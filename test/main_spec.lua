@@ -3,6 +3,82 @@
 
 local helper = require("test.test_helper")
 
+describe("Warrior XP table", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    describe("getLevelForXp", function()
+
+        it("returns 1 at 0 XP", function()
+            assert.are.equal(1, getLevelForXp(0))
+        end)
+
+        it("returns 1 for the user's current XP of 354", function()
+            assert.are.equal(1, getLevelForXp(354))
+        end)
+
+        it("returns 2 at exactly 1125 XP", function()
+            assert.are.equal(2, getLevelForXp(1125))
+        end)
+
+        it("returns 2 just below the level 3 threshold", function()
+            assert.are.equal(2, getLevelForXp(3239))
+        end)
+
+        it("returns 25 at max XP", function()
+            assert.are.equal(25, getLevelForXp(11594700))
+        end)
+
+    end)
+
+    describe("getXpForNextLevel", function()
+
+        it("returns 1125 when at level 1", function()
+            assert.are.equal(1125, getXpForNextLevel(354))
+        end)
+
+        it("returns the level 3 threshold when at level 2", function()
+            assert.are.equal(3240, getXpForNextLevel(1125))
+        end)
+
+        it("returns nil at max level", function()
+            assert.is_nil(getXpForNextLevel(11594700))
+        end)
+
+    end)
+
+    describe("other classes", function()
+
+        it("Rogue level 2 threshold is 1120", function()
+            assert.are.equal(2, getLevelForXp(1120, "Rogue"))
+            assert.are.equal(1, getLevelForXp(1119, "Rogue"))
+        end)
+
+        it("Acolyte and Necrolyte share the same thresholds", function()
+            assert.are.equal(getLevelForXp(1150, "Acolyte"), getLevelForXp(1150, "Necrolyte"))
+        end)
+
+        it("Sorceror and Druid share the same thresholds", function()
+            assert.are.equal(getLevelForXp(1180, "Sorceror"), getLevelForXp(1180, "Druid"))
+        end)
+
+        it("Sorceror level 2 threshold is 1180", function()
+            assert.are.equal(2, getLevelForXp(1180, "Sorceror"))
+            assert.are.equal(1, getLevelForXp(1179, "Sorceror"))
+        end)
+
+        it("Rogue max level XP is 11221500", function()
+            assert.are.equal(25, getLevelForXp(11221500, "Rogue"))
+            assert.is_nil(getXpForNextLevel(11221500, "Rogue"))
+        end)
+
+    end)
+
+end)
+
 describe("Tele-Arena triggers", function()
 
     before_each(function()
