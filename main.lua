@@ -45,6 +45,14 @@ function getExperience()
   return taPackage.character.experience
 end
 
+function setGold(value)
+  taPackage.character.gold = tonumber(value)
+end
+
+function getGold()
+  return taPackage.character.gold
+end
+
 -- =========================================================================
 -- Triggers
 -- =========================================================================
@@ -59,6 +67,15 @@ end, { type = "regex" })
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
   setExperience(matches[2])
+end, { type = "regex" })
+
+createTrigger("^You are carrying (\\d+) gold crowns\\.$", function(matches)
+  setGold(matches[2])
+end, { type = "regex" })
+
+createTrigger("^You found (\\d+) gold crowns while searching", function(matches)
+  local found = tonumber(matches[2])
+  setGold((getGold() or 0) + found)
 end, { type = "regex" })
 
 createTrigger("attacked you .+ for (\\d+) damage!", function(matches)
@@ -80,6 +97,7 @@ local function status()
     and (vitalityCurrent .. "/" .. vitalityMax)
     or "?"
   local experience = getExperience() and tostring(getExperience()) or "?"
+  local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
     { text = "Vitality" },
@@ -88,6 +106,8 @@ local function status()
     { text = experience, fg = "white" },
     { text = "Status" },
     { text = charStatus, fg = "white" },
+    { text = "Gold" },
+    { text = gold, fg = "white" },
   }
   return segments
 end

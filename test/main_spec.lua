@@ -11,6 +11,35 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Gold triggers
+    -- =========================================================================
+
+    describe("Gold triggers", function()
+
+        it("sets gold from inventory line", function()
+            helper.simulateLine("You are carrying 755 gold crowns.")
+            assert.are.equal(755, getGold())
+        end)
+
+        it("increases gold when looting a corpse", function()
+            helper.simulateLine("You are carrying 755 gold crowns.")
+            helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
+            assert.are.equal(760, getGold())
+        end)
+
+        it("accumulates loot gold from zero when inventory not yet seen", function()
+            helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
+            assert.are.equal(5, getGold())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("You are carrying a shortsword.")
+            assert.is_nil(getGold())
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Incoming damage trigger
     -- =========================================================================
 
@@ -130,6 +159,7 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("?", segments[2].text)  -- Vitality
             assert.are.equal("?", segments[4].text)  -- XP
             assert.are.equal("?", segments[6].text)  -- Status
+            assert.are.equal("?", segments[8].text)  -- Gold
         end)
 
         it("shows captured Vitality as current/max", function()
