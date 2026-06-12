@@ -4,5 +4,3 @@ install:
 test:
     busted test/
 
-test-verbose:
-    busted test/ --verbose
