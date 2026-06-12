@@ -74,12 +74,12 @@ local function status()
   local experience = getExperience() and tostring(getExperience()) or "?"
 
   local segments = {
-    { text = "Status" },
-    { text = charStatus, fg = "white" },
     { text = "Vitality" },
     { text = vitalityText, fg = "white" },
     { text = "XP" },
     { text = experience, fg = "white" },
+    { text = "Status" },
+    { text = charStatus, fg = "white" },
   }
   return segments
 end
