@@ -10,3 +10,65 @@ local scriptDir = SCRIPT_DIR
 if not scriptDir then
   error("SCRIPT_DIR not set - are you running this through Baud?")
 end
+
+-- =========================================================================
+-- State
+-- =========================================================================
+
+if not taPackage then
+  taPackage = {}
+  taPackage.character = {}
+end
+
+local function setCharacterStatus(value)
+  taPackage.character.status = value
+end
+
+local function getCharacterStatus()
+  return taPackage.character.status
+end
+
+local function setVitality(current, max)
+  taPackage.character.vitalityCurrent = tonumber(current)
+  taPackage.character.vitalityMax = tonumber(max)
+end
+
+local function getVitality()
+  return taPackage.character.vitalityCurrent, taPackage.character.vitalityMax
+end
+
+-- =========================================================================
+-- Triggers
+-- =========================================================================
+
+createTrigger("^ Status:\\s+(\\S+)$", function(matches)
+  setCharacterStatus(matches[2])
+end, { type = "regex" })
+
+createTrigger("^ Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
+  setVitality(matches[2], matches[3])
+end, { type = "regex" })
+
+-- =========================================================================
+-- Status bar
+-- =========================================================================
+
+local function status()
+  local charStatus = getCharacterStatus() or "?"
+  local vitalityCurrent, vitalityMax = getVitality()
+  local vitalityText = (vitalityCurrent and vitalityMax)
+    and (vitalityCurrent .. "/" .. vitalityMax)
+    or "?"
+
+  local segments = {
+    { text = "Status" },
+    { text = charStatus, fg = "white" },
+    { text = "Vitality" },
+    { text = vitalityText, fg = "white" },
+  }
+  return segments
+end
+
+setStatus(status)
+
+echo("Finishing reading main.lua")
