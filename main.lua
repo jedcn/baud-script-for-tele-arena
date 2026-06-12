@@ -20,20 +20,20 @@ if not taPackage then
   taPackage.character = {}
 end
 
-local function setCharacterStatus(value)
+function setCharacterStatus(value)
   taPackage.character.status = value
 end
 
-local function getCharacterStatus()
+function getCharacterStatus()
   return taPackage.character.status
 end
 
-local function setVitality(current, max)
+function setVitality(current, max)
   taPackage.character.vitalityCurrent = tonumber(current)
   taPackage.character.vitalityMax = tonumber(max)
 end
 
-local function getVitality()
+function getVitality()
   return taPackage.character.vitalityCurrent, taPackage.character.vitalityMax
 end
 
