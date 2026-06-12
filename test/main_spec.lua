@@ -197,6 +197,42 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Class trigger
+    -- =========================================================================
+
+    describe("Class trigger", function()
+
+        it("captures class", function()
+            helper.simulateLine("Class:        Warrior")
+            assert.are.equal("Warrior", getClass())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Race:         Half-ogre")
+            assert.is_nil(getClass())
+        end)
+
+    end)
+
+    -- =========================================================================
+    -- Level trigger
+    -- =========================================================================
+
+    describe("Level trigger", function()
+
+        it("captures level", function()
+            helper.simulateLine("Level:        1")
+            assert.are.equal(1, getLevel())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Intellect:    8")
+            assert.is_nil(getLevel())
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Experience trigger
     -- =========================================================================
 

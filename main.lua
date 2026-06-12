@@ -45,6 +45,22 @@ function getExperience()
   return taPackage.character.experience
 end
 
+function setClass(value)
+  taPackage.character.class = value
+end
+
+function getClass()
+  return taPackage.character.class
+end
+
+function setLevel(value)
+  taPackage.character.level = tonumber(value)
+end
+
+function getLevel()
+  return taPackage.character.level
+end
+
 function setGold(value)
   taPackage.character.gold = tonumber(value)
 end
@@ -134,6 +150,14 @@ end, { type = "regex" })
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
   setExperience(matches[2])
+end, { type = "regex" })
+
+createTrigger("^Class:\\s+(\\S+)$", function(matches)
+  setClass(matches[2])
+end, { type = "regex" })
+
+createTrigger("^Level:\\s+(\\d+)$", function(matches)
+  setLevel(matches[2])
 end, { type = "regex" })
 
 createTrigger("^You are carrying (\\d+) gold crowns\\.$", function(matches)
