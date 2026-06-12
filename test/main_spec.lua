@@ -40,6 +40,34 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Healing trigger
+    -- =========================================================================
+
+    describe("Healing trigger", function()
+
+        it("restores vitality to max", function()
+            helper.simulateLine("Vitality:     13 / 26")
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            local current, max = getVitality()
+            assert.are.equal(26, current)
+            assert.are.equal(26, max)
+        end)
+
+        it("deducts the cost from gold", function()
+            helper.simulateLine("You are carrying 755 gold crowns.")
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            assert.are.equal(753, getGold())
+        end)
+
+        it("works when vitality max is not yet known", function()
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            local current, _ = getVitality()
+            assert.is_nil(current)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Incoming damage trigger
     -- =========================================================================
 

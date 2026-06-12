@@ -78,6 +78,15 @@ createTrigger("^You found (\\d+) gold crowns while searching", function(matches)
   setGold((getGold() or 0) + found)
 end, { type = "regex" })
 
+createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", function(matches)
+  local cost = tonumber(matches[2])
+  setGold((getGold() or 0) - cost)
+  local _, max = getVitality()
+  if max then
+    setVitality(max, max)
+  end
+end, { type = "regex" })
+
 createTrigger("attacked you .+ for (\\d+) damage!", function(matches)
   local damage = tonumber(matches[2])
   local current, max = getVitality()
