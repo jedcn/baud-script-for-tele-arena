@@ -37,6 +37,14 @@ function getVitality()
   return taPackage.character.vitalityCurrent, taPackage.character.vitalityMax
 end
 
+function setExperience(value)
+  taPackage.character.experience = tonumber(value)
+end
+
+function getExperience()
+  return taPackage.character.experience
+end
+
 -- =========================================================================
 -- Triggers
 -- =========================================================================
@@ -49,6 +57,10 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   setVitality(matches[2], matches[3])
 end, { type = "regex" })
 
+createTrigger("^Experience:\\s+(\\d+)$", function(matches)
+  setExperience(matches[2])
+end, { type = "regex" })
+
 -- =========================================================================
 -- Status bar
 -- =========================================================================
@@ -59,12 +71,15 @@ local function status()
   local vitalityText = (vitalityCurrent and vitalityMax)
     and (vitalityCurrent .. "/" .. vitalityMax)
     or "?"
+  local experience = getExperience() and tostring(getExperience()) or "?"
 
   local segments = {
     { text = "Status" },
     { text = charStatus, fg = "white" },
     { text = "Vitality" },
     { text = vitalityText, fg = "white" },
+    { text = "XP" },
+    { text = experience, fg = "white" },
   }
   return segments
 end

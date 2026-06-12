@@ -34,6 +34,24 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Experience trigger
+    -- =========================================================================
+
+    describe("Experience trigger", function()
+
+        it("captures experience value", function()
+            helper.simulateLine("Experience:   354")
+            assert.are.equal(354, getExperience())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Intellect:    8")
+            assert.is_nil(getExperience())
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Vitality trigger
     -- =========================================================================
 
@@ -95,12 +113,20 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("26/26", segments[4].text)
         end)
 
-        it("shows both values after a full status block", function()
+        it("shows captured Experience value", function()
+            helper.simulateLine("Experience:   354")
+            local segments = capturedFn()
+            assert.are.equal("354", segments[6].text)
+        end)
+
+        it("shows all values after a full status block", function()
             helper.simulateLine("Status:       Healthy")
             helper.simulateLine("Vitality:     10 / 26")
+            helper.simulateLine("Experience:   354")
             local segments = capturedFn()
             assert.are.equal("Healthy", segments[2].text)
             assert.are.equal("10/26", segments[4].text)
+            assert.are.equal("354", segments[6].text)
         end)
 
     end)
