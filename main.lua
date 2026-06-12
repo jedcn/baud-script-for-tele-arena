@@ -41,11 +41,11 @@ end
 -- Triggers
 -- =========================================================================
 
-createTrigger("^ Status:\\s+(\\S+)$", function(matches)
+createTrigger("^Status:\\s+(\\S+)$", function(matches)
   setCharacterStatus(matches[2])
 end, { type = "regex" })
 
-createTrigger("^ Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
+createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   setVitality(matches[2], matches[3])
 end, { type = "regex" })
 
