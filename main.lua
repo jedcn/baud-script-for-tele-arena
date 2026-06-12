@@ -118,7 +118,7 @@ local function status()
   local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
-    { text = "Vitality" },
+    { text = "HP" },
     { text = vitalityText, fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = "XP" },
     { text = experience, fg = "white" },

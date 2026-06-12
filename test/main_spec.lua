@@ -184,7 +184,7 @@ describe("Tele-Arena triggers", function()
 
         it("shows ? for all values when nothing captured yet", function()
             local segments = capturedFn()
-            assert.are.equal("?", segments[2].text)  -- Vitality
+            assert.are.equal("?", segments[2].text)  -- HP
             assert.are.equal("?", segments[4].text)  -- XP
             assert.are.equal("?", segments[6].text)  -- Status
             assert.are.equal("?", segments[8].text)  -- Gold
