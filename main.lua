@@ -207,14 +207,17 @@ local function status()
     or "?"
   local xp = getExperience()
   local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
-  local experience = xp and (tostring(xp) .. "/" .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "?"
   local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
     { text = "HP" },
-    { text = vitalityText, fg = vitalityColor(vitalityCurrent, vitalityMax) },
+    { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
+      fg = vitalityColor(vitalityCurrent, vitalityMax) },
+    { text = vitalityMax and ("/" .. tostring(vitalityMax)) or "", fg = "white" },
     { text = "XP" },
-    { text = experience, fg = "white" },
+    { text = xp and tostring(xp) or "?", fg = "white" },
+    { text = xp and ("/" .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
+      fg = "white" },
     { text = "Status" },
     { text = charStatus, fg = "white" },
     { text = "Gold" },
