@@ -205,7 +205,9 @@ local function status()
   local vitalityText = (vitalityCurrent and vitalityMax)
     and (vitalityCurrent .. "/" .. vitalityMax)
     or "?"
-  local experience = getExperience() and tostring(getExperience()) or "?"
+  local xp = getExperience()
+  local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
+  local experience = xp and (tostring(xp) .. "/" .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "?"
   local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
