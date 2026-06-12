@@ -11,6 +11,36 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Incoming damage trigger
+    -- =========================================================================
+
+    describe("Incoming damage trigger", function()
+
+        it("reduces current vitality by damage amount", function()
+            helper.simulateLine("Vitality:     26 / 26")
+            helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
+            local current, max = getVitality()
+            assert.are.equal(19, current)
+            assert.are.equal(26, max)
+        end)
+
+        it("does nothing when vitality is not yet known", function()
+            helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
+            local current, _ = getVitality()
+            assert.is_nil(current)
+        end)
+
+        it("stacks multiple hits", function()
+            helper.simulateLine("Vitality:     26 / 26")
+            helper.simulateLine("The lizard woman attacked you with her spear for 3 damage!")
+            helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(16, current)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Status trigger
     -- =========================================================================
 

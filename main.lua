@@ -61,6 +61,14 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
   setExperience(matches[2])
 end, { type = "regex" })
 
+createTrigger("attacked you .+ for (\\d+) damage!", function(matches)
+  local damage = tonumber(matches[2])
+  local current, max = getVitality()
+  if current then
+    setVitality(current - damage, max)
+  end
+end, { type = "regex" })
+
 -- =========================================================================
 -- Status bar
 -- =========================================================================
