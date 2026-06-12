@@ -99,6 +99,15 @@ end, { type = "regex" })
 -- Status bar
 -- =========================================================================
 
+local function vitalityColor(current, max)
+  if not current or not max or max == 0 then return "white" end
+  local pct = current / max
+  if pct >= 0.66 then return "green"
+  elseif pct >= 0.33 then return "yellow"
+  else return "red"
+  end
+end
+
 local function status()
   local charStatus = getCharacterStatus() or "?"
   local vitalityCurrent, vitalityMax = getVitality()
@@ -110,7 +119,7 @@ local function status()
 
   local segments = {
     { text = "Vitality" },
-    { text = vitalityText, fg = "white" },
+    { text = vitalityText, fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = "XP" },
     { text = experience, fg = "white" },
     { text = "Status" },

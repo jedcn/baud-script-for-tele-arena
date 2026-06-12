@@ -218,6 +218,36 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Healthy", segments[6].text)
         end)
 
+        it("colors vitality green at or above 66%", function()
+            helper.simulateLine("Vitality:     26 / 26")  -- 100%
+            assert.are.equal("green", capturedFn()[2].fg)
+        end)
+
+        it("colors vitality green at exactly 66%", function()
+            helper.simulateLine("Vitality:     17 / 26")  -- ~65.4%, just below
+            assert.are.equal("yellow", capturedFn()[2].fg)
+            helper.resetAll()
+            _G.setStatus = function(fn) capturedFn = fn end
+            dofile("main.lua")
+            helper.simulateLine("Vitality:     18 / 26")  -- ~69.2%, above
+            assert.are.equal("green", capturedFn()[2].fg)
+        end)
+
+        it("colors vitality yellow between 33% and 66%", function()
+            helper.simulateLine("Vitality:     13 / 26")  -- 50%
+            assert.are.equal("yellow", capturedFn()[2].fg)
+        end)
+
+        it("colors vitality red below 33%", function()
+            helper.simulateLine("Vitality:     8 / 26")  -- ~30.8%
+            assert.are.equal("red", capturedFn()[2].fg)
+        end)
+
+        it("colors vitality white when not yet known", function()
+            local segments = capturedFn()
+            assert.are.equal("white", segments[2].fg)
+        end)
+
     end)
 
 end)
