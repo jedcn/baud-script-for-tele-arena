@@ -11,6 +11,20 @@ if not scriptDir then
   error("SCRIPT_DIR not set - are you running this through Baud?")
 end
 
+-- Derive absolute directory from debug info so io.open paths work regardless
+-- of baud's working directory (which may be /).
+local function absoluteScriptDir()
+  local src = debug.getinfo(1, "S").source
+  if src and src:sub(1, 1) == "@" then
+    local path = src:sub(2)
+    if path:sub(1, 1) == "/" then
+      return path:match("^(.+)/[^/]+$") .. "/"
+    end
+  end
+  -- Fallback: baud data dir, which is a known writable absolute path
+  return (os.getenv("HOME") or "") .. "/Library/Application Support/baud/"
+end
+
 -- =========================================================================
 -- State
 -- =========================================================================
@@ -18,6 +32,19 @@ end
 if not taPackage then
   taPackage = {}
   taPackage.character = {}
+end
+
+if not taPackage.monsterDb then
+  local Db = dofile(scriptDir .. "db.lua")
+  local dbPath = absoluteScriptDir() .. "monsters.lua"
+  taPackage.monsterDb = {
+    monsters = Db.load(dbPath),
+    db = Db,
+    dbPath = dbPath,
+    state = "idle",
+    lookTarget = nil,
+    accumulatedLines = {},
+  }
 end
 
 function setCharacterStatus(value)
@@ -197,6 +224,95 @@ createTrigger("attacked you .+ for (\\d+) damage!", function(matches)
   local current, max = getVitality()
   if current then
     setVitality(current - damage, max)
+  end
+end, { type = "regex" })
+
+-- =========================================================================
+-- Monster database
+-- =========================================================================
+
+local function isHealthLine(line)
+  return string.find(line, "wounded") ~= nil
+      or string.find(line, "in good health") ~= nil
+      or string.find(line, "falls to the ground lifeless") ~= nil
+end
+
+local function extractMonsterName(firstLine)
+  return string.match(firstLine, "^The (.+) is ") or string.match(firstLine, "^The (.+) has ")
+end
+
+local function upsertMonster(name, description)
+  local db = taPackage.monsterDb.monsters
+  local today = os.date("%Y-%m-%d")
+  if db[name] then
+    db[name].description = description
+    db[name].encounters = db[name].encounters + 1
+  else
+    db[name] = { description = description, firstSeen = today, encounters = 1 }
+  end
+  pcall(taPackage.monsterDb.db.save, taPackage.monsterDb.dbPath, db)
+end
+
+function getMonsterEntry(name)
+  return taPackage.monsterDb.monsters[name]
+end
+
+function getMonsterDbState()
+  return taPackage.monsterDb.state
+end
+
+function getKnownMonsters()
+  local names = {}
+  for name in pairs(taPackage.monsterDb.monsters) do
+    table.insert(names, name)
+  end
+  table.sort(names)
+  for _, name in ipairs(names) do
+    echo(name)
+  end
+end
+
+createTrigger("^l (.+)$", function(matches)
+  taPackage.monsterDb.state = "accumulating"
+  taPackage.monsterDb.lookTarget = matches[2]
+  taPackage.monsterDb.accumulatedLines = {}
+end, { type = "regex" })
+
+local function recordEncounter(name)
+  local entry = taPackage.monsterDb.monsters[name]
+  if entry then
+    entry.encounters = entry.encounters + 1
+    pcall(taPackage.monsterDb.db.save, taPackage.monsterDb.dbPath, taPackage.monsterDb.monsters)
+  end
+end
+
+createTrigger("^There is a (.+) here\\.$", function(matches)
+  recordEncounter(matches[2])
+end, { type = "regex" })
+
+createTrigger("^An? (.+) enters ", function(matches)
+  recordEncounter(matches[2])
+end, { type = "regex" })
+
+createTrigger("^(.+)$", function(matches)
+  if taPackage.monsterDb.state ~= "accumulating" then return end
+  local line = matches[2]
+  if string.match(line, "^l .") then return end
+  if string.match(line, "^You're in the") or string.match(line, "^There is ") then
+    taPackage.monsterDb.state = "idle"
+    taPackage.monsterDb.accumulatedLines = {}
+    return
+  end
+  if isHealthLine(line) then
+    local lines = taPackage.monsterDb.accumulatedLines
+    if #lines > 0 then
+      local canonicalName = extractMonsterName(lines[1]) or taPackage.monsterDb.lookTarget
+      local desc = table.concat(lines, " ")
+      upsertMonster(canonicalName, desc)
+    end
+    taPackage.monsterDb.state = "idle"
+  else
+    table.insert(taPackage.monsterDb.accumulatedLines, line)
   end
 end, { type = "regex" })
 

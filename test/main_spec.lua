@@ -425,3 +425,245 @@ describe("Tele-Arena triggers", function()
     end)
 
 end)
+
+-- =========================================================================
+-- Db module
+-- =========================================================================
+
+describe("Db", function()
+
+    local Db
+    local tmpPath = "./test/monsters_test_tmp.lua"
+
+    before_each(function()
+        Db = dofile("db.lua")
+        os.remove(tmpPath)
+    end)
+
+    after_each(function()
+        os.remove(tmpPath)
+    end)
+
+    it("returns empty table when file does not exist", function()
+        local result = Db.load(tmpPath)
+        assert.are.same({}, result)
+    end)
+
+    it("round-trips a monster record", function()
+        local monsters = {
+            ["giant bat"] = {
+                description = "The giant bat has a wingspan of over twelve feet.",
+                firstSeen = "2026-06-12",
+                encounters = 3,
+            }
+        }
+        Db.save(tmpPath, monsters)
+        local loaded = Db.load(tmpPath)
+        assert.are.equal("The giant bat has a wingspan of over twelve feet.", loaded["giant bat"].description)
+        assert.are.equal("2026-06-12", loaded["giant bat"].firstSeen)
+        assert.are.equal(3, loaded["giant bat"].encounters)
+    end)
+
+    it("round-trips multiple monster records", function()
+        local monsters = {
+            ["lizard woman"] = { description = "She has scaley skin.", firstSeen = "2026-06-12", encounters = 1 },
+            ["giant bat"] = { description = "It has large wings.", firstSeen = "2026-06-12", encounters = 5 },
+        }
+        Db.save(tmpPath, monsters)
+        local loaded = Db.load(tmpPath)
+        assert.are.equal("She has scaley skin.", loaded["lizard woman"].description)
+        assert.are.equal("It has large wings.", loaded["giant bat"].description)
+    end)
+
+    it("handles descriptions with commas and apostrophes", function()
+        local monsters = {
+            ["lizard woman"] = {
+                description = "She has greyish scaley skin, and sharp claws and teeth.",
+                firstSeen = "2026-06-12",
+                encounters = 1,
+            }
+        }
+        Db.save(tmpPath, monsters)
+        local loaded = Db.load(tmpPath)
+        assert.are.equal("She has greyish scaley skin, and sharp claws and teeth.", loaded["lizard woman"].description)
+    end)
+
+end)
+
+-- =========================================================================
+-- Monster database triggers
+-- =========================================================================
+
+describe("Monster database", function()
+
+    local realIo
+
+    before_each(function()
+        helper.resetAll()
+        -- Prevent file writes during trigger tests
+        realIo = _G.io
+        _G.io = { open = function() return nil end }
+        dofile("main.lua")
+    end)
+
+    after_each(function()
+        _G.io = realIo
+    end)
+
+    describe("look command", function()
+
+        it("transitions to accumulating state", function()
+            helper.simulateLine("l li")
+            assert.are.equal("accumulating", getMonsterDbState())
+        end)
+
+        it("records the look target", function()
+            helper.simulateLine("l li")
+            assert.are.equal("li", taPackage.monsterDb.lookTarget)
+        end)
+
+        it("does not accumulate the echo line itself", function()
+            helper.simulateLine("l li")
+            assert.are.equal(0, #taPackage.monsterDb.accumulatedLines)
+        end)
+
+    end)
+
+    describe("description accumulation", function()
+
+        it("accumulates non-health lines", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            assert.are.equal(1, #taPackage.monsterDb.accumulatedLines)
+            assert.are.equal("accumulating", getMonsterDbState())
+        end)
+
+        it("accumulates multiple lines", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
+            helper.simulateLine("resemble those of a large lizard.")
+            assert.are.equal(2, #taPackage.monsterDb.accumulatedLines)
+        end)
+
+        it("finalizes on a wounded health line", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            assert.are.equal("idle", getMonsterDbState())
+        end)
+
+        it("extracts canonical name from description first line", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            assert.is_not_nil(getMonsterEntry("lizard woman"))
+        end)
+
+        it("does not include the health line in the description", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            local entry = getMonsterEntry("lizard woman")
+            assert.is_nil(string.find(entry.description, "wounded"))
+        end)
+
+        it("joins multi-line description with spaces", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
+            helper.simulateLine("resemble those of a large lizard.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            local entry = getMonsterEntry("lizard woman")
+            assert.are.equal(
+                "The lizard woman is a five foot tall bipedal humanoid who's features resemble those of a large lizard.",
+                entry.description
+            )
+        end)
+
+        it("aborts on room navigation line without saving", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("idle", getMonsterDbState())
+            assert.is_nil(getMonsterEntry("lizard woman"))
+        end)
+
+        it("aborts on 'There is' line without saving", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("There is a blue robed priest here.")
+            assert.are.equal("idle", getMonsterDbState())
+            assert.is_nil(getMonsterEntry("lizard woman"))
+        end)
+
+        it("finalizes on 'falls to the ground lifeless' line", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman falls to the ground lifeless!")
+            assert.are.equal("idle", getMonsterDbState())
+            assert.is_not_nil(getMonsterEntry("lizard woman"))
+        end)
+
+    end)
+
+    describe("second look", function()
+
+        it("updates description and increments encounters", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid with sharp claws.")
+            helper.simulateLine("The lizard woman is badly wounded.")
+            local entry = getMonsterEntry("lizard woman")
+            assert.are.equal(
+                "The lizard woman is a five foot tall bipedal humanoid with sharp claws.",
+                entry.description
+            )
+            assert.are.equal(2, entry.encounters)
+        end)
+
+    end)
+
+    describe("room scan trigger", function()
+
+        it("does not create a record for an unknown monster", function()
+            helper.simulateLine("There is a blue robed priest here.")
+            assert.is_nil(getMonsterEntry("blue robed priest"))
+        end)
+
+        it("increments encounters for a known monster", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            helper.simulateLine("There is a lizard woman here.")
+            assert.are.equal(2, getMonsterEntry("lizard woman").encounters)
+        end)
+
+    end)
+
+    describe("monster enters trigger", function()
+
+        it("does not create a record for an unknown monster entering", function()
+            helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
+            assert.is_nil(getMonsterEntry("lizard man"))
+        end)
+
+        it("increments encounters when a known monster enters", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard man is a bipedal lizard humanoid.")
+            helper.simulateLine("The lizard man is lightly wounded.")
+            helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
+            assert.are.equal(2, getMonsterEntry("lizard man").encounters)
+        end)
+
+        it("handles 'An' prefix for monsters starting with a vowel", function()
+            helper.simulateLine("l og")
+            helper.simulateLine("The ogre is a large brutish humanoid.")
+            helper.simulateLine("The ogre is lightly wounded.")
+            helper.simulateLine("An ogre enters the arena through the dungeon gate!")
+            assert.are.equal(2, getMonsterEntry("ogre").encounters)
+        end)
+
+    end)
+
+end)

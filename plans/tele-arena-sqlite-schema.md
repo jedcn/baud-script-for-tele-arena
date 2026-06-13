@@ -17,6 +17,31 @@ to match lines from the game server and maintain in-memory state in `taPackage`.
 The test suite is in `test/main_spec.lua` using the Busted framework. Run with `just test`.
 The test helper (`test/test_helper.lua`) mocks all baud globals including `echo`.
 
+## Actual baud SQLite API (differs from original plan)
+
+baud exposes a single global `dbOpen(name)` that returns a database object. The database
+file is created at `process.cwd() + "/" + name` (Node.js CWD, not wasmoon's virtual CWD).
+When baud is run from the script directory, this puts `tele-arena.db` alongside `main.lua`.
+
+```lua
+local db = dbOpen("tele-arena.db")
+
+-- Execute DDL or DML. Returns number of rows changed.
+db:execute("CREATE TABLE IF NOT EXISTS rooms (name TEXT PRIMARY KEY)")
+db:execute("INSERT OR IGNORE INTO rooms (name) VALUES (?)", "north plaza")
+
+-- Query returning all matching rows as a Lua table of tables.
+local rows = db:query("SELECT * FROM rooms")
+
+-- Query returning first matching row as a Lua table, or nil.
+local row = db:queryOne("SELECT * FROM rooms WHERE name = ?", "north plaza")
+
+-- Absolute path to the database file (useful for debugging).
+echo(db.path)
+```
+
+Note: `db.path` is a field, not a method. `execute`/`query`/`queryOne` are called with `:` syntax.
+
 ## Goal
 
 Build a persistent database of game knowledge that populates automatically as the player
