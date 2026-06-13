@@ -667,3 +667,420 @@ describe("Monster database", function()
     end)
 
 end)
+
+-- =========================================================================
+-- ta_db module
+-- =========================================================================
+
+describe("ta_db", function()
+
+    local TaDb
+
+    before_each(function()
+        helper.resetAll()
+        TaDb = dofile("ta_db.lua")
+        helper.clearDbCalls()
+    end)
+
+    describe("visitRoom", function()
+
+        it("inserts a new room and echoes visit #1", function()
+            TaDb.visitRoom("north plaza", nil)
+            local call = helper.findDbCall("execute", "INSERT INTO rooms")
+            assert.is_not_nil(call)
+            assert.are.equal("north plaza", call.params[1])
+            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza (visit #1)", helper.echoCalls[1])
+        end)
+
+        it("updates an existing room and echoes incremented count", function()
+            helper.mockDbOneRow = { visits = 3 }
+            TaDb.visitRoom("north plaza", nil)
+            local call = helper.findDbCall("execute", "UPDATE rooms")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza (visit #4)", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordExit", function()
+
+        it("inserts an exit and echoes it", function()
+            TaDb.recordExit("north plaza", "east", "arena")
+            local call = helper.findDbCall("execute", "room_exits")
+            assert.is_not_nil(call)
+            assert.are.equal("north plaza", call.params[1])
+            assert.are.equal("east", call.params[2])
+            assert.are.equal("arena", call.params[3])
+            assert.are.equal("[DB\xE2\x86\x92room_exits] north plaza --east--> arena", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("upsertMonster", function()
+
+        it("inserts a new monster and echoes 'new'", function()
+            TaDb.upsertMonster("lizard woman", "She has scaley skin.")
+            local call = helper.findDbCall("execute", "INSERT INTO monsters")
+            assert.is_not_nil(call)
+            assert.are.equal("lizard woman", call.params[1])
+            assert.are.equal("[DB\xE2\x86\x92monsters] new: lizard woman", helper.echoCalls[1])
+        end)
+
+        it("updates an existing monster and echoes encounter count", function()
+            helper.mockDbOneRow = { encounters = 3 }
+            TaDb.upsertMonster("lizard woman", "She has scaley skin.")
+            local call = helper.findDbCall("execute", "UPDATE monsters SET description")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92monsters] seen: lizard woman (encounter #4)", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordMonsterSeen", function()
+
+        it("does nothing when monster is not in DB", function()
+            TaDb.recordMonsterSeen("huge rat")
+            assert.are.equal(0, #helper.echoCalls)
+            assert.is_nil(helper.findDbCall("execute", "UPDATE monsters SET encounters"))
+        end)
+
+        it("increments encounters for a known monster and echoes", function()
+            helper.mockDbOneRow = { encounters = 2 }
+            TaDb.recordMonsterSeen("huge rat")
+            local call = helper.findDbCall("execute", "UPDATE monsters SET encounters")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92monsters] seen: huge rat (encounter #3)", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordPlayerAttack", function()
+
+        it("records a hit and echoes damage", function()
+            TaDb.recordPlayerAttack("Mace", "huge rat", "hit", 10)
+            local call = helper.findDbCall("execute", "player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("Mace", call.params[1])
+            assert.are.equal("huge rat", call.params[2])
+            assert.are.equal("hit", call.params[3])
+            assert.are.equal(10, call.params[4])
+            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace HIT huge rat: 10 dmg", helper.echoCalls[1])
+        end)
+
+        it("records a miss and echoes without damage", function()
+            TaDb.recordPlayerAttack("Mace", "huge rat", "miss", nil)
+            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace MISS huge rat", helper.echoCalls[1])
+        end)
+
+        it("records a dodge", function()
+            TaDb.recordPlayerAttack("Mace", "huge rat", "dodge", nil)
+            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace DODGE huge rat", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordMonsterAttack", function()
+
+        it("records a hit and echoes damage", function()
+            TaDb.recordMonsterAttack("huge rat", "hit", 3)
+            local call = helper.findDbCall("execute", "monster_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92monster_attacks] huge rat HIT you: 3 dmg", helper.echoCalls[1])
+        end)
+
+        it("records a miss", function()
+            TaDb.recordMonsterAttack("huge rat", "miss", nil)
+            assert.are.equal("[DB\xE2\x86\x92monster_attacks] huge rat MISS", helper.echoCalls[1])
+        end)
+
+        it("records a glanced hit", function()
+            TaDb.recordMonsterAttack("huge rat", "glanced", nil)
+            assert.are.equal("[DB\xE2\x86\x92monster_attacks] huge rat GLANCED", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordMonsterLoot", function()
+
+        it("records gold and echoes", function()
+            TaDb.recordMonsterLoot("lizard woman", 4)
+            local call = helper.findDbCall("execute", "monster_loot")
+            assert.is_not_nil(call)
+            assert.are.equal("lizard woman", call.params[1])
+            assert.are.equal(4, call.params[2])
+            assert.are.equal("[DB\xE2\x86\x92monster_loot] lizard woman: 4 gold", helper.echoCalls[1])
+        end)
+
+        it("records zero gold", function()
+            TaDb.recordMonsterLoot("huge rat", 0)
+            assert.are.equal("[DB\xE2\x86\x92monster_loot] huge rat: 0 gold", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordService", function()
+
+        it("inserts a new service and echoes use #1", function()
+            TaDb.recordService("healing", "temple", 2)
+            local call = helper.findDbCall("execute", "INSERT INTO services")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp (use #1)", helper.echoCalls[1])
+        end)
+
+        it("updates an existing service and echoes incremented count", function()
+            helper.mockDbOneRow = { uses = 2 }
+            TaDb.recordService("healing", "temple", 2)
+            local call = helper.findDbCall("execute", "UPDATE services")
+            assert.is_not_nil(call)
+            assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp (use #3)", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordStatChange", function()
+
+        it("inserts a stat change and echoes", function()
+            TaDb.recordStatChange("Level", 1, 2)
+            local call = helper.findDbCall("execute", "stat_changes")
+            assert.is_not_nil(call)
+            assert.are.equal("Level", call.params[1])
+            assert.are.equal(1, call.params[2])
+            assert.are.equal(2, call.params[3])
+        end)
+
+    end)
+
+end)
+
+-- =========================================================================
+-- main.lua triggers for world map and combat
+-- =========================================================================
+
+describe("World map triggers", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    describe("room entry trigger", function()
+
+        it("sets currentRoom", function()
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("north plaza", taPackage.currentRoom)
+        end)
+
+        it("calls visitRoom via echo", function()
+            helper.simulateLine("You're in the north plaza.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "north plaza") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("clears pendingDirection after entry", function()
+            taPackage.pendingDirection = "n"
+            helper.simulateLine("You're in the north plaza.")
+            assert.is_nil(taPackage.pendingDirection)
+        end)
+
+        it("calls recordExit when pendingDirection and prevRoom are set", function()
+            taPackage.currentRoom = "market"
+            taPackage.pendingDirection = "north"
+            taPackage.prevRoom = "market"
+            helper.simulateLine("You're in the north plaza.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "room_exits") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("records zero loot when monster died but no gold found before room change", function()
+            taPackage.lastKilledMonster = "huge rat"
+            taPackage.pendingLootCheck = true
+            helper.simulateLine("You're in the north plaza.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "monster_loot") and string.find(msg, "huge rat") then found = true end
+            end
+            assert.is_true(found)
+            assert.is_nil(taPackage.pendingLootCheck)
+        end)
+
+    end)
+
+    describe("movement alias", function()
+
+        it("sets pendingDirection when player moves north", function()
+            helper.simulateAlias("n")
+            assert.are.equal("n", taPackage.pendingDirection)
+        end)
+
+        it("sets prevRoom when player moves", function()
+            taPackage.currentRoom = "market"
+            helper.simulateAlias("e")
+            assert.are.equal("market", taPackage.prevRoom)
+        end)
+
+        it("sends the movement command", function()
+            helper.simulateAlias("s")
+            assert.are.equal("s", helper.sendCalls[1])
+        end)
+
+    end)
+
+end)
+
+describe("Combat triggers", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    describe("player attack outcomes", function()
+
+        it("records a hit with damage", function()
+            helper.simulateLine("Your attack hit the huge rat for 10 damage!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "HIT huge rat: 10 dmg") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("records a miss using lastAttackTarget", function()
+            taPackage.lastAttackTarget = "huge rat"
+            helper.simulateLine("Your attack missed!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "MISS huge rat") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("records a dodge", function()
+            helper.simulateLine("The huge rat dodged your attack!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "DODGE huge rat") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+    describe("monster attack outcomes", function()
+
+        it("records a hit and reduces vitality", function()
+            helper.simulateLine("Vitality:     26 / 26")
+            helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(19, current)
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "HIT you: 7 dmg") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("stacks multiple monster hits", function()
+            helper.simulateLine("Vitality:     26 / 26")
+            helper.simulateLine("The lizard woman attacked you with her spear for 3 damage!")
+            helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(16, current)
+        end)
+
+        it("records a glance", function()
+            helper.simulateLine("The huge rat's claws glanced off your armor!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "GLANCED") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("records a miss", function()
+            helper.simulateLine("The huge rat's claws misses you!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "MISS") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+    describe("kill and loot", function()
+
+        it("sets lastKilledMonster when monster dies", function()
+            helper.simulateLine("The huge rat falls to the ground lifeless!")
+            assert.are.equal("huge rat", taPackage.lastKilledMonster)
+            assert.is_true(taPackage.pendingLootCheck)
+        end)
+
+        it("records loot gold and clears kill state", function()
+            helper.simulateLine("The huge rat falls to the ground lifeless!")
+            helper.simulateLine("You found 3 gold crowns while searching the rat's corpse.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "monster_loot") and string.find(msg, "huge rat") then found = true end
+            end
+            assert.is_true(found)
+            assert.is_nil(taPackage.lastKilledMonster)
+            assert.is_nil(taPackage.pendingLootCheck)
+        end)
+
+    end)
+
+    describe("services", function()
+
+        it("records healing service", function()
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "services") and string.find(msg, "healing") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("records barmaid drink service", function()
+            helper.simulateLine("The barmaid brings you a drink for 1 crowns.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "services") and string.find(msg, "drink") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+    describe("stat changes", function()
+
+        it("records a level-up", function()
+            helper.simulateLine("Level:        1")
+            helper.simulateLine("Level:        2")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "stat_changes") and string.find(msg, "Level") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("does not record a stat change on first level reading", function()
+            helper.simulateLine("Level:        1")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "stat_changes") then found = true end
+            end
+            assert.is_false(found)
+        end)
+
+    end)
+
+end)

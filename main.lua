@@ -47,6 +47,10 @@ if not taPackage.monsterDb then
   }
 end
 
+if not taPackage.db then
+  taPackage.db = dofile(scriptDir .. "ta_db.lua")
+end
+
 function setCharacterStatus(value)
   taPackage.character.status = value
 end
@@ -197,10 +201,6 @@ createTrigger("^Class:\\s+(\\S+)$", function(matches)
   setClass(matches[2])
 end, { type = "regex" })
 
-createTrigger("^Level:\\s+(\\d+)$", function(matches)
-  setLevel(matches[2])
-end, { type = "regex" })
-
 createTrigger("^You are carrying (\\d+) gold crowns\\.$", function(matches)
   setGold(matches[2])
 end, { type = "regex" })
@@ -208,6 +208,11 @@ end, { type = "regex" })
 createTrigger("^You found (\\d+) gold crowns while searching", function(matches)
   local found = tonumber(matches[2])
   setGold((getGold() or 0) + found)
+  if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
+    taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, found)
+    taPackage.pendingLootCheck = nil
+    taPackage.lastKilledMonster = nil
+  end
 end, { type = "regex" })
 
 createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", function(matches)
@@ -217,14 +222,7 @@ createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", functio
   if max then
     setVitality(max, max)
   end
-end, { type = "regex" })
-
-createTrigger("attacked you .+ for (\\d+) damage!", function(matches)
-  local damage = tonumber(matches[2])
-  local current, max = getVitality()
-  if current then
-    setVitality(current - damage, max)
-  end
+  taPackage.db.recordService("healing", "temple", cost)
 end, { type = "regex" })
 
 -- =========================================================================
@@ -287,11 +285,15 @@ local function recordEncounter(name)
 end
 
 createTrigger("^There is a (.+) here\\.$", function(matches)
-  recordEncounter(matches[2])
+  local name = matches[2]
+  recordEncounter(name)
+  taPackage.db.recordMonsterSeen(name)
 end, { type = "regex" })
 
 createTrigger("^An? (.+) enters ", function(matches)
-  recordEncounter(matches[2])
+  local name = matches[2]
+  recordEncounter(name)
+  taPackage.db.recordMonsterSeen(name)
 end, { type = "regex" })
 
 createTrigger("^(.+)$", function(matches)
@@ -309,11 +311,119 @@ createTrigger("^(.+)$", function(matches)
       local canonicalName = extractMonsterName(lines[1]) or taPackage.monsterDb.lookTarget
       local desc = table.concat(lines, " ")
       upsertMonster(canonicalName, desc)
+      taPackage.db.upsertMonster(canonicalName, desc)
     end
     taPackage.monsterDb.state = "idle"
   else
     table.insert(taPackage.monsterDb.accumulatedLines, line)
   end
+end, { type = "regex" })
+
+-- =========================================================================
+-- World map triggers
+-- =========================================================================
+
+createTrigger("^You're in the (.+)\\.$", function(matches)
+  local newRoom = matches[2]
+  if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
+    taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, 0)
+    taPackage.pendingLootCheck = nil
+    taPackage.lastKilledMonster = nil
+  end
+  if taPackage.pendingDirection and taPackage.prevRoom then
+    taPackage.db.recordExit(taPackage.prevRoom, taPackage.pendingDirection, newRoom)
+  end
+  taPackage.db.visitRoom(newRoom)
+  taPackage.prevRoom = taPackage.currentRoom
+  taPackage.currentRoom = newRoom
+  taPackage.pendingDirection = nil
+end, { type = "regex" })
+
+local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw" }
+for _, dir in ipairs(moveDirections) do
+  createAlias("^" .. dir .. "$", function()
+    taPackage.pendingDirection = dir
+    taPackage.prevRoom = taPackage.currentRoom
+    send(dir)
+  end, { type = "regex" })
+end
+
+-- =========================================================================
+-- Combat triggers
+-- =========================================================================
+
+createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)
+  local monster = matches[2]
+  local damage = tonumber(matches[3])
+  taPackage.lastAttackTarget = monster
+  taPackage.db.recordPlayerAttack(
+    taPackage.character.weapon or "weapon", monster, "hit", damage
+  )
+end, { type = "regex" })
+
+createTrigger("^Your attack missed!$", function(matches)
+  local monster = taPackage.lastAttackTarget or "unknown"
+  taPackage.db.recordPlayerAttack(
+    taPackage.character.weapon or "weapon", monster, "miss", nil
+  )
+end, { type = "regex" })
+
+createTrigger("^The (.+) dodged your attack!$", function(matches)
+  local monster = matches[2]
+  taPackage.lastAttackTarget = monster
+  taPackage.db.recordPlayerAttack(
+    taPackage.character.weapon or "weapon", monster, "dodge", nil
+  )
+end, { type = "regex" })
+
+createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
+  local monster = matches[2]
+  local damage = tonumber(matches[3])
+  local current, max = getVitality()
+  if current then
+    setVitality(current - damage, max)
+  end
+  taPackage.db.recordMonsterAttack(monster, "hit", damage)
+end, { type = "regex" })
+
+createTrigger("^The (.+)'s .+ glanced off your armor!$", function(matches)
+  taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)
+end, { type = "regex" })
+
+createTrigger("^The (.+)'s? .+ misses? you!$", function(matches)
+  taPackage.db.recordMonsterAttack(matches[2], "miss", nil)
+end, { type = "regex" })
+
+-- =========================================================================
+-- Loot and kill triggers
+-- =========================================================================
+
+createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
+  taPackage.lastKilledMonster = matches[2]
+  taPackage.pendingLootCheck = true
+end, { type = "regex" })
+
+-- =========================================================================
+-- Service triggers
+-- =========================================================================
+
+createTrigger("^The barmaid brings you a drink for (\\d+) crowns\\.$", function(matches)
+  local cost = tonumber(matches[2])
+  setGold((getGold() or 0) - cost)
+  taPackage.db.recordService("drink", "tavern", cost)
+end, { type = "regex" })
+
+-- =========================================================================
+-- Stat change tracking
+-- =========================================================================
+
+createTrigger("^Level:\\s+(\\d+)$", function(matches)
+  local newLevel = tonumber(matches[2])
+  local oldLevel = taPackage.character.level
+  if oldLevel and oldLevel ~= newLevel then
+    taPackage.db.recordStatChange("Level", oldLevel, newLevel)
+  end
+  setLevel(newLevel)
 end, { type = "regex" })
 
 -- =========================================================================

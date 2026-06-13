@@ -10,6 +10,31 @@ M.aliases = {}
 M.outboundTriggers = {}
 M.sendCalls = {}
 M.echoCalls = {}
+M.dbCalls = {}
+M.mockDbOneRow = nil
+M.mockDbRows = {}
+
+local function makeDb(name)
+  return {
+    path = "/mock/" .. name,
+    execute = function(self, sql, ...)
+      table.insert(M.dbCalls, { method = "execute", db = name, sql = sql, params = { ... } })
+      return 0
+    end,
+    query = function(self, sql, ...)
+      table.insert(M.dbCalls, { method = "query", db = name, sql = sql, params = { ... } })
+      return M.mockDbRows or {}
+    end,
+    queryOne = function(self, sql, ...)
+      table.insert(M.dbCalls, { method = "queryOne", db = name, sql = sql, params = { ... } })
+      return M.mockDbOneRow
+    end,
+  }
+end
+
+function dbOpen(name)
+  return makeDb(name)
+end
 
 local function regexToLuaPattern(pattern)
     local luaPattern = pattern
@@ -85,12 +110,42 @@ function M.simulateLine(text)
     end
 end
 
+function M.simulateAlias(text)
+    for _, alias in ipairs(M.aliases) do
+        local luaPattern = regexToLuaPattern(alias.pattern)
+        local matches = {string.match(text, luaPattern)}
+        if #matches > 0 or string.match(text, luaPattern) then
+            if #matches == 0 then matches = {} end
+            table.insert(matches, 1, text)
+            alias.callback(matches)
+        end
+    end
+end
+
+function M.clearDbCalls()
+    for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
+    M.mockDbOneRow = nil
+    M.mockDbRows = {}
+end
+
+function M.findDbCall(method, sql_fragment)
+    for _, call in ipairs(M.dbCalls) do
+        if call.method == method and call.sql and string.find(call.sql, sql_fragment, 1, true) then
+            return call
+        end
+    end
+    return nil
+end
+
 function M.resetAll()
     for k in pairs(M.triggers) do M.triggers[k] = nil end
     for k in pairs(M.aliases) do M.aliases[k] = nil end
     for k in pairs(M.outboundTriggers) do M.outboundTriggers[k] = nil end
     for k in pairs(M.sendCalls) do M.sendCalls[k] = nil end
     for k in pairs(M.echoCalls) do M.echoCalls[k] = nil end
+    for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
+    M.mockDbOneRow = nil
+    M.mockDbRows = {}
     taPackage = nil
 end
 
