@@ -136,6 +136,20 @@ function getXpForNextLevel(xp, class)
   return thresholds[currentLevel + 1]
 end
 
+local xpProgressColors = { "white", "cyan", "green", "yellow", "red" }
+
+local function xpColor(xp, class)
+  if not xp then return "white" end
+  local level = getLevelForXp(xp, class)
+  local thresholds = xpThresholds[class or "Warrior"]
+  if level >= 25 then return xpProgressColors[5] end
+  local levelStart = thresholds[level]
+  local levelEnd   = thresholds[level + 1]
+  local progress   = (xp - levelStart) / (levelEnd - levelStart)
+  local idx        = math.min(5, math.floor(progress * 5) + 1)
+  return xpProgressColors[idx]
+end
+
 -- =========================================================================
 -- Triggers
 -- =========================================================================
@@ -215,7 +229,7 @@ local function status()
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
     { text = "XP" },
-    { text = xp and tostring(xp) or "?", fg = "white" },
+    { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
       fg = "white" },
     { text = "Status" },

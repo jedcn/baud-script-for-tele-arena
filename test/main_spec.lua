@@ -34,6 +34,52 @@ describe("Warrior XP table", function()
 
     end)
 
+    describe("xpColor (via status bar segments)", function()
+
+        local capturedFn
+
+        before_each(function()
+            helper.resetAll()
+            _G.setStatus = function(fn) capturedFn = fn end
+            dofile("main.lua")
+            helper.simulateLine("Class:        Warrior")
+        end)
+
+        -- Warrior level 1: 0 XP (start) → 1125 XP (end)
+        -- fifth boundaries: 0-224, 225-449, 450-674, 675-899, 900-1124
+
+        it("shows white at 0% (just started level)", function()
+            helper.simulateLine("Experience:   0")
+            assert.are.equal("white", capturedFn()[5].fg)
+        end)
+
+        it("shows cyan in the second fifth", function()
+            helper.simulateLine("Experience:   225")  -- 20% of 1125
+            assert.are.equal("cyan", capturedFn()[5].fg)
+        end)
+
+        it("shows green in the third fifth", function()
+            helper.simulateLine("Experience:   450")  -- 40% of 1125
+            assert.are.equal("green", capturedFn()[5].fg)
+        end)
+
+        it("shows yellow in the fourth fifth", function()
+            helper.simulateLine("Experience:   675")  -- 60% of 1125
+            assert.are.equal("yellow", capturedFn()[5].fg)
+        end)
+
+        it("shows red in the fifth fifth (almost leveled up)", function()
+            helper.simulateLine("Experience:   900")  -- 80% of 1125
+            assert.are.equal("red", capturedFn()[5].fg)
+        end)
+
+        it("shows red at max level", function()
+            helper.simulateLine("Experience:   11594700")
+            assert.are.equal("red", capturedFn()[5].fg)
+        end)
+
+    end)
+
     describe("getXpForNextLevel", function()
 
         it("returns 1125 when at level 1", function()
