@@ -201,7 +201,7 @@ createTrigger("^Class:\\s+(\\S+)$", function(matches)
   setClass(matches[2])
 end, { type = "regex" })
 
-createTrigger("^You are carrying (\\d+) gold crowns\\.$", function(matches)
+createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
   setGold(matches[2])
 end, { type = "regex" })
 

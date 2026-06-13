@@ -86,78 +86,59 @@ local function now()
 end
 
 function TaDb.visitRoom(name, description)
-  local row = db:queryOne("SELECT visits FROM rooms WHERE name = ?", name)
-  if row then
-    db:execute("UPDATE rooms SET visits = visits + 1 WHERE name = ?", name)
-    echo("[DB\xE2\x86\x92rooms] " .. name .. " (visit #" .. (row.visits + 1) .. ")")
-  else
-    db:execute(
-      "INSERT INTO rooms (name, description, first_visited, visits) VALUES (?, ?, ?, 1)",
-      name, description, now()
-    )
-    echo("[DB\xE2\x86\x92rooms] " .. name .. " (visit #1)")
-  end
+  db:execute(
+    "INSERT OR IGNORE INTO rooms (name, description, first_visited, visits) VALUES (?, ?, ?, 0)",
+    name, description or "", now()
+  )
+  db:execute("UPDATE rooms SET visits = visits + 1 WHERE name = ?", name)
+  echo("[DB\xE2\x86\x92rooms] " .. name)
 end
 
 function TaDb.recordExit(fromRoom, direction, toRoom)
   db:execute(
     "INSERT OR REPLACE INTO room_exits (from_room, direction, to_room) VALUES (?, ?, ?)",
-    fromRoom, direction, toRoom
+    fromRoom, direction, toRoom or ""
   )
   echo("[DB\xE2\x86\x92room_exits] " .. fromRoom .. " --" .. direction .. "--> " .. (toRoom or "?"))
 end
 
 function TaDb.upsertMonster(name, description)
-  local row = db:queryOne("SELECT encounters FROM monsters WHERE name = ?", name)
-  if row then
-    db:execute(
-      "UPDATE monsters SET description = ?, encounters = encounters + 1 WHERE name = ?",
-      description, name
-    )
-    echo("[DB\xE2\x86\x92monsters] seen: " .. name .. " (encounter #" .. (row.encounters + 1) .. ")")
-  else
-    db:execute(
-      "INSERT INTO monsters (name, description, first_seen, encounters) VALUES (?, ?, ?, 1)",
-      name, description, now()
-    )
-    echo("[DB\xE2\x86\x92monsters] new: " .. name)
-  end
+  db:execute(
+    "INSERT OR IGNORE INTO monsters (name, description, first_seen, encounters) VALUES (?, ?, ?, 0)",
+    name, description, now()
+  )
+  db:execute(
+    "UPDATE monsters SET description = ?, encounters = encounters + 1 WHERE name = ?",
+    description, name
+  )
+  echo("[DB\xE2\x86\x92monsters] " .. name)
 end
 
 function TaDb.recordMonsterSeen(name)
-  local row = db:queryOne("SELECT encounters FROM monsters WHERE name = ?", name)
-  if row then
-    db:execute("UPDATE monsters SET encounters = encounters + 1 WHERE name = ?", name)
-    echo("[DB\xE2\x86\x92monsters] seen: " .. name .. " (encounter #" .. (row.encounters + 1) .. ")")
+  local changed = db:execute("UPDATE monsters SET encounters = encounters + 1 WHERE name = ?", name)
+  if changed and changed > 0 then
+    echo("[DB\xE2\x86\x92monsters] seen: " .. name)
   end
 end
 
 function TaDb.upsertDenizen(name, location, description)
-  local row = db:queryOne("SELECT name FROM denizens WHERE name = ? AND location = ?", name, location)
-  if row then
-    db:execute(
-      "UPDATE denizens SET description = ? WHERE name = ? AND location = ?",
-      description, name, location
-    )
-  else
-    db:execute(
-      "INSERT INTO denizens (name, location, description, first_seen) VALUES (?, ?, ?, ?)",
-      name, location, description, now()
-    )
-    echo("[DB\xE2\x86\x92denizens] new: " .. name .. " @ " .. location)
-  end
+  db:execute(
+    "INSERT OR IGNORE INTO denizens (name, location, description, first_seen) VALUES (?, ?, ?, ?)",
+    name, location, description or "", now()
+  )
+  db:execute(
+    "UPDATE denizens SET description = ? WHERE name = ? AND location = ?",
+    description or "", name, location
+  )
+  echo("[DB\xE2\x86\x92denizens] " .. name .. " @ " .. location)
 end
 
 function TaDb.recordShopItem(name, shop, price)
-  local row = db:queryOne("SELECT name FROM shop_items WHERE name = ? AND shop = ?", name, shop)
-  if row then
-    db:execute("UPDATE shop_items SET price = ? WHERE name = ? AND shop = ?", price, name, shop)
-  else
-    db:execute(
-      "INSERT INTO shop_items (name, shop, price, first_seen) VALUES (?, ?, ?, ?)",
-      name, shop, price, now()
-    )
-  end
+  db:execute(
+    "INSERT OR IGNORE INTO shop_items (name, shop, price, first_seen) VALUES (?, ?, ?, ?)",
+    name, shop, price, now()
+  )
+  db:execute("UPDATE shop_items SET price = ? WHERE name = ? AND shop = ?", price, name, shop)
   echo("[DB\xE2\x86\x92shop_items] " .. shop .. ": " .. name .. " " .. price .. "gp")
 end
 
@@ -167,20 +148,15 @@ function TaDb.recordMinLevel(name, shop, level)
 end
 
 function TaDb.recordService(name, location, cost)
-  local row = db:queryOne("SELECT uses FROM services WHERE name = ? AND location = ?", name, location)
-  if row then
-    db:execute(
-      "UPDATE services SET cost = ?, uses = uses + 1 WHERE name = ? AND location = ?",
-      cost, name, location
-    )
-    echo("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp (use #" .. (row.uses + 1) .. ")")
-  else
-    db:execute(
-      "INSERT INTO services (name, location, cost, first_used, uses) VALUES (?, ?, ?, ?, 1)",
-      name, location, cost, now()
-    )
-    echo("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp (use #1)")
-  end
+  db:execute(
+    "INSERT OR IGNORE INTO services (name, location, cost, first_used, uses) VALUES (?, ?, ?, ?, 0)",
+    name, location, cost, now()
+  )
+  db:execute(
+    "UPDATE services SET cost = ?, uses = uses + 1 WHERE name = ? AND location = ?",
+    cost, name, location
+  )
+  echo("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
 end
 
 function TaDb.recordStatChange(stat, fromVal, toVal)
@@ -194,10 +170,10 @@ end
 function TaDb.recordPlayerAttack(weapon, monster, outcome, damage)
   db:execute(
     "INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at) VALUES (?, ?, ?, ?, ?)",
-    weapon, monster, outcome, damage, now()
+    weapon, monster, outcome, damage or 0, now()
   )
   if outcome == "hit" then
-    echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " HIT " .. monster .. ": " .. damage .. " dmg")
+    echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " HIT " .. monster .. ": " .. (damage or 0) .. " dmg")
   elseif outcome == "miss" then
     echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " MISS " .. monster)
   else
@@ -208,10 +184,10 @@ end
 function TaDb.recordMonsterAttack(monster, outcome, damage)
   db:execute(
     "INSERT INTO monster_attacks (monster, outcome, damage, recorded_at) VALUES (?, ?, ?, ?)",
-    monster, outcome, damage, now()
+    monster, outcome, damage or 0, now()
   )
   if outcome == "hit" then
-    echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " HIT you: " .. damage .. " dmg")
+    echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " HIT you: " .. (damage or 0) .. " dmg")
   elseif outcome == "miss" then
     echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " MISS")
   else

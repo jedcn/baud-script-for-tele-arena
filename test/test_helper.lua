@@ -13,13 +13,14 @@ M.echoCalls = {}
 M.dbCalls = {}
 M.mockDbOneRow = nil
 M.mockDbRows = {}
+M.mockExecuteReturn = nil
 
 local function makeDb(name)
   return {
     path = "/mock/" .. name,
     execute = function(self, sql, ...)
       table.insert(M.dbCalls, { method = "execute", db = name, sql = sql, params = { ... } })
-      return 0
+      return M.mockExecuteReturn or 0
     end,
     query = function(self, sql, ...)
       table.insert(M.dbCalls, { method = "query", db = name, sql = sql, params = { ... } })
@@ -126,6 +127,7 @@ function M.clearDbCalls()
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.mockDbOneRow = nil
     M.mockDbRows = {}
+    M.mockExecuteReturn = nil
 end
 
 function M.findDbCall(method, sql_fragment)
@@ -146,6 +148,7 @@ function M.resetAll()
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.mockDbOneRow = nil
     M.mockDbRows = {}
+    M.mockExecuteReturn = nil
     taPackage = nil
 end
 

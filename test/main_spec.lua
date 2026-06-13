@@ -154,6 +154,11 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(5, getGold())
         end)
 
+        it("sets gold when carrying gold and items", function()
+            helper.simulateLine("You are carrying 675 gold crowns, and a shortsword.")
+            assert.are.equal(675, getGold())
+        end)
+
         it("does not fire on unrelated lines", function()
             helper.simulateLine("You are carrying a shortsword.")
             assert.is_nil(getGold())
@@ -684,20 +689,21 @@ describe("ta_db", function()
 
     describe("visitRoom", function()
 
-        it("inserts a new room and echoes visit #1", function()
+        it("upserts via INSERT OR IGNORE then UPDATE", function()
             TaDb.visitRoom("north plaza", nil)
-            local call = helper.findDbCall("execute", "INSERT INTO rooms")
-            assert.is_not_nil(call)
-            assert.are.equal("north plaza", call.params[1])
-            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza (visit #1)", helper.echoCalls[1])
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO rooms"))
+            assert.is_not_nil(helper.findDbCall("execute", "UPDATE rooms"))
         end)
 
-        it("updates an existing room and echoes incremented count", function()
-            helper.mockDbOneRow = { visits = 3 }
+        it("passes room name as first param to INSERT", function()
             TaDb.visitRoom("north plaza", nil)
-            local call = helper.findDbCall("execute", "UPDATE rooms")
-            assert.is_not_nil(call)
-            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza (visit #4)", helper.echoCalls[1])
+            local call = helper.findDbCall("execute", "INSERT OR IGNORE INTO rooms")
+            assert.are.equal("north plaza", call.params[1])
+        end)
+
+        it("echoes the room name", function()
+            TaDb.visitRoom("north plaza", nil)
+            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza", helper.echoCalls[1])
         end)
 
     end)
@@ -718,38 +724,33 @@ describe("ta_db", function()
 
     describe("upsertMonster", function()
 
-        it("inserts a new monster and echoes 'new'", function()
+        it("upserts via INSERT OR IGNORE then UPDATE", function()
             TaDb.upsertMonster("lizard woman", "She has scaley skin.")
-            local call = helper.findDbCall("execute", "INSERT INTO monsters")
-            assert.is_not_nil(call)
-            assert.are.equal("lizard woman", call.params[1])
-            assert.are.equal("[DB\xE2\x86\x92monsters] new: lizard woman", helper.echoCalls[1])
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO monsters"))
+            local upd = helper.findDbCall("execute", "UPDATE monsters SET description")
+            assert.is_not_nil(upd)
+            assert.are.equal("She has scaley skin.", upd.params[1])
+            assert.are.equal("lizard woman", upd.params[2])
         end)
 
-        it("updates an existing monster and echoes encounter count", function()
-            helper.mockDbOneRow = { encounters = 3 }
+        it("echoes the monster name", function()
             TaDb.upsertMonster("lizard woman", "She has scaley skin.")
-            local call = helper.findDbCall("execute", "UPDATE monsters SET description")
-            assert.is_not_nil(call)
-            assert.are.equal("[DB\xE2\x86\x92monsters] seen: lizard woman (encounter #4)", helper.echoCalls[1])
+            assert.are.equal("[DB\xE2\x86\x92monsters] lizard woman", helper.echoCalls[1])
         end)
 
     end)
 
     describe("recordMonsterSeen", function()
 
-        it("does nothing when monster is not in DB", function()
+        it("does nothing when execute returns 0 rows changed (monster unknown)", function()
             TaDb.recordMonsterSeen("huge rat")
             assert.are.equal(0, #helper.echoCalls)
-            assert.is_nil(helper.findDbCall("execute", "UPDATE monsters SET encounters"))
         end)
 
-        it("increments encounters for a known monster and echoes", function()
-            helper.mockDbOneRow = { encounters = 2 }
+        it("echoes when execute returns rows changed (monster known)", function()
+            helper.mockExecuteReturn = 1
             TaDb.recordMonsterSeen("huge rat")
-            local call = helper.findDbCall("execute", "UPDATE monsters SET encounters")
-            assert.is_not_nil(call)
-            assert.are.equal("[DB\xE2\x86\x92monsters] seen: huge rat (encounter #3)", helper.echoCalls[1])
+            assert.are.equal("[DB\xE2\x86\x92monsters] seen: huge rat", helper.echoCalls[1])
         end)
 
     end)
@@ -820,19 +821,11 @@ describe("ta_db", function()
 
     describe("recordService", function()
 
-        it("inserts a new service and echoes use #1", function()
+        it("upserts via INSERT OR IGNORE then UPDATE", function()
             TaDb.recordService("healing", "temple", 2)
-            local call = helper.findDbCall("execute", "INSERT INTO services")
-            assert.is_not_nil(call)
-            assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp (use #1)", helper.echoCalls[1])
-        end)
-
-        it("updates an existing service and echoes incremented count", function()
-            helper.mockDbOneRow = { uses = 2 }
-            TaDb.recordService("healing", "temple", 2)
-            local call = helper.findDbCall("execute", "UPDATE services")
-            assert.is_not_nil(call)
-            assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp (use #3)", helper.echoCalls[1])
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO services"))
+            assert.is_not_nil(helper.findDbCall("execute", "UPDATE services"))
+            assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp", helper.echoCalls[1])
         end)
 
     end)
@@ -1040,20 +1033,20 @@ describe("Combat triggers", function()
 
     describe("services", function()
 
-        it("records healing service", function()
+        it("records healing service and echoes", function()
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "services") and string.find(msg, "healing") then found = true end
+                if msg == "[DB\xE2\x86\x92services] temple: healing 2gp" then found = true end
             end
             assert.is_true(found)
         end)
 
-        it("records barmaid drink service", function()
+        it("records barmaid drink service and echoes", function()
             helper.simulateLine("The barmaid brings you a drink for 1 crowns.")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "services") and string.find(msg, "drink") then found = true end
+                if msg == "[DB\xE2\x86\x92services] tavern: drink 1gp" then found = true end
             end
             assert.is_true(found)
         end)
