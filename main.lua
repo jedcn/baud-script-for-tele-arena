@@ -625,7 +625,119 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   else
     echo("[re-roll] Physique=" .. physique .. ", Stamina=" .. stamina .. " — re-rolling...")
     send("reroll")
-    send("status")
+  end
+end, { type = "regex" })
+
+-- =========================================================================
+-- Ring gong and fight in arena
+-- =========================================================================
+
+local function arenaSend(cmd)
+  taPackage.arenaLastCmd = cmd
+  send(cmd)
+end
+
+local function arenaAttack()
+  local name = taPackage.arenaMonster
+  if name then
+    arenaSend("a " .. name:match("^(%S+)"))
+  end
+end
+
+local function checkFleeArena()
+  if taPackage.arenaState ~= "fighting" then return false end
+  local hp = taPackage.character.vitalityCurrent
+  if hp and hp < 20 then
+    taPackage.arenaState = "fleeing"
+    arenaSend("w")
+    return true
+  end
+  return false
+end
+
+createAlias("^ring-gong-and-fight-in-arena$", function()
+  taPackage.arenaState = "ringing"
+  arenaSend("ring gong")
+end, { type = "regex" })
+
+createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
+  if taPackage.arenaState ~= "ringing" then return end
+  taPackage.arenaMonster = matches[2]
+  taPackage.arenaState = "fighting"
+  arenaAttack()
+end, { type = "regex" })
+
+createTrigger("^Your attack hit the .+ for \\d+ damage!$", function(matches)
+  if taPackage.arenaState ~= "fighting" then return end
+  if not checkFleeArena() then arenaAttack() end
+end, { type = "regex" })
+
+createTrigger("^Your attack missed!$", function(matches)
+  if taPackage.arenaState ~= "fighting" then return end
+  if not checkFleeArena() then arenaAttack() end
+end, { type = "regex" })
+
+createTrigger("^The .+ dodged your attack!$", function(matches)
+  if taPackage.arenaState ~= "fighting" then return end
+  if not checkFleeArena() then arenaAttack() end
+end, { type = "regex" })
+
+createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
+  if taPackage.arenaState ~= "fighting" then return end
+  taPackage.arenaMonster = nil
+  if not checkFleeArena() then
+    taPackage.arenaState = "ringing"
+    arenaSend("ring gong")
+  end
+end, { type = "regex" })
+
+createTrigger("^The .+ attacked you .+ for \\d+ damage!$", function(matches)
+  checkFleeArena()
+end, { type = "regex" })
+
+createTrigger("^You're in the (.+)\\.$", function(matches)
+  local room = matches[2]
+  if taPackage.arenaState == "fleeing" then
+    if room == "north plaza" then
+      arenaSend("w")
+    elseif room == "temple" then
+      taPackage.arenaState = "healing"
+      arenaSend("buy healing")
+    end
+  elseif taPackage.arenaState == "returning" then
+    if room == "north plaza" then
+      arenaSend("e")
+    elseif room == "arena" then
+      if taPackage.arenaMonster then
+        taPackage.arenaState = "fighting"
+        arenaAttack()
+      else
+        taPackage.arenaState = "ringing"
+        arenaSend("ring gong")
+      end
+    end
+  end
+end, { type = "regex" })
+
+createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(matches)
+  if taPackage.arenaState ~= "healing" then return end
+  taPackage.arenaState = "returning"
+  arenaSend("e")
+end, { type = "regex" })
+
+createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)
+  if not taPackage.arenaState then return end
+  local cmd = taPackage.arenaLastCmd
+  if cmd then
+    createTimer(15000, function() arenaSend(cmd) end, { type = "once" })
+  end
+end, { type = "regex" })
+
+createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
+  if not taPackage.arenaState then return end
+  local cmd = taPackage.arenaLastCmd
+  if cmd then
+    createTimer(15000, function() arenaSend(cmd) end, { type = "once" })
   end
 end, { type = "regex" })
 

@@ -1110,7 +1110,7 @@ describe("re-roll-for-good-stats", function()
             taPackage.reRolling = true
             simulateStatus(24, 24)
             assert.are.equal("reroll", helper.sendCalls[1])
-            assert.are.equal("status", helper.sendCalls[2])
+            assert.is_nil(helper.sendCalls[2])
         end)
 
         it("re-rolls when physique is good but stamina is not", function()
@@ -1317,6 +1317,285 @@ describe("Combat triggers", function()
                 if string.find(msg, "stat_changes") then found = true end
             end
             assert.is_false(found)
+        end)
+
+    end)
+
+end)
+
+-- =========================================================================
+-- Ring gong and fight in arena
+-- =========================================================================
+
+describe("ring-gong-and-fight-in-arena", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    local function setHP(current, max)
+        helper.simulateLine("Vitality:     " .. current .. " / " .. (max or current))
+    end
+
+    describe("alias", function()
+
+        it("sets arenaState to 'ringing'", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("sends 'ring gong'", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+    end)
+
+    describe("monster enters arena", function()
+
+        it("captures monster name and starts fighting", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
+            assert.are.equal("skeleton warrior", taPackage.arenaMonster)
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        it("sends abbreviated attack using first word", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
+            assert.are.equal("a skeleton", helper.sendCalls[1])
+        end)
+
+        it("sends abbreviated attack for single-word monster", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("An ogre enters the arena through the dungeon gate!")
+            assert.are.equal("a ogre", helper.sendCalls[1])
+        end)
+
+        it("does nothing when not in ringing state", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("our attack results", function()
+
+        it("sends next attack after a hit (HP fine)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(28, 30)
+            helper.simulateLine("Your attack hit the lizard man for 10 damage!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("flees when HP < 20 after a hit", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(15, 30)
+            helper.simulateLine("Your attack hit the lizard man for 10 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("sends next attack after a miss (HP fine)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(28, 30)
+            helper.simulateLine("Your attack missed!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("flees when HP < 20 after a miss", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(10, 30)
+            helper.simulateLine("Your attack missed!")
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("sends next attack after monster dodge (HP fine)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(28, 30)
+            helper.simulateLine("The lizard man dodged your attack!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("does nothing when not in fighting state", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("Your attack missed!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("monster death", function()
+
+        it("clears arenaMonster", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(28, 30)
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaMonster)
+        end)
+
+        it("rings gong again when HP is fine", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(28, 30)
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+        it("flees when HP < 20 on monster death", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(15, 30)
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("does nothing when not in fighting state", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("incoming monster attack", function()
+
+        it("flees when HP drops below 20", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            -- simulate vitality already at 15 (existing trigger already decremented it)
+            setHP(15, 30)
+            helper.simulateLine("The lizard man attacked you with his scimitar for 13 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("does not flee when HP is still fine after attack", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(25, 30)
+            helper.simulateLine("The lizard man attacked you with his scimitar for 2 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("fleeing and healing", function()
+
+        it("continues west when entering north plaza while fleeing", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("buys healing when entering temple while fleeing", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("healing", taPackage.arenaState)
+            assert.are.equal("buy healing", helper.sendCalls[1])
+        end)
+
+        it("starts returning east after healing", function()
+            taPackage.arenaState = "healing"
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("e", helper.sendCalls[1])
+        end)
+
+        it("continues east when entering north plaza while returning", function()
+            taPackage.arenaState = "returning"
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("e", helper.sendCalls[1])
+        end)
+
+        it("rings gong when entering arena and no monster left", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = nil
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+        it("resumes attacking when entering arena and monster still alive", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = "cave bear"
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("ignores room entries in other states", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("healing trigger ignored outside arena script", function()
+
+        it("does not affect state when arenaState is not healing", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("rate limiting", function()
+
+        local timerCreated
+
+        before_each(function()
+            helper.resetAll()
+            _G.createTimer = function(interval, cb, opts)
+                timerCreated = { interval = interval, cb = cb, opts = opts }
+                return "mock_timer"
+            end
+            dofile("main.lua")
+            helper.clearDbCalls()
+            timerCreated = nil
+        end)
+
+        it("creates 15s timer on move-rate-limit when arena is active", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(15000, timerCreated.interval)
+        end)
+
+        it("creates 15s timer on attack-rate-limit when arena is active", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaLastCmd = "a skeleton"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(15000, timerCreated.interval)
+        end)
+
+        it("does not create timer when arenaState is nil", function()
+            taPackage.arenaState = nil
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_nil(timerCreated)
+        end)
+
+        it("does not create timer for exhaustion when arenaState is nil", function()
+            taPackage.arenaState = nil
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_nil(timerCreated)
         end)
 
     end)
