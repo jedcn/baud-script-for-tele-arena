@@ -245,7 +245,37 @@ local function isHealthLine(line)
 end
 
 local function extractMonsterName(firstLine)
-  return string.match(firstLine, "^The (.+) is ") or string.match(firstLine, "^The (.+) has ")
+  -- Try several first-sentence verbs; take the shortest match so that a description
+  -- like "The huge rat resembles … and is …" picks "huge rat" via "resembles" rather
+  -- than the longer capture via the later "is".
+  local best = nil
+  for _, verb in ipairs({" is ", " has ", " resembles ", " appears "}) do
+    local name = string.match(firstLine, "^The (.-)" .. verb)
+    if name and (best == nil or #name < #best) then
+      best = name
+    end
+  end
+  return best
+end
+
+-- When the server puts description text and the health sentence on the same line
+-- (e.g. "claws and teeth. The X seems to be in good physical health."), pull out
+-- the description part that precedes the health sentence.
+local function descPrefixFromHealthLine(line)
+  local lastPos = nil
+  for _, sep in ipairs({". The ", ". It "}) do
+    local pos = 1
+    while true do
+      local found = string.find(line, sep, pos, true)
+      if not found then break end
+      lastPos = found
+      pos = found + 1
+    end
+  end
+  if lastPos then
+    return string.sub(line, 1, lastPos)
+  end
+  return nil
 end
 
 local function upsertMonster(name, description)
@@ -358,12 +388,15 @@ createTrigger("^(.+)$", function(matches)
   end
   if isHealthLine(line) then
     local lines = taPackage.monsterDb.accumulatedLines
+    -- Extract description text that precedes the health sentence on the same line
+    -- (e.g. "claws and teeth. The X seems to be in good physical health.")
+    local prefix = descPrefixFromHealthLine(line)
+    if prefix then table.insert(lines, prefix) end
     if #lines > 0 then
       local canonicalName = extractMonsterName(lines[1]) or taPackage.monsterDb.lookTarget
       local desc = table.concat(lines, " ")
-      -- The health status line is sometimes split across two server lines; the first
-      -- fragment (e.g. "The X seems to be in") gets accumulated before the second
-      -- fragment triggers finalization. Truncate at the last period to drop it.
+      -- If the health status was split across two server lines, the first fragment
+      -- (e.g. "The X seems to be in") got accumulated; truncate at last period to drop it.
       desc = desc:match("^(.*%.)") or desc
       upsertMonster(canonicalName, desc)
       taPackage.db.upsertMonster(canonicalName, desc)

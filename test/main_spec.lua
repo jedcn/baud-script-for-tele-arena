@@ -597,6 +597,32 @@ describe("Monster database", function()
             )
         end)
 
+        it("extracts correct name when monster description starts with 'has ... has'", function()
+            -- "The giant bat has a wingspan ... and has wicked looking" -- greedy matching
+            -- would capture "giant bat has a wingspan ... and" as the name. Non-greedy
+            -- must stop at the first ' has '.
+            helper.simulateLine("look bat")
+            helper.simulateLine("The giant bat has a wingspan of over twelve feet and has wicked looking")
+            helper.simulateLine("claws and teeth. The giant bat seems to be in good physical health.")
+            local entry = getMonsterEntry("giant bat")
+            assert.is_not_nil(entry, "monster should be stored under 'giant bat'")
+            assert.are.equal(
+                "The giant bat has a wingspan of over twelve feet and has wicked looking claws and teeth.",
+                entry.description
+            )
+        end)
+
+        it("extracts correct name when description uses 'resembles' instead of 'is'/'has'", function()
+            -- "The huge rat resembles rats you've seen before, except that it is about
+            -- two feet tall" -- without 'resembles' in the verb list, the ' is ' later
+            -- in the sentence would capture a huge wrong chunk as the name.
+            helper.simulateLine("l rat")
+            helper.simulateLine("The huge rat resembles rats you've seen before, except that it is about")
+            helper.simulateLine("two feet tall at the shoulder. The huge rat is lightly wounded.")
+            local entry = getMonsterEntry("huge rat")
+            assert.is_not_nil(entry, "monster should be stored under 'huge rat'")
+        end)
+
         it("joins multi-line description with spaces", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
