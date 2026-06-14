@@ -104,6 +104,22 @@ function getGold()
   return taPackage.character.gold
 end
 
+function setPhysique(value)
+  taPackage.character.physique = tonumber(value)
+end
+
+function getPhysique()
+  return taPackage.character.physique
+end
+
+function setStamina(value)
+  taPackage.character.stamina = tonumber(value)
+end
+
+function getStamina()
+  return taPackage.character.stamina
+end
+
 -- =========================================================================
 -- XP tables by class (from "help Exp1" and "help Exp2")
 -- =========================================================================
@@ -207,6 +223,14 @@ end, { type = "regex" })
 
 createTrigger("^Weapon:\\s+(.+)$", function(matches)
   taPackage.character.weapon = matches[2]
+end, { type = "regex" })
+
+createTrigger("^Physique:\\s+(\\d+)$", function(matches)
+  setPhysique(matches[2])
+end, { type = "regex" })
+
+createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
+  setStamina(matches[2])
 end, { type = "regex" })
 
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
@@ -581,5 +605,28 @@ local function status()
 end
 
 setStatus(status)
+
+-- =========================================================================
+-- Re-roll for good stats
+-- =========================================================================
+
+createAlias("^re-roll-for-good-stats$", function()
+  taPackage.reRolling = true
+  send("status")
+end, { type = "regex" })
+
+createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
+  if not taPackage.reRolling then return end
+  local physique = taPackage.character.physique or 0
+  local stamina  = taPackage.character.stamina  or 0
+  if physique >= 29 and stamina >= 29 then
+    taPackage.reRolling = false
+    echo("[re-roll] Done! Physique=" .. physique .. ", Stamina=" .. stamina)
+  else
+    echo("[re-roll] Physique=" .. physique .. ", Stamina=" .. stamina .. " — re-rolling...")
+    send("reroll")
+    send("status")
+  end
+end, { type = "regex" })
 
 echo("Finishing reading main.lua")

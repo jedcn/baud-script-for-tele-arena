@@ -1040,6 +1040,129 @@ describe("World map triggers", function()
 
 end)
 
+-- =========================================================================
+-- Re-roll for good stats
+-- =========================================================================
+
+describe("re-roll-for-good-stats", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    describe("Physique trigger", function()
+
+        it("captures physique value", function()
+            helper.simulateLine("Physique:     24")
+            assert.are.equal(24, getPhysique())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Stamina:      24")
+            assert.is_nil(getPhysique())
+        end)
+
+    end)
+
+    describe("Stamina trigger", function()
+
+        it("captures stamina value", function()
+            helper.simulateLine("Stamina:      24")
+            assert.are.equal(24, getStamina())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Physique:     24")
+            assert.is_nil(getStamina())
+        end)
+
+    end)
+
+    describe("alias", function()
+
+        it("sets reRolling to true", function()
+            helper.simulateAlias("re-roll-for-good-stats")
+            assert.is_true(taPackage.reRolling)
+        end)
+
+        it("sends 'status'", function()
+            helper.simulateAlias("re-roll-for-good-stats")
+            assert.are.equal("status", helper.sendCalls[1])
+        end)
+
+    end)
+
+    describe("Encumberance trigger (status block complete)", function()
+
+        local function simulateStatus(physique, stamina)
+            helper.simulateLine("Physique:     " .. physique)
+            helper.simulateLine("Stamina:      " .. stamina)
+            helper.simulateLine("Encumberance: 195 / 1200")
+        end
+
+        it("does nothing when not in re-roll mode", function()
+            simulateStatus(24, 24)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("re-rolls when both stats are below threshold", function()
+            taPackage.reRolling = true
+            simulateStatus(24, 24)
+            assert.are.equal("reroll", helper.sendCalls[1])
+            assert.are.equal("status", helper.sendCalls[2])
+        end)
+
+        it("re-rolls when physique is good but stamina is not", function()
+            taPackage.reRolling = true
+            simulateStatus(29, 24)
+            assert.are.equal("reroll", helper.sendCalls[1])
+        end)
+
+        it("re-rolls when stamina is good but physique is not", function()
+            taPackage.reRolling = true
+            simulateStatus(24, 29)
+            assert.are.equal("reroll", helper.sendCalls[1])
+        end)
+
+        it("stops and clears reRolling when both stats are 29", function()
+            taPackage.reRolling = true
+            simulateStatus(29, 29)
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_false(taPackage.reRolling)
+        end)
+
+        it("stops when both stats are 30 (maximum)", function()
+            taPackage.reRolling = true
+            simulateStatus(30, 30)
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_false(taPackage.reRolling)
+        end)
+
+        it("echoes success message when done", function()
+            taPackage.reRolling = true
+            simulateStatus(29, 30)
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "%[re%-roll%] Done!") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("echoes re-rolling message when stats are not good enough", function()
+            taPackage.reRolling = true
+            simulateStatus(24, 24)
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "re%-rolling") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+end)
+
 describe("Combat triggers", function()
 
     before_each(function()

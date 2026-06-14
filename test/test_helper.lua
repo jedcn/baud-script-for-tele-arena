@@ -55,6 +55,7 @@ local function regexToLuaPattern(pattern)
     luaPattern = luaPattern:gsub("\\%)", "%%)")
     luaPattern = luaPattern:gsub("\\%?", "%%?")
     luaPattern = luaPattern:gsub("\\%.", "%%.")
+    luaPattern = luaPattern:gsub("%-", "%%-")
 
     if hasStart then luaPattern = "^" .. luaPattern end
     if hasEnd then luaPattern = luaPattern .. "$" end
