@@ -312,6 +312,7 @@ createTrigger("^(.+)$", function(matches)
       local desc = table.concat(lines, " ")
       upsertMonster(canonicalName, desc)
       taPackage.db.upsertMonster(canonicalName, desc)
+      taPackage.lastAttackTarget = canonicalName
     end
     taPackage.monsterDb.state = "idle"
   else

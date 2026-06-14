@@ -584,6 +584,25 @@ describe("Monster database", function()
             )
         end)
 
+        it("sets lastAttackTarget on finalization", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            assert.are.equal("lizard woman", taPackage.lastAttackTarget)
+        end)
+
+        it("miss after look uses lastAttackTarget set by look", function()
+            helper.simulateLine("l li")
+            helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
+            helper.simulateLine("The lizard woman is lightly wounded.")
+            helper.simulateLine("Your attack missed!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "MISS lizard woman") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
         it("aborts on room navigation line without saving", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
