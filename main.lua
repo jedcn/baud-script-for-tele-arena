@@ -275,10 +275,18 @@ function getKnownMonsters()
   end
 end
 
-createTrigger("^l (.+)$", function(matches)
+local function startLook(target)
   taPackage.monsterDb.state = "accumulating"
-  taPackage.monsterDb.lookTarget = matches[2]
+  taPackage.monsterDb.lookTarget = target
   taPackage.monsterDb.accumulatedLines = {}
+end
+
+createTrigger("^l (.+)$", function(matches)
+  startLook(matches[2])
+end, { type = "regex" })
+
+createTrigger("^look (.+)$", function(matches)
+  startLook(matches[2])
 end, { type = "regex" })
 
 local function recordEncounter(name)
@@ -304,7 +312,7 @@ end, { type = "regex" })
 createTrigger("^(.+)$", function(matches)
   if taPackage.monsterDb.state ~= "accumulating" then return end
   local line = matches[2]
-  if string.match(line, "^l .") then return end
+  if string.match(line, "^l .") or string.match(line, "^look .") then return end
   if string.match(line, "^You're in the") or string.match(line, "^There is ") then
     taPackage.monsterDb.state = "idle"
     taPackage.monsterDb.accumulatedLines = {}

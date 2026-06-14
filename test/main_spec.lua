@@ -522,6 +522,11 @@ describe("Monster database", function()
             assert.are.equal("accumulating", getMonsterDbState())
         end)
 
+        it("transitions to accumulating state with 'look' prefix", function()
+            helper.simulateLine("look li")
+            assert.are.equal("accumulating", getMonsterDbState())
+        end)
+
         it("records the look target", function()
             helper.simulateLine("l li")
             assert.are.equal("li", taPackage.monsterDb.lookTarget)
@@ -529,6 +534,11 @@ describe("Monster database", function()
 
         it("does not accumulate the echo line itself", function()
             helper.simulateLine("l li")
+            assert.are.equal(0, #taPackage.monsterDb.accumulatedLines)
+        end)
+
+        it("does not accumulate the 'look' echo line itself", function()
+            helper.simulateLine("look li")
             assert.are.equal(0, #taPackage.monsterDb.accumulatedLines)
         end)
 
