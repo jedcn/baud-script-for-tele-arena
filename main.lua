@@ -34,6 +34,10 @@ if not taPackage then
   taPackage.character = {}
 end
 
+if not taPackage.roomPresence then
+  taPackage.roomPresence = {}
+end
+
 if not taPackage.monsterDb then
   local Db = dofile(scriptDir .. "db.lua")
   local dbPath = absoluteScriptDir() .. "monsters.lua"
@@ -289,6 +293,34 @@ createTrigger("^look (.+)$", function(matches)
   startLook(matches[2])
 end, { type = "regex" })
 
+-- After 1 hour a monster in the same room is treated as a new encounter:
+-- by then it has healed back to full health and is effectively a fresh data point.
+local PRESENCE_TIMEOUT = 3600
+
+local function presenceKey(room, monster) return room .. "|" .. monster end
+
+local function isNewEncounter(monster)
+  local room = taPackage.currentRoom
+  if not room then return true end
+  local seenAt = taPackage.roomPresence[presenceKey(room, monster)]
+  if seenAt == nil then return true end
+  return (os.time() - seenAt) > PRESENCE_TIMEOUT
+end
+
+local function markPresent(monster)
+  local room = taPackage.currentRoom
+  if room then
+    taPackage.roomPresence[presenceKey(room, monster)] = os.time()
+  end
+end
+
+local function clearPresence(monster)
+  local room = taPackage.currentRoom
+  if room then
+    taPackage.roomPresence[presenceKey(room, monster)] = nil
+  end
+end
+
 local function recordEncounter(name)
   local entry = taPackage.monsterDb.monsters[name]
   if entry then
@@ -299,14 +331,20 @@ end
 
 createTrigger("^There is a (.+) here\\.$", function(matches)
   local name = matches[2]
-  recordEncounter(name)
-  taPackage.db.recordMonsterSeen(name)
+  if isNewEncounter(name) then
+    recordEncounter(name)
+    taPackage.db.recordMonsterSeen(name)
+  end
+  markPresent(name)
 end, { type = "regex" })
 
 createTrigger("^An? (.+) enters ", function(matches)
   local name = matches[2]
-  recordEncounter(name)
-  taPackage.db.recordMonsterSeen(name)
+  if isNewEncounter(name) then
+    recordEncounter(name)
+    taPackage.db.recordMonsterSeen(name)
+  end
+  markPresent(name)
 end, { type = "regex" })
 
 createTrigger("^(.+)$", function(matches)
@@ -413,7 +451,9 @@ end, { type = "regex" })
 -- =========================================================================
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
-  taPackage.lastKilledMonster = matches[2]
+  local name = matches[2]
+  clearPresence(name)
+  taPackage.lastKilledMonster = name
   taPackage.pendingLootCheck = true
 end, { type = "regex" })
 
