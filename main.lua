@@ -201,15 +201,20 @@ createTrigger("^Class:\\s+(\\S+)$", function(matches)
   setClass(matches[2])
 end, { type = "regex" })
 
+createTrigger("^Weapon:\\s+(.+)$", function(matches)
+  taPackage.character.weapon = matches[2]
+end, { type = "regex" })
+
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
   setGold(matches[2])
 end, { type = "regex" })
 
-createTrigger("^You found (\\d+) gold crowns while searching", function(matches)
+createTrigger("^You found (\\d+) gold crowns while searching the (.+)'s corpse\\.$", function(matches)
   local found = tonumber(matches[2])
+  local monster = matches[3]
   setGold((getGold() or 0) + found)
-  if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
-    taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, found)
+  taPackage.db.recordMonsterLoot(monster, found)
+  if taPackage.lastKilledMonster == monster then
     taPackage.pendingLootCheck = nil
     taPackage.lastKilledMonster = nil
   end
@@ -387,7 +392,7 @@ createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
   taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
-createTrigger("^The (.+)'s .+ glanced off your armor!$", function(matches)
+createTrigger("^The (.+) attacked you, but .+ glanced off your armor!$", function(matches)
   taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)
 end, { type = "regex" })
 

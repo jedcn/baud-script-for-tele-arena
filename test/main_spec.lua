@@ -1009,7 +1009,7 @@ describe("Combat triggers", function()
         end)
 
         it("records a glance", function()
-            helper.simulateLine("The huge rat's claws glanced off your armor!")
+            helper.simulateLine("The huge rat attacked you, but its claws glanced off your armor!")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "GLANCED") then found = true end
@@ -1038,7 +1038,7 @@ describe("Combat triggers", function()
 
         it("records loot gold and clears kill state", function()
             helper.simulateLine("The huge rat falls to the ground lifeless!")
-            helper.simulateLine("You found 3 gold crowns while searching the rat's corpse.")
+            helper.simulateLine("You found 3 gold crowns while searching the huge rat's corpse.")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "monster_loot") and string.find(msg, "huge rat") then found = true end
