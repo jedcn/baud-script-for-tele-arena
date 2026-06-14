@@ -361,6 +361,10 @@ createTrigger("^(.+)$", function(matches)
     if #lines > 0 then
       local canonicalName = extractMonsterName(lines[1]) or taPackage.monsterDb.lookTarget
       local desc = table.concat(lines, " ")
+      -- The health status line is sometimes split across two server lines; the first
+      -- fragment (e.g. "The X seems to be in") gets accumulated before the second
+      -- fragment triggers finalization. Truncate at the last period to drop it.
+      desc = desc:match("^(.*%.)") or desc
       upsertMonster(canonicalName, desc)
       taPackage.db.upsertMonster(canonicalName, desc)
       taPackage.lastAttackTarget = canonicalName

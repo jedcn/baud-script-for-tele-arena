@@ -582,6 +582,21 @@ describe("Monster database", function()
             assert.is_nil(string.find(entry.description, "wounded"))
         end)
 
+        it("strips split health-line fragment when server breaks the line mid-sentence", function()
+            -- The server can split "seems to be in good physical health." across two lines.
+            -- The fragment "The skeleton warrior seems to be in" ends up accumulated as a
+            -- description line; it must be stripped before saving.
+            helper.simulateLine("l war")
+            helper.simulateLine("The skeleton warrior is wearing tattered armor and mouldering bits of old")
+            helper.simulateLine("clothing, and is armed with a shortsword. The skeleton warrior seems to be in")
+            helper.simulateLine("good physical health.")
+            local entry = getMonsterEntry("skeleton warrior")
+            assert.are.equal(
+                "The skeleton warrior is wearing tattered armor and mouldering bits of old clothing, and is armed with a shortsword.",
+                entry.description
+            )
+        end)
+
         it("joins multi-line description with spaces", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
