@@ -1111,6 +1111,15 @@ describe("Combat triggers", function()
             assert.is_true(found)
         end)
 
+        it("records barmaid meal service and echoes", function()
+            helper.simulateLine("The barmaid brings you a meal for 2 crowns.")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if msg == "[DB\xE2\x86\x92services] tavern: meal 2gp" then found = true end
+            end
+            assert.is_true(found)
+        end)
+
     end)
 
     describe("stat changes", function()

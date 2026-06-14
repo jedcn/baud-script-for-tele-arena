@@ -467,6 +467,12 @@ createTrigger("^The barmaid brings you a drink for (\\d+) crowns\\.$", function(
   taPackage.db.recordService("drink", "tavern", cost)
 end, { type = "regex" })
 
+createTrigger("^The barmaid brings you a meal for (\\d+) crowns\\.$", function(matches)
+  local cost = tonumber(matches[2])
+  setGold((getGold() or 0) - cost)
+  taPackage.db.recordService("meal", "tavern", cost)
+end, { type = "regex" })
+
 -- =========================================================================
 -- Stat change tracking
 -- =========================================================================
