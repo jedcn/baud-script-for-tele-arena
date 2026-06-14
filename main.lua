@@ -258,6 +258,18 @@ local function extractMonsterName(firstLine)
   return best
 end
 
+-- The health sentence always names the monster explicitly ("The female orc seems to be…",
+-- "It looks as if the lizard man is…"). Use that as the canonical name — it's more
+-- reliable than parsing the description's first line (which may say "The orc is…"
+-- for a "female orc", giving the wrong name).
+local function extractNameFromHealthLine(line)
+  return string.match(line, "^The (.-) seems to be")
+      or string.match(line, "^The (.-) appears to be")
+      or string.match(line, "^The (.-) is .-wounded")
+      or string.match(line, "^The (.-) falls to the ground")
+      or string.match(line, "^It looks as if the (.-) is ")
+end
+
 -- When the server puts description text and the health sentence on the same line
 -- (e.g. "claws and teeth. The X seems to be in good physical health."), pull out
 -- the description part that precedes the health sentence.
@@ -393,7 +405,12 @@ createTrigger("^(.+)$", function(matches)
     local prefix = descPrefixFromHealthLine(line)
     if prefix then table.insert(lines, prefix) end
     if #lines > 0 then
-      local canonicalName = extractMonsterName(lines[1]) or taPackage.monsterDb.lookTarget
+      -- The health sentence names the monster explicitly ("The female orc seems to be…");
+      -- when the health line has a description prefix, strip it first to isolate the sentence.
+      local healthSentence = prefix and string.sub(line, #prefix + 2) or line
+      local canonicalName = extractNameFromHealthLine(healthSentence)
+                         or extractMonsterName(lines[1])
+                         or taPackage.monsterDb.lookTarget
       local desc = table.concat(lines, " ")
       -- If the health status was split across two server lines, the first fragment
       -- (e.g. "The X seems to be in") got accumulated; truncate at last period to drop it.

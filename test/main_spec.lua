@@ -597,6 +597,18 @@ describe("Monster database", function()
             )
         end)
 
+        it("uses health-line name for gendered variants ('female orc' vs 'orc')", function()
+            -- Game describes female orc as "The orc is a smallish humanoid..." but the
+            -- health sentence says "The female orc seems to be in good physical health."
+            -- The health sentence is the authoritative name source.
+            helper.simulateLine("look female")
+            helper.simulateLine("The orc is a smallish humanoid with piglike facial features and is covered")
+            helper.simulateLine("sparsely by coarse body hair. She stands just over four feet in height, is")
+            helper.simulateLine("wearing a leather tunic, and is armed with a dagger. The female orc seems to be in good physical health.")
+            local entry = getMonsterEntry("female orc")
+            assert.is_not_nil(entry, "monster should be stored under 'female orc'")
+        end)
+
         it("extracts correct name when monster description starts with 'has ... has'", function()
             -- "The giant bat has a wingspan ... and has wicked looking" -- greedy matching
             -- would capture "giant bat has a wingspan ... and" as the name. Non-greedy
