@@ -1353,6 +1353,28 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("stop alias", function()
+
+        it("clears arenaState", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("clears arenaMonster", function()
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            assert.is_nil(taPackage.arenaMonster)
+        end)
+
+        it("clears arenaLastCmd", function()
+            taPackage.arenaLastCmd = "a lizard"
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            assert.is_nil(taPackage.arenaLastCmd)
+        end)
+
+    end)
+
     describe("monster enters arena", function()
 
         it("captures monster name and starts fighting", function()

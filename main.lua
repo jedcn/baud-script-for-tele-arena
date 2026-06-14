@@ -660,6 +660,13 @@ createAlias("^ring-gong-and-fight-in-arena$", function()
   arenaSend("ring gong")
 end, { type = "regex" })
 
+createAlias("^stop-ring-gong-and-fight-in-arena$", function()
+  taPackage.arenaState = nil
+  taPackage.arenaMonster = nil
+  taPackage.arenaLastCmd = nil
+  echo("[arena] Stopped.")
+end, { type = "regex" })
+
 createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
   if taPackage.arenaState ~= "ringing" then return end
   taPackage.arenaMonster = matches[2]
