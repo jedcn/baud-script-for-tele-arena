@@ -12,3 +12,6 @@ run:
 run-and-save-session-log:
     bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./session.log
 
+report:
+    bun report.ts && open report.html
+
