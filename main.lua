@@ -231,7 +231,7 @@ end, { type = "regex" })
 
 local function isHealthLine(line)
   return string.find(line, "wounded") ~= nil
-      or string.find(line, "in good health") ~= nil
+      or string.match(line, "health%.$") ~= nil
       or string.find(line, "falls to the ground lifeless") ~= nil
 end
 
