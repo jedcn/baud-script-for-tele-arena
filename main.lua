@@ -324,6 +324,21 @@ createTrigger("^You found (\\d+) gold crowns while searching the (.+)'s corpse\\
   end
 end, { type = "regex" })
 
+createTrigger("^You found (\\d+) gold crowns while searching the area\\.$", function(matches)
+  local found = tonumber(matches[2])
+  local monster = taPackage.lastKilledMonster or "unknown"
+  setGold((getGold() or 0) + found)
+  taPackage.db.recordMonsterLoot(monster, found)
+  taPackage.pendingLootCheck = nil
+  taPackage.lastKilledMonster = nil
+end, { type = "regex" })
+
+createTrigger("^While searching the area, you notice (.+), which you add to your possessions\\.$", function(matches)
+  local item = matches[2]
+  local monster = taPackage.lastKilledMonster or "unknown"
+  taPackage.db.recordItemDrop(monster, item)
+end, { type = "regex" })
+
 createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", function(matches)
   local cost = tonumber(matches[2])
   setGold((getGold() or 0) - cost)

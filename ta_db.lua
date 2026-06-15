@@ -81,6 +81,13 @@ db:execute([[CREATE TABLE IF NOT EXISTS monster_loot (
   recorded_at TEXT NOT NULL
 )]])
 
+db:execute([[CREATE TABLE IF NOT EXISTS item_drops (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  monster     TEXT NOT NULL,
+  item        TEXT NOT NULL,
+  recorded_at TEXT NOT NULL
+)]])
+
 local function now()
     return os.date("%Y-%m-%dT%H:%M:%S")
 end
@@ -211,6 +218,14 @@ function TaDb.recordMonsterLoot(monster, gold)
         monster, gold, now()
     )
     echo("[DB\xE2\x86\x92monster_loot] " .. monster .. ": " .. gold .. " gold")
+end
+
+function TaDb.recordItemDrop(monster, item)
+    db:execute(
+        "INSERT INTO item_drops (monster, item, recorded_at) VALUES (?, ?, ?)",
+        monster, item, now()
+    )
+    echo("[DB\xE2\x86\x92item_drops] " .. monster .. " dropped: " .. item)
 end
 
 return TaDb

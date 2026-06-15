@@ -43,6 +43,10 @@ const loot = db.prepare(`
   SELECT monster, gold, recorded_at FROM monster_loot ORDER BY recorded_at
 `).all() as any[];
 
+const itemDrops = db.prepare(`
+  SELECT monster, item, recorded_at FROM item_drops ORDER BY recorded_at
+`).all() as any[];
+
 // ── Combat summary (player attacks per monster) ────────────────────────────────
 
 type CombatRow = { hits: number; misses: number; dodges: number; totalDmg: number; maxDmg: number };
@@ -265,6 +269,13 @@ ${table(
   lootRows,
   { alignRight: [1,2,3,4,5] }
 )}
+
+<h2>Item Drops</h2>
+${itemDrops.length > 0 ? table(
+  ["Monster", "Item", "Date"],
+  itemDrops.map(d => [esc(d.monster), esc(d.item), d.recorded_at?.slice(0,10) ?? "—"]),
+  {}
+) : "<p class='note'>No item drops recorded yet.</p>"}
 
 <h2>World Map</h2>
 ${table(
