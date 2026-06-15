@@ -51,9 +51,7 @@ if not taPackage.monsterDb then
   }
 end
 
-if not taPackage.db then
-  taPackage.db = dofile(scriptDir .. "ta_db.lua")
-end
+taPackage.db = dofile(scriptDir .. "ta_db.lua")
 
 function setCharacterStatus(value)
   taPackage.character.status = value
