@@ -102,6 +102,11 @@ function TaDb.recordExit(fromRoom, direction, toRoom)
     echo("[DB\xE2\x86\x92room_exits] " .. fromRoom .. " --" .. direction .. "--> " .. (toRoom or "?"))
 end
 
+function TaDb.upsertRoomDescription(name, description)
+    db:execute("UPDATE rooms SET description = ? WHERE name = ?", description, name)
+    echo("[DB\xE2\x86\x92rooms] desc: " .. name)
+end
+
 function TaDb.upsertMonster(name, description)
     db:execute(
         "INSERT OR IGNORE INTO monsters (name, description, first_seen, encounters) VALUES (?, ?, ?, 0)",

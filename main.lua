@@ -435,6 +435,17 @@ createTrigger("^look (.+)$", function(matches)
   startLook(matches[2])
 end, { type = "regex" })
 
+-- Bare "look" or "l" (no target) = room description
+createTrigger("^look$", function()
+  taPackage.monsterDb.state = "accumulating_room"
+  taPackage.monsterDb.accumulatedLines = {}
+end, { type = "regex" })
+
+createTrigger("^l$", function()
+  taPackage.monsterDb.state = "accumulating_room"
+  taPackage.monsterDb.accumulatedLines = {}
+end, { type = "regex" })
+
 -- After 1 hour a monster in the same room is treated as a new encounter:
 -- by then it has healed back to full health and is effectively a fresh data point.
 local PRESENCE_TIMEOUT = 3600
@@ -489,9 +500,34 @@ createTrigger("^An? (.+) enters ", function(matches)
   markPresent(name)
 end, { type = "regex" })
 
+local function isRoomDescTerminator(line)
+  return string.match(line, "^Sorry,")
+      or string.match(line, "^You're in the")
+      or string.match(line, "^There is ")
+      or string.match(line, "^An? .+ enters ")
+      or string.match(line, "^You ")
+      or isHealthLine(line)
+end
+
 createTrigger("^(.+)$", function(matches)
-  if taPackage.monsterDb.state ~= "accumulating" then return end
   local line = matches[2]
+
+  if taPackage.monsterDb.state == "accumulating_room" then
+    if isRoomDescTerminator(line) then
+      local lines = taPackage.monsterDb.accumulatedLines
+      if #lines > 0 and taPackage.currentRoom then
+        local desc = table.concat(lines, " ")
+        taPackage.db.upsertRoomDescription(taPackage.currentRoom, desc)
+      end
+      taPackage.monsterDb.state = "idle"
+      taPackage.monsterDb.accumulatedLines = {}
+    else
+      table.insert(taPackage.monsterDb.accumulatedLines, line)
+    end
+    return
+  end
+
+  if taPackage.monsterDb.state ~= "accumulating" then return end
   if string.match(line, "^l .") or string.match(line, "^look .") then return end
   if string.match(line, "^You're in the") or string.match(line, "^There is ") then
     taPackage.monsterDb.state = "idle"
