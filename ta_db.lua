@@ -121,6 +121,11 @@ function TaDb.recordMonsterSeen(name)
     end
 end
 
+function TaDb.monsterHasDescription(name)
+    local row = db:queryOne("SELECT description FROM monsters WHERE name = ?", name)
+    return row ~= nil and row.description ~= nil and row.description ~= ""
+end
+
 function TaDb.upsertDenizen(name, location, description)
     db:execute(
         "INSERT OR IGNORE INTO denizens (name, location, description, first_seen) VALUES (?, ?, ?, ?)",

@@ -750,6 +750,9 @@ createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(
   if taPackage.arenaState ~= "ringing" then return end
   taPackage.arenaMonster = matches[2]
   taPackage.arenaState = "fighting"
+  if not taPackage.db.monsterHasDescription(taPackage.arenaMonster) then
+    send("look " .. taPackage.arenaMonster)
+  end
   arenaAttack()
 end, { type = "regex" })
 

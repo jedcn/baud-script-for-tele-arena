@@ -1420,12 +1420,14 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("sends abbreviated attack using first word", function()
             taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "A skeleton warrior." }
             helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
             assert.are.equal("a skeleton", helper.sendCalls[1])
         end)
 
         it("sends abbreviated attack for single-word monster", function()
             taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "An ogre." }
             helper.simulateLine("An ogre enters the arena through the dungeon gate!")
             assert.are.equal("a ogre", helper.sendCalls[1])
         end)
@@ -1434,6 +1436,30 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
             assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("looks at monster before attacking when description is unknown", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = nil
+            helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
+            assert.are.equal("look huge rat", helper.sendCalls[1])
+            assert.are.equal("a huge", helper.sendCalls[2])
+        end)
+
+        it("skips look when description is already known", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "A huge rat scurries about." }
+            helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
+            assert.are.equal("a huge", helper.sendCalls[1])
+            assert.is_nil(helper.sendCalls[2])
+        end)
+
+        it("skips look when description field is empty string", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "" }
+            helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
+            assert.are.equal("look huge rat", helper.sendCalls[1])
+            assert.are.equal("a huge", helper.sendCalls[2])
         end)
 
     end)
