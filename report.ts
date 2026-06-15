@@ -10,7 +10,7 @@ const db = new Database(DB_PATH, { readonly: true });
 // ── Raw queries ────────────────────────────────────────────────────────────────
 
 const rooms = db.prepare(`
-  SELECT r.name, r.visits, r.first_visited,
+  SELECT r.name, r.description, r.visits, r.first_visited,
          GROUP_CONCAT(re.direction || ' → ' || COALESCE(re.to_room,'?'), ', ') AS exits
   FROM rooms r
   LEFT JOIN room_exits re ON re.from_room = r.name
@@ -195,6 +195,13 @@ const monsterCards = monsters.map(m => `
     <p class="meta">First seen: ${m.first_seen?.slice(0,10) ?? "—"} · Encounters: ${m.encounters}</p>
   </div>`).join("\n");
 
+const roomCards = rooms.map(r => `
+  <div class="card">
+    <h3>${esc(r.name)}</h3>
+    <p class="desc">${esc(r.description || "(no description yet)")}</p>
+    <p class="meta">First visited: ${r.first_visited?.slice(0,10) ?? "—"} · Visits: ${r.visits}${r.exits ? ` · Exits: ${esc(r.exits)}` : ""}</p>
+  </div>`).join("\n");
+
 // ── Full HTML ─────────────────────────────────────────────────────────────────
 
 const html = `<!DOCTYPE html>
@@ -279,6 +286,11 @@ ${statRows.length > 0 ? table(
   statRows,
   { alignRight: [1,2] }
 ) : "<p class='note'>No stat changes recorded yet.</p>"}
+
+<h2>Room Encyclopedia</h2>
+<div class="cards">
+${roomCards || "<p class='note'>No rooms visited yet.</p>"}
+</div>
 
 <h2>Monster Encyclopedia</h2>
 <div class="cards">
