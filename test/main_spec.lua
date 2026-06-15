@@ -1409,15 +1409,15 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after a hit (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(28, 30)
+            setHP(60, 100)
             helper.simulateLine("Your attack hit the lizard man for 10 damage!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 20 after a hit", function()
+        it("flees when HP < 50 after a hit", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(15, 30)
+            setHP(15, 100)
             helper.simulateLine("Your attack hit the lizard man for 10 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[1])
@@ -1426,15 +1426,15 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after a miss (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(28, 30)
+            setHP(60, 100)
             helper.simulateLine("Your attack missed!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 20 after a miss", function()
+        it("flees when HP < 50 after a miss", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(10, 30)
+            setHP(10, 100)
             helper.simulateLine("Your attack missed!")
             assert.are.equal("w", helper.sendCalls[1])
         end)
@@ -1442,7 +1442,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after monster dodge (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(28, 30)
+            setHP(60, 100)
             helper.simulateLine("The lizard man dodged your attack!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
@@ -1460,7 +1460,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("clears arenaMonster", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(28, 30)
+            setHP(60, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.is_nil(taPackage.arenaMonster)
         end)
@@ -1468,16 +1468,16 @@ describe("ring-gong-and-fight-in-arena", function()
         it("rings gong again when HP is fine", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(28, 30)
+            setHP(60, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("ring gong", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 20 on monster death", function()
+        it("flees when HP < 50 on monster death", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(15, 30)
+            setHP(15, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[1])
@@ -1493,11 +1493,11 @@ describe("ring-gong-and-fight-in-arena", function()
 
     describe("incoming monster attack", function()
 
-        it("flees when HP drops below 20", function()
+        it("flees when HP drops below 50", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            -- simulate vitality already at 15 (existing trigger already decremented it)
-            setHP(15, 30)
+            -- simulate vitality already at 45 (existing trigger already decremented it)
+            setHP(45, 100)
             helper.simulateLine("The lizard man attacked you with his scimitar for 13 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[1])
@@ -1506,7 +1506,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("does not flee when HP is still fine after attack", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(25, 30)
+            setHP(60, 100)
             helper.simulateLine("The lizard man attacked you with his scimitar for 2 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
             assert.are.equal(0, #helper.sendCalls)
@@ -1618,6 +1618,74 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = nil
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_nil(timerCreated)
+        end)
+
+        it("timer callback sends command when arenaState is still active at fire time", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_not_nil(timerCreated)
+            helper.sendCalls = {}
+            timerCreated.cb()
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("timer callback sends nothing when arenaState is nil at fire time (stop after rate limit)", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_not_nil(timerCreated)
+            taPackage.arenaState = nil
+            helper.sendCalls = {}
+            timerCreated.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
+        it("exhaustion timer callback sends nothing when arenaState is nil at fire time", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaLastCmd = "a skeleton"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_not_nil(timerCreated)
+            taPackage.arenaState = nil
+            helper.sendCalls = {}
+            timerCreated.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
+        it("second exhaustion message creates a timer that does not fire (generation mismatch)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaLastCmd = "a skeleton"
+            -- First exhaustion: creates timer with current generation
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local firstTimer = timerCreated
+            assert.is_not_nil(firstTimer)
+            -- Second exhaustion: creates another timer with same generation
+            timerCreated = nil
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local secondTimer = timerCreated
+            assert.is_not_nil(secondTimer)
+            -- First timer fires and sends (increments generation)
+            helper.sendCalls = {}
+            firstTimer.cb()
+            assert.are.equal("a skeleton", helper.sendCalls[1])
+            -- Second timer fires but generation has moved on — sends nothing
+            helper.sendCalls = {}
+            secondTimer.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
+        it("timer does not fire after a new command supersedes it (generation mismatch)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            taPackage.arenaLastCmd = "a cave"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local staleTimer = timerCreated
+            -- Monster dies; arena sends "ring gong", incrementing generation
+            helper.simulateLine("The cave bear falls to the ground lifeless!")
+            helper.sendCalls = {}
+            -- Stale timer fires — generation mismatch, should not send
+            staleTimer.cb()
+            assert.is_nil(helper.sendCalls[1])
         end)
 
     end)

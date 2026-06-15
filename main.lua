@@ -634,6 +634,7 @@ end, { type = "regex" })
 
 local function arenaSend(cmd)
   taPackage.arenaLastCmd = cmd
+  taPackage.arenaRetryGeneration = (taPackage.arenaRetryGeneration or 0) + 1
   send(cmd)
 end
 
@@ -647,7 +648,7 @@ end
 local function checkFleeArena()
   if taPackage.arenaState ~= "fighting" then return false end
   local hp = taPackage.character.vitalityCurrent
-  if hp and hp < 20 then
+  if hp and hp < 50 then
     taPackage.arenaState = "fleeing"
     arenaSend("w")
     return true
@@ -735,16 +736,26 @@ end, { type = "regex" })
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)
   if not taPackage.arenaState then return end
   local cmd = taPackage.arenaLastCmd
+  local gen = taPackage.arenaRetryGeneration or 0
   if cmd then
-    createTimer(15000, function() arenaSend(cmd) end, { type = "once" })
+    createTimer(15000, function()
+      if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
+        arenaSend(cmd)
+      end
+    end, { type = "once" })
   end
 end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
   if not taPackage.arenaState then return end
   local cmd = taPackage.arenaLastCmd
+  local gen = taPackage.arenaRetryGeneration or 0
   if cmd then
-    createTimer(15000, function() arenaSend(cmd) end, { type = "once" })
+    createTimer(15000, function()
+      if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
+        arenaSend(cmd)
+      end
+    end, { type = "once" })
   end
 end, { type = "regex" })
 
