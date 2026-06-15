@@ -500,27 +500,41 @@ createTrigger("^An? (.+) enters ", function(matches)
   markPresent(name)
 end, { type = "regex" })
 
+local DIRECTION_PATTERN = "^[nsewud][sewn]?$"
+
+local function trimLine(line)
+  return (line or ""):match("^%s*(.-)%s*$")
+end
+
 local function isRoomDescTerminator(line)
   return string.match(line, "^Sorry,")
       or string.match(line, "^You're in the")
       or string.match(line, "^There is ")
       or string.match(line, "^An? .+ enters ")
-      or string.match(line, "^[nsew]$")
-      or string.match(line, "^n[ew]$")
-      or string.match(line, "^s[ew]$")
+      or string.match(line, DIRECTION_PATTERN)
       or isHealthLine(line)
 end
 
+local function cleanRoomDesc(desc)
+  -- Strip "look " or "l " prefix if the echo got accumulated
+  desc = desc:gsub("^look%s+", ""):gsub("^l%s+", "")
+  -- Strip trailing single direction word (e.g. " e", " sw", " d")
+  desc = desc:gsub("%s+[nsewud][sewn]?$", "")
+  return desc
+end
+
 createTrigger("^(.+)$", function(matches)
-  local line = matches[2]
+  local line = trimLine(matches[2])
 
   if taPackage.monsterDb.state == "accumulating_room" then
     if line == "look" or line == "l" then return end
     if isRoomDescTerminator(line) then
       local lines = taPackage.monsterDb.accumulatedLines
       if #lines > 0 and taPackage.currentRoom then
-        local desc = table.concat(lines, " ")
-        taPackage.db.upsertRoomDescription(taPackage.currentRoom, desc)
+        local desc = cleanRoomDesc(table.concat(lines, " "))
+        if #desc > 0 then
+          taPackage.db.upsertRoomDescription(taPackage.currentRoom, desc)
+        end
       end
       taPackage.monsterDb.state = "idle"
       taPackage.monsterDb.accumulatedLines = {}
