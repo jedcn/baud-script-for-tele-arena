@@ -503,9 +503,11 @@ end, { type = "regex" })
 local function isRoomDescTerminator(line)
   return string.match(line, "^Sorry,")
       or string.match(line, "^You're in the")
-      or string.match(line, "^You're ")
       or string.match(line, "^There is ")
       or string.match(line, "^An? .+ enters ")
+      or string.match(line, "^[nsew]$")
+      or string.match(line, "^n[ew]$")
+      or string.match(line, "^s[ew]$")
       or isHealthLine(line)
 end
 
@@ -513,6 +515,7 @@ createTrigger("^(.+)$", function(matches)
   local line = matches[2]
 
   if taPackage.monsterDb.state == "accumulating_room" then
+    if line == "look" or line == "l" then return end
     if isRoomDescTerminator(line) then
       local lines = taPackage.monsterDb.accumulatedLines
       if #lines > 0 and taPackage.currentRoom then
