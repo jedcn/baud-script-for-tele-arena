@@ -503,9 +503,9 @@ end, { type = "regex" })
 local function isRoomDescTerminator(line)
   return string.match(line, "^Sorry,")
       or string.match(line, "^You're in the")
+      or string.match(line, "^You're ")
       or string.match(line, "^There is ")
       or string.match(line, "^An? .+ enters ")
-      or string.match(line, "^You ")
       or isHealthLine(line)
 end
 
