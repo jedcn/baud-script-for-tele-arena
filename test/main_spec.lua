@@ -1319,6 +1319,40 @@ describe("Combat triggers", function()
             assert.is_false(found)
         end)
 
+        local attributeStats = { "Physique", "Stamina", "Agility", "Charisma", "Intellect", "Knowledge" }
+
+        for _, stat in ipairs(attributeStats) do
+            it("records a " .. stat .. " increase", function()
+                helper.simulateLine(stat .. ":      16")
+                helper.simulateLine(stat .. ":      17")
+                local found = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
+                end
+                assert.is_true(found)
+            end)
+
+            it("does not record " .. stat .. " change on first reading", function()
+                helper.simulateLine(stat .. ":      16")
+                local found = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
+                end
+                assert.is_false(found)
+            end)
+
+            it("does not record " .. stat .. " change during re-rolling", function()
+                helper.simulateAlias("re-roll-for-good-stats")
+                helper.simulateLine(stat .. ":      16")
+                helper.simulateLine(stat .. ":      17")
+                local found = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
+                end
+                assert.is_false(found)
+            end)
+        end
+
     end)
 
 end)

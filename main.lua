@@ -120,6 +120,38 @@ function getStamina()
   return taPackage.character.stamina
 end
 
+function setAgility(value)
+  taPackage.character.agility = tonumber(value)
+end
+
+function getAgility()
+  return taPackage.character.agility
+end
+
+function setCharisma(value)
+  taPackage.character.charisma = tonumber(value)
+end
+
+function getCharisma()
+  return taPackage.character.charisma
+end
+
+function setIntellect(value)
+  taPackage.character.intellect = tonumber(value)
+end
+
+function getIntellect()
+  return taPackage.character.intellect
+end
+
+function setKnowledge(value)
+  taPackage.character.knowledge = tonumber(value)
+end
+
+function getKnowledge()
+  return taPackage.character.knowledge
+end
+
 -- =========================================================================
 -- XP tables by class (from "help Exp1" and "help Exp2")
 -- =========================================================================
@@ -226,11 +258,57 @@ createTrigger("^Weapon:\\s+(.+)$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
-  setPhysique(matches[2])
+  local newVal = tonumber(matches[2])
+  local oldVal = getPhysique()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Physique", oldVal, newVal)
+  end
+  setPhysique(newVal)
 end, { type = "regex" })
 
 createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
-  setStamina(matches[2])
+  local newVal = tonumber(matches[2])
+  local oldVal = getStamina()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Stamina", oldVal, newVal)
+  end
+  setStamina(newVal)
+end, { type = "regex" })
+
+createTrigger("^Agility:\\s+(\\d+)$", function(matches)
+  local newVal = tonumber(matches[2])
+  local oldVal = getAgility()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Agility", oldVal, newVal)
+  end
+  setAgility(newVal)
+end, { type = "regex" })
+
+createTrigger("^Charisma:\\s+(\\d+)$", function(matches)
+  local newVal = tonumber(matches[2])
+  local oldVal = getCharisma()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Charisma", oldVal, newVal)
+  end
+  setCharisma(newVal)
+end, { type = "regex" })
+
+createTrigger("^Intellect:\\s+(\\d+)$", function(matches)
+  local newVal = tonumber(matches[2])
+  local oldVal = getIntellect()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Intellect", oldVal, newVal)
+  end
+  setIntellect(newVal)
+end, { type = "regex" })
+
+createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
+  local newVal = tonumber(matches[2])
+  local oldVal = getKnowledge()
+  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+    taPackage.db.recordStatChange("Knowledge", oldVal, newVal)
+  end
+  setKnowledge(newVal)
 end, { type = "regex" })
 
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
