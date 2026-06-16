@@ -838,9 +838,9 @@ createTrigger("^The .+ dodged your attack!$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
-  if taPackage.arenaState ~= "fighting" then return end
+  if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
   taPackage.arenaMonster = nil
-  if not checkFleeArena() then
+  if taPackage.arenaState == "fighting" and not checkFleeArena() then
     taPackage.arenaState = "ringing"
     arenaSend("ring gong")
   end
