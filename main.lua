@@ -765,6 +765,11 @@ createAlias("^re-roll-for-good-stats$", function()
   send("status")
 end, { type = "regex" })
 
+createAlias("^re-roll-stop$", function()
+  taPackage.reRolling = false
+  echo("[re-roll] Stopped.")
+end, { type = "regex" })
+
 createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   if not taPackage.reRolling then return end
   local intellect  = taPackage.character.intellect    or 0
