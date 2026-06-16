@@ -760,8 +760,14 @@ setStatus(status)
 -- Re-roll for good stats
 -- =========================================================================
 
+local function reRollResetStats()
+  taPackage.reRollCount = 0
+  taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0, vitMax=0 }
+end
+
 createAlias("^re-roll-for-good-stats$", function()
   taPackage.reRolling = true
+  reRollResetStats()
   send("status")
 end, { type = "regex" })
 
@@ -780,12 +786,33 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   local charisma   = taPackage.character.charisma     or 0
   local _, vitMax  = getVitality()
   vitMax = vitMax or 0
+
+  local t = taPackage.reRollTotals
+  t.intellect = t.intellect + intellect
+  t.knowledge = t.knowledge + knowledge
+  t.physique  = t.physique  + physique
+  t.stamina   = t.stamina   + stamina
+  t.agility   = t.agility   + agility
+  t.charisma  = t.charisma  + charisma
+  t.vitMax    = t.vitMax    + vitMax
+  taPackage.reRollCount = taPackage.reRollCount + 1
+  local n = taPackage.reRollCount
+
+  if n % 10 == 0 then
+    local avg = function(x) return string.format("%.1f", x / n) end
+    echo("[re-roll] Averages after " .. n .. " rolls: "
+      .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
+      .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
+      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma)
+      .. " Vit=" .. avg(t.vitMax))
+  end
+
   local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma .. " Vit=" .. vitMax
   if intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
       and agility >= 18 and charisma >= 18 and vitMax >= 27 then
     taPackage.reRolling = false
-    echo("[re-roll] Done! " .. summary)
+    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
     send("reroll")
