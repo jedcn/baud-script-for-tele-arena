@@ -767,13 +767,22 @@ end, { type = "regex" })
 
 createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   if not taPackage.reRolling then return end
-  local physique = taPackage.character.physique or 0
-  local stamina  = taPackage.character.stamina  or 0
-  if physique >= 29 and stamina >= 29 then
+  local intellect  = taPackage.character.intellect    or 0
+  local knowledge  = taPackage.character.knowledge    or 0
+  local physique   = taPackage.character.physique     or 0
+  local stamina    = taPackage.character.stamina      or 0
+  local agility    = taPackage.character.agility      or 0
+  local charisma   = taPackage.character.charisma     or 0
+  local _, vitMax  = getVitality()
+  vitMax = vitMax or 0
+  local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
+    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma .. " Vit=" .. vitMax
+  if intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
+      and agility >= 19 and charisma >= 19 and vitMax >= 28 then
     taPackage.reRolling = false
-    echo("[re-roll] Done! Physique=" .. physique .. ", Stamina=" .. stamina)
+    echo("[re-roll] Done! " .. summary)
   else
-    echo("[re-roll] Physique=" .. physique .. ", Stamina=" .. stamina .. " — re-rolling...")
+    echo("[re-roll] " .. summary .. " — re-rolling...")
     send("reroll")
   end
 end, { type = "regex" })
