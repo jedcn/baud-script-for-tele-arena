@@ -521,9 +521,15 @@ local function trimLine(line)
   return (line or ""):match("^%s*(.-)%s*$")
 end
 
+local function isRoomLine(line)
+  return string.match(line, "^You're in ")
+      or string.match(line, "^You are in ")
+      or string.match(line, "^You are inside ")
+end
+
 local function isRoomDescTerminator(line)
   return string.match(line, "^Sorry,")
-      or string.match(line, "^You're in the")
+      or isRoomLine(line)
       or string.match(line, "^There is ")
       or string.match(line, "^An? .+ enters ")
       or string.match(line, DIRECTION_PATTERN)
@@ -561,7 +567,7 @@ createTrigger("^(.+)$", function(matches)
 
   if taPackage.monsterDb.state ~= "accumulating" then return end
   if string.match(line, "^l .") or string.match(line, "^look .") then return end
-  if string.match(line, "^You're in the") or string.match(line, "^There is ") then
+  if isRoomLine(line) or string.match(line, "^There is ") then
     taPackage.monsterDb.state = "idle"
     taPackage.monsterDb.accumulatedLines = {}
     return
@@ -597,7 +603,7 @@ end, { type = "regex" })
 -- World map triggers
 -- =========================================================================
 
-createTrigger("^You're in the (.+)\\.$", function(matches)
+createTrigger("^You(?:'re| are)(?: inside(?: the)?| in (?:the|an?)) (.+)\\.$", function(matches)
   local newRoom = matches[2]
   if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
     taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, 0)
