@@ -798,21 +798,25 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   taPackage.reRollCount = taPackage.reRollCount + 1
   local n = taPackage.reRollCount
 
-  if n % 10 == 0 then
+  local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
+    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma .. " Vit=" .. vitMax
+  local done = intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
+      and agility >= 18 and charisma >= 18 and vitMax >= 27
+
+  if done then
+    taPackage.reRolling = false
+    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
+  elseif n % 10 == 0 then
     local avg = function(x) return string.format("%.1f", x / n) end
     echo("[re-roll] Averages after " .. n .. " rolls: "
       .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
       .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
       .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma)
       .. " Vit=" .. avg(t.vitMax))
-  end
-
-  local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
-    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma .. " Vit=" .. vitMax
-  if intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
-      and agility >= 18 and charisma >= 18 and vitMax >= 27 then
-    taPackage.reRolling = false
-    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
+    echo("[re-roll] Pausing 10 seconds...")
+    tempTimer(10, function()
+      if taPackage.reRolling then send("reroll") end
+    end)
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
     send("reroll")
