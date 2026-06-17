@@ -809,10 +809,7 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
       .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
       .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
       .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
-    echo("[re-roll] Pausing 10 seconds...")
-    createTimer(5000, function()
-      if taPackage.reRolling then send("reroll") end
-    end, { type = "once" })
+    send("reroll")
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
     send("reroll")
