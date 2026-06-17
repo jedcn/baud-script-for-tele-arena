@@ -235,6 +235,23 @@ end
 -- Triggers
 -- =========================================================================
 
+local function reRollResetStats()
+  taPackage.reRollCount = 0
+  taPackage.reRollTimerPending = false
+  taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
+end
+
+local function scheduleReroll()
+  if taPackage.reRollTimerPending then return end
+  taPackage.reRollTimerPending = true
+  local gen = taPackage.reRollGeneration
+  createTimer(1000, function()
+    if taPackage.reRollGeneration ~= gen then return end
+    taPackage.reRollTimerPending = false
+    if taPackage.reRolling then send("reroll") end
+  end, { type = "once" })
+end
+
 createTrigger("^Status:\\s+(\\S+)$", function(matches)
   setCharacterStatus(matches[2])
 end, { type = "regex" })
@@ -793,23 +810,6 @@ setStatus(status)
 -- =========================================================================
 -- Re-roll for good stats
 -- =========================================================================
-
-local function reRollResetStats()
-  taPackage.reRollCount = 0
-  taPackage.reRollTimerPending = false
-  taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
-end
-
-local function scheduleReroll()
-  if taPackage.reRollTimerPending then return end
-  taPackage.reRollTimerPending = true
-  local gen = taPackage.reRollGeneration
-  createTimer(1000, function()
-    if taPackage.reRollGeneration ~= gen then return end
-    taPackage.reRollTimerPending = false
-    if taPackage.reRolling then send("reroll") end
-  end, { type = "once" })
-end
 
 createAlias("^re-roll-for-good-stats$", function()
   taPackage.reRolling = true
