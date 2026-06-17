@@ -762,7 +762,7 @@ setStatus(status)
 
 local function reRollResetStats()
   taPackage.reRollCount = 0
-  taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0, vitMax=0 }
+  taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
 end
 
 createAlias("^re-roll-for-good-stats$", function()
@@ -784,8 +784,6 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   local stamina    = taPackage.character.stamina      or 0
   local agility    = taPackage.character.agility      or 0
   local charisma   = taPackage.character.charisma     or 0
-  local _, vitMax  = getVitality()
-  vitMax = vitMax or 0
 
   local t = taPackage.reRollTotals
   t.intellect = t.intellect + intellect
@@ -794,14 +792,13 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   t.stamina   = t.stamina   + stamina
   t.agility   = t.agility   + agility
   t.charisma  = t.charisma  + charisma
-  t.vitMax    = t.vitMax    + vitMax
   taPackage.reRollCount = taPackage.reRollCount + 1
   local n = taPackage.reRollCount
 
   local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
-    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma .. " Vit=" .. vitMax
+    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
   local done = intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
-      and agility >= 18 and charisma >= 18 and vitMax >= 27
+      and agility >= 18 and charisma >= 18
 
   if done then
     taPackage.reRolling = false
@@ -811,8 +808,7 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
     echo("[re-roll] Averages after " .. n .. " rolls: "
       .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
       .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
-      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma)
-      .. " Vit=" .. avg(t.vitMax))
+      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
     echo("[re-roll] Pausing 10 seconds...")
     createTimer(5000, function()
       if taPackage.reRolling then send("reroll") end
