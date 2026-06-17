@@ -1000,6 +1000,14 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
   arenaSend("e")
 end, { type = "regex" })
 
+createTrigger("^You cannot leave in the heat of battle!$", function()
+  if taPackage.arenaState ~= "fleeing" then return end
+  -- Can't flee right now; fight back so we're not just standing there.
+  -- checkFleeArena will re-trigger on the next attack result and retry fleeing.
+  taPackage.arenaState = "fighting"
+  arenaAttack()
+end, { type = "regex" })
+
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)
   if not taPackage.arenaState then return end
   local cmd = taPackage.arenaLastCmd
