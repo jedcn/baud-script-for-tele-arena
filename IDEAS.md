@@ -16,3 +16,18 @@ Things to figure out:
 - How long to wait between retry attempts
 - Whether mana tracking is reliable enough to skip the cast when at 0 mana
 - Whether to suppress casting during certain arena states (e.g. mid-flee, tavern queue)
+
+## Timed Experience Checks
+
+On a repeating timer, echo a timestamp to the session log and send `status`. When the XP reading comes back, compare it to the XP from the previous tick and echo the difference — something like:
+
+```
+[XP check] 14:32:01 — XP: 4821 (+143 since last check)
+```
+
+This gives a running record in the session log of experience gained per interval, making it easy to see how fast XP is accumulating during an arena session.
+
+Things to figure out:
+- What interval to use (e.g. every 5 minutes)
+- Whether to skip the delta on the very first tick (no prior value to compare against)
+- Whether to also record this to the database for longer-term trending
