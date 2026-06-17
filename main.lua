@@ -70,6 +70,15 @@ function getVitality()
   return taPackage.character.vitalityCurrent, taPackage.character.vitalityMax
 end
 
+function setMana(current, max)
+  taPackage.character.manaCurrent = tonumber(current)
+  taPackage.character.manaMax = tonumber(max)
+end
+
+function getMana()
+  return taPackage.character.manaCurrent, taPackage.character.manaMax
+end
+
 function setExperience(value)
   taPackage.character.experience = tonumber(value)
 end
@@ -256,6 +265,10 @@ end
 
 createTrigger("^Status:\\s+(\\S+)$", function(matches)
   setCharacterStatus(matches[2])
+end, { type = "regex" })
+
+createTrigger("^Mana:\\s+(\\d+) / (\\d+)$", function(matches)
+  setMana(matches[2], matches[3])
 end, { type = "regex" })
 
 createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
@@ -795,7 +808,11 @@ local function status()
   local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
   local gold = getGold() and tostring(getGold()) or "?"
 
+  local manaCurrent, manaMax = getMana()
   local segments = {
+    { text = "Mana:" },
+    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
+    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
