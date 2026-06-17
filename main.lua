@@ -805,12 +805,20 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   taPackage.reRollCount = taPackage.reRollCount + 1
   local n = taPackage.reRollCount
 
+  local targets = { intellect=20, knowledge=21, physique=20, stamina=22, agility=17, charisma=17 }
+  local threshold = 2
+  local deficit = math.max(0, targets.intellect - intellect)
+            + math.max(0, targets.knowledge - knowledge)
+            + math.max(0, targets.physique  - physique)
+            + math.max(0, targets.stamina   - stamina)
+            + math.max(0, targets.agility   - agility)
+            + math.max(0, targets.charisma  - charisma)
+
   local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
-  local done = intellect >= 19 and knowledge >= 20 and physique >= 20 and stamina >= 21
-      and agility >= 16 and charisma >= 16
+    .. " (deficit=" .. deficit .. ")"
 
-  if done then
+  if deficit <= threshold then
     taPackage.reRolling = false
     echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
   elseif n % 10 == 0 then
