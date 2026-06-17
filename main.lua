@@ -239,6 +239,7 @@ local function reRollResetStats()
   taPackage.reRollCount = 0
   taPackage.reRollBestDeficit = nil
   taPackage.reRollTimerPending = false
+  taPackage.reRollSuppressStats = true
   taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
 end
 
@@ -315,7 +316,7 @@ end, { type = "regex" })
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getPhysique()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Physique", oldVal, newVal)
   end
   setPhysique(newVal)
@@ -324,7 +325,7 @@ end, { type = "regex" })
 createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getStamina()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Stamina", oldVal, newVal)
   end
   setStamina(newVal)
@@ -333,7 +334,7 @@ end, { type = "regex" })
 createTrigger("^Agility:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getAgility()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Agility", oldVal, newVal)
   end
   setAgility(newVal)
@@ -342,7 +343,7 @@ end, { type = "regex" })
 createTrigger("^Charisma:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getCharisma()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Charisma", oldVal, newVal)
   end
   setCharisma(newVal)
@@ -351,7 +352,7 @@ end, { type = "regex" })
 createTrigger("^Intellect:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getIntellect()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Intellect", oldVal, newVal)
   end
   setIntellect(newVal)
@@ -360,7 +361,7 @@ end, { type = "regex" })
 createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
   local newVal = tonumber(matches[2])
   local oldVal = getKnowledge()
-  if oldVal and oldVal ~= newVal and not taPackage.reRolling then
+  if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
     taPackage.db.recordStatChange("Knowledge", oldVal, newVal)
   end
   setKnowledge(newVal)
@@ -828,6 +829,9 @@ createAlias("^re-roll-stop$", function()
   taPackage.reRollTimerPending = false
   taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
   echo("[re-roll] Stopped.")
+  createTimer(2000, function()
+    taPackage.reRollSuppressStats = false
+  end, { repeating = false })
 end, { type = "regex" })
 
 
