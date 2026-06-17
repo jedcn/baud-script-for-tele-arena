@@ -796,17 +796,17 @@ local function status()
   local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
-    { text = "HP" },
+    { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
-    { text = "XP" },
+    { text = "XP:" },
     { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
       fg = "white" },
-    { text = "Status" },
+    { text = "Status:" },
     { text = charStatus, fg = "white" },
-    { text = "Gold" },
+    { text = "Gold:" },
     { text = gold, fg = "white" },
   }
   return segments
