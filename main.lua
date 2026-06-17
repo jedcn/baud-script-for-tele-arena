@@ -1033,6 +1033,19 @@ createOutboundTrigger("^cast motu ", function()
   end
 end, { type = "regex" })
 
+createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", function(matches)
+  local target = matches[2]
+  local amount = tonumber(matches[3])
+  taPackage.db.recordSpellHeal("motu", target, amount)
+  if target == taPackage.character.name then
+    local current = taPackage.character.vitalityCurrent
+    local max = taPackage.character.vitalityMax
+    if current and amount then
+      taPackage.character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
+    end
+  end
+end, { type = "regex" })
+
 createTrigger("^Username:\\s*$", function()
   taPackage.awaitingUsername = true
 end, { type = "regex" })
