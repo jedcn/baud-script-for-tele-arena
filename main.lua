@@ -764,6 +764,16 @@ local function reRollResetStats()
   taPackage.reRollCount = 0
   taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
   taPackage.reRollMaxes = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
+  taPackage.reRollTimerPending = false
+end
+
+local function scheduleReroll()
+  if taPackage.reRollTimerPending then return end
+  taPackage.reRollTimerPending = true
+  createTimer(1000, function()
+    taPackage.reRollTimerPending = false
+    if taPackage.reRolling then send("reroll") end
+  end, { type = "once" })
 end
 
 createAlias("^re-roll-for-good-stats$", function()
@@ -774,6 +784,7 @@ end, { type = "regex" })
 
 createAlias("^re-roll-stop$", function()
   taPackage.reRolling = false
+  taPackage.reRollTimerPending = false
   echo("[re-roll] Stopped.")
 end, { type = "regex" })
 
@@ -831,10 +842,10 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
       .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
       .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
       .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
-    createTimer(1000, function() if taPackage.reRolling then send("reroll") end end, { type = "once" })
+    scheduleReroll()
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
-    createTimer(1000, function() if taPackage.reRolling then send("reroll") end end, { type = "once" })
+    scheduleReroll()
   end
 end, { type = "regex" })
 
