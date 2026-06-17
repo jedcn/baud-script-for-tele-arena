@@ -70,3 +70,13 @@ Automate walking through the game's help system:
 2. For each keyword, send `help <keyword>` — capture and save the output
 
 Store the results in `docs/help/` as one Markdown file per topic. This gives us authoritative in-game documentation that complements the Tumblr archive, covering anything the devs documented directly in the game itself.
+
+## Unified Report
+
+Once the Tumblr archive and in-game help scrape exist, import them into the database and expand `just report` into a single self-contained HTML page that brings everything together:
+
+- Live session data (combat stats, loot, XP, rooms visited, spell heals)
+- Reference data from the archive (XP tables, items, spells) cross-linked with what we've actually seen in-game
+- In-game help content alongside our own observed data — e.g. the help page for a spell next to how many times we've cast it and what it actually healed
+
+The goal is one page you can open after a session and use both as a debrief and as a reference guide.
