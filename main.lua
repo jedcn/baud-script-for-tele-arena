@@ -271,7 +271,8 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
     echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
   else
-    echo("[re-roll] " .. summary .. " — re-rolling...")
+    local time = os.date("%H:%M:%S")
+    echo("[re-roll] #" .. n .. " at " .. time .. " — " .. summary .. " — re-rolling...")
     scheduleReroll()
   end
 end, { type = "regex" })
