@@ -290,9 +290,9 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     .. " (deficit=" .. deficit .. " best=" .. best .. ")"
 
   if deficit <= threshold then
-    taPackage.reRolling = false
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
-    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
+    taPackage.reRollTimerPending = false
+    echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
   else
     local time = os.date("%H:%M:%S")
     echo("[re-roll] #" .. n .. " at " .. time .. " — " .. summary .. " — re-rolling...")
