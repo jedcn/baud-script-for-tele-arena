@@ -810,6 +810,7 @@ local function status()
 
   local manaCurrent, manaMax = getMana()
   local segments = {
+    { text = taPackage.character.name or "?", fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
