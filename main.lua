@@ -249,7 +249,7 @@ local function scheduleReroll()
     if taPackage.reRollGeneration ~= gen then return end
     taPackage.reRollTimerPending = false
     if taPackage.reRolling then send("reroll") end
-  end, { type = "once" })
+  end, { repeating = false })
 end
 
 createTrigger("^Status:\\s+(\\S+)$", function(matches)
@@ -981,7 +981,7 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
       if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
         arenaSend(cmd)
       end
-    end, { type = "once" })
+    end, { repeating = false })
   end
 end, { type = "regex" })
 
@@ -994,7 +994,7 @@ createTrigger("^You are still physically exhausted from your previous activities
       if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
         arenaSend(cmd)
       end
-    end, { type = "once" })
+    end, { repeating = false })
   end
 end, { type = "regex" })
 
