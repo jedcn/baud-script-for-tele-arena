@@ -831,10 +831,10 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
       .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
       .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
       .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
-    send("reroll")
+    createTimer(1000, function() if taPackage.reRolling then send("reroll") end end, { type = "once" })
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
-    send("reroll")
+    createTimer(1000, function() if taPackage.reRolling then send("reroll") end end, { type = "once" })
   end
 end, { type = "regex" })
 
