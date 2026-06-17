@@ -47,6 +47,13 @@ const itemDrops = db.prepare(`
   SELECT monster, item, recorded_at FROM item_drops ORDER BY recorded_at
 `).all() as any[];
 
+const spellHeals = db.prepare(`
+  SELECT spell, target, COUNT(*) as casts, AVG(amount) as avg_heal, MIN(amount) as min_heal, MAX(amount) as max_heal
+  FROM spell_heals
+  GROUP BY spell, target
+  ORDER BY casts DESC
+`).all() as any[];
+
 // ── Combat summary (player attacks per monster) ────────────────────────────────
 
 type CombatRow = { hits: number; misses: number; dodges: number; totalDmg: number; maxDmg: number };
@@ -290,6 +297,13 @@ ${table(
   serviceRows,
   { alignRight: [2,3] }
 )}
+
+<h2>Spells</h2>
+${spellHeals.length > 0 ? table(
+  ["Spell", "Target", "Casts", "Avg Heal", "Min Heal", "Max Heal"],
+  spellHeals.map(s => [esc(s.spell), esc(s.target), s.casts, (+s.avg_heal).toFixed(1), s.min_heal, s.max_heal]),
+  { alignRight: [2,3,4,5] }
+) : "<p class='note'>No spell heals recorded yet.</p>"}
 
 <h2>Stat Changes</h2>
 ${statRows.length > 0 ? table(
