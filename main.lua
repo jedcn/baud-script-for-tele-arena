@@ -237,6 +237,7 @@ end
 
 local function reRollResetStats()
   taPackage.reRollCount = 0
+  taPackage.reRollBestDeficit = nil
   taPackage.reRollTimerPending = false
   taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
 end
@@ -279,9 +280,14 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
             + math.max(0, targets.agility   - agility)
             + math.max(0, targets.charisma  - charisma)
 
+  if not taPackage.reRollBestDeficit or deficit < taPackage.reRollBestDeficit then
+    taPackage.reRollBestDeficit = deficit
+  end
+  local best = taPackage.reRollBestDeficit
+
   local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
-    .. " (deficit=" .. deficit .. ")"
+    .. " (deficit=" .. deficit .. " best=" .. best .. ")"
 
   if deficit <= threshold then
     taPackage.reRolling = false
