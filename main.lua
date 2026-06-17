@@ -1023,6 +1023,9 @@ end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
   if not taPackage.arenaState then return end
+  if taPackage.character.name == "Pelayo" then
+    send("cast motu pelayo")
+  end
   local cmd = taPackage.arenaLastCmd
   local gen = taPackage.arenaRetryGeneration or 0
   if cmd then
