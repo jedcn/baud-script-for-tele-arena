@@ -810,9 +810,6 @@ local function status()
 
   local manaCurrent, manaMax = getMana()
   local segments = {
-    { text = "Mana:" },
-    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
-    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
@@ -821,6 +818,9 @@ local function status()
     { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
       fg = "white" },
+    { text = "MP:" },
+    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
+    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "white" },
     { text = "Status:" },
     { text = charStatus, fg = "white" },
     { text = "Gold:" },
