@@ -1025,7 +1025,7 @@ createTrigger("^You are still physically exhausted from your previous activities
   end
 end, { type = "regex" })
 
-createOutboundTrigger("^cast motu pelayo$", function()
+createOutboundTrigger("^cast motu ", function()
   local current = taPackage.character.manaCurrent
   if current then
     taPackage.character.manaCurrent = math.max(0, current - 1)
