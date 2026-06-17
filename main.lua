@@ -807,8 +807,8 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
 
   local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
-  local done = intellect >= 22 and knowledge >= 24 and physique >= 15 and stamina >= 18
-      and agility >= 18 and charisma >= 18
+  local done = intellect >= 20 and knowledge >= 21 and physique >= 20 and stamina >= 22
+      and agility >= 17 and charisma >= 17
 
   if done then
     taPackage.reRolling = false
