@@ -1032,4 +1032,15 @@ createOutboundTrigger("^cast motu ", function()
   end
 end, { type = "regex" })
 
+createTrigger("^Username:\\s*$", function()
+  taPackage.awaitingUsername = true
+end, { type = "regex" })
+
+createOutboundTrigger("^(.+)$", function(matches)
+  if not taPackage.awaitingUsername then return end
+  taPackage.awaitingUsername = false
+  local username = matches[2]
+  taPackage.character.name = username:sub(1, 1):upper() .. username:sub(2)
+end, { type = "regex" })
+
 echo("Finishing reading main.lua")
