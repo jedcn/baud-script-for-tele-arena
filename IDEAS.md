@@ -38,6 +38,15 @@ Capture the character's class from the game output (known so far: Acolyte, Warri
 
 There are roughly 6 classes total, and each has its own XP-per-level table. Right now `getXpForNextLevel` presumably uses a single table; it should branch on class so the "XP to next level" value shown in the status bar and timed XP checks is accurate for the active character.
 
+The class appears in the `status` output, e.g.:
+
+```
+Race:         Dwarven
+Class:        Acolyte
+Level:        3
+```
+
+So a trigger on `^Class:\s+(\w+)$` would capture it whenever `status` is sent.
+
 Things to figure out:
-- Where the class appears in game output (character screen, status screen, or login sequence) so we know what trigger to write
 - Whether to look up all 6 class XP tables from the game docs or derive them empirically from observed level-up events
