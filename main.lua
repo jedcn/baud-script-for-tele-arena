@@ -245,7 +245,7 @@ local function scheduleReroll()
   if taPackage.reRollTimerPending then return end
   taPackage.reRollTimerPending = true
   local gen = taPackage.reRollGeneration
-  createTimer(1000, function()
+  createTimer(500, function()
     if taPackage.reRollGeneration ~= gen then return end
     taPackage.reRollTimerPending = false
     if taPackage.reRolling then send("reroll") end
