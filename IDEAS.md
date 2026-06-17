@@ -50,3 +50,23 @@ So a trigger on `^Class:\s+(\w+)$` would capture it whenever `status` is sent.
 
 Things to figure out:
 - Whether to look up all 6 class XP tables from the game docs or derive them empirically from observed level-up events
+
+## Archive tele-arena.tumblr.com
+
+Download all content from https://tele-arena.tumblr.com/, convert it to Markdown, and save it in a `docs/` directory. The game is over 30 years old and this material could disappear at any time.
+
+Credit the source at the top of each file. The archive should cover at minimum:
+- Experience tables per class
+- Items available for purchase (shops, prices)
+- Spells available (by class, cost, effect)
+- Any other reference material (races, stats, maps, commands)
+
+This gives us an offline reference we can query when building out XP tables, spell costs, and other game mechanics — and preserves the history.
+
+## Scrape In-Game Help
+
+Automate walking through the game's help system:
+1. Send `help` — capture the list of keywords from the response
+2. For each keyword, send `help <keyword>` — capture and save the output
+
+Store the results in `docs/help/` as one Markdown file per topic. This gives us authoritative in-game documentation that complements the Tumblr archive, covering anything the devs documented directly in the game itself.
