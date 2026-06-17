@@ -250,23 +250,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   local agility    = taPackage.character.agility      or 0
   local charisma   = taPackage.character.charisma     or 0
 
-  local t = taPackage.reRollTotals
-  t.intellect = t.intellect + intellect
-  t.knowledge = t.knowledge + knowledge
-  t.physique  = t.physique  + physique
-  t.stamina   = t.stamina   + stamina
-  t.agility   = t.agility   + agility
-  t.charisma  = t.charisma  + charisma
-
-  local m = taPackage.reRollMaxes
-  m.intellect = math.max(m.intellect, intellect)
-  m.knowledge = math.max(m.knowledge, knowledge)
-  m.physique  = math.max(m.physique,  physique)
-  m.stamina   = math.max(m.stamina,   stamina)
-  m.agility   = math.max(m.agility,   agility)
-  m.charisma  = math.max(m.charisma,  charisma)
-
-  taPackage.reRollCount = taPackage.reRollCount + 1
+  taPackage.reRollCount = (taPackage.reRollCount or 0) + 1
   local n = taPackage.reRollCount
 
   local targets = { intellect=20, knowledge=21, physique=20, stamina=22, agility=17, charisma=17 }
@@ -286,17 +270,6 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     taPackage.reRolling = false
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
     echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
-  elseif n % 10 == 0 then
-    local avg = function(x) return string.format("%.1f", x / n) end
-    echo("[re-roll] Averages after " .. n .. " rolls: "
-      .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
-      .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
-      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
-    echo("[re-roll] Maximums after " .. n .. " rolls: "
-      .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
-      .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
-      .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
-    scheduleReroll()
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
     scheduleReroll()
@@ -822,8 +795,6 @@ setStatus(status)
 
 local function reRollResetStats()
   taPackage.reRollCount = 0
-  taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
-  taPackage.reRollMaxes = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
   taPackage.reRollTimerPending = false
   taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
 end
