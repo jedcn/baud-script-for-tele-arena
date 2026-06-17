@@ -241,6 +241,66 @@ end, { type = "regex" })
 
 createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   setVitality(matches[2], matches[3])
+  if not taPackage.reRolling then return end
+
+  local intellect  = taPackage.character.intellect    or 0
+  local knowledge  = taPackage.character.knowledge    or 0
+  local physique   = taPackage.character.physique     or 0
+  local stamina    = taPackage.character.stamina      or 0
+  local agility    = taPackage.character.agility      or 0
+  local charisma   = taPackage.character.charisma     or 0
+
+  local t = taPackage.reRollTotals
+  t.intellect = t.intellect + intellect
+  t.knowledge = t.knowledge + knowledge
+  t.physique  = t.physique  + physique
+  t.stamina   = t.stamina   + stamina
+  t.agility   = t.agility   + agility
+  t.charisma  = t.charisma  + charisma
+
+  local m = taPackage.reRollMaxes
+  m.intellect = math.max(m.intellect, intellect)
+  m.knowledge = math.max(m.knowledge, knowledge)
+  m.physique  = math.max(m.physique,  physique)
+  m.stamina   = math.max(m.stamina,   stamina)
+  m.agility   = math.max(m.agility,   agility)
+  m.charisma  = math.max(m.charisma,  charisma)
+
+  taPackage.reRollCount = taPackage.reRollCount + 1
+  local n = taPackage.reRollCount
+
+  local targets = { intellect=20, knowledge=21, physique=20, stamina=22, agility=17, charisma=17 }
+  local threshold = 3
+  local deficit = math.max(0, targets.intellect - intellect)
+            + math.max(0, targets.knowledge - knowledge)
+            + math.max(0, targets.physique  - physique)
+            + math.max(0, targets.stamina   - stamina)
+            + math.max(0, targets.agility   - agility)
+            + math.max(0, targets.charisma  - charisma)
+
+  local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
+    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
+    .. " (deficit=" .. deficit .. ")"
+
+  if deficit <= threshold then
+    taPackage.reRolling = false
+    taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
+    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
+  elseif n % 10 == 0 then
+    local avg = function(x) return string.format("%.1f", x / n) end
+    echo("[re-roll] Averages after " .. n .. " rolls: "
+      .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
+      .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
+      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
+    echo("[re-roll] Maximums after " .. n .. " rolls: "
+      .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
+      .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
+      .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
+    scheduleReroll()
+  else
+    echo("[re-roll] " .. summary .. " — re-rolling...")
+    scheduleReroll()
+  end
 end, { type = "regex" })
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
@@ -765,12 +825,15 @@ local function reRollResetStats()
   taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
   taPackage.reRollMaxes = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
   taPackage.reRollTimerPending = false
+  taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
 end
 
 local function scheduleReroll()
   if taPackage.reRollTimerPending then return end
   taPackage.reRollTimerPending = true
+  local gen = taPackage.reRollGeneration
   createTimer(1000, function()
+    if taPackage.reRollGeneration ~= gen then return end
     taPackage.reRollTimerPending = false
     if taPackage.reRolling then send("reroll") end
   end, { type = "once" })
@@ -785,69 +848,10 @@ end, { type = "regex" })
 createAlias("^re-roll-stop$", function()
   taPackage.reRolling = false
   taPackage.reRollTimerPending = false
+  taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
   echo("[re-roll] Stopped.")
 end, { type = "regex" })
 
-createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
-  if not taPackage.reRolling then return end
-  local intellect  = taPackage.character.intellect    or 0
-  local knowledge  = taPackage.character.knowledge    or 0
-  local physique   = taPackage.character.physique     or 0
-  local stamina    = taPackage.character.stamina      or 0
-  local agility    = taPackage.character.agility      or 0
-  local charisma   = taPackage.character.charisma     or 0
-
-  local t = taPackage.reRollTotals
-  t.intellect = t.intellect + intellect
-  t.knowledge = t.knowledge + knowledge
-  t.physique  = t.physique  + physique
-  t.stamina   = t.stamina   + stamina
-  t.agility   = t.agility   + agility
-  t.charisma  = t.charisma  + charisma
-
-  local m = taPackage.reRollMaxes
-  m.intellect = math.max(m.intellect, intellect)
-  m.knowledge = math.max(m.knowledge, knowledge)
-  m.physique  = math.max(m.physique,  physique)
-  m.stamina   = math.max(m.stamina,   stamina)
-  m.agility   = math.max(m.agility,   agility)
-  m.charisma  = math.max(m.charisma,  charisma)
-
-  taPackage.reRollCount = taPackage.reRollCount + 1
-  local n = taPackage.reRollCount
-
-  local targets = { intellect=20, knowledge=21, physique=20, stamina=22, agility=17, charisma=17 }
-  local threshold = 3
-  local deficit = math.max(0, targets.intellect - intellect)
-            + math.max(0, targets.knowledge - knowledge)
-            + math.max(0, targets.physique  - physique)
-            + math.max(0, targets.stamina   - stamina)
-            + math.max(0, targets.agility   - agility)
-            + math.max(0, targets.charisma  - charisma)
-
-  local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
-    .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
-    .. " (deficit=" .. deficit .. ")"
-
-  if deficit <= threshold then
-    taPackage.reRolling = false
-    echo("[re-roll] Done after " .. n .. " rolls! " .. summary)
-  elseif n % 10 == 0 then
-    local avg = function(x) return string.format("%.1f", x / n) end
-    echo("[re-roll] Averages after " .. n .. " rolls: "
-      .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
-      .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
-      .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
-    echo("[re-roll] Maximums after " .. n .. " rolls: "
-      .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
-      .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
-      .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
-    scheduleReroll()
-  else
-    echo("[re-roll] " .. summary .. " — re-rolling...")
-    scheduleReroll()
-  end
-end, { type = "regex" })
 
 -- =========================================================================
 -- Ring gong and fight in arena
