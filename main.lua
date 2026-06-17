@@ -856,7 +856,7 @@ local function checkFleeArena()
   if taPackage.arenaState ~= "fighting" then return false end
   local hp = taPackage.character.vitalityCurrent
   local maxHp = taPackage.character.vitalityMax
-  local fleeThreshold = maxHp and math.floor(maxHp * 0.6) or 50
+  local fleeThreshold = maxHp and math.floor(maxHp * 0.75) or 50
   if hp and hp < fleeThreshold then
     taPackage.arenaState = "fleeing"
     arenaSend("w")
