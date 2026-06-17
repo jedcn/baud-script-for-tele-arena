@@ -80,3 +80,43 @@ Once the Tumblr archive and in-game help scrape exist, import them into the data
 - In-game help content alongside our own observed data — e.g. the help page for a spell next to how many times we've cast it and what it actually healed
 
 The goal is one page you can open after a session and use both as a debrief and as a reference guide.
+
+## Two-Character Party Script
+
+A separate script for running a two-character party where a human controls the leader and a script controls the supporter.
+
+**Setup:** Leader is a Warrior (human-controlled), supporter is an Acolyte (script-controlled, running its own baud instance).
+
+### Following
+
+The supporter watches for the leader leaving the room and follows them. If the leader goes north, the supporter goes north. The supporter stays one step behind, always in the same room.
+
+### Combat assist
+
+When the supporter sees that the leader has engaged a monster, it:
+
+- Begins attacking the same monster (`kill <monster>`)
+- Watches for the monster attacking the leader — if so, casts heal on the leader (`cast motu <leader>`)
+- Watches for the monster attacking the supporter itself — if so, casts heal on itself (`cast motu <self>`)
+
+### Retreat
+
+If the leader flees the fight, or says `retreat` in the room, the supporter:
+
+1. Stops attacking
+2. Waits for the leader to leave the room
+3. Follows them out
+
+### Out-of-combat heal commands
+
+The leader can say things in the room that the supporter acts on:
+
+- `heal me` → supporter casts heal on the leader
+- `heal yourself` → supporter casts heal on itself
+
+### Things to figure out
+
+- How the supporter detects which monster the leader attacked (look for `<leader> attacks <monster>` in room text)
+- How to detect the leader leaving vs. being in the same room during a chase
+- Mana management — what does the supporter do if it runs out of mana mid-fight?
+- Whether the two baud instances need any coordination beyond watching room text, or if they can operate independently
