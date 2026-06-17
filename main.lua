@@ -763,6 +763,7 @@ setStatus(status)
 local function reRollResetStats()
   taPackage.reRollCount = 0
   taPackage.reRollTotals = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
+  taPackage.reRollMaxes = { intellect=0, knowledge=0, physique=0, stamina=0, agility=0, charisma=0 }
 end
 
 createAlias("^re-roll-for-good-stats$", function()
@@ -792,6 +793,15 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
   t.stamina   = t.stamina   + stamina
   t.agility   = t.agility   + agility
   t.charisma  = t.charisma  + charisma
+
+  local m = taPackage.reRollMaxes
+  m.intellect = math.max(m.intellect, intellect)
+  m.knowledge = math.max(m.knowledge, knowledge)
+  m.physique  = math.max(m.physique,  physique)
+  m.stamina   = math.max(m.stamina,   stamina)
+  m.agility   = math.max(m.agility,   agility)
+  m.charisma  = math.max(m.charisma,  charisma)
+
   taPackage.reRollCount = taPackage.reRollCount + 1
   local n = taPackage.reRollCount
 
@@ -809,6 +819,10 @@ createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
       .. "Int=" .. avg(t.intellect) .. " Kno=" .. avg(t.knowledge)
       .. " Phy=" .. avg(t.physique) .. " Sta=" .. avg(t.stamina)
       .. " Agi=" .. avg(t.agility) .. " Cha=" .. avg(t.charisma))
+    echo("[re-roll] Maximums after " .. n .. " rolls: "
+      .. "Int=" .. m.intellect .. " Kno=" .. m.knowledge
+      .. " Phy=" .. m.physique .. " Sta=" .. m.stamina
+      .. " Agi=" .. m.agility .. " Cha=" .. m.charisma)
     send("reroll")
   else
     echo("[re-roll] " .. summary .. " — re-rolling...")
