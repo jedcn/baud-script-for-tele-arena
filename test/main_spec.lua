@@ -1658,20 +1658,20 @@ describe("ring-gong-and-fight-in-arena", function()
             timerCreated = nil
         end)
 
-        it("creates 15s timer on move-rate-limit when arena is active", function()
+        it("creates 30s timer on move-rate-limit when arena is active", function()
             taPackage.arenaState = "fleeing"
             taPackage.arenaLastCmd = "w"
             helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
             assert.is_not_nil(timerCreated)
-            assert.are.equal(15000, timerCreated.interval)
+            assert.are.equal(30000, timerCreated.interval)
         end)
 
-        it("creates 15s timer on attack-rate-limit when arena is active", function()
+        it("creates 30s timer on attack-rate-limit when arena is active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaLastCmd = "a skeleton"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_not_nil(timerCreated)
-            assert.are.equal(15000, timerCreated.interval)
+            assert.are.equal(30000, timerCreated.interval)
         end)
 
         it("does not create timer when arenaState is nil", function()
