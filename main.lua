@@ -1017,10 +1017,7 @@ end, { type = "regex" })
 
 createTrigger("^You cannot leave in the heat of battle!$", function()
   if taPackage.arenaState ~= "fleeing" then return end
-  -- Can't flee right now; fight back so we're not just standing there.
-  -- checkFleeArena will re-trigger on the next attack result and retry fleeing.
-  taPackage.arenaState = "fighting"
-  arenaAttack()
+  arenaSend("w")
 end, { type = "regex" })
 
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)
