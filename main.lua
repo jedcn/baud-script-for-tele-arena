@@ -902,6 +902,12 @@ local function checkFleeArena()
   return false
 end
 
+local function departForTavern()
+  taPackage.arenaState = "tavern"
+  echo("[arena] Heading to tavern.")
+  arenaSend("w")
+end
+
 createAlias("^ring-gong-and-fight-in-arena$", function()
   taPackage.arenaState = "ringing"
   arenaSend("ring gong")
@@ -965,10 +971,14 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
     if room == "north plaza" then
       arenaSend("ne")
     elseif room == "tavern" then
-      for _, cmd in ipairs(taPackage.tavernQueue or {}) do
-        send(cmd)
+      if taPackage.needsDrinks then
+        for _ = 1, 3 do send("buy drink") end
+        taPackage.needsDrinks = nil
       end
-      taPackage.tavernQueue = {}
+      if taPackage.needsMeal then
+        for _ = 1, 3 do send("buy meal") end
+        taPackage.needsMeal = nil
+      end
       taPackage.arenaState = "returning"
       arenaSend("sw")
     end
@@ -990,28 +1000,27 @@ end, { type = "regex" })
 createTrigger("^You're thirsty\\.$", function()
   if not taPackage.arenaState then return end
   taPackage.needsDrinks = true
-  echo("[arena] Thirsty — will buy drinks after healing.")
+  if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+    departForTavern()
+  else
+    echo("[arena] Thirsty — will buy drinks at next tavern visit.")
+  end
 end, { type = "regex" })
 
 createTrigger("^You're hungry\\.$", function()
   if not taPackage.arenaState then return end
   taPackage.needsMeal = true
-  echo("[arena] Hungry — will buy a meal after healing.")
+  if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+    departForTavern()
+  else
+    echo("[arena] Hungry — will buy a meal at next tavern visit.")
+  end
 end, { type = "regex" })
 
 createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(matches)
   if taPackage.arenaState ~= "healing" then return end
   if taPackage.needsDrinks or taPackage.needsMeal then
     taPackage.arenaState = "tavern"
-    taPackage.tavernQueue = {}
-    if taPackage.needsDrinks then
-      for _ = 1, 3 do table.insert(taPackage.tavernQueue, "buy drink") end
-      taPackage.needsDrinks = nil
-    end
-    if taPackage.needsMeal then
-      for _ = 1, 3 do table.insert(taPackage.tavernQueue, "buy meal") end
-      taPackage.needsMeal = nil
-    end
     echo("[arena] Heading to tavern.")
   else
     taPackage.arenaState = "returning"
@@ -1020,7 +1029,7 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
 end, { type = "regex" })
 
 createTrigger("^You cannot leave in the heat of battle!$", function()
-  if taPackage.arenaState ~= "fleeing" then return end
+  if taPackage.arenaState ~= "fleeing" and taPackage.arenaState ~= "tavern" then return end
   arenaSend("w")
 end, { type = "regex" })
 

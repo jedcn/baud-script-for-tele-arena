@@ -1668,6 +1668,111 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("thirsty and hungry during arena", function()
+
+        it("departs for tavern immediately when thirsty while fighting", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're thirsty.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+            assert.is_true(taPackage.needsDrinks)
+        end)
+
+        it("departs for tavern immediately when hungry while fighting", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're hungry.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+            assert.is_true(taPackage.needsMeal)
+        end)
+
+        it("departs for tavern immediately when thirsty while ringing", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You're thirsty.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("does not depart again when second need fires after already heading to tavern", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're thirsty.")
+            helper.sendCalls = {}
+            helper.simulateLine("You're hungry.")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_true(taPackage.needsMeal)
+        end)
+
+        it("just sets flag when thirsty while fleeing", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You're thirsty.")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_true(taPackage.needsDrinks)
+        end)
+
+        it("goes to tavern state after healing when thirsty", function()
+            taPackage.arenaState = "healing"
+            taPackage.needsDrinks = true
+            helper.simulateLine("The priests heal all your wounds for 2 crowns.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("e", helper.sendCalls[1])
+        end)
+
+        it("buys 3 drinks when entering tavern with needsDrinks", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsDrinks = true
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal("buy drink", helper.sendCalls[1])
+            assert.are.equal("buy drink", helper.sendCalls[2])
+            assert.are.equal("buy drink", helper.sendCalls[3])
+            assert.is_nil(taPackage.needsDrinks)
+        end)
+
+        it("buys 3 meals when entering tavern with needsMeal", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsMeal = true
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal("buy meal", helper.sendCalls[1])
+            assert.are.equal("buy meal", helper.sendCalls[2])
+            assert.are.equal("buy meal", helper.sendCalls[3])
+            assert.is_nil(taPackage.needsMeal)
+        end)
+
+        it("buys both drinks and meals when both needed", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsDrinks = true
+            taPackage.needsMeal = true
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal("buy drink", helper.sendCalls[1])
+            assert.are.equal("buy drink", helper.sendCalls[2])
+            assert.are.equal("buy drink", helper.sendCalls[3])
+            assert.are.equal("buy meal", helper.sendCalls[4])
+            assert.are.equal("buy meal", helper.sendCalls[5])
+            assert.are.equal("buy meal", helper.sendCalls[6])
+        end)
+
+        it("retries w and stays in tavern state when cannot leave in heat of battle", function()
+            taPackage.arenaState = "tavern"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("navigates north plaza -> ne -> tavern when in tavern state", function()
+            taPackage.arenaState = "tavern"
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("ne", helper.sendCalls[1])
+        end)
+
+        it("departs tavern sw and transitions to returning", function()
+            taPackage.arenaState = "tavern"
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+    end)
+
     describe("healing trigger ignored outside arena script", function()
 
         it("does not affect state when arenaState is not healing", function()
