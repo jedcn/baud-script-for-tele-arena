@@ -815,6 +815,7 @@ local function status()
   local gold = getGold() and tostring(getGold()) or "?"
 
   local segments = {
+    { text = taPackage.character.name or "?", fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
