@@ -1572,7 +1572,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("does not flee when HP is still fine after attack", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("The lizard man attacked you with his scimitar for 2 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
             assert.are.equal(0, #helper.sendCalls)
