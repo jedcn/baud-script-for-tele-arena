@@ -81,6 +81,14 @@ function createAlias(pattern, callback, options)
     })
 end
 
+function createOutboundTrigger(pattern, callback, options)
+    table.insert(M.outboundTriggers, {
+        pattern = pattern,
+        callback = callback,
+        options = options or {}
+    })
+end
+
 function createTimer(interval, callback, options)
     return "mock_timer_id"
 end
