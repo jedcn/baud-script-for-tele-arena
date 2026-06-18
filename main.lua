@@ -810,6 +810,7 @@ end
 local function status()
   local charStatus = getCharacterStatus() or "?"
   local vitalityCurrent, vitalityMax = getVitality()
+  local manaCurrent, manaMax = getMana()
   local xp = getExperience()
   local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
   local gold = getGold() and tostring(getGold()) or "?"
@@ -820,14 +821,17 @@ local function status()
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
+    { text = "MP:", fg = "green" },
+    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
+    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "cyan" },
     { text = "XP:" },
     { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
       fg = "white" },
     { text = "Status:" },
-    { text = charStatus, fg = "white" },
+    { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },
     { text = "Gold:" },
-    { text = gold, fg = "white" },
+    { text = gold, fg = "yellow" },
   }
   return segments
 end
