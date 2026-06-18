@@ -1082,6 +1082,17 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
   end
 end, { type = "regex" })
 
+createAlias("^cast\\.heal$", function()
+  local name = taPackage.character.name
+  if name then
+    send("cast motu " .. name:lower())
+  end
+end, { type = "regex" })
+
+createAlias("^cast\\.heal (.+)$", function(matches)
+  send("cast motu " .. matches[2])
+end, { type = "regex" })
+
 createTrigger("^Username:\\s*$", function()
   taPackage.awaitingUsername = true
 end, { type = "regex" })
