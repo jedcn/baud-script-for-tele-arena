@@ -674,7 +674,7 @@ end, { type = "regex" })
 -- World map triggers
 -- =========================================================================
 
-createTrigger("^You(?:'re| are)(?: inside(?: the)?| in (?:the|an?)) (.+)\\.$", function(matches)
+local function handleRoomEntry(matches)
   local newRoom = matches[2]
   if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
     taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, 0)
@@ -688,7 +688,16 @@ createTrigger("^You(?:'re| are)(?: inside(?: the)?| in (?:the|an?)) (.+)\\.$", f
   taPackage.prevRoom = taPackage.currentRoom
   taPackage.currentRoom = newRoom
   taPackage.pendingDirection = nil
-end, { type = "regex" })
+end
+
+createTrigger("^You're in the (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You are in the (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're in an? (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You are in an? (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're inside the (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You are inside the (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're inside an? (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You are inside an? (.+)\\.$", handleRoomEntry, { type = "regex" })
 
 local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw" }
 for _, dir in ipairs(moveDirections) do
@@ -801,23 +810,15 @@ end
 local function status()
   local charStatus = getCharacterStatus() or "?"
   local vitalityCurrent, vitalityMax = getVitality()
-  local vitalityText = (vitalityCurrent and vitalityMax)
-    and (vitalityCurrent .. "/" .. vitalityMax)
-    or "?"
   local xp = getExperience()
   local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
   local gold = getGold() and tostring(getGold()) or "?"
 
-  local manaCurrent, manaMax = getMana()
   local segments = {
-    { text = taPackage.character.name or "?", fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
-    { text = "MP:" },
-    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
-    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "white" },
     { text = "XP:" },
     { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
@@ -852,6 +853,19 @@ createAlias("^re-roll-stop$", function()
   end, { repeating = false })
 end, { type = "regex" })
 
+createTrigger("^Encumberance:\\s+\\d+ / \\d+$", function()
+  if not taPackage.reRolling then return end
+  local physique = getPhysique() or 0
+  local stamina = getStamina() or 0
+  if physique >= 29 and stamina >= 29 then
+    taPackage.reRolling = false
+    echo("[re-roll] Done!")
+  else
+    send("reroll")
+    echo("[re-roll] re-rolling... (Phy=" .. physique .. " Sta=" .. stamina .. ")")
+  end
+end, { type = "regex" })
+
 
 -- =========================================================================
 -- Ring gong and fight in arena
@@ -874,7 +888,7 @@ local function checkFleeArena()
   if taPackage.arenaState ~= "fighting" then return false end
   local hp = taPackage.character.vitalityCurrent
   local maxHp = taPackage.character.vitalityMax
-  local fleeThreshold = maxHp and math.floor(maxHp * 0.75) or 50
+  local fleeThreshold = maxHp and math.floor(maxHp * 0.5) or 50
   if hp and hp < fleeThreshold then
     taPackage.arenaState = "fleeing"
     arenaSend("w")
