@@ -1,5 +1,9 @@
 # Baud Script for Tele-Arena
 
+## Testing
+
+- Run `just test` after every change to verify nothing is broken.
+
 ## Committing
 
 - Commit after every logical change — don't batch unrelated work into one commit.
