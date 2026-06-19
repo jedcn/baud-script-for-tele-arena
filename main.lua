@@ -1124,6 +1124,7 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^You're thirsty\\.$", function()
+  setCharacterStatus("Thirsty")
   if not taPackage.arenaState then return end
   taPackage.needsDrinks = true
   if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
