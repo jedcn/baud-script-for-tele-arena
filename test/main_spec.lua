@@ -170,6 +170,12 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(455, getGold())
         end)
 
+        it("increases gold when withdrawing from vault", function()
+            helper.simulateLine("You are carrying 100 gold crowns.")
+            helper.simulateLine("You withdrew 1 gold from your account.")
+            assert.are.equal(101, getGold())
+        end)
+
     end)
 
     -- =========================================================================
