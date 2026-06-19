@@ -2039,22 +2039,27 @@ describe("ta.follow", function()
             assert.is_true(found)
         end)
 
-        it("sends ta.following notification via game", function()
+        it("sends 'join <target>' via game", function()
             helper.simulateAlias("ta.follow tojolias")
-            assert.are.equal("ta.following: tojolias", helper.sendCalls[1])
+            assert.are.equal("join tojolias", helper.sendCalls[1])
         end)
 
     end)
 
-    describe("ta.following trigger (received by followed character)", function()
+    describe("join request trigger (received by leader)", function()
 
-        it("sets followedBy when notification received", function()
-            helper.simulateLine("From Pelayo: ta.following: tojolias")
+        it("sets followedBy when join request received", function()
+            helper.simulateLine("Pelayo is asking to join your group.")
             assert.are.equal("Pelayo", taPackage.followedBy)
         end)
 
-        it("echoes who is following", function()
-            helper.simulateLine("From Pelayo: ta.following: tojolias")
+        it("sends 'add <name>' in response", function()
+            helper.simulateLine("Pelayo is asking to join your group.")
+            assert.are.equal("add pelayo", helper.sendCalls[1])
+        end)
+
+        it("echoes who is now following", function()
+            helper.simulateLine("Pelayo is asking to join your group.")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "Pelayo") and string.find(msg, "following") then found = true end
