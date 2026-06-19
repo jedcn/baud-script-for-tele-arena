@@ -881,18 +881,6 @@ createAlias("^re-roll-stop$", function()
   end, { repeating = false })
 end, { type = "regex" })
 
-createTrigger("^Encumberance:\\s+\\d+ / \\d+$", function()
-  if not taPackage.reRolling then return end
-  local physique = getPhysique() or 0
-  local stamina = getStamina() or 0
-  if physique >= 29 and stamina >= 29 then
-    taPackage.reRolling = false
-    echo("[re-roll] Done!")
-  else
-    send("reroll")
-    echo("[re-roll] re-rolling... (Phy=" .. physique .. " Sta=" .. stamina .. ")")
-  end
-end, { type = "regex" })
 
 
 -- =========================================================================
