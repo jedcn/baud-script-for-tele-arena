@@ -1823,6 +1823,19 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("sends only one attack when monster attacks twice in the same round", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateLine("The lizard man attacked you with his scimitar for 2 damage!")
+            helper.simulateLine("The lizard man attacked you, but his scimitar glanced off your armor!")
+            local count = 0
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "a lizard" then count = count + 1 end
+            end
+            assert.are.equal(1, count)
+        end)
+
     end)
 
     describe("fleeing and healing", function()

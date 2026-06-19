@@ -917,6 +917,8 @@ end
 local function arenaAttack()
   local name = taPackage.arenaMonster
   if name then
+    if taPackage.arenaAttackPending then return end
+    taPackage.arenaAttackPending = true
     arenaDebugEcho("attack-sent")
     arenaSend("a " .. name:match("^(%S+)"))
   end
@@ -995,6 +997,7 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
   taPackage.arenaLastCmd = nil
   taPackage.arenaFleeTimerPending = false
   taPackage.arenaDebug = nil
+  taPackage.arenaAttackPending = nil
   echo("[arena] Stopped.")
 end, { type = "regex" })
 
@@ -1010,18 +1013,21 @@ end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  taPackage.arenaAttackPending = false
   arenaDebugEcho("our-hit")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  taPackage.arenaAttackPending = false
   arenaDebugEcho("our-miss")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
 createTrigger("^The .+ dodged your attack!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  taPackage.arenaAttackPending = false
   arenaDebugEcho("monster-dodge")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
@@ -1029,6 +1035,7 @@ end, { type = "regex" })
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
   if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
   taPackage.arenaMonster = nil
+  taPackage.arenaAttackPending = false
   if taPackage.arenaState == "fighting" and not checkFleeArena() then
     if checkTrainingNeeded() then
       echo("[arena] Leveling up — heading to training hall.")
@@ -1175,6 +1182,7 @@ end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
   if not taPackage.arenaState then return end
+  taPackage.arenaAttackPending = false
   arenaDebugEcho("exhausted")
   if taPackage.character.name == "Pelayo" then
     send("cast motu pelayo")
