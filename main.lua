@@ -904,9 +904,16 @@ local function arenaSend(cmd)
   send(cmd)
 end
 
+local function arenaDebugEcho(label)
+  if taPackage.arenaDebug then
+    echo("[T] " .. os.date("%H:%M:%S") .. " " .. label)
+  end
+end
+
 local function arenaAttack()
   local name = taPackage.arenaMonster
   if name then
+    arenaDebugEcho("attack-sent")
     arenaSend("a " .. name:match("^(%S+)"))
   end
 end
@@ -951,14 +958,16 @@ local function scheduleArenaXpCheck()
   end, { repeating = false })
 end
 
-createAlias("^ring-gong-and-fight-in-arena$", function()
+createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
+  taPackage.arenaDebug = matches[2] == " debug"
   taPackage.arenaSessionStartXp = taPackage.character.experience
   taPackage.arenaSessionStartTime = os.time()
   taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
   taPackage.arenaXpCheckPending = false
   taPackage.arenaState = "ringing"
   local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
-  echo("[arena] Session started. XP: " .. startXpStr)
+  local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
+  echo("[arena] Session started" .. debugSuffix .. ". XP: " .. startXpStr)
   scheduleArenaXpCheck()
   arenaSend("ring gong")
 end, { type = "regex" })
@@ -980,6 +989,7 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
   taPackage.arenaMonster = nil
   taPackage.arenaLastCmd = nil
   taPackage.arenaFleeTimerPending = false
+  taPackage.arenaDebug = nil
   echo("[arena] Stopped.")
 end, { type = "regex" })
 
@@ -995,16 +1005,19 @@ end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("our-hit")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("our-miss")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
 createTrigger("^The .+ dodged your attack!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("monster-dodge")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
@@ -1026,16 +1039,19 @@ end, { type = "regex" })
 
 createTrigger("^The .+ attacked you .+ for \\d+ damage!$", function()
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("monster-hit")
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
 
 createTrigger("^The .+ attacked you, but .+ glanced off your armor!$", function()
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("monster-glance")
   arenaAttack()
 end, { type = "regex" })
 
 createTrigger("^The .+'s? .+ misses? you!$", function()
   if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("monster-miss")
   arenaAttack()
 end, { type = "regex" })
 
@@ -1148,6 +1164,7 @@ end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
   if not taPackage.arenaState then return end
+  arenaDebugEcho("exhausted")
   if taPackage.character.name == "Pelayo" then
     send("cast motu pelayo")
   end
