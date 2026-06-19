@@ -1795,11 +1795,21 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("buy healing", helper.sendCalls[1])
         end)
 
-        it("retries w and stays fleeing when cannot leave in heat of battle", function()
+        it("schedules a retry and stays fleeing when cannot leave in heat of battle", function()
             taPackage.arenaState = "fleeing"
             helper.simulateLine("You cannot leave in the heat of battle!")
             assert.are.equal("fleeing", taPackage.arenaState)
-            assert.are.equal("w", helper.sendCalls[1])
+            assert.are.equal(0, #helper.sendCalls)  -- no immediate send
+            assert.is_true(taPackage.arenaFleeTimerPending)
+        end)
+
+        it("does not stack multiple retries for repeated cannot-leave messages", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_true(taPackage.arenaFleeTimerPending)
         end)
 
         it("starts returning east after healing", function()
@@ -1922,11 +1932,12 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("buy meal", helper.sendCalls[6])
         end)
 
-        it("retries w and stays in tavern state when cannot leave in heat of battle", function()
+        it("schedules a retry and stays in tavern state when cannot leave in heat of battle", function()
             taPackage.arenaState = "tavern"
             helper.simulateLine("You cannot leave in the heat of battle!")
             assert.are.equal("tavern", taPackage.arenaState)
-            assert.are.equal("w", helper.sendCalls[1])
+            assert.are.equal(0, #helper.sendCalls)  -- no immediate send
+            assert.is_true(taPackage.arenaFleeTimerPending)
         end)
 
         it("navigates north plaza -> ne -> tavern when in tavern state", function()

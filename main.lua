@@ -979,6 +979,7 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
   taPackage.arenaState = nil
   taPackage.arenaMonster = nil
   taPackage.arenaLastCmd = nil
+  taPackage.arenaFleeTimerPending = false
   echo("[arena] Stopped.")
 end, { type = "regex" })
 
@@ -1110,7 +1111,15 @@ end, { type = "regex" })
 
 createTrigger("^You cannot leave in the heat of battle!$", function()
   if taPackage.arenaState ~= "fleeing" and taPackage.arenaState ~= "tavern" then return end
-  arenaSend("w")
+  if taPackage.arenaFleeTimerPending then return end
+  taPackage.arenaFleeTimerPending = true
+  local gen = taPackage.arenaRetryGeneration or 0
+  createTimer(2000, function()
+    taPackage.arenaFleeTimerPending = false
+    if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
+      arenaSend("w")
+    end
+  end, { repeating = false })
 end, { type = "regex" })
 
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)
