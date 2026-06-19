@@ -1062,7 +1062,7 @@ createTrigger("^You are still physically exhausted from your previous activities
   end
 end, { type = "regex" })
 
-createOutboundTrigger("^cast motu ", function()
+createOutboundTrigger("^cast kamotu ", function()
   local current = taPackage.character.manaCurrent
   if current then
     taPackage.character.manaCurrent = math.max(0, current - 1)
@@ -1085,12 +1085,12 @@ end, { type = "regex" })
 createAlias("^cast\\.heal$", function()
   local name = taPackage.character.name
   if name then
-    send("cast motu " .. name:lower())
+    send("cast kamotu " .. name:lower())
   end
 end, { type = "regex" })
 
 createAlias("^cast\\.heal (.+)$", function(matches)
-  send("cast motu " .. matches[2])
+  send("cast kamotu " .. matches[2])
 end, { type = "regex" })
 
 createTrigger("^Username:\\s*$", function()

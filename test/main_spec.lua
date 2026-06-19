@@ -1906,16 +1906,16 @@ describe("cast.heal alias", function()
         dofile("main.lua")
     end)
 
-    it("sends cast motu <character name> with no argument", function()
+    it("sends cast kamotu <character name> with no argument", function()
         taPackage.character.name = "Pelayo"
         helper.simulateAlias("cast.heal")
-        assert.are.equal("cast motu pelayo", helper.sendCalls[1])
+        assert.are.equal("cast kamotu pelayo", helper.sendCalls[1])
     end)
 
     it("lowercases the character name", function()
         taPackage.character.name = "Tojolias"
         helper.simulateAlias("cast.heal")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
+        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
     end)
 
     it("sends nothing when no argument and character name is unknown", function()
@@ -1924,15 +1924,15 @@ describe("cast.heal alias", function()
         assert.are.equal(0, #helper.sendCalls)
     end)
 
-    it("sends cast motu <target> with one argument", function()
+    it("sends cast kamotu <target> with one argument", function()
         helper.simulateAlias("cast.heal tojolias")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
+        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
     end)
 
-    it("sends cast motu <target> regardless of character name", function()
+    it("sends cast kamotu <target> regardless of character name", function()
         taPackage.character.name = "Pelayo"
         helper.simulateAlias("cast.heal tojolias")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
+        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
     end)
 
 end)
