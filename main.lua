@@ -1093,6 +1093,24 @@ createAlias("^cast\\.heal (.+)$", function(matches)
   send("cast kamotu " .. matches[2])
 end, { type = "regex" })
 
+createOutboundTrigger("^cast motu ", function()
+  local current = taPackage.character.manaCurrent
+  if current then
+    taPackage.character.manaCurrent = math.max(0, current - 1)
+  end
+end, { type = "regex" })
+
+createAlias("^cast\\.minor\\.heal$", function()
+  local name = taPackage.character.name
+  if name then
+    send("cast motu " .. name:lower())
+  end
+end, { type = "regex" })
+
+createAlias("^cast\\.minor\\.heal (.+)$", function(matches)
+  send("cast motu " .. matches[2])
+end, { type = "regex" })
+
 createTrigger("^Username:\\s*$", function()
   taPackage.awaitingUsername = true
 end, { type = "regex" })
