@@ -935,6 +935,7 @@ local function checkFleeArena()
   local maxHp = taPackage.character.vitalityMax
   local fleeThreshold = maxHp and math.floor(maxHp * 0.6) or 50
   if hp and hp < fleeThreshold then
+    arenaDebugEcho("flee-triggered")
     taPackage.arenaState = "fleeing"
     arenaSend("w")
     return true
