@@ -825,8 +825,14 @@ local function status()
   local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
   local gold = getGold() and tostring(getGold()) or "?"
 
+  local charName = taPackage.character.name
+  local charClass = getClass()
+  local nameText = charName and charClass and (charName .. " [" .. charClass .. "]")
+                or charName
+                or "?"
+
   local segments = {
-    { text = taPackage.character.name or "?", fg = "white" },
+    { text = nameText, fg = "white" },
     { text = "HP:" },
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },

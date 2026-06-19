@@ -367,9 +367,15 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("?", segments[14].text)  -- Gold
         end)
 
-        it("shows player name in first segment", function()
+        it("shows player name in first segment when class is unknown", function()
             taPackage.character.name = "Sat"
             assert.are.equal("Sat", capturedFn()[1].text)
+        end)
+
+        it("shows name and class in first segment when both known", function()
+            taPackage.character.name = "Pelayo"
+            helper.simulateLine("Class:        Acolyte")
+            assert.are.equal("Pelayo [Acolyte]", capturedFn()[1].text)
         end)
 
         it("shows current and max vitality in separate segments", function()
