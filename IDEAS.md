@@ -44,6 +44,18 @@ Credit the source at the top of each file. The archive should cover at minimum:
 
 This gives us an offline reference we can query when building out XP tables, spell costs, and other game mechanics — and preserves the history.
 
+### Progress
+
+The conversion approach is documented in [`docs/shrine/conversion-plan.md`](docs/shrine/conversion-plan.md). The index of all known shrine pages (with links to both the live Tumblr URLs and local files where converted) lives in [`docs/shrine/README.md`](docs/shrine/README.md).
+
+Pages converted so far:
+- `MAX_STATS.md` — max rerollable stats per class and race (8 classes × 6 races)
+- `WEAPONS_ARMOR.md` — best armor and weapon by level for each class/promoted class
+- `MAGIC_ITEMS.md` — all items with descriptions and prices
+- `SPELLS.md` — full spell lists for Necrolyte, Acolyte, Sorceror, and Druid
+- `PROMOTIONS.md` — stat gains at promotion for all 8 classes
+- `PROMOTED_EXP_CHART.md` — full 105-level post-promotion XP table
+
 ## Scrape In-Game Help
 
 Automate walking through the game's help system:
