@@ -164,6 +164,12 @@ describe("Tele-Arena triggers", function()
             assert.is_nil(getGold())
         end)
 
+        it("decreases gold when depositing at vault", function()
+            helper.simulateLine("You are carrying 755 gold crowns.")
+            helper.simulateLine("You deposited 300 gold in your account.")
+            assert.are.equal(455, getGold())
+        end)
+
     end)
 
     -- =========================================================================
