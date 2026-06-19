@@ -382,7 +382,7 @@ describe("Tele-Arena triggers", function()
             taPackage.character.name = "Pelayo"
             helper.simulateLine("Class:        Acolyte")
             taPackage.followTarget = "tojolias"
-            assert.are.equal("Pelayo [Acolyte] Following tojolias", capturedFn()[1].text)
+            assert.are.equal("Pelayo [Acolyte] Following Tojolias", capturedFn()[1].text)
         end)
 
         it("shows current and max vitality in separate segments", function()

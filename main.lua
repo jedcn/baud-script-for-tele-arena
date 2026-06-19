@@ -831,7 +831,8 @@ local function status()
                 or charName
                 or "?"
   if taPackage.followTarget then
-    nameText = nameText .. " Following " .. taPackage.followTarget
+    local ft = taPackage.followTarget
+    nameText = nameText .. " Following " .. ft:sub(1,1):upper() .. ft:sub(2)
   end
 
   local segments = {
