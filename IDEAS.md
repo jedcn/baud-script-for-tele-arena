@@ -70,7 +70,11 @@ A separate script for running a two-character party where a human controls the l
 
 ### Following
 
-The supporter watches for the leader leaving the room and follows them. If the leader goes north, the supporter goes north. The supporter stays one step behind, always in the same room.
+This has been implemented:
+
+```
+ta.follow <target>
+```
 
 ### Combat assist
 

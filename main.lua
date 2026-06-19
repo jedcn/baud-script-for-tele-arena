@@ -1150,6 +1150,18 @@ createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
   if cmd then send(cmd) end
 end, { type = "regex" })
 
+createTrigger("^(.+) has just gone downward\\.$", function(matches)
+  if not taPackage.followTarget then return end
+  if matches[2]:lower() ~= taPackage.followTarget then return end
+  send("d")
+end, { type = "regex" })
+
+createTrigger("^(.+) has just gone upward\\.$", function(matches)
+  if not taPackage.followTarget then return end
+  if matches[2]:lower() ~= taPackage.followTarget then return end
+  send("u")
+end, { type = "regex" })
+
 createTrigger("^Username:\\s*$", function()
   taPackage.awaitingUsername = true
 end, { type = "regex" })

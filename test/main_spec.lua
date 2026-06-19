@@ -2066,10 +2066,27 @@ describe("ta.follow", function()
             assert.are.equal("sw", helper.sendCalls[1])
         end)
 
-        it("sends 'u' when followed character goes up", function()
+        it("sends 'u' when followed character goes upward", function()
             taPackage.followTarget = "tojolias"
-            helper.simulateLine("Tojolias has just gone to the up.")
+            helper.simulateLine("Tojolias has just gone upward.")
             assert.are.equal("u", helper.sendCalls[1])
+        end)
+
+        it("sends 'd' when followed character goes downward", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone downward.")
+            assert.are.equal("d", helper.sendCalls[1])
+        end)
+
+        it("does nothing on upward when followTarget not set", function()
+            helper.simulateLine("Tojolias has just gone upward.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing on downward when a different character leaves", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Pelayo has just gone downward.")
+            assert.are.equal(0, #helper.sendCalls)
         end)
 
         it("does nothing when a different character leaves", function()
