@@ -1,0 +1,7 @@
+# General1
+
+Welcome to Tele-Arena. Tele-arena is basically a role playing swords & sorcery type adventure game similar to many popular games such as Dungeons & Dragons(tm), etc. It is a land where players and monsters battle for treasure and glory. When you first enter the game you will be asked two questions. The first is which race you would like to be. The second is which class you would like to be.
+
+Race refers to your physical appearance and characteristics. Some races are better suited to certain classes than others. The races currently common in the world of Tele-Arena are Elves, Dwarves, Gnomes, Humans, Goblins, and Half-ogres. Elves are lithe and intelligent and excel in spellcraft. Dwarves are tough and strong and are skilled in physical combat. Gnomes are quite agile and much heartier than elves, and do almost equally well as spellcasters or rogues. Humans are the 'normal' average that all other races are compared to and are equally suited for any class. Goblins are cunning and agile creatures who are shunned by most other races. They make very skillful rogues. Half-ogres are the toughest, and most durable of the races. They are usually the offspring of renegade ogres and their unwilling human captives. What they lack in intelligence, they make up for with brute strength.
+
+Class refers to your profession or calling in life. The current classes available are Warrior, Sorceror, Acolyte, Rogue, Hunter, Druid, Archer, and Necrolyte. Warriors rely on sheer muscle to defeat their enemies. They also get the best choice of armor and weapons.
