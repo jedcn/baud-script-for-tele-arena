@@ -834,8 +834,8 @@ local function status()
     local ft = taPackage.followTarget
     nameText = nameText .. " Following " .. ft:sub(1,1):upper() .. ft:sub(2)
   end
-  if taPackage.followedBy then
-    nameText = nameText .. " Leader"
+  if taPackage.followedBy and #taPackage.followedBy > 0 then
+    nameText = nameText .. " Leader (" .. #taPackage.followedBy .. ")"
   end
 
   local segments = {
@@ -1157,7 +1157,8 @@ end, { type = "regex" })
 
 createTrigger("^(.+) is asking to join your group\\.$", function(matches)
   local name = matches[2]
-  taPackage.followedBy = name
+  if not taPackage.followedBy then taPackage.followedBy = {} end
+  table.insert(taPackage.followedBy, name)
   send("add " .. name:lower())
   echo("[follow] " .. name .. " is now following you.")
 end, { type = "regex" })

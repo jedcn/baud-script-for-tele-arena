@@ -385,11 +385,18 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Pelayo [Acolyte] Following Tojolias", capturedFn()[1].text)
         end)
 
-        it("appends Leader when being followed", function()
+        it("appends Leader (N) when being followed", function()
             taPackage.character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
-            taPackage.followedBy = "Pelayo"
-            assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
+            taPackage.followedBy = { "Pelayo" }
+            assert.are.equal("Tojolias [Warrior] Leader (1)", capturedFn()[1].text)
+        end)
+
+        it("shows correct count with multiple followers", function()
+            taPackage.character.name = "Tojolias"
+            helper.simulateLine("Class:        Warrior")
+            taPackage.followedBy = { "Pelayo", "Sat", "Grog" }
+            assert.are.equal("Tojolias [Warrior] Leader (3)", capturedFn()[1].text)
         end)
 
         it("shows current and max vitality in separate segments", function()
@@ -2048,9 +2055,17 @@ describe("ta.follow", function()
 
     describe("join request trigger (received by leader)", function()
 
-        it("sets followedBy when join request received", function()
+        it("adds to followedBy list when join request received", function()
             helper.simulateLine("Pelayo is asking to join your group.")
-            assert.are.equal("Pelayo", taPackage.followedBy)
+            assert.are.equal("Pelayo", taPackage.followedBy[1])
+        end)
+
+        it("accumulates multiple followers", function()
+            helper.simulateLine("Pelayo is asking to join your group.")
+            helper.simulateLine("Sat is asking to join your group.")
+            assert.are.equal(2, #taPackage.followedBy)
+            assert.are.equal("Pelayo", taPackage.followedBy[1])
+            assert.are.equal("Sat", taPackage.followedBy[2])
         end)
 
         it("sends 'add <name>' in response", function()
