@@ -906,6 +906,17 @@ local function arenaAttack()
   end
 end
 
+local function checkTrainingNeeded()
+  local xp  = getExperience()
+  local cls = getClass()
+  local lvl = getLevel()
+  if not (xp and cls and lvl) then return false end
+  local thresholds = xpThresholds[cls]
+  if not thresholds then return false end
+  local nextThreshold = thresholds[lvl + 1]
+  return nextThreshold ~= nil and xp >= nextThreshold
+end
+
 local function checkFleeArena()
   if taPackage.arenaState ~= "fighting" then return false end
   local hp = taPackage.character.vitalityCurrent
@@ -995,8 +1006,15 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
   if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
   taPackage.arenaMonster = nil
   if taPackage.arenaState == "fighting" and not checkFleeArena() then
-    taPackage.arenaState = "ringing"
-    arenaSend("ring gong")
+    if checkTrainingNeeded() then
+      echo("[arena] Leveling up — heading to training hall.")
+      taPackage.arenaState = "training"
+      taPackage.arenaTrainingPhase = 1
+      arenaSend("w")
+    else
+      taPackage.arenaState = "ringing"
+      arenaSend("ring gong")
+    end
   end
 end, { type = "regex" })
 
@@ -1006,7 +1024,18 @@ end, { type = "regex" })
 
 createTrigger("^You're in the (.+)\\.$", function(matches)
   local room = matches[2]
-  if taPackage.arenaState == "fleeing" then
+  if taPackage.arenaState == "training" then
+    local phase = taPackage.arenaTrainingPhase or 1
+    if phase == 1 and room == "north plaza" then
+      taPackage.arenaTrainingPhase = 2
+      arenaSend("n")
+    elseif phase == 2 then
+      send("buy training")
+      arenaSend("s")
+      taPackage.arenaState = "returning"
+      taPackage.arenaTrainingPhase = nil
+    end
+  elseif taPackage.arenaState == "fleeing" then
     if room == "north plaza" then
       arenaSend("w")
     elseif room == "temple" then

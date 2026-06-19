@@ -1698,6 +1698,63 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("goes to train when XP has crossed the next level threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(60, 100)
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("training", taPackage.arenaState)
+            assert.are.equal(1, taPackage.arenaTrainingPhase)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        it("rings gong when XP is below next level threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(60, 100)
+            taPackage.character.experience = 500
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+    end)
+
+    describe("auto-training", function()
+
+        it("goes north when arriving at north plaza in training state", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaTrainingPhase = 1
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal(2, taPackage.arenaTrainingPhase)
+            assert.are.equal("n", helper.sendCalls[1])
+        end)
+
+        it("buys training and goes south when arriving at training hall", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaTrainingPhase = 2
+            helper.simulateLine("You're in the training hall.")
+            local boughtTraining = false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "buy training" then boughtTraining = true end
+            end
+            assert.is_true(boughtTraining)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("switches to returning state after buying training", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaTrainingPhase = 2
+            helper.simulateLine("You're in the training hall.")
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.is_nil(taPackage.arenaTrainingPhase)
+        end)
+
     end)
 
     describe("incoming monster attack", function()
