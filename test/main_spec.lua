@@ -1986,3 +1986,110 @@ describe("cast.minor.heal alias", function()
     end)
 
 end)
+
+-- =========================================================================
+-- Follow
+-- =========================================================================
+
+describe("ta.follow", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    describe("ta.follow alias", function()
+
+        it("sets followTarget to lowercase target name", function()
+            helper.simulateAlias("ta.follow tojolias")
+            assert.are.equal("tojolias", taPackage.followTarget)
+        end)
+
+        it("lowercases a mixed-case target name", function()
+            helper.simulateAlias("ta.follow Tojolias")
+            assert.are.equal("tojolias", taPackage.followTarget)
+        end)
+
+        it("echoes confirmation", function()
+            helper.simulateAlias("ta.follow tojolias")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "tojolias") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+    describe("ta.follow-stop alias", function()
+
+        it("clears followTarget", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateAlias("ta.follow-stop")
+            assert.is_nil(taPackage.followTarget)
+        end)
+
+        it("echoes confirmation", function()
+            helper.simulateAlias("ta.follow-stop")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Stopped") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+    end)
+
+    describe("departure trigger", function()
+
+        it("sends 'e' when followed character goes east", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone to the east.")
+            assert.are.equal("e", helper.sendCalls[1])
+        end)
+
+        it("sends 'ne' when followed character goes northeast", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone to the northeast.")
+            assert.are.equal("ne", helper.sendCalls[1])
+        end)
+
+        it("sends 'n' when followed character goes north", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone to the north.")
+            assert.are.equal("n", helper.sendCalls[1])
+        end)
+
+        it("sends 'sw' when followed character goes southwest", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone to the southwest.")
+            assert.are.equal("sw", helper.sendCalls[1])
+        end)
+
+        it("sends 'u' when followed character goes up", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Tojolias has just gone to the up.")
+            assert.are.equal("u", helper.sendCalls[1])
+        end)
+
+        it("does nothing when a different character leaves", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("Pelayo has just gone to the east.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when followTarget is not set", function()
+            helper.simulateLine("Tojolias has just gone to the east.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("matches case-insensitively (capitalized game output)", function()
+            helper.simulateAlias("ta.follow tojolias")
+            helper.sendCalls = {}
+            helper.simulateLine("Tojolias has just gone to the west.")
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+    end)
+
+end)

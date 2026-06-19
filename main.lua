@@ -1121,6 +1121,35 @@ createAlias("^cast\\.minor\\.heal (.+)$", function(matches)
   send("cast motu " .. matches[2])
 end, { type = "regex" })
 
+-- =========================================================================
+-- Follow
+-- =========================================================================
+
+local dirShort = {
+  north = "n", south = "s", east = "e", west = "w",
+  northeast = "ne", northwest = "nw", southeast = "se", southwest = "sw",
+  up = "u", down = "d",
+}
+
+createAlias("^ta\\.follow (.+)$", function(matches)
+  taPackage.followTarget = matches[2]:lower()
+  echo("[follow] Now following: " .. taPackage.followTarget)
+end, { type = "regex" })
+
+createAlias("^ta\\.follow-stop$", function()
+  taPackage.followTarget = nil
+  echo("[follow] Stopped following.")
+end, { type = "regex" })
+
+createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
+  if not taPackage.followTarget then return end
+  local name = matches[2]:lower()
+  if name ~= taPackage.followTarget then return end
+  local direction = matches[3]:lower()
+  local cmd = dirShort[direction]
+  if cmd then send(cmd) end
+end, { type = "regex" })
+
 createTrigger("^Username:\\s*$", function()
   taPackage.awaitingUsername = true
 end, { type = "regex" })
