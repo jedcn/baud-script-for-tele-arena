@@ -1154,7 +1154,7 @@ createTrigger("^You are still physically exhausted from your previous activities
   local cmd = taPackage.arenaLastCmd
   local gen = taPackage.arenaRetryGeneration or 0
   if cmd then
-    createTimer(3000, function()
+    createTimer(30000, function()
       if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
         arenaSend(cmd)
       end
