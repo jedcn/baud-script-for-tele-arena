@@ -834,6 +834,9 @@ local function status()
     local ft = taPackage.followTarget
     nameText = nameText .. " Following " .. ft:sub(1,1):upper() .. ft:sub(2)
   end
+  if taPackage.followedBy then
+    nameText = nameText .. " Leader"
+  end
 
   local segments = {
     { text = nameText, fg = "white" },

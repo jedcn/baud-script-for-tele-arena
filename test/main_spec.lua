@@ -385,6 +385,13 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Pelayo [Acolyte] Following Tojolias", capturedFn()[1].text)
         end)
 
+        it("appends Leader when being followed", function()
+            taPackage.character.name = "Tojolias"
+            helper.simulateLine("Class:        Warrior")
+            taPackage.followedBy = "Pelayo"
+            assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
+        end)
+
         it("shows current and max vitality in separate segments", function()
             helper.simulateLine("Vitality:     26 / 26")
             local segments = capturedFn()
