@@ -1249,6 +1249,15 @@ describe("Combat triggers", function()
             assert.is_true(found)
         end)
 
+        it("records a player dodge", function()
+            helper.simulateLine("You barely dodge the huge rat's attack!")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "DODGE") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
     end)
 
     describe("kill and loot", function()
@@ -1797,6 +1806,13 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             helper.simulateLine("The lizard man's poorly executed attack misses you!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("counter-attacks after player dodges monster attack", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateLine("You barely dodge the lizard man's attack!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 

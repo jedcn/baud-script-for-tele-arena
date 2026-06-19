@@ -770,6 +770,10 @@ createTrigger("^The (.+)'s? .+ misses? you!$", function(matches)
   taPackage.db.recordMonsterAttack(matches[2], "miss", nil)
 end, { type = "regex" })
 
+createTrigger("^You barely dodge the (.+)'s attack!$", function(matches)
+  taPackage.db.recordMonsterAttack(matches[2], "dodge", nil)
+end, { type = "regex" })
+
 -- =========================================================================
 -- Loot and kill triggers
 -- =========================================================================
@@ -1053,6 +1057,12 @@ end, { type = "regex" })
 createTrigger("^The .+'s? .+ misses? you!$", function()
   if taPackage.arenaState ~= "fighting" then return end
   arenaDebugEcho("monster-miss")
+  arenaAttack()
+end, { type = "regex" })
+
+createTrigger("^You barely dodge the .+'s attack!$", function()
+  if taPackage.arenaState ~= "fighting" then return end
+  arenaDebugEcho("player-dodge")
   arenaAttack()
 end, { type = "regex" })
 
