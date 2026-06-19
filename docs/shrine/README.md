@@ -15,12 +15,12 @@ It's not fetched in its entirety, but instead here is the information that might
 * [Max Stats](MAX_STATS.md)
 * [Agility](https://tele-arena.tumblr.com/agility)
 * [Weapons & Armor](WEAPONS_ARMOR.md)
-* [Magic Items](https://tele-arena.tumblr.com/magicitems)
-* [Spells](https://tele-arena.tumblr.com/spells)
+* [Magic Items](MAGIC_ITEMS.md)
+* [Spells](SPELLS.md)
 * [Runes](https://tele-arena.tumblr.com/runes)
 * [Rumors](https://tele-arena.tumblr.com/rumors)
-* [Promotions](https://tele-arena.tumblr.com/promogains)
-* [Promoted Exp Chart](https://tele-arena.tumblr.com/promoexp)
+* [Promotions](PROMOTIONS.md)
+* [Promoted Exp Chart](PROMOTED_EXP_CHART.md)
 * [ANSI](https://tele-arena.tumblr.com/ansi)
 
 ### Help
