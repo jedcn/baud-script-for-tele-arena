@@ -285,14 +285,15 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   taPackage.reRollCount = (taPackage.reRollCount or 0) + 1
   local n = taPackage.reRollCount
 
-  local targets = { intellect=0, knowledge=0, physique=21, stamina=22, agility=30, charisma=0 }
-  local threshold = 6
-  local deficit = math.max(0, targets.intellect - intellect)
-            + math.max(0, targets.knowledge - knowledge)
-            + math.max(0, targets.physique  - physique)
-            + math.max(0, targets.stamina   - stamina)
-            + math.max(0, targets.agility   - agility)
-            + math.max(0, targets.charisma  - charisma)
+  local targets = { intellect=16, knowledge=18, physique=21, stamina=22, agility=30, charisma=13 }
+  local threshold = 10
+  local required_deficit = math.max(0, targets.physique - physique)
+                         + math.max(0, targets.stamina  - stamina)
+                         + math.max(0, targets.agility  - agility)
+  local flex_deficit     = math.max(0, targets.intellect - intellect)
+                         + math.max(0, targets.knowledge - knowledge)
+                         + math.max(0, targets.charisma  - charisma)
+  local deficit = required_deficit + flex_deficit
 
   if not taPackage.reRollBestDeficit or deficit < taPackage.reRollBestDeficit then
     taPackage.reRollBestDeficit = deficit
@@ -303,7 +304,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
     .. " (deficit=" .. deficit .. " best=" .. best .. ")"
 
-  if deficit <= threshold then
+  if required_deficit == 0 and flex_deficit <= threshold then
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
     taPackage.reRollTimerPending = false
     echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
