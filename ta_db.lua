@@ -2,6 +2,11 @@ local TaDb = {}
 
 local db = dbOpen("tele-arena.db")
 
+-- WAL mode lets multiple sessions read concurrently while one writes.
+-- busy_timeout tells SQLite to retry for up to 5s before giving up on a lock.
+db:execute("PRAGMA journal_mode = WAL")
+db:execute("PRAGMA busy_timeout = 5000")
+
 db:execute([[CREATE TABLE IF NOT EXISTS rooms (
   name          TEXT PRIMARY KEY,
   description   TEXT,
