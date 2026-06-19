@@ -1250,6 +1250,83 @@ createAlias("^cast\\.minor\\.heal (.+)$", function(matches)
 end, { type = "regex" })
 
 -- =========================================================================
+-- Kill a single target
+-- =========================================================================
+
+local function killAttack()
+  local target = taPackage.killTarget
+  if target then
+    if taPackage.killAttackPending then return end
+    taPackage.killAttackPending = true
+    send("a " .. target:match("^(%S+)"))
+  end
+end
+
+createAlias("^kill (.+)$", function(matches)
+  if taPackage.arenaState then
+    echo("[kill] Cannot start — arena session is active.")
+    return
+  end
+  taPackage.killTarget = matches[2]
+  taPackage.killActive = true
+  taPackage.killAttackPending = false
+  taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
+  echo("[kill] Attacking " .. taPackage.killTarget .. ".")
+  killAttack()
+end, { type = "regex" })
+
+createAlias("^kill-stop$", function()
+  taPackage.killActive = false
+  taPackage.killTarget = nil
+  taPackage.killAttackPending = false
+  taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
+  echo("[kill] Stopped.")
+end, { type = "regex" })
+
+createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
+  if not taPackage.killActive then return end
+  taPackage.killAttackPending = false
+  killAttack()
+end, { type = "regex" })
+
+createTrigger("^Your attack missed!$", function()
+  if not taPackage.killActive then return end
+  taPackage.killAttackPending = false
+  killAttack()
+end, { type = "regex" })
+
+createTrigger("^The .+ dodged your attack!$", function()
+  if not taPackage.killActive then return end
+  taPackage.killAttackPending = false
+  killAttack()
+end, { type = "regex" })
+
+createTrigger("^You barely dodge the .+'s attack!$", function()
+  if not taPackage.killActive then return end
+  taPackage.killAttackPending = false
+  killAttack()
+end, { type = "regex" })
+
+createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
+  if not taPackage.killActive then return end
+  taPackage.killActive = false
+  taPackage.killTarget = nil
+  taPackage.killAttackPending = false
+  echo("[kill] " .. matches[2] .. " is dead.")
+end, { type = "regex" })
+
+createTrigger("^You are still physically exhausted from your previous activities!$", function()
+  if not taPackage.killActive then return end
+  taPackage.killAttackPending = false
+  local gen = taPackage.killGeneration or 0
+  createTimer(30000, function()
+    if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
+      killAttack()
+    end
+  end, { repeating = false })
+end, { type = "regex" })
+
+-- =========================================================================
 -- Follow
 -- =========================================================================
 

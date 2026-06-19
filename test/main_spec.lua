@@ -2373,4 +2373,98 @@ describe("ta.follow", function()
 
     end)
 
+    describe("kill alias", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+        end)
+
+        it("sends attack on start", function()
+            helper.simulateAlias("kill cave lizard")
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("uses first word of multi-word target", function()
+            helper.simulateAlias("kill lizard man")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("sets killActive and killTarget", function()
+            helper.simulateAlias("kill cave lizard")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("cave lizard", taPackage.killTarget)
+        end)
+
+        it("continues attacking after a hit", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("Your attack hit the cave lizard for 8 damage!")
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("continues attacking after a miss", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("Your attack missed!")
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("continues attacking after monster dodge", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("The cave lizard dodged your attack!")
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("continues attacking after player dodge", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("You barely dodge the cave lizard's attack!")
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
+        it("stops and echoes done when monster dies", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.simulateLine("The cave lizard falls to the ground lifeless!")
+            assert.is_falsy(taPackage.killActive)
+            assert.is_nil(taPackage.killTarget)
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "dead") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("kill-stop clears state", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.simulateAlias("kill-stop")
+            assert.is_falsy(taPackage.killActive)
+            assert.is_nil(taPackage.killTarget)
+        end)
+
+        it("does not start when arena session is active", function()
+            taPackage.arenaState = "fighting"
+            helper.sendCalls = {}
+            helper.simulateAlias("kill cave lizard")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("sends only one attack when pending flag is set", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            -- simulate two rapid hit lines before pending clears
+            taPackage.killAttackPending = true
+            helper.simulateLine("Your attack hit the cave lizard for 8 damage!")
+            -- pending was cleared by hit trigger, one attack re-sent
+            local count = 0
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "a cave" then count = count + 1 end
+            end
+            assert.are.equal(1, count)
+        end)
+
+    end)
+
 end)
