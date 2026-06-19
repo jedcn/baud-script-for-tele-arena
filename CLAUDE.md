@@ -2,7 +2,9 @@
 
 ## Client
 
-This script runs inside [baud](https://github.com/jedcn/baud), a custom MUD client. Do not assume Mudlet or any other client. The `createTrigger`, `createAlias`, `createTimer`, `send`, `echo` etc. APIs are baud's Lua scripting interface. To reload the script after changes, type `/lua reloadScript()` in baud.
+This script runs inside [baud](https://github.com/jedcn/baud), a custom MUD client. If changes are made to .lua files in this directory the user must run `/lua reloadScript()` in their session to get those changes.
+
+What is more: we have control over baud. This means that if we are bumping into a limitation with the script for tele-arena, we can modify the source of baud.
 
 ## Testing
 
