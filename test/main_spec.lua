@@ -2049,12 +2049,12 @@ describe("ta.follow", function()
     describe("ta.following trigger (received by followed character)", function()
 
         it("sets followedBy when notification received", function()
-            helper.simulateLine("From Pelayo: ta.following Tojolias")
+            helper.simulateLine("From Pelayo: ta.following: tojolias")
             assert.are.equal("Pelayo", taPackage.followedBy)
         end)
 
         it("echoes who is following", function()
-            helper.simulateLine("From Pelayo: ta.following Tojolias")
+            helper.simulateLine("From Pelayo: ta.following: tojolias")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "Pelayo") and string.find(msg, "following") then found = true end

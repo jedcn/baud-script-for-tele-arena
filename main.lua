@@ -1155,7 +1155,7 @@ createAlias("^ta\\.follow-stop$", function()
   echo("[follow] Stopped following.")
 end, { type = "regex" })
 
-createTrigger("^From (.+): ta\\.following (.+)$", function(matches)
+createTrigger("^From (.+): ta\\.following: (.+)$", function(matches)
   taPackage.followedBy = matches[2]
   echo("[follow] " .. matches[2] .. " is now following you.")
 end, { type = "regex" })
