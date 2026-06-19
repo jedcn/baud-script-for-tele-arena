@@ -1623,6 +1623,14 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
+        it("sends next attack after an adjective-qualified hit (HP fine)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(60, 100)
+            helper.simulateLine("Your skillful attack hit the lizard man for 10 damage!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
         it("flees when HP < 50 after a hit", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
@@ -1769,12 +1777,33 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("w", helper.sendCalls[1])
         end)
 
-        it("does not flee when HP is still fine after attack", function()
+        it("counter-attacks when HP is still fine after monster hit", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
             helper.simulateLine("The lizard man attacked you with his scimitar for 2 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("counter-attacks after a glancing blow", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateLine("The lizard man attacked you, but his scimitar glanced off your armor!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("counter-attacks after monster misses", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateLine("The lizard man's poorly executed attack misses you!")
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("does not counter-attack from glance when not fighting", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateLine("The lizard man attacked you, but his scimitar glanced off your armor!")
             assert.are.equal(0, #helper.sendCalls)
         end)
 
@@ -1989,12 +2018,12 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(30000, timerCreated.interval)
         end)
 
-        it("creates 30s timer on attack-rate-limit when arena is active", function()
+        it("creates 3s timer on attack-rate-limit when arena is active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaLastCmd = "a skeleton"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_not_nil(timerCreated)
-            assert.are.equal(30000, timerCreated.interval)
+            assert.are.equal(3000, timerCreated.interval)
         end)
 
         it("does not create timer when arenaState is nil", function()

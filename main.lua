@@ -993,7 +993,7 @@ createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(
   arenaAttack()
 end, { type = "regex" })
 
-createTrigger("^Your attack hit the .+ for \\d+ damage!$", function(matches)
+createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
   if taPackage.arenaState ~= "fighting" then return end
   if not checkFleeArena() then arenaAttack() end
 end, { type = "regex" })
@@ -1024,8 +1024,19 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
   end
 end, { type = "regex" })
 
-createTrigger("^The .+ attacked you .+ for \\d+ damage!$", function(matches)
-  checkFleeArena()
+createTrigger("^The .+ attacked you .+ for \\d+ damage!$", function()
+  if taPackage.arenaState ~= "fighting" then return end
+  if not checkFleeArena() then arenaAttack() end
+end, { type = "regex" })
+
+createTrigger("^The .+ attacked you, but .+ glanced off your armor!$", function()
+  if taPackage.arenaState ~= "fighting" then return end
+  arenaAttack()
+end, { type = "regex" })
+
+createTrigger("^The .+'s? .+ misses? you!$", function()
+  if taPackage.arenaState ~= "fighting" then return end
+  arenaAttack()
 end, { type = "regex" })
 
 createTrigger("^You're in the (.+)\\.$", function(matches)
@@ -1143,7 +1154,7 @@ createTrigger("^You are still physically exhausted from your previous activities
   local cmd = taPackage.arenaLastCmd
   local gen = taPackage.arenaRetryGeneration or 0
   if cmd then
-    createTimer(30000, function()
+    createTimer(3000, function()
       if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
         arenaSend(cmd)
       end
