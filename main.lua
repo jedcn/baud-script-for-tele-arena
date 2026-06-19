@@ -830,6 +830,9 @@ local function status()
   local nameText = charName and charClass and (charName .. " [" .. charClass .. "]")
                 or charName
                 or "?"
+  if taPackage.followTarget then
+    nameText = nameText .. " Following " .. taPackage.followTarget
+  end
 
   local segments = {
     { text = nameText, fg = "white" },
