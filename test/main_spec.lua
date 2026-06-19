@@ -1391,6 +1391,38 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ring gong", helper.sendCalls[1])
         end)
 
+        it("records session start XP from current experience", function()
+            taPackage.character = { experience = 500 }
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal(500, taPackage.arenaSessionStartXp)
+        end)
+
+        it("records session start time", function()
+            local before = os.time()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            local after = os.time()
+            assert.is_true(taPackage.arenaSessionStartTime >= before)
+            assert.is_true(taPackage.arenaSessionStartTime <= after)
+        end)
+
+        it("bumps arenaXpTimerGen to cancel any prior timer", function()
+            taPackage.arenaXpTimerGen = 3
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal(4, taPackage.arenaXpTimerGen)
+        end)
+
+        it("echoes session start with XP", function()
+            taPackage.character = { experience = 1000 }
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Session started") and string.find(msg, "1000") then
+                    found = true
+                end
+            end
+            assert.is_true(found)
+        end)
+
     end)
 
     describe("stop alias", function()
@@ -1411,6 +1443,117 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaLastCmd = "a lizard"
             helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
             assert.is_nil(taPackage.arenaLastCmd)
+        end)
+
+        it("clears session tracking state", function()
+            taPackage.arenaSessionStartXp = 500
+            taPackage.arenaSessionStartTime = os.time()
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            assert.is_nil(taPackage.arenaSessionStartXp)
+            assert.is_nil(taPackage.arenaSessionStartTime)
+        end)
+
+        it("bumps arenaXpTimerGen to cancel pending timer", function()
+            taPackage.arenaXpTimerGen = 2
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            assert.are.equal(3, taPackage.arenaXpTimerGen)
+        end)
+
+        it("echoes session summary with XP gained and elapsed minutes", function()
+            taPackage.arenaSessionStartXp = 400
+            taPackage.arenaSessionStartTime = os.time() - 600  -- 10 minutes ago
+            taPackage.character = { experience = 1400 }
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "+1000 XP") and string.find(msg, "10 minutes") then
+                    found = true
+                end
+            end
+            assert.is_true(found)
+        end)
+
+        it("skips summary when no session was started", function()
+            taPackage.arenaSessionStartXp = nil
+            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Session over") then found = true end
+            end
+            assert.is_false(found)
+        end)
+
+    end)
+
+    describe("XP check timer", function()
+
+        local timerCreated
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+            _G.createTimer = function(interval, cb, opts)
+                timerCreated = { interval = interval, cb = cb, opts = opts }
+                return "mock_timer"
+            end
+            timerCreated = nil
+        end)
+
+        it("schedules a 5-minute timer on session start", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(300000, timerCreated.interval)
+        end)
+
+        it("timer callback sends status", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            timerCreated.cb()
+            local found = false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "status" then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("timer callback sets arenaXpCheckPending", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            timerCreated.cb()
+            assert.is_true(taPackage.arenaXpCheckPending)
+        end)
+
+        it("timer callback does nothing when generation has changed", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            local cb = timerCreated.cb
+            taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
+            cb()
+            assert.is_nil(taPackage.arenaXpCheckPending or nil)
+        end)
+
+        it("XP trigger echoes delta when arenaXpCheckPending is set", function()
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time() - 300
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   800")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "+500") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("XP trigger clears arenaXpCheckPending after echoing", function()
+            taPackage.arenaXpCheckPending = true
+            taPackage.arenaSessionStartXp = 0
+            taPackage.arenaSessionStartTime = os.time()
+            helper.simulateLine("Experience:   100")
+            assert.is_false(taPackage.arenaXpCheckPending)
+        end)
+
+        it("XP trigger does not echo when arenaXpCheckPending is not set", function()
+            local before = #helper.echoCalls
+            taPackage.arenaXpCheckPending = false
+            helper.simulateLine("Experience:   100")
+            assert.are.equal(before, #helper.echoCalls)
         end)
 
     end)

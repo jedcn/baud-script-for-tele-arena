@@ -313,6 +313,15 @@ end, { type = "regex" })
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
   setExperience(matches[2])
+  if not taPackage.arenaXpCheckPending then return end
+  taPackage.arenaXpCheckPending = false
+  local xp = tonumber(matches[2])
+  local startXp = taPackage.arenaSessionStartXp
+  local elapsed = os.time() - (taPackage.arenaSessionStartTime or os.time())
+  local minutes = math.floor(elapsed / 60)
+  local gained = startXp and (xp - startXp) or 0
+  echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
+    .. gained .. " XP (total: " .. xp .. ")")
 end, { type = "regex" })
 
 createTrigger("^Class:\\s+(\\S+)$", function(matches)
@@ -916,12 +925,41 @@ local function departForTavern()
   arenaSend("w")
 end
 
+local function scheduleArenaXpCheck()
+  local gen = taPackage.arenaXpTimerGen or 0
+  createTimer(300000, function()
+    if (taPackage.arenaXpTimerGen or 0) ~= gen then return end
+    taPackage.arenaXpCheckPending = true
+    send("status")
+    scheduleArenaXpCheck()
+  end, { repeating = false })
+end
+
 createAlias("^ring-gong-and-fight-in-arena$", function()
+  taPackage.arenaSessionStartXp = taPackage.character.experience
+  taPackage.arenaSessionStartTime = os.time()
+  taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
+  taPackage.arenaXpCheckPending = false
   taPackage.arenaState = "ringing"
+  local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
+  echo("[arena] Session started. XP: " .. startXpStr)
+  scheduleArenaXpCheck()
   arenaSend("ring gong")
 end, { type = "regex" })
 
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
+  taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
+  taPackage.arenaXpCheckPending = false
+  local startXp = taPackage.arenaSessionStartXp
+  local currentXp = taPackage.character.experience
+  local startTime = taPackage.arenaSessionStartTime
+  if startXp and currentXp and startTime then
+    local gained = currentXp - startXp
+    local minutes = math.floor((os.time() - startTime) / 60)
+    echo("[arena] Session over — +" .. gained .. " XP in " .. minutes .. " minutes.")
+  end
+  taPackage.arenaSessionStartXp = nil
+  taPackage.arenaSessionStartTime = nil
   taPackage.arenaState = nil
   taPackage.arenaMonster = nil
   taPackage.arenaLastCmd = nil
