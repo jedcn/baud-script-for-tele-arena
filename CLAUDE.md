@@ -2,7 +2,7 @@
 
 ## Client
 
-This script runs inside [baud](https://github.com/jedcn/baud), a custom MUD client. Do not assume Mudlet or any other client. The `createTrigger`, `createAlias`, `createTimer`, `send`, `echo` etc. APIs are baud's Lua scripting interface. To reload the script after changes, refer to baud's loading docs at https://github.com/jedcn/baud?tab=readme-ov-file#loading-scripts.
+This script runs inside [baud](https://github.com/jedcn/baud), a custom MUD client. Do not assume Mudlet or any other client. The `createTrigger`, `createAlias`, `createTimer`, `send`, `echo` etc. APIs are baud's Lua scripting interface. To reload the script after changes, type `/lua reloadScript()` in baud.
 
 ## Testing
 
