@@ -13,4 +13,6 @@
 | Sorceror | Arch Magus | +5 | +5 | — | — | +3 |
 | Necrolyte | Necromancer | +5 | +5 | — | — | +3 |
 
-Spellcasters' mana pool doubles at promotion. Post-promotion MP per level: Arch Magus and Necromancer gain 4 MP/level; High Priest and Arch Druid gain 2 MP/level.
+Your character will also gain a fair chunk of hitpoints, depending on your class. This is an average amount that doesn’t take your stats into account, so if your character didn’t gain many HP per level, it will be brought back up to speed.
+
+Additionally, if you are a spellcaster, your mana pool will double. Subsequent levels for the Arch Magus and Necromancer will provide 4 MP per level. The High Priest and Arch Druid will gain 2 MP per level.

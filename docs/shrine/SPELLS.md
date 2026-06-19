@@ -2,7 +2,8 @@
 
 *Source: [TELE-ARENA SHRINE](https://tele-arena.tumblr.com/spells)*
 
-ERL (every-round-level) assumes promotion at level 25. Formula: `ERL = (manaCost - 1) * 5`.
+* The cast ERL (every-round-level) assumes promotion at level 25.
+* For assistance decoding these spell names, see [HELP GLOSSARY](https://tele-arena.tumblr.com/help_glossary).
 
 ## Necrolyte / Necromancer
 
