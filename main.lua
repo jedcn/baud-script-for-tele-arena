@@ -286,7 +286,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   local n = taPackage.reRollCount
 
   local targets = { intellect=16, knowledge=18, physique=21, stamina=22, agility=30, charisma=13 }
-  local threshold = 10
+  local threshold = 15
   local required_deficit = math.max(0, targets.physique - physique)
                          + math.max(0, targets.stamina  - stamina)
                          + math.max(0, targets.agility  - agility)
