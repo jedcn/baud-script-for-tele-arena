@@ -12,9 +12,9 @@ It's not fetched in its entirety, but instead here is the information that might
 
 * [Tutorial](https://tele-arena.tumblr.com/tutorial)
 * [FAQs](https://tele-arena.tumblr.com/faq)
-* [Max Stats](https://tele-arena.tumblr.com/maxstats)
+* [Max Stats](MAX_STATS.md)
 * [Agility](https://tele-arena.tumblr.com/agility)
-* [Weapons & Armor](https://tele-arena.tumblr.com/weaponsarmor)
+* [Weapons & Armor](WEAPONS_ARMOR.md)
 * [Magic Items](https://tele-arena.tumblr.com/magicitems)
 * [Spells](https://tele-arena.tumblr.com/spells)
 * [Runes](https://tele-arena.tumblr.com/runes)
