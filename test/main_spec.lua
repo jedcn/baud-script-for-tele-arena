@@ -2032,6 +2032,29 @@ describe("ta.follow", function()
             assert.is_true(found)
         end)
 
+        it("sends ta.following notification via game", function()
+            helper.simulateAlias("ta.follow tojolias")
+            assert.are.equal("ta.following: tojolias", helper.sendCalls[1])
+        end)
+
+    end)
+
+    describe("ta.following trigger (received by followed character)", function()
+
+        it("sets followedBy when notification received", function()
+            helper.simulateLine("From Pelayo: ta.following Tojolias")
+            assert.are.equal("Pelayo", taPackage.followedBy)
+        end)
+
+        it("echoes who is following", function()
+            helper.simulateLine("From Pelayo: ta.following Tojolias")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Pelayo") and string.find(msg, "following") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
     end)
 
     describe("ta.follow-stop alias", function()

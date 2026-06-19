@@ -1144,11 +1144,17 @@ local dirShort = {
 createAlias("^ta\\.follow (.+)$", function(matches)
   taPackage.followTarget = matches[2]:lower()
   echo("[follow] Now following: " .. taPackage.followTarget)
+  send("ta.following: " .. matches[2])
 end, { type = "regex" })
 
 createAlias("^ta\\.follow-stop$", function()
   taPackage.followTarget = nil
   echo("[follow] Stopped following.")
+end, { type = "regex" })
+
+createTrigger("^From (.+): ta\\.following (.+)$", function(matches)
+  taPackage.followedBy = matches[2]
+  echo("[follow] " .. matches[2] .. " is now following you.")
 end, { type = "regex" })
 
 createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
