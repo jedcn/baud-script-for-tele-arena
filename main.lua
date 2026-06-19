@@ -850,9 +850,13 @@ local function status()
     { text = vitalityCurrent and tostring(vitalityCurrent) or "?",
       fg = vitalityColor(vitalityCurrent, vitalityMax) },
     { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
-    { text = "MP:", fg = "green" },
-    { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" },
-    { text = manaMax and ("/ " .. tostring(manaMax)) or "", fg = "cyan" },
+  }
+  if manaMax and manaMax > 0 then
+    table.insert(segments, { text = "MP:", fg = "green" })
+    table.insert(segments, { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" })
+    table.insert(segments, { text = "/ " .. tostring(manaMax), fg = "cyan" })
+  end
+  local tail = {
     { text = "XP:" },
     { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
     { text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
@@ -862,6 +866,7 @@ local function status()
     { text = "Gold:" },
     { text = gold, fg = "yellow" },
   }
+  for _, seg in ipairs(tail) do table.insert(segments, seg) end
   return segments
 end
 

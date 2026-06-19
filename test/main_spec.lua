@@ -50,32 +50,32 @@ describe("Warrior XP table", function()
 
         it("shows white at 0% (just started level)", function()
             helper.simulateLine("Experience:   0")
-            assert.are.equal("white", capturedFn()[9].fg)
+            assert.are.equal("white", capturedFn()[6].fg)
         end)
 
         it("shows cyan in the second fifth", function()
             helper.simulateLine("Experience:   225")  -- 20% of 1125
-            assert.are.equal("cyan", capturedFn()[9].fg)
+            assert.are.equal("cyan", capturedFn()[6].fg)
         end)
 
         it("shows green in the third fifth", function()
             helper.simulateLine("Experience:   450")  -- 40% of 1125
-            assert.are.equal("green", capturedFn()[9].fg)
+            assert.are.equal("green", capturedFn()[6].fg)
         end)
 
         it("shows yellow in the fourth fifth", function()
             helper.simulateLine("Experience:   675")  -- 60% of 1125
-            assert.are.equal("yellow", capturedFn()[9].fg)
+            assert.are.equal("yellow", capturedFn()[6].fg)
         end)
 
         it("shows red in the fifth fifth (almost leveled up)", function()
             helper.simulateLine("Experience:   900")  -- 80% of 1125
-            assert.are.equal("red", capturedFn()[9].fg)
+            assert.are.equal("red", capturedFn()[6].fg)
         end)
 
         it("shows red at max level", function()
             helper.simulateLine("Experience:   11594700")
-            assert.are.equal("red", capturedFn()[9].fg)
+            assert.are.equal("red", capturedFn()[6].fg)
         end)
 
     end)
@@ -361,10 +361,10 @@ describe("Tele-Arena triggers", function()
             local segments = capturedFn()
             assert.are.equal("?", segments[1].text)   -- Name
             assert.are.equal("?", segments[3].text)   -- HP current
-            assert.are.equal("?", segments[6].text)   -- MP current
-            assert.are.equal("?", segments[9].text)   -- XP current
-            assert.are.equal("?", segments[12].text)  -- Status
-            assert.are.equal("?", segments[14].text)  -- Gold
+            -- MP hidden when mana max is nil
+            assert.are.equal("?", segments[6].text)   -- XP current
+            assert.are.equal("?", segments[9].text)   -- Status
+            assert.are.equal("?", segments[11].text)  -- Gold
         end)
 
         it("shows player name in first segment when class is unknown", function()
@@ -411,43 +411,43 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("Experience:   710")
             local segments = capturedFn()
-            assert.are.equal("710",   segments[9].text)
-            assert.are.equal("/ 1125", segments[10].text)
-            assert.are.equal("white",  segments[10].fg)
+            assert.are.equal("710",    segments[6].text)   -- no MP, XP at [6]
+            assert.are.equal("/ 1125", segments[7].text)
+            assert.are.equal("white",  segments[7].fg)
         end)
 
         it("shows XP as current/max at max level", function()
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("Experience:   11594700")
             local segments = capturedFn()
-            assert.are.equal("11594700", segments[9].text)
-            assert.are.equal("/ max",     segments[10].text)
+            assert.are.equal("11594700", segments[6].text)  -- no MP, XP at [6]
+            assert.are.equal("/ max",    segments[7].text)
         end)
 
         it("shows captured Status value", function()
             helper.simulateLine("Status:       Healthy")
             local segments = capturedFn()
-            assert.are.equal("Healthy", segments[12].text)
+            assert.are.equal("Healthy", segments[9].text)   -- no MP, Status at [9]
         end)
 
         it("colors status red when Thirsty", function()
             helper.simulateLine("Status:       Thirsty")
-            assert.are.equal("red", capturedFn()[12].fg)
+            assert.are.equal("red", capturedFn()[9].fg)
         end)
 
         it("colors status red when Hungry", function()
             helper.simulateLine("Status:       Hungry")
-            assert.are.equal("red", capturedFn()[12].fg)
+            assert.are.equal("red", capturedFn()[9].fg)
         end)
 
         it("colors status white when Healthy", function()
             helper.simulateLine("Status:       Healthy")
-            assert.are.equal("white", capturedFn()[12].fg)
+            assert.are.equal("white", capturedFn()[9].fg)
         end)
 
         it("colors gold amount yellow", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
-            assert.are.equal("yellow", capturedFn()[14].fg)
+            assert.are.equal("yellow", capturedFn()[11].fg)
         end)
 
         it("colors MP label green and values cyan", function()
@@ -464,11 +464,11 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Experience:   354")
             helper.simulateLine("Status:       Healthy")
             local segments = capturedFn()
-            assert.are.equal("10",    segments[3].text)
-            assert.are.equal("/ 26",   segments[4].text)
-            assert.are.equal("354",   segments[9].text)
-            assert.are.equal("/ 1125", segments[10].text)
-            assert.are.equal("Healthy", segments[12].text)
+            assert.are.equal("10",      segments[3].text)
+            assert.are.equal("/ 26",    segments[4].text)
+            assert.are.equal("354",     segments[6].text)   -- no MP, XP at [6]
+            assert.are.equal("/ 1125",  segments[7].text)
+            assert.are.equal("Healthy", segments[9].text)   -- Status at [9]
         end)
 
         it("colors vitality green at or above 66%", function()
