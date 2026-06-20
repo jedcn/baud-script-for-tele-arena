@@ -2997,7 +2997,6 @@ describe("ta.follow", function()
 
             before_each(function()
                 setClass("Acolyte")
-                taPackage.healAllies = { tojolias = true, johnsonite = true }
             end)
 
             it("melees on start like everyone else", function()
@@ -3005,32 +3004,61 @@ describe("ta.follow", function()
                 assert.are.equal("a cave", helper.sendCalls[1])
             end)
 
-            it("heals an ally a monster attacks during the fight", function()
+            it("checks the group on attack exhaustion", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.sendCalls = {}
-                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                assert.are.equal("group", helper.sendCalls[1])
+            end)
+
+            it("heals the first member below the threshold from the group listing", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                helper.sendCalls = {}
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
+                helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
+                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+                assert.are.equal("cast motu Pelayo", helper.sendCalls[1])
+            end)
+
+            it("parses the leader's (L) marker line", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                helper.sendCalls = {}
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Tojolias                       (L) [HE: 55% ST:Resting]")
                 assert.are.equal("cast motu Tojolias", helper.sendCalls[1])
             end)
 
-            it("does not heal a name that isn't in the heal list", function()
+            it("heals only one member per group listing", function()
                 helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
                 helper.sendCalls = {}
-                helper.simulateLine("The lizard man attacked Pelayo with his spear!")
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
+                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+                local heals = 0
+                for _, cmd in ipairs(helper.sendCalls) do
+                    if cmd:match("^cast motu ") then heals = heals + 1 end
+                end
+                assert.are.equal(1, heals)
+            end)
+
+            it("does not heal when everyone is at or above the threshold", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                helper.sendCalls = {}
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
+                helper.simulateLine("  Teekywiki                          [HE: 95% ST:Ready]")
                 assert.are.equal(0, #helper.sendCalls)
             end)
 
-            it("does not heal when no fight is active", function()
-                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+            it("ignores a group listing typed outside a fight", function()
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Pelayo                             [HE: 50% ST:Ready]")
                 assert.are.equal(0, #helper.sendCalls)
-            end)
-
-            it("can heal again after a landed heal clears the pending flag", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
-                helper.simulateLine("You intoned the spell for Tojolias which healed 6 damage!")
-                helper.sendCalls = {}
-                helper.simulateLine("The lizard man attacked Johnsonite with his spear!")
-                assert.are.equal("cast motu Johnsonite", helper.sendCalls[1])
             end)
 
         end)
@@ -3043,13 +3071,20 @@ describe("ta.follow", function()
             helper.resetAll()
             dofile("main.lua")
             setClass("Warrior")
-            taPackage.healAllies = { tojolias = true }
         end)
 
-        it("does not heal when the class is not a caster", function()
+        it("does not send group on attack exhaustion", function()
             helper.simulateAlias("kill cave lizard")
             helper.sendCalls = {}
-            helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not heal off a group listing", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 50% ST:Ready]")
             assert.are.equal(0, #helper.sendCalls)
         end)
 

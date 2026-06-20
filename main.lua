@@ -1484,13 +1484,8 @@ end, { type = "regex" })
 -- Kill a single target
 -- =========================================================================
 
--- Allies an Acolyte will keep healed during a fight. Preserved across
--- reloads so a runtime change isn't clobbered; defaults otherwise.
-taPackage.healAllies = taPackage.healAllies or {
-    teekywiki = true,
-    tojolias = true,
-    johnsonite = true,
-}
+-- An Acolyte heals a group member once their health drops below this.
+local HEAL_THRESHOLD = 90
 
 -- Melee: everyone swings each round, casters included.
 local function killAttack()
@@ -1554,6 +1549,7 @@ createAlias("^kill-stop$", function()
     taPackage.killAttackPending = false
     taPackage.castPending = false
     taPackage.healTarget = nil
+    taPackage.groupHealScan = false
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Stopped.")
 end, { type = "regex" })
@@ -1603,14 +1599,23 @@ createTrigger("^Your spell was negated by the .+'s magickal defenses!$", functio
     castSpell()
 end, { type = "regex" })
 
--- A monster turning on a party member is an Acolyte's cue to heal them.
-createTrigger("^The .+ attacked (.+) with .+!$", function(matches)
-    if getClass() ~= "Acolyte" then return end
+-- An Acolyte asks the game who's in the group (sent on attack exhaustion,
+-- below) and heals the first injured member the listing reports. The header
+-- arms scanning only mid-fight, so a manually-typed `group` is left alone.
+createTrigger("^Your group currently consists of:$", function()
     if not taPackage.killActive then return end
-    local ally = matches[2]
-    if not taPackage.healAllies[ally:lower()] then return end
-    taPackage.healTarget = ally
-    castSpell()
+    if getClass() ~= "Acolyte" then return end
+    taPackage.groupHealScan = true
+end, { type = "regex" })
+
+createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)%", function(matches)
+    if not taPackage.groupHealScan then return end
+    local health = tonumber(matches[3])
+    if health and health < HEAL_THRESHOLD then
+        taPackage.groupHealScan = false
+        taPackage.healTarget = matches[2]
+        castSpell()
+    end
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
@@ -1620,12 +1625,18 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.killAttackPending = false
     taPackage.castPending = false
     taPackage.healTarget = nil
+    taPackage.groupHealScan = false
     echo("[kill] " .. matches[2] .. " is dead.")
 end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function()
     if not taPackage.killActive then return end
     taPackage.killAttackPending = false
+    -- Out of melee for now; an Acolyte spends the lull checking the group so
+    -- the next cast (on the mental clock) heals whoever needs it.
+    if getClass() == "Acolyte" then
+        send("group")
+    end
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
