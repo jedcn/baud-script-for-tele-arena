@@ -3184,6 +3184,38 @@ describe("ta.follow", function()
 
     end)
 
+    describe("heal.allies alias", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+        end)
+
+        it("scans the group and heals the most injured as an Acolyte", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal.allies")
+            assert.are.equal("group", helper.sendCalls[1])
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
+        end)
+
+        it("does nothing and warns when not an Acolyte", function()
+            setClass("Warrior")
+            helper.simulateAlias("heal.allies")
+            assert.are.equal(0, #helper.sendCalls)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Acolyte") then warned = true end
+            end
+            assert.is_true(warned)
+        end)
+
+    end)
+
     describe("non-caster classes", function()
 
         before_each(function()

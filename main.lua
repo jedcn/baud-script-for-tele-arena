@@ -1582,6 +1582,16 @@ createAlias("^kill-stop$", function()
     echo("[kill] Stopped.")
 end, { type = "regex" })
 
+-- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
+-- and heals its most-injured member. Non-Acolytes have no group heal to cast.
+createAlias("^heal\\.allies$", function()
+    if getClass() == "Acolyte" then
+        beginGroupHealScan()
+    else
+        echo("[heal] Only an Acolyte can heal the group.")
+    end
+end, { type = "regex" })
+
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
     taPackage.killAttackPending = false
