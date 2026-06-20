@@ -2757,6 +2757,23 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("scans the group and heals the most injured on 'confer heal.allies' as an Acolyte", function()
+            setClass("Acolyte")
+            helper.simulateLine("From Tojolias (to group): heal.allies")
+            assert.are.equal("group", helper.sendCalls[1])
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
+        end)
+
+        it("does nothing on 'confer heal.allies' when not an Acolyte", function()
+            helper.simulateLine("From Tojolias (to group): heal.allies")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
         it("ignores conferred commands from a non-leader", function()
             helper.simulateLine("From Pelayo (to group): kill lizard")
             assert.is_falsy(taPackage.killActive)
@@ -3088,7 +3105,7 @@ describe("ta.follow", function()
                 assert.are.equal("group", helper.sendCalls[1])
             end)
 
-            it("heals the first member below the threshold from the group listing", function()
+            it("heals the most injured member from the group listing", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.simulateLine("You are still physically exhausted from your previous activities!")
                 helper.sendCalls = {}
@@ -3096,7 +3113,8 @@ describe("ta.follow", function()
                 helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
                 helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
                 helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
-                assert.are.equal("cast motu Pelayo", helper.sendCalls[1])
+                helper.simulateLine("You're in a cave.")
+                assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
             end)
 
             it("parses the leader's (L) marker line", function()
@@ -3105,6 +3123,7 @@ describe("ta.follow", function()
                 helper.sendCalls = {}
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Tojolias                       (L) [HE: 55% ST:Resting]")
+                helper.simulateLine("You're in a cave.")
                 assert.are.equal("cast motu Tojolias", helper.sendCalls[1])
             end)
 
@@ -3115,6 +3134,7 @@ describe("ta.follow", function()
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
                 helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+                helper.simulateLine("You're in a cave.")
                 local heals = 0
                 for _, cmd in ipairs(helper.sendCalls) do
                     if cmd:match("^cast motu ") then heals = heals + 1 end
@@ -3129,13 +3149,32 @@ describe("ta.follow", function()
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
                 helper.simulateLine("  Teekywiki                          [HE: 95% ST:Ready]")
+                helper.simulateLine("You're in a cave.")
                 assert.are.equal(0, #helper.sendCalls)
             end)
 
-            it("ignores a group listing typed outside a fight", function()
+            it("does not abort the scan on combat noise before the listing", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                helper.sendCalls = {}
+                helper.simulateLine("The cave bear attacked you with its claws for 5 damage!")
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+                helper.simulateLine("You're in a cave.")
+                assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
+            end)
+
+            it("ignores a group listing typed outside a scan", function()
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Pelayo                             [HE: 50% ST:Ready]")
+                helper.simulateLine("You're in a cave.")
                 assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            it("clears castPending on mental exhaustion even out of combat", function()
+                taPackage.castPending = true
+                helper.simulateLine("You are still too mentally exhausted from your last incantation!")
+                assert.is_false(taPackage.castPending)
             end)
 
         end)

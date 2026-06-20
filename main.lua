@@ -1517,6 +1517,34 @@ local function castSpell()
     end
 end
 
+-- Acolyte group healing. We send `group`, accumulate each member's health as
+-- the listing streams in, and once the listing ends heal the most-injured
+-- member (lowest HE%) if anyone is below the threshold. Phases:
+--   "want"    -- asked for the listing, waiting for the header
+--   "reading" -- header seen, members are streaming in
+-- The listing has no terminator line, so the first non-member line after the
+-- header ends it. Waiting for the header first means combat spam arriving
+-- before the listing doesn't cut the scan short.
+local function beginGroupHealScan()
+    taPackage.groupHealPhase = "want"
+    taPackage.groupHealBestName = nil
+    taPackage.groupHealBestHealth = nil
+    send("group")
+end
+
+local function finalizeGroupHeal()
+    taPackage.groupHealPhase = nil
+    local name = taPackage.groupHealBestName
+    local health = taPackage.groupHealBestHealth
+    taPackage.groupHealBestName = nil
+    taPackage.groupHealBestHealth = nil
+    if not name or not health or health >= HEAL_THRESHOLD then return end
+    if taPackage.castPending then return end
+    taPackage.castPending = true
+    taPackage.healTarget = name
+    send("cast motu " .. name)
+end
+
 local function startKill(target)
     if taPackage.arenaState then
         echo("[kill] Cannot start — arena session is active.")
@@ -1549,7 +1577,7 @@ createAlias("^kill-stop$", function()
     taPackage.killAttackPending = false
     taPackage.castPending = false
     taPackage.healTarget = nil
-    taPackage.groupHealScan = false
+    taPackage.groupHealPhase = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Stopped.")
 end, { type = "regex" })
@@ -1599,23 +1627,33 @@ createTrigger("^Your spell was negated by the .+'s magickal defenses!$", functio
     castSpell()
 end, { type = "regex" })
 
--- An Acolyte asks the game who's in the group (sent on attack exhaustion,
--- below) and heals the first injured member the listing reports. The header
--- arms scanning only mid-fight, so a manually-typed `group` is left alone.
+-- The header (only when we asked for the listing) starts the reading phase;
+-- a manually-typed `group` has no pending scan, so it's left alone.
 createTrigger("^Your group currently consists of:$", function()
-    if not taPackage.killActive then return end
-    if getClass() ~= "Acolyte" then return end
-    taPackage.groupHealScan = true
+    if taPackage.groupHealPhase == "want" then
+        taPackage.groupHealPhase = "reading"
+    end
 end, { type = "regex" })
 
+-- While reading the listing, track the most-injured member seen.
 createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)%", function(matches)
-    if not taPackage.groupHealScan then return end
+    if taPackage.groupHealPhase ~= "reading" then return end
     local health = tonumber(matches[3])
-    if health and health < HEAL_THRESHOLD then
-        taPackage.groupHealScan = false
-        taPackage.healTarget = matches[2]
-        castSpell()
+    if not health then return end
+    if not taPackage.groupHealBestHealth or health < taPackage.groupHealBestHealth then
+        taPackage.groupHealBestHealth = health
+        taPackage.groupHealBestName = matches[2]
     end
+end, { type = "regex" })
+
+-- The listing has no end marker, so the first line that is neither the header
+-- nor a member row ends the reading phase and triggers the heal.
+createTrigger("^(.+)$", function(matches)
+    if taPackage.groupHealPhase ~= "reading" then return end
+    local line = matches[2]
+    if line:match("^Your group currently consists of:$") then return end
+    if line:match("^%s+%S+.*HE:%s*%d+%%") then return end
+    finalizeGroupHeal()
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
@@ -1625,7 +1663,7 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.killAttackPending = false
     taPackage.castPending = false
     taPackage.healTarget = nil
-    taPackage.groupHealScan = false
+    taPackage.groupHealPhase = nil
     echo("[kill] " .. matches[2] .. " is dead.")
 end, { type = "regex" })
 
@@ -1635,7 +1673,7 @@ createTrigger("^You are still physically exhausted from your previous activities
     -- Out of melee for now; an Acolyte spends the lull checking the group so
     -- the next cast (on the mental clock) heals whoever needs it.
     if getClass() == "Acolyte" then
-        send("group")
+        beginGroupHealScan()
     end
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
@@ -1646,8 +1684,10 @@ createTrigger("^You are still physically exhausted from your previous activities
 end, { type = "regex" })
 
 createTrigger("^You are still too mentally exhausted from your last incantation!$", function()
-    if not taPackage.killActive then return end
+    -- Clear the flag even out of combat (e.g. a confer heal.allies cast), so a
+    -- blocked cast doesn't wedge future ones; only the retry needs a fight.
     taPackage.castPending = false
+    if not taPackage.killActive then return end
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
@@ -1703,6 +1743,10 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     local killMonster = command:match("^kill (.+)$")
     if killMonster then
         startKill(killMonster)
+    elseif command == "heal.allies" then
+        if getClass() == "Acolyte" then
+            beginGroupHealScan()
+        end
     end
 end, { type = "regex" })
 
