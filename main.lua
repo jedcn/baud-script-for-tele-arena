@@ -1365,6 +1365,15 @@ createTrigger("^(.+) just intoned a minor healing spell for you which healed (\\
     end
 end, { type = "regex" })
 
+createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) damage!$", function(matches)
+    local amount = tonumber(matches[3])
+    local current = taPackage.character.vitalityCurrent
+    local max = taPackage.character.vitalityMax
+    if current and amount then
+        taPackage.character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
+    end
+end, { type = "regex" })
+
 createAlias("^cast\\.heal$", function()
     local name = taPackage.character.name
     if name then

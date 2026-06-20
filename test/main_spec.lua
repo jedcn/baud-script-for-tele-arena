@@ -238,6 +238,37 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Incoming heal from another player trigger
+    -- =========================================================================
+
+    describe("Incoming heal from another player trigger", function()
+
+        it("increases current vitality by healed amount", function()
+            helper.simulateLine("Vitality:     8 / 26")
+            helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
+            local current, max = getVitality()
+            assert.are.equal(22, current)
+            assert.are.equal(26, max)
+        end)
+
+        it("does not exceed max vitality", function()
+            helper.simulateLine("Vitality:     24 / 26")
+            helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(26, current)
+        end)
+
+        it("works when max vitality is not yet known", function()
+            helper.simulateLine("Vitality:     8 / 26")
+            taPackage.character.vitalityMax = nil
+            helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(22, current)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Incoming damage trigger
     -- =========================================================================
 
