@@ -233,7 +233,7 @@ function TaDb.recordPlayerSpell(spell, target, outcome, amount)
         spell, target or "", outcome, amount, now()
     )
     local msg = "[DB\xE2\x86\x92player_spells] " .. spell .. " \xE2\x86\x92 " .. (target or "?") .. " [" .. outcome .. "]"
-    if amount then msg = msg .. " " .. amount end
+    if type(amount) == "number" then msg = msg .. " " .. amount end
     echo(msg)
 end
 
