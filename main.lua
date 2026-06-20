@@ -1541,9 +1541,11 @@ end
 -- member (lowest HE%) if anyone is below the threshold. Phases:
 --   "want"    -- asked for the listing, waiting for the header
 --   "reading" -- header seen, members are streaming in
--- The listing has no terminator line, so the first non-member line after the
--- header ends it. Waiting for the header first means combat spam arriving
--- before the listing doesn't cut the scan short.
+-- The listing has no terminator line. In combat the first non-member line
+-- after the header ends it; out of combat no such line arrives until the user
+-- hits return, so a short debounce (scheduleGroupHealFinalize) finalizes the
+-- heal once member rows stop streaming. Waiting for the header first means
+-- combat spam arriving before the listing doesn't cut the scan short.
 local function beginGroupHealScan()
     taPackage.groupHealPhase = "want"
     taPackage.groupHealBestName = nil
@@ -1553,6 +1555,7 @@ end
 
 local function finalizeGroupHeal()
     taPackage.groupHealPhase = nil
+    taPackage.groupHealGen = (taPackage.groupHealGen or 0) + 1
     local name = taPackage.groupHealBestName
     local health = taPackage.groupHealBestHealth
     taPackage.groupHealBestName = nil
@@ -1562,6 +1565,22 @@ local function finalizeGroupHeal()
     taPackage.castPending = true
     taPackage.healTarget = name
     send("cast kamotu " .. name)
+end
+
+-- The group listing has no terminator line, so out of combat nothing arrives
+-- after the last member until the user hits return — which is why the heal used
+-- to stall. Each member row (and the header) re-arms this short debounce; once
+-- the rows stop streaming the timer finalizes the heal on its own. A generation
+-- guard means only the latest re-arm fires, and any line-based finalize (the
+-- combat path) bumps the generation so a pending timer becomes a no-op.
+local function scheduleGroupHealFinalize()
+    taPackage.groupHealGen = (taPackage.groupHealGen or 0) + 1
+    local gen = taPackage.groupHealGen
+    createTimer(500, function()
+        if taPackage.groupHealPhase == "reading" and taPackage.groupHealGen == gen then
+            finalizeGroupHeal()
+        end
+    end, { repeating = false })
 end
 
 local function startKill(target)
@@ -1661,6 +1680,7 @@ end, { type = "regex" })
 createTrigger("^Your group currently consists of:$", function()
     if taPackage.groupHealPhase == "want" then
         taPackage.groupHealPhase = "reading"
+        scheduleGroupHealFinalize()
     end
 end, { type = "regex" })
 
@@ -1673,6 +1693,8 @@ createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)%", function(matches)
         taPackage.groupHealBestHealth = health
         taPackage.groupHealBestName = matches[2]
     end
+    -- Re-arm the debounce: as long as rows keep streaming we keep waiting.
+    scheduleGroupHealFinalize()
 end, { type = "regex" })
 
 -- The listing has no end marker, so the first line that is neither the header

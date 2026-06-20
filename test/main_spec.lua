@@ -3254,6 +3254,54 @@ describe("ta.follow", function()
             assert.is_true(warned)
         end)
 
+        describe("debounce finalize (no terminator line)", function()
+
+            local timerCreated
+            local realCreateTimer
+
+            before_each(function()
+                helper.resetAll()
+                realCreateTimer = _G.createTimer
+                _G.createTimer = function(interval, cb, opts)
+                    timerCreated = { interval = interval, cb = cb, opts = opts }
+                    return "mock_timer"
+                end
+                dofile("main.lua")
+                setClass("Acolyte")
+                timerCreated = nil
+            end)
+
+            after_each(function()
+                _G.createTimer = realCreateTimer
+            end)
+
+            it("heals once the debounce fires without a following line", function()
+                helper.simulateAlias("heal.allies")
+                helper.sendCalls = {}
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+                helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
+                -- No terminator line arrives; the heal must come from the timer.
+                assert.are.equal(0, #helper.sendCalls)
+                assert.is_not_nil(timerCreated)
+                timerCreated.cb()
+                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
+            end)
+
+            it("a stale debounce timer does not fire after finalize", function()
+                helper.simulateAlias("heal.allies")
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+                local staleTimer = timerCreated
+                -- A terminator line finalizes immediately and bumps the gen.
+                helper.simulateLine("You're in a cave.")
+                helper.sendCalls = {}
+                staleTimer.cb()
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+        end)
+
     end)
 
     describe("non-caster classes", function()
