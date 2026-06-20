@@ -2737,6 +2737,27 @@ describe("ta.follow", function()
 
     end)
 
+    describe("drink trigger", function()
+
+        it("buys a drink when the leader does", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The barmaid brings a drink over to Tojolias in exchange for a few coins.")
+            assert.are.equal("b drink", helper.sendCalls[1])
+        end)
+
+        it("does nothing when a different character buys a drink", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The barmaid brings a drink over to Pelayo in exchange for a few coins.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when not following anyone", function()
+            helper.simulateLine("The barmaid brings a drink over to Tojolias in exchange for a few coins.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("group attack trigger", function()
 
         before_each(function()
