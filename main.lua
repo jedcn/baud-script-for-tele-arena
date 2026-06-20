@@ -1648,6 +1648,15 @@ createTrigger("^(.+) just attacked the (.+) with .+!$", function(matches)
     startKill(matches[3])
 end, { type = "regex" })
 
+-- A monster dodging the leader's first swing is the same signal to join in;
+-- here the monster comes first and the leader is in the possessive form.
+createTrigger("^The (.+) barely dodged (.+)'s .+!$", function(matches)
+    if not taPackage.followTarget then return end
+    if matches[3]:lower() ~= taPackage.followTarget then return end
+    if taPackage.killActive then return end
+    startKill(matches[2])
+end, { type = "regex" })
+
 createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
     if not taPackage.followTarget then return end
     local name = matches[2]:lower()

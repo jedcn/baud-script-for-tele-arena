@@ -2790,6 +2790,19 @@ describe("ta.follow", function()
             assert.is_falsy(taPackage.killActive)
         end)
 
+        it("starts when a monster dodges the leader's attack", function()
+            helper.simulateLine("The hobgoblin barely dodged Tojolias's flail!")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("hobgoblin", taPackage.killTarget)
+            assert.are.equal("a hobgoblin", helper.sendCalls[1])
+        end)
+
+        it("does nothing on a dodge of a non-leader's attack", function()
+            helper.simulateLine("The hobgoblin barely dodged Pelayo's sword!")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
     end)
 
     describe("kill alias", function()
