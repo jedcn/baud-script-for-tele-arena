@@ -2804,6 +2804,47 @@ describe("ta.follow", function()
             assert.are.equal(1, count)
         end)
 
+        describe("Sorceror", function()
+
+            before_each(function()
+                setClass("Sorceror")
+            end)
+
+            it("casts komiza on start instead of attacking", function()
+                helper.simulateAlias("kill cave lizard")
+                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+            end)
+
+            it("re-casts after a successful discharge", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("You discharged the spell at the cave lizard for 8 damage!")
+                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+            end)
+
+            it("re-casts after a fizzle", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("You confuse the key syllables and the spell fails!")
+                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+            end)
+
+            it("re-casts after a resist", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("Your spell was negated by the cave lizard's magickal defenses!")
+                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+            end)
+
+            it("clears the pending flag on mental exhaustion", function()
+                helper.simulateAlias("kill cave lizard")
+                taPackage.killAttackPending = true
+                helper.simulateLine("You are still too mentally exhausted from your last incantation!")
+                assert.is_false(taPackage.killAttackPending)
+            end)
+
+        end)
+
     end)
 
 end)

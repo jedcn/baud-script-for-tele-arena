@@ -1478,7 +1478,12 @@ local function killAttack()
     if target then
         if taPackage.killAttackPending then return end
         taPackage.killAttackPending = true
-        send("a " .. target:match("^(%S+)"))
+        local name = target:match("^(%S+)")
+        if getClass() == "Sorceror" then
+            send("cast komiza " .. name)
+        else
+            send("a " .. name)
+        end
     end
 end
 
@@ -1527,6 +1532,27 @@ createTrigger("^You barely dodge the .+'s attack!$", function()
     killAttack()
 end, { type = "regex" })
 
+-- Sorceror spell-outcome continuation. The DB-recording copies of these
+-- lines live in the spell section; these re-fire the kill loop the same way
+-- the melee triggers above do.
+createTrigger("^You discharged the spell at the .+ for \\d+ damage!$", function()
+    if not taPackage.killActive then return end
+    taPackage.killAttackPending = false
+    killAttack()
+end, { type = "regex" })
+
+createTrigger("^You confuse the key syllables and the spell fails!$", function()
+    if not taPackage.killActive then return end
+    taPackage.killAttackPending = false
+    killAttack()
+end, { type = "regex" })
+
+createTrigger("^Your spell was negated by the .+'s magickal defenses!$", function()
+    if not taPackage.killActive then return end
+    taPackage.killAttackPending = false
+    killAttack()
+end, { type = "regex" })
+
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if not taPackage.killActive then return end
     taPackage.killActive = false
@@ -1536,6 +1562,17 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function()
+    if not taPackage.killActive then return end
+    taPackage.killAttackPending = false
+    local gen = taPackage.killGeneration or 0
+    createTimer(30000, function()
+        if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
+            killAttack()
+        end
+    end, { repeating = false })
+end, { type = "regex" })
+
+createTrigger("^You are still too mentally exhausted from your last incantation!$", function()
     if not taPackage.killActive then return end
     taPackage.killAttackPending = false
     local gen = taPackage.killGeneration or 0
