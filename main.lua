@@ -1376,6 +1376,8 @@ end, { type = "regex" })
 createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", function(matches)
     local target = matches[2]
     local amount = tonumber(matches[3])
+    -- A landed heal frees the cast loop to respond to the next injury.
+    taPackage.castPending = false
     taPackage.db.recordPlayerSpell("motu", target, "hit", amount)
     if target == taPackage.character.name then
         local current = taPackage.character.vitalityCurrent
@@ -1482,17 +1484,41 @@ end, { type = "regex" })
 -- Kill a single target
 -- =========================================================================
 
+-- Allies an Acolyte will keep healed during a fight. Preserved across
+-- reloads so a runtime change isn't clobbered; defaults otherwise.
+taPackage.healAllies = taPackage.healAllies or {
+    teekwiki = true,
+    tojolias = true,
+    johnsonite = true,
+}
+
+-- Melee: everyone swings each round, casters included.
 local function killAttack()
     local target = taPackage.killTarget
     if target then
         if taPackage.killAttackPending then return end
         taPackage.killAttackPending = true
         local name = target:match("^(%S+)")
-        if getClass() == "Sorceror" then
-            send("cast komiza " .. name)
-        else
-            send("a " .. name)
-        end
+        send("a " .. name)
+    end
+end
+
+-- Casters take a second action each round, on a separate exhaustion clock:
+-- Sorcerors blast the target, Acolytes heal whoever was most recently hurt.
+local function castSpell()
+    if taPackage.castPending then return end
+    if not taPackage.killActive then return end
+    local class = getClass()
+    if class == "Sorceror" then
+        local target = taPackage.killTarget
+        if not target then return end
+        taPackage.castPending = true
+        send("cast komiza " .. target:match("^(%S+)"))
+    elseif class == "Acolyte" then
+        local ally = taPackage.healTarget
+        if not ally then return end
+        taPackage.castPending = true
+        send("cast motu " .. ally)
     end
 end
 
@@ -1508,9 +1534,12 @@ local function startKill(target)
     taPackage.killTarget = target
     taPackage.killActive = true
     taPackage.killAttackPending = false
+    taPackage.castPending = false
+    taPackage.healTarget = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Attacking " .. taPackage.killTarget .. ".")
     killAttack()
+    castSpell()
     return true
 end
 taPackage.startKill = startKill
@@ -1523,6 +1552,8 @@ createAlias("^kill-stop$", function()
     taPackage.killActive = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
+    taPackage.castPending = false
+    taPackage.healTarget = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Stopped.")
 end, { type = "regex" })
@@ -1551,25 +1582,35 @@ createTrigger("^You barely dodge the .+'s attack!$", function()
     killAttack()
 end, { type = "regex" })
 
--- Sorceror spell-outcome continuation. The DB-recording copies of these
--- lines live in the spell section; these re-fire the kill loop the same way
--- the melee triggers above do.
+-- Caster spell-outcome continuation. The DB-recording copies of these lines
+-- live in the spell section; these re-fire the cast loop independently of the
+-- melee loop above.
 createTrigger("^You discharged the spell at the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
-    taPackage.killAttackPending = false
-    killAttack()
+    taPackage.castPending = false
+    castSpell()
 end, { type = "regex" })
 
 createTrigger("^You confuse the key syllables and the spell fails!$", function()
     if not taPackage.killActive then return end
-    taPackage.killAttackPending = false
-    killAttack()
+    taPackage.castPending = false
+    castSpell()
 end, { type = "regex" })
 
 createTrigger("^Your spell was negated by the .+'s magickal defenses!$", function()
     if not taPackage.killActive then return end
-    taPackage.killAttackPending = false
-    killAttack()
+    taPackage.castPending = false
+    castSpell()
+end, { type = "regex" })
+
+-- A monster turning on a party member is an Acolyte's cue to heal them.
+createTrigger("^The .+ attacked (.+) with .+!$", function(matches)
+    if getClass() ~= "Acolyte" then return end
+    if not taPackage.killActive then return end
+    local ally = matches[2]
+    if not taPackage.healAllies[ally:lower()] then return end
+    taPackage.healTarget = ally
+    castSpell()
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
@@ -1577,6 +1618,8 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.killActive = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
+    taPackage.castPending = false
+    taPackage.healTarget = nil
     echo("[kill] " .. matches[2] .. " is dead.")
 end, { type = "regex" })
 
@@ -1593,11 +1636,11 @@ end, { type = "regex" })
 
 createTrigger("^You are still too mentally exhausted from your last incantation!$", function()
     if not taPackage.killActive then return end
-    taPackage.killAttackPending = false
+    taPackage.castPending = false
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
-            killAttack()
+            castSpell()
         end
     end, { repeating = false })
 end, { type = "regex" })

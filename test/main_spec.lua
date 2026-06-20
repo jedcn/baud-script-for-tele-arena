@@ -2916,9 +2916,17 @@ describe("ta.follow", function()
                 setClass("Sorceror")
             end)
 
-            it("casts komiza on start instead of attacking", function()
+            it("melees and casts komiza on start", function()
                 helper.simulateAlias("kill cave lizard")
-                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+                assert.are.equal("a cave", helper.sendCalls[1])
+                assert.are.equal("cast komiza cave", helper.sendCalls[2])
+            end)
+
+            it("keeps meleeing after a hit, independent of the cast loop", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("Your attack hit the cave lizard for 8 damage!")
+                assert.are.equal("a cave", helper.sendCalls[1])
             end)
 
             it("re-casts after a successful discharge", function()
@@ -2942,13 +2950,73 @@ describe("ta.follow", function()
                 assert.are.equal("cast komiza cave", helper.sendCalls[1])
             end)
 
-            it("clears the pending flag on mental exhaustion", function()
+            it("clears the cast pending flag on mental exhaustion", function()
                 helper.simulateAlias("kill cave lizard")
-                taPackage.killAttackPending = true
+                taPackage.castPending = true
                 helper.simulateLine("You are still too mentally exhausted from your last incantation!")
-                assert.is_false(taPackage.killAttackPending)
+                assert.is_false(taPackage.castPending)
             end)
 
+        end)
+
+        describe("Acolyte", function()
+
+            before_each(function()
+                setClass("Acolyte")
+                taPackage.healAllies = { tojolias = true, johnsonite = true }
+            end)
+
+            it("melees on start like everyone else", function()
+                helper.simulateAlias("kill cave lizard")
+                assert.are.equal("a cave", helper.sendCalls[1])
+            end)
+
+            it("heals an ally a monster attacks during the fight", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+                assert.are.equal("cast motu Tojolias", helper.sendCalls[1])
+            end)
+
+            it("does not heal a name that isn't in the heal list", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("The lizard man attacked Pelayo with his spear!")
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            it("does not heal when no fight is active", function()
+                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            it("can heal again after a landed heal clears the pending flag", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+                helper.simulateLine("You intoned the spell for Tojolias which healed 6 damage!")
+                helper.sendCalls = {}
+                helper.simulateLine("The lizard man attacked Johnsonite with his spear!")
+                assert.are.equal("cast motu Johnsonite", helper.sendCalls[1])
+            end)
+
+        end)
+
+    end)
+
+    describe("non-caster classes", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+            setClass("Warrior")
+            taPackage.healAllies = { tojolias = true }
+        end)
+
+        it("does not heal when the class is not a caster", function()
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("The lizard man attacked Tojolias with his spear!")
+            assert.are.equal(0, #helper.sendCalls)
         end)
 
     end)
