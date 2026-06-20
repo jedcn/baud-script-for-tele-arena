@@ -92,19 +92,6 @@ ta.follow <target>
 
 When the supporter sees that the leader has engaged a monster, it:
 
-- ✅ Begins attacking the same monster (`kill <monster>`). Implemented: the
-  follower joins the kill loop when it sees the leader land a hit
-  (`<leader> just attacked the <monster> with ...`) or have an attack dodged
-  (`The <monster> barely dodged <leader>'s ...`).
-- ✅ Watches for the monster attacking the leader — if so, casts heal on the
-  leader. Implemented as a generalized Acolyte behavior: a monster attacking
-  any name in `taPackage.healAllies` (`The <monster> attacked <ally> with ...`)
-  triggers `cast motu <ally>`. Covers the leader as long as they're listed.
-- ❌ Watches for the monster attacking the supporter itself — if so, casts
-  heal on itself (`cast motu <self>`). Not done: a monster attacking the
-  supporter prints `The <monster> attacked you ...`, which the name-based
-  `healAllies` match doesn't catch. Needs a self-heal branch.
-
 ### Retreat
 
 If the leader flees the fight, or says `retreat` in the room, the supporter:
@@ -122,42 +109,31 @@ The leader can say things in the room that the supporter acts on:
 
 ### Things to figure out
 
-- How the supporter detects which monster the leader attacked (look for `<leader> attacks <monster>` in room text)
 - How to detect the leader leaving vs. being in the same room during a chase
 - Mana management — what does the supporter do if it runs out of mana mid-fight?
 - Whether the two baud instances need any coordination beyond watching room text, or if they can operate independently
 
 ### Group-status-driven healing
 
-Today the Acolyte heals reactively — whenever a monster attacks a name in
-`healAllies`. A better target selection: before healing, run the `group`
-command and pick whoever is actually hurt.
-
-Each time the healer is about to heal, send `group`. The response looks like:
+✅ Implemented. The hardcoded `healAllies` list and the "monster attacked an
+ally" trigger are gone. Instead, when an Acolyte hits attack (physical)
+exhaustion mid-fight, it sends `group` and heals the first member the listing
+reports below 90% health (`cast motu <name>`), parsing lines like:
 
 ```
 Your group currently consists of:
   Johnsonite                         [HE:100% ST:Ready]
-  Pelayo                             [HE:100% ST:Ready]
-  Tojolias                       (L) [HE:100% ST:Resting]
+  Tojolias                       (L) [HE: 55% ST:Resting]
   Teekywiki                          [HE: 95% ST:Ready]
 ```
 
-- `(L)` marks the leader.
-- `HE:` is the member's health percentage.
-- `ST:` is their status (`Ready`, `Resting`, …).
+Decisions made: 90% threshold (not "below 100%"); first injured member wins
+(tie-breaking deferred until we see how often ties happen); gated on Acolyte +
+active fight, so it works from a manual `kill` too, not just while following.
 
-Parse each line, and cast heal on a member below 100% — in this example,
-`Teekywiki` at 95%. This replaces (or refines) the "monster attacked an
-ally" trigger as the way we decide who needs a heal.
-
-Things to figure out:
-- If several members are below 100%, who to heal first — lowest HE%, the
-  leader preferentially, or just the first listed?
-- Whether a small threshold is better than "anything below 100%" (e.g. only
-  heal below 90%) to avoid wasting mana on chip damage.
+Still open:
+- Tie-breaking when several members are injured (lowest HE%? leader first?).
 - Whether `ST:Resting`/exhaustion on a member should affect the choice.
-- How the `group` round-trip interacts with the cast loop's pending flag and
-  mental-exhaustion retries — we'd be issuing `group` then a heal each round.
-- Whether to keep the attack-line trigger as a fast path and use `group`
-  only to choose among multiple injured members.
+- Self-heal when a monster attacks the supporter (`The <monster> attacked you
+  ...`) — the group scan only fires on attack exhaustion, so a healer taking
+  hits without exhausting its own melee wouldn't react.
