@@ -59,3 +59,17 @@ independent).
 **Commit:** `9cfa44c`
 
 **Result:** Found after 1,624 rolls — Int=6 Kno=17 Phy=21 Sta=22 Agi=30 Cha=13
+
+---
+
+## Elf Sorceror
+
+**Max stats:** Int=22 Kno=25 Phy=15 Sta=15 Agi=19 Cha=21
+
+**Approach:** Mixed — hard floors on Int=22, Kno=25, and Sta=15 (all must be at max),
+plus a combined deficit threshold of 5 for Phy and Cha. Agi is ignored. Vit is excluded
+from matching because it is fully determined by Sta.
+
+**Final targets:** Int=22 Kno=25 Sta=15 (exact), Phy+Cha combined deficit <= 5, Agi ignored
+
+**Commit:** `9a25de2`
