@@ -47,11 +47,21 @@ const itemDrops = db.prepare(`
   SELECT monster, item, recorded_at FROM item_drops ORDER BY recorded_at
 `).all() as any[];
 
-const spellHeals = db.prepare(`
-  SELECT spell, target, COUNT(*) as casts, AVG(amount) as avg_heal, MIN(amount) as min_heal, MAX(amount) as max_heal
-  FROM spell_heals
+const playerSpells = db.prepare(`
+  SELECT
+    spell,
+    target,
+    COUNT(*) FILTER (WHERE outcome = 'hit')    as hits,
+    COUNT(*) FILTER (WHERE outcome = 'fizzle') as fizzles,
+    COUNT(*) FILTER (WHERE outcome = 'resist') as resists,
+    COUNT(*)                                   as total,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE outcome = 'hit') / COUNT(*), 1) as hit_pct,
+    ROUND(AVG(amount) FILTER (WHERE outcome = 'hit'), 1) as avg_amount,
+    MIN(amount) FILTER (WHERE outcome = 'hit') as min_amount,
+    MAX(amount) FILTER (WHERE outcome = 'hit') as max_amount
+  FROM player_spells
   GROUP BY spell, target
-  ORDER BY casts DESC
+  ORDER BY spell, total DESC
 `).all() as any[];
 
 // ── Combat summary (player attacks per monster) ────────────────────────────────
@@ -299,11 +309,11 @@ ${table(
 )}
 
 <h2>Spells</h2>
-${spellHeals.length > 0 ? table(
-  ["Spell", "Target", "Casts", "Avg Heal", "Min Heal", "Max Heal"],
-  spellHeals.map(s => [esc(s.spell), esc(s.target), s.casts, (+s.avg_heal).toFixed(1), s.min_heal, s.max_heal]),
-  { alignRight: [2,3,4,5] }
-) : "<p class='note'>No spell heals recorded yet.</p>"}
+${playerSpells.length > 0 ? table(
+  ["Spell", "Target", "Hits", "Fizzles", "Resists", "Hit%", "Avg", "Min", "Max"],
+  playerSpells.map(s => [esc(s.spell), esc(s.target), s.hits, s.fizzles, s.resists, s.hit_pct + "%", s.avg_amount ?? "—", s.min_amount ?? "—", s.max_amount ?? "—"]),
+  { alignRight: [2,3,4,5,6,7,8] }
+) : "<p class='note'>No spells recorded yet.</p>"}
 
 <h2>Stat Changes</h2>
 ${statRows.length > 0 ? table(
