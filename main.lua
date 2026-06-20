@@ -285,11 +285,13 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   taPackage.reRollCount = (taPackage.reRollCount or 0) + 1
   local n = taPackage.reRollCount
 
-  local targets = { intellect=0, knowledge=0, physique=21, stamina=22, agility=30, charisma=0 }
-  local threshold = 0
-  local deficit = math.max(0, targets.physique  - physique)
-              + math.max(0, targets.stamina   - stamina)
-              + math.max(0, targets.agility   - agility)
+  -- Elf Sorceror: exact floors on Int/Kno/Sta, combined Phy+Cha deficit <= 5, Agi ignored
+  local hardFloors = { intellect=22, knowledge=25, stamina=15 }
+  local softThreshold = 5
+  local floorsOk = intellect >= hardFloors.intellect
+               and knowledge >= hardFloors.knowledge
+               and stamina   >= hardFloors.stamina
+  local deficit = math.max(0, 15 - physique) + math.max(0, 21 - charisma)
 
   if not taPackage.reRollBestDeficit or deficit < taPackage.reRollBestDeficit then
     taPackage.reRollBestDeficit = deficit
@@ -300,7 +302,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
     .. " (deficit=" .. deficit .. " best=" .. best .. ")"
 
-  if deficit <= threshold then
+  if floorsOk and deficit <= softThreshold then
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
     taPackage.reRollTimerPending = false
     echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
