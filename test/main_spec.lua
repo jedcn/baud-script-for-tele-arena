@@ -2737,6 +2737,61 @@ describe("ta.follow", function()
 
     end)
 
+    describe("group attack trigger", function()
+
+        before_each(function()
+            setClass("Warrior")
+            taPackage.followTarget = "tojolias"
+        end)
+
+        it("starts the kill loop on the leader's target", function()
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("huge rat", taPackage.killTarget)
+            assert.are.equal("a huge", helper.sendCalls[1])
+        end)
+
+        it("matches the leader case-insensitively", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("TOJOLIAS just attacked the huge rat with a flail!")
+            assert.is_true(taPackage.killActive)
+        end)
+
+        it("does nothing when the attacker is not the leader", function()
+            helper.simulateLine("Pelayo just attacked the huge rat with a sword!")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when not following anyone", function()
+            taPackage.followTarget = nil
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not restart when already killing", function()
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            local generation = taPackage.killGeneration
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            assert.are.equal(generation, taPackage.killGeneration)
+        end)
+
+        it("stops when the monster dies, even if another player kills it", function()
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            helper.simulateLine("The huge rat falls to the ground lifeless!")
+            assert.is_falsy(taPackage.killActive)
+            assert.is_nil(taPackage.killTarget)
+        end)
+
+        it("does not start when class is unknown", function()
+            setClass(nil)
+            helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+            assert.is_falsy(taPackage.killActive)
+        end)
+
+    end)
+
     describe("kill alias", function()
 
         before_each(function()

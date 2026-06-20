@@ -1496,21 +1496,27 @@ local function killAttack()
     end
 end
 
-createAlias("^kill (.+)$", function(matches)
+local function startKill(target)
     if taPackage.arenaState then
         echo("[kill] Cannot start — arena session is active.")
-        return
+        return false
     end
     if not getClass() then
         echo("[kill] Class unknown — run 'st' first so casters cast.")
-        return
+        return false
     end
-    taPackage.killTarget = matches[2]
+    taPackage.killTarget = target
     taPackage.killActive = true
     taPackage.killAttackPending = false
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Attacking " .. taPackage.killTarget .. ".")
     killAttack()
+    return true
+end
+taPackage.startKill = startKill
+
+createAlias("^kill (.+)$", function(matches)
+    startKill(matches[2])
 end, { type = "regex" })
 
 createAlias("^kill-stop$", function()
@@ -1630,6 +1636,16 @@ createTrigger("^(.+) is asking to join your group\\.$", function(matches)
     table.insert(taPackage.followedBy, name)
     send("add " .. name:lower())
     echo("[follow] " .. name .. " is now following you.")
+end, { type = "regex" })
+
+-- When the leader we're following attacks a monster, join the fight on the
+-- same target via the kill loop. The kill loop's death trigger stops us
+-- naturally if someone else lands the killing blow first.
+createTrigger("^(.+) just attacked the (.+) with .+!$", function(matches)
+    if not taPackage.followTarget then return end
+    if matches[2]:lower() ~= taPackage.followTarget then return end
+    if taPackage.killActive then return end
+    startKill(matches[3])
 end, { type = "regex" })
 
 createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
