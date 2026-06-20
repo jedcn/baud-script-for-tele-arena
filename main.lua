@@ -1060,6 +1060,17 @@ local function arenaCast()
     arenaSend("cast komiza " .. target)
 end
 
+-- Ringing the gong is itself a physical action. Right after a melee kill the
+-- physical clock is spent, so the immediate ring is rejected with "still
+-- physically exhausted" — the same retry treatment the swing gets keeps the
+-- loop alive. The pending guard means a stale retry timer can't double-ring.
+local ARENA_RING_RETRY_MS = 3000
+local function arenaRing()
+    if taPackage.arenaRingPending then return end
+    taPackage.arenaRingPending = true
+    arenaSend("ring gong")
+end
+
 local function checkTrainingNeeded()
     local xp  = getExperience()
     local cls = getClass()
@@ -1134,12 +1145,13 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaXpCheckPending = false
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
+    taPackage.arenaRingPending = false
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
     echo("[arena] Session started" .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
-    arenaSend("ring gong")
+    arenaRing()
 end, { type = "regex" })
 
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
@@ -1163,6 +1175,7 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     taPackage.arenaDebug = nil
     taPackage.arenaAttackPending = nil
     taPackage.arenaCastPending = nil
+    taPackage.arenaRingPending = nil
     echo("[arena] Stopped.")
 end, { type = "regex" })
 
@@ -1175,6 +1188,7 @@ createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(
     end
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
+    taPackage.arenaRingPending = false
     arenaAttack()
     arenaCast()
 end, { type = "regex" })
@@ -1213,7 +1227,8 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
             arenaSend("w")
         else
             taPackage.arenaState = "ringing"
-            arenaSend("ring gong")
+            taPackage.arenaRingPending = false
+            arenaRing()
         end
     end
 end, { type = "regex" })
@@ -1289,7 +1304,8 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
                 arenaCast()
             else
                 taPackage.arenaState = "ringing"
-                arenaSend("ring gong")
+                taPackage.arenaRingPending = false
+                arenaRing()
             end
         end
     end
@@ -1356,20 +1372,32 @@ end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
     if not taPackage.arenaState then return end
-    taPackage.arenaAttackPending = false
     arenaDebugEcho("exhausted")
     if taPackage.character.name == "Pelayo" then
         send("cast motu pelayo")
     end
-    -- Melee is on cooldown; retry the swing once the physical clock recovers.
-    -- A stable combat generation (not the per-send retry counter) keeps this
-    -- timer alive even though the cast loop keeps firing arenaSend meanwhile.
+    -- A stable combat generation (not the per-send retry counter) keeps these
+    -- timers alive even though the cast loop keeps firing arenaSend meanwhile.
     local gen = taPackage.arenaCombatGen or 0
-    createTimer(30000, function()
-        if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
-            arenaAttack()
-        end
-    end, { repeating = false })
+    if taPackage.arenaState == "ringing" then
+        -- The blocked physical action was the gong ring (the kill just spent
+        -- the physical clock). Retry the ring, not a swing — there's no monster
+        -- to swing at, so retrying arenaAttack would silently stall the loop.
+        taPackage.arenaRingPending = false
+        createTimer(ARENA_RING_RETRY_MS, function()
+            if taPackage.arenaState == "ringing" and (taPackage.arenaCombatGen or 0) == gen then
+                arenaRing()
+            end
+        end, { repeating = false })
+    else
+        -- Melee is on cooldown; retry the swing once the physical clock recovers.
+        taPackage.arenaAttackPending = false
+        createTimer(30000, function()
+            if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
+                arenaAttack()
+            end
+        end, { repeating = false })
+    end
 end, { type = "regex" })
 
 createTrigger("^You are still too mentally exhausted from your last incantation!$", function(matches)

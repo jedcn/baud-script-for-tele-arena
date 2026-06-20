@@ -2281,6 +2281,46 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(30000, timerCreated.interval)
         end)
 
+        it("retries the gong (not a swing) when exhausted while ringing", function()
+            -- After a melee kill the physical clock is spent, so the immediate
+            -- post-kill 'ring gong' is rejected. The retry must re-ring.
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(3000, timerCreated.interval)
+            helper.sendCalls = {}
+            timerCreated.cb()
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+        it("the gong retry stops once the state leaves ringing", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local staleTimer = timerCreated
+            -- A monster entered; we're now fighting, so the stale ring retry
+            -- must not fire another gong.
+            taPackage.arenaState = "fighting"
+            helper.sendCalls = {}
+            staleTimer.cb()
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("stacked ringing exhaustions retry the gong only once (pending guard)", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local firstTimer = timerCreated
+            timerCreated = nil
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local secondTimer = timerCreated
+            assert.is_not_nil(secondTimer)
+            helper.sendCalls = {}
+            firstTimer.cb()
+            assert.are.equal("ring gong", helper.sendCalls[1])
+            helper.sendCalls = {}
+            secondTimer.cb()
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
         it("does not create timer when arenaState is nil", function()
             taPackage.arenaState = nil
             helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
