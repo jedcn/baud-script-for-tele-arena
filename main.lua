@@ -1700,6 +1700,14 @@ createTrigger("^The (.+) barely dodged (.+)'s .+!$", function(matches)
     startKill(matches[2])
 end, { type = "regex" })
 
+-- The leader swinging and missing still means they're engaging that monster.
+createTrigger("^(.+)'s poorly executed attack misses the (.+)!$", function(matches)
+    if not taPackage.followTarget then return end
+    if matches[2]:lower() ~= taPackage.followTarget then return end
+    if taPackage.killActive then return end
+    startKill(matches[3])
+end, { type = "regex" })
+
 -- When the leader buys a drink, the follower buys one too.
 createTrigger("^The barmaid brings a drink over to (.+) in exchange for a few coins\\.$", function(matches)
     if not taPackage.followTarget then return end

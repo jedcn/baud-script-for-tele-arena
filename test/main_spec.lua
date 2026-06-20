@@ -2824,6 +2824,19 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("starts when the leader swings and misses", function()
+            helper.simulateLine("Tojolias's poorly executed attack misses the cyclops!")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("cyclops", taPackage.killTarget)
+            assert.are.equal("a cyclops", helper.sendCalls[1])
+        end)
+
+        it("does nothing on a non-leader's missed attack", function()
+            helper.simulateLine("Pelayo's poorly executed attack misses the cyclops!")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
     end)
 
     describe("kill alias", function()
