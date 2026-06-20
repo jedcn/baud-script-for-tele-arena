@@ -92,9 +92,18 @@ ta.follow <target>
 
 When the supporter sees that the leader has engaged a monster, it:
 
-- Begins attacking the same monster (`kill <monster>`)
-- Watches for the monster attacking the leader — if so, casts heal on the leader (`cast motu <leader>`)
-- Watches for the monster attacking the supporter itself — if so, casts heal on itself (`cast motu <self>`)
+- ✅ Begins attacking the same monster (`kill <monster>`). Implemented: the
+  follower joins the kill loop when it sees the leader land a hit
+  (`<leader> just attacked the <monster> with ...`) or have an attack dodged
+  (`The <monster> barely dodged <leader>'s ...`).
+- ✅ Watches for the monster attacking the leader — if so, casts heal on the
+  leader. Implemented as a generalized Acolyte behavior: a monster attacking
+  any name in `taPackage.healAllies` (`The <monster> attacked <ally> with ...`)
+  triggers `cast motu <ally>`. Covers the leader as long as they're listed.
+- ❌ Watches for the monster attacking the supporter itself — if so, casts
+  heal on itself (`cast motu <self>`). Not done: a monster attacking the
+  supporter prints `The <monster> attacked you ...`, which the name-based
+  `healAllies` match doesn't catch. Needs a self-heal branch.
 
 ### Retreat
 
