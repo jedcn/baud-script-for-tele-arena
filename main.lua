@@ -1346,7 +1346,7 @@ end, { type = "regex" })
 createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", function(matches)
     local target = matches[2]
     local amount = tonumber(matches[3])
-    taPackage.db.recordSpellHeal("motu", target, amount)
+    taPackage.db.recordPlayerSpell("motu", target, "hit", amount)
     if target == taPackage.character.name then
         local current = taPackage.character.vitalityCurrent
         local max = taPackage.character.vitalityMax

@@ -1021,6 +1021,38 @@ describe("ta_db", function()
 
     end)
 
+    describe("recordPlayerSpell", function()
+
+        it("records a hit with amount", function()
+            TaDb.recordPlayerSpell("komiza", "huge rat", "hit", 7)
+            local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+            assert.is_not_nil(call)
+            assert.are.equal("komiza", call.params[1])
+            assert.are.equal("huge rat", call.params[2])
+            assert.are.equal("hit", call.params[3])
+            assert.are.equal(7, call.params[4])
+        end)
+
+        it("records a miss with no amount", function()
+            TaDb.recordPlayerSpell("komiza", "huge rat", "miss", nil)
+            local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+            assert.is_not_nil(call)
+            assert.are.equal("miss", call.params[3])
+            assert.is_nil(call.params[4])
+        end)
+
+        it("echoes with amount when present", function()
+            TaDb.recordPlayerSpell("motu", "pelayo", "hit", 10)
+            assert.are.equal("[DB\xE2\x86\x92player_spells] motu \xE2\x86\x92 pelayo [hit] 10", helper.echoCalls[1])
+        end)
+
+        it("echoes without amount when nil", function()
+            TaDb.recordPlayerSpell("komiza", "huge rat", "miss", nil)
+            assert.are.equal("[DB\xE2\x86\x92player_spells] komiza \xE2\x86\x92 huge rat [miss]", helper.echoCalls[1])
+        end)
+
+    end)
+
     describe("recordMonsterLoot", function()
 
         it("records gold and echoes", function()
@@ -2282,6 +2314,33 @@ describe("cast komiza outbound trigger", function()
     it("does nothing when manaCurrent is unknown", function()
         helper.simulateOutbound("cast komiza tojolias")
         assert.is_nil(taPackage.character.manaCurrent)
+    end)
+
+end)
+
+describe("motu inbound trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("records the spell cast via recordPlayerSpell", function()
+        helper.simulateLine("You intoned the spell for pelayo which healed 10 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.is_not_nil(call)
+        assert.are.equal("motu", call.params[1])
+        assert.are.equal("pelayo", call.params[2])
+        assert.are.equal("hit", call.params[3])
+        assert.are.equal(10, call.params[4])
+    end)
+
+    it("parses target and amount from the line", function()
+        helper.simulateLine("You intoned the spell for tojolias which healed 5 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.is_not_nil(call)
+        assert.are.equal("tojolias", call.params[2])
+        assert.are.equal(5, call.params[4])
     end)
 
 end)

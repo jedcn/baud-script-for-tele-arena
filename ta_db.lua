@@ -93,11 +93,12 @@ db:execute([[CREATE TABLE IF NOT EXISTS item_drops (
   recorded_at TEXT NOT NULL
 )]])
 
-db:execute([[CREATE TABLE IF NOT EXISTS spell_heals (
+db:execute([[CREATE TABLE IF NOT EXISTS player_spells (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   spell       TEXT NOT NULL,
-  target      TEXT NOT NULL,
-  amount      INTEGER NOT NULL,
+  target      TEXT,
+  outcome     TEXT NOT NULL,
+  amount      INTEGER,
   recorded_at TEXT NOT NULL
 )]])
 
@@ -226,12 +227,14 @@ function TaDb.recordMonsterLoot(monster, gold)
     echo("[DB\xE2\x86\x92monster_loot] " .. monster .. ": " .. gold .. " gold")
 end
 
-function TaDb.recordSpellHeal(spell, target, amount)
+function TaDb.recordPlayerSpell(spell, target, outcome, amount)
     db:execute(
-        "INSERT INTO spell_heals (spell, target, amount, recorded_at) VALUES (?, ?, ?, ?)",
-        spell, target, amount, now()
+        "INSERT INTO player_spells (spell, target, outcome, amount, recorded_at) VALUES (?, ?, ?, ?, ?)",
+        spell, target or "", outcome, amount, now()
     )
-    echo("[DB\xE2\x86\x92spell_heals] " .. spell .. " healed " .. target .. " for " .. amount)
+    local msg = "[DB\xE2\x86\x92player_spells] " .. spell .. " \xE2\x86\x92 " .. (target or "?") .. " [" .. outcome .. "]"
+    if amount then msg = msg .. " " .. amount end
+    echo(msg)
 end
 
 function TaDb.recordItemDrop(monster, item)
