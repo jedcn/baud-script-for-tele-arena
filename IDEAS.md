@@ -137,3 +137,32 @@ Still open:
 - Self-heal when a monster attacks the supporter (`The <monster> attacked you
   ...`) — the group scan only fires on attack exhaustion, so a healer taking
   hits without exhausting its own melee wouldn't react.
+
+### Leader-issued commands via group chat
+
+While following with `ta.follow`, let the leader drive the followers by
+sending commands over group chat. The leader types:
+
+```
+confer kill lizard
+```
+
+`confer` broadcasts to the group, and every member sees:
+
+```
+From Tojolias (to group): kill lizard
+```
+
+When that line appears and the speaker is the current follow leader, each
+watching account runs the command (`kill lizard`). This gives the leader a
+single channel to issue arbitrary commands to the whole party.
+
+Things to figure out:
+- Whether to run *any* command verbatim or only an allowlist (running
+  arbitrary input from chat is powerful but risky).
+- How this interacts with the existing auto-join-the-fight triggers — a
+  `confer kill <monster>` and the leader's own attack line could both fire.
+- Whether the leader should be able to target a specific member rather than
+  broadcasting to everyone.
+- Confirming the exact `From <name> (to group): <message>` format, and that
+  the follower doesn't act on its own conferred messages.
