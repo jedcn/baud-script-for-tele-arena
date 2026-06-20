@@ -2246,6 +2246,46 @@ describe("cast.minor.heal alias", function()
 
 end)
 
+describe("cast.ice.dart alias", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("sends cast komiza <target>", function()
+        helper.simulateAlias("cast.ice.dart tojolias")
+        assert.are.equal("cast komiza tojolias", helper.sendCalls[1])
+    end)
+
+end)
+
+describe("cast komiza outbound trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("decrements manaCurrent by 1", function()
+        helper.simulateLine("Mana:         10 / 20")
+        helper.simulateOutbound("cast komiza tojolias")
+        assert.are.equal(9, taPackage.character.manaCurrent)
+    end)
+
+    it("does not reduce manaCurrent below 0", function()
+        helper.simulateLine("Mana:         0 / 20")
+        helper.simulateOutbound("cast komiza tojolias")
+        assert.are.equal(0, taPackage.character.manaCurrent)
+    end)
+
+    it("does nothing when manaCurrent is unknown", function()
+        helper.simulateOutbound("cast komiza tojolias")
+        assert.is_nil(taPackage.character.manaCurrent)
+    end)
+
+end)
+
 -- =========================================================================
 -- Follow
 -- =========================================================================

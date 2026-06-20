@@ -132,6 +132,18 @@ function M.simulateAlias(text)
     end
 end
 
+function M.simulateOutbound(text)
+    for _, trigger in ipairs(M.outboundTriggers) do
+        local luaPattern = regexToLuaPattern(trigger.pattern)
+        local matches = {string.match(text, luaPattern)}
+        if #matches > 0 or string.match(text, luaPattern) then
+            if #matches == 0 then matches = {} end
+            table.insert(matches, 1, text)
+            trigger.callback(matches)
+        end
+    end
+end
+
 function M.clearDbCalls()
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.mockDbOneRow = nil
