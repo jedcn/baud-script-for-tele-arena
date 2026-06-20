@@ -140,29 +140,20 @@ Still open:
 
 ### Leader-issued commands via group chat
 
-While following with `ta.follow`, let the leader drive the followers by
-sending commands over group chat. The leader types:
+✅ Implemented (allowlist). While following, a line
+`From <leader> (to group): <command>` from the current follow leader runs
+the command, but only for recognized entries:
 
-```
-confer kill lizard
-```
+- `kill <monster>` → starts the kill loop on that monster
+- `buy healing` → sends `buy healing`
 
-`confer` broadcasts to the group, and every member sees:
+The speaker must match `followTarget`, so a follower's own conferred lines and
+other members' messages are ignored, as is anything off the allowlist.
 
-```
-From Tojolias (to group): kill lizard
-```
-
-When that line appears and the speaker is the current follow leader, each
-watching account runs the command (`kill lizard`). This gives the leader a
-single channel to issue arbitrary commands to the whole party.
-
-Things to figure out:
-- Whether to run *any* command verbatim or only an allowlist (running
-  arbitrary input from chat is powerful but risky).
-- How this interacts with the existing auto-join-the-fight triggers — a
-  `confer kill <monster>` and the leader's own attack line could both fire.
+Still open:
+- Growing the allowlist as we find more commands worth broadcasting.
 - Whether the leader should be able to target a specific member rather than
-  broadcasting to everyone.
-- Confirming the exact `From <name> (to group): <message>` format, and that
-  the follower doesn't act on its own conferred messages.
+  the whole group.
+- Overlap with the auto-join-the-fight triggers: `confer kill <monster>` plus
+  the leader's own attack line both fire, but the second is a no-op once a
+  kill is already active.
