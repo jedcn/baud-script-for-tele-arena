@@ -311,19 +311,6 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
   end
 end, { type = "regex" })
 
-createTrigger("^Experience:\\s+(\\d+)$", function(matches)
-  setExperience(matches[2])
-  if not taPackage.arenaXpCheckPending then return end
-  taPackage.arenaXpCheckPending = false
-  local xp = tonumber(matches[2])
-  local startXp = taPackage.arenaSessionStartXp
-  local elapsed = os.time() - (taPackage.arenaSessionStartTime or os.time())
-  local minutes = math.floor(elapsed / 60)
-  local gained = startXp and (xp - startXp) or 0
-  echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
-    .. gained .. " XP (total: " .. xp .. ")")
-end, { type = "regex" })
-
 createTrigger("^Class:\\s+(\\S+)$", function(matches)
   setClass(matches[2])
 end, { type = "regex" })
@@ -964,6 +951,26 @@ local function scheduleArenaXpCheck()
     scheduleArenaXpCheck()
   end, { repeating = false })
 end
+
+createTrigger("^Experience:\\s+(\\d+)$", function(matches)
+  setExperience(matches[2])
+  if taPackage.arenaState == "ringing" and checkTrainingNeeded() then
+    echo("[arena] Leveling up — heading to training hall.")
+    taPackage.arenaState = "training"
+    taPackage.arenaTrainingPhase = 1
+    arenaSend("w")
+    return
+  end
+  if not taPackage.arenaXpCheckPending then return end
+  taPackage.arenaXpCheckPending = false
+  local xp = tonumber(matches[2])
+  local startXp = taPackage.arenaSessionStartXp
+  local elapsed = os.time() - (taPackage.arenaSessionStartTime or os.time())
+  local minutes = math.floor(elapsed / 60)
+  local gained = startXp and (xp - startXp) or 0
+  echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
+    .. gained .. " XP (total: " .. xp .. ")")
+end, { type = "regex" })
 
 createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
   taPackage.arenaDebug = matches[2] == " debug"
