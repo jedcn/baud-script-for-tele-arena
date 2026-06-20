@@ -1555,6 +1555,7 @@ describe("ring-gong-and-fight-in-arena", function()
         helper.resetAll()
         dofile("main.lua")
         helper.clearDbCalls()
+        setClass("Warrior")
     end)
 
     local function setHP(current, max)
@@ -1574,9 +1575,20 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("records session start XP from current experience", function()
-            taPackage.character = { experience = 500 }
+            taPackage.character.experience = 500
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             assert.are.equal(500, taPackage.arenaSessionStartXp)
+        end)
+
+        it("does not start when class is unknown", function()
+            setClass(nil)
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.is_nil(taPackage.arenaState)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Class unknown") then warned = true end
+            end
+            assert.is_true(warned)
         end)
 
         it("records session start time", function()
@@ -1594,7 +1606,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("echoes session start with XP", function()
-            taPackage.character = { experience = 1000 }
+            taPackage.character.experience = 1000
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
@@ -1674,6 +1686,7 @@ describe("ring-gong-and-fight-in-arena", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
+            setClass("Warrior")
             _G.createTimer = function(interval, cb, opts)
                 timerCreated = { interval = interval, cb = cb, opts = opts }
                 return "mock_timer"
@@ -2717,6 +2730,19 @@ describe("ta.follow", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
+            setClass("Warrior")
+        end)
+
+        it("does not start when class is unknown", function()
+            setClass(nil)
+            helper.simulateAlias("kill cave lizard")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Class unknown") then warned = true end
+            end
+            assert.is_true(warned)
         end)
 
         it("sends attack on start", function()

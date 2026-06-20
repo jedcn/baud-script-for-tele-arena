@@ -1108,6 +1108,10 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
 end, { type = "regex" })
 
 createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
+    if not getClass() then
+        echo("[arena] Class unknown — run 'st' first so casters cast.")
+        return
+    end
     taPackage.arenaDebug = matches[2] == " debug"
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
@@ -1490,6 +1494,10 @@ end
 createAlias("^kill (.+)$", function(matches)
     if taPackage.arenaState then
         echo("[kill] Cannot start — arena session is active.")
+        return
+    end
+    if not getClass() then
+        echo("[kill] Class unknown — run 'st' first so casters cast.")
         return
     end
     taPackage.killTarget = matches[2]
