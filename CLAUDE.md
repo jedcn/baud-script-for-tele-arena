@@ -10,6 +10,11 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 - Run `just test` after every change to verify nothing is broken.
 
+## Session logs
+
+- Session logs (e.g. `../old-tele-arena-session-logs/`) contain raw terminal output with ANSI escape codes and binary bytes, so `grep` treats them as binary and may skip matches.
+- Always search them with `grep -a` (treat as text) — e.g. `grep -a -C 3 "bronze"`. Don't pre-strip escape codes before grepping; a naive strip can eat the first letter of a word that immediately follows a color code and cause you to miss real matches.
+
 ## Committing
 
 - Don't create new branches. Commit directly to the current branch.
