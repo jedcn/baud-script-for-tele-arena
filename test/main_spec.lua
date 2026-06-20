@@ -922,6 +922,85 @@ describe("Monster database", function()
 end)
 
 -- =========================================================================
+-- Arena combat (class-based action)
+-- =========================================================================
+
+describe("Arena combat", function()
+
+    local realIo
+
+    before_each(function()
+        helper.resetAll()
+        realIo = _G.io
+        _G.io = { open = function() return nil end }
+        dofile("main.lua")
+    end)
+
+    after_each(function()
+        _G.io = realIo
+    end)
+
+    local function lastSend()
+        return helper.sendCalls[#helper.sendCalls]
+    end
+
+    describe("Sorceror", function()
+
+        before_each(function()
+            setClass("Sorceror")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+        end)
+
+        it("re-casts komiza after a successful discharge", function()
+            helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
+            assert.are.equal("cast komiza lizard", lastSend())
+        end)
+
+        it("re-casts komiza after a fizzle", function()
+            helper.simulateLine("You confuse the key syllables and the spell fails!")
+            assert.are.equal("cast komiza lizard", lastSend())
+        end)
+
+        it("re-casts komiza after a resist", function()
+            helper.simulateLine("Your spell was negated by the lizard man's magickal defenses!")
+            assert.are.equal("cast komiza lizard", lastSend())
+        end)
+
+        it("clears the pending flag on mental exhaustion", function()
+            taPackage.arenaAttackPending = true
+            helper.simulateLine("You are still too mentally exhausted from your last incantation!")
+            assert.is_false(taPackage.arenaAttackPending)
+        end)
+
+    end)
+
+    describe("non-Sorceror", function()
+
+        it("attacks normally for a Warrior", function()
+            setClass("Warrior")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateLine("Your sword hit the lizard man for 5 damage!")
+            assert.are.equal("a lizard", lastSend())
+        end)
+
+    end)
+
+    describe("loop guard", function()
+
+        it("does not continue the spell loop outside arena fighting", function()
+            setClass("Sorceror")
+            -- no arenaState set
+            helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+end)
+
+-- =========================================================================
 -- ta_db module
 -- =========================================================================
 

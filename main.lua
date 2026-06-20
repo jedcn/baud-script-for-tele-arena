@@ -1035,8 +1035,14 @@ local function arenaAttack()
     if name then
         if taPackage.arenaAttackPending then return end
         taPackage.arenaAttackPending = true
-        arenaDebugEcho("attack-sent")
-        arenaSend("a " .. name:match("^(%S+)"))
+        local target = name:match("^(%S+)")
+        if getClass() == "Sorceror" then
+            arenaDebugEcho("cast-sent")
+            arenaSend("cast komiza " .. target)
+        else
+            arenaDebugEcho("attack-sent")
+            arenaSend("a " .. target)
+        end
     end
 end
 
@@ -1336,6 +1342,21 @@ createTrigger("^You are still physically exhausted from your previous activities
     end
 end, { type = "regex" })
 
+createTrigger("^You are still too mentally exhausted from your last incantation!$", function(matches)
+    if not taPackage.arenaState then return end
+    taPackage.arenaAttackPending = false
+    arenaDebugEcho("mentally-exhausted")
+    local cmd = taPackage.arenaLastCmd
+    local gen = taPackage.arenaRetryGeneration or 0
+    if cmd then
+        createTimer(3000, function()
+            if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
+                arenaSend(cmd)
+            end
+        end, { repeating = false })
+    end
+end, { type = "regex" })
+
 createOutboundTrigger("^cast kamotu ", function()
     local current = taPackage.character.manaCurrent
     if current then
@@ -1402,17 +1423,32 @@ createTrigger("^You discharged the spell at the (.+) for (\\d+) damage!$", funct
     local amount = tonumber(matches[3])
     taPackage.lastAttackTarget = monster
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "hit", amount)
+    if taPackage.arenaState == "fighting" then
+        taPackage.arenaAttackPending = false
+        arenaDebugEcho("our-spell-hit")
+        if not checkFleeArena() then arenaAttack() end
+    end
 end, { type = "regex" })
 
 createTrigger("^You confuse the key syllables and the spell fails!$", function()
     local monster = taPackage.lastAttackTarget or "unknown"
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "fizzle", nil)
+    if taPackage.arenaState == "fighting" then
+        taPackage.arenaAttackPending = false
+        arenaDebugEcho("our-spell-fizzle")
+        if not checkFleeArena() then arenaAttack() end
+    end
 end, { type = "regex" })
 
 createTrigger("^Your spell was negated by the (.+)'s magickal defenses!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "resist", nil)
+    if taPackage.arenaState == "fighting" then
+        taPackage.arenaAttackPending = false
+        arenaDebugEcho("our-spell-resist")
+        if not checkFleeArena() then arenaAttack() end
+    end
 end, { type = "regex" })
 
 createOutboundTrigger("^cast motu ", function()
