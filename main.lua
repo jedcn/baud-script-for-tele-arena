@@ -1742,6 +1742,14 @@ createTrigger("^The barmaid brings a drink over to (.+) in exchange for a few co
     send("b drink")
 end, { type = "regex" })
 
+-- When the leader gets healed at the temple, the follower buys healing too.
+-- Match the opening clause only; the full message wraps across lines.
+createTrigger("^The temple priests take (\\S+) into another chamber", function(matches)
+    if not taPackage.followTarget then return end
+    if matches[2]:lower() ~= taPackage.followTarget then return end
+    send("buy healing")
+end, { type = "regex" })
+
 createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
     if not taPackage.followTarget then return end
     local name = matches[2]:lower()

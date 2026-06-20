@@ -2798,6 +2798,27 @@ describe("ta.follow", function()
 
     end)
 
+    describe("temple heal trigger", function()
+
+        it("buys healing when the leader is healed at the temple", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The temple priests take Tojolias into another chamber briefly, after which")
+            assert.are.equal("buy healing", helper.sendCalls[1])
+        end)
+
+        it("does nothing when a different character is healed", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The temple priests take Pelayo into another chamber briefly, after which")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when not following anyone", function()
+            helper.simulateLine("The temple priests take Tojolias into another chamber briefly, after which")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("group attack trigger", function()
 
         before_each(function()
