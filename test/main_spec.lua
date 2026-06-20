@@ -1023,6 +1023,7 @@ describe("ta_db", function()
     before_each(function()
         helper.resetAll()
         TaDb = dofile("ta_db.lua")
+        TaDb.debug = true
         helper.clearDbCalls()
     end)
 
@@ -1228,6 +1229,7 @@ describe("World map triggers", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
+        taPackage.db.debug = true
         helper.clearDbCalls()
     end)
 
@@ -1361,6 +1363,7 @@ describe("Combat triggers", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
+        taPackage.db.debug = true
         helper.clearDbCalls()
     end)
 

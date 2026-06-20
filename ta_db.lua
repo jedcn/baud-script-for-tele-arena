@@ -1,5 +1,15 @@
 local TaDb = {}
 
+-- Per-write debug logging is off by default so normal sessions stay quiet.
+-- Set TaDb.debug = true to surface the [DB->...] traces.
+TaDb.debug = false
+
+local function dbLog(msg)
+    if TaDb.debug then
+        echo(msg)
+    end
+end
+
 local db = dbOpen("tele-arena.db")
 
 -- WAL mode lets multiple sessions read concurrently while one writes.
@@ -112,7 +122,7 @@ function TaDb.visitRoom(name, description)
       name, description or "", now()
     )
     db:execute("UPDATE rooms SET visits = visits + 1 WHERE name = ?", name)
-    echo("[DB\xE2\x86\x92rooms] " .. name)
+    dbLog("[DB\xE2\x86\x92rooms] " .. name)
 end
 
 function TaDb.recordExit(fromRoom, direction, toRoom)
@@ -120,12 +130,12 @@ function TaDb.recordExit(fromRoom, direction, toRoom)
         "INSERT OR REPLACE INTO room_exits (from_room, direction, to_room) VALUES (?, ?, ?)",
         fromRoom, direction, toRoom or ""
     )
-    echo("[DB\xE2\x86\x92room_exits] " .. fromRoom .. " --" .. direction .. "--> " .. (toRoom or "?"))
+    dbLog("[DB\xE2\x86\x92room_exits] " .. fromRoom .. " --" .. direction .. "--> " .. (toRoom or "?"))
 end
 
 function TaDb.upsertRoomDescription(name, description)
     db:execute("UPDATE rooms SET description = ? WHERE name = ?", description, name)
-    echo("[DB\xE2\x86\x92rooms] desc: " .. name)
+    dbLog("[DB\xE2\x86\x92rooms] desc: " .. name)
 end
 
 function TaDb.upsertMonster(name, description)
@@ -137,13 +147,13 @@ function TaDb.upsertMonster(name, description)
         "UPDATE monsters SET description = ?, encounters = encounters + 1 WHERE name = ?",
         description, name
     )
-    echo("[DB\xE2\x86\x92monsters] " .. name)
+    dbLog("[DB\xE2\x86\x92monsters] " .. name)
 end
 
 function TaDb.recordMonsterSeen(name)
     local changed = db:execute("UPDATE monsters SET encounters = encounters + 1 WHERE name = ?", name)
     if changed and changed > 0 then
-        echo("[DB\xE2\x86\x92monsters] seen: " .. name)
+        dbLog("[DB\xE2\x86\x92monsters] seen: " .. name)
     end
 end
 
@@ -161,7 +171,7 @@ function TaDb.upsertDenizen(name, location, description)
         "UPDATE denizens SET description = ? WHERE name = ? AND location = ?",
         description or "", name, location
     )
-    echo("[DB\xE2\x86\x92denizens] " .. name .. " @ " .. location)
+    dbLog("[DB\xE2\x86\x92denizens] " .. name .. " @ " .. location)
 end
 
 function TaDb.recordShopItem(name, shop, price)
@@ -170,12 +180,12 @@ function TaDb.recordShopItem(name, shop, price)
         name, shop, price, now()
     )
     db:execute("UPDATE shop_items SET price = ? WHERE name = ? AND shop = ?", price, name, shop)
-    echo("[DB\xE2\x86\x92shop_items] " .. shop .. ": " .. name .. " " .. price .. "gp")
+    dbLog("[DB\xE2\x86\x92shop_items] " .. shop .. ": " .. name .. " " .. price .. "gp")
 end
 
 function TaDb.recordMinLevel(name, shop, level)
     db:execute("UPDATE shop_items SET min_level = ? WHERE name = ? AND shop = ?", level, name, shop)
-    echo("[DB\xE2\x86\x92shop_items] min_level updated: " .. name .. " @ " .. shop .. " >= level " .. level)
+    dbLog("[DB\xE2\x86\x92shop_items] min_level updated: " .. name .. " @ " .. shop .. " >= level " .. level)
 end
 
 function TaDb.recordService(name, location, cost)
@@ -187,7 +197,7 @@ function TaDb.recordService(name, location, cost)
         "UPDATE services SET cost = ?, uses = uses + 1 WHERE name = ? AND location = ?",
         cost, name, location
     )
-    echo("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
+    dbLog("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
 end
 
 function TaDb.recordStatChange(stat, fromVal, toVal)
@@ -195,7 +205,7 @@ function TaDb.recordStatChange(stat, fromVal, toVal)
         "INSERT INTO stat_changes (stat, from_value, to_value, recorded_at) VALUES (?, ?, ?, ?)",
         stat, fromVal, toVal, now()
     )
-    echo("[DB\xE2\x86\x92stat_changes] " .. stat .. ": " .. fromVal .. " \xE2\x86\x92 " .. toVal)
+    dbLog("[DB\xE2\x86\x92stat_changes] " .. stat .. ": " .. fromVal .. " \xE2\x86\x92 " .. toVal)
 end
 
 function TaDb.recordPlayerAttack(weapon, monster, outcome, damage)
@@ -211,11 +221,11 @@ function TaDb.recordMonsterAttack(monster, outcome, damage)
         monster, outcome, damage or 0, now()
     )
     if outcome == "hit" then
-        echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " HIT you: " .. (damage or 0) .. " dmg")
+        dbLog("[DB\xE2\x86\x92monster_attacks] " .. monster .. " HIT you: " .. (damage or 0) .. " dmg")
     elseif outcome == "miss" then
-        echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " MISS")
+        dbLog("[DB\xE2\x86\x92monster_attacks] " .. monster .. " MISS")
     else
-        echo("[DB\xE2\x86\x92monster_attacks] " .. monster .. " " .. outcome:upper())
+        dbLog("[DB\xE2\x86\x92monster_attacks] " .. monster .. " " .. outcome:upper())
     end
 end
 
@@ -224,7 +234,7 @@ function TaDb.recordMonsterLoot(monster, gold)
         "INSERT INTO monster_loot (monster, gold, recorded_at) VALUES (?, ?, ?)",
         monster, gold, now()
     )
-    echo("[DB\xE2\x86\x92monster_loot] " .. monster .. ": " .. gold .. " gold")
+    dbLog("[DB\xE2\x86\x92monster_loot] " .. monster .. ": " .. gold .. " gold")
 end
 
 function TaDb.recordPlayerSpell(spell, target, outcome, amount)
@@ -234,7 +244,7 @@ function TaDb.recordPlayerSpell(spell, target, outcome, amount)
     )
     local msg = "[DB\xE2\x86\x92player_spells] " .. spell .. " \xE2\x86\x92 " .. (target or "?") .. " [" .. outcome .. "]"
     if type(amount) == "number" then msg = msg .. " " .. amount end
-    echo(msg)
+    dbLog(msg)
 end
 
 function TaDb.recordItemDrop(monster, item)
@@ -242,7 +252,7 @@ function TaDb.recordItemDrop(monster, item)
         "INSERT INTO item_drops (monster, item, recorded_at) VALUES (?, ?, ?)",
         monster, item, now()
     )
-    echo("[DB\xE2\x86\x92item_drops] " .. monster .. " dropped: " .. item)
+    dbLog("[DB\xE2\x86\x92item_drops] " .. monster .. " dropped: " .. item)
 end
 
 return TaDb
