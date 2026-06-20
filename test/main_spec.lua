@@ -207,6 +207,37 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Incoming minor heal from another player trigger
+    -- =========================================================================
+
+    describe("Incoming minor heal from another player trigger", function()
+
+        it("increases current vitality by healed amount", function()
+            helper.simulateLine("Vitality:     20 / 26")
+            helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
+            local current, max = getVitality()
+            assert.are.equal(26, current)
+            assert.are.equal(26, max)
+        end)
+
+        it("does not exceed max vitality", function()
+            helper.simulateLine("Vitality:     24 / 26")
+            helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(26, current)
+        end)
+
+        it("works when max vitality is not yet known", function()
+            helper.simulateLine("Vitality:     20 / 26")
+            taPackage.character.vitalityMax = nil
+            helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(26, current)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Incoming damage trigger
     -- =========================================================================
 
