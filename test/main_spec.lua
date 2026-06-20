@@ -2798,6 +2798,27 @@ describe("ta.follow", function()
 
     end)
 
+    describe("meal trigger", function()
+
+        it("buys a meal when the leader does", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The barmaid brings a hot meal over to Tojolias in exchange for a handful")
+            assert.are.equal("buy meal", helper.sendCalls[1])
+        end)
+
+        it("does nothing when a different character buys a meal", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("The barmaid brings a hot meal over to Pelayo in exchange for a handful")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when not following anyone", function()
+            helper.simulateLine("The barmaid brings a hot meal over to Tojolias in exchange for a handful")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("temple heal trigger", function()
 
         it("buys healing when the leader is healed at the temple", function()
