@@ -176,6 +176,18 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(101, getGold())
         end)
 
+        it("decreases gold when buying an item from a shop", function()
+            helper.simulateLine("You are carrying 100 gold crowns.")
+            helper.simulateLine("Ok, you bought a quarterstaff for 9 crowns.")
+            assert.are.equal(91, getGold())
+        end)
+
+        it("handles a multi-word item name when buying", function()
+            helper.simulateLine("You are carrying 100 gold crowns.")
+            helper.simulateLine("Ok, you bought robes for 18 crowns.")
+            assert.are.equal(82, getGold())
+        end)
+
     end)
 
     -- =========================================================================

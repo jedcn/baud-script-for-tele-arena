@@ -535,6 +535,11 @@ createTrigger("^You withdrew (\\d+) gold from your account\\.$", function(matche
     setGold((getGold() or 0) + amount)
 end, { type = "regex" })
 
+createTrigger("^Ok, you bought .+ for (\\d+) crowns\\.$", function(matches)
+    local cost = tonumber(matches[2])
+    setGold((getGold() or 0) - cost)
+end, { type = "regex" })
+
 createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", function(matches)
     local cost = tonumber(matches[2])
     setGold((getGold() or 0) - cost)
