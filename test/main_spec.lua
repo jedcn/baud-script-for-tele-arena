@@ -2345,6 +2345,105 @@ describe("motu inbound trigger", function()
 
 end)
 
+describe("spell discharge trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.lastSpellCast = "komiza"
+    end)
+
+    it("records a hit with monster and damage", function()
+        helper.simulateLine("You discharged the spell at the skeleton warrior for 8 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.is_not_nil(call)
+        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("skeleton warrior", call.params[2])
+        assert.are.equal("hit", call.params[3])
+        assert.are.equal(8, call.params[4])
+    end)
+
+    it("updates lastAttackTarget on hit", function()
+        helper.simulateLine("You discharged the spell at the giant bat for 5 damage!")
+        assert.are.equal("giant bat", taPackage.lastAttackTarget)
+    end)
+
+    it("falls back to 'unknown' spell when lastSpellCast is nil", function()
+        taPackage.lastSpellCast = nil
+        helper.simulateLine("You discharged the spell at the imp for 3 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.are.equal("unknown", call.params[1])
+    end)
+
+end)
+
+describe("spell fizzle trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.lastSpellCast = "komiza"
+        taPackage.lastAttackTarget = "skeleton warrior"
+    end)
+
+    it("records a fizzle using lastAttackTarget", function()
+        helper.simulateLine("You confuse the key syllables and the spell fails!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.is_not_nil(call)
+        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("skeleton warrior", call.params[2])
+        assert.are.equal("fizzle", call.params[3])
+        assert.is_nil(call.params[4])
+    end)
+
+    it("falls back to 'unknown' monster when lastAttackTarget is nil", function()
+        taPackage.lastAttackTarget = nil
+        helper.simulateLine("You confuse the key syllables and the spell fails!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.are.equal("unknown", call.params[2])
+    end)
+
+end)
+
+describe("spell resist trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.lastSpellCast = "komiza"
+    end)
+
+    it("records a resist with monster name from line", function()
+        helper.simulateLine("Your spell was negated by the giant bat's magickal defenses!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.is_not_nil(call)
+        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("giant bat", call.params[2])
+        assert.are.equal("resist", call.params[3])
+        assert.is_nil(call.params[4])
+    end)
+
+    it("updates lastAttackTarget on resist", function()
+        helper.simulateLine("Your spell was negated by the imp's magickal defenses!")
+        assert.are.equal("imp", taPackage.lastAttackTarget)
+    end)
+
+end)
+
+describe("cast komiza outbound sets lastSpellCast", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("sets lastSpellCast to komiza", function()
+        helper.simulateOutbound("cast komiza skel")
+        assert.are.equal("komiza", taPackage.lastSpellCast)
+    end)
+
+end)
+
 -- =========================================================================
 -- Follow
 -- =========================================================================

@@ -1385,6 +1385,25 @@ createOutboundTrigger("^cast komiza ", function()
     if current then
         taPackage.character.manaCurrent = math.max(0, current - 1)
     end
+    taPackage.lastSpellCast = "komiza"
+end, { type = "regex" })
+
+createTrigger("^You discharged the spell at the (.+) for (\\d+) damage!$", function(matches)
+    local monster = matches[2]
+    local amount = tonumber(matches[3])
+    taPackage.lastAttackTarget = monster
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "hit", amount)
+end, { type = "regex" })
+
+createTrigger("^You confuse the key syllables and the spell fails!$", function()
+    local monster = taPackage.lastAttackTarget or "unknown"
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "fizzle", nil)
+end, { type = "regex" })
+
+createTrigger("^Your spell was negated by the (.+)'s magickal defenses!$", function(matches)
+    local monster = matches[2]
+    taPackage.lastAttackTarget = monster
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "resist", nil)
 end, { type = "regex" })
 
 createOutboundTrigger("^cast motu ", function()
