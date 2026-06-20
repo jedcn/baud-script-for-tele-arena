@@ -2737,6 +2737,46 @@ describe("ta.follow", function()
 
     end)
 
+    describe("confer command trigger", function()
+
+        before_each(function()
+            setClass("Warrior")
+            taPackage.followTarget = "tojolias"
+        end)
+
+        it("starts the kill loop on 'confer kill <monster>' from the leader", function()
+            helper.simulateLine("From Tojolias (to group): kill lizard")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("lizard", taPackage.killTarget)
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        it("buys healing on 'confer buy healing' from the leader", function()
+            helper.simulateLine("From Tojolias (to group): buy healing")
+            assert.are.equal("buy healing", helper.sendCalls[1])
+        end)
+
+        it("ignores commands not on the allowlist", function()
+            helper.simulateLine("From Tojolias (to group): drop sword")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("ignores conferred commands from a non-leader", function()
+            helper.simulateLine("From Pelayo (to group): kill lizard")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does nothing when not following anyone", function()
+            taPackage.followTarget = nil
+            helper.simulateLine("From Tojolias (to group): kill lizard")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("drink trigger", function()
 
         it("buys a drink when the leader does", function()

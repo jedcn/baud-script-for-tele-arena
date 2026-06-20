@@ -1692,6 +1692,22 @@ createTrigger("^(.+) is asking to join your group\\.$", function(matches)
     echo("[follow] " .. name .. " is now following you.")
 end, { type = "regex" })
 
+-- The leader can drive followers over group chat with `confer <command>`,
+-- which everyone sees as "From <leader> (to group): <command>". Only an
+-- allowlisted set of commands runs; anything else is ignored. The speaker
+-- must be the leader we're following, so our own conferred lines won't match.
+createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
+    if not taPackage.followTarget then return end
+    if matches[2]:lower() ~= taPackage.followTarget then return end
+    local command = matches[3]
+    local killMonster = command:match("^kill (.+)$")
+    if killMonster then
+        startKill(killMonster)
+    elseif command == "buy healing" then
+        send("buy healing")
+    end
+end, { type = "regex" })
+
 -- When the leader we're following attacks a monster, join the fight on the
 -- same target via the kill loop. The kill loop's death trigger stops us
 -- naturally if someone else lands the killing blow first.
