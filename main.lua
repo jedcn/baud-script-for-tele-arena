@@ -1035,20 +1035,29 @@ local function arenaDebugEcho(label)
     end
 end
 
+-- Melee: everyone swings each round with a physical attack, casters included.
 local function arenaAttack()
     local name = taPackage.arenaMonster
     if name then
         if taPackage.arenaAttackPending then return end
         taPackage.arenaAttackPending = true
         local target = name:match("^(%S+)")
-        if getClass() == "Sorceror" then
-            arenaDebugEcho("cast-sent")
-            arenaSend("cast komiza " .. target)
-        else
-            arenaDebugEcho("attack-sent")
-            arenaSend("a " .. target)
-        end
+        arenaDebugEcho("attack-sent")
+        arenaSend("a " .. target)
     end
+end
+
+-- Casters take a second action each round on a separate exhaustion clock: a
+-- Sorceror blasts the monster with komiza while still meleeing every round.
+local function arenaCast()
+    if getClass() ~= "Sorceror" then return end
+    local name = taPackage.arenaMonster
+    if not name then return end
+    if taPackage.arenaCastPending then return end
+    taPackage.arenaCastPending = true
+    local target = name:match("^(%S+)")
+    arenaDebugEcho("cast-sent")
+    arenaSend("cast komiza " .. target)
 end
 
 local function checkTrainingNeeded()
@@ -1121,7 +1130,10 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
+    taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaXpCheckPending = false
+    taPackage.arenaAttackPending = false
+    taPackage.arenaCastPending = false
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
@@ -1132,6 +1144,7 @@ end, { type = "regex" })
 
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
+    taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaXpCheckPending = false
     local startXp = taPackage.arenaSessionStartXp
     local currentXp = taPackage.character.experience
@@ -1149,6 +1162,7 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     taPackage.arenaFleeTimerPending = false
     taPackage.arenaDebug = nil
     taPackage.arenaAttackPending = nil
+    taPackage.arenaCastPending = nil
     echo("[arena] Stopped.")
 end, { type = "regex" })
 
@@ -1159,7 +1173,10 @@ createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(
     if not taPackage.db.monsterHasDescription(taPackage.arenaMonster) then
         send("look " .. taPackage.arenaMonster)
     end
+    taPackage.arenaAttackPending = false
+    taPackage.arenaCastPending = false
     arenaAttack()
+    arenaCast()
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
@@ -1187,6 +1204,7 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
     taPackage.arenaMonster = nil
     taPackage.arenaAttackPending = false
+    taPackage.arenaCastPending = false
     if taPackage.arenaState == "fighting" and not checkFleeArena() then
         if checkTrainingNeeded() then
             echo("[arena] Leveling up — heading to training hall.")
@@ -1265,7 +1283,10 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
         elseif room == "arena" then
             if taPackage.arenaMonster then
                 taPackage.arenaState = "fighting"
+                taPackage.arenaAttackPending = false
+                taPackage.arenaCastPending = false
                 arenaAttack()
+                arenaCast()
             else
                 taPackage.arenaState = "ringing"
                 arenaSend("ring gong")
@@ -1340,30 +1361,28 @@ createTrigger("^You are still physically exhausted from your previous activities
     if taPackage.character.name == "Pelayo" then
         send("cast motu pelayo")
     end
-    local cmd = taPackage.arenaLastCmd
-    local gen = taPackage.arenaRetryGeneration or 0
-    if cmd then
-        createTimer(30000, function()
-            if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
-                arenaSend(cmd)
-            end
-        end, { repeating = false })
-    end
+    -- Melee is on cooldown; retry the swing once the physical clock recovers.
+    -- A stable combat generation (not the per-send retry counter) keeps this
+    -- timer alive even though the cast loop keeps firing arenaSend meanwhile.
+    local gen = taPackage.arenaCombatGen or 0
+    createTimer(30000, function()
+        if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
+            arenaAttack()
+        end
+    end, { repeating = false })
 end, { type = "regex" })
 
 createTrigger("^You are still too mentally exhausted from your last incantation!$", function(matches)
     if not taPackage.arenaState then return end
-    taPackage.arenaAttackPending = false
+    taPackage.arenaCastPending = false
     arenaDebugEcho("mentally-exhausted")
-    local cmd = taPackage.arenaLastCmd
-    local gen = taPackage.arenaRetryGeneration or 0
-    if cmd then
-        createTimer(30000, function()
-            if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
-                arenaSend(cmd)
-            end
-        end, { repeating = false })
-    end
+    -- The spell is on cooldown; retry the cast once the mental clock recovers.
+    local gen = taPackage.arenaCombatGen or 0
+    createTimer(30000, function()
+        if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
+            arenaCast()
+        end
+    end, { repeating = false })
 end, { type = "regex" })
 
 createOutboundTrigger("^cast kamotu ", function()
@@ -1435,9 +1454,9 @@ createTrigger("^You discharged the spell at the (.+) for (\\d+) damage!$", funct
     taPackage.lastAttackTarget = monster
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "hit", amount)
     if taPackage.arenaState == "fighting" then
-        taPackage.arenaAttackPending = false
+        taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-hit")
-        if not checkFleeArena() then arenaAttack() end
+        if not checkFleeArena() then arenaCast() end
     end
 end, { type = "regex" })
 
@@ -1445,9 +1464,9 @@ createTrigger("^You confuse the key syllables and the spell fails!$", function()
     local monster = taPackage.lastAttackTarget or "unknown"
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "fizzle", nil)
     if taPackage.arenaState == "fighting" then
-        taPackage.arenaAttackPending = false
+        taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-fizzle")
-        if not checkFleeArena() then arenaAttack() end
+        if not checkFleeArena() then arenaCast() end
     end
 end, { type = "regex" })
 
@@ -1456,9 +1475,9 @@ createTrigger("^Your spell was negated by the (.+)'s magickal defenses!$", funct
     taPackage.lastAttackTarget = monster
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "resist", nil)
     if taPackage.arenaState == "fighting" then
-        taPackage.arenaAttackPending = false
+        taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-resist")
-        if not checkFleeArena() then arenaAttack() end
+        if not checkFleeArena() then arenaCast() end
     end
 end, { type = "regex" })
 

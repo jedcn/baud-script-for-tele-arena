@@ -979,9 +979,34 @@ describe("Arena combat", function()
             assert.are.equal("cast komiza lizard", lastSend())
         end)
 
-        it("clears the pending flag on mental exhaustion", function()
-            taPackage.arenaAttackPending = true
+        it("also melees on a physical hit, independent of the cast loop", function()
+            helper.simulateLine("Your dagger hit the lizard man for 3 damage!")
+            assert.are.equal("a lizard", lastSend())
+        end)
+
+        it("melees and casts komiza when a monster enters", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaMonster = nil
+            helper.sendCalls = {}
+            helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
+            local melee, cast = false, false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "a lizard" then melee = true end
+                if cmd == "cast komiza lizard" then cast = true end
+            end
+            assert.is_true(melee)
+            assert.is_true(cast)
+        end)
+
+        it("clears the cast pending flag on mental exhaustion", function()
+            taPackage.arenaCastPending = true
             helper.simulateLine("You are still too mentally exhausted from your last incantation!")
+            assert.is_false(taPackage.arenaCastPending)
+        end)
+
+        it("clears the attack pending flag on physical exhaustion", function()
+            taPackage.arenaAttackPending = true
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_false(taPackage.arenaAttackPending)
         end)
 
@@ -2300,38 +2325,53 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(helper.sendCalls[1])
         end)
 
-        it("second exhaustion message creates a timer that does not fire (generation mismatch)", function()
+        it("stacked exhaustion timers send only one swing (pending guard dedups)", function()
             taPackage.arenaState = "fighting"
-            taPackage.arenaLastCmd = "a skeleton"
-            -- First exhaustion: creates timer with current generation
+            taPackage.arenaMonster = "skeleton"
+            -- First exhaustion: schedules a melee retry
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             local firstTimer = timerCreated
             assert.is_not_nil(firstTimer)
-            -- Second exhaustion: creates another timer with same generation
+            -- Second exhaustion: schedules another retry on the same combat gen
             timerCreated = nil
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             local secondTimer = timerCreated
             assert.is_not_nil(secondTimer)
-            -- First timer fires and sends (increments generation)
+            -- First timer fires and re-melees
             helper.sendCalls = {}
             firstTimer.cb()
             assert.are.equal("a skeleton", helper.sendCalls[1])
-            -- Second timer fires but generation has moved on — sends nothing
+            -- Second timer fires but the swing is still pending — no duplicate
             helper.sendCalls = {}
             secondTimer.cb()
             assert.is_nil(helper.sendCalls[1])
         end)
 
-        it("timer does not fire after a new command supersedes it (generation mismatch)", function()
+        it("retry timer does not swing after the monster is dead", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            taPackage.arenaLastCmd = "a cave"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             local staleTimer = timerCreated
-            -- Monster dies; arena sends "ring gong", incrementing generation
+            -- Monster dies; arena clears the target and rings the gong
             helper.simulateLine("The cave bear falls to the ground lifeless!")
             helper.sendCalls = {}
-            -- Stale timer fires — generation mismatch, should not send
+            -- Stale timer fires — no target, so nothing is sent
+            staleTimer.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
+        it("retry timer does not fire after a new session bumps the combat gen", function()
+            setClass("Warrior")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "skeleton"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local staleTimer = timerCreated
+            assert.is_not_nil(staleTimer)
+            -- A fresh session bumps arenaCombatGen and re-arms the monster, but
+            -- the old timer's captured gen no longer matches, so it stays quiet.
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            taPackage.arenaMonster = "skeleton"
+            helper.sendCalls = {}
             staleTimer.cb()
             assert.is_nil(helper.sendCalls[1])
         end)
