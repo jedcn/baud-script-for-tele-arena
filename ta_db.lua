@@ -202,13 +202,6 @@ function TaDb.recordPlayerAttack(weapon, monster, outcome, damage)
         "INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at) VALUES (?, ?, ?, ?, ?)",
         weapon, monster, outcome, damage or 0, now()
     )
-    if outcome == "hit" then
-        echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " HIT " .. monster .. ": " .. (damage or 0) .. " dmg")
-    elseif outcome == "miss" then
-        echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " MISS " .. monster)
-    else
-        echo("[DB\xE2\x86\x92player_attacks] " .. weapon .. " " .. outcome:upper() .. " " .. monster)
-    end
 end
 
 function TaDb.recordMonsterAttack(monster, outcome, damage)

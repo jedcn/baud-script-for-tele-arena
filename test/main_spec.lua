@@ -733,11 +733,10 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
             helper.simulateLine("Your attack missed!")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "MISS lizard woman") then found = true end
-            end
-            assert.is_true(found)
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("lizard woman", call.params[2])
+            assert.are.equal("miss", call.params[3])
         end)
 
         it("aborts on room navigation line without saving", function()
@@ -944,25 +943,28 @@ describe("ta_db", function()
 
     describe("recordPlayerAttack", function()
 
-        it("records a hit and echoes damage", function()
+        it("records a hit", function()
             TaDb.recordPlayerAttack("Mace", "huge rat", "hit", 10)
-            local call = helper.findDbCall("execute", "player_attacks")
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
             assert.is_not_nil(call)
             assert.are.equal("Mace", call.params[1])
             assert.are.equal("huge rat", call.params[2])
             assert.are.equal("hit", call.params[3])
             assert.are.equal(10, call.params[4])
-            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace HIT huge rat: 10 dmg", helper.echoCalls[1])
         end)
 
-        it("records a miss and echoes without damage", function()
+        it("records a miss", function()
             TaDb.recordPlayerAttack("Mace", "huge rat", "miss", nil)
-            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace MISS huge rat", helper.echoCalls[1])
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("miss", call.params[3])
         end)
 
         it("records a dodge", function()
             TaDb.recordPlayerAttack("Mace", "huge rat", "dodge", nil)
-            assert.are.equal("[DB\xE2\x86\x92player_attacks] Mace DODGE huge rat", helper.echoCalls[1])
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("dodge", call.params[3])
         end)
 
     end)
@@ -1181,30 +1183,28 @@ describe("Combat triggers", function()
 
         it("records a hit with damage", function()
             helper.simulateLine("Your attack hit the huge rat for 10 damage!")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "HIT huge rat: 10 dmg") then found = true end
-            end
-            assert.is_true(found)
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("huge rat", call.params[2])
+            assert.are.equal("hit", call.params[3])
+            assert.are.equal(10, call.params[4])
         end)
 
         it("records a miss using lastAttackTarget", function()
             taPackage.lastAttackTarget = "huge rat"
             helper.simulateLine("Your attack missed!")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "MISS huge rat") then found = true end
-            end
-            assert.is_true(found)
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("huge rat", call.params[2])
+            assert.are.equal("miss", call.params[3])
         end)
 
         it("records a dodge", function()
             helper.simulateLine("The huge rat dodged your attack!")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "DODGE huge rat") then found = true end
-            end
-            assert.is_true(found)
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("huge rat", call.params[2])
+            assert.are.equal("dodge", call.params[3])
         end)
 
     end)
