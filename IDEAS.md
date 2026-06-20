@@ -116,9 +116,9 @@ The leader can say things in the room that the supporter acts on:
 ### Group-status-driven healing
 
 ✅ Implemented. The hardcoded `healAllies` list and the "monster attacked an
-ally" trigger are gone. Instead, when an Acolyte hits attack (physical)
-exhaustion mid-fight, it sends `group` and heals the first member the listing
-reports below 90% health (`cast motu <name>`), parsing lines like:
+ally" trigger are gone. Instead an Acolyte sends `group`, reads the listing,
+and heals the **most-injured** member (lowest HE%) below 90% (`cast motu
+<name>`), parsing lines like:
 
 ```
 Your group currently consists of:
@@ -127,16 +127,22 @@ Your group currently consists of:
   Teekywiki                          [HE: 95% ST:Ready]
 ```
 
-Decisions made: 90% threshold (not "below 100%"); first injured member wins
-(tie-breaking deferred until we see how often ties happen); gated on Acolyte +
-active fight, so it works from a manual `kill` too, not just while following.
+A scan is triggered two ways: automatically on attack (physical) exhaustion
+mid-fight, and on demand via `confer heal.allies` from the leader (works out
+of combat too). The listing has no terminator, so the scan waits for the
+header then reads member rows until the first non-member line ends it —
+combat spam before the listing can't cut it short.
+
+Decisions made: 90% threshold (not "below 100%"); most-injured member wins;
+the auto path is gated on Acolyte + active fight (so it works from a manual
+`kill`), the confer path on Acolyte + following.
 
 Still open:
-- Tie-breaking when several members are injured (lowest HE%? leader first?).
+- Tie-breaking when two members share the same lowest HE% (currently the first
+  one listed wins).
 - Whether `ST:Resting`/exhaustion on a member should affect the choice.
 - Self-heal when a monster attacks the supporter (`The <monster> attacked you
-  ...`) — the group scan only fires on attack exhaustion, so a healer taking
-  hits without exhausting its own melee wouldn't react.
+  ...`).
 
 ### Leader-issued commands via group chat
 
@@ -145,6 +151,8 @@ Still open:
 the command, but only for recognized entries:
 
 - `kill <monster>` → starts the kill loop on that monster
+- `heal.allies` → an Acolyte scans the group and heals the most-injured member
+  (see Group-status-driven healing above)
 
 The speaker must match `followTarget`, so a follower's own conferred lines and
 other members' messages are ignored, as is anything off the allowlist.
