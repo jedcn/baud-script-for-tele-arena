@@ -2751,11 +2751,6 @@ describe("ta.follow", function()
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        it("buys healing on 'confer buy healing' from the leader", function()
-            helper.simulateLine("From Tojolias (to group): buy healing")
-            assert.are.equal("buy healing", helper.sendCalls[1])
-        end)
-
         it("ignores commands not on the allowlist", function()
             helper.simulateLine("From Tojolias (to group): drop sword")
             assert.is_falsy(taPackage.killActive)

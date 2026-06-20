@@ -145,7 +145,6 @@ Still open:
 the command, but only for recognized entries:
 
 - `kill <monster>` → starts the kill loop on that monster
-- `buy healing` → sends `buy healing`
 
 The speaker must match `followTarget`, so a follower's own conferred lines and
 other members' messages are ignored, as is anything off the allowlist.

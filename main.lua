@@ -1703,8 +1703,6 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     local killMonster = command:match("^kill (.+)$")
     if killMonster then
         startKill(killMonster)
-    elseif command == "buy healing" then
-        send("buy healing")
     end
 end, { type = "regex" })
 
