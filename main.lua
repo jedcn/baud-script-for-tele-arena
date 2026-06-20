@@ -1487,7 +1487,7 @@ end, { type = "regex" })
 -- Allies an Acolyte will keep healed during a fight. Preserved across
 -- reloads so a runtime change isn't clobbered; defaults otherwise.
 taPackage.healAllies = taPackage.healAllies or {
-    teekwiki = true,
+    teekywiki = true,
     tojolias = true,
     johnsonite = true,
 }
