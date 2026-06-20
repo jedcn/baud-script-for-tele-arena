@@ -1513,7 +1513,7 @@ local function castSpell()
         local ally = taPackage.healTarget
         if not ally then return end
         taPackage.castPending = true
-        send("cast motu " .. ally)
+        send("cast kamotu " .. ally)
     end
 end
 
@@ -1542,7 +1542,7 @@ local function finalizeGroupHeal()
     if taPackage.castPending then return end
     taPackage.castPending = true
     taPackage.healTarget = name
-    send("cast motu " .. name)
+    send("cast kamotu " .. name)
 end
 
 local function startKill(target)

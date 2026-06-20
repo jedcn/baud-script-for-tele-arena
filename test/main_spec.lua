@@ -2766,7 +2766,7 @@ describe("ta.follow", function()
             helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
             helper.simulateLine("You're in a cave.")
-            assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
+            assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
         end)
 
         it("does nothing on 'confer heal.allies' when not an Acolyte", function()
@@ -3114,7 +3114,7 @@ describe("ta.follow", function()
                 helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
                 helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
                 helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
+                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
             end)
 
             it("parses the leader's (L) marker line", function()
@@ -3124,7 +3124,7 @@ describe("ta.follow", function()
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Tojolias                       (L) [HE: 55% ST:Resting]")
                 helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast motu Tojolias", helper.sendCalls[1])
+                assert.are.equal("cast kamotu Tojolias", helper.sendCalls[1])
             end)
 
             it("heals only one member per group listing", function()
@@ -3137,7 +3137,7 @@ describe("ta.follow", function()
                 helper.simulateLine("You're in a cave.")
                 local heals = 0
                 for _, cmd in ipairs(helper.sendCalls) do
-                    if cmd:match("^cast motu ") then heals = heals + 1 end
+                    if cmd:match("^cast kamotu ") then heals = heals + 1 end
                 end
                 assert.are.equal(1, heals)
             end)
@@ -3161,7 +3161,7 @@ describe("ta.follow", function()
                 helper.simulateLine("Your group currently consists of:")
                 helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
                 helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
+                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
             end)
 
             it("ignores a group listing typed outside a scan", function()
