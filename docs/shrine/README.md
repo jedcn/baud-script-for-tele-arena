@@ -10,7 +10,7 @@ It's not fetched in its entirety, but instead here is the information that might
 
 ### Info
 
-* [Tutorial](https://tele-arena.tumblr.com/tutorial)
+* [Tutorial](TUTORIAL.md)
 * [FAQs](https://tele-arena.tumblr.com/faq)
 * [Max Stats](MAX_STATS.md)
 * [Agility](https://tele-arena.tumblr.com/agility)
