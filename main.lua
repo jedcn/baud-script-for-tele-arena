@@ -1688,7 +1688,7 @@ createAlias("^kill (.+)$", function(matches)
     startKill(matches[2])
 end, { type = "regex" })
 
-createAlias("^kill-stop$", function()
+createAlias("^stop-kill$", function()
     taPackage.killActive = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
