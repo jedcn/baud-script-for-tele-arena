@@ -3364,6 +3364,24 @@ describe("ta.follow", function()
                 assert.is_false(taPackage.castPending)
             end)
 
+            it("clears castPending when mana is too low (no kill active)", function()
+                taPackage.castPending = true
+                helper.simulateLine("Your mana is too low to cast that spell.")
+                assert.is_false(taPackage.castPending)
+            end)
+
+            it("clears arenaCastPending when mana is too low", function()
+                taPackage.arenaCastPending = true
+                helper.simulateLine("Your mana is too low to cast that spell.")
+                assert.is_false(taPackage.arenaCastPending)
+            end)
+
+            it("clears castPending on a fizzle even out of combat", function()
+                taPackage.castPending = true
+                helper.simulateLine("You confuse the key syllables and the spell fails!")
+                assert.is_false(taPackage.castPending)
+            end)
+
         end)
 
     end)

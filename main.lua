@@ -1790,15 +1790,28 @@ createTrigger("^You discharged the spell at the .+ for \\d+ damage!$", function(
 end, { type = "regex" })
 
 createTrigger("^You confuse the key syllables and the spell fails!$", function()
-    if not taPackage.killActive then return end
+    -- Clear unconditionally: a heal (heal-allies-in-loop) can fizzle too, and
+    -- if we only cleared inside a kill the blocked cast would wedge castPending
+    -- forever. Only the kill loop's re-cast needs an active fight.
     taPackage.castPending = false
+    if not taPackage.killActive then return end
     castSpell()
 end, { type = "regex" })
 
 createTrigger("^Your spell was negated by the .+'s magickal defenses!$", function()
-    if not taPackage.killActive then return end
     taPackage.castPending = false
+    if not taPackage.killActive then return end
     castSpell()
+end, { type = "regex" })
+
+-- "Mana too low" aborts a cast with no result line. With no handler this
+-- wedged castPending forever: heal-allies-in-loop ran Pelayo out of mana, then
+-- every scan logged "a cast is pending — skipping" and never healed again.
+-- Clears both the kill/heal guard and the arena guard, since either loop can
+-- run dry. No retry — the next scan/round casts again once mana regenerates.
+createTrigger("^Your mana is too low to cast that spell\\.$", function()
+    taPackage.castPending = false
+    taPackage.arenaCastPending = false
 end, { type = "regex" })
 
 -- The header (only when we asked for the listing) starts the reading phase;
