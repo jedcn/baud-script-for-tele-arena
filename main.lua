@@ -1661,10 +1661,10 @@ createAlias("^heal\\.allies$", function()
 end, { type = "regex" })
 
 -- Hands-off group healing: every minute, scan the group and top off anyone
--- below 100%. A generation counter (bumped on start/stop) makes the rescheduled
+-- below 95%. A generation counter (bumped on start/stop) makes the rescheduled
 -- one-shot timer self-cancel, mirroring scheduleArenaXpCheck.
 local HEAL_LOOP_INTERVAL = 60000
-local HEAL_LOOP_THRESHOLD = 100
+local HEAL_LOOP_THRESHOLD = 95
 local function scheduleHealAlliesLoop()
     local gen = taPackage.healLoopGen or 0
     createTimer(HEAL_LOOP_INTERVAL, function()
@@ -1680,7 +1680,7 @@ createAlias("^heal-allies-in-loop$", function()
         return
     end
     taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
-    echo("[heal] Looping group heal every 60s (tops off anyone below 100%).")
+    echo("[heal] Looping group heal every 60s (tops off anyone below 95%).")
     beginGroupHealScan(HEAL_LOOP_THRESHOLD)
     scheduleHealAlliesLoop()
 end, { type = "regex" })
