@@ -3279,7 +3279,26 @@ describe("ta.follow", function()
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
-            helper.simulateLine("You're in a cave.")
+            helper.simulateLine("Exits: n,sw.")
+            assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
+        end)
+
+        it("chases the listing with `ex` so a terminator line always arrives", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal.allies")
+            assert.are.equal("group", helper.sendCalls[1])
+            assert.are.equal("ex", helper.sendCalls[2])
+        end)
+
+        it("finalizes off the `ex` reply (no following line needed)", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal.allies")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
+            -- The "Exits:" line is the guaranteed terminator from `ex`.
+            helper.simulateLine("Exits: n,sw.")
             assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
         end)
 
@@ -3294,54 +3313,6 @@ describe("ta.follow", function()
             assert.is_true(warned)
         end)
 
-        describe("debounce finalize (no terminator line)", function()
-
-            local timerCreated
-            local realCreateTimer
-
-            before_each(function()
-                helper.resetAll()
-                realCreateTimer = _G.createTimer
-                _G.createTimer = function(interval, cb, opts)
-                    timerCreated = { interval = interval, cb = cb, opts = opts }
-                    return "mock_timer"
-                end
-                dofile("main.lua")
-                setClass("Acolyte")
-                timerCreated = nil
-            end)
-
-            after_each(function()
-                _G.createTimer = realCreateTimer
-            end)
-
-            it("heals once the debounce fires without a following line", function()
-                helper.simulateAlias("heal.allies")
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
-                helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
-                -- No terminator line arrives; the heal must come from the timer.
-                assert.are.equal(0, #helper.sendCalls)
-                assert.is_not_nil(timerCreated)
-                timerCreated.cb()
-                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
-            end)
-
-            it("a stale debounce timer does not fire after finalize", function()
-                helper.simulateAlias("heal.allies")
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
-                local staleTimer = timerCreated
-                -- A terminator line finalizes immediately and bumps the gen.
-                helper.simulateLine("You're in a cave.")
-                helper.sendCalls = {}
-                staleTimer.cb()
-                assert.are.equal(0, #helper.sendCalls)
-            end)
-
-        end)
-
     end)
 
     describe("heal-allies-in-loop alias", function()
@@ -3350,7 +3321,7 @@ describe("ta.follow", function()
         local realCreateTimer
 
         local function lastLoopTimer()
-            -- The 60s loop timer, distinct from the 500ms debounce timer.
+            -- The 60s loop timer (the only timer this feature schedules).
             for i = #timers, 1, -1 do
                 if timers[i].interval == 60000 then return timers[i] end
             end
