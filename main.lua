@@ -1092,11 +1092,19 @@ local function checkTrainingNeeded()
     return nextThreshold ~= nil and xp >= nextThreshold
 end
 
+-- Flee at 75% of max HP, but never below an absolute floor. The percentage
+-- alone is unsafe for low-HP characters: a level-2 Sorceror (31 max HP) at 60%
+-- fled at 18, and a cave bear's worst observed round is 23 damage (two claws)
+-- — so he could cross from "fine" to dead in one round. The floor guarantees
+-- enough headroom to survive the round in which the flee is decided. 25 covers
+-- a cave bear's worst round (23) with a small margin.
+local FLEE_HP_FRACTION = 0.75
+local FLEE_HP_FLOOR = 25
 local function checkFleeArena()
     if taPackage.arenaState ~= "fighting" then return false end
     local hp = taPackage.character.vitalityCurrent
     local maxHp = taPackage.character.vitalityMax
-    local fleeThreshold = maxHp and math.floor(maxHp * 0.6) or 50
+    local fleeThreshold = maxHp and math.max(math.floor(maxHp * FLEE_HP_FRACTION), FLEE_HP_FLOOR) or FLEE_HP_FLOOR
     if hp and hp < fleeThreshold then
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"

@@ -1853,7 +1853,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after a hit (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("Your attack hit the lizard man for 10 damage!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
@@ -1861,12 +1861,12 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after an adjective-qualified hit (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("Your skillful attack hit the lizard man for 10 damage!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 50 after a hit", function()
+        it("flees when HP is below the flee threshold after a hit", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(15, 100)
@@ -1875,15 +1875,45 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("w", helper.sendCalls[1])
         end)
 
+        -- Flee threshold is max(75% of maxHP, 25). At 100 max, that's 75.
+        it("flees at 75% of max HP for a high-HP character", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(74, 100)  -- just under 75
+            helper.simulateLine("Your attack hit the lizard man for 10 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+        end)
+
+        it("keeps fighting at exactly the 75% threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(75, 100)  -- not below threshold
+            helper.simulateLine("Your attack hit the lizard man for 10 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a lizard", helper.sendCalls[1])
+        end)
+
+        -- For a low-HP character the 25 floor kicks in: 75% of 31 is 23, but the
+        -- floor raises the threshold to 25 so a cave bear's worst round (23) can't
+        -- kill from above-threshold. This is the Johnsonite case (31 max HP).
+        it("uses the absolute floor of 25 for a low-HP character", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(24, 31)  -- below floor 25, above 75% (23)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
         it("sends next attack after a miss (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("Your attack missed!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 50 after a miss", function()
+        it("flees when HP is below the flee threshold after a miss", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(10, 100)
@@ -1894,7 +1924,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("sends next attack after monster dodge (HP fine)", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("The lizard man dodged your attack!")
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
@@ -1912,7 +1942,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("clears arenaMonster", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.is_nil(taPackage.arenaMonster)
         end)
@@ -1920,13 +1950,13 @@ describe("ring-gong-and-fight-in-arena", function()
         it("rings gong again when HP is fine", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("ring gong", helper.sendCalls[1])
         end)
 
-        it("flees when HP < 50 on monster death", function()
+        it("flees when HP is below the flee threshold on monster death", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(15, 100)
@@ -1944,7 +1974,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("goes to train when XP has crossed the next level threshold", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             taPackage.character.experience = 1120  -- Rogue level 2 threshold
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
@@ -1957,7 +1987,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("rings gong when XP is below next level threshold", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
-            setHP(60, 100)
+            setHP(80, 100)
             taPackage.character.experience = 500
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
@@ -2002,7 +2032,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
     describe("incoming monster attack", function()
 
-        it("flees when HP drops below 50", function()
+        it("flees when HP drops below the flee threshold", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             -- simulate vitality already at 45 (existing trigger already decremented it)
