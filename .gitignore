@@ -3,4 +3,5 @@ logs/
 tele-arena.db
 tele-arena.db-shm
 tele-arena.db-wal
+tele-arena.db.bak-*
 report.html
