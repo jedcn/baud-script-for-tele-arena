@@ -1172,7 +1172,7 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     arenaRing()
 end, { type = "regex" })
 
-createAlias("^stop-ring-gong-and-fight-in-arena$", function()
+local function stopArena()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
     taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaXpCheckPending = false
@@ -1195,6 +1195,11 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     taPackage.arenaCastPending = nil
     taPackage.arenaRingPending = nil
     echo("[arena] Stopped.")
+end
+taPackage.stopArena = stopArena
+
+createAlias("^stop-ring-gong-and-fight-in-arena$", function()
+    stopArena()
 end, { type = "regex" })
 
 createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
@@ -1688,7 +1693,7 @@ createAlias("^kill (.+)$", function(matches)
     startKill(matches[2])
 end, { type = "regex" })
 
-createAlias("^stop-kill$", function()
+local function stopKill()
     taPackage.killActive = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
@@ -1697,6 +1702,11 @@ createAlias("^stop-kill$", function()
     taPackage.groupHealPhase = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     echo("[kill] Stopped.")
+end
+taPackage.stopKill = stopKill
+
+createAlias("^stop-kill$", function()
+    stopKill()
 end, { type = "regex" })
 
 -- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
@@ -1735,10 +1745,25 @@ createAlias("^heal-allies-in-loop$", function()
     scheduleHealAlliesLoop()
 end, { type = "regex" })
 
-createAlias("^stop-heal-allies-in-loop$", function()
+local function stopHealLoop()
     taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
     taPackage.healLoopActive = false
     echo("[heal] Group heal loop stopped.")
+end
+taPackage.stopHealLoop = stopHealLoop
+
+createAlias("^stop-heal-allies-in-loop$", function()
+    stopHealLoop()
+end, { type = "regex" })
+
+-- Stops every long-running script at once. Each sub-stop is independent and
+-- safe to call when its script isn't running (it just resets already-clear
+-- state), so this is a no-op for whatever wasn't active.
+createAlias("^stop-all-scripts$", function()
+    echo("[all] Stopping all scripts.")
+    stopArena()
+    stopHealLoop()
+    stopKill()
 end, { type = "regex" })
 
 -- The 60s timer can leave an ally hurt for up to a minute between scans, which

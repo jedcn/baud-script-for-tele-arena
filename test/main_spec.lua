@@ -3599,6 +3599,34 @@ describe("ta.follow", function()
 
     end)
 
+    describe("stop-all-scripts", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+        end)
+
+        it("stops the kill, heal loop, and arena scripts together", function()
+            taPackage.killActive = true
+            taPackage.healLoopActive = true
+            taPackage.arenaState = "fighting"
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_falsy(taPackage.killActive)
+            assert.is_false(taPackage.healLoopActive)
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("is a safe no-op when nothing is running", function()
+            assert.has_no.errors(function()
+                helper.simulateAlias("stop-all-scripts")
+            end)
+            assert.is_falsy(taPackage.killActive)
+            assert.is_falsy(taPackage.healLoopActive)
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+    end)
+
     describe("group-heal decision logging", function()
 
         before_each(function()
