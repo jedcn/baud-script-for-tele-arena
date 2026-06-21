@@ -3469,6 +3469,77 @@ describe("ta.follow", function()
 
     end)
 
+    describe("heal-allies-in-loop hit reaction", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+            setClass("Acolyte")
+        end)
+
+        it("scans the group when a group member takes a hit", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            assert.are.equal("group", helper.sendCalls[1])
+            assert.are.equal("ex", helper.sendCalls[2])
+        end)
+
+        it("scans when the healer itself is hit (for N damage)", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked you with its claws for 6 damage!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("heals the most injured member the hit revealed", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Johnsonite                         [HE: 38% ST:Ready]")
+            helper.simulateLine("Exits: w,d.")
+            assert.are.equal("cast kamotu Johnsonite", helper.sendCalls[1])
+        end)
+
+        it("does not scan on a glancing blow (no damage)", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked Johnsonite, but its claws glanced off Johnsonite's armor!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("collapses a monster's two claws in one round into a single scan", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            local scans = 0
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "group" then scans = scans + 1 end
+            end
+            assert.are.equal(1, scans)
+        end)
+
+        it("does not scan when the loop is not active", function()
+            taPackage.healLoopActive = false
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not scan after the loop is stopped", function()
+            helper.simulateAlias("heal-allies-in-loop")
+            helper.simulateAlias("stop-heal-allies-in-loop")
+            helper.sendCalls = {}
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not scan when not an Acolyte", function()
+            setClass("Warrior")
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("group-heal decision logging", function()
 
         before_each(function()

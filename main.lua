@@ -1717,14 +1717,31 @@ createAlias("^heal-allies-in-loop$", function()
         return
     end
     taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
-    echo("[heal] Looping group heal every 60s (tops off anyone below 95%).")
+    taPackage.healLoopActive = true
+    echo("[heal] Looping group heal every 60s (tops off below 95%), and scanning on any group member taking a hit.")
     beginGroupHealScan(HEAL_LOOP_THRESHOLD, "loop start")
     scheduleHealAlliesLoop()
 end, { type = "regex" })
 
 createAlias("^stop-heal-allies-in-loop$", function()
     taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
+    taPackage.healLoopActive = false
     echo("[heal] Group heal loop stopped.")
+end, { type = "regex" })
+
+-- The 60s timer can leave an ally hurt for up to a minute between scans, which
+-- is fatal against burst damage (a cave bear's worst round is ~23). So while
+-- the loop is active, react to any group member taking a hit by scanning the
+-- group right away and healing if it dropped someone below the threshold. The
+-- "with" in the pattern matches landed hits ("attacked Johnsonite with its
+-- claws!", "attacked you ... for N damage!") while skipping glances and misses,
+-- which deal no damage. The in-progress guard collapses a monster's two claws
+-- in one round into a single scan.
+createTrigger("^The .+ attacked .+ with .+!$", function()
+    if not taPackage.healLoopActive then return end
+    if getClass() ~= "Acolyte" then return end
+    if taPackage.groupHealPhase then return end
+    beginGroupHealScan(HEAL_LOOP_THRESHOLD, "hit reaction")
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
