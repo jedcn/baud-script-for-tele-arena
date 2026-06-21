@@ -1575,11 +1575,20 @@ end
 -- timing guesswork. Waiting for the header first means any spam arriving before
 -- the listing doesn't cut the scan short.
 local GROUP_HEAL_TERMINATOR = "ex"
-local function beginGroupHealScan(threshold)
+-- context labels the scan's origin so the decision log distinguishes a typed
+-- heal.allies, an automatic loop tick, and the kill-loop's exhaustion heal.
+local function beginGroupHealScan(threshold, context)
     taPackage.groupHealPhase = "want"
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
     taPackage.groupHealThreshold = threshold or HEAL_THRESHOLD
+    taPackage.groupHealContext = context or "heal.allies"
+    -- Tallied as the listing streams in (see the member-row trigger): total
+    -- members, how many are hurt (below full), and how many are below the
+    -- heal threshold. Drives the decision log in finalizeGroupHeal.
+    taPackage.groupHealMembers = 0
+    taPackage.groupHealHurt = 0
+    taPackage.groupHealNeedy = 0
     send("group")
     send(GROUP_HEAL_TERMINATOR)
 end
@@ -1589,10 +1598,35 @@ local function finalizeGroupHeal()
     local name = taPackage.groupHealBestName
     local health = taPackage.groupHealBestHealth
     local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
+    local context = taPackage.groupHealContext or "heal.allies"
+    local members = taPackage.groupHealMembers or 0
+    local hurt = taPackage.groupHealHurt or 0
+    local needy = taPackage.groupHealNeedy or 0
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
-    if not name or not health or health >= threshold then return end
-    if taPackage.castPending then return end
+
+    if members == 0 then
+        echo(string.format("[heal] %s: no group members seen, taking no action.", context))
+        return
+    end
+    if needy == 0 then
+        if hurt == 0 then
+            echo(string.format("[heal] %s: all %d allies at full health, taking no action.",
+                context, members))
+        else
+            echo(string.format("[heal] %s: %d of %d allies hurt but all at or above %d%%, taking no action.",
+                context, hurt, members, threshold))
+        end
+        return
+    end
+    if not name or not health then return end
+    if taPackage.castPending then
+        echo(string.format("[heal] %s: %d of %d allies below %d%% (most injured %s at %d%%), but a cast is pending — skipping.",
+            context, needy, members, threshold, name, health))
+        return
+    end
+    echo(string.format("[heal] %s: %d of %d allies below %d%%, healing most injured %s at %d%%.",
+        context, needy, members, threshold, name, health))
     taPackage.castPending = true
     taPackage.healTarget = name
     send("cast kamotu " .. name)
@@ -1654,7 +1688,7 @@ local function scheduleHealAlliesLoop()
     local gen = taPackage.healLoopGen or 0
     createTimer(HEAL_LOOP_INTERVAL, function()
         if (taPackage.healLoopGen or 0) ~= gen then return end
-        beginGroupHealScan(HEAL_LOOP_THRESHOLD)
+        beginGroupHealScan(HEAL_LOOP_THRESHOLD, "loop tick")
         scheduleHealAlliesLoop()
     end, { repeating = false })
 end
@@ -1666,7 +1700,7 @@ createAlias("^heal-allies-in-loop$", function()
     end
     taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
     echo("[heal] Looping group heal every 60s (tops off anyone below 95%).")
-    beginGroupHealScan(HEAL_LOOP_THRESHOLD)
+    beginGroupHealScan(HEAL_LOOP_THRESHOLD, "loop start")
     scheduleHealAlliesLoop()
 end, { type = "regex" })
 
@@ -1728,11 +1762,19 @@ createTrigger("^Your group currently consists of:$", function()
     end
 end, { type = "regex" })
 
--- While reading the listing, track the most-injured member seen.
+-- While reading the listing, tally members and track the most-injured one.
 createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)%", function(matches)
     if taPackage.groupHealPhase ~= "reading" then return end
     local health = tonumber(matches[3])
     if not health then return end
+    local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
+    taPackage.groupHealMembers = (taPackage.groupHealMembers or 0) + 1
+    if health < 100 then
+        taPackage.groupHealHurt = (taPackage.groupHealHurt or 0) + 1
+    end
+    if health < threshold then
+        taPackage.groupHealNeedy = (taPackage.groupHealNeedy or 0) + 1
+    end
     if not taPackage.groupHealBestHealth or health < taPackage.groupHealBestHealth then
         taPackage.groupHealBestHealth = health
         taPackage.groupHealBestName = matches[2]
@@ -1768,7 +1810,7 @@ createTrigger("^You are still physically exhausted from your previous activities
     -- Out of melee for now; an Acolyte spends the lull checking the group so
     -- the next cast (on the mental clock) heals whoever needs it.
     if getClass() == "Acolyte" then
-        beginGroupHealScan()
+        beginGroupHealScan(nil, "exhaustion")
     end
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()

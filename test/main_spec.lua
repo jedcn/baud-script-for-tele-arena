@@ -3406,6 +3406,72 @@ describe("ta.follow", function()
 
     end)
 
+    describe("group-heal decision logging", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+            setClass("Acolyte")
+        end)
+
+        -- Did any echoed line contain the given substring?
+        local function logged(substr)
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, substr, 1, true) then return true end
+            end
+            return false
+        end
+
+        it("logs that all allies are at full health when nobody is hurt", function()
+            helper.simulateAlias("heal.allies")
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE:100% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.is_true(logged("all 2 allies at full health, taking no action"))
+        end)
+
+        it("logs hurt-but-above-threshold when allies are hurt but none need healing", function()
+            helper.simulateAlias("heal.allies")
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.is_true(logged("1 of 2 allies hurt but all at or above 90%, taking no action"))
+        end)
+
+        it("logs the count and most-injured member when healing", function()
+            helper.simulateAlias("heal.allies")
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.is_true(logged("2 of 2 allies below 90%, healing most injured Teekywiki at 60%"))
+        end)
+
+        it("labels the scan origin (loop tick) in the log", function()
+            local timers = {}
+            local realCreateTimer = _G.createTimer
+            _G.createTimer = function(interval, cb, opts)
+                table.insert(timers, { interval = interval, cb = cb, opts = opts })
+                return "mock_timer"
+            end
+            helper.simulateAlias("heal-allies-in-loop")
+            local loop
+            for i = #timers, 1, -1 do
+                if timers[i].interval == 60000 then loop = timers[i] break end
+            end
+            helper.echoCalls = {}
+            loop.cb()
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 50% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            _G.createTimer = realCreateTimer
+            assert.is_true(logged("loop tick: 1 of 1 allies below 95%, healing most injured Pelayo at 50%"))
+        end)
+
+    end)
+
     describe("non-caster classes", function()
 
         before_each(function()
