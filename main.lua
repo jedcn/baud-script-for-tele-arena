@@ -1652,7 +1652,10 @@ local function finalizeGroupHeal()
         context, needy, members, threshold, name, health))
     taPackage.castPending = true
     taPackage.healTarget = name
-    send("cast kamotu " .. name)
+    -- motu (minor heal), not kamotu (regular heal): for a low-HP ally taking
+    -- small hits, kamotu's ~24 HP is overheal and costs more mana. motu tops
+    -- off ~4-8 HP per cast, which matches the damage and stretches mana further.
+    send("cast motu " .. name)
 end
 
 local function startKill(target)
