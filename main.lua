@@ -1474,17 +1474,6 @@ createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) da
     end
 end, { type = "regex" })
 
-createAlias("^cast\\.heal$", function()
-    local name = taPackage.character.name
-    if name then
-        send("cast kamotu " .. name:lower())
-    end
-end, { type = "regex" })
-
-createAlias("^cast\\.heal (.+)$", function(matches)
-    send("cast kamotu " .. matches[2])
-end, { type = "regex" })
-
 createAlias("^cast\\.ice.dart (.+)$", function(matches)
     send("cast komiza " .. matches[2])
 end, { type = "regex" })
@@ -1538,6 +1527,10 @@ createOutboundTrigger("^cast motu ", function()
     taPackage.lastSpellCast = "motu"
 end, { type = "regex" })
 
+-- Heal spells, weakest to strongest: motu (Minor Heal, 1 MP) via
+-- cast.minor.heal and kamotu (Heal, 2 MP) via cast.heal. Each has a self form
+-- (no arg → the caster) and a targeted form. Gimotu (Greater Heal, 4 MP,
+-- level 8) will join this family as cast.greater.heal once we can learn it.
 createAlias("^cast\\.minor\\.heal$", function()
     local name = taPackage.character.name
     if name then
@@ -1547,6 +1540,17 @@ end, { type = "regex" })
 
 createAlias("^cast\\.minor\\.heal (.+)$", function(matches)
     send("cast motu " .. matches[2])
+end, { type = "regex" })
+
+createAlias("^cast\\.heal$", function()
+    local name = taPackage.character.name
+    if name then
+        send("cast kamotu " .. name:lower())
+    end
+end, { type = "regex" })
+
+createAlias("^cast\\.heal (.+)$", function(matches)
+    send("cast kamotu " .. matches[2])
 end, { type = "regex" })
 
 -- =========================================================================
