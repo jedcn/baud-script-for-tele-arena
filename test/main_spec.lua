@@ -3344,6 +3344,96 @@ describe("ta.follow", function()
 
     end)
 
+    describe("heal-allies-in-loop alias", function()
+
+        local timers
+        local realCreateTimer
+
+        local function lastLoopTimer()
+            -- The 60s loop timer, distinct from the 500ms debounce timer.
+            for i = #timers, 1, -1 do
+                if timers[i].interval == 60000 then return timers[i] end
+            end
+        end
+
+        before_each(function()
+            helper.resetAll()
+            timers = {}
+            realCreateTimer = _G.createTimer
+            _G.createTimer = function(interval, cb, opts)
+                table.insert(timers, { interval = interval, cb = cb, opts = opts })
+                return "mock_timer"
+            end
+            dofile("main.lua")
+        end)
+
+        after_each(function()
+            _G.createTimer = realCreateTimer
+        end)
+
+        it("scans immediately and schedules a 60s loop as an Acolyte", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-allies-in-loop")
+            assert.are.equal("group", helper.sendCalls[1])
+            assert.is_not_nil(lastLoopTimer())
+        end)
+
+        it("tops off a member below 100% (looser than heal.allies' 90%)", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-allies-in-loop")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cast kamotu Pelayo", helper.sendCalls[1])
+        end)
+
+        it("does not heal when everyone is at 100%", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-allies-in-loop")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Pelayo                             [HE:100% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("the loop tick re-scans and reschedules", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-allies-in-loop")
+            local loop = lastLoopTimer()
+            helper.sendCalls = {}
+            local before = #timers
+            loop.cb()
+            assert.are.equal("group", helper.sendCalls[1])
+            assert.is_true(#timers > before)
+        end)
+
+        it("stop-heal-allies-in-loop keeps a pending tick from firing", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-allies-in-loop")
+            local loop = lastLoopTimer()
+            helper.simulateAlias("stop-heal-allies-in-loop")
+            helper.sendCalls = {}
+            loop.cb()
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("warns and does not loop when not an Acolyte", function()
+            setClass("Warrior")
+            helper.simulateAlias("heal-allies-in-loop")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_nil(lastLoopTimer())
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Acolyte") then warned = true end
+            end
+            assert.is_true(warned)
+        end)
+
+    end)
+
     describe("non-caster classes", function()
 
         before_each(function()

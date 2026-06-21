@@ -1574,10 +1574,11 @@ end
 -- hits return, so a short debounce (scheduleGroupHealFinalize) finalizes the
 -- heal once member rows stop streaming. Waiting for the header first means
 -- combat spam arriving before the listing doesn't cut the scan short.
-local function beginGroupHealScan()
+local function beginGroupHealScan(threshold)
     taPackage.groupHealPhase = "want"
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
+    taPackage.groupHealThreshold = threshold or HEAL_THRESHOLD
     send("group")
 end
 
@@ -1586,9 +1587,10 @@ local function finalizeGroupHeal()
     taPackage.groupHealGen = (taPackage.groupHealGen or 0) + 1
     local name = taPackage.groupHealBestName
     local health = taPackage.groupHealBestHealth
+    local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
-    if not name or not health or health >= HEAL_THRESHOLD then return end
+    if not name or not health or health >= threshold then return end
     if taPackage.castPending then return end
     taPackage.castPending = true
     taPackage.healTarget = name
@@ -1656,6 +1658,36 @@ createAlias("^heal\\.allies$", function()
     else
         echo("[heal] Only an Acolyte can heal the group.")
     end
+end, { type = "regex" })
+
+-- Hands-off group healing: every minute, scan the group and top off anyone
+-- below 100%. A generation counter (bumped on start/stop) makes the rescheduled
+-- one-shot timer self-cancel, mirroring scheduleArenaXpCheck.
+local HEAL_LOOP_INTERVAL = 60000
+local HEAL_LOOP_THRESHOLD = 100
+local function scheduleHealAlliesLoop()
+    local gen = taPackage.healLoopGen or 0
+    createTimer(HEAL_LOOP_INTERVAL, function()
+        if (taPackage.healLoopGen or 0) ~= gen then return end
+        beginGroupHealScan(HEAL_LOOP_THRESHOLD)
+        scheduleHealAlliesLoop()
+    end, { repeating = false })
+end
+
+createAlias("^heal-allies-in-loop$", function()
+    if getClass() ~= "Acolyte" then
+        echo("[heal] Only an Acolyte can heal the group.")
+        return
+    end
+    taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
+    echo("[heal] Looping group heal every 60s (tops off anyone below 100%).")
+    beginGroupHealScan(HEAL_LOOP_THRESHOLD)
+    scheduleHealAlliesLoop()
+end, { type = "regex" })
+
+createAlias("^stop-heal-allies-in-loop$", function()
+    taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
+    echo("[heal] Group heal loop stopped.")
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
