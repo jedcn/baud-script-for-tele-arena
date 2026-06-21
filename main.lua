@@ -1036,7 +1036,14 @@ local function arenaDebugEcho(label)
 end
 
 -- Melee: everyone swings each round with a physical attack, casters included.
+-- Only swing while actually fighting. Once flee triggers (state "fleeing"),
+-- every physical action resets the game's movement cooldown, so a stray swing
+-- — e.g. a stale exhaustion-retry timer firing 30s late — keeps the escape
+-- move from ever landing. Gating here makes those retries no-op until we're
+-- back in combat, so the queued `w` gets a clean window. (See the death in
+-- logs/session-2026-06-21T11-51-45.log, where post-flee swings stalled the run.)
 local function arenaAttack()
+    if taPackage.arenaState ~= "fighting" then return end
     local name = taPackage.arenaMonster
     if name then
         if taPackage.arenaAttackPending then return end
@@ -1050,6 +1057,9 @@ end
 -- Casters take a second action each round on a separate exhaustion clock: a
 -- Sorceror blasts the monster with komiza while still meleeing every round.
 local function arenaCast()
+    -- Like arenaAttack, casting is a combat action that resets the move clock;
+    -- once we're fleeing it must cease until we're fighting again.
+    if taPackage.arenaState ~= "fighting" then return end
     if getClass() ~= "Sorceror" then return end
     local name = taPackage.arenaMonster
     if not name then return end

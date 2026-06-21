@@ -2400,6 +2400,39 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(helper.sendCalls[1])
         end)
 
+        it("stale swing retry does not fire after flee is triggered", function()
+            -- Regression: a cave bear killed Johnsonite because a 30s-stale
+            -- exhaustion retry kept swinging after flee triggered, and every
+            -- swing reset the movement cooldown so the escape `w` never landed.
+            -- Once fleeing, the retry must no-op.
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local staleTimer = timerCreated
+            assert.is_not_nil(staleTimer)
+            -- HP drops below the flee threshold; the arena starts fleeing.
+            setHP(10, 100)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            -- The stale swing retry fires while fleeing — it must stay silent.
+            helper.sendCalls = {}
+            staleTimer.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
+        it("stale cast retry does not fire after flee is triggered", function()
+            setClass("Sorceror")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            helper.simulateLine("You are still too mentally exhausted from your last incantation!")
+            local staleTimer = timerCreated
+            assert.is_not_nil(staleTimer)
+            taPackage.arenaState = "fleeing"
+            helper.sendCalls = {}
+            staleTimer.cb()
+            assert.is_nil(helper.sendCalls[1])
+        end)
+
         it("retry timer does not fire after a new session bumps the combat gen", function()
             setClass("Warrior")
             taPackage.arenaState = "fighting"
