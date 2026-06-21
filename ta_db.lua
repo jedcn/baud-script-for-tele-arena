@@ -103,14 +103,50 @@ db:execute([[CREATE TABLE IF NOT EXISTS item_drops (
   recorded_at TEXT NOT NULL
 )]])
 
+-- Append-only log of every spell we cast. `kind` ('offense' | 'heal') groups
+-- spells by what they do, so queries can aggregate without hardcoding spell
+-- names and a new spell of a known kind is captured correctly from day one.
+-- NOTE: `amount` is interpreted per kind — damage dealt for 'offense', HP
+-- restored for 'heal' — so always filter by `kind` (or `spell`) before
+-- aggregating `amount`, or you'll average unlike things together. When a
+-- genuinely new kind appears (e.g. a stat buff whose effect isn't a single
+-- integer), that's the signal to revisit this shape rather than overload
+-- `amount` further.
+-- kind is last to match what the migration below produces for pre-existing
+-- DBs (ALTER ... ADD COLUMN appends), so fresh and migrated schemas are
+-- identical. All access is by column name, so the position is cosmetic.
 db:execute([[CREATE TABLE IF NOT EXISTS player_spells (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   spell       TEXT NOT NULL,
   target      TEXT,
   outcome     TEXT NOT NULL,
   amount      INTEGER,
-  recorded_at TEXT NOT NULL
+  recorded_at TEXT NOT NULL,
+  kind        TEXT
 )]])
+
+-- Migration: player_spells predates the `kind` column. Add it if missing and
+-- backfill the known spells so historical rows stay queryable by kind. The
+-- PRAGMA check keeps this idempotent across reloads (SQLite has no
+-- ADD COLUMN IF NOT EXISTS).
+local function tableHasColumn(tbl, col)
+    local rows = db:query("PRAGMA table_info(" .. tbl .. ")")
+    for _, row in ipairs(rows or {}) do
+        if row.name == col then return true end
+    end
+    return false
+end
+
+if not tableHasColumn("player_spells", "kind") then
+    -- pcall guards the rare false-negative: if the column already exists but
+    -- the PRAGMA check missed it, a reload must not crash on a duplicate
+    -- column. The backfill UPDATEs are idempotent, so they're safe to re-run.
+    pcall(function()
+        db:execute("ALTER TABLE player_spells ADD COLUMN kind TEXT")
+    end)
+    db:execute("UPDATE player_spells SET kind = 'heal' WHERE spell IN ('motu', 'kamotu')")
+    db:execute("UPDATE player_spells SET kind = 'offense' WHERE spell = 'komiza'")
+end
 
 local function now()
     return os.date("%Y-%m-%dT%H:%M:%S")
@@ -237,10 +273,10 @@ function TaDb.recordMonsterLoot(monster, gold)
     dbLog("[DB\xE2\x86\x92monster_loot] " .. monster .. ": " .. gold .. " gold")
 end
 
-function TaDb.recordPlayerSpell(spell, target, outcome, amount)
+function TaDb.recordPlayerSpell(spell, target, outcome, amount, kind)
     db:execute(
-        "INSERT INTO player_spells (spell, target, outcome, amount, recorded_at) VALUES (?, ?, ?, ?, ?)",
-        spell, target or "", outcome, amount, now()
+        "INSERT INTO player_spells (spell, target, outcome, amount, recorded_at, kind) VALUES (?, ?, ?, ?, ?, ?)",
+        spell, target or "", outcome, amount, now(), kind
     )
     local msg = "[DB\xE2\x86\x92player_spells] " .. spell .. " \xE2\x86\x92 " .. (target or "?") .. " [" .. outcome .. "]"
     if type(amount) == "number" then msg = msg .. " " .. amount end

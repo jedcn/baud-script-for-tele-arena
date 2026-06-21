@@ -1436,14 +1436,17 @@ createOutboundTrigger("^cast kamotu ", function()
     if current then
         taPackage.character.manaCurrent = math.max(0, current - 1)
     end
+    taPackage.lastSpellCast = "kamotu"
 end, { type = "regex" })
 
 createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", function(matches)
     local target = matches[2]
     local amount = tonumber(matches[3])
-    -- A landed heal frees the cast loop to respond to the next injury.
+    -- A landed heal frees the cast loop to respond to the next injury. The
+    -- land message doesn't name the spell, so record whichever heal we last
+    -- cast (motu = self, kamotu = group); both produce this same line.
     taPackage.castPending = false
-    taPackage.db.recordPlayerSpell("motu", target, "hit", amount)
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", target, "hit", amount, "heal")
     if target == taPackage.character.name then
         local current = taPackage.character.vitalityCurrent
         local max = taPackage.character.vitalityMax
@@ -1498,7 +1501,7 @@ createTrigger("^You discharged the spell at the (.+) for (\\d+) damage!$", funct
     local monster = matches[2]
     local amount = tonumber(matches[3])
     taPackage.lastAttackTarget = monster
-    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "hit", amount)
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "hit", amount, "offense")
     if taPackage.arenaState == "fighting" then
         taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-hit")
@@ -1508,7 +1511,7 @@ end, { type = "regex" })
 
 createTrigger("^You confuse the key syllables and the spell fails!$", function()
     local monster = taPackage.lastAttackTarget or "unknown"
-    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "fizzle", nil)
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "fizzle", nil, "offense")
     if taPackage.arenaState == "fighting" then
         taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-fizzle")
@@ -1519,7 +1522,7 @@ end, { type = "regex" })
 createTrigger("^Your spell was negated by the (.+)'s magickal defenses!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
-    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "resist", nil)
+    taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", monster, "resist", nil, "offense")
     if taPackage.arenaState == "fighting" then
         taPackage.arenaCastPending = false
         arenaDebugEcho("our-spell-resist")
@@ -1532,6 +1535,7 @@ createOutboundTrigger("^cast motu ", function()
     if current then
         taPackage.character.manaCurrent = math.max(0, current - 1)
     end
+    taPackage.lastSpellCast = "motu"
 end, { type = "regex" })
 
 createAlias("^cast\\.minor\\.heal$", function()
@@ -1639,7 +1643,8 @@ local function finalizeGroupHeal()
     end
     if not name or not health then return end
     if taPackage.castPending then
-        echo(string.format("[heal] %s: %d of %d allies below %d%% (most injured %s at %d%%), but a cast is pending — skipping.",
+        echo(string.format(
+            "[heal] %s: %d of %d allies below %d%% (most injured %s at %d%%), but a cast is pending — skipping.",
             context, needy, members, threshold, name, health))
         return
     end

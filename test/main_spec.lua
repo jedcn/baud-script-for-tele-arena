@@ -1189,6 +1189,13 @@ describe("ta_db", function()
             assert.is_nil(call.params[4])
         end)
 
+        it("stores kind as the last bound parameter", function()
+            TaDb.recordPlayerSpell("kamotu", "pelayo", "hit", 12, "heal")
+            local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+            assert.is_not_nil(call)
+            assert.are.equal("heal", call.params[6])
+        end)
+
         it("echoes with amount when present", function()
             TaDb.recordPlayerSpell("motu", "pelayo", "hit", 10)
             assert.are.equal("[DB\xE2\x86\x92player_spells] motu \xE2\x86\x92 pelayo [hit] 10", helper.echoCalls[1])
@@ -2606,17 +2613,38 @@ describe("motu inbound trigger", function()
         dofile("main.lua")
     end)
 
-    it("records the spell cast via recordPlayerSpell", function()
+    -- The land message doesn't name the spell, so we record whichever heal was
+    -- last cast. INSERT param order: spell, target, outcome, amount, recorded_at, kind.
+    it("records the last-cast heal spell (kamotu) with kind 'heal'", function()
+        taPackage.lastSpellCast = "kamotu"
         helper.simulateLine("You intoned the spell for pelayo which healed 10 damage!")
         local call = helper.findDbCall("execute", "INSERT INTO player_spells")
         assert.is_not_nil(call)
-        assert.are.equal("motu", call.params[1])
+        assert.are.equal("kamotu", call.params[1])
         assert.are.equal("pelayo", call.params[2])
         assert.are.equal("hit", call.params[3])
         assert.are.equal(10, call.params[4])
+        assert.are.equal("heal", call.params[6])
+    end)
+
+    it("records motu when motu was the last heal cast", function()
+        taPackage.lastSpellCast = "motu"
+        helper.simulateLine("You intoned the spell for pelayo which healed 7 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.are.equal("motu", call.params[1])
+        assert.are.equal("heal", call.params[6])
+    end)
+
+    it("falls back to 'unknown' spell but still kind 'heal' when none tracked", function()
+        taPackage.lastSpellCast = nil
+        helper.simulateLine("You intoned the spell for pelayo which healed 7 damage!")
+        local call = helper.findDbCall("execute", "INSERT INTO player_spells")
+        assert.are.equal("unknown", call.params[1])
+        assert.are.equal("heal", call.params[6])
     end)
 
     it("parses target and amount from the line", function()
+        taPackage.lastSpellCast = "kamotu"
         helper.simulateLine("You intoned the spell for tojolias which healed 5 damage!")
         local call = helper.findDbCall("execute", "INSERT INTO player_spells")
         assert.is_not_nil(call)
@@ -2642,6 +2670,7 @@ describe("spell discharge trigger", function()
         assert.are.equal("skeleton warrior", call.params[2])
         assert.are.equal("hit", call.params[3])
         assert.are.equal(8, call.params[4])
+        assert.are.equal("offense", call.params[6])
     end)
 
     it("updates lastAttackTarget on hit", function()
@@ -2675,6 +2704,7 @@ describe("spell fizzle trigger", function()
         assert.are.equal("skeleton warrior", call.params[2])
         assert.are.equal("fizzle", call.params[3])
         assert.is_nil(call.params[4])
+        assert.are.equal("offense", call.params[6])
     end)
 
     it("falls back to 'unknown' monster when lastAttackTarget is nil", function()
@@ -2702,6 +2732,7 @@ describe("spell resist trigger", function()
         assert.are.equal("giant bat", call.params[2])
         assert.are.equal("resist", call.params[3])
         assert.is_nil(call.params[4])
+        assert.are.equal("offense", call.params[6])
     end)
 
     it("updates lastAttackTarget on resist", function()
@@ -2711,7 +2742,7 @@ describe("spell resist trigger", function()
 
 end)
 
-describe("cast komiza outbound sets lastSpellCast", function()
+describe("cast outbound sets lastSpellCast", function()
 
     before_each(function()
         helper.resetAll()
@@ -2721,6 +2752,16 @@ describe("cast komiza outbound sets lastSpellCast", function()
     it("sets lastSpellCast to komiza", function()
         helper.simulateOutbound("cast komiza skel")
         assert.are.equal("komiza", taPackage.lastSpellCast)
+    end)
+
+    it("sets lastSpellCast to kamotu", function()
+        helper.simulateOutbound("cast kamotu pelayo")
+        assert.are.equal("kamotu", taPackage.lastSpellCast)
+    end)
+
+    it("sets lastSpellCast to motu", function()
+        helper.simulateOutbound("cast motu pelayo")
+        assert.are.equal("motu", taPackage.lastSpellCast)
     end)
 
 end)
