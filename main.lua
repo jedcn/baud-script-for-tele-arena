@@ -533,6 +533,11 @@ createTrigger("^While searching the area, you notice (.+), which you add to your
     taPackage.db.recordItemDrop(monster, item)
 end, { type = "regex" })
 
+createTrigger("^You gave (\\d+) gold coins to (.+)\\.$", function(matches)
+    local amount = tonumber(matches[2])
+    setGold((getGold() or 0) - amount)
+end, { type = "regex" })
+
 createTrigger("^You deposited (\\d+) gold in your account\\.$", function(matches)
     local amount = tonumber(matches[2])
     setGold((getGold() or 0) - amount)
