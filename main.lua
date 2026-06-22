@@ -994,8 +994,12 @@ local function status()
         or "?"
     -- Followers show only name + class; the leader gets a bare "Leader" tag.
     -- We deliberately omit who we follow and the follower count to keep the bar
-    -- compact.
-    if taPackage.followedBy and #taPackage.followedBy > 0 then
+    -- compact. Leader and follower are mutually exclusive: if we're following
+    -- someone we're a member, not a leader, so never show "Leader" then. This
+    -- also keeps a stale followedBy (it persists across reloadScript) from
+    -- mislabelling a follower as a leader.
+    if not taPackage.followTarget
+        and taPackage.followedBy and #taPackage.followedBy > 0 then
         nameText = nameText .. " Leader"
     end
 
@@ -1982,6 +1986,9 @@ local dirShort = {
 
 createAlias("^ta\\.follow (.+)$", function(matches)
     taPackage.followTarget = matches[2]:lower()
+    -- Joining someone else's group means we're no longer a leader; drop any
+    -- (possibly stale) follower list so we don't keep showing the Leader tag.
+    taPackage.followedBy = nil
     echo("[follow] Now following: " .. taPackage.followTarget)
     send("join " .. matches[2])
 end, { type = "regex" })

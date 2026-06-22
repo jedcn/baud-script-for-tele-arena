@@ -514,6 +514,14 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
+        it("does not show Leader while following, even with a stale followedBy", function()
+            taPackage.character.name = "Johnsonite"
+            helper.simulateLine("Class:        Sorceror")
+            taPackage.followTarget = "pelayo"
+            taPackage.followedBy = { "Grog" }
+            assert.are.equal("Johnsonite [Sorceror]", capturedFn()[1].text)
+        end)
+
         it("shows current and max vitality in separate segments", function()
             helper.simulateLine("Vitality:     26 / 26")
             local segments = capturedFn()
@@ -2828,6 +2836,12 @@ describe("ta.follow", function()
         it("lowercases a mixed-case target name", function()
             helper.simulateAlias("ta.follow Tojolias")
             assert.are.equal("tojolias", taPackage.followTarget)
+        end)
+
+        it("clears a stale followedBy list when we start following", function()
+            taPackage.followedBy = { "Grog" }
+            helper.simulateAlias("ta.follow tojolias")
+            assert.is_nil(taPackage.followedBy)
         end)
 
         it("echoes confirmation", function()
