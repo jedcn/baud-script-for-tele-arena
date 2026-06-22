@@ -992,12 +992,11 @@ local function status()
     local nameText = charName and charClass and (charName .. " [" .. charClass .. "]")
         or charName
         or "?"
-    if taPackage.followTarget then
-        local ft = taPackage.followTarget
-        nameText = nameText .. " Following " .. ft:sub(1, 1):upper() .. ft:sub(2)
-    end
+    -- Followers show only name + class; the leader gets a bare "Leader" tag.
+    -- We deliberately omit who we follow and the follower count to keep the bar
+    -- compact.
     if taPackage.followedBy and #taPackage.followedBy > 0 then
-        nameText = nameText .. " Leader (" .. #taPackage.followedBy .. ")"
+        nameText = nameText .. " Leader"
     end
 
     local segments = {

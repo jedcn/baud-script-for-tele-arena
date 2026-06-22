@@ -493,25 +493,25 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Pelayo [Acolyte]", capturedFn()[1].text)
         end)
 
-        it("appends follow target when following someone", function()
+        it("shows only name and class when following someone", function()
             taPackage.character.name = "Pelayo"
             helper.simulateLine("Class:        Acolyte")
             taPackage.followTarget = "tojolias"
-            assert.are.equal("Pelayo [Acolyte] Following Tojolias", capturedFn()[1].text)
+            assert.are.equal("Pelayo [Acolyte]", capturedFn()[1].text)
         end)
 
-        it("appends Leader (N) when being followed", function()
+        it("appends a bare Leader tag when being followed", function()
             taPackage.character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
             taPackage.followedBy = { "Pelayo" }
-            assert.are.equal("Tojolias [Warrior] Leader (1)", capturedFn()[1].text)
+            assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
-        it("shows correct count with multiple followers", function()
+        it("shows the same Leader tag regardless of follower count", function()
             taPackage.character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
             taPackage.followedBy = { "Pelayo", "Sat", "Grog" }
-            assert.are.equal("Tojolias [Warrior] Leader (3)", capturedFn()[1].text)
+            assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
         it("shows current and max vitality in separate segments", function()
