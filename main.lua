@@ -1993,6 +1993,11 @@ createAlias("^ta\\.follow-stop$", function()
 end, { type = "regex" })
 
 createTrigger("^(.+) is asking to join your group\\.$", function(matches)
+    -- Only the group leader can add members. When we're following someone we're
+    -- a member, not the leader, yet the game shows this line to the whole group;
+    -- a reflexive `add` from a follower just earns "Sorry, you are not the leader
+    -- of a group." Leave it to the real leader.
+    if taPackage.followTarget then return end
     local name = matches[2]
     if not taPackage.followedBy then taPackage.followedBy = {} end
     table.insert(taPackage.followedBy, name)

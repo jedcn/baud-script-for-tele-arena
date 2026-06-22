@@ -2875,6 +2875,13 @@ describe("ta.follow", function()
             assert.is_true(found)
         end)
 
+        it("does not add when we are following someone (not the leader)", function()
+            taPackage.followTarget = "pelayo"
+            helper.simulateLine("Johnsonite is asking to join your group.")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_nil(taPackage.followedBy)
+        end)
+
     end)
 
     describe("ta.follow-stop alias", function()
