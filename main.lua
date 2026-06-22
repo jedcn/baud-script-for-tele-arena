@@ -1797,16 +1797,27 @@ end, { type = "regex" })
 -- is fatal against burst damage (a cave bear's worst round is ~23). So while
 -- the loop is active, react to any group member taking a hit by scanning the
 -- group right away and healing if it dropped someone below the threshold. The
--- "with" in the pattern matches landed hits ("attacked Johnsonite with its
--- claws!", "attacked you ... for N damage!") while skipping glances and misses,
--- which deal no damage. The in-progress guard collapses a monster's two claws
--- in one round into a single scan.
-createTrigger("^The .+ attacked .+ with .+!$", function()
+-- in-progress guard collapses a monster's two claws in one round into a single
+-- scan.
+local function reactToGroupHit()
     if not taPackage.healLoopActive then return end
     if getClass() ~= "Acolyte" then return end
     if taPackage.groupHealPhase then return end
     beginGroupHealScan(HEAL_LOOP_THRESHOLD, "hit reaction")
-end, { type = "regex" })
+end
+
+-- The "with" in the pattern matches landed hits ("attacked Johnsonite with its
+-- claws!", "attacked you ... for N damage!") while skipping glances and misses,
+-- which deal no damage.
+createTrigger("^The .+ attacked .+ with .+!$", reactToGroupHit, { type = "regex" })
+
+-- Special attacks (a stone giant's boulder, a cyclops's throw) are the biggest
+-- single hits we've seen, so the healer must react to them too. Unlike the
+-- HP-tracking triggers above, these match any target, not just "you": when one
+-- lands on an ally the game prints no number ("hurled a boulder at Pelayo!"),
+-- but the ally still took a heavy hit and needs an immediate scan.
+createTrigger("^The .+ hurled a boulder at .+!$", reactToGroupHit, { type = "regex" })
+createTrigger("^The .+ picks up and hurls .+!$", reactToGroupHit, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end

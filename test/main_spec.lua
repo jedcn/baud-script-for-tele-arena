@@ -3619,6 +3619,37 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("scans when a stone giant's boulder lands on an ally", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("scans when a stone giant's boulder lands on the healer", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The stone giant hurled a boulder at you for 52 damage!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("scans when a cyclops's throw lands on an ally", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cyclops picks up and hurls Teekywiki!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("scans when a cyclops's throw lands on the healer", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The cyclops picks up and hurls you for 22 damage!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("does not scan on special attacks when the loop is not active", function()
+            taPackage.healLoopActive = false
+            helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
+            helper.simulateLine("The cyclops picks up and hurls Teekywiki!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
     end)
 
     describe("stop-all-scripts", function()
