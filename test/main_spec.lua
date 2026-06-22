@@ -2858,6 +2858,31 @@ describe("ta.follow", function()
             assert.are.equal("join tojolias", helper.sendCalls[1])
         end)
 
+        it("leaves followDebug falsy without a debug suffix", function()
+            helper.simulateAlias("ta.follow tojolias")
+            assert.is_falsy(taPackage.followDebug)
+        end)
+
+        it("sets followDebug when given a ' debug' suffix", function()
+            helper.simulateAlias("ta.follow tojolias debug")
+            assert.is_true(taPackage.followDebug)
+            assert.are.equal("tojolias", taPackage.followTarget)
+        end)
+
+        it("strips ' debug' from the join command", function()
+            helper.simulateAlias("ta.follow tojolias debug")
+            assert.are.equal("join tojolias", helper.sendCalls[1])
+        end)
+
+        it("notes debug mode in the confirmation echo", function()
+            helper.simulateAlias("ta.follow tojolias debug")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "debug") then found = true end
+            end
+            assert.is_true(found)
+        end)
+
     end)
 
     describe("join request trigger (received by leader)", function()
@@ -2904,6 +2929,12 @@ describe("ta.follow", function()
             taPackage.followTarget = "tojolias"
             helper.simulateAlias("ta.follow-stop")
             assert.is_nil(taPackage.followTarget)
+        end)
+
+        it("clears followDebug", function()
+            taPackage.followDebug = true
+            helper.simulateAlias("ta.follow-stop")
+            assert.is_nil(taPackage.followDebug)
         end)
 
         it("echoes confirmation", function()
@@ -3180,6 +3211,51 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        describe("debug follows through from ta.follow", function()
+
+            local function countKillTrace()
+                local count = 0
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "[K]", 1, true) then count = count + 1 end
+                end
+                return count
+            end
+
+            it("inherits follow debug into the spawned kill", function()
+                helper.simulateAlias("ta.follow tojolias debug")
+                helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+                assert.is_true(taPackage.killActive)
+                assert.is_true(taPackage.followDebug)
+                assert.is_true(countKillTrace() > 0)
+            end)
+
+            it("emits no kill trace when following without debug", function()
+                helper.simulateAlias("ta.follow tojolias")
+                helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+                assert.is_true(taPackage.killActive)
+                assert.are.equal(0, countKillTrace())
+            end)
+
+            it("logs a join-skip decision when already killing in another room", function()
+                helper.simulateAlias("ta.follow tojolias debug")
+                helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
+                helper.echoCalls = {}
+                -- Leader moves on and engages a new monster while our loop is
+                -- still pinned to the (never-seen-dead) huge rat.
+                helper.simulateLine("Tojolias just attacked the cave bear with a flail!")
+                assert.are.equal("huge rat", taPackage.killTarget)
+                local logged = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "join-skip", 1, true)
+                        and string.find(msg, "cave bear", 1, true) then
+                        logged = true
+                    end
+                end
+                assert.is_true(logged)
+            end)
+
+        end)
+
     end)
 
     describe("kill alias", function()
@@ -3216,6 +3292,33 @@ describe("ta.follow", function()
             helper.simulateAlias("kill cave lizard")
             assert.is_true(taPackage.killActive)
             assert.are.equal("cave lizard", taPackage.killTarget)
+        end)
+
+        it("does not set killDebug without a debug suffix", function()
+            helper.simulateAlias("kill cave lizard")
+            assert.is_falsy(taPackage.killDebug)
+            local traced = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "[K]", 1, true) then traced = true end
+            end
+            assert.is_false(traced)
+        end)
+
+        it("sets killDebug and traces with a ' debug' suffix", function()
+            helper.simulateAlias("kill cave lizard debug")
+            assert.is_true(taPackage.killDebug)
+            assert.are.equal("cave lizard", taPackage.killTarget)
+            local traced = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "[K]", 1, true) then traced = true end
+            end
+            assert.is_true(traced)
+        end)
+
+        it("clears killDebug when the target dies", function()
+            helper.simulateAlias("kill cave lizard debug")
+            helper.simulateLine("The cave lizard falls to the ground lifeless!")
+            assert.is_falsy(taPackage.killDebug)
         end)
 
         it("continues attacking after a hit", function()

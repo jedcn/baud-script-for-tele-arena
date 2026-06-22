@@ -1603,32 +1603,63 @@ end, { type = "regex" })
 -- An Acolyte heals a group member once their health drops below this.
 local HEAL_THRESHOLD = 90
 
+-- Kill-loop debug tracing. Emits a timestamped line for each combat event and
+-- decision when the loop is running in debug mode. The flag is set by `kill
+-- <target> debug` directly, or inherited from a `ta.follow <name> debug` so the
+-- follow's debug "follows through" into every kill it spawns (see followDebug).
+local function killDebugEcho(label)
+    if taPackage.killDebug or taPackage.followDebug then
+        echo("[K] " .. os.date("%H:%M:%S") .. " " .. label)
+    end
+end
+
 -- Melee: everyone swings each round, casters included.
 local function killAttack()
     local target = taPackage.killTarget
-    if target then
-        if taPackage.killAttackPending then return end
-        taPackage.killAttackPending = true
-        local name = target:match("^(%S+)")
-        send("a " .. name)
+    if not target then
+        killDebugEcho("attack-skip: no target")
+        return
     end
+    if taPackage.killAttackPending then
+        killDebugEcho("attack-skip: swing already pending")
+        return
+    end
+    taPackage.killAttackPending = true
+    local name = target:match("^(%S+)")
+    killDebugEcho("attack-sent: a " .. name)
+    send("a " .. name)
 end
 
 -- Casters take a second action each round, on a separate exhaustion clock:
 -- Sorcerors blast the target, Acolytes heal whoever was most recently hurt.
 local function castSpell()
-    if taPackage.castPending then return end
-    if not taPackage.killActive then return end
+    if taPackage.castPending then
+        killDebugEcho("cast-skip: cast already pending")
+        return
+    end
+    if not taPackage.killActive then
+        killDebugEcho("cast-skip: kill loop not active")
+        return
+    end
     local class = getClass()
     if class == "Sorceror" then
         local target = taPackage.killTarget
-        if not target then return end
+        if not target then
+            killDebugEcho("cast-skip: no target")
+            return
+        end
         taPackage.castPending = true
-        send("cast komiza " .. target:match("^(%S+)"))
+        local name = target:match("^(%S+)")
+        killDebugEcho("cast-sent: komiza " .. name)
+        send("cast komiza " .. name)
     elseif class == "Acolyte" then
         local ally = taPackage.healTarget
-        if not ally then return end
+        if not ally then
+            killDebugEcho("cast-skip: no heal target")
+            return
+        end
         taPackage.castPending = true
+        killDebugEcho("cast-sent: kamotu " .. ally)
         send("cast kamotu " .. ally)
     end
 end
@@ -1705,7 +1736,7 @@ local function finalizeGroupHeal()
     send("cast motu " .. name)
 end
 
-local function startKill(target)
+local function startKill(target, debug)
     if taPackage.arenaState then
         echo("[kill] Cannot start — arena session is active.")
         return false
@@ -1716,23 +1747,36 @@ local function startKill(target)
     end
     taPackage.killTarget = target
     taPackage.killActive = true
+    taPackage.killDebug = debug or false
     taPackage.killAttackPending = false
     taPackage.castPending = false
     taPackage.healTarget = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
-    echo("[kill] Attacking " .. taPackage.killTarget .. ".")
+    local debugSuffix = (taPackage.killDebug or taPackage.followDebug) and " (debug)" or ""
+    echo("[kill] Attacking " .. taPackage.killTarget .. "." .. debugSuffix)
+    killDebugEcho("kill-start: target=" .. target)
     killAttack()
     castSpell()
     return true
 end
 taPackage.startKill = startKill
 
+-- `kill <target>` melees (and casts) a single monster. An optional trailing
+-- " debug" turns on the kill-loop trace for this fight.
 createAlias("^kill (.+)$", function(matches)
-    startKill(matches[2])
+    local rest = matches[2]
+    local target, debug = rest, false
+    local stripped = rest:match("^(.-) debug$")
+    if stripped then
+        target, debug = stripped, true
+    end
+    startKill(target, debug)
 end, { type = "regex" })
 
 local function stopKill()
+    killDebugEcho("kill-stop")
     taPackage.killActive = false
+    taPackage.killDebug = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
     taPackage.castPending = false
@@ -1832,24 +1876,28 @@ createTrigger("^The .+ picks up and hurls .+!$", reactToGroupHit, { type = "rege
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("our melee landed")
     taPackage.killAttackPending = false
     killAttack()
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("our melee missed")
     taPackage.killAttackPending = false
     killAttack()
 end, { type = "regex" })
 
 createTrigger("^The .+ dodged your attack!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("monster dodged our melee")
     taPackage.killAttackPending = false
     killAttack()
 end, { type = "regex" })
 
 createTrigger("^You barely dodge the .+'s attack!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("we dodged the monster")
     taPackage.killAttackPending = false
     killAttack()
 end, { type = "regex" })
@@ -1859,6 +1907,7 @@ end, { type = "regex" })
 -- melee loop above.
 createTrigger("^You discharged the spell at the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("our spell landed")
     taPackage.castPending = false
     castSpell()
 end, { type = "regex" })
@@ -1869,12 +1918,14 @@ createTrigger("^You confuse the key syllables and the spell fails!$", function()
     -- forever. Only the kill loop's re-cast needs an active fight.
     taPackage.castPending = false
     if not taPackage.killActive then return end
+    killDebugEcho("our spell fizzled")
     castSpell()
 end, { type = "regex" })
 
 createTrigger("^Your spell was negated by the .+'s magickal defenses!$", function()
     taPackage.castPending = false
     if not taPackage.killActive then return end
+    killDebugEcho("our spell was resisted")
     castSpell()
 end, { type = "regex" })
 
@@ -1929,7 +1980,9 @@ end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if not taPackage.killActive then return end
+    killDebugEcho("target dead: " .. matches[2] .. " — kill loop ending")
     taPackage.killActive = false
+    taPackage.killDebug = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
     taPackage.castPending = false
@@ -1940,6 +1993,7 @@ end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function()
     if not taPackage.killActive then return end
+    killDebugEcho("physically exhausted — melee retry in 30s")
     taPackage.killAttackPending = false
     -- Out of melee for now; an Acolyte spends the lull checking the group so
     -- the next cast (on the mental clock) heals whoever needs it.
@@ -1949,6 +2003,7 @@ createTrigger("^You are still physically exhausted from your previous activities
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
+            killDebugEcho("melee retry firing after exhaustion")
             killAttack()
         end
     end, { repeating = false })
@@ -1959,9 +2014,11 @@ createTrigger("^You are still too mentally exhausted from your last incantation!
     -- blocked cast doesn't wedge future ones; only the retry needs a fight.
     taPackage.castPending = false
     if not taPackage.killActive then return end
+    killDebugEcho("mentally exhausted — cast retry in 30s")
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
+            killDebugEcho("cast retry firing after exhaustion")
             castSpell()
         end
     end, { repeating = false })
@@ -1984,17 +2041,30 @@ local dirShort = {
     down = "d",
 }
 
+-- `ta.follow <name>` joins and shadows a leader. An optional trailing " debug"
+-- turns on tracing for the whole follow session: the join decisions below, plus
+-- every kill the follow spawns (followDebug feeds killDebugEcho, so the debug
+-- "follows through" without each kill having to be flagged individually).
 createAlias("^ta\\.follow (.+)$", function(matches)
-    taPackage.followTarget = matches[2]:lower()
+    local rest = matches[2]
+    local name, debug = rest, false
+    local stripped = rest:match("^(.-) debug$")
+    if stripped then
+        name, debug = stripped, true
+    end
+    taPackage.followTarget = name:lower()
+    taPackage.followDebug = debug
     -- Joining someone else's group means we're no longer a leader; drop any
     -- (possibly stale) follower list so we don't keep showing the Leader tag.
     taPackage.followedBy = nil
-    echo("[follow] Now following: " .. taPackage.followTarget)
-    send("join " .. matches[2])
+    local debugSuffix = debug and " (debug mode)" or ""
+    echo("[follow] Now following: " .. taPackage.followTarget .. debugSuffix)
+    send("join " .. name)
 end, { type = "regex" })
 
 createAlias("^ta\\.follow-stop$", function()
     taPackage.followTarget = nil
+    taPackage.followDebug = nil
     echo("[follow] Stopped following.")
 end, { type = "regex" })
 
@@ -2021,7 +2091,7 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     local command = matches[3]
     local killMonster = command:match("^kill (.+)$")
     if killMonster then
-        startKill(killMonster)
+        startKill(killMonster, taPackage.followDebug)
     elseif command == "heal.allies" then
         if getClass() == "Acolyte" then
             beginGroupHealScan()
@@ -2029,31 +2099,37 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     end
 end, { type = "regex" })
 
--- When the leader we're following attacks a monster, join the fight on the
--- same target via the kill loop. The kill loop's death trigger stops us
--- naturally if someone else lands the killing blow first.
-createTrigger("^(.+) just attacked the (.+) with .+!$", function(matches)
+-- When the leader we're following engages a monster, join the fight on the same
+-- target via the kill loop. The kill loop's death trigger stops us naturally if
+-- someone else lands the killing blow first. The skip-while-already-killing
+-- branch is logged in debug because it's the usual reason a follower fails to
+-- join the leader in a new room: a stale killActive (from a monster we never saw
+-- die) suppresses every later join until the loop is cleared.
+local function followJoinKill(attacker, monster)
     if not taPackage.followTarget then return end
-    if matches[2]:lower() ~= taPackage.followTarget then return end
-    if taPackage.killActive then return end
-    startKill(matches[3])
+    if attacker:lower() ~= taPackage.followTarget then return end
+    if taPackage.killActive then
+        killDebugEcho("join-skip: already killing " .. tostring(taPackage.killTarget)
+            .. " (leader engaged " .. monster .. ")")
+        return
+    end
+    killDebugEcho("join: leader engaged " .. monster .. " — starting kill")
+    startKill(monster, taPackage.followDebug)
+end
+
+createTrigger("^(.+) just attacked the (.+) with .+!$", function(matches)
+    followJoinKill(matches[2], matches[3])
 end, { type = "regex" })
 
 -- A monster dodging the leader's first swing is the same signal to join in;
 -- here the monster comes first and the leader is in the possessive form.
 createTrigger("^The (.+) barely dodged (.+)'s .+!$", function(matches)
-    if not taPackage.followTarget then return end
-    if matches[3]:lower() ~= taPackage.followTarget then return end
-    if taPackage.killActive then return end
-    startKill(matches[2])
+    followJoinKill(matches[3], matches[2])
 end, { type = "regex" })
 
 -- The leader swinging and missing still means they're engaging that monster.
 createTrigger("^(.+)'s poorly executed attack misses the (.+)!$", function(matches)
-    if not taPackage.followTarget then return end
-    if matches[2]:lower() ~= taPackage.followTarget then return end
-    if taPackage.killActive then return end
-    startKill(matches[3])
+    followJoinKill(matches[2], matches[3])
 end, { type = "regex" })
 
 -- When the leader buys a drink, the follower buys one too.
