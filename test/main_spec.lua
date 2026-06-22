@@ -333,6 +333,25 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Entering Tele-Arena trigger
+    -- =========================================================================
+
+    describe("Entering Tele-Arena trigger", function()
+
+        it("runs st then i on entering", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            assert.are.equal("st", helper.sendCalls[1])
+            assert.are.equal("i", helper.sendCalls[2])
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Entering the arena gates...")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Status trigger
     -- =========================================================================
 

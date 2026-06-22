@@ -383,6 +383,14 @@ local function scheduleReroll()
     end, { repeating = false })
 end
 
+-- On entering the arena, pull our character sheet (st) and inventory (i) so the
+-- script's tracked state is populated right away instead of waiting for the
+-- first manual status check.
+createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
+    send("st")
+    send("i")
+end, { type = "regex" })
+
 createTrigger("^Status:\\s+(\\S+)$", function(matches)
     setCharacterStatus(matches[2])
 end, { type = "regex" })
