@@ -876,6 +876,33 @@ createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
+-- Special attacks don't use the "attacked you ... for N damage!" phrasing, so
+-- the generic incoming-damage trigger above misses them and our HP drifts high
+-- against some of the hardest hits in the game (a stone giant's boulder has been
+-- seen for 52, a cyclops's throw for 22). Catch each special verb explicitly and
+-- apply the damage the same way. Only the "you" variants carry a number; when
+-- these land on another group member the game prints no damage ("hurled a
+-- boulder at Pelayo!"), so there is nothing to subtract from our own vitality.
+createTrigger("^The (.+) hurled a boulder at you for (\\d+) damage!$", function(matches)
+    local monster = matches[2]
+    local damage = tonumber(matches[3])
+    local current, max = getVitality()
+    if current then
+        setVitality(current - damage, max)
+    end
+    taPackage.db.recordMonsterAttack(monster, "hit", damage)
+end, { type = "regex" })
+
+createTrigger("^The (.+) picks up and hurls you for (\\d+) damage!$", function(matches)
+    local monster = matches[2]
+    local damage = tonumber(matches[3])
+    local current, max = getVitality()
+    if current then
+        setVitality(current - damage, max)
+    end
+    taPackage.db.recordMonsterAttack(monster, "hit", damage)
+end, { type = "regex" })
+
 createTrigger("^The (.+) attacked you, but .+ glanced off your armor!$", function(matches)
     taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)
 end, { type = "regex" })

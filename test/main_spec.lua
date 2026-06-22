@@ -308,6 +308,28 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(16, current)
         end)
 
+        it("reduces vitality for a stone giant's boulder", function()
+            helper.simulateLine("Vitality:     80 / 80")
+            helper.simulateLine("The stone giant hurled a boulder at you for 52 damage!")
+            local current, max = getVitality()
+            assert.are.equal(28, current)
+            assert.are.equal(80, max)
+        end)
+
+        it("reduces vitality for a cyclops's throw", function()
+            helper.simulateLine("Vitality:     50 / 50")
+            helper.simulateLine("The cyclops picks up and hurls you for 22 damage!")
+            local current, _ = getVitality()
+            assert.are.equal(28, current)
+        end)
+
+        it("ignores a boulder thrown at another player", function()
+            helper.simulateLine("Vitality:     80 / 80")
+            helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
+            local current, _ = getVitality()
+            assert.are.equal(80, current)
+        end)
+
     end)
 
     -- =========================================================================
