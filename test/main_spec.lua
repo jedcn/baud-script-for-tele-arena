@@ -323,9 +323,24 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(28, current)
         end)
 
+        it("reduces vitality for a chimera's flame breath", function()
+            helper.simulateLine("Vitality:     80 / 80")
+            helper.simulateLine("The chimera breathed flames at you for 27 damage!")
+            local current, max = getVitality()
+            assert.are.equal(53, current)
+            assert.are.equal(80, max)
+        end)
+
         it("ignores a boulder thrown at another player", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
+            local current, _ = getVitality()
+            assert.are.equal(80, current)
+        end)
+
+        it("ignores flames breathed at another player", function()
+            helper.simulateLine("Vitality:     80 / 80")
+            helper.simulateLine("The chimera breathed flames at Pelayo!")
             local current, _ = getVitality()
             assert.are.equal(80, current)
         end)
@@ -3786,10 +3801,23 @@ describe("ta.follow", function()
             assert.are.equal("group", helper.sendCalls[1])
         end)
 
+        it("scans when a chimera's flame breath lands on an ally", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The chimera breathed flames at Pelayo!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("scans when a chimera's flame breath lands on the healer", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The chimera breathed flames at you for 27 damage!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
         it("does not scan on special attacks when the loop is not active", function()
             taPackage.healLoopActive = false
             helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
             helper.simulateLine("The cyclops picks up and hurls Teekywiki!")
+            helper.simulateLine("The chimera breathed flames at Pelayo!")
             assert.are.equal(0, #helper.sendCalls)
         end)
 

@@ -911,6 +911,16 @@ createTrigger("^The (.+) picks up and hurls you for (\\d+) damage!$", function(m
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
+createTrigger("^The (.+) breathed flames at you for (\\d+) damage!$", function(matches)
+    local monster = matches[2]
+    local damage = tonumber(matches[3])
+    local current, max = getVitality()
+    if current then
+        setVitality(current - damage, max)
+    end
+    taPackage.db.recordMonsterAttack(monster, "hit", damage)
+end, { type = "regex" })
+
 createTrigger("^The (.+) attacked you, but .+ glanced off your armor!$", function(matches)
     taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)
 end, { type = "regex" })
@@ -1873,6 +1883,7 @@ createTrigger("^The .+ attacked .+ with .+!$", reactToGroupHit, { type = "regex"
 -- but the ally still took a heavy hit and needs an immediate scan.
 createTrigger("^The .+ hurled a boulder at .+!$", reactToGroupHit, { type = "regex" })
 createTrigger("^The .+ picks up and hurls .+!$", reactToGroupHit, { type = "regex" })
+createTrigger("^The .+ breathed flames at .+!$", reactToGroupHit, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
