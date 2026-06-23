@@ -2412,20 +2412,33 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
-        it("stacked ringing exhaustions retry the gong only once (pending guard)", function()
+        it("stacked ringing exhaustions schedule only one retry timer", function()
+            -- A kill bounces the trailing swing and the gong in the same instant,
+            -- firing this handler twice. Only the first should arm a retry timer;
+            -- the second is a no-op so we don't churn a redundant timer.
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local firstTimer = timerCreated
+            assert.is_not_nil(firstTimer)
+            timerCreated = nil
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_nil(timerCreated)
+            helper.sendCalls = {}
+            firstTimer.cb()
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+        it("re-arms the retry after the previous one fires", function()
+            -- Once the retry timer fires it clears the dedupe flag, so a later
+            -- exhaustion (the next retry still bounces) can schedule again.
             taPackage.arenaState = "ringing"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             local firstTimer = timerCreated
             timerCreated = nil
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            local secondTimer = timerCreated
-            assert.is_not_nil(secondTimer)
-            helper.sendCalls = {}
             firstTimer.cb()
-            assert.are.equal("ring gong", helper.sendCalls[1])
-            helper.sendCalls = {}
-            secondTimer.cb()
-            assert.are.equal(0, #helper.sendCalls)
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(3000, timerCreated.interval)
         end)
 
         it("does not create timer when arenaState is nil", function()

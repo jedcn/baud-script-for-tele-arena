@@ -1217,6 +1217,7 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
+    taPackage.arenaRingRetryScheduled = false
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
@@ -1247,6 +1248,7 @@ local function stopArena()
     taPackage.arenaAttackPending = nil
     taPackage.arenaCastPending = nil
     taPackage.arenaRingPending = nil
+    taPackage.arenaRingRetryScheduled = nil
     echo("[arena] Stopped.")
 end
 taPackage.stopArena = stopArena
@@ -1459,8 +1461,18 @@ createTrigger("^You are still physically exhausted from your previous activities
         -- The blocked physical action was the gong ring (the kill just spent
         -- the physical clock). Retry the ring, not a swing — there's no monster
         -- to swing at, so retrying arenaAttack would silently stall the loop.
+        --
+        -- A kill bounces two physical actions in the same instant — the trailing
+        -- melee swing and the fresh gong — so this handler fires twice back to
+        -- back. The arenaRingPending guard already stops a real double-ring, but
+        -- without this dedupe each bounce still churns its own retry timer. Keep
+        -- at most one retry outstanding; the callback clears the flag when it
+        -- fires so the next bounce can re-arm.
+        if taPackage.arenaRingRetryScheduled then return end
+        taPackage.arenaRingRetryScheduled = true
         taPackage.arenaRingPending = false
         createTimer(ARENA_RING_RETRY_MS, function()
+            taPackage.arenaRingRetryScheduled = false
             if taPackage.arenaState == "ringing" and (taPackage.arenaCombatGen or 0) == gen then
                 arenaRing()
             end
