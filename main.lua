@@ -2131,12 +2131,6 @@ createAlias("^ta\\.follow (.+)$", function(matches)
     send("status")
 end, { type = "regex" })
 
-createAlias("^ta\\.follow-stop$", function()
-    taPackage.followTarget = nil
-    taPackage.followDebug = nil
-    echo("[follow] Stopped following.")
-end, { type = "regex" })
-
 -- `ta.unfollow` ends the group session started by `ta.follow`: it leaves the
 -- group, clears all follow state, then sends `status` so the Experience trigger
 -- can report how much XP we gained over the session.

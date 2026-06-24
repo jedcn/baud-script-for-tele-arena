@@ -2986,31 +2986,6 @@ describe("ta.follow", function()
 
     end)
 
-    describe("ta.follow-stop alias", function()
-
-        it("clears followTarget", function()
-            taPackage.followTarget = "tojolias"
-            helper.simulateAlias("ta.follow-stop")
-            assert.is_nil(taPackage.followTarget)
-        end)
-
-        it("clears followDebug", function()
-            taPackage.followDebug = true
-            helper.simulateAlias("ta.follow-stop")
-            assert.is_nil(taPackage.followDebug)
-        end)
-
-        it("echoes confirmation", function()
-            helper.simulateAlias("ta.follow-stop")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "Stopped") then found = true end
-            end
-            assert.is_true(found)
-        end)
-
-    end)
-
     describe("departure trigger", function()
 
         it("sends 'e' when followed character goes east", function()
