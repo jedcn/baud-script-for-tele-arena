@@ -1545,7 +1545,19 @@ createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) da
 end, { type = "regex" })
 
 createAlias("^cast\\.ice.dart (.+)$", function(matches)
+    send("cast komiza " .. matches[2])
+end, { type = "regex" })
+
+createAlias("^cast\\.fire.dart (.+)$", function(matches)
     send("cast toduza " .. matches[2])
+end, { type = "regex" })
+
+createOutboundTrigger("^cast komiza ", function()
+    local current = taPackage.character.manaCurrent
+    if current then
+        taPackage.character.manaCurrent = math.max(0, current - 1)
+    end
+    taPackage.lastSpellCast = "komiza"
 end, { type = "regex" })
 
 createOutboundTrigger("^cast toduza ", function()

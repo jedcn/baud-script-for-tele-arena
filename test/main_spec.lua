@@ -2656,9 +2656,38 @@ describe("cast.ice.dart alias", function()
         dofile("main.lua")
     end)
 
-    it("sends cast toduza <target>", function()
+    it("sends cast komiza <target>", function()
         helper.simulateAlias("cast.ice.dart tojolias")
+        assert.are.equal("cast komiza tojolias", helper.sendCalls[1])
+    end)
+
+end)
+
+describe("cast.fire.dart alias", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("sends cast toduza <target>", function()
+        helper.simulateAlias("cast.fire.dart tojolias")
         assert.are.equal("cast toduza tojolias", helper.sendCalls[1])
+    end)
+
+end)
+
+describe("cast komiza outbound trigger", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("decrements manaCurrent by 1", function()
+        helper.simulateLine("Mana:         10 / 20")
+        helper.simulateOutbound("cast komiza tojolias")
+        assert.are.equal(9, taPackage.character.manaCurrent)
     end)
 
 end)
