@@ -1551,7 +1551,7 @@ end, { type = "regex" })
 createOutboundTrigger("^cast toduza ", function()
     local current = taPackage.character.manaCurrent
     if current then
-        taPackage.character.manaCurrent = math.max(0, current - 1)
+        taPackage.character.manaCurrent = math.max(0, current - 2)
     end
     taPackage.lastSpellCast = "toduza"
 end, { type = "regex" })

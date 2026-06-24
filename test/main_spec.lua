@@ -2670,10 +2670,10 @@ describe("cast toduza outbound trigger", function()
         dofile("main.lua")
     end)
 
-    it("decrements manaCurrent by 1", function()
+    it("decrements manaCurrent by 2", function()
         helper.simulateLine("Mana:         10 / 20")
         helper.simulateOutbound("cast toduza tojolias")
-        assert.are.equal(9, taPackage.character.manaCurrent)
+        assert.are.equal(8, taPackage.character.manaCurrent)
     end)
 
     it("does not reduce manaCurrent below 0", function()
