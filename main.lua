@@ -538,6 +538,11 @@ createTrigger("^You gave (\\d+) gold coins to (.+)\\.$", function(matches)
     setGold((getGold() or 0) - amount)
 end, { type = "regex" })
 
+createTrigger("^(.+) just gave you (\\d+) gold coins\\.$", function(matches)
+    local amount = tonumber(matches[3])
+    setGold((getGold() or 0) + amount)
+end, { type = "regex" })
+
 createTrigger("^You deposited (\\d+) gold in your account\\.$", function(matches)
     local amount = tonumber(matches[2])
     setGold((getGold() or 0) - amount)

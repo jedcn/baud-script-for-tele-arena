@@ -182,6 +182,12 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(655, getGold())
         end)
 
+        it("increases gold when another player gives you coins", function()
+            helper.simulateLine("You are carrying 755 gold crowns.")
+            helper.simulateLine("Teekywiki just gave you 32 gold coins.")
+            assert.are.equal(787, getGold())
+        end)
+
         it("decreases gold when buying an item from a shop", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Ok, you bought a quarterstaff for 9 crowns.")
