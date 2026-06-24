@@ -1185,6 +1185,26 @@ end
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     setExperience(matches[2])
+    -- Follow-session XP accounting. `ta.follow` records the starting XP and
+    -- `ta.unfollow` records the ending XP by sending `status` and waiting for the
+    -- Experience line below; a pending flag tells us which capture this line is
+    -- for. Kept independent of the arena flags so the two can't interfere.
+    local followXp = tonumber(matches[2])
+    if taPackage.followStartXpPending then
+        taPackage.followStartXpPending = false
+        taPackage.followSessionStartXp = followXp
+        echo("[follow] Session started. XP: " .. followXp)
+    elseif taPackage.followEndXpPending then
+        taPackage.followEndXpPending = false
+        local startXp = taPackage.followSessionStartXp
+        if startXp then
+            echo("[follow] Session over — gained " .. (followXp - startXp)
+                .. " XP (total: " .. followXp .. ").")
+        else
+            echo("[follow] Session over — starting XP unknown (total: " .. followXp .. ").")
+        end
+        taPackage.followSessionStartXp = nil
+    end
     if taPackage.arenaState == "ringing" and checkTrainingNeeded() then
         echo("[arena] Leveling up — heading to training hall.")
         taPackage.arenaState = "training"
@@ -2103,12 +2123,32 @@ createAlias("^ta\\.follow (.+)$", function(matches)
     local debugSuffix = debug and " (debug mode)" or ""
     echo("[follow] Now following: " .. taPackage.followTarget .. debugSuffix)
     send("join " .. name)
+    -- Begin a group session: capture our starting XP so `ta.unfollow` can report
+    -- the gain. The Experience line from this status is consumed by the
+    -- followStartXpPending branch of the Experience trigger.
+    taPackage.followStartXpPending = true
+    taPackage.followEndXpPending = false
+    send("status")
 end, { type = "regex" })
 
 createAlias("^ta\\.follow-stop$", function()
     taPackage.followTarget = nil
     taPackage.followDebug = nil
     echo("[follow] Stopped following.")
+end, { type = "regex" })
+
+-- `ta.unfollow` ends the group session started by `ta.follow`: it leaves the
+-- group, clears all follow state, then sends `status` so the Experience trigger
+-- can report how much XP we gained over the session.
+createAlias("^ta\\.unfollow$", function()
+    send("leave")
+    taPackage.followTarget = nil
+    taPackage.followDebug = nil
+    taPackage.followedBy = nil
+    taPackage.followStartXpPending = false
+    taPackage.followEndXpPending = true
+    echo("[follow] Left the group.")
+    send("status")
 end, { type = "regex" })
 
 createTrigger("^(.+) is asking to join your group\\.$", function(matches)

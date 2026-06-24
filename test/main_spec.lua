@@ -4003,3 +4003,76 @@ describe("ta.follow", function()
     end)
 
 end)
+
+describe("Follow sessions", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function sent(cmd)
+        for _, c in ipairs(helper.sendCalls) do
+            if c == cmd then return true end
+        end
+        return false
+    end
+
+    local function echoed(fragment)
+        for _, e in ipairs(helper.echoCalls) do
+            if string.find(e, fragment, 1, true) then return true end
+        end
+        return false
+    end
+
+    it("ta.follow joins, requests status, and arms the start capture", function()
+        helper.simulateAlias("ta.follow Pelayo")
+        assert.is_true(sent("join Pelayo"))
+        assert.is_true(sent("status"))
+        assert.is_true(taPackage.followStartXpPending)
+        assert.is_false(taPackage.followEndXpPending)
+    end)
+
+    it("captures starting XP from the status that follows ta.follow", function()
+        helper.simulateAlias("ta.follow Pelayo")
+        helper.simulateLine("Experience:   100")
+        assert.are.equal(100, taPackage.followSessionStartXp)
+        assert.is_false(taPackage.followStartXpPending)
+        assert.is_true(echoed("Session started. XP: 100"))
+    end)
+
+    it("ta.unfollow leaves, clears follow state, and requests status", function()
+        helper.simulateAlias("ta.follow Pelayo")
+        helper.simulateLine("Experience:   100")
+        helper.sendCalls = {}
+        helper.simulateAlias("ta.unfollow")
+        assert.is_true(sent("leave"))
+        assert.is_true(sent("status"))
+        assert.is_nil(taPackage.followTarget)
+        assert.is_nil(taPackage.followDebug)
+        assert.is_true(taPackage.followEndXpPending)
+    end)
+
+    it("reports the XP gained over a full follow session", function()
+        helper.simulateAlias("ta.follow Pelayo")
+        helper.simulateLine("Experience:   100")
+        helper.simulateAlias("ta.unfollow")
+        helper.simulateLine("Experience:   175")
+        assert.is_true(echoed("gained 75 XP (total: 175)"))
+        assert.is_nil(taPackage.followSessionStartXp)
+        assert.is_false(taPackage.followEndXpPending)
+    end)
+
+    it("reports unknown starting XP if ta.unfollow runs without a captured start", function()
+        taPackage.followEndXpPending = true
+        helper.simulateLine("Experience:   175")
+        assert.is_true(echoed("starting XP unknown (total: 175)"))
+    end)
+
+    it("does not treat a routine Experience line as a session boundary", function()
+        helper.simulateLine("Experience:   100")
+        assert.is_false(echoed("Session started"))
+        assert.is_false(echoed("Session over"))
+    end)
+
+end)
