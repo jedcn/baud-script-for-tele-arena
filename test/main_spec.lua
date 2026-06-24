@@ -1034,19 +1034,19 @@ describe("Arena combat", function()
             taPackage.arenaMonster = "lizard man"
         end)
 
-        it("re-casts komiza after a successful discharge", function()
+        it("re-casts toduza after a successful discharge", function()
             helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
-            assert.are.equal("cast komiza lizard", lastSend())
+            assert.are.equal("cast toduza lizard", lastSend())
         end)
 
-        it("re-casts komiza after a fizzle", function()
+        it("re-casts toduza after a fizzle", function()
             helper.simulateLine("You confuse the key syllables and the spell fails!")
-            assert.are.equal("cast komiza lizard", lastSend())
+            assert.are.equal("cast toduza lizard", lastSend())
         end)
 
-        it("re-casts komiza after a resist", function()
+        it("re-casts toduza after a resist", function()
             helper.simulateLine("Your spell was negated by the lizard man's magickal defenses!")
-            assert.are.equal("cast komiza lizard", lastSend())
+            assert.are.equal("cast toduza lizard", lastSend())
         end)
 
         it("also melees on a physical hit, independent of the cast loop", function()
@@ -1054,7 +1054,7 @@ describe("Arena combat", function()
             assert.are.equal("a lizard", lastSend())
         end)
 
-        it("melees and casts komiza when a monster enters", function()
+        it("melees and casts toduza when a monster enters", function()
             taPackage.arenaState = "ringing"
             taPackage.arenaMonster = nil
             helper.sendCalls = {}
@@ -1062,7 +1062,7 @@ describe("Arena combat", function()
             local melee, cast = false, false
             for _, cmd in ipairs(helper.sendCalls) do
                 if cmd == "a lizard" then melee = true end
-                if cmd == "cast komiza lizard" then cast = true end
+                if cmd == "cast toduza lizard" then cast = true end
             end
             assert.is_true(melee)
             assert.is_true(cast)
@@ -1242,17 +1242,17 @@ describe("ta_db", function()
     describe("recordPlayerSpell", function()
 
         it("records a hit with amount", function()
-            TaDb.recordPlayerSpell("komiza", "huge rat", "hit", 7)
+            TaDb.recordPlayerSpell("toduza", "huge rat", "hit", 7)
             local call = helper.findDbCall("execute", "INSERT INTO player_spells")
             assert.is_not_nil(call)
-            assert.are.equal("komiza", call.params[1])
+            assert.are.equal("toduza", call.params[1])
             assert.are.equal("huge rat", call.params[2])
             assert.are.equal("hit", call.params[3])
             assert.are.equal(7, call.params[4])
         end)
 
         it("records a miss with no amount", function()
-            TaDb.recordPlayerSpell("komiza", "huge rat", "miss", nil)
+            TaDb.recordPlayerSpell("toduza", "huge rat", "miss", nil)
             local call = helper.findDbCall("execute", "INSERT INTO player_spells")
             assert.is_not_nil(call)
             assert.are.equal("miss", call.params[3])
@@ -1272,8 +1272,8 @@ describe("ta_db", function()
         end)
 
         it("echoes without amount when nil", function()
-            TaDb.recordPlayerSpell("komiza", "huge rat", "miss", nil)
-            assert.are.equal("[DB\xE2\x86\x92player_spells] komiza \xE2\x86\x92 huge rat [miss]", helper.echoCalls[1])
+            TaDb.recordPlayerSpell("toduza", "huge rat", "miss", nil)
+            assert.are.equal("[DB\xE2\x86\x92player_spells] toduza \xE2\x86\x92 huge rat [miss]", helper.echoCalls[1])
         end)
 
     end)
@@ -2656,14 +2656,14 @@ describe("cast.ice.dart alias", function()
         dofile("main.lua")
     end)
 
-    it("sends cast komiza <target>", function()
+    it("sends cast toduza <target>", function()
         helper.simulateAlias("cast.ice.dart tojolias")
-        assert.are.equal("cast komiza tojolias", helper.sendCalls[1])
+        assert.are.equal("cast toduza tojolias", helper.sendCalls[1])
     end)
 
 end)
 
-describe("cast komiza outbound trigger", function()
+describe("cast toduza outbound trigger", function()
 
     before_each(function()
         helper.resetAll()
@@ -2672,18 +2672,18 @@ describe("cast komiza outbound trigger", function()
 
     it("decrements manaCurrent by 1", function()
         helper.simulateLine("Mana:         10 / 20")
-        helper.simulateOutbound("cast komiza tojolias")
+        helper.simulateOutbound("cast toduza tojolias")
         assert.are.equal(9, taPackage.character.manaCurrent)
     end)
 
     it("does not reduce manaCurrent below 0", function()
         helper.simulateLine("Mana:         0 / 20")
-        helper.simulateOutbound("cast komiza tojolias")
+        helper.simulateOutbound("cast toduza tojolias")
         assert.are.equal(0, taPackage.character.manaCurrent)
     end)
 
     it("does nothing when manaCurrent is unknown", function()
-        helper.simulateOutbound("cast komiza tojolias")
+        helper.simulateOutbound("cast toduza tojolias")
         assert.is_nil(taPackage.character.manaCurrent)
     end)
 
@@ -2742,14 +2742,14 @@ describe("spell discharge trigger", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
-        taPackage.lastSpellCast = "komiza"
+        taPackage.lastSpellCast = "toduza"
     end)
 
     it("records a hit with monster and damage", function()
         helper.simulateLine("You discharged the spell at the skeleton warrior for 8 damage!")
         local call = helper.findDbCall("execute", "INSERT INTO player_spells")
         assert.is_not_nil(call)
-        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("toduza", call.params[1])
         assert.are.equal("skeleton warrior", call.params[2])
         assert.are.equal("hit", call.params[3])
         assert.are.equal(8, call.params[4])
@@ -2775,7 +2775,7 @@ describe("spell fizzle trigger", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
-        taPackage.lastSpellCast = "komiza"
+        taPackage.lastSpellCast = "toduza"
         taPackage.lastAttackTarget = "skeleton warrior"
     end)
 
@@ -2783,7 +2783,7 @@ describe("spell fizzle trigger", function()
         helper.simulateLine("You confuse the key syllables and the spell fails!")
         local call = helper.findDbCall("execute", "INSERT INTO player_spells")
         assert.is_not_nil(call)
-        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("toduza", call.params[1])
         assert.are.equal("skeleton warrior", call.params[2])
         assert.are.equal("fizzle", call.params[3])
         assert.is_nil(call.params[4])
@@ -2804,14 +2804,14 @@ describe("spell resist trigger", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
-        taPackage.lastSpellCast = "komiza"
+        taPackage.lastSpellCast = "toduza"
     end)
 
     it("records a resist with monster name from line", function()
         helper.simulateLine("Your spell was negated by the giant bat's magickal defenses!")
         local call = helper.findDbCall("execute", "INSERT INTO player_spells")
         assert.is_not_nil(call)
-        assert.are.equal("komiza", call.params[1])
+        assert.are.equal("toduza", call.params[1])
         assert.are.equal("giant bat", call.params[2])
         assert.are.equal("resist", call.params[3])
         assert.is_nil(call.params[4])
@@ -2832,9 +2832,9 @@ describe("cast outbound sets lastSpellCast", function()
         dofile("main.lua")
     end)
 
-    it("sets lastSpellCast to komiza", function()
-        helper.simulateOutbound("cast komiza skel")
-        assert.are.equal("komiza", taPackage.lastSpellCast)
+    it("sets lastSpellCast to toduza", function()
+        helper.simulateOutbound("cast toduza skel")
+        assert.are.equal("toduza", taPackage.lastSpellCast)
     end)
 
     it("sets lastSpellCast to kamotu", function()
@@ -3430,10 +3430,10 @@ describe("ta.follow", function()
                 setClass("Sorceror")
             end)
 
-            it("melees and casts komiza on start", function()
+            it("melees and casts toduza on start", function()
                 helper.simulateAlias("kill cave lizard")
                 assert.are.equal("a cave", helper.sendCalls[1])
-                assert.are.equal("cast komiza cave", helper.sendCalls[2])
+                assert.are.equal("cast toduza cave", helper.sendCalls[2])
             end)
 
             it("keeps meleeing after a hit, independent of the cast loop", function()
@@ -3447,21 +3447,21 @@ describe("ta.follow", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.sendCalls = {}
                 helper.simulateLine("You discharged the spell at the cave lizard for 8 damage!")
-                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+                assert.are.equal("cast toduza cave", helper.sendCalls[1])
             end)
 
             it("re-casts after a fizzle", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.sendCalls = {}
                 helper.simulateLine("You confuse the key syllables and the spell fails!")
-                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+                assert.are.equal("cast toduza cave", helper.sendCalls[1])
             end)
 
             it("re-casts after a resist", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.sendCalls = {}
                 helper.simulateLine("Your spell was negated by the cave lizard's magickal defenses!")
-                assert.are.equal("cast komiza cave", helper.sendCalls[1])
+                assert.are.equal("cast toduza cave", helper.sendCalls[1])
             end)
 
             it("clears the cast pending flag on mental exhaustion", function()

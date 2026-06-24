@@ -1108,7 +1108,7 @@ local function arenaAttack()
 end
 
 -- Casters take a second action each round on a separate exhaustion clock: a
--- Sorceror blasts the monster with komiza while still meleeing every round.
+-- Sorceror blasts the monster with toduza while still meleeing every round.
 local function arenaCast()
     -- Like arenaAttack, casting is a combat action that resets the move clock;
     -- once we're fleeing it must cease until we're fighting again.
@@ -1120,7 +1120,7 @@ local function arenaCast()
     taPackage.arenaCastPending = true
     local target = name:match("^(%S+)")
     arenaDebugEcho("cast-sent")
-    arenaSend("cast komiza " .. target)
+    arenaSend("cast toduza " .. target)
 end
 
 -- Ringing the gong is itself a physical action. Right after a melee kill the
@@ -1545,15 +1545,15 @@ createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) da
 end, { type = "regex" })
 
 createAlias("^cast\\.ice.dart (.+)$", function(matches)
-    send("cast komiza " .. matches[2])
+    send("cast toduza " .. matches[2])
 end, { type = "regex" })
 
-createOutboundTrigger("^cast komiza ", function()
+createOutboundTrigger("^cast toduza ", function()
     local current = taPackage.character.manaCurrent
     if current then
         taPackage.character.manaCurrent = math.max(0, current - 1)
     end
-    taPackage.lastSpellCast = "komiza"
+    taPackage.lastSpellCast = "toduza"
 end, { type = "regex" })
 
 createTrigger("^You discharged the spell at the (.+) for (\\d+) damage!$", function(matches)
@@ -1677,8 +1677,8 @@ local function castSpell()
         end
         taPackage.castPending = true
         local name = target:match("^(%S+)")
-        killDebugEcho("cast-sent: komiza " .. name)
-        send("cast komiza " .. name)
+        killDebugEcho("cast-sent: toduza " .. name)
+        send("cast toduza " .. name)
     elseif class == "Acolyte" then
         local ally = taPackage.healTarget
         if not ally then
