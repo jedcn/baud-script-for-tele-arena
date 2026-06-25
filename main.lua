@@ -661,17 +661,6 @@ function getMonsterDbState()
     return taPackage.monsterDb.state
 end
 
-function getKnownMonsters()
-    local names = {}
-    for name in pairs(taPackage.monsterDb.monsters) do
-        table.insert(names, name)
-    end
-    table.sort(names)
-    for _, name in ipairs(names) do
-        echo(name)
-    end
-end
-
 local function startLook(target)
     taPackage.monsterDb.state = "accumulating"
     taPackage.monsterDb.lookTarget = target
