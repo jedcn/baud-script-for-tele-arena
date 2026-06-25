@@ -17,10 +17,12 @@ before starting a session.
 
 ## Half-Ogre Warrior
 
+**Alias:** `re-roll-half-ogre-warrior` (stop with `re-roll-stop`)
+
 **Max stats:** Int=14 Kno=14 Phy=30 Sta=30 Agi=17 Cha=12
 
 **Approach:** Simple hard floors — reroll until Physique >= 29 AND Stamina >= 29.
-No deficit math; the other stats were ignored entirely.
+No deficit math; the other stats are ignored entirely.
 
 **Commit:** `dfeddae`
 

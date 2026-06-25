@@ -383,6 +383,34 @@ local function scheduleReroll()
     end, { repeating = false })
 end
 
+local function reRollStatSummary(s)
+    return "Int=" .. s.intellect .. " Kno=" .. s.knowledge .. " Phy=" .. s.physique
+        .. " Sta=" .. s.stamina .. " Agi=" .. s.agility .. " Cha=" .. s.charisma
+end
+
+-- Each re-roll build is a matcher: given the six rolled stats it returns
+-- (accepted, summary), where accepted is true once the roll is good enough to
+-- stop on. Aliases below pick which matcher the Vitality trigger uses.
+local reRollBuilds = {}
+
+-- Elf Sorceror: exact floors on Int/Kno/Sta, combined Phy+Cha deficit <= 5, Agi ignored.
+reRollBuilds.elfSorceror = function(s)
+    local floorsOk = s.intellect >= 22 and s.knowledge >= 25 and s.stamina >= 15
+    local deficit = math.max(0, 15 - s.physique) + math.max(0, 21 - s.charisma)
+    if not taPackage.reRollBestDeficit or deficit < taPackage.reRollBestDeficit then
+        taPackage.reRollBestDeficit = deficit
+    end
+    local summary = reRollStatSummary(s)
+        .. " (deficit=" .. deficit .. " best=" .. taPackage.reRollBestDeficit .. ")"
+    return floorsOk and deficit <= 5, summary
+end
+
+-- Half-Ogre Warrior: simple hard floors — Phy >= 29 AND Sta >= 29, other stats ignored.
+reRollBuilds.halfOgreWarrior = function(s)
+    local accepted = s.physique >= 29 and s.stamina >= 29
+    return accepted, reRollStatSummary(s)
+end
+
 -- On entering the arena, pull our character sheet (st) and inventory (i) so the
 -- script's tracked state is populated right away instead of waiting for the
 -- first manual status check.
@@ -403,34 +431,22 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     setVitality(matches[2], matches[3])
     if not taPackage.reRolling then return end
 
-    local intellect       = taPackage.character.intellect or 0
-    local knowledge       = taPackage.character.knowledge or 0
-    local physique        = taPackage.character.physique or 0
-    local stamina         = taPackage.character.stamina or 0
-    local agility         = taPackage.character.agility or 0
-    local charisma        = taPackage.character.charisma or 0
+    local stats = {
+        intellect = taPackage.character.intellect or 0,
+        knowledge = taPackage.character.knowledge or 0,
+        physique  = taPackage.character.physique or 0,
+        stamina   = taPackage.character.stamina or 0,
+        agility   = taPackage.character.agility or 0,
+        charisma  = taPackage.character.charisma or 0,
+    }
 
     taPackage.reRollCount = (taPackage.reRollCount or 0) + 1
     local n               = taPackage.reRollCount
 
-    -- Elf Sorceror: exact floors on Int/Kno/Sta, combined Phy+Cha deficit <= 5, Agi ignored
-    local hardFloors      = { intellect = 22, knowledge = 25, stamina = 15 }
-    local softThreshold   = 5
-    local floorsOk        = intellect >= hardFloors.intellect
-        and knowledge >= hardFloors.knowledge
-        and stamina >= hardFloors.stamina
-    local deficit         = math.max(0, 15 - physique) + math.max(0, 21 - charisma)
+    local matcher         = taPackage.reRollMatcher or reRollBuilds.elfSorceror
+    local accepted, summary = matcher(stats)
 
-    if not taPackage.reRollBestDeficit or deficit < taPackage.reRollBestDeficit then
-        taPackage.reRollBestDeficit = deficit
-    end
-    local best = taPackage.reRollBestDeficit
-
-    local summary = "Int=" .. intellect .. " Kno=" .. knowledge .. " Phy=" .. physique
-        .. " Sta=" .. stamina .. " Agi=" .. agility .. " Cha=" .. charisma
-        .. " (deficit=" .. deficit .. " best=" .. best .. ")"
-
-    if floorsOk and deficit <= softThreshold then
+    if accepted then
         taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
         taPackage.reRollTimerPending = false
         echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
@@ -1060,6 +1076,14 @@ setStatus(status)
 -- =========================================================================
 
 createAlias("^re-roll-for-good-stats$", function()
+    taPackage.reRollMatcher = reRollBuilds.elfSorceror
+    taPackage.reRolling = true
+    reRollResetStats()
+    send("status")
+end, { type = "regex" })
+
+createAlias("^re-roll-half-ogre-warrior$", function()
+    taPackage.reRollMatcher = reRollBuilds.halfOgreWarrior
     taPackage.reRolling = true
     reRollResetStats()
     send("status")
