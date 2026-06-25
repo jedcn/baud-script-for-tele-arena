@@ -21,8 +21,9 @@ before starting a session.
 
 **Max stats:** Int=14 Kno=14 Phy=30 Sta=30 Agi=17 Cha=12
 
-**Approach:** Simple hard floors — reroll until Physique >= 29 AND Stamina >= 29.
-No deficit math; the other stats are ignored entirely.
+**Approach:** Simple hard floors — reroll until Physique >= 29 AND Stamina >= 29
+AND Agility >= 16. No deficit math; Int, Kno, and Cha are ignored entirely.
+(Agility maxes at 17 for this build, so 16 is one shy of max.)
 
 **Commit:** `dfeddae`
 

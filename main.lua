@@ -405,9 +405,10 @@ reRollBuilds.elfSorceror = function(s)
     return floorsOk and deficit <= 5, summary
 end
 
--- Half-Ogre Warrior: simple hard floors — Phy >= 29 AND Sta >= 29, other stats ignored.
+-- Half-Ogre Warrior: simple hard floors — Phy >= 29 AND Sta >= 29 AND Agi >= 16,
+-- other stats ignored. (Agi maxes at 17 for this build.)
 reRollBuilds.halfOgreWarrior = function(s)
-    local accepted = s.physique >= 29 and s.stamina >= 29
+    local accepted = s.physique >= 29 and s.stamina >= 29 and s.agility >= 16
     return accepted, reRollStatSummary(s)
 end
 
