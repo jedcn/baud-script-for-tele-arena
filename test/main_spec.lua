@@ -48,34 +48,34 @@ describe("Warrior XP table", function()
         -- Warrior level 1: 0 XP (start) → 1125 XP (end)
         -- fifth boundaries: 0-224, 225-449, 450-674, 675-899, 900-1124
 
-        it("shows white at 0% (just started level)", function()
+        it("shows blue at 0% (just started level)", function()
             helper.simulateLine("Experience:   0")
-            assert.are.equal("white", capturedFn()[6].fg)
+            assert.are.equal("#0000ff", capturedFn()[6].fg)
         end)
 
-        it("shows cyan in the second fifth", function()
+        it("shows blue-violet in the second fifth", function()
             helper.simulateLine("Experience:   225")  -- 20% of 1125
-            assert.are.equal("cyan", capturedFn()[6].fg)
+            assert.are.equal("#4000bf", capturedFn()[6].fg)
         end)
 
-        it("shows green in the third fifth", function()
+        it("shows purple/magenta in the third fifth", function()
             helper.simulateLine("Experience:   450")  -- 40% of 1125
-            assert.are.equal("green", capturedFn()[6].fg)
+            assert.are.equal("#800080", capturedFn()[6].fg)
         end)
 
-        it("shows yellow in the fourth fifth", function()
+        it("shows pink-red in the fourth fifth", function()
             helper.simulateLine("Experience:   675")  -- 60% of 1125
-            assert.are.equal("yellow", capturedFn()[6].fg)
+            assert.are.equal("#bf0040", capturedFn()[6].fg)
         end)
 
         it("shows red in the fifth fifth (almost leveled up)", function()
             helper.simulateLine("Experience:   900")  -- 80% of 1125
-            assert.are.equal("red", capturedFn()[6].fg)
+            assert.are.equal("#ff0000", capturedFn()[6].fg)
         end)
 
         it("shows red at max level", function()
             helper.simulateLine("Experience:   11594700")
-            assert.are.equal("red", capturedFn()[6].fg)
+            assert.are.equal("#ff0000", capturedFn()[6].fg)
         end)
 
     end)
