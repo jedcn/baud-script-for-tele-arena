@@ -348,12 +348,13 @@ end
 
 -- Progress through the current level, from just-leveled (blue) to about-to-level
 -- (red), walking across the color wheel through violet/magenta/pink in between.
+-- All light/readable tints so the value stays visible against a dark status bar.
 --   1: first fifth   ( 0-20%)  light blue
---   2: second fifth  (20-40%)  blue-violet
---   3: third fifth   (40-60%)  purple/magenta
---   4: fourth fifth  (60-80%)  pink-red
---   5: fifth fifth   (80-99%)  red
-local xpProgressColors = { "#66b3ff", "#4000bf", "#cc33cc", "#bf0040", "#ff0000" }
+--   2: second fifth  (20-40%)  light blue-violet
+--   3: third fifth   (40-60%)  light purple/magenta
+--   4: fourth fifth  (60-80%)  light pink-red
+--   5: fifth fifth   (80-99%)  light red
+local xpProgressColors = { "#66b3ff", "#9b8cff", "#e066e0", "#ff6699", "#ff6666" }
 
 local function xpColor(xp, class)
     if not xp then return "white" end

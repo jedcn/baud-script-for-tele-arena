@@ -55,27 +55,27 @@ describe("Warrior XP table", function()
 
         it("shows blue-violet in the second fifth", function()
             helper.simulateLine("Experience:   225")  -- 20% of 1125
-            assert.are.equal("#4000bf", capturedFn()[6].fg)
+            assert.are.equal("#9b8cff", capturedFn()[6].fg)
         end)
 
         it("shows purple/magenta in the third fifth", function()
             helper.simulateLine("Experience:   450")  -- 40% of 1125
-            assert.are.equal("#cc33cc", capturedFn()[6].fg)
+            assert.are.equal("#e066e0", capturedFn()[6].fg)
         end)
 
         it("shows pink-red in the fourth fifth", function()
             helper.simulateLine("Experience:   675")  -- 60% of 1125
-            assert.are.equal("#bf0040", capturedFn()[6].fg)
+            assert.are.equal("#ff6699", capturedFn()[6].fg)
         end)
 
         it("shows red in the fifth fifth (almost leveled up)", function()
             helper.simulateLine("Experience:   900")  -- 80% of 1125
-            assert.are.equal("#ff0000", capturedFn()[6].fg)
+            assert.are.equal("#ff6666", capturedFn()[6].fg)
         end)
 
         it("shows red at max level", function()
             helper.simulateLine("Experience:   11594700")
-            assert.are.equal("#ff0000", capturedFn()[6].fg)
+            assert.are.equal("#ff6666", capturedFn()[6].fg)
         end)
 
     end)
