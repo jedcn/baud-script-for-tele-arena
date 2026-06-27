@@ -48,9 +48,9 @@ describe("Warrior XP table", function()
         -- Warrior level 1: 0 XP (start) → 1125 XP (end)
         -- fifth boundaries: 0-224, 225-449, 450-674, 675-899, 900-1124
 
-        it("shows blue at 0% (just started level)", function()
+        it("shows light blue at 0% (just started level)", function()
             helper.simulateLine("Experience:   0")
-            assert.are.equal("#0000ff", capturedFn()[6].fg)
+            assert.are.equal("#66b3ff", capturedFn()[6].fg)
         end)
 
         it("shows blue-violet in the second fifth", function()
