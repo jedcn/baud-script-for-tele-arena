@@ -46,6 +46,10 @@ total XP per kill to within rounding.
 | Gargoyle² | 107 | 40 | 147 | ≈147 | 3.84 | **564** | 3.84 × 147 ≈ 564 |
 | Troll #1³ | 78 | 69 | 147 | ~124 | 4.39 | **~543** | 4.39 × 124 ≈ 544 |
 | Troll #2³ | 84 | 28 | 112 | ~95 | 4.39 | **~417** | 4.39 × 95 ≈ 417 |
+| Stone Giant #1 | 77 | 92 | 169 | ~148 | 11.40 | **1,686** | 11.40 × 148 ≈ 1,687 |
+| Stone Giant #2 | 134 | 55 | 189 | ~185 | 9.38 | **1,739** | 9.38 × 185 ≈ 1,735 |
+| Stone Giantess #1⁴ | 211 | 114 | 325 | ~324 | ~9.66 | **~3,133** | 9.66 × 324 ≈ 3,130 |
+| Stone Giantess #2⁴ | 48 | 39 | 87 | ~82 | ~9.66 | **~792** | 9.66 × 82 ≈ 792 |
 
 ¹ Stygian Dragon is from an earlier session (`session-tojolias-2026-06-27T07-52-20.log`
 / `session-teekywiki-2026-06-27T07-53-51.log`); both characters earned an
@@ -62,6 +66,14 @@ XP for Teekywiki is estimated by applying the combined non-killer rate (4.39 = 4
 estimates (~543 and ~417). The killer-lower-ratio pattern holds normally here: Tojolias
 (killer, both) 3.08 / 3.50 < Teekywiki 4.39.
 
+⁴ Stone Giantess #1 / #2: the two giantesses were fought in an interleaved chase across
+multiple rooms. Giantess #1 was the chased giantess (3 rooms, 9 Tojolias hits); giantess
+#2 was a fresh spawn in the final room. Tojolias's giantess #1 XP (2,032) was captured by
+a status immediately after that kill, before any hits on giantess #2. Tojolias's giantess
+#2 XP was not captured (no status after kill). Teekywiki's single snapshot covers both
+kills combined (1,478 XP ÷ 153 damage = 9.66 XP/dmg); per-giantess XP for Teekywiki is
+estimated at that rate. Total XP and effective HP for giantess #2 are estimates only.
+
 ## Per-character XP gains
 
 | Monster | Tojolias gain | Teekywiki gain | Killing blow | Who gained most |
@@ -74,6 +86,10 @@ estimates (~543 and ~417). The killer-lower-ratio pattern holds normally here: T
 | Gargoyle | +418 | +146 | Tojolias | Tojolias |
 | Troll #1³ | +240 | ~+303 | Tojolias | Teekywiki |
 | Troll #2³ | +294 | ~+123 | Tojolias | Tojolias |
+| Stone Giant #1 | +637 | +1,049 | Tojolias | Teekywiki |
+| Stone Giant #2 | +1,257 | +482 | Teekywiki | Tojolias |
+| Stone Giantess #1⁴ | +2,032 | ~+1,101 | Tojolias | Tojolias |
+| Stone Giantess #2⁴ | not captured | ~+377 | Tojolias | — |
 
 ## Damage detail (per character's own log)
 
@@ -86,6 +102,10 @@ estimates (~543 and ~417). The killer-lower-ratio pattern holds normally here: T
 | Gargoyle | 17, 30, 27, 33 | 7, 13, 14, 6 |
 | Troll #1 | 16, 32, 30 | 12, 14, 17, 16, 10 |
 | Troll #2 | 15, 33, 36 | 11, 17 |
+| Stone Giant #1 | 25, 27, 25 | 12, 15, 9, 16, 5, 7, 16, 12 |
+| Stone Giant #2 | 19, 31, 27, 26, 31 | 8, 12, 17, 8, 10 |
+| Stone Giantess #1 | 23, 18, 13, 32, 30, 22, 29, 14, 30 | 9, 18, 6, 19, 9, 11, 15, 11, 7, 9 |
+| Stone Giantess #2 | 18, 30 | 7, 10, 8, 14 |
 
 ## XP snapshots (`status` deltas)
 
@@ -93,8 +113,8 @@ estimates (~543 and ~417). The killer-lower-ratio pattern holds normally here: T
 - **Teekywiki:** 56,368 → 58,192 (dragon) → 58,431 (chimera) → 58,555 (skel #1) → 58,836 (skel #2)
 
 Session T14:03:
-- **Tojolias:** 55,064 → 55,482 (gargoyle) → 55,722 (troll #1) → 56,016 (troll #2)
-- **Teekywiki:** 59,520 → 59,666 (gargoyle) → 60,092 (both trolls; single snapshot)
+- **Tojolias:** 55,064 → 55,482 (gargoyle) → 55,722 (troll #1) → 56,016 (troll #2) → 56,653 (giant #1) → 56,814 (skel lord) → 58,071 (giant #2) → 60,103 (giantess #1; giantess #2 not captured)
+- **Teekywiki:** 59,520 → 59,666 (gargoyle) → 60,092 (both trolls; single snapshot) → 61,141 (giant #1) → 61,284 (skel lord) → 61,766 (giant #2) → 63,244 (both giantesses; single snapshot)
 
 ## Takeaways
 
@@ -108,3 +128,8 @@ Session T14:03:
 3. **XP per kill ≈ rate × HP.** Tougher monsters (more HP) at a higher per-point
    rate pay dramatically more: the dragon's 4,608 XP dwarfs a skeleton lord's
    ~300–370.
+4. **HP varies significantly between spawns of the same monster type.** The two
+   stone giantesses in a single session had 325 and 87 displayed HP — a 3.7×
+   difference — yielding ~3,100 vs ~800 XP per kill. The per-damage rate (~9.66)
+   was the same; only the HP differed. The same effect was visible in the two
+   skeleton lords (164 vs 100 HP).
