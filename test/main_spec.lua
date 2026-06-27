@@ -3565,6 +3565,9 @@ describe("ta.follow", function()
 
             before_each(function()
                 setClass("Acolyte")
+                -- These tests exercise the automatic in-combat healing, which is
+                -- gated off by default; turn it on for them.
+                taPackage.acolyteAutoHealDisabled = false
             end)
 
             it("melees on start like everyone else", function()
@@ -3679,6 +3682,43 @@ describe("ta.follow", function()
                 taPackage.castPending = true
                 helper.simulateLine("You confuse the key syllables and the spell fails!")
                 assert.is_false(taPackage.castPending)
+            end)
+
+        end)
+
+        describe("Acolyte with auto-heal disabled", function()
+
+            before_each(function()
+                setClass("Acolyte")
+                -- The hard-coded default, made explicit here.
+                taPackage.acolyteAutoHealDisabled = true
+            end)
+
+            it("melees on start", function()
+                helper.simulateAlias("kill cave lizard")
+                assert.are.equal("a cave", helper.sendCalls[1])
+            end)
+
+            it("does not scan the group on attack exhaustion", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                for _, cmd in ipairs(helper.sendCalls) do
+                    assert.are_not.equal("group", cmd)
+                end
+            end)
+
+            it("never casts a heal across an exhaustion-driven scan", function()
+                helper.simulateAlias("kill cave lizard")
+                helper.sendCalls = {}
+                helper.simulateLine("You are still physically exhausted from your previous activities!")
+                -- A group listing arriving anyway must not be acted on.
+                helper.simulateLine("Your group currently consists of:")
+                helper.simulateLine("  Teekywiki                          [HE: 40% ST:Ready]")
+                helper.simulateLine("You're in a cave.")
+                for _, cmd in ipairs(helper.sendCalls) do
+                    assert.is_nil(cmd:match("^cast kamotu"))
+                end
             end)
 
         end)

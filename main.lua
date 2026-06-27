@@ -1681,6 +1681,16 @@ end, { type = "regex" })
 -- An Acolyte heals a group member once their health drops below this.
 local HEAL_THRESHOLD = 90
 
+-- Hard-coded toggle: when true, an Acolyte in the kill loop skips its automatic
+-- in-combat healing (the exhaustion-driven group scan and the cast-clock heal)
+-- and just melees for damage. Manually-typed `heal.allies` and the opt-in
+-- `heal-allies-in-loop` are unaffected. Flip to false to restore automatic
+-- battle healing. Lives on taPackage so it can also be flipped at runtime via
+-- `/lua taPackage.acolyteAutoHealDisabled = false`.
+if taPackage.acolyteAutoHealDisabled == nil then
+    taPackage.acolyteAutoHealDisabled = true
+end
+
 -- Kill-loop debug tracing. Emits a timestamped line for each combat event and
 -- decision when the loop is running in debug mode. The flag is set by `kill
 -- <target> debug` directly, or inherited from a `ta.follow <name> debug` so the
@@ -1731,6 +1741,10 @@ local function castSpell()
         killDebugEcho("cast-sent: toduza " .. name)
         send("cast toduza " .. name)
     elseif class == "Acolyte" then
+        if taPackage.acolyteAutoHealDisabled then
+            killDebugEcho("cast-skip: acolyte auto-heal disabled")
+            return
+        end
         local ally = taPackage.healTarget
         if not ally then
             killDebugEcho("cast-skip: no heal target")
@@ -2078,8 +2092,9 @@ createTrigger("^You are still physically exhausted from your previous activities
     killDebugEcho("physically exhausted — melee retry in 30s")
     taPackage.killAttackPending = false
     -- Out of melee for now; an Acolyte spends the lull checking the group so
-    -- the next cast (on the mental clock) heals whoever needs it.
-    if getClass() == "Acolyte" then
+    -- the next cast (on the mental clock) heals whoever needs it. Skipped when
+    -- auto-heal is disabled — then the Acolyte just rides out the lull.
+    if getClass() == "Acolyte" and not taPackage.acolyteAutoHealDisabled then
         beginGroupHealScan(nil, "exhaustion")
     end
     local gen = taPackage.killGeneration or 0
