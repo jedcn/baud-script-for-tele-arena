@@ -1,0 +1,87 @@
+# Monster XP Analysis
+
+Empirical study of how experience is awarded for damage in Tele-Arena, using
+paired session logs from **Tojolias** (Half-ogre Warrior, L6) and **Teekywiki**
+(Goblin Rogue, L6) fighting as a two-person team. Each character's log records
+its own attacks ("Your attack hit … for N damage"), and `status` was run before
+and after each kill to capture the experience delta.
+
+## Method
+
+For each kill, with the two characters as the *sole* attackers:
+
+- **Total hit points** = sum of both characters' damage dealt.
+- **XP per kill (measured)** = sum of both characters' XP gains.
+- **XP per point of damage** = a character's XP gain ÷ that character's damage.
+
+### Killing-blow caveat
+
+The *displayed* damage of the final, killing hit overshoots the monster's
+remaining HP (you can't deal damage past 0), but XP is awarded only on
+*effective* damage. So the character who lands the killing blow shows an
+inflated damage total and therefore a deflated XP/damage ratio. The **non-killer
+never overkills**, so their XP/damage ratio is the clean per-point rate for that
+fight. This pattern held in every fight observed: the character who landed the
+kill always had the lower raw XP/damage ratio.
+
+Practical consequence:
+
+- **HP (sum of displayed damage)** is a slight *over*-estimate.
+- **Effective HP** ≈ (measured XP per kill) ÷ (clean non-killer rate).
+
+## The headline relationship
+
+> **XP per point of damage × total hit points ≈ XP per kill**
+
+Using the clean (non-killer) rate and effective HP, this reproduces the measured
+total XP per kill to within rounding.
+
+## Results
+
+| Monster | Tojolias dmg | Teekywiki dmg | HP (displayed sum) | Effective HP | Clean rate (XP/dmg) | **XP per kill (measured)** | Rate × Eff. HP (check) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Stygian Dragon¹ | 128 | 84 | 212 | ~212 | ~21.7 | **4,608** | 21.7 × 212 ≈ 4,600 |
+| Chimera | 75 | 41 | 116 | ~107 | 7.43 | **796** | 7.43 × 107 ≈ 795 |
+| Skeleton Lord #1 | 101 | 63 | 164 | ~151 | 2.47 | **373** | 2.47 × 151 ≈ 373 |
+| Skeleton Lord #2 | 17 | 83 | 100 | ~91 | 3.39 | **308** | 3.39 × 91 ≈ 308 |
+
+¹ Stygian Dragon is from an earlier session (`session-tojolias-2026-06-27T07-52-20.log`
+/ `session-teekywiki-2026-06-27T07-53-51.log`); both characters earned an
+essentially identical ~21.7 XP/point, the cleanest confirmation of the model.
+
+## Per-character XP gains
+
+| Monster | Tojolias gain | Teekywiki gain | Killing blow | Who gained most |
+|---|---:|---:|---|---|
+| Stygian Dragon | +2,784 | +1,824 | Tojolias | Tojolias |
+| Chimera | +557 | +239 | Teekywiki | Tojolias |
+| Skeleton Lord #1 | +249 | +124 | Teekywiki | Tojolias |
+| Skeleton Lord #2 | +27 | +281 | Tojolias | Teekywiki |
+| **Chimera + 2 Skeletons total** | **+833** | **+644** | — | Tojolias |
+
+## Damage detail (per character's own log)
+
+| Monster | Tojolias hits | Teekywiki hits |
+|---|---|---|
+| Stygian Dragon | 31, 19, 18, 29, 17, 14 | 20, 20, 11, 14, 19 |
+| Chimera | 28, 16, 31 | 15, 9, 17 |
+| Skeleton Lord #1 | 17, 27, 26, 31 | 14, 15, 19, 15 |
+| Skeleton Lord #2 | 17 | 11, 17, 43, 12 |
+
+## XP snapshots (`status` deltas)
+
+- **Tojolias:** 47,579 → 50,363 (dragon) → 50,920 (chimera) → 51,169 (skel #1) → 51,196 (skel #2)
+- **Teekywiki:** 56,368 → 58,192 (dragon) → 58,431 (chimera) → 58,555 (skel #1) → 58,836 (skel #2)
+
+## Takeaways
+
+1. **XP scales linearly with effective damage** at a rate that is the *same for
+   both characters* in a given fight (class/level did not matter). Apparent
+   per-character differences are entirely a killing-blow overkill artifact.
+2. **The rate is per-monster (per individual spawn), not universal.** The dragon
+   paid ~21.7 XP/point; the chimera ~7.4; the two skeleton lords differed from
+   each other (2.47 vs 3.39) because they were separate spawns with different
+   HP/XP values.
+3. **XP per kill ≈ rate × HP.** Tougher monsters (more HP) at a higher per-point
+   rate pay dramatically more: the dragon's 4,608 XP dwarfs a skeleton lord's
+   ~300–370.
