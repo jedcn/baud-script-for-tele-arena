@@ -60,7 +60,7 @@ describe("Warrior XP table", function()
 
         it("shows purple/magenta in the third fifth", function()
             helper.simulateLine("Experience:   450")  -- 40% of 1125
-            assert.are.equal("#800080", capturedFn()[6].fg)
+            assert.are.equal("#cc33cc", capturedFn()[6].fg)
         end)
 
         it("shows pink-red in the fourth fifth", function()

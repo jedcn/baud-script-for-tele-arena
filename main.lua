@@ -353,7 +353,7 @@ end
 --   3: third fifth   (40-60%)  purple/magenta
 --   4: fourth fifth  (60-80%)  pink-red
 --   5: fifth fifth   (80-99%)  red
-local xpProgressColors = { "#66b3ff", "#4000bf", "#800080", "#bf0040", "#ff0000" }
+local xpProgressColors = { "#66b3ff", "#4000bf", "#cc33cc", "#bf0040", "#ff0000" }
 
 local function xpColor(xp, class)
     if not xp then return "white" end
