@@ -4233,20 +4233,20 @@ describe("Attack badges", function()
         assert.is_true(badge.bold)
     end
 
-    it("echoes a pink HIT badge when a monster damages us", function()
-        assertIncomingHit("The stone giantess attacked you with a club for 9 damage!", " HIT 9 ")
+    it("echoes a pink TOOK badge when a monster damages us", function()
+        assertIncomingHit("The stone giantess attacked you with a club for 9 damage!", " TOOK 9 ")
     end)
 
     it("badges a hurled-boulder special attack", function()
-        assertIncomingHit("The stone giant hurled a boulder at you for 52 damage!", " HIT 52 ")
+        assertIncomingHit("The stone giant hurled a boulder at you for 52 damage!", " TOOK 52 ")
     end)
 
     it("badges a pick-up-and-hurl special attack", function()
-        assertIncomingHit("The cyclops picks up and hurls you for 22 damage!", " HIT 22 ")
+        assertIncomingHit("The cyclops picks up and hurls you for 22 damage!", " TOOK 22 ")
     end)
 
     it("badges a flame-breath special attack", function()
-        assertIncomingHit("The dragon breathed flames at you for 30 damage!", " HIT 30 ")
+        assertIncomingHit("The dragon breathed flames at you for 30 damage!", " TOOK 30 ")
     end)
 
     it("does not badge a special attack that lands on a party member", function()

@@ -922,7 +922,7 @@ createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
     if current then
         setVitality(current - damage, max)
     end
-    incomingBadge("HIT " .. damage)
+    incomingBadge("TOOK " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -940,7 +940,7 @@ createTrigger("^The (.+) hurled a boulder at you for (\\d+) damage!$", function(
     if current then
         setVitality(current - damage, max)
     end
-    incomingBadge("HIT " .. damage)
+    incomingBadge("TOOK " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -951,7 +951,7 @@ createTrigger("^The (.+) picks up and hurls you for (\\d+) damage!$", function(m
     if current then
         setVitality(current - damage, max)
     end
-    incomingBadge("HIT " .. damage)
+    incomingBadge("TOOK " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -962,7 +962,7 @@ createTrigger("^The (.+) breathed flames at you for (\\d+) damage!$", function(m
     if current then
         setVitality(current - damage, max)
     end
-    incomingBadge("HIT " .. damage)
+    incomingBadge("TOOK " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
