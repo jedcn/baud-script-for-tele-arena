@@ -1212,15 +1212,34 @@ end
 -- summoned — may already be present. Ringing on top of it stacks a second
 -- monster on us, the orphaned-monster trap that gets characters killed, so we
 -- adopt whatever is here and only ring once the room is clear.
+--
+-- This is a SELF-HEALING PUMP, not a one-shot. Each scan arms a follow-up
+-- timer keyed to arenaRingGen; if the scan doesn't resolve into a fight within
+-- the window — brief lost, ring bounced on "physically exhausted", or the room
+-- churned by the other player sharing it — the next tick simply scans again.
+-- The loop can therefore never get wedged in "ringing" doing nothing (the
+-- earlier deadlock: a dropped retry left the character idle, see
+-- logs/session-pollux-2026-06-28T16-09-01.log). arenaEngage bumps arenaRingGen
+-- the instant we lock onto a monster, which stops the pump.
 local function arenaScanRoom()
-    if taPackage.arenaProbePending then return end
+    if taPackage.arenaState ~= "ringing" then return end
+    local gen = (taPackage.arenaRingGen or 0) + 1
+    taPackage.arenaRingGen = gen
     taPackage.arenaProbePending = true
+    taPackage.arenaRingPending = false
     send("")
+    createTimer(ARENA_RING_RETRY_MS, function()
+        if taPackage.arenaState == "ringing" and (taPackage.arenaRingGen or 0) == gen then
+            arenaScanRoom()
+        end
+    end, { repeating = false })
 end
 
 -- Lock onto a single monster and start swinging. Shared by the gate-spawn path
 -- (a monster we just summoned) and the room-scan path (a monster already here).
 local function arenaEngage(name)
+    -- Halt the scan pump: any outstanding tick guards the prior arenaRingGen.
+    taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     taPackage.arenaMonster = name
     taPackage.arenaState = "fighting"
     taPackage.arenaAttackPending = false
@@ -1336,7 +1355,6 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
-    taPackage.arenaRingRetryScheduled = false
     taPackage.arenaOwnSummonPending = false
     taPackage.arenaProbePending = false
     taPackage.arenaState = "ringing"
@@ -1371,9 +1389,10 @@ local function stopArena()
     taPackage.arenaAttackPending = nil
     taPackage.arenaCastPending = nil
     taPackage.arenaRingPending = nil
-    taPackage.arenaRingRetryScheduled = nil
     taPackage.arenaOwnSummonPending = nil
     taPackage.arenaProbePending = nil
+    -- Bump the ring generation so any in-flight scan-pump tick no-ops.
+    taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     echo("[arena] Stopped.")
 end
 taPackage.stopArena = stopArena
@@ -1626,26 +1645,13 @@ createTrigger("^You are still physically exhausted from your previous activities
     -- timers alive even though the cast loop keeps firing arenaSend meanwhile.
     local gen = taPackage.arenaCombatGen or 0
     if taPackage.arenaState == "ringing" then
-        -- The blocked physical action was the gong ring (the kill just spent
-        -- the physical clock). Retry by re-scanning the room, not by swinging —
-        -- there's no monster to swing at. Re-scanning (rather than ringing
-        -- straight away) keeps the "engage an orphan before ringing" guarantee
-        -- on every retry, and self-heals if the probe response was ever missed.
-        --
-        -- A kill bounces two physical actions in the same instant — the trailing
-        -- melee swing and the fresh gong — so this handler fires twice back to
-        -- back. Without a dedupe each bounce churns its own retry timer. Keep at
-        -- most one retry outstanding; the callback clears the flag when it fires
-        -- so the next bounce can re-arm.
-        if taPackage.arenaRingRetryScheduled then return end
-        taPackage.arenaRingRetryScheduled = true
-        taPackage.arenaRingPending = false
-        createTimer(ARENA_RING_RETRY_MS, function()
-            taPackage.arenaRingRetryScheduled = false
-            if taPackage.arenaState == "ringing" and (taPackage.arenaCombatGen or 0) == gen then
-                arenaScanRoom()
-            end
-        end, { repeating = false })
+        -- The blocked physical action was the gong ring (the kill just spent the
+        -- physical clock). Nothing to do here: the scan pump (arenaScanRoom) is
+        -- already re-arming on its own timer and will re-scan and re-ring once
+        -- the clock recovers. Scheduling our own retry here was the source of the
+        -- deadlock — it shared flags with the pump and could drop the only
+        -- outstanding retry. Let the pump own ring liveness.
+        return
     else
         -- Melee is on cooldown; retry the swing once the physical clock recovers.
         taPackage.arenaAttackPending = false

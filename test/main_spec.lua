@@ -1896,8 +1896,12 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.resetAll()
             dofile("main.lua")
             setClass("Warrior")
+            -- Capture only the XP-check timer; session start also arms the
+            -- short scan-pump timer, which is not what these tests are about.
             _G.createTimer = function(interval, cb, opts)
-                timerCreated = { interval = interval, cb = cb, opts = opts }
+                if interval == 300000 then
+                    timerCreated = { interval = interval, cb = cb, opts = opts }
+                end
                 return "mock_timer"
             end
             timerCreated = nil
@@ -2634,59 +2638,64 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(30000, timerCreated.interval)
         end)
 
-        it("re-scans the room (not a swing) when exhausted while ringing", function()
-            -- After a melee kill the physical clock is spent, so the immediate
-            -- post-kill action is rejected. The retry re-scans the room (a bare
-            -- return), which then rings or engages depending on what's here.
+        it("does NOT schedule a retry on exhaustion while ringing (pump owns it)", function()
+            -- The scan pump re-arms itself; the exhaustion handler must not also
+            -- schedule a retry (that shared-flag retry was the deadlock source).
             taPackage.arenaState = "ringing"
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            assert.is_not_nil(timerCreated)
-            assert.are.equal(3000, timerCreated.interval)
-            helper.sendCalls = {}
-            timerCreated.cb()
-            assert.are.equal("", helper.sendCalls[1])
-            assert.is_true(taPackage.arenaProbePending)
-        end)
-
-        it("the gong retry stops once the state leaves ringing", function()
-            taPackage.arenaState = "ringing"
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            local staleTimer = timerCreated
-            -- A monster entered; we're now fighting, so the stale ring retry
-            -- must not fire another gong.
-            taPackage.arenaState = "fighting"
-            helper.sendCalls = {}
-            staleTimer.cb()
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("stacked ringing exhaustions schedule only one retry timer", function()
-            -- A kill bounces the trailing swing and the gong in the same instant,
-            -- firing this handler twice. Only the first should arm a retry timer;
-            -- the second is a no-op so we don't churn a redundant timer.
-            taPackage.arenaState = "ringing"
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            local firstTimer = timerCreated
-            assert.is_not_nil(firstTimer)
-            timerCreated = nil
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_nil(timerCreated)
-            helper.sendCalls = {}
-            firstTimer.cb()
-            assert.are.equal("", helper.sendCalls[1])
         end)
 
-        it("re-arms the retry after the previous one fires", function()
-            -- Once the retry timer fires it clears the dedupe flag, so a later
-            -- exhaustion (the next retry still bounces) can schedule again.
-            taPackage.arenaState = "ringing"
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            local firstTimer = timerCreated
-            timerCreated = nil
-            firstTimer.cb()
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
+        it("arms a 3s self-healing scan-pump timer on entering ringing", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "orc"
+            helper.simulateLine("The orc falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
             assert.is_not_nil(timerCreated)
             assert.are.equal(3000, timerCreated.interval)
+        end)
+
+        it("the pump tick re-scans and re-arms while still ringing", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "orc"
+            helper.simulateLine("The orc falls to the ground lifeless!")
+            local tick = timerCreated.cb
+            helper.sendCalls = {}
+            timerCreated = nil
+            tick()
+            assert.are.equal("", helper.sendCalls[1])   -- re-scanned (bare return)
+            assert.is_not_nil(timerCreated)             -- re-armed
+            assert.are.equal(3000, timerCreated.interval)
+        end)
+
+        it("the pump tick stops once we leave ringing (engaged a monster)", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "orc"
+            helper.simulateLine("The orc falls to the ground lifeless!")
+            local tick = timerCreated.cb
+            -- We engage a monster (state -> fighting, generation bumped).
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = true
+            helper.simulateLine("An imp enters the arena through the dungeon gate!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            helper.sendCalls = {}
+            timerCreated = nil
+            tick()                                       -- stale tick
+            assert.are.equal(0, #helper.sendCalls)       -- did nothing
+            assert.is_nil(timerCreated)
+        end)
+
+        it("an outdated pump tick no-ops after a newer scan supersedes it", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "orc"
+            helper.simulateLine("The orc falls to the ground lifeless!")
+            local firstTick = timerCreated.cb
+            firstTick()                                  -- runs, bumps gen, arms timer2
+            helper.sendCalls = {}
+            timerCreated = nil
+            firstTick()                                  -- generation has moved on
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_nil(timerCreated)
         end)
 
         it("does not create timer when arenaState is nil", function()
