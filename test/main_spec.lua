@@ -4191,7 +4191,7 @@ describe("Attack badges", function()
         helper.simulateLine("Your attack hit the stone giantess for 12 damage!")
         local badge = lastBadge()
         assert.is_not_nil(badge)
-        assert.are.equal("HIT 12", badge.text)
+        assert.are.equal(" HIT 12 ", badge.text)
         assert.are.equal("#ff5fd7", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
         assert.is_true(badge.bold)
@@ -4199,12 +4199,12 @@ describe("Attack badges", function()
 
     it("echoes a MISS badge", function()
         helper.simulateLine("Your attack missed!")
-        assert.are.equal("MISS", lastBadge().text)
+        assert.are.equal(" MISS ", lastBadge().text)
     end)
 
     it("echoes a DODGE badge when the monster dodges", function()
         helper.simulateLine("The stone giantess dodged your attack!")
-        assert.are.equal("DODGE", lastBadge().text)
+        assert.are.equal(" DODGE ", lastBadge().text)
     end)
 
     it("badges each swing of a multi-hit burst", function()
@@ -4213,7 +4213,7 @@ describe("Attack badges", function()
         helper.simulateLine("Your attack hit the stone giantess for 18 damage!")
         local texts = {}
         for _, c in ipairs(helper.cechoBgCalls) do table.insert(texts, c.text) end
-        assert.are.same({ "HIT 12", "HIT 25", "HIT 18" }, texts)
+        assert.are.same({ " HIT 12 ", " HIT 25 ", " HIT 18 " }, texts)
     end)
 
     it("does not badge a party member's attack", function()
