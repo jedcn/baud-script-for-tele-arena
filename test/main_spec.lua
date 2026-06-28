@@ -4370,9 +4370,9 @@ describe("Attack badges", function()
         assert.is_true(badge.bold)
     end)
 
-    it("echoes a MISS badge", function()
+    it("does not badge a miss", function()
         helper.simulateLine("Your attack missed!")
-        assert.are.equal(" MISS ", lastBadge().text)
+        assert.are.equal(0, #helper.cechoBgCalls)
     end)
 
     it("echoes a DODGE badge when the monster dodges", function()

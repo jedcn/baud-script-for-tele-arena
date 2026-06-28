@@ -900,7 +900,6 @@ end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     local monster = taPackage.lastAttackTarget or "unknown"
-    outgoingBadge("MISS")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "miss", nil
     )
