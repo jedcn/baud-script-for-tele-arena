@@ -2088,6 +2088,47 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
+        -- When another player shares the arena, the brief shows "Pollux is
+        -- here." with NO "There is ... here." line, so the floor line that ends
+        -- the brief is the only reliable terminator. Without it the probe hangs.
+        it("rings via the floor line when only another player is present", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.simulateLine("Pollux is here.")
+            assert.are.equal(0, #helper.sendCalls)  -- player line is not a terminator
+            helper.simulateLine("There is nothing on the floor.")
+            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.is_false(taPackage.arenaProbePending)
+        end)
+
+        it("still terminates the brief when there is loot on the floor", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.simulateLine("There is a dagger on the floor.")
+            assert.are.equal("ring gong", helper.sendCalls[1])
+        end)
+
+        it("does not ring on the floor line once a monster was engaged", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.mockDbOneRow = { description = "A hobgoblin." }
+            helper.simulateLine("There is a hobgoblin here.")
+            helper.simulateLine("There is nothing on the floor.")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("hobgoblin", taPackage.arenaMonster)
+            -- only the attack was sent, no "ring gong"
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("ring gong", cmd)
+            end
+        end)
+
+        it("ignores the floor line when no probe is pending", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = false
+            helper.simulateLine("There is nothing on the floor.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
         it("ignores the occupant line when no probe is pending", function()
             taPackage.arenaState = "ringing"
             taPackage.arenaProbePending = false

@@ -1405,8 +1405,8 @@ end, { type = "regex" })
 
 -- Response to the bare-return probe from arenaScanRoom: the arena brief's
 -- occupant line. If a monster is already here, engage it instead of ringing —
--- ringing now would stack a second monster on us. Only ring the gong when the
--- room is clear ("There is nobody here.").
+-- ringing now would stack a second monster on us. An empty room prints
+-- "There is nobody here." (no monster), so we ring.
 createTrigger("^There is (.+) here\\.$", function(matches)
     if not taPackage.arenaProbePending then return end
     taPackage.arenaProbePending = false
@@ -1417,6 +1417,21 @@ createTrigger("^There is (.+) here\\.$", function(matches)
     else
         arenaRing()
     end
+end, { type = "regex" })
+
+-- The "There is nobody here." occupant line only appears when the room is
+-- *completely* empty. When another player is present, their "Pollux is here."
+-- line takes the occupant slot and the "nobody" line is omitted — so the
+-- occupant trigger above never fires and the probe would hang forever (both
+-- characters deadlock; see logs/session-castor-2026-06-28T15-48-05.log). The
+-- floor line always ends the brief, whoever is here, so use it as the
+-- definitive terminator: if the probe is still pending when it arrives, no
+-- monster was listed and the room is clear of monsters, so ring.
+createTrigger("^There .+ on the floor\\.$", function()
+    if not taPackage.arenaProbePending then return end
+    taPackage.arenaProbePending = false
+    if taPackage.arenaState ~= "ringing" then return end
+    arenaRing()
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
