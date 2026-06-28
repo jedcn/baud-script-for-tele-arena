@@ -1062,6 +1062,7 @@ describe("Arena combat", function()
 
         it("melees and casts toduza when a monster enters", function()
             taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = true
             taPackage.arenaMonster = nil
             helper.sendCalls = {}
             helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
@@ -1770,9 +1771,16 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
-        it("sends 'ring gong'", function()
+        it("scans the room (bare return) before ringing", function()
             helper.simulateAlias("ring-gong-and-fight-in-arena")
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
+            assert.is_true(taPackage.arenaProbePending)
+        end)
+
+        it("rings the gong once the scan shows an empty room", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[2])
         end)
 
         it("records session start XP from current experience", function()
@@ -1956,6 +1964,12 @@ describe("ring-gong-and-fight-in-arena", function()
 
     describe("monster enters arena", function()
 
+        -- The arena is shared; we only adopt a gate spawn when it followed our
+        -- own ring (signalled by "You just rang the great gong!").
+        before_each(function()
+            taPackage.arenaOwnSummonPending = true
+        end)
+
         it("captures monster name and starts fighting", function()
             taPackage.arenaState = "ringing"
             helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
@@ -1983,6 +1997,35 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("ignores a spawn we did not summon (another player's gong)", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = false
+            helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
+            assert.is_nil(taPackage.arenaMonster)
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("consumes the own-summon flag so a second spawn is not adopted", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("A skeleton warrior enters the arena through the dungeon gate!")
+            assert.is_false(taPackage.arenaOwnSummonPending)
+        end)
+
+        it("'You just rang the great gong!' arms own-summon while ringing", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = false
+            helper.simulateLine("You just rang the great gong!")
+            assert.is_true(taPackage.arenaOwnSummonPending)
+        end)
+
+        it("another player's gong does not arm own-summon", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = false
+            helper.simulateLine("Castor just rang the great gong!")
+            assert.is_falsy(taPackage.arenaOwnSummonPending)
+        end)
+
         it("looks at monster before attacking when description is unknown", function()
             taPackage.arenaState = "ringing"
             helper.mockDbOneRow = nil
@@ -2005,6 +2048,61 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
             assert.are.equal("look huge rat", helper.sendCalls[1])
             assert.are.equal("a huge", helper.sendCalls[2])
+        end)
+
+    end)
+
+    describe("scan room before ringing", function()
+
+        it("engages a monster already in the arena instead of ringing", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.mockDbOneRow = { description = "A hobgoblin." }
+            helper.simulateLine("There is a hobgoblin here.")
+            assert.are.equal("hobgoblin", taPackage.arenaMonster)
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a hobgoblin", helper.sendCalls[1])
+        end)
+
+        it("engages the first of several monsters in the room", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.mockDbOneRow = { description = "A hobgoblin." }
+            helper.simulateLine("There is a hobgoblin, a huge rat, and a female kobold here.")
+            assert.are.equal("hobgoblin", taPackage.arenaMonster)
+        end)
+
+        it("singularizes a plural first entry so the death line matches", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.mockDbOneRow = { description = "A huge rat." }
+            helper.simulateLine("There is two huge rats, and an orc here.")
+            assert.are.equal("huge rat", taPackage.arenaMonster)
+        end)
+
+        it("rings the gong when the room is empty", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("ignores the occupant line when no probe is pending", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = false
+            helper.simulateLine("There is a hobgoblin here.")
+            assert.is_nil(taPackage.arenaMonster)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("clears the probe flag and does nothing if no longer ringing", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            taPackage.arenaProbePending = true
+            helper.simulateLine("There is a hobgoblin here.")
+            assert.is_false(taPackage.arenaProbePending)
+            assert.are.equal("lizard man", taPackage.arenaMonster)
         end)
 
     end)
@@ -2108,13 +2206,33 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(taPackage.arenaMonster)
         end)
 
-        it("rings gong again when HP is fine", function()
+        it("scans the room before ringing again when HP is fine", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
+            assert.is_true(taPackage.arenaProbePending)
+        end)
+
+        it("rings the gong after the scan shows an empty room", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[2])
+        end)
+
+        it("ignores the death of a monster we are not fighting", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateLine("The huge rat falls to the ground lifeless!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("lizard man", taPackage.arenaMonster)
+            assert.are.equal(0, #helper.sendCalls)
         end)
 
         it("flees when HP is below the flee threshold on monster death", function()
@@ -2145,7 +2263,7 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("w", helper.sendCalls[1])
         end)
 
-        it("rings gong when XP is below next level threshold", function()
+        it("scans (then rings) when XP is below next level threshold", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
@@ -2154,7 +2272,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.level = 1
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[2])
         end)
 
     end)
@@ -2300,12 +2420,13 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("e", helper.sendCalls[1])
         end)
 
-        it("rings gong when entering arena and no monster left", function()
+        it("scans the room when entering arena and no monster left", function()
             taPackage.arenaState = "returning"
             taPackage.arenaMonster = nil
             helper.simulateLine("You're in the arena.")
             assert.are.equal("ringing", taPackage.arenaState)
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
+            assert.is_true(taPackage.arenaProbePending)
         end)
 
         it("resumes attacking when entering arena and monster still alive", function()
@@ -2472,16 +2593,18 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(30000, timerCreated.interval)
         end)
 
-        it("retries the gong (not a swing) when exhausted while ringing", function()
+        it("re-scans the room (not a swing) when exhausted while ringing", function()
             -- After a melee kill the physical clock is spent, so the immediate
-            -- post-kill 'ring gong' is rejected. The retry must re-ring.
+            -- post-kill action is rejected. The retry re-scans the room (a bare
+            -- return), which then rings or engages depending on what's here.
             taPackage.arenaState = "ringing"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_not_nil(timerCreated)
             assert.are.equal(3000, timerCreated.interval)
             helper.sendCalls = {}
             timerCreated.cb()
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
+            assert.is_true(taPackage.arenaProbePending)
         end)
 
         it("the gong retry stops once the state leaves ringing", function()
@@ -2509,7 +2632,7 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(timerCreated)
             helper.sendCalls = {}
             firstTimer.cb()
-            assert.are.equal("ring gong", helper.sendCalls[1])
+            assert.are.equal("", helper.sendCalls[1])
         end)
 
         it("re-arms the retry after the previous one fires", function()

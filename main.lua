@@ -1182,6 +1182,57 @@ local function arenaRing()
     arenaSend("ring gong")
 end
 
+-- The arena brief lists occupants as "There is a hobgoblin, a huge rat, and a
+-- female kobold here." Pull the first monster's name so we can engage it. The
+-- leading word is an article ("a"/"an"/"the") or a count ("two huge rats"); a
+-- count means a plural noun, so drop the trailing "s" to match the singular
+-- name the death line ("The huge rat falls...") and our attack target use.
+local ARENA_ARTICLE_WORDS = {
+    a = true, an = true, the = true,
+    two = true, three = true, four = true, five = true, six = true,
+}
+local function firstArenaMonster(contents)
+    if not contents or contents == "nobody" then return nil end
+    local first = (contents:match("^([^,]+)") or contents):match("^%s*(.-)%s*$")
+    local article, rest = first:match("^(%S+)%s+(.+)$")
+    if article and ARENA_ARTICLE_WORDS[article:lower()] then
+        local a = article:lower()
+        if a ~= "a" and a ~= "an" and a ~= "the" then
+            rest = rest:gsub("s$", "")
+        end
+        return rest
+    end
+    return first
+end
+
+-- Before ringing for a fresh monster, send a bare return to print the arena
+-- brief and see who is already here. Sending "look" only re-prints the room
+-- description (no occupants); an empty line is the only way to list them. The
+-- arena is shared and a monster we lost track of — or one another player
+-- summoned — may already be present. Ringing on top of it stacks a second
+-- monster on us, the orphaned-monster trap that gets characters killed, so we
+-- adopt whatever is here and only ring once the room is clear.
+local function arenaScanRoom()
+    if taPackage.arenaProbePending then return end
+    taPackage.arenaProbePending = true
+    send("")
+end
+
+-- Lock onto a single monster and start swinging. Shared by the gate-spawn path
+-- (a monster we just summoned) and the room-scan path (a monster already here).
+local function arenaEngage(name)
+    taPackage.arenaMonster = name
+    taPackage.arenaState = "fighting"
+    taPackage.arenaAttackPending = false
+    taPackage.arenaCastPending = false
+    taPackage.arenaRingPending = false
+    if not taPackage.db.monsterHasDescription(name) then
+        send("look " .. name)
+    end
+    arenaAttack()
+    arenaCast()
+end
+
 local function checkTrainingNeeded()
     local xp  = getExperience()
     local cls = getClass()
@@ -1286,12 +1337,16 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
     taPackage.arenaRingRetryScheduled = false
+    taPackage.arenaOwnSummonPending = false
+    taPackage.arenaProbePending = false
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
     echo("[arena] Session started" .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
-    arenaRing()
+    -- Scan the room before the first ring: another player may already have a
+    -- monster in here, and we should clear it before summoning our own.
+    arenaScanRoom()
 end, { type = "regex" })
 
 local function stopArena()
@@ -1317,6 +1372,8 @@ local function stopArena()
     taPackage.arenaCastPending = nil
     taPackage.arenaRingPending = nil
     taPackage.arenaRingRetryScheduled = nil
+    taPackage.arenaOwnSummonPending = nil
+    taPackage.arenaProbePending = nil
     echo("[arena] Stopped.")
 end
 taPackage.stopArena = stopArena
@@ -1325,18 +1382,41 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     stopArena()
 end, { type = "regex" })
 
+-- Our own gong ring is confirmed by this line; the monster we summoned arrives
+-- on the very next "enters the arena" line. The arena is shared, so other
+-- players' rings ("Castor just rang the great gong!") also spawn monsters — we
+-- must only adopt the one that followed *our* ring. (See the cascade in
+-- logs/session-pollux-2026-06-28T12-33-36.log, where Pollux latched onto
+-- Castor's spawns and piled up monsters it couldn't see.)
+createTrigger("^You just rang the great gong!$", function()
+    if taPackage.arenaState ~= "ringing" then return end
+    taPackage.arenaOwnSummonPending = true
+end, { type = "regex" })
+
 createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
     if taPackage.arenaState ~= "ringing" then return end
-    taPackage.arenaMonster = matches[2]
-    taPackage.arenaState = "fighting"
-    if not taPackage.db.monsterHasDescription(taPackage.arenaMonster) then
-        send("look " .. taPackage.arenaMonster)
+    -- Only adopt the monster that came through the gate in response to our own
+    -- ring. Without this guard a monster summoned by another player sharing the
+    -- arena gets adopted, and our real fight is forgotten.
+    if not taPackage.arenaOwnSummonPending then return end
+    taPackage.arenaOwnSummonPending = false
+    arenaEngage(matches[2])
+end, { type = "regex" })
+
+-- Response to the bare-return probe from arenaScanRoom: the arena brief's
+-- occupant line. If a monster is already here, engage it instead of ringing —
+-- ringing now would stack a second monster on us. Only ring the gong when the
+-- room is clear ("There is nobody here.").
+createTrigger("^There is (.+) here\\.$", function(matches)
+    if not taPackage.arenaProbePending then return end
+    taPackage.arenaProbePending = false
+    if taPackage.arenaState ~= "ringing" then return end
+    local monster = firstArenaMonster(matches[2])
+    if monster then
+        arenaEngage(monster)
+    else
+        arenaRing()
     end
-    taPackage.arenaAttackPending = false
-    taPackage.arenaCastPending = false
-    taPackage.arenaRingPending = false
-    arenaAttack()
-    arenaCast()
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
@@ -1362,6 +1442,11 @@ end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
+    -- Only react to the death of the monster we are actually fighting. The arena
+    -- is shared, so another player's kill prints this same line; reacting to it
+    -- would ring the gong (or end our fight) while our own monster is still
+    -- alive and beating on us unseen.
+    if matches[2] ~= taPackage.arenaMonster then return end
     taPackage.arenaMonster = nil
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
@@ -1374,7 +1459,7 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
         else
             taPackage.arenaState = "ringing"
             taPackage.arenaRingPending = false
-            arenaRing()
+            arenaScanRoom()
         end
     end
 end, { type = "regex" })
@@ -1451,7 +1536,7 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
             else
                 taPackage.arenaState = "ringing"
                 taPackage.arenaRingPending = false
-                arenaRing()
+                arenaScanRoom()
             end
         end
     end
@@ -1527,22 +1612,23 @@ createTrigger("^You are still physically exhausted from your previous activities
     local gen = taPackage.arenaCombatGen or 0
     if taPackage.arenaState == "ringing" then
         -- The blocked physical action was the gong ring (the kill just spent
-        -- the physical clock). Retry the ring, not a swing — there's no monster
-        -- to swing at, so retrying arenaAttack would silently stall the loop.
+        -- the physical clock). Retry by re-scanning the room, not by swinging —
+        -- there's no monster to swing at. Re-scanning (rather than ringing
+        -- straight away) keeps the "engage an orphan before ringing" guarantee
+        -- on every retry, and self-heals if the probe response was ever missed.
         --
         -- A kill bounces two physical actions in the same instant — the trailing
         -- melee swing and the fresh gong — so this handler fires twice back to
-        -- back. The arenaRingPending guard already stops a real double-ring, but
-        -- without this dedupe each bounce still churns its own retry timer. Keep
-        -- at most one retry outstanding; the callback clears the flag when it
-        -- fires so the next bounce can re-arm.
+        -- back. Without a dedupe each bounce churns its own retry timer. Keep at
+        -- most one retry outstanding; the callback clears the flag when it fires
+        -- so the next bounce can re-arm.
         if taPackage.arenaRingRetryScheduled then return end
         taPackage.arenaRingRetryScheduled = true
         taPackage.arenaRingPending = false
         createTimer(ARENA_RING_RETRY_MS, function()
             taPackage.arenaRingRetryScheduled = false
             if taPackage.arenaState == "ringing" and (taPackage.arenaCombatGen or 0) == gen then
-                arenaRing()
+                arenaScanRoom()
             end
         end, { repeating = false })
     else
