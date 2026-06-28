@@ -4175,3 +4175,49 @@ describe("Follow sessions", function()
     end)
 
 end)
+
+describe("Attack badges", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function lastBadge()
+        return helper.cechoBgCalls[#helper.cechoBgCalls]
+    end
+
+    it("echoes a pink-on-gray HIT badge with the damage amount", function()
+        helper.simulateLine("Your attack hit the stone giantess for 12 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal("HIT 12", badge.text)
+        assert.are.equal("#ff5fd7", badge.color)
+        assert.are.equal("#444444", badge.backgroundColor)
+    end)
+
+    it("echoes a MISS badge", function()
+        helper.simulateLine("Your attack missed!")
+        assert.are.equal("MISS", lastBadge().text)
+    end)
+
+    it("echoes a DODGE badge when the monster dodges", function()
+        helper.simulateLine("The stone giantess dodged your attack!")
+        assert.are.equal("DODGE", lastBadge().text)
+    end)
+
+    it("badges each swing of a multi-hit burst", function()
+        helper.simulateLine("Your attack hit the stone giantess for 12 damage!")
+        helper.simulateLine("Your attack hit the stone giantess for 25 damage!")
+        helper.simulateLine("Your attack hit the stone giantess for 18 damage!")
+        local texts = {}
+        for _, c in ipairs(helper.cechoBgCalls) do table.insert(texts, c.text) end
+        assert.are.same({ "HIT 12", "HIT 25", "HIT 18" }, texts)
+    end)
+
+    it("does not badge a party member's attack", function()
+        helper.simulateLine("Teekywiki just attacked the stone giantess with a broadsword!")
+        assert.are.equal(0, #helper.cechoBgCalls)
+    end)
+
+end)

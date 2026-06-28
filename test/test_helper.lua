@@ -10,6 +10,7 @@ M.aliases = {}
 M.outboundTriggers = {}
 M.sendCalls = {}
 M.echoCalls = {}
+M.cechoBgCalls = {}
 M.dbCalls = {}
 M.mockDbOneRow = nil
 M.mockDbRows = {}
@@ -107,6 +108,11 @@ function cecho(color, text)
     table.insert(M.echoCalls, text == nil and color or text)
 end
 
+function cechoBg(color, backgroundColor, text)
+    table.insert(M.echoCalls, text)
+    table.insert(M.cechoBgCalls, { color = color, backgroundColor = backgroundColor, text = text })
+end
+
 function say(text) end
 
 function M.simulateLine(text)
@@ -166,6 +172,7 @@ function M.resetAll()
     for k in pairs(M.outboundTriggers) do M.outboundTriggers[k] = nil end
     for k in pairs(M.sendCalls) do M.sendCalls[k] = nil end
     for k in pairs(M.echoCalls) do M.echoCalls[k] = nil end
+    for k in pairs(M.cechoBgCalls) do M.cechoBgCalls[k] = nil end
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.mockDbOneRow = nil
     M.mockDbRows = {}

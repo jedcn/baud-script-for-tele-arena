@@ -874,10 +874,21 @@ end
 -- Combat triggers
 -- =========================================================================
 
+-- A normalized, color-coded badge echoed right after each of our own attack
+-- lines so the result doesn't get lost in the fast scroll of party/monster
+-- chatter. Pink-on-gray reads as "damage I'm dealing"; the gray block makes the
+-- badge stand out against the surrounding plain text.
+local DAMAGE_FG = "#ff5fd7"
+local DAMAGE_BG = "#444444"
+local function damageBadge(text)
+    cechoBg(DAMAGE_FG, DAMAGE_BG, text)
+end
+
 createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)
     local monster = matches[2]
     local damage = tonumber(matches[3])
     taPackage.lastAttackTarget = monster
+    damageBadge("HIT " .. damage)
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "hit", damage
     )
@@ -885,6 +896,7 @@ end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     local monster = taPackage.lastAttackTarget or "unknown"
+    damageBadge("MISS")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "miss", nil
     )
@@ -893,6 +905,7 @@ end, { type = "regex" })
 createTrigger("^The (.+) dodged your attack!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
+    damageBadge("DODGE")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "dodge", nil
     )
