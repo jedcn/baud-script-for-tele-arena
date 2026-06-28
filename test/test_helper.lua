@@ -108,9 +108,9 @@ function cecho(color, text)
     table.insert(M.echoCalls, text == nil and color or text)
 end
 
-function cechoBg(color, backgroundColor, text)
+function cechoBg(color, backgroundColor, text, bold)
     table.insert(M.echoCalls, text)
-    table.insert(M.cechoBgCalls, { color = color, backgroundColor = backgroundColor, text = text })
+    table.insert(M.cechoBgCalls, { color = color, backgroundColor = backgroundColor, text = text, bold = bold })
 end
 
 function say(text) end

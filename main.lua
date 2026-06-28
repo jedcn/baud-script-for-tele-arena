@@ -881,7 +881,7 @@ end
 local DAMAGE_FG = "#ff5fd7"
 local DAMAGE_BG = "#e0e0e0"
 local function damageBadge(text)
-    cechoBg(DAMAGE_FG, DAMAGE_BG, text)
+    cechoBg(DAMAGE_FG, DAMAGE_BG, text, true)
 end
 
 createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)

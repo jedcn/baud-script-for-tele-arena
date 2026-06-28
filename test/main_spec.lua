@@ -4194,6 +4194,7 @@ describe("Attack badges", function()
         assert.are.equal("HIT 12", badge.text)
         assert.are.equal("#ff5fd7", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
+        assert.is_true(badge.bold)
     end)
 
     it("echoes a MISS badge", function()
