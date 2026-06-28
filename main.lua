@@ -874,21 +874,25 @@ end
 -- Combat triggers
 -- =========================================================================
 
--- A normalized, color-coded badge echoed right after each of our own attack
+-- A normalized, color-coded badge echoed right after each of our own combat
 -- lines so the result doesn't get lost in the fast scroll of party/monster
--- chatter. Pink-on-gray reads as "damage I'm dealing"; the gray block makes the
--- badge stand out against the surrounding plain text.
-local DAMAGE_FG = "#ff5fd7"
-local DAMAGE_BG = "#e0e0e0"
-local function damageBadge(text)
-    cechoBg(DAMAGE_FG, DAMAGE_BG, " " .. text .. " ", true)
+-- chatter. Both badges share the same bold, padded, near-white block so they
+-- read as a matched pair; only the foreground color differs: blue for damage we
+-- deal, pink/red for damage we take.
+local BADGE_BG = "#e0e0e0"
+local OUTGOING_FG = "#2563eb" -- blue: damage we deal
+local INCOMING_FG = "#ff5fd7" -- pink/red: damage we take
+local function badge(fg, text)
+    cechoBg(fg, BADGE_BG, " " .. text .. " ", true)
 end
+local function outgoingBadge(text) badge(OUTGOING_FG, text) end
+local function incomingBadge(text) badge(INCOMING_FG, text) end
 
 createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)
     local monster = matches[2]
     local damage = tonumber(matches[3])
     taPackage.lastAttackTarget = monster
-    damageBadge("HIT " .. damage)
+    outgoingBadge("HIT " .. damage)
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "hit", damage
     )
@@ -896,7 +900,7 @@ end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     local monster = taPackage.lastAttackTarget or "unknown"
-    damageBadge("MISS")
+    outgoingBadge("MISS")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "miss", nil
     )
@@ -905,7 +909,7 @@ end, { type = "regex" })
 createTrigger("^The (.+) dodged your attack!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
-    damageBadge("DODGE")
+    outgoingBadge("DODGE")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "dodge", nil
     )
@@ -918,6 +922,7 @@ createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
     if current then
         setVitality(current - damage, max)
     end
+    incomingBadge("HIT " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -935,6 +940,7 @@ createTrigger("^The (.+) hurled a boulder at you for (\\d+) damage!$", function(
     if current then
         setVitality(current - damage, max)
     end
+    incomingBadge("HIT " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -945,6 +951,7 @@ createTrigger("^The (.+) picks up and hurls you for (\\d+) damage!$", function(m
     if current then
         setVitality(current - damage, max)
     end
+    incomingBadge("HIT " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
@@ -955,6 +962,7 @@ createTrigger("^The (.+) breathed flames at you for (\\d+) damage!$", function(m
     if current then
         setVitality(current - damage, max)
     end
+    incomingBadge("HIT " .. damage)
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 

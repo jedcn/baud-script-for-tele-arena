@@ -4187,12 +4187,12 @@ describe("Attack badges", function()
         return helper.cechoBgCalls[#helper.cechoBgCalls]
     end
 
-    it("echoes a pink-on-gray HIT badge with the damage amount", function()
+    it("echoes a blue-on-near-white HIT badge with the damage amount", function()
         helper.simulateLine("Your attack hit the stone giantess for 12 damage!")
         local badge = lastBadge()
         assert.is_not_nil(badge)
         assert.are.equal(" HIT 12 ", badge.text)
-        assert.are.equal("#ff5fd7", badge.color)
+        assert.are.equal("#2563eb", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
         assert.is_true(badge.bold)
     end)
@@ -4218,6 +4218,39 @@ describe("Attack badges", function()
 
     it("does not badge a party member's attack", function()
         helper.simulateLine("Teekywiki just attacked the stone giantess with a broadsword!")
+        assert.are.equal(0, #helper.cechoBgCalls)
+    end)
+
+    -- Incoming damage: same bold, padded, near-white block as outgoing, but
+    -- pink/red to mark damage we take rather than deal.
+    local function assertIncomingHit(line, expectedText)
+        helper.simulateLine(line)
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(expectedText, badge.text)
+        assert.are.equal("#ff5fd7", badge.color)
+        assert.are.equal("#e0e0e0", badge.backgroundColor)
+        assert.is_true(badge.bold)
+    end
+
+    it("echoes a pink HIT badge when a monster damages us", function()
+        assertIncomingHit("The stone giantess attacked you with a club for 9 damage!", " HIT 9 ")
+    end)
+
+    it("badges a hurled-boulder special attack", function()
+        assertIncomingHit("The stone giant hurled a boulder at you for 52 damage!", " HIT 52 ")
+    end)
+
+    it("badges a pick-up-and-hurl special attack", function()
+        assertIncomingHit("The cyclops picks up and hurls you for 22 damage!", " HIT 22 ")
+    end)
+
+    it("badges a flame-breath special attack", function()
+        assertIncomingHit("The dragon breathed flames at you for 30 damage!", " HIT 30 ")
+    end)
+
+    it("does not badge a special attack that lands on a party member", function()
+        helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
         assert.are.equal(0, #helper.cechoBgCalls)
     end)
 
