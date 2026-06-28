@@ -879,7 +879,7 @@ end
 -- chatter. Pink-on-gray reads as "damage I'm dealing"; the gray block makes the
 -- badge stand out against the surrounding plain text.
 local DAMAGE_FG = "#ff5fd7"
-local DAMAGE_BG = "#444444"
+local DAMAGE_BG = "#e0e0e0"
 local function damageBadge(text)
     cechoBg(DAMAGE_FG, DAMAGE_BG, text)
 end
