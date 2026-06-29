@@ -420,6 +420,21 @@ reRollBuilds.halfOgreWarrior = function(s)
     return accepted, reRollStatSummary(s)
 end
 
+-- A normalized, color-coded badge echoed right after a combat line so the
+-- result doesn't get lost in the fast scroll of party/monster chatter. Both
+-- badges share the same bold, padded, near-white block so they read as a
+-- matched pair; only the foreground color differs: blue for damage we deal,
+-- pink/red for damage we take. Defined here (above the Vitality trigger) so the
+-- trap handler below can badge from there too.
+local BADGE_BG = "#e0e0e0"
+local OUTGOING_FG = "#2563eb" -- blue: damage we deal
+local INCOMING_FG = "#ff5fd7" -- pink/red: damage we take
+local function badge(fg, text)
+    cechoBg(fg, BADGE_BG, " " .. text .. " ", true)
+end
+local function outgoingBadge(text) badge(OUTGOING_FG, text) end
+local function incomingBadge(text) badge(INCOMING_FG, text) end
+
 -- On entering the arena, pull our character sheet (st) and inventory (i) so the
 -- script's tracked state is populated right away instead of waiting for the
 -- first manual status check.
@@ -437,6 +452,15 @@ createTrigger("^Mana:\\s+(\\d+) / (\\d+)$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
+    -- A trap hurt us without printing a damage number; the trap handler stashed
+    -- our HP and fired "st", so this fresh Vitality line lets us recover the hit
+    -- as the drop from the stashed value.
+    local trapBefore = taPackage.trapHpBefore
+    if trapBefore then
+        taPackage.trapHpBefore = nil
+        local lost = trapBefore - tonumber(matches[2])
+        if lost > 0 then incomingBadge("TRAP " .. lost) end
+    end
     setVitality(matches[2], matches[3])
     if not taPackage.reRolling then return end
 
@@ -874,20 +898,6 @@ end
 -- Combat triggers
 -- =========================================================================
 
--- A normalized, color-coded badge echoed right after each of our own combat
--- lines so the result doesn't get lost in the fast scroll of party/monster
--- chatter. Both badges share the same bold, padded, near-white block so they
--- read as a matched pair; only the foreground color differs: blue for damage we
--- deal, pink/red for damage we take.
-local BADGE_BG = "#e0e0e0"
-local OUTGOING_FG = "#2563eb" -- blue: damage we deal
-local INCOMING_FG = "#ff5fd7" -- pink/red: damage we take
-local function badge(fg, text)
-    cechoBg(fg, BADGE_BG, " " .. text .. " ", true)
-end
-local function outgoingBadge(text) badge(OUTGOING_FG, text) end
-local function incomingBadge(text) badge(INCOMING_FG, text) end
-
 createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)
     local monster = matches[2]
     local damage = tonumber(matches[3])
@@ -975,6 +985,18 @@ end, { type = "regex" })
 createTrigger("^You barely dodge the (.+)'s attack!$", function(matches)
     taPackage.db.recordMonsterAttack(matches[2], "dodge", nil)
 end, { type = "regex" })
+
+-- Traps hurt us without ever printing a damage number, so we can't subtract the
+-- hit directly. Stash our current HP and ask the server for a fresh status
+-- ("st"); the Vitality trigger above recovers the loss and badges "TRAP <n>".
+-- Point additional trap-message triggers at handleTrap as we discover them.
+local function handleTrap()
+    taPackage.trapHpBefore = getVitality()
+    send("st")
+end
+
+createTrigger("^A spiked trap catches your foot and pain shoots up your leg!$",
+    handleTrap, { type = "regex" })
 
 -- =========================================================================
 -- Loot and kill triggers
