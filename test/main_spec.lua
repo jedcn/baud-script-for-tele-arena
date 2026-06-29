@@ -4430,31 +4430,36 @@ describe("Attack badges", function()
     -- Traps print no damage number; we stash HP, ask for "st", and recover the
     -- loss from the fresh Vitality line.
     describe("trap badges", function()
-        local TRAP = "A spiked trap catches your foot and pain shoots up your leg!"
+        local TRAPS = {
+            "A spiked trap catches your foot and pain shoots up your leg!",
+            "Several crossbow bolts fire from holes in the walls, striking you!",
+        }
 
         before_each(function()
             helper.simulateLine("Vitality:     50 / 60")
         end)
 
-        it("stashes HP and requests a status check on a trap", function()
-            helper.simulateLine(TRAP)
-            assert.are.equal(50, taPackage.trapHpBefore)
-            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
-        end)
+        for _, TRAP in ipairs(TRAPS) do
+            it("stashes HP and requests a status check on: " .. TRAP, function()
+                helper.simulateLine(TRAP)
+                assert.are.equal(50, taPackage.trapHpBefore)
+                assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+            end)
 
-        it("badges the HP lost once the status returns", function()
-            helper.simulateLine(TRAP)
-            helper.simulateLine("Vitality:     30 / 60")
-            local badge = lastBadge()
-            assert.are.equal(" TRAP 20 ", badge.text)
-            assert.are.equal("#ff5fd7", badge.color)
-            assert.are.equal("#e0e0e0", badge.backgroundColor)
-            assert.is_true(badge.bold)
-            assert.is_nil(taPackage.trapHpBefore)
-        end)
+            it("badges the HP lost once the status returns for: " .. TRAP, function()
+                helper.simulateLine(TRAP)
+                helper.simulateLine("Vitality:     30 / 60")
+                local badge = lastBadge()
+                assert.are.equal(" TRAP 20 ", badge.text)
+                assert.are.equal("#ff5fd7", badge.color)
+                assert.are.equal("#e0e0e0", badge.backgroundColor)
+                assert.is_true(badge.bold)
+                assert.is_nil(taPackage.trapHpBefore)
+            end)
+        end
 
         it("does not badge if HP did not drop", function()
-            helper.simulateLine(TRAP)
+            helper.simulateLine(TRAPS[1])
             helper.simulateLine("Vitality:     50 / 60")
             assert.are.equal(0, #helper.cechoBgCalls)
         end)
