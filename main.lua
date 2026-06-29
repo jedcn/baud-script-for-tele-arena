@@ -908,7 +908,6 @@ end, { type = "regex" })
 createTrigger("^The (.+) dodged your attack!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
-    outgoingBadge("DODGE")
     taPackage.db.recordPlayerAttack(
         taPackage.character.weapon or "weapon", monster, "dodge", nil
     )

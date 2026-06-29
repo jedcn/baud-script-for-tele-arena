@@ -4375,9 +4375,9 @@ describe("Attack badges", function()
         assert.are.equal(0, #helper.cechoBgCalls)
     end)
 
-    it("echoes a DODGE badge when the monster dodges", function()
+    it("does not badge a dodge", function()
         helper.simulateLine("The stone giantess dodged your attack!")
-        assert.are.equal(" DODGE ", lastBadge().text)
+        assert.are.equal(0, #helper.cechoBgCalls)
     end)
 
     it("badges each swing of a multi-hit burst", function()
