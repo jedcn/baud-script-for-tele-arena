@@ -1001,6 +1001,9 @@ createTrigger("^A spiked trap catches your foot and pain shoots up your leg!$",
 createTrigger("^Several crossbow bolts fire from holes in the walls, striking you!$",
     handleTrap, { type = "regex" })
 
+createTrigger("^Several large stones fall on you from above!$",
+    handleTrap, { type = "regex" })
+
 -- =========================================================================
 -- Loot and kill triggers
 -- =========================================================================
