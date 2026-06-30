@@ -4471,4 +4471,44 @@ describe("Attack badges", function()
         end)
     end)
 
+    -- Area-effect spells print no damage number either; same trick as traps. The
+    -- cast message word-wraps, so we only ever see/match the first physical line.
+    describe("area-effect spell badges", function()
+        local CAST = "The warlock just discharged a storm of ice shards at hostile people in the"
+
+        before_each(function()
+            helper.simulateLine("Vitality:     50 / 60")
+        end)
+
+        it("stashes HP and requests a status check", function()
+            helper.simulateLine(CAST)
+            assert.are.equal(50, taPackage.aoeHpBefore)
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("badges the HP lost once the status returns", function()
+            helper.simulateLine(CAST)
+            helper.simulateLine("Vitality:     38 / 60")
+            local badge = lastBadge()
+            assert.are.equal(" AOE 12 ", badge.text)
+            assert.are.equal("#ff5fd7", badge.color)
+            assert.are.equal("#e0e0e0", badge.backgroundColor)
+            assert.is_true(badge.bold)
+            assert.is_nil(taPackage.aoeHpBefore)
+        end)
+
+        it("matches any caster and any area-effect spell", function()
+            helper.simulateLine(
+                "The ogre mage just discharged a wave of fire at hostile people in the")
+            assert.are.equal(50, taPackage.aoeHpBefore)
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("does not badge if HP did not drop", function()
+            helper.simulateLine(CAST)
+            helper.simulateLine("Vitality:     50 / 60")
+            assert.are.equal(0, #helper.cechoBgCalls)
+        end)
+    end)
+
 end)

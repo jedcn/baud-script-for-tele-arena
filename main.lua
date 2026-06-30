@@ -461,6 +461,14 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         local lost = trapBefore - tonumber(matches[2])
         if lost > 0 then incomingBadge("TRAP " .. lost) end
     end
+    -- Same trick for an area-effect spell: the caster's handler stashed our HP
+    -- and fired "st", so this fresh Vitality line recovers the hit and badges it.
+    local aoeBefore = taPackage.aoeHpBefore
+    if aoeBefore then
+        taPackage.aoeHpBefore = nil
+        local lost = aoeBefore - tonumber(matches[2])
+        if lost > 0 then incomingBadge("AOE " .. lost) end
+    end
     setVitality(matches[2], matches[3])
     if not taPackage.reRolling then return end
 
@@ -1003,6 +1011,21 @@ createTrigger("^Several crossbow bolts fire from holes in the walls, striking yo
 
 createTrigger("^Several large stones fall on you from above!$",
     handleTrap, { type = "regex" })
+
+-- Advanced monsters cast area-effect spells that hit everyone nearby without
+-- printing a damage number — just like a trap. Use the identical trick: stash
+-- our HP, ask for a fresh status ("st"), and let the Vitality trigger above
+-- recover the loss and badge "AOE <n>". The cast message word-wraps across two
+-- physical lines (".. in the" / "area!"), so we match only the stable first
+-- line, up through "at hostile people", and never anchor the end.
+-- Point additional area-effect triggers at handleAreaEffect as we discover them.
+local function handleAreaEffect()
+    taPackage.aoeHpBefore = getVitality()
+    send("st")
+end
+
+createTrigger("^The .+ just discharged .+ at hostile people",
+    handleAreaEffect, { type = "regex" })
 
 -- =========================================================================
 -- Loot and kill triggers
