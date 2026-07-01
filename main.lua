@@ -931,72 +931,39 @@ createTrigger("^The (.+) dodged your attack!$", function(matches)
     )
 end, { type = "regex" })
 
-createTrigger("^The (.+) attacked you .+ for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
-    local current, max = getVitality()
-    if current then
-        setVitality(current - damage, max)
-    end
-    incomingBadge("TOOK " .. damage)
-    taPackage.db.recordMonsterAttack(monster, "hit", damage)
-end, { type = "regex" })
+-- All incoming-damage lines do the same three things: subtract the hit from our
+-- vitality, badge "TOOK N", and record the attack. The generic "attacked you ...
+-- for N damage!" phrasing covers ordinary swings, but many enemies deal damage
+-- through special verbs that never say "attacked you" — a stone giant's boulder
+-- (seen for 52), a cyclops's throw (22), a stygian dragon's bite (39) or tail
+-- lash (35), a minotaur chieftain's charge (42), a caster's "discharged" spell.
+-- Each needs its own phrasing but the handler is identical, so drive them all
+-- from one list. Only the "you" variants carry a number; when a special lands on
+-- another group member the game prints no damage ("hurled a boulder at
+-- Pelayo!"), so there is nothing to subtract from our own vitality.
+local incomingDamagePatterns = {
+    "^The (.+) attacked you .+ for (\\d+) damage!$",
+    "^The (.+) hurled a boulder at you for (\\d+) damage!$",
+    "^The (.+) picks up and hurls you for (\\d+) damage!$",
+    "^The (.+) breathed flames at you for (\\d+) damage!$",
+    "^The (.+) discharged .+ at you for (\\d+) damage!$",
+    "^The (.+) viciously bit you for (\\d+) damage!$",
+    "^The (.+) lashed out with its tail for (\\d+) damage!$",
+    "^The (.+) charged you for (\\d+) damage!$",
+}
 
--- Special attacks don't use the "attacked you ... for N damage!" phrasing, so
--- the generic incoming-damage trigger above misses them and our HP drifts high
--- against some of the hardest hits in the game (a stone giant's boulder has been
--- seen for 52, a cyclops's throw for 22). Catch each special verb explicitly and
--- apply the damage the same way. Only the "you" variants carry a number; when
--- these land on another group member the game prints no damage ("hurled a
--- boulder at Pelayo!"), so there is nothing to subtract from our own vitality.
-createTrigger("^The (.+) hurled a boulder at you for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
-    local current, max = getVitality()
-    if current then
-        setVitality(current - damage, max)
-    end
-    incomingBadge("TOOK " .. damage)
-    taPackage.db.recordMonsterAttack(monster, "hit", damage)
-end, { type = "regex" })
-
-createTrigger("^The (.+) picks up and hurls you for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
-    local current, max = getVitality()
-    if current then
-        setVitality(current - damage, max)
-    end
-    incomingBadge("TOOK " .. damage)
-    taPackage.db.recordMonsterAttack(monster, "hit", damage)
-end, { type = "regex" })
-
-createTrigger("^The (.+) breathed flames at you for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
-    local current, max = getVitality()
-    if current then
-        setVitality(current - damage, max)
-    end
-    incomingBadge("TOOK " .. damage)
-    taPackage.db.recordMonsterAttack(monster, "hit", damage)
-end, { type = "regex" })
-
--- Warlocks (and other casters) hurl damaging spells with "discharged": "The
--- warlock discharged a searing ball of flame at you for 47 damage!" or "...a
--- shower of flame at you...". The spell name between "discharged" and "at you"
--- varies, so match it loosely. As with the other specials, only the "you"
--- variant carries a number.
-createTrigger("^The (.+) discharged .+ at you for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
-    local current, max = getVitality()
-    if current then
-        setVitality(current - damage, max)
-    end
-    incomingBadge("TOOK " .. damage)
-    taPackage.db.recordMonsterAttack(monster, "hit", damage)
-end, { type = "regex" })
+for _, pattern in ipairs(incomingDamagePatterns) do
+    createTrigger(pattern, function(matches)
+        local monster = matches[2]
+        local damage = tonumber(matches[3])
+        local current, max = getVitality()
+        if current then
+            setVitality(current - damage, max)
+        end
+        incomingBadge("TOOK " .. damage)
+        taPackage.db.recordMonsterAttack(monster, "hit", damage)
+    end, { type = "regex" })
+end
 
 createTrigger("^The (.+) attacked you, but .+ glanced off your armor!$", function(matches)
     taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)

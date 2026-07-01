@@ -4969,6 +4969,18 @@ describe("Attack badges", function()
         assertIncomingHit("The warlock discharged a shower of flame at you for 32 damage!", " TOOK 32 ")
     end)
 
+    it("badges a stygian dragon's bite special attack", function()
+        assertIncomingHit("The stygian dragon viciously bit you for 39 damage!", " TOOK 39 ")
+    end)
+
+    it("badges a stygian dragon's tail-lash special attack", function()
+        assertIncomingHit("The stygian dragon lashed out with its tail for 35 damage!", " TOOK 35 ")
+    end)
+
+    it("badges a minotaur chieftain's charge special attack", function()
+        assertIncomingHit("The minotaur chieftain charged you for 42 damage!", " TOOK 42 ")
+    end)
+
     it("does not badge a special attack that lands on a party member", function()
         helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
         assert.are.equal(0, #helper.cechoBgCalls)
