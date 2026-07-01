@@ -2830,6 +2830,271 @@ describe("ring-gong-and-fight-in-arena", function()
 
 end)
 
+-- =========================================================================
+-- Ring gong and fight in the SECOND arena
+-- =========================================================================
+-- Shares the combat engine with the first arena; only navigation differs. The
+-- temple and bar are several rooms away and must be walked one paced step at a
+-- time (moving too fast makes the character fall), and both arenas' rooms are
+-- named "arena"/"temple", so travel is keyed off arenaProfile == "second".
+
+describe("ring-gong-and-fight-in-second-arena", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+        setClass("Warrior")
+    end)
+
+    local function setHP(current, max)
+        helper.simulateLine("Vitality:     " .. current .. " / " .. (max or current))
+    end
+
+    describe("alias", function()
+
+        it("sets arenaProfile to 'second'", function()
+            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            assert.are.equal("second", taPackage.arenaProfile)
+        end)
+
+        it("starts ringing and scans the room like the first arena", function()
+            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("", helper.sendCalls[1])
+            assert.is_true(taPackage.arenaProbePending)
+        end)
+
+        it("does not start when class is unknown", function()
+            setClass(nil)
+            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("the first-arena alias leaves profile 'first' (not 'second')", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal("first", taPackage.arenaProfile)
+        end)
+
+    end)
+
+    describe("stop alias", function()
+
+        it("clears profile, journey, and state", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaJourney = { steps = { "s" }, index = 0, arriveRoom = "temple" }
+            taPackage.arenaState = "fighting"
+            helper.simulateAlias("stop-ring-gong-and-fight-in-second-arena")
+            assert.is_nil(taPackage.arenaProfile)
+            assert.is_nil(taPackage.arenaJourney)
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+    end)
+
+    describe("travel to the temple to heal", function()
+
+        local stepTimer
+
+        before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == 1000 then stepTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            stepTimer = nil
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("flees toward the temple with the first south step", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(10, 100)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("paces the next step after an intermediate 'on a path' room", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(10, 100)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")  -- sends "s"
+            helper.simulateLine("You're on a path.")
+            assert.is_not_nil(stepTimer)  -- a 1s pacing timer was armed
+            stepTimer.cb()
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("treats 'east plaza' as an intermediate step, not arrival", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaJourney = { steps = { "s", "s", "s", "s" }, index = 2, arriveRoom = "temple" }
+            helper.simulateLine("You're in the east plaza.")
+            assert.are.equal("fleeing", taPackage.arenaState)  -- did not buy healing
+            assert.is_not_nil(stepTimer)
+            stepTimer.cb()
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("buys healing on arriving at the temple", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaJourney = { steps = { "s", "s", "s", "s" }, index = 4, arriveRoom = "temple" }
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("healing", taPackage.arenaState)
+            assert.are.equal("buy healing", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaJourney)
+        end)
+
+        it("does not use first-arena nav (no 'w' at north plaza)", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaJourney = { steps = { "s", "s", "s", "s" }, index = 1, arriveRoom = "temple" }
+            helper.simulateLine("You're in the north plaza.")
+            for _, c in ipairs(helper.sendCalls) do
+                assert.are_not.equal("w", c)
+            end
+        end)
+
+    end)
+
+    describe("return from the temple after healing", function()
+
+        local stepTimer
+
+        before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == 1000 then stepTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            stepTimer = nil
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("walks back to the arena, starting with north", function()
+            taPackage.arenaState = "healing"
+            helper.simulateLine("The priests heal all your wounds for 3 crowns.")
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
+            assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
+        end)
+
+        it("resumes attacking on arriving back in the arena with the monster alive", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = "cave bear"
+            taPackage.arenaJourney = { steps = { "n", "n", "n", "n" }, index = 4, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a cave", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("scans and rings on arriving back with no monster", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = nil
+            taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("", helper.sendCalls[#helper.sendCalls])
+            assert.is_true(taPackage.arenaProbePending)
+        end)
+
+    end)
+
+    describe("travel to the bar (inn) to eat and drink", function()
+
+        local stepTimer
+
+        before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == 1000 then stepTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            stepTimer = nil
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("departs for the bar with the first south step when thirsty", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're thirsty.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.is_true(taPackage.needsDrinks)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("passes through north plaza as an intermediate step to the inn", function()
+            taPackage.arenaState = "tavern"
+            taPackage.arenaJourney = { steps = { "s", "s", "w", "w", "sw", "sw" }, index = 4, arriveRoom = "inn" }
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("tavern", taPackage.arenaState)  -- not arrival
+            assert.is_not_nil(stepTimer)
+            stepTimer.cb()
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("buys three drinks on arriving at the inn, then walks back", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsDrinks = true
+            taPackage.arenaJourney = { steps = { "sw" }, index = 6, arriveRoom = "inn" }
+            helper.simulateLine("You're in the inn.")
+            local drinks = 0
+            for _, c in ipairs(helper.sendCalls) do
+                if c == "buy drink" then drinks = drinks + 1 end
+            end
+            assert.are.equal(3, drinks)
+            assert.is_nil(taPackage.needsDrinks)
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("ne", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("buys three meals on arriving at the inn when hungry", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsMeal = true
+            taPackage.arenaJourney = { steps = { "sw" }, index = 6, arriveRoom = "inn" }
+            helper.simulateLine("You're in the inn.")
+            local meals = 0
+            for _, c in ipairs(helper.sendCalls) do
+                if c == "buy meal" then meals = meals + 1 end
+            end
+            assert.are.equal(3, meals)
+            assert.is_nil(taPackage.needsMeal)
+        end)
+
+        it("heads to the bar after healing when still thirsty, on reaching the arena", function()
+            taPackage.arenaState = "returning"
+            taPackage.needsDrinks = true
+            taPackage.arenaMonster = "cave bear"
+            taPackage.arenaJourney = { steps = { "n" }, index = 4, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+    end)
+
+    describe("blocked first step out of the arena", function()
+
+        local retryTimer
+
+        before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == 2000 then retryTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            retryTimer = nil
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("retries the blocked south step, not a hardcoded west", function()
+            taPackage.arenaState = "fleeing"
+            taPackage.arenaLastCmd = "s"
+            taPackage.arenaRetryGeneration = 0
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_not_nil(retryTimer)
+            retryTimer.cb()
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+    end)
+
+end)
+
 describe("cast.heal alias", function()
 
     before_each(function()
