@@ -982,6 +982,22 @@ createTrigger("^The (.+) breathed flames at you for (\\d+) damage!$", function(m
     taPackage.db.recordMonsterAttack(monster, "hit", damage)
 end, { type = "regex" })
 
+-- Warlocks (and other casters) hurl damaging spells with "discharged": "The
+-- warlock discharged a searing ball of flame at you for 47 damage!" or "...a
+-- shower of flame at you...". The spell name between "discharged" and "at you"
+-- varies, so match it loosely. As with the other specials, only the "you"
+-- variant carries a number.
+createTrigger("^The (.+) discharged .+ at you for (\\d+) damage!$", function(matches)
+    local monster = matches[2]
+    local damage = tonumber(matches[3])
+    local current, max = getVitality()
+    if current then
+        setVitality(current - damage, max)
+    end
+    incomingBadge("TOOK " .. damage)
+    taPackage.db.recordMonsterAttack(monster, "hit", damage)
+end, { type = "regex" })
+
 createTrigger("^The (.+) attacked you, but .+ glanced off your armor!$", function(matches)
     taPackage.db.recordMonsterAttack(matches[2], "glanced", nil)
 end, { type = "regex" })

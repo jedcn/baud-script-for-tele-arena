@@ -4949,6 +4949,14 @@ describe("Attack badges", function()
         assertIncomingHit("The dragon breathed flames at you for 30 damage!", " TOOK 30 ")
     end)
 
+    it("badges a warlock's discharged-spell special attack", function()
+        assertIncomingHit("The warlock discharged a searing ball of flame at you for 47 damage!", " TOOK 47 ")
+    end)
+
+    it("badges a warlock's shower-of-flame variant", function()
+        assertIncomingHit("The warlock discharged a shower of flame at you for 32 damage!", " TOOK 32 ")
+    end)
+
     it("does not badge a special attack that lands on a party member", function()
         helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
         assert.are.equal(0, #helper.cechoBgCalls)
