@@ -3068,6 +3068,58 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
     end)
 
+    describe("trips and falls when moving too fast", function()
+
+        local tripTimer
+
+        before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == 2000 then tripTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            tripTimer = nil
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("re-sends the current step after tripping mid-walk", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaJourney = { steps = { "ne", "ne", "e", "e", "n", "n" }, index = 5, arriveRoom = "arena" }
+            helper.simulateLine("In your haste, you trip and fall!")
+            assert.is_not_nil(tripTimer)  -- a retry timer was armed
+            tripTimer.cb()
+            assert.are.equal("n", helper.sendCalls[#helper.sendCalls])  -- step 5, not advanced
+            assert.are.equal(5, taPackage.arenaJourney.index)
+        end)
+
+        it("does nothing when no journey is active", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaJourney = nil
+            helper.simulateLine("In your haste, you trip and fall!")
+            assert.is_nil(tripTimer)
+        end)
+
+        it("drops the retry if a new journey starts before it fires", function()
+            taPackage.arenaState = "returning"
+            taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
+            taPackage.arenaJourneyGen = 3
+            helper.simulateLine("In your haste, you trip and fall!")
+            assert.is_not_nil(tripTimer)
+            taPackage.arenaJourneyGen = 4  -- a new leg started
+            local before = #helper.sendCalls
+            tripTimer.cb()
+            assert.are.equal(before, #helper.sendCalls)  -- stale retry no-op
+        end)
+
+        it("does not react on the first-arena profile", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "returning"
+            taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
+            helper.simulateLine("In your haste, you trip and fall!")
+            assert.is_nil(tripTimer)
+        end)
+
+    end)
+
     describe("monster appears in a puff of smoke", function()
 
         before_each(function()

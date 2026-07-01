@@ -1332,6 +1332,11 @@ end
 -- be told apart by room name — it is driven by taPackage.arenaProfile, set by
 -- whichever alias started the session.
 local SECOND_ARENA_STEP_DELAY_MS = 1000
+-- When a step is rejected because we moved too fast ("In your haste, you trip
+-- and fall!"), no room line is printed, so the step-driven walk would stall
+-- forever waiting for a room it never enters. Re-send the current step after a
+-- longer pause than the normal pacing to both recover the walk and back off.
+local SECOND_ARENA_TRIP_RETRY_MS = 2000
 local SECOND_ARENA = {
     arenaRoom  = "arena",
     templeRoom = "temple",
@@ -1348,6 +1353,16 @@ local function secondArenaSendStep()
     local j = taPackage.arenaJourney
     if not j then return end
     j.index = j.index + 1
+    local dir = j.steps[j.index]
+    if dir then arenaSend(dir) end
+end
+
+-- Re-send the current (not-yet-completed) step without advancing the index.
+-- Used to recover from a rejected move: the step at j.index was sent but never
+-- landed us in a new room, so we walk it again.
+local function secondArenaResendStep()
+    local j = taPackage.arenaJourney
+    if not j then return end
     local dir = j.steps[j.index]
     if dir then arenaSend(dir) end
 end
@@ -1800,6 +1815,23 @@ end, { type = "regex" })
 createTrigger("^You're on a (.+)\\.$", function(matches)
     if taPackage.arenaProfile ~= "second" then return end
     secondArenaOnMovement(matches[2])
+end, { type = "regex" })
+
+-- Moving between rooms too quickly makes the character trip and fall. No room
+-- line follows, so the step-driven walk above would stall forever waiting to
+-- enter a room it never does. Re-send the current step after a longer pause to
+-- recover the walk (and back off the pace). The move genuinely failed, so no
+-- room line is in flight — the resend cannot double-move us. The generation
+-- guard drops the retry if the session stops or a new journey starts first.
+createTrigger("^In your haste, you trip and fall!$", function()
+    if taPackage.arenaProfile ~= "second" then return end
+    if not taPackage.arenaJourney then return end
+    local gen = taPackage.arenaJourneyGen or 0
+    createTimer(SECOND_ARENA_TRIP_RETRY_MS, function()
+        if taPackage.arenaState and (taPackage.arenaJourneyGen or 0) == gen then
+            secondArenaResendStep()
+        end
+    end, { repeating = false })
 end, { type = "regex" })
 
 createTrigger("^You're thirsty\\.$", function()
