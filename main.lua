@@ -1301,6 +1301,128 @@ local function arenaEngage(name)
     arenaCast()
 end
 
+-- Return to combat after a trip out of the arena (heal or bar). Shared by both
+-- arenas' "arrived back at the arena" paths: resume swinging at the monster we
+-- left if it survived, otherwise scan the room and ring for a fresh one.
+local function arenaResumeInCombat()
+    if taPackage.arenaMonster then
+        taPackage.arenaState = "fighting"
+        taPackage.arenaAttackPending = false
+        taPackage.arenaCastPending = false
+        arenaAttack()
+        arenaCast()
+    else
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = false
+        arenaScanRoom()
+    end
+end
+
+-- =========================================================================
+-- Second arena navigation
+-- =========================================================================
+-- The second arena shares the combat engine with the first, but its temple and
+-- bar are several rooms away instead of one step off a shared plaza. Moving too
+-- fast between rooms makes the character fall down, so each leg is walked one
+-- step at a time with a pause between steps (the first arena's rooms are
+-- adjacent, so it moves immediately). Each leg is an explicit list of
+-- directions; we send the first step, then advance one step per room line we
+-- receive, pausing SECOND_ARENA_STEP_DELAY_MS between steps. Note that both
+-- arenas' rooms are literally named "arena" and "temple", so navigation cannot
+-- be told apart by room name — it is driven by taPackage.arenaProfile, set by
+-- whichever alias started the session.
+local SECOND_ARENA_STEP_DELAY_MS = 1000
+local SECOND_ARENA = {
+    arenaRoom  = "arena",
+    templeRoom = "temple",
+    barRoom    = "inn",
+    toTemple   = { "s", "s", "s", "s" },
+    fromTemple = { "n", "n", "n", "n" },
+    toBar      = { "s", "s", "w", "w", "sw", "sw" },
+    fromBar    = { "ne", "ne", "e", "e", "n", "n" },
+}
+
+-- Send the next queued direction. index counts steps already sent, so bumping
+-- it first and indexing gives the step we haven't walked yet.
+local function secondArenaSendStep()
+    local j = taPackage.arenaJourney
+    if not j then return end
+    j.index = j.index + 1
+    local dir = j.steps[j.index]
+    if dir then arenaSend(dir) end
+end
+
+-- Pause before the next step so we don't move too fast and fall. The generation
+-- guard drops a stale timer if the session stops or a new journey starts before
+-- it fires.
+local function secondArenaScheduleStep()
+    local gen = taPackage.arenaJourneyGen or 0
+    createTimer(SECOND_ARENA_STEP_DELAY_MS, function()
+        if taPackage.arenaState and (taPackage.arenaJourneyGen or 0) == gen then
+            secondArenaSendStep()
+        end
+    end, { repeating = false })
+end
+
+-- Begin walking a leg: record the step list and the room that ends it, bump the
+-- journey generation to invalidate any in-flight step timer, and send the first
+-- step immediately (the pacing pause only applies between steps).
+local function secondArenaStartJourney(steps, arriveRoom)
+    taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
+    taPackage.arenaJourney = { steps = steps, index = 0, arriveRoom = arriveRoom }
+    secondArenaSendStep()
+end
+
+-- Head to the bar. Its confirmation lines differ from the first arena's tavern
+-- ("The barmaid brings you a drink..."), but the buy commands are the same and
+-- our navigation doesn't depend on those lines, so we just walk there.
+local function departForBar()
+    taPackage.arenaState = "tavern"
+    echo("[arena] Heading to bar.")
+    secondArenaStartJourney(SECOND_ARENA.toBar, SECOND_ARENA.barRoom)
+end
+
+-- Advance the walk one room at a time. Called for every "You're ..." line while
+-- a second-arena journey is active. Reaching the leg's destination room fires
+-- that leg's action (heal, buy, or resume combat); any other room is an
+-- intermediate step, so pace the next move.
+local function secondArenaOnMovement(room)
+    local j = taPackage.arenaJourney
+    if not j then return end
+    if room ~= j.arriveRoom then
+        secondArenaScheduleStep()
+        return
+    end
+    taPackage.arenaJourney = nil
+    local st = taPackage.arenaState
+    if st == "fleeing" then
+        -- Arrived at the temple.
+        taPackage.arenaState = "healing"
+        arenaSend("buy healing")
+    elseif st == "tavern" then
+        -- Arrived at the bar.
+        if taPackage.needsDrinks then
+            for _ = 1, 3 do send("buy drink") end
+            taPackage.needsDrinks = nil
+        end
+        if taPackage.needsMeal then
+            for _ = 1, 3 do send("buy meal") end
+            taPackage.needsMeal = nil
+        end
+        taPackage.arenaState = "returning"
+        secondArenaStartJourney(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
+    elseif st == "returning" then
+        -- Arrived back at the arena. The bar is its own round trip from here, so
+        -- if we healed but are still hungry/thirsty, set out for it now rather
+        -- than resuming combat.
+        if taPackage.needsDrinks or taPackage.needsMeal then
+            departForBar()
+        else
+            arenaResumeInCombat()
+        end
+    end
+end
+
 local function checkTrainingNeeded()
     local xp  = getExperience()
     local cls = getClass()
@@ -1328,13 +1450,21 @@ local function checkFleeArena()
     if hp and hp < fleeThreshold then
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
-        arenaSend("w")
+        if taPackage.arenaProfile == "second" then
+            secondArenaStartJourney(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom)
+        else
+            arenaSend("w")
+        end
         return true
     end
     return false
 end
 
 local function departForTavern()
+    if taPackage.arenaProfile == "second" then
+        departForBar()
+        return
+    end
     taPackage.arenaState = "tavern"
     echo("[arena] Heading to tavern.")
     arenaSend("w")
@@ -1390,16 +1520,18 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
         .. gained .. " XP (total: " .. xp .. ")")
 end, { type = "regex" })
 
-createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
-    if not getClass() then
-        echo("[arena] Class unknown — run 'st' first so casters cast.")
-        return
-    end
-    taPackage.arenaDebug = matches[2] == " debug"
+-- Start an arena session. profile "first" is the original adjacent-rooms arena;
+-- profile "second" shares this combat engine but walks its distant temple/bar
+-- one paced step at a time (see the second-arena navigation section).
+local function beginArenaSession(profile, debug)
+    taPackage.arenaProfile = profile
+    taPackage.arenaDebug = debug
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
     taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
+    taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
+    taPackage.arenaJourney = nil
     taPackage.arenaXpCheckPending = false
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
@@ -1408,12 +1540,28 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
     taPackage.arenaProbePending = false
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
-    local debugSuffix = taPackage.arenaDebug and " (debug mode)" or ""
+    local debugSuffix = debug and " (debug mode)" or ""
     echo("[arena] Session started" .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
     -- Scan the room before the first ring: another player may already have a
     -- monster in here, and we should clear it before summoning our own.
     arenaScanRoom()
+end
+
+createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
+    if not getClass() then
+        echo("[arena] Class unknown — run 'st' first so casters cast.")
+        return
+    end
+    beginArenaSession("first", matches[2] == " debug")
+end, { type = "regex" })
+
+createAlias("^ring-gong-and-fight-in-second-arena(.*)$", function(matches)
+    if not getClass() then
+        echo("[arena] Class unknown — run 'st' first so casters cast.")
+        return
+    end
+    beginArenaSession("second", matches[2] == " debug")
 end, { type = "regex" })
 
 local function stopArena()
@@ -1440,13 +1588,20 @@ local function stopArena()
     taPackage.arenaRingPending = nil
     taPackage.arenaOwnSummonPending = nil
     taPackage.arenaProbePending = nil
-    -- Bump the ring generation so any in-flight scan-pump tick no-ops.
+    taPackage.arenaProfile = nil
+    taPackage.arenaJourney = nil
+    -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
+    taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
     echo("[arena] Stopped.")
 end
 taPackage.stopArena = stopArena
 
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
+    stopArena()
+end, { type = "regex" })
+
+createAlias("^stop-ring-gong-and-fight-in-second-arena$", function()
     stopArena()
 end, { type = "regex" })
 
@@ -1573,6 +1728,13 @@ end, { type = "regex" })
 
 createTrigger("^You're in the (.+)\\.$", function(matches)
     local room = matches[2]
+    -- The second arena walks fixed step lists rather than reacting to named
+    -- waypoints, and its rooms collide with the first arena's names ("arena",
+    -- "temple"), so hand the whole entry to its own handler.
+    if taPackage.arenaProfile == "second" then
+        secondArenaOnMovement(room)
+        return
+    end
     if taPackage.arenaState == "training" then
         local phase = taPackage.arenaTrainingPhase or 1
         if phase == 1 and room == "north plaza" then
@@ -1610,19 +1772,18 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
         if room == "north plaza" then
             arenaSend("e")
         elseif room == "arena" then
-            if taPackage.arenaMonster then
-                taPackage.arenaState = "fighting"
-                taPackage.arenaAttackPending = false
-                taPackage.arenaCastPending = false
-                arenaAttack()
-                arenaCast()
-            else
-                taPackage.arenaState = "ringing"
-                taPackage.arenaRingPending = false
-                arenaScanRoom()
-            end
+            arenaResumeInCombat()
         end
     end
+end, { type = "regex" })
+
+-- The second arena's paths pass through "You're on a path." rooms, which the
+-- "in the" trigger above never matches. Feed them to the walk handler too so
+-- every step advances. Guarded to the second profile; the first arena has no
+-- such rooms.
+createTrigger("^You're on a (.+)\\.$", function(matches)
+    if taPackage.arenaProfile ~= "second" then return end
+    secondArenaOnMovement(matches[2])
 end, { type = "regex" })
 
 createTrigger("^You're thirsty\\.$", function()
@@ -1649,6 +1810,14 @@ end, { type = "regex" })
 
 createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(matches)
     if taPackage.arenaState ~= "healing" then return end
+    -- The second arena always walks back to the arena from the temple; if it is
+    -- also hungry/thirsty, the arrival handler sets out for the bar (a separate
+    -- round trip) rather than trying to route temple->bar directly.
+    if taPackage.arenaProfile == "second" then
+        taPackage.arenaState = "returning"
+        secondArenaStartJourney(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom)
+        return
+    end
     if taPackage.needsDrinks or taPackage.needsMeal then
         taPackage.arenaState = "tavern"
         echo("[arena] Heading to tavern.")
@@ -1663,10 +1832,13 @@ createTrigger("^You cannot leave in the heat of battle!$", function()
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
     local gen = taPackage.arenaRetryGeneration or 0
+    -- Retry the exact step that was blocked, not a hardcoded "w": the second
+    -- arena's first step out is "s". arenaLastCmd is the blocked command.
+    local cmd = taPackage.arenaLastCmd or "w"
     createTimer(2000, function()
         taPackage.arenaFleeTimerPending = false
         if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
-            arenaSend("w")
+            arenaSend(cmd)
         end
     end, { repeating = false })
 end, { type = "regex" })
