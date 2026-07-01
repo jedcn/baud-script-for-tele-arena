@@ -3068,6 +3068,39 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
     end)
 
+    describe("monster appears in a puff of smoke", function()
+
+        before_each(function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaOwnSummonPending = true
+        end)
+
+        it("adopts the summoned monster and starts fighting", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "A troll." }
+            helper.simulateLine("A troll appears in a puff of reddish smoke!")
+            assert.are.equal("troll", taPackage.arenaMonster)
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a troll", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("ignores a spawn we did not summon (own-summon not armed)", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = false
+            helper.simulateLine("A troll appears in a puff of reddish smoke!")
+            assert.is_nil(taPackage.arenaMonster)
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("matches other smoke colors too", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = { description = "An ogre." }
+            helper.simulateLine("An ogre appears in a puff of greenish smoke!")
+            assert.are.equal("ogre", taPackage.arenaMonster)
+        end)
+
+    end)
+
     describe("no training in the second arena", function()
 
         before_each(function()

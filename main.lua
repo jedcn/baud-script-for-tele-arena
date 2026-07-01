@@ -1620,14 +1620,26 @@ createTrigger("^You just rang the great gong!$", function()
     taPackage.arenaOwnSummonPending = true
 end, { type = "regex" })
 
-createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
+-- Adopt a freshly-spawned monster, but only the one that followed *our* ring
+-- (arenaOwnSummonPending). Without that guard a monster summoned by another
+-- player sharing the arena gets adopted and our real fight is forgotten. The
+-- two arenas spawn with different flavor text — the first through a dungeon
+-- gate, the second in a puff of smoke — but the adoption rule is identical.
+local function arenaAdoptOwnSummon(name)
     if taPackage.arenaState ~= "ringing" then return end
-    -- Only adopt the monster that came through the gate in response to our own
-    -- ring. Without this guard a monster summoned by another player sharing the
-    -- arena gets adopted, and our real fight is forgotten.
     if not taPackage.arenaOwnSummonPending then return end
     taPackage.arenaOwnSummonPending = false
-    arenaEngage(matches[2])
+    arenaEngage(name)
+end
+
+createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
+    arenaAdoptOwnSummon(matches[2])
+end, { type = "regex" })
+
+-- Second arena: the summoned monster materializes instead of walking in. The
+-- smoke's color varies, so match any word(s) before "smoke".
+createTrigger("^An? (.+) appears in a puff of .+ smoke!$", function(matches)
+    arenaAdoptOwnSummon(matches[2])
 end, { type = "regex" })
 
 -- Response to the bare-return probe from arenaScanRoom: the arena brief's
