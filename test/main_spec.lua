@@ -3204,6 +3204,159 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
 end)
 
+-- =========================================================================
+-- Magic-shop potion runs (strength/agility potions, both arenas)
+-- =========================================================================
+-- Reactive round trip like healing: when a potion wears off (identical line for
+-- rowan and hyssop) we walk to the "magic shop", re-buy and re-drink both, and
+-- walk back. Uses the shared paced-journey pump, so both arenas do it — each by
+-- its own route.
+
+describe("magic-shop potion runs", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+        setClass("Warrior")
+    end)
+
+    describe("a potion wears off", function()
+
+        it("heads to the shop (second arena, first step 's') when fighting", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("potions", taPackage.arenaState)
+            assert.is_true(taPackage.needsPotions)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("heads to the shop (first arena, first step 'w') when fighting", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("potions", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("departs when the tingle fires while ringing", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "ringing"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("potions", taPackage.arenaState)
+        end)
+
+        it("just flags when the tingle fires mid-trip (e.g. fleeing)", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.is_true(taPackage.needsPotions)
+        end)
+
+        it("does not double-depart on the second potion's tingle line", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            helper.sendCalls = {}
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.are.equal("potions", taPackage.arenaState)
+        end)
+
+        it("does nothing outside an arena session", function()
+            taPackage.arenaState = nil
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.is_nil(taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("arriving at the shop", function()
+
+        it("re-buys and re-drinks both potions, then walks back (second arena)", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "potions"
+            taPackage.needsPotions = true
+            taPackage.arenaJourney = { steps = { "s", "s", "w", "w", "n", "n" }, index = 6, arriveRoom = "magic shop" }
+            helper.simulateLine("You're in the magic shop.")
+            assert.are.equal("buy rowan", helper.sendCalls[1])
+            assert.are.equal("buy hyssop", helper.sendCalls[2])
+            assert.are.equal("drink rowan", helper.sendCalls[3])
+            assert.are.equal("drink hyssop", helper.sendCalls[4])
+            assert.is_nil(taPackage.needsPotions)
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])  -- first step home (s,s,e,e,n,n)
+        end)
+
+        it("walks back on the first-arena route (starts 'n')", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "potions"
+            taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 3, arriveRoom = "magic shop" }
+            helper.simulateLine("You're in the magic shop.")
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("treats an intermediate room as a step, not the shop", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "potions"
+            taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 1, arriveRoom = "magic shop" }
+            helper.simulateLine("You're in the north plaza.")
+            assert.are.equal("potions", taPackage.arenaState)  -- not arrived
+            for _, c in ipairs(helper.sendCalls) do
+                assert.are_not.equal("buy rowan", c)
+            end
+        end)
+
+    end)
+
+    describe("returning to the arena from the shop", function()
+
+        it("resumes combat when nothing else is owed", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = "troll"
+            taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a troll", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("makes the shop trip after healing when a potion also wore off", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "returning"
+            taPackage.needsPotions = true
+            taPackage.arenaJourney = { steps = { "n" }, index = 4, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("potions", taPackage.arenaState)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])  -- first step to the shop
+        end)
+
+        it("does the shop before food when both are owed", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "returning"
+            taPackage.needsPotions = true
+            taPackage.needsDrinks = true
+            taPackage.arenaJourney = { steps = { "n" }, index = 4, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("potions", taPackage.arenaState)
+        end)
+
+    end)
+
+    it("stop clears needsPotions", function()
+        taPackage.arenaProfile = "second"
+        taPackage.needsPotions = true
+        taPackage.arenaState = "potions"
+        helper.simulateAlias("stop-ring-gong-and-fight-in-second-arena")
+        assert.is_nil(taPackage.needsPotions)
+    end)
+
+end)
+
 describe("cast.heal alias", function()
 
     before_each(function()

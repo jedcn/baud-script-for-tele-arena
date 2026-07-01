@@ -1336,14 +1336,26 @@ local ARENA_STEP_DELAY_MS = 1000
 -- forever waiting for a room it never enters. Re-send the current step after a
 -- longer pause than the normal pacing to both recover the walk and back off.
 local ARENA_TRIP_RETRY_MS = 2000
+local ARENA_ROOM = "arena"
 local SECOND_ARENA = {
-    arenaRoom  = "arena",
+    arenaRoom  = ARENA_ROOM,
     templeRoom = "temple",
     barRoom    = "inn",
     toTemple   = { "s", "s", "s", "s" },
     fromTemple = { "n", "n", "n", "n" },
     toBar      = { "s", "s", "w", "w", "sw", "sw" },
     fromBar    = { "ne", "ne", "e", "e", "n", "n" },
+}
+
+-- Strength/agility potions (rowan, hyssop) from the magic shop. Both arenas
+-- reach the same "magic shop" room by different routes. This is a reactive
+-- round trip like healing: when a potion wears off we walk here, re-buy and
+-- re-drink both, and walk back. The wear-off line is identical for each potion,
+-- so we can't tell which lapsed — we always refresh both.
+local SHOP_ROOM = "magic shop"
+local ARENA_SHOP = {
+    first  = { to = { "w", "s", "s" },                from = { "n", "n", "e" } },
+    second = { to = { "s", "s", "w", "w", "n", "n" }, from = { "s", "s", "e", "e", "n", "n" } },
 }
 
 -- Send the next queued direction. index counts steps already sent, so bumping
@@ -1396,10 +1408,26 @@ local function departForBar()
     arenaJourneyStart(SECOND_ARENA.toBar, SECOND_ARENA.barRoom)
 end
 
+-- Forward declaration: arenaJourneyOnMovement chains to the tavern/bar when a
+-- shop trip ends and food/drink is still owed, but departForTavern (which picks
+-- the right route per arena) is defined further down.
+local departForTavern
+
+-- Head to the magic shop to restock the strength/agility potions. Both arenas
+-- reach the same shop by different routes, chosen by profile. Always a journey,
+-- so even the first arena walks it one paced step at a time.
+local function departForShop()
+    local nav = ARENA_SHOP[taPackage.arenaProfile]
+    if not nav then return end
+    taPackage.arenaState = "potions"
+    echo("[arena] A potion wore off — heading to the magic shop.")
+    arenaJourneyStart(nav.to, SHOP_ROOM)
+end
+
 -- Advance the walk one room at a time. Called for every "You're ..." line while
--- a second-arena journey is active. Reaching the leg's destination room fires
--- that leg's action (heal, buy, or resume combat); any other room is an
--- intermediate step, so pace the next move.
+-- a paced journey is active. Reaching the leg's destination room fires that
+-- leg's action (heal, buy, or resume combat); any other room is an intermediate
+-- step, so pace the next move.
 local function arenaJourneyOnMovement(room)
     local j = taPackage.arenaJourney
     if not j then return end
@@ -1425,12 +1453,25 @@ local function arenaJourneyOnMovement(room)
         end
         taPackage.arenaState = "returning"
         arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
+    elseif st == "potions" then
+        -- Arrived at the magic shop. Re-buy and re-drink both potions — the
+        -- wear-off line is identical for each, so we refresh both — then walk
+        -- back. The route home is chosen by the same profile we walked out on.
+        send("buy rowan")
+        send("buy hyssop")
+        send("drink rowan")
+        send("drink hyssop")
+        taPackage.needsPotions = nil
+        taPackage.arenaState = "returning"
+        arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM)
     elseif st == "returning" then
-        -- Arrived back at the arena. The bar is its own round trip from here, so
-        -- if we healed but are still hungry/thirsty, set out for it now rather
-        -- than resuming combat.
-        if taPackage.needsDrinks or taPackage.needsMeal then
-            departForBar()
+        -- Arrived back at the arena. Each errand is its own round trip from here,
+        -- so if more are still owed, set out again (shop before food) rather than
+        -- resuming combat. departForTavern picks the right route per arena.
+        if taPackage.needsPotions then
+            departForShop()
+        elseif taPackage.needsDrinks or taPackage.needsMeal then
+            departForTavern()
         else
             arenaResumeInCombat()
         end
@@ -1478,7 +1519,7 @@ local function checkFleeArena()
     return false
 end
 
-local function departForTavern()
+function departForTavern()
     if taPackage.arenaProfile == "second" then
         departForBar()
         return
@@ -1608,6 +1649,7 @@ local function stopArena()
     taPackage.arenaProbePending = nil
     taPackage.arenaProfile = nil
     taPackage.arenaJourney = nil
+    taPackage.needsPotions = nil
     -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
@@ -1853,6 +1895,21 @@ createTrigger("^You're hungry\\.$", function()
         departForTavern()
     else
         echo("[arena] Hungry — will buy a meal at next tavern visit.")
+    end
+end, { type = "regex" })
+
+-- A strength/agility potion wearing off. The line is identical for rowan and
+-- hyssop, so it fires once per potion — we can't tell which lapsed and refresh
+-- both. Like thirst/hunger: leave for the shop now if we're fighting or
+-- ringing, otherwise flag it and the arrival handler makes the trip on the way
+-- back. A second wear-off line mid-trip just re-sets the flag (idempotent).
+createTrigger("^An odd tingling sensation washes over you briefly!$", function()
+    if not taPackage.arenaState then return end
+    taPackage.needsPotions = true
+    if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+        departForShop()
+    else
+        echo("[arena] A potion wore off — will restock at next shop visit.")
     end
 end, { type = "regex" })
 
