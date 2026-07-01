@@ -1424,6 +1424,10 @@ local function secondArenaOnMovement(room)
 end
 
 local function checkTrainingNeeded()
+    -- The second arena has no training hall — never leave to train from it.
+    -- Short-circuiting here disables both the XP-trigger and death-handler
+    -- training transitions at once, so a level-up there just keeps fighting.
+    if taPackage.arenaProfile == "second" then return false end
     local xp  = getExperience()
     local cls = getClass()
     local lvl = getLevel()

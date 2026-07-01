@@ -3068,6 +3068,27 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
     end)
 
+    describe("no training in the second arena", function()
+
+        before_each(function()
+            taPackage.arenaProfile = "second"
+        end)
+
+        it("keeps fighting through a level-up instead of leaving to train", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(80, 100)
+            taPackage.character.experience = 1120  -- past a level threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            helper.simulateLine("The cave bear falls to the ground lifeless!")
+            assert.are_not.equal("training", taPackage.arenaState)
+            -- resumes the ring loop, does not send the arena-1 training move
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+    end)
+
     describe("blocked first step out of the arena", function()
 
         local retryTimer
