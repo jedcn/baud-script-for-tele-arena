@@ -3110,12 +3110,15 @@ describe("ring-gong-and-fight-in-second-arena", function()
             assert.are.equal(before, #helper.sendCalls)  -- stale retry no-op
         end)
 
-        it("does not react on the first-arena profile", function()
+        it("also recovers on the first-arena profile (its shop trip is a journey too)", function()
             taPackage.arenaProfile = "first"
-            taPackage.arenaState = "returning"
-            taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
+            taPackage.arenaState = "potions"
+            taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 2, arriveRoom = "magic shop" }
             helper.simulateLine("In your haste, you trip and fall!")
-            assert.is_nil(tripTimer)
+            assert.is_not_nil(tripTimer)
+            tripTimer.cb()
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])  -- step 2, not advanced
+            assert.are.equal(2, taPackage.arenaJourney.index)
         end)
 
     end)

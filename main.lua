@@ -1319,24 +1319,23 @@ local function arenaResumeInCombat()
 end
 
 -- =========================================================================
--- Second arena navigation
+-- Paced journey navigation
 -- =========================================================================
--- The second arena shares the combat engine with the first, but its temple and
--- bar are several rooms away instead of one step off a shared plaza. Moving too
--- fast between rooms makes the character fall down, so each leg is walked one
--- step at a time with a pause between steps (the first arena's rooms are
--- adjacent, so it moves immediately). Each leg is an explicit list of
--- directions; we send the first step, then advance one step per room line we
--- receive, pausing SECOND_ARENA_STEP_DELAY_MS between steps. Note that both
--- arenas' rooms are literally named "arena" and "temple", so navigation cannot
--- be told apart by room name — it is driven by taPackage.arenaProfile, set by
--- whichever alias started the session.
-local SECOND_ARENA_STEP_DELAY_MS = 1000
+-- Some destinations are several rooms away, and moving between them too fast
+-- makes the character fall down. A "journey" walks such a route one step at a
+-- time: an explicit list of directions plus the room that ends it. We send the
+-- first step, then advance one step per room line we receive, pausing
+-- ARENA_STEP_DELAY_MS between steps. This is the shared travel primitive for
+-- the second arena's temple/bar trips and for either arena's magic-shop trip.
+-- The first arena's adjacent temple/bar still use immediate room-name moves
+-- (no journey); both arenas' rooms are named "arena"/"temple", so a journey is
+-- driven by its own step list, never by matching a waypoint's name.
+local ARENA_STEP_DELAY_MS = 1000
 -- When a step is rejected because we moved too fast ("In your haste, you trip
 -- and fall!"), no room line is printed, so the step-driven walk would stall
 -- forever waiting for a room it never enters. Re-send the current step after a
 -- longer pause than the normal pacing to both recover the walk and back off.
-local SECOND_ARENA_TRIP_RETRY_MS = 2000
+local ARENA_TRIP_RETRY_MS = 2000
 local SECOND_ARENA = {
     arenaRoom  = "arena",
     templeRoom = "temple",
@@ -1349,7 +1348,7 @@ local SECOND_ARENA = {
 
 -- Send the next queued direction. index counts steps already sent, so bumping
 -- it first and indexing gives the step we haven't walked yet.
-local function secondArenaSendStep()
+local function arenaJourneyStep()
     local j = taPackage.arenaJourney
     if not j then return end
     j.index = j.index + 1
@@ -1360,7 +1359,7 @@ end
 -- Re-send the current (not-yet-completed) step without advancing the index.
 -- Used to recover from a rejected move: the step at j.index was sent but never
 -- landed us in a new room, so we walk it again.
-local function secondArenaResendStep()
+local function arenaJourneyResendStep()
     local j = taPackage.arenaJourney
     if not j then return end
     local dir = j.steps[j.index]
@@ -1370,11 +1369,11 @@ end
 -- Pause before the next step so we don't move too fast and fall. The generation
 -- guard drops a stale timer if the session stops or a new journey starts before
 -- it fires.
-local function secondArenaScheduleStep()
+local function arenaJourneyScheduleStep()
     local gen = taPackage.arenaJourneyGen or 0
-    createTimer(SECOND_ARENA_STEP_DELAY_MS, function()
+    createTimer(ARENA_STEP_DELAY_MS, function()
         if taPackage.arenaState and (taPackage.arenaJourneyGen or 0) == gen then
-            secondArenaSendStep()
+            arenaJourneyStep()
         end
     end, { repeating = false })
 end
@@ -1382,10 +1381,10 @@ end
 -- Begin walking a leg: record the step list and the room that ends it, bump the
 -- journey generation to invalidate any in-flight step timer, and send the first
 -- step immediately (the pacing pause only applies between steps).
-local function secondArenaStartJourney(steps, arriveRoom)
+local function arenaJourneyStart(steps, arriveRoom)
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
     taPackage.arenaJourney = { steps = steps, index = 0, arriveRoom = arriveRoom }
-    secondArenaSendStep()
+    arenaJourneyStep()
 end
 
 -- Head to the bar. Its confirmation lines differ from the first arena's tavern
@@ -1394,18 +1393,18 @@ end
 local function departForBar()
     taPackage.arenaState = "tavern"
     echo("[arena] Heading to bar.")
-    secondArenaStartJourney(SECOND_ARENA.toBar, SECOND_ARENA.barRoom)
+    arenaJourneyStart(SECOND_ARENA.toBar, SECOND_ARENA.barRoom)
 end
 
 -- Advance the walk one room at a time. Called for every "You're ..." line while
 -- a second-arena journey is active. Reaching the leg's destination room fires
 -- that leg's action (heal, buy, or resume combat); any other room is an
 -- intermediate step, so pace the next move.
-local function secondArenaOnMovement(room)
+local function arenaJourneyOnMovement(room)
     local j = taPackage.arenaJourney
     if not j then return end
     if room ~= j.arriveRoom then
-        secondArenaScheduleStep()
+        arenaJourneyScheduleStep()
         return
     end
     taPackage.arenaJourney = nil
@@ -1425,7 +1424,7 @@ local function secondArenaOnMovement(room)
             taPackage.needsMeal = nil
         end
         taPackage.arenaState = "returning"
-        secondArenaStartJourney(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
+        arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
     elseif st == "returning" then
         -- Arrived back at the arena. The bar is its own round trip from here, so
         -- if we healed but are still hungry/thirsty, set out for it now rather
@@ -1470,7 +1469,7 @@ local function checkFleeArena()
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
         if taPackage.arenaProfile == "second" then
-            secondArenaStartJourney(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom)
+            arenaJourneyStart(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom)
         else
             arenaSend("w")
         end
@@ -1759,13 +1758,16 @@ end, { type = "regex" })
 
 createTrigger("^You're in the (.+)\\.$", function(matches)
     local room = matches[2]
-    -- The second arena walks fixed step lists rather than reacting to named
-    -- waypoints, and its rooms collide with the first arena's names ("arena",
-    -- "temple"), so hand the whole entry to its own handler.
-    if taPackage.arenaProfile == "second" then
-        secondArenaOnMovement(room)
+    -- While a paced journey is active (the second arena's temple/bar trips, or
+    -- either arena's magic-shop trip), the walk handler owns every room line —
+    -- it advances fixed step lists rather than reacting to named waypoints. The
+    -- second arena has no room-name navigation at all, so a stray room line
+    -- there with no journey is a no-op.
+    if taPackage.arenaJourney then
+        arenaJourneyOnMovement(room)
         return
     end
+    if taPackage.arenaProfile == "second" then return end
     if taPackage.arenaState == "training" then
         local phase = taPackage.arenaTrainingPhase or 1
         if phase == 1 and room == "north plaza" then
@@ -1808,13 +1810,12 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
     end
 end, { type = "regex" })
 
--- The second arena's paths pass through "You're on a path." rooms, which the
--- "in the" trigger above never matches. Feed them to the walk handler too so
--- every step advances. Guarded to the second profile; the first arena has no
--- such rooms.
+-- Paced routes pass through "You're on a path." rooms, which the "in the"
+-- trigger above never matches. Feed them to the walk handler too so every step
+-- advances. Only meaningful mid-journey; otherwise a no-op.
 createTrigger("^You're on a (.+)\\.$", function(matches)
-    if taPackage.arenaProfile ~= "second" then return end
-    secondArenaOnMovement(matches[2])
+    if not taPackage.arenaJourney then return end
+    arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
 
 -- Moving between rooms too quickly makes the character trip and fall. No room
@@ -1824,12 +1825,11 @@ end, { type = "regex" })
 -- room line is in flight — the resend cannot double-move us. The generation
 -- guard drops the retry if the session stops or a new journey starts first.
 createTrigger("^In your haste, you trip and fall!$", function()
-    if taPackage.arenaProfile ~= "second" then return end
     if not taPackage.arenaJourney then return end
     local gen = taPackage.arenaJourneyGen or 0
-    createTimer(SECOND_ARENA_TRIP_RETRY_MS, function()
+    createTimer(ARENA_TRIP_RETRY_MS, function()
         if taPackage.arenaState and (taPackage.arenaJourneyGen or 0) == gen then
-            secondArenaResendStep()
+            arenaJourneyResendStep()
         end
     end, { repeating = false })
 end, { type = "regex" })
@@ -1863,7 +1863,7 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
     -- round trip) rather than trying to route temple->bar directly.
     if taPackage.arenaProfile == "second" then
         taPackage.arenaState = "returning"
-        secondArenaStartJourney(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom)
+        arenaJourneyStart(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom)
         return
     end
     if taPackage.needsDrinks or taPackage.needsMeal then
