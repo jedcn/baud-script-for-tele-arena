@@ -1440,6 +1440,22 @@ local function departForShop()
     arenaJourneyStart(nav.to, SHOP_ROOM)
 end
 
+-- Back in the arena at the end of an errand. Each errand (heal, food, potions)
+-- is its own round trip that starts and ends here, so any still-owed errand is
+-- launched now — shop before food — rather than resuming combat. Shared by both
+-- the paced-journey return (second arena, and any shop trip) and the first
+-- arena's room-name return, so a potion that wore off mid-errand is serviced
+-- whichever way we walked home. departForShop/Tavern pick the route per arena.
+local function arenaArrivedHome()
+    if taPackage.needsPotions then
+        departForShop()
+    elseif taPackage.needsDrinks or taPackage.needsMeal then
+        departForTavern()
+    else
+        arenaResumeInCombat()
+    end
+end
+
 -- Advance the walk one room at a time. Called for every "You're ..." line while
 -- a paced journey is active. Reaching the leg's destination room fires that
 -- leg's action (heal, buy, or resume combat); any other room is an intermediate
@@ -1481,16 +1497,7 @@ local function arenaJourneyOnMovement(room)
         taPackage.arenaState = "returning"
         arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM)
     elseif st == "returning" then
-        -- Arrived back at the arena. Each errand is its own round trip from here,
-        -- so if more are still owed, set out again (shop before food) rather than
-        -- resuming combat. departForTavern picks the right route per arena.
-        if taPackage.needsPotions then
-            departForShop()
-        elseif taPackage.needsDrinks or taPackage.needsMeal then
-            departForTavern()
-        else
-            arenaResumeInCombat()
-        end
+        arenaArrivedHome()
     end
 end
 
@@ -1863,7 +1870,7 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
         if room == "north plaza" then
             arenaSend("e")
         elseif room == "arena" then
-            arenaResumeInCombat()
+            arenaArrivedHome()
         end
     end
 end, { type = "regex" })

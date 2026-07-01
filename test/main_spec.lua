@@ -3345,6 +3345,18 @@ describe("magic-shop potion runs", function()
             assert.are.equal("potions", taPackage.arenaState)
         end)
 
+        -- The first arena walks home via room-name navigation (no journey), so a
+        -- potion that wore off mid-errand must still be serviced on that path.
+        it("services a deferred potion run on the first arena's room-name return", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "returning"
+            taPackage.needsPotions = true
+            taPackage.arenaJourney = nil
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("potions", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])  -- first step of the shop route
+        end)
+
     end)
 
     it("stop clears needsPotions", function()
