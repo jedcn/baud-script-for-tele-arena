@@ -1443,11 +1443,11 @@ local function arenaJourneyOnMovement(room)
     elseif st == "tavern" then
         -- Arrived at the bar.
         if taPackage.needsDrinks then
-            for _ = 1, 3 do send("buy drink") end
+            send("buy drink")
             taPackage.needsDrinks = nil
         end
         if taPackage.needsMeal then
-            for _ = 1, 3 do send("buy meal") end
+            send("buy meal")
             taPackage.needsMeal = nil
         end
         taPackage.arenaState = "returning"
@@ -1823,11 +1823,11 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
             arenaSend("ne")
         elseif room == "tavern" then
             if taPackage.needsDrinks then
-                for _ = 1, 3 do send("buy drink") end
+                send("buy drink")
                 taPackage.needsDrinks = nil
             end
             if taPackage.needsMeal then
-                for _ = 1, 3 do send("buy meal") end
+                send("buy meal")
                 taPackage.needsMeal = nil
             end
             taPackage.arenaState = "returning"

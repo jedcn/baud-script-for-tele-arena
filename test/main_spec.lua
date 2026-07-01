@@ -2540,37 +2540,32 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("e", helper.sendCalls[1])
         end)
 
-        it("buys 3 drinks when entering tavern with needsDrinks", function()
+        it("buys a drink when entering tavern with needsDrinks", function()
             taPackage.arenaState = "tavern"
             taPackage.needsDrinks = true
             helper.simulateLine("You're in the tavern.")
             assert.are.equal("buy drink", helper.sendCalls[1])
-            assert.are.equal("buy drink", helper.sendCalls[2])
-            assert.are.equal("buy drink", helper.sendCalls[3])
+            assert.are.equal("sw", helper.sendCalls[2])
             assert.is_nil(taPackage.needsDrinks)
         end)
 
-        it("buys 3 meals when entering tavern with needsMeal", function()
+        it("buys a meal when entering tavern with needsMeal", function()
             taPackage.arenaState = "tavern"
             taPackage.needsMeal = true
             helper.simulateLine("You're in the tavern.")
             assert.are.equal("buy meal", helper.sendCalls[1])
-            assert.are.equal("buy meal", helper.sendCalls[2])
-            assert.are.equal("buy meal", helper.sendCalls[3])
+            assert.are.equal("sw", helper.sendCalls[2])
             assert.is_nil(taPackage.needsMeal)
         end)
 
-        it("buys both drinks and meals when both needed", function()
+        it("buys both a drink and a meal when both needed", function()
             taPackage.arenaState = "tavern"
             taPackage.needsDrinks = true
             taPackage.needsMeal = true
             helper.simulateLine("You're in the tavern.")
             assert.are.equal("buy drink", helper.sendCalls[1])
-            assert.are.equal("buy drink", helper.sendCalls[2])
-            assert.are.equal("buy drink", helper.sendCalls[3])
-            assert.are.equal("buy meal", helper.sendCalls[4])
-            assert.are.equal("buy meal", helper.sendCalls[5])
-            assert.are.equal("buy meal", helper.sendCalls[6])
+            assert.are.equal("buy meal", helper.sendCalls[2])
+            assert.are.equal("sw", helper.sendCalls[3])
         end)
 
         it("schedules a retry and stays in tavern state when cannot leave in heat of battle", function()
@@ -3028,7 +3023,7 @@ describe("ring-gong-and-fight-in-second-arena", function()
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("buys three drinks on arriving at the inn, then walks back", function()
+        it("buys a drink on arriving at the inn, then walks back", function()
             taPackage.arenaState = "tavern"
             taPackage.needsDrinks = true
             taPackage.arenaJourney = { steps = { "sw" }, index = 6, arriveRoom = "inn" }
@@ -3037,13 +3032,13 @@ describe("ring-gong-and-fight-in-second-arena", function()
             for _, c in ipairs(helper.sendCalls) do
                 if c == "buy drink" then drinks = drinks + 1 end
             end
-            assert.are.equal(3, drinks)
+            assert.are.equal(1, drinks)
             assert.is_nil(taPackage.needsDrinks)
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("ne", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("buys three meals on arriving at the inn when hungry", function()
+        it("buys a meal on arriving at the inn when hungry", function()
             taPackage.arenaState = "tavern"
             taPackage.needsMeal = true
             taPackage.arenaJourney = { steps = { "sw" }, index = 6, arriveRoom = "inn" }
@@ -3052,7 +3047,7 @@ describe("ring-gong-and-fight-in-second-arena", function()
             for _, c in ipairs(helper.sendCalls) do
                 if c == "buy meal" then meals = meals + 1 end
             end
-            assert.are.equal(3, meals)
+            assert.are.equal(1, meals)
             assert.is_nil(taPackage.needsMeal)
         end)
 
