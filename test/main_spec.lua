@@ -3364,6 +3364,82 @@ describe("magic-shop potion runs", function()
 
 end)
 
+-- =========================================================================
+-- Errand departure must not race a gong summon (problem.log deadlock)
+-- =========================================================================
+-- A potion wore off in the ring gap while our gong ring was still in flight.
+-- The old code departed for the shop immediately, flipping the state out of
+-- "ringing", so the warlock that then materialized was never adopted — and the
+-- shop walk jammed on "You cannot leave in the heat of battle!" (a state the
+-- retry didn't cover). The character stood there taking hits until stopped by
+-- hand. The fix: defer the errand while a summon is pending, and service it
+-- from the next clear ring gap.
+
+describe("errand vs. in-flight gong summon", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        setClass("Warrior")
+        taPackage.arenaProfile = "second"
+    end)
+
+    it("defers the shop run while a ring is in flight, then fights the summon", function()
+        -- Ringing gap, gong just rung and awaiting its monster.
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = true
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        -- Did NOT bail out to the shop: still ringing, no walk sent.
+        assert.are.equal("ringing", taPackage.arenaState)
+        assert.is_true(taPackage.needsPotions)
+        for _, c in ipairs(helper.sendCalls) do
+            assert.are_not.equal("s", c)  -- no shop-route step
+        end
+
+        -- The summon we rang for now lands and must be adopted and fought.
+        taPackage.arenaOwnSummonPending = true
+        helper.mockDbOneRow = { description = "A warlock." }
+        helper.simulateLine("A warlock appears in a puff of reddish smoke!")
+        assert.are.equal("fighting", taPackage.arenaState)
+        assert.are.equal("warlock", taPackage.arenaMonster)
+    end)
+
+    it("makes the deferred shop run from the next clear ring gap", function()
+        taPackage.needsPotions = true
+        taPackage.arenaState = "ringing"
+        taPackage.arenaProbePending = true
+        -- The bare-return probe comes back with an empty room.
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+        assert.are.equal("potions", taPackage.arenaState)
+        assert.are.equal("s", helper.sendCalls[#helper.sendCalls])  -- first shop step
+    end)
+
+    it("rings normally from a clear gap when no errand is owed", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaProbePending = true
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+        assert.are.equal("ring gong", helper.sendCalls[#helper.sendCalls])
+    end)
+
+    it("retries a shop step blocked by heat of battle", function()
+        local retryTimer
+        _G.createTimer = function(interval, cb, opts)
+            if interval == 2000 then retryTimer = { cb = cb } end
+            return "mock_timer"
+        end
+        taPackage.arenaState = "potions"
+        taPackage.arenaLastCmd = "s"
+        taPackage.arenaRetryGeneration = 0
+        helper.simulateLine("You cannot leave in the heat of battle!")
+        assert.is_not_nil(retryTimer)
+        retryTimer.cb()
+        assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+    end)
+
+end)
+
 describe("cast.heal alias", function()
 
     before_each(function()

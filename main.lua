@@ -1423,6 +1423,41 @@ local function arenaArrivedHome()
     end
 end
 
+-- Can we walk out for an errand (thirst/hunger/potion) right now? Only from an
+-- active fight or the ringing gap, and NEVER while a gong summon is still in
+-- flight. Ringing the gong is a two-step handshake — "You just rang the great
+-- gong!" then, a beat later, the monster materializes — and adoption of that
+-- monster requires arenaState == "ringing" (see arenaAdoptOwnSummon). If an
+-- errand departs in that gap, the state flips to "potions"/"tavern", the summon
+-- is orphaned (never adopted, so we never swing at it), and we walk out into a
+-- monster that answers our move with "You cannot leave in the heat of battle!"
+-- — the run then wedges forever (see problem.log: a potion wore off between the
+-- ring and a warlock's arrival, and the character stood there thirsty, taking
+-- hits, until it was stopped by hand). Deferring here lets the summon land and
+-- be fought; the errand is picked up from the next clear ring gap below.
+local function arenaCanDepartNow()
+    local st = taPackage.arenaState
+    if st ~= "fighting" and st ~= "ringing" then return false end
+    if taPackage.arenaRingPending or taPackage.arenaOwnSummonPending then return false end
+    return true
+end
+
+-- At a clear-room ring decision, honor any errand deferred while a monster was
+-- present (or while a summon was still in flight): the room is empty now, so it
+-- is safe to walk out. Otherwise ring for a fresh monster. This is the single
+-- service point that guarantees a deferred potion/food/drink run is eventually
+-- made even when it was flagged mid-fight. Mirrors arenaArrivedHome, but the
+-- no-errand case rings rather than resuming a (nonexistent) fight.
+local function arenaRingOrErrand()
+    if taPackage.needsPotions then
+        departForShop()
+    elseif taPackage.needsDrinks or taPackage.needsMeal then
+        departForTavern()
+    else
+        arenaRing()
+    end
+end
+
 -- Advance the walk one room at a time. Called for every "You're ..." line while
 -- a paced journey is active. Reaching the leg's destination room fires that
 -- leg's action (heal, buy, or resume combat); any other room is an intermediate
@@ -1700,7 +1735,7 @@ createTrigger("^There is (.+) here\\.$", function(matches)
     if monster then
         arenaEngage(monster)
     else
-        arenaRing()
+        arenaRingOrErrand()
     end
 end, { type = "regex" })
 
@@ -1716,7 +1751,7 @@ createTrigger("^There .+ on the floor\\.$", function()
     if not taPackage.arenaProbePending then return end
     taPackage.arenaProbePending = false
     if taPackage.arenaState ~= "ringing" then return end
-    arenaRing()
+    arenaRingOrErrand()
 end, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
@@ -1870,7 +1905,7 @@ createTrigger("^You're thirsty\\.$", function()
     setCharacterStatus("Thirsty")
     if not taPackage.arenaState then return end
     taPackage.needsDrinks = true
-    if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+    if arenaCanDepartNow() then
         departForTavern()
     else
         echo("[arena] Thirsty — will buy drinks at next tavern visit.")
@@ -1881,7 +1916,7 @@ createTrigger("^You're hungry\\.$", function()
     setCharacterStatus("Hungry")
     if not taPackage.arenaState then return end
     taPackage.needsMeal = true
-    if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+    if arenaCanDepartNow() then
         departForTavern()
     else
         echo("[arena] Hungry — will buy a meal at next tavern visit.")
@@ -1896,7 +1931,7 @@ end, { type = "regex" })
 createTrigger("^An odd tingling sensation washes over you briefly!$", function()
     if not taPackage.arenaState then return end
     taPackage.needsPotions = true
-    if taPackage.arenaState == "fighting" or taPackage.arenaState == "ringing" then
+    if arenaCanDepartNow() then
         departForShop()
     else
         echo("[arena] A potion wore off — will restock at next shop visit.")
@@ -1922,8 +1957,15 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
     arenaSend("e")
 end, { type = "regex" })
 
+-- Any walk-out that gets blocked by a monster — fleeing to the temple, or an
+-- errand run to the bar ("tavern") or magic shop ("potions") — retries the same
+-- step until a between-attacks window opens. arenaCanDepartNow now stops us from
+-- departing into an in-flight summon, so this is a backstop for the case where a
+-- monster arrives after we've stepped out (e.g. another player's ring on the
+-- shared gong). Omitting "potions" here is exactly what left problem.log wedged.
 createTrigger("^You cannot leave in the heat of battle!$", function()
-    if taPackage.arenaState ~= "fleeing" and taPackage.arenaState ~= "tavern" then return end
+    local st = taPackage.arenaState
+    if st ~= "fleeing" and st ~= "tavern" and st ~= "potions" then return end
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
     local gen = taPackage.arenaRetryGeneration or 0
