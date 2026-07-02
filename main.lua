@@ -1957,6 +1957,103 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
     arenaSend("e")
 end, { type = "regex" })
 
+-- =========================================================================
+-- hang-around-in-tavern
+--
+-- A standalone "idle in a tavern" mode, independent of the arena scripts. It
+-- parks the character in a bar and keeps it fed and watered: buy a meal when
+-- hungry, a drink when thirsty. Two things end it, both by leaving the game
+-- with "x": HP falling below half (something is hurting us faster than we can
+-- recover — e.g. we ran out of money and hunger/thirst is grinding us down),
+-- or a purchase failing for lack of money (the direct signal for the same).
+-- =========================================================================
+
+local TAVERN_HP_FRACTION = 0.5      -- exit if current HP drops below this share of max
+local TAVERN_STATUS_POLL_MS = 60000 -- re-check HP this often; hunger/thirst damage is silent
+
+local function isTavernRoom(room)
+    if not room then return false end
+    local r = room:lower()
+    return r:find("tavern") ~= nil or r:find("bar") ~= nil
+end
+
+-- Leave the game and stop the mode. Bumping the generation invalidates any
+-- poll timer still in flight so it can't re-arm after we've quit.
+local function tavernExitGame(reason)
+    echo("[tavern] " .. reason .. " — leaving the game.")
+    taPackage.tavernMode = false
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    send("x")
+end
+
+-- Poll our status while idling so hunger/thirst damage (which prints no number)
+-- can't slip us past the HP floor unnoticed. The Vitality trigger below reads
+-- the fresh line and decides whether to bail.
+local function scheduleTavernPoll()
+    local gen = taPackage.tavernModeGen
+    createTimer(TAVERN_STATUS_POLL_MS, function()
+        if not taPackage.tavernMode or taPackage.tavernModeGen ~= gen then return end
+        send("st")
+        scheduleTavernPoll()
+    end, { repeating = false })
+end
+
+createAlias("^hang-around-in-tavern$", function()
+    send("look")
+    local room = taPackage.currentRoom
+    if not isTavernRoom(room) then
+        echo("[tavern] Not in a tavern/bar (room: " .. (room or "unknown")
+            .. "). Walk into one first, then run hang-around-in-tavern.")
+        return
+    end
+    taPackage.tavernMode = true
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    echo("[tavern] Hanging around in the " .. room
+        .. ". Buying meals/drinks as needed; will leave (x) if HP drops below 50% or money runs out.")
+    send("st") -- prime HP tracking so the first poll isn't the first reading
+    scheduleTavernPoll()
+end, { type = "regex" })
+
+createAlias("^stop-hang-around-in-tavern$", function()
+    if not taPackage.tavernMode then
+        echo("[tavern] Not currently hanging around.")
+        return
+    end
+    taPackage.tavernMode = false
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    echo("[tavern] Stopped hanging around (still in the game).")
+end, { type = "regex" })
+
+createTrigger("^You're hungry\\.$", function()
+    if not taPackage.tavernMode then return end
+    send("buy meal")
+end, { type = "regex" })
+
+createTrigger("^You're thirsty\\.$", function()
+    if not taPackage.tavernMode then return end
+    send("buy drink")
+end, { type = "regex" })
+
+-- A purchase we asked for was refused for lack of funds ("You can't afford
+-- drink.", "You can't afford a meal."). In tavern mode the only things we ever
+-- try to buy are meals and drinks, so any affordability failure is ours: quit
+-- before hunger/thirst grinds us down.
+createTrigger("^You can't afford (.+)\\.$", function(matches)
+    if not taPackage.tavernMode then return end
+    tavernExitGame("Out of money (can't afford " .. matches[2] .. ")")
+end, { type = "regex" })
+
+-- A fresh Vitality reading — from our poll, or any status check. If we've
+-- dropped below half health while idling, leave the game.
+createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
+    if not taPackage.tavernMode then return end
+    local current = tonumber(matches[2])
+    local max = tonumber(matches[3])
+    if current and max and max > 0 and current < max * TAVERN_HP_FRACTION then
+        tavernExitGame("HP below 50% (" .. current .. "/" .. max .. ")")
+    end
+end, { type = "regex" })
+
 -- Any walk-out that gets blocked by a monster — fleeing to the temple, or an
 -- errand run to the bar ("tavern") or magic shop ("potions") — retries the same
 -- step until a between-attacks window opens. arenaCanDepartNow now stops us from

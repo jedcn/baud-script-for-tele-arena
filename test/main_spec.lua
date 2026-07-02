@@ -5142,3 +5142,145 @@ describe("Attack badges", function()
     end)
 
 end)
+
+-- =========================================================================
+-- hang-around-in-tavern
+-- =========================================================================
+
+describe("hang-around-in-tavern", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function lastSend()
+        return helper.sendCalls[#helper.sendCalls]
+    end
+
+    describe("starting", function()
+
+        it("refuses when not in a tavern/bar", function()
+            taPackage.currentRoom = "north plaza"
+            helper.simulateAlias("hang-around-in-tavern")
+            assert.is_falsy(taPackage.tavernMode)
+        end)
+
+        it("enters tavern mode when the room is a tavern", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            assert.is_true(taPackage.tavernMode)
+        end)
+
+        it("also accepts a bar room", function()
+            taPackage.currentRoom = "village bar"
+            helper.simulateAlias("hang-around-in-tavern")
+            assert.is_true(taPackage.tavernMode)
+        end)
+
+        it("looks around and primes status on start", function()
+            taPackage.currentRoom = "village tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            local looked, statused = false, false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "look" then looked = true end
+                if cmd == "st" then statused = true end
+            end
+            assert.is_true(looked)
+            assert.is_true(statused)
+        end)
+
+    end)
+
+    describe("stopping", function()
+
+        it("leaves tavern mode without exiting the game", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            helper.sendCalls = {}
+            helper.simulateAlias("stop-hang-around-in-tavern")
+            assert.is_false(taPackage.tavernMode)
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
+        end)
+
+    end)
+
+    describe("eating and drinking", function()
+
+        before_each(function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            helper.sendCalls = {}
+        end)
+
+        it("buys a meal when hungry", function()
+            helper.simulateLine("You're hungry.")
+            assert.are.equal("buy meal", lastSend())
+        end)
+
+        it("buys a drink when thirsty", function()
+            helper.simulateLine("You're thirsty.")
+            assert.are.equal("buy drink", lastSend())
+        end)
+
+    end)
+
+    describe("out of tavern mode", function()
+
+        it("does not buy meals when not hanging around", function()
+            helper.simulateLine("You're hungry.")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("buy meal", cmd)
+            end
+        end)
+
+    end)
+
+    describe("exiting the game", function()
+
+        before_each(function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            helper.sendCalls = {}
+        end)
+
+        it("sends x when HP drops below 50%", function()
+            helper.simulateLine("Vitality:     29 / 60")
+            assert.are.equal("x", lastSend())
+            assert.is_false(taPackage.tavernMode)
+        end)
+
+        it("stays in the game when HP is at or above 50%", function()
+            helper.simulateLine("Vitality:     30 / 60")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
+            assert.is_true(taPackage.tavernMode)
+        end)
+
+        it("sends x when a drink is unaffordable", function()
+            helper.simulateLine("You can't afford drink.")
+            assert.are.equal("x", lastSend())
+            assert.is_false(taPackage.tavernMode)
+        end)
+
+        it("sends x when a meal is unaffordable", function()
+            helper.simulateLine("You can't afford a meal.")
+            assert.are.equal("x", lastSend())
+            assert.is_false(taPackage.tavernMode)
+        end)
+
+        it("ignores low HP when not hanging around", function()
+            helper.simulateAlias("stop-hang-around-in-tavern")
+            helper.sendCalls = {}
+            helper.simulateLine("Vitality:     5 / 60")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
+        end)
+
+    end)
+
+end)
