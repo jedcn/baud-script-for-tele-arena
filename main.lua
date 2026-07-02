@@ -564,6 +564,12 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     setGold(matches[2])
 end, { type = "regex" })
 
+-- Buying passage across the great lake charges us, but the ship message doesn't
+-- report the fare, so fire an inventory check to re-capture our current gold.
+createTrigger("^You buy passage across the great lake and board a ship", function()
+    send("i")
+end, { type = "regex" })
+
 createTrigger("^You found (\\d+) gold crowns while searching the (.+)'s corpse\\.$", function(matches)
     local found = tonumber(matches[2])
     local monster = matches[3]

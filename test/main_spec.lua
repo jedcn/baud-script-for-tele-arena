@@ -379,6 +379,24 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Buy passage trigger
+    -- =========================================================================
+
+    describe("Buy passage trigger", function()
+
+        it("sends i after boarding the ship", function()
+            helper.simulateLine("You buy passage across the great lake and board a ship...")
+            assert.are.equal("i", helper.sendCalls[1])
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("You board a ship at the docks.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Status trigger
     -- =========================================================================
 
