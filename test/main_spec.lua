@@ -3123,6 +3123,31 @@ describe("ring-gong-and-fight-in-second-arena", function()
             assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
         end)
 
+        it("does not advance on the departure-room scan left over from the kill", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're thirsty.")   -- departs: first "s" sent
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+            assert.are.equal(1, taPackage.arenaJourney.index)
+            -- The trailing "You're in the arena." brief from the finished fight is
+            -- the room we're leaving, not a move — it must not schedule a step.
+            helper.simulateLine("You're in the arena.")
+            assert.is_nil(stepTimer)
+            assert.are.equal(1, taPackage.arenaJourney.index)
+        end)
+
+        it("stays in sync: one real move advances exactly one step (s then s, not w)", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You're thirsty.")     -- step 1: "s"
+            helper.simulateLine("You're in the arena.") -- departure scan: ignored
+            helper.simulateLine("You're on a path.")    -- first real move
+            assert.is_not_nil(stepTimer)
+            stepTimer.cb()
+            -- The route is {s,s,...}; after one real move the next step is the
+            -- second "s", NOT "w" (the desync that walked into "no exit").
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+            assert.are.equal(2, taPackage.arenaJourney.index)
+        end)
+
         it("passes through north plaza as an intermediate step to the inn", function()
             taPackage.arenaState = "tavern"
             taPackage.arenaJourney = { steps = { "s", "s", "w", "w", "sw", "sw" }, index = 4, arriveRoom = "inn" }

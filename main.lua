@@ -1386,12 +1386,14 @@ local function arenaJourneyScheduleStep()
     end, { repeating = false })
 end
 
--- Begin walking a leg: record the step list and the room that ends it, bump the
--- journey generation to invalidate any in-flight step timer, and send the first
--- step immediately (the pacing pause only applies between steps).
-local function arenaJourneyStart(steps, arriveRoom)
+-- Begin walking a leg: record the step list, the room that ends it, and the room
+-- we are leaving from (fromRoom), bump the journey generation to invalidate any
+-- in-flight step timer, and send the first step immediately (the pacing pause
+-- only applies between steps). fromRoom lets the movement handler ignore the
+-- room brief we're already standing in — see arenaJourneyOnMovement.
+local function arenaJourneyStart(steps, arriveRoom, fromRoom)
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
-    taPackage.arenaJourney = { steps = steps, index = 0, arriveRoom = arriveRoom }
+    taPackage.arenaJourney = { steps = steps, index = 0, arriveRoom = arriveRoom, fromRoom = fromRoom }
     arenaJourneyStep()
 end
 
@@ -1401,7 +1403,7 @@ end
 local function departForBar()
     taPackage.arenaState = "tavern"
     echo("[arena] Heading to bar.")
-    arenaJourneyStart(SECOND_ARENA.toBar, SECOND_ARENA.barRoom)
+    arenaJourneyStart(SECOND_ARENA.toBar, SECOND_ARENA.barRoom, SECOND_ARENA.arenaRoom)
 end
 
 -- Forward declaration: arenaJourneyOnMovement chains to the tavern/bar when a
@@ -1417,7 +1419,7 @@ local function departForShop()
     if not nav then return end
     taPackage.arenaState = "potions"
     echo("[arena] A potion wore off — heading to the magic shop.")
-    arenaJourneyStart(nav.to, SHOP_ROOM)
+    arenaJourneyStart(nav.to, SHOP_ROOM, ARENA_ROOM)
 end
 
 -- Back in the arena at the end of an errand. Each errand (heal, food, potions)
@@ -1478,6 +1480,16 @@ end
 local function arenaJourneyOnMovement(room)
     local j = taPackage.arenaJourney
     if not j then return end
+    -- A room brief for the room we departed from is NOT a move. A journey leaves
+    -- right after a kill, and the kill's trailing "You're in the arena." scan
+    -- arrives just as we start walking; counting it as a step advanced the index
+    -- past our true position, so one real south consumed two "s" steps and the
+    -- next step ("w") fired a room too early → "no exit" and a wedged walk (see
+    -- something-went-wrong.log). Departure rooms are distinctive ("arena", "inn",
+    -- "temple", "magic shop") and a route never revisits its start, so ignoring
+    -- them for the whole leg is safe — unlike the generic "path" rooms a leg may
+    -- pass through several of in a row, which must each still count.
+    if j.fromRoom and room == j.fromRoom then return end
     if room ~= j.arriveRoom then
         arenaJourneyScheduleStep()
         return
@@ -1500,7 +1512,7 @@ local function arenaJourneyOnMovement(room)
         end
         taPackage.arenaParchedStreak = 0
         taPackage.arenaState = "returning"
-        arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
+        arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom, SECOND_ARENA.barRoom)
     elseif st == "potions" then
         -- Arrived at the magic shop. Re-buy and re-drink both potions — the
         -- wear-off line is identical for each, so we refresh both — then walk
@@ -1511,7 +1523,7 @@ local function arenaJourneyOnMovement(room)
         send("drink hyssop")
         taPackage.needsPotions = nil
         taPackage.arenaState = "returning"
-        arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM)
+        arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM, SHOP_ROOM)
     elseif st == "returning" then
         arenaArrivedHome()
     end
@@ -1549,7 +1561,7 @@ local function checkFleeArena()
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
         if taPackage.arenaProfile == "second" then
-            arenaJourneyStart(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom)
+            arenaJourneyStart(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom, SECOND_ARENA.arenaRoom)
         else
             arenaSend("w")
         end
@@ -1994,7 +2006,7 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
     -- round trip) rather than trying to route temple->bar directly.
     if taPackage.arenaProfile == "second" then
         taPackage.arenaState = "returning"
-        arenaJourneyStart(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom)
+        arenaJourneyStart(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom, SECOND_ARENA.templeRoom)
         return
     end
     if taPackage.needsDrinks or taPackage.needsMeal then
