@@ -1688,6 +1688,16 @@ local function stopArena()
 end
 taPackage.stopArena = stopArena
 
+-- Arena mode's last-resort escape hatch. A wedged navigation walk or an
+-- unserviceable thirst/hunger loop would otherwise grind the character to death
+-- (see something-went-wrong.log). Leaving the game with "x" preserves the
+-- character and stops all damage; tear the session down so no stale timer re-arms.
+local function arenaEmergencyExit(reason)
+    echo("[arena] " .. reason .. " — leaving the game (x).")
+    send("x")
+    stopArena()
+end
+
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     stopArena()
 end, { type = "regex" })
@@ -2093,6 +2103,17 @@ createTrigger("^You cannot leave in the heat of battle!$", function()
             arenaSend(cmd)
         end
     end, { repeating = false })
+end, { type = "regex" })
+
+-- A paced journey only issues moves from a fixed route, so a "no exit" reply means
+-- the walk has lost sync with the character's true position. No room line follows,
+-- so the step index can never advance — the walk wedges forever (something-went-wrong
+-- .log:1899, where the character then slowly died of thirst). This is unrecoverable
+-- in-script; bail out of the game before thirst/hunger grinds us down. Scoped to an
+-- active journey so a stray manual move never trips it.
+createTrigger("^Sorry, there's no exit in that direction\\.$", function()
+    if not taPackage.arenaState or not taPackage.arenaJourney then return end
+    arenaEmergencyExit("Navigation lost (no exit on a journey step)")
 end, { type = "regex" })
 
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function(matches)

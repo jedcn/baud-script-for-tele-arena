@@ -2609,6 +2609,41 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("emergency exit on lost navigation", function()
+
+        local function sawSend(cmd)
+            for _, c in ipairs(helper.sendCalls) do
+                if c == cmd then return true end
+            end
+            return false
+        end
+
+        it("leaves the game when a journey step hits no exit", function()
+            taPackage.arenaState = "tavern"
+            taPackage.arenaJourney = { steps = { "w" }, index = 1, arriveRoom = "inn" }
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.is_true(sawSend("x"))
+            assert.is_nil(taPackage.arenaState)   -- session torn down
+            assert.is_nil(taPackage.arenaJourney)
+        end)
+
+        it("ignores no exit when no journey is active", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaJourney = nil
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        it("ignores no exit when no arena session is running", function()
+            taPackage.arenaState = nil
+            taPackage.arenaJourney = { steps = { "w" }, index = 1, arriveRoom = "inn" }
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("healing trigger ignored outside arena script", function()
 
         it("does not affect state when arenaState is not healing", function()
