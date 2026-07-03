@@ -12,6 +12,7 @@ M.sendCalls = {}
 M.echoCalls = {}
 M.cechoBgCalls = {}
 M.httpPostCalls = {}
+M.httpRequestCalls = {}
 M.dbCalls = {}
 M.mockDbOneRow = nil
 M.mockDbRows = {}
@@ -120,6 +121,10 @@ function httpPost(url, body, callback)
     table.insert(M.httpPostCalls, { url = url, body = body, callback = callback })
 end
 
+function httpRequest(url, options, callback)
+    table.insert(M.httpRequestCalls, { url = url, options = options, callback = callback })
+end
+
 function M.simulateLine(text)
     for _, trigger in ipairs(M.triggers) do
         local matches = {string.match(text, trigger.pattern)}
@@ -179,6 +184,7 @@ function M.resetAll()
     for k in pairs(M.echoCalls) do M.echoCalls[k] = nil end
     for k in pairs(M.cechoBgCalls) do M.cechoBgCalls[k] = nil end
     for k in pairs(M.httpPostCalls) do M.httpPostCalls[k] = nil end
+    for k in pairs(M.httpRequestCalls) do M.httpRequestCalls[k] = nil end
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.mockDbOneRow = nil
     M.mockDbRows = {}

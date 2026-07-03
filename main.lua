@@ -87,6 +87,20 @@ function getExperience()
     return taPackage.character.experience
 end
 
+-- Group an integer into comma-separated thousands, e.g. 620046 -> "620,046".
+-- Display-only (notifications); returns non-numbers unchanged.
+function formatWithCommas(n)
+    local num = tonumber(n)
+    if not num then return tostring(n) end
+    local s = tostring(math.floor(num))
+    while true do
+        local replaced
+        s, replaced = string.gsub(s, "^(-?%d+)(%d%d%d)", "%1,%2")
+        if replaced == 0 then break end
+    end
+    return s
+end
+
 function setClass(value)
     taPackage.character.class = value
 end
@@ -1628,13 +1642,23 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     local gained = startXp and (xp - startXp) or 0
     echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
         .. gained .. " XP (total: " .. xp .. ")")
-    -- Proof-of-concept phone notification for the second arena: mirror the
-    -- periodic XP heartbeat to an ntfy topic so progress is visible off-screen.
-    -- Fire-and-forget (no callback) — a failed ping must never disturb the loop.
+    -- Phone notification for the second arena so progress is visible off-screen.
+    -- The XP echo above runs every 5 min, but a check-in every 5 min is too
+    -- chatty for a phone, so throttle the ping to every 15 min. Fire-and-forget
+    -- (no callback) — a failed ping must never disturb the fight loop.
     if taPackage.arenaProfile == "second" then
-        httpPost("https://ntfy.sh/s5bbs-tele-arena-j5",
-            "Fighting in Second Arena. The time is " .. os.date("%H:%M:%S")
-            .. ". Current Experience is " .. xp)
+        local now = os.time()
+        local lastNtfy = taPackage.arenaLastNtfyTime
+        if not lastNtfy or (now - lastNtfy) >= 900 then
+            taPackage.arenaLastNtfyTime = now
+            local hp = getVitality()
+            httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
+                method = "POST",
+                headers = { ["X-Title"] = "2nd Arena Check-In" },
+                body = "[" .. (taPackage.character.name or "?") .. "] Current XP:"
+                    .. formatWithCommas(xp) .. " Current HP:" .. (hp or "?"),
+            })
+        end
     end
 end, { type = "regex" })
 
@@ -1646,6 +1670,7 @@ local function beginArenaSession(profile, debug)
     taPackage.arenaDebug = debug
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
+    taPackage.arenaLastNtfyTime = nil
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
     taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1

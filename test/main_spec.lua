@@ -473,6 +473,24 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    describe("formatWithCommas", function()
+
+        it("groups thousands with commas", function()
+            assert.are.equal("620,046", formatWithCommas(620046))
+            assert.are.equal("1,000,000", formatWithCommas(1000000))
+        end)
+
+        it("leaves values under 1000 unchanged", function()
+            assert.are.equal("313", formatWithCommas(313))
+            assert.are.equal("0", formatWithCommas(0))
+        end)
+
+        it("accepts numeric strings", function()
+            assert.are.equal("620,046", formatWithCommas("620046"))
+        end)
+
+    end)
+
     -- =========================================================================
     -- Vitality trigger
     -- =========================================================================
@@ -1984,15 +2002,18 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("second-arena XP check fires an ntfy notification", function()
             taPackage.arenaProfile = "second"
+            taPackage.character.name = "Tojolias"
+            taPackage.character.vitalityCurrent = 313
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
-            helper.simulateLine("Experience:   800")
-            assert.are.equal(1, #helper.httpPostCalls)
-            local call = helper.httpPostCalls[1]
+            helper.simulateLine("Experience:   620046")
+            assert.are.equal(1, #helper.httpRequestCalls)
+            local call = helper.httpRequestCalls[1]
             assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
-            assert.is_not_nil(string.find(call.body, "Fighting in Second Arena", 1, true))
-            assert.is_not_nil(string.find(call.body, "Current Experience is 800", 1, true))
+            assert.are.equal("POST", call.options.method)
+            assert.are.equal("2nd Arena Check-In", call.options.headers["X-Title"])
+            assert.are.equal("[Tojolias] Current XP:620,046 Current HP:313", call.options.body)
         end)
 
         it("first-arena XP check does not fire an ntfy notification", function()
@@ -2001,14 +2022,38 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   800")
-            assert.are.equal(0, #helper.httpPostCalls)
+            assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
         it("ntfy notification only fires on the periodic XP check", function()
             taPackage.arenaProfile = "second"
             taPackage.arenaXpCheckPending = false
             helper.simulateLine("Experience:   800")
-            assert.are.equal(0, #helper.httpPostCalls)
+            assert.are.equal(0, #helper.httpRequestCalls)
+        end)
+
+        it("ntfy notification is throttled to every 15 minutes", function()
+            taPackage.arenaProfile = "second"
+            taPackage.character.name = "Tojolias"
+            taPackage.character.vitalityCurrent = 313
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+
+            -- First periodic check (5 min in) pings.
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620046")
+            assert.are.equal(1, #helper.httpRequestCalls)
+
+            -- Next check (10 min in) is within the 15-min window: no ping.
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620100")
+            assert.are.equal(1, #helper.httpRequestCalls)
+
+            -- Once 15 min has elapsed since the last ping, it fires again.
+            taPackage.arenaLastNtfyTime = os.time() - 900
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620200")
+            assert.are.equal(2, #helper.httpRequestCalls)
         end)
 
     end)
