@@ -1982,6 +1982,35 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(before, #helper.echoCalls)
         end)
 
+        it("second-arena XP check fires an ntfy notification", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   800")
+            assert.are.equal(1, #helper.httpPostCalls)
+            local call = helper.httpPostCalls[1]
+            assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
+            assert.is_not_nil(string.find(call.body, "Fighting in Second Arena", 1, true))
+            assert.is_not_nil(string.find(call.body, "Current Experience is 800", 1, true))
+        end)
+
+        it("first-arena XP check does not fire an ntfy notification", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   800")
+            assert.are.equal(0, #helper.httpPostCalls)
+        end)
+
+        it("ntfy notification only fires on the periodic XP check", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaXpCheckPending = false
+            helper.simulateLine("Experience:   800")
+            assert.are.equal(0, #helper.httpPostCalls)
+        end)
+
     end)
 
     describe("monster enters arena", function()

@@ -1628,6 +1628,14 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     local gained = startXp and (xp - startXp) or 0
     echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
         .. gained .. " XP (total: " .. xp .. ")")
+    -- Proof-of-concept phone notification for the second arena: mirror the
+    -- periodic XP heartbeat to an ntfy topic so progress is visible off-screen.
+    -- Fire-and-forget (no callback) — a failed ping must never disturb the loop.
+    if taPackage.arenaProfile == "second" then
+        httpPost("https://ntfy.sh/s5bbs-tele-arena-j5",
+            "Fighting in Second Arena. The time is " .. os.date("%H:%M:%S")
+            .. ". Current Experience is " .. xp)
+    end
 end, { type = "regex" })
 
 -- Start an arena session. profile "first" is the original adjacent-rooms arena;
