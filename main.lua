@@ -2004,6 +2004,16 @@ local function scheduleTavernPoll()
     end, { repeating = false })
 end
 
+-- Stop tavern idle mode without leaving the game. Returns true if it was
+-- running. Bumping the generation invalidates any poll timer in flight so it
+-- can't re-arm. Shared by stop-hang-around-in-tavern and stop-all-scripts.
+local function stopTavernMode()
+    if not taPackage.tavernMode then return false end
+    taPackage.tavernMode = false
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    return true
+end
+
 createAlias("^hang-around-in-tavern$", function()
     send("look")
     local room = taPackage.currentRoom
@@ -2021,13 +2031,11 @@ createAlias("^hang-around-in-tavern$", function()
 end, { type = "regex" })
 
 createAlias("^stop-hang-around-in-tavern$", function()
-    if not taPackage.tavernMode then
+    if stopTavernMode() then
+        echo("[tavern] Stopped hanging around (still in the game).")
+    else
         echo("[tavern] Not currently hanging around.")
-        return
     end
-    taPackage.tavernMode = false
-    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
-    echo("[tavern] Stopped hanging around (still in the game).")
 end, { type = "regex" })
 
 createTrigger("^You're hungry\\.$", function()
@@ -2538,6 +2546,7 @@ createAlias("^stop-all-scripts$", function()
     stopArena()
     stopHealLoop()
     stopKill()
+    stopTavernMode()
 end, { type = "regex" })
 
 -- The 60s timer can leave an ally hurt for up to a minute between scans, which

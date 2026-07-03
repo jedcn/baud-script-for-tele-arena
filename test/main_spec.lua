@@ -4790,14 +4790,16 @@ describe("ta.follow", function()
             dofile("main.lua")
         end)
 
-        it("stops the kill, heal loop, and arena scripts together", function()
+        it("stops the kill, heal loop, arena, and tavern scripts together", function()
             taPackage.killActive = true
             taPackage.healLoopActive = true
             taPackage.arenaState = "fighting"
+            taPackage.tavernMode = true
             helper.simulateAlias("stop-all-scripts")
             assert.is_falsy(taPackage.killActive)
             assert.is_false(taPackage.healLoopActive)
             assert.is_nil(taPackage.arenaState)
+            assert.is_false(taPackage.tavernMode)
         end)
 
         it("is a safe no-op when nothing is running", function()

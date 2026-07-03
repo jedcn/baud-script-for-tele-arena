@@ -6,6 +6,10 @@ This script runs inside [baud](https://github.com/jedcn/baud), a custom MUD clie
 
 What is more: we have control over baud. This means that if we are bumping into a limitation with the script for tele-arena, we can modify the source of baud.
 
+## Scripts
+
+- When adding a new script/mode with its own stop logic, wire its teardown into the `stop-all-scripts` alias in `main.lua`. `stop-all-scripts` is meant to halt *everything*, so factor the stop logic into a shared function (e.g. `stopTavernMode`) and call it from both the script's own `stop-*` alias and from `stop-all-scripts`. Add a case to the `stop-all-scripts` test asserting the new script is stopped too.
+
 ## Testing
 
 - Run `just test` after every change to verify nothing is broken.
