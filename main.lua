@@ -1974,8 +1974,8 @@ end, { type = "regex" })
 -- or a purchase failing for lack of money (the direct signal for the same).
 -- =========================================================================
 
-local TAVERN_HP_FRACTION = 0.5      -- exit if current HP drops below this share of max
-local TAVERN_STATUS_POLL_MS = 60000 -- re-check HP this often; hunger/thirst damage is silent
+local TAVERN_HP_FRACTION = 0.5        -- exit if current HP drops below this share of max
+local TAVERN_STATUS_POLL_MS = 600000 -- low-frequency HP heartbeat (10 min); see scheduleTavernPoll
 
 local function isTavernRoom(room)
     if not room then return false end
@@ -1992,9 +1992,13 @@ local function tavernExitGame(reason)
     send("x")
 end
 
--- Poll our status while idling so hunger/thirst damage (which prints no number)
--- can't slip us past the HP floor unnoticed. The Vitality trigger below reads
--- the fresh line and decides whether to bail.
+-- Hunger/thirst damage is NOT silent: the game prints "You're hungry." /
+-- "You're thirsty." on every 1-HP tick, and the triggers below react to each by
+-- buying food/drink. The real "we're being ground down" case — out of money — is
+-- caught directly by the "You can't afford ..." trigger, which exits at once. So
+-- this poll isn't the primary safety mechanism; it's just an occasional HP
+-- heartbeat (10 min) to catch anything unforeseen. The Vitality trigger below
+-- reads the fresh line and decides whether to bail.
 local function scheduleTavernPoll()
     local gen = taPackage.tavernModeGen
     createTimer(TAVERN_STATUS_POLL_MS, function()
