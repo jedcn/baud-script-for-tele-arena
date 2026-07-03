@@ -2544,13 +2544,25 @@ end, { type = "regex" })
 
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear
--- state), so this is a no-op for whatever wasn't active.
+-- state). We check each script's "running" flag first so we can report, per
+-- script, whether we actually stopped it or it wasn't running.
+--
+-- When you add a new script, add it here too (see CLAUDE.md).
 createAlias("^stop-all-scripts$", function()
-    echo("[all] Stopping all scripts.")
-    stopArena()
-    stopHealLoop()
-    stopKill()
-    stopTavernMode()
+    local scripts = {
+        { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = stopArena },
+        { name = "heal loop",             running = taPackage.healLoopActive == true, stop = stopHealLoop },
+        { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
+        { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
+    }
+    for _, s in ipairs(scripts) do
+        if s.running then
+            s.stop()
+            echo("[all] Stopped " .. s.name .. ".")
+        else
+            echo("[all] " .. s.name .. " not running.")
+        end
+    end
 end, { type = "regex" })
 
 -- The 60s timer can leave an ally hurt for up to a minute between scans, which

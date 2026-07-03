@@ -4811,6 +4811,40 @@ describe("ta.follow", function()
             assert.is_nil(taPackage.arenaState)
         end)
 
+        local function echoed(needle)
+            for _, text in ipairs(helper.echoCalls) do
+                if text:find(needle, 1, true) then return true end
+            end
+            return false
+        end
+
+        it("reports each script it stopped", function()
+            taPackage.killActive = true
+            taPackage.healLoopActive = true
+            taPackage.arenaState = "fighting"
+            taPackage.tavernMode = true
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_true(echoed("[all] Stopped arena."))
+            assert.is_true(echoed("[all] Stopped heal loop."))
+            assert.is_true(echoed("[all] Stopped kill."))
+            assert.is_true(echoed("[all] Stopped hang-around-in-tavern."))
+        end)
+
+        it("reports scripts that were not running", function()
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_true(echoed("[all] arena not running."))
+            assert.is_true(echoed("[all] heal loop not running."))
+            assert.is_true(echoed("[all] kill not running."))
+            assert.is_true(echoed("[all] hang-around-in-tavern not running."))
+        end)
+
+        it("reports a mix of stopped and not-running scripts", function()
+            taPackage.killActive = true
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_true(echoed("[all] Stopped kill."))
+            assert.is_true(echoed("[all] arena not running."))
+        end)
+
     end)
 
     describe("group-heal decision logging", function()
