@@ -2644,6 +2644,63 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("thirst/hunger escape hatch", function()
+
+        local function sawSend(cmd)
+            for _, c in ipairs(helper.sendCalls) do
+                if c == cmd then return true end
+            end
+            return false
+        end
+
+        it("leaves the game after 20 unrelieved thirst ticks", function()
+            taPackage.arenaState = "tavern"  -- stuck en route, never drinking
+            for _ = 1, 20 do helper.simulateLine("You're thirsty.") end
+            assert.is_true(sawSend("x"))
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("does not leave the game at 19 thirst ticks", function()
+            taPackage.arenaState = "tavern"
+            for _ = 1, 19 do helper.simulateLine("You're thirsty.") end
+            assert.is_false(sawSend("x"))
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal(19, taPackage.arenaParchedStreak)
+        end)
+
+        it("leaves the game after 20 unrelieved hunger ticks", function()
+            taPackage.arenaState = "tavern"
+            for _ = 1, 20 do helper.simulateLine("You're hungry.") end
+            assert.is_true(sawSend("x"))
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("counts thirst and hunger toward the same streak", function()
+            taPackage.arenaState = "tavern"
+            for _ = 1, 10 do helper.simulateLine("You're thirsty.") end
+            for _ = 1, 10 do helper.simulateLine("You're hungry.") end
+            assert.is_true(sawSend("x"))
+        end)
+
+        it("resets the streak when the gong is rung", function()
+            taPackage.arenaState = "tavern"
+            for _ = 1, 15 do helper.simulateLine("You're thirsty.") end
+            helper.simulateLine("You just rang the great gong!")
+            assert.are.equal(0, taPackage.arenaParchedStreak)
+            for _ = 1, 15 do helper.simulateLine("You're thirsty.") end
+            assert.is_false(sawSend("x"))
+        end)
+
+        it("resets the streak when a drink is bought at the tavern", function()
+            taPackage.arenaState = "tavern"
+            taPackage.needsDrinks = true
+            taPackage.arenaParchedStreak = 10
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal(0, taPackage.arenaParchedStreak)
+        end)
+
+    end)
+
     describe("healing trigger ignored outside arena script", function()
 
         it("does not affect state when arenaState is not healing", function()

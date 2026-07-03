@@ -1326,6 +1326,13 @@ local ARENA_STEP_DELAY_MS = 1000
 -- longer pause than the normal pacing to both recover the walk and back off.
 local ARENA_TRIP_RETRY_MS = 2000
 local ARENA_ROOM = "arena"
+-- Consecutive unrelieved thirst/hunger ticks before we give up and leave the
+-- game. Each tick drains ~1 HP; a healthy loop rings the gong or buys a drink
+-- between ticks (both reset the streak), so reaching this many in a row means
+-- the errand loop is wedged. 20 is far above any normal bar round-trip yet bails
+-- with a large HP margin (something-went-wrong.log still had ~200/318 after 20
+-- minutes stuck).
+local ARENA_PARCHED_LIMIT = 20
 local SECOND_ARENA = {
     arenaRoom  = ARENA_ROOM,
     templeRoom = "temple",
@@ -1491,6 +1498,7 @@ local function arenaJourneyOnMovement(room)
             send("buy meal")
             taPackage.needsMeal = nil
         end
+        taPackage.arenaParchedStreak = 0
         taPackage.arenaState = "returning"
         arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom)
     elseif st == "potions" then
@@ -1628,6 +1636,7 @@ local function beginArenaSession(profile, debug)
     taPackage.arenaRingPending = false
     taPackage.arenaOwnSummonPending = false
     taPackage.arenaProbePending = false
+    taPackage.arenaParchedStreak = 0
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = debug and " (debug mode)" or ""
@@ -1680,6 +1689,7 @@ local function stopArena()
     taPackage.arenaProbePending = nil
     taPackage.arenaProfile = nil
     taPackage.arenaJourney = nil
+    taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
@@ -1698,6 +1708,22 @@ local function arenaEmergencyExit(reason)
     stopArena()
 end
 
+-- Count consecutive thirst/hunger ticks that go unrelieved. A tick means the
+-- game is draining 1 HP; if we rack up ARENA_PARCHED_LIMIT in a row without
+-- ringing the gong or buying a drink/meal (both reset the streak), the errand
+-- loop is wedged and standing here just dies slowly — bail out of the game
+-- instead. Returns true when it triggered the exit so the caller stops
+-- processing the tick.
+local function arenaCheckParched()
+    taPackage.arenaParchedStreak = (taPackage.arenaParchedStreak or 0) + 1
+    if taPackage.arenaParchedStreak >= ARENA_PARCHED_LIMIT then
+        arenaEmergencyExit("Thirsty/hungry " .. taPackage.arenaParchedStreak
+            .. "x with no relief (navigation likely stuck)")
+        return true
+    end
+    return false
+end
+
 createAlias("^stop-ring-gong-and-fight-in-arena$", function()
     stopArena()
 end, { type = "regex" })
@@ -1713,6 +1739,10 @@ end, { type = "regex" })
 -- logs/session-pollux-2026-06-28T12-33-36.log, where Pollux latched onto
 -- Castor's spawns and piled up monsters it couldn't see.)
 createTrigger("^You just rang the great gong!$", function()
+    -- The fight loop is alive again — clear any accumulated thirst/hunger streak
+    -- so a later dry spell starts counting fresh (a bar round-trip ends with a
+    -- ring back in the arena, so this is what resets the streak between trips).
+    taPackage.arenaParchedStreak = 0
     if taPackage.arenaState ~= "ringing" then return end
     taPackage.arenaOwnSummonPending = true
 end, { type = "regex" })
@@ -1881,6 +1911,7 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
                 send("buy meal")
                 taPackage.needsMeal = nil
             end
+            taPackage.arenaParchedStreak = 0
             taPackage.arenaState = "returning"
             arenaSend("sw")
         end
@@ -1920,6 +1951,7 @@ end, { type = "regex" })
 createTrigger("^You're thirsty\\.$", function()
     setCharacterStatus("Thirsty")
     if not taPackage.arenaState then return end
+    if arenaCheckParched() then return end
     taPackage.needsDrinks = true
     if arenaCanDepartNow() then
         departForTavern()
@@ -1931,6 +1963,7 @@ end, { type = "regex" })
 createTrigger("^You're hungry\\.$", function()
     setCharacterStatus("Hungry")
     if not taPackage.arenaState then return end
+    if arenaCheckParched() then return end
     taPackage.needsMeal = true
     if arenaCanDepartNow() then
         departForTavern()
