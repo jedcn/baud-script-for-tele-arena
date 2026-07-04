@@ -30,7 +30,14 @@ local function makeDb(name)
       return M.mockDbRows or {}
     end,
     queryOne = function(self, sql, ...)
-      table.insert(M.dbCalls, { method = "queryOne", db = name, sql = sql, params = { ... } })
+      local params = { ... }
+      table.insert(M.dbCalls, { method = "queryOne", db = name, sql = sql, params = params })
+      -- mockDbOneRow may be a static row (returned for every queryOne) or a
+      -- function(sql, params) for tests that need different rows per query
+      -- (e.g. slug-collision probes vs. a following SELECT id).
+      if type(M.mockDbOneRow) == "function" then
+        return M.mockDbOneRow(sql, params)
+      end
       return M.mockDbOneRow
     end,
   }

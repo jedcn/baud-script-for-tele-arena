@@ -878,10 +878,10 @@ createTrigger("^(.+)$", function(matches)
         if line == "look" or line == "l" then return end
         if isRoomDescTerminator(line) then
             local lines = taPackage.monsterDb.accumulatedLines
-            if #lines > 0 and taPackage.currentRoom then
+            if #lines > 0 and taPackage.currentRoomId then
                 local desc = cleanRoomDesc(table.concat(lines, " "))
                 if #desc > 0 then
-                    taPackage.db.upsertRoomDescription(taPackage.currentRoom, desc)
+                    taPackage.db.setRoomDescription(taPackage.currentRoomId, desc)
                 end
             end
             taPackage.monsterDb.state = "idle"
@@ -930,39 +930,113 @@ end, { type = "regex" })
 -- World map triggers
 -- =========================================================================
 
+-- Reverse of each movement direction, used to record the back-edge when we
+-- discover a room by walking into it.
+local REVERSE_DIR = {
+    n = "s", s = "n", e = "w", w = "e",
+    ne = "sw", sw = "ne", nw = "se", se = "nw",
+    u = "d", d = "u",
+}
+
+-- Turn the phrase after "You're in/on/at ..." into a canonical room name by
+-- dropping a leading article: "the tavern" -> "tavern", "a cave" -> "cave",
+-- "an intersection" -> "intersection", "small cavern" -> "small cavern".
+local function normalizeRoomName(phrase)
+    return (phrase or ""):gsub("^the%s+", ""):gsub("^an?%s+", "")
+end
+
+-- Resolve the room we entered when there's no move to walk from (session start,
+-- recall, teleport): stay in the room we already believe we're in, else the
+-- unique room with this name, else discover a fresh one.
+local function resolveColdStart(name)
+    if taPackage.currentRoomId and name == taPackage.currentRoom then
+        return taPackage.currentRoomId
+    end
+    local ids = taPackage.db.roomIdsByName(name)
+    if #ids == 1 then return ids[1] end
+    if #ids == 0 then return taPackage.db.discoverRoom(name, taPackage.currentAreaId) end
+    return ids[1]
+end
+
+-- Topology-based room identity: when we arrive after moving `dir` from a known
+-- room, the room is whatever that exit already points to; only when the exit's
+-- destination is unknown do we mint a new room id and link both directions.
 local function handleRoomEntry(matches)
-    local newRoom = matches[2]
+    local name = normalizeRoomName(matches[2])
+
+    -- A kill with no gold found before we left records zero loot.
     if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
         taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, 0)
         taPackage.pendingLootCheck = nil
         taPackage.lastKilledMonster = nil
     end
-    if taPackage.pendingDirection and taPackage.prevRoom then
-        taPackage.db.recordExit(taPackage.prevRoom, taPackage.pendingDirection, newRoom)
+
+    local roomId
+    if taPackage.pendingDirection and taPackage.prevRoomId then
+        local dir = taPackage.pendingDirection
+        local dest = taPackage.db.exitDestination(taPackage.prevRoomId, dir)
+        if dest then
+            roomId = dest                       -- re-entering a known room
+        else
+            roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
+            taPackage.db.linkExit(taPackage.prevRoomId, dir, roomId)
+            local back = REVERSE_DIR[dir]
+            if back then taPackage.db.linkExit(roomId, back, taPackage.prevRoomId) end
+        end
+    else
+        roomId = resolveColdStart(name)
     end
-    taPackage.db.visitRoom(newRoom)
+
+    taPackage.db.recordVisit(roomId)
+    taPackage.prevRoomId = taPackage.currentRoomId
+    taPackage.currentRoomId = roomId
     taPackage.prevRoom = taPackage.currentRoom
-    taPackage.currentRoom = newRoom
+    taPackage.currentRoom = name
     taPackage.pendingDirection = nil
 end
 
-createTrigger("^You're in the (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You are in the (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're in an? (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You are in an? (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're inside the (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You are inside the (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're inside an? (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You are inside an? (.+)\\.$", handleRoomEntry, { type = "regex" })
+-- One trigger per preposition (mutually exclusive prefixes, so no double-fire).
+-- Only the "You're" contraction is a real move; "You are ..." lines belong to
+-- the look description and must not be treated as room entries.
+createTrigger("^You're in (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're inside (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're on (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're at (.+)\\.$", handleRoomEntry, { type = "regex" })
 
-local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw" }
+local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
 for _, dir in ipairs(moveDirections) do
     createAlias("^" .. dir .. "$", function()
         taPackage.pendingDirection = dir
         taPackage.prevRoom = taPackage.currentRoom
+        taPackage.prevRoomId = taPackage.currentRoomId
         send(dir)
     end, { type = "regex" })
 end
+
+-- `ex` prints the current room's exits ("Exits: n,e,sw."). Seed each as a
+-- known-but-unexplored exit so the map shows edges before they're walked.
+createTrigger("^Exits: (.+)\\.$", function(matches)
+    if not taPackage.currentRoomId then return end
+    for dir in matches[2]:gmatch("[^,%s]+") do
+        taPackage.db.recordKnownExit(taPackage.currentRoomId, dir)
+    end
+end, { type = "regex" })
+
+-- A rejected move: clear the pending direction so the next room line doesn't
+-- record a phantom exit from the room we never actually left.
+createTrigger("^Sorry, there's no exit in that direction\\.$", function()
+    taPackage.pendingDirection = nil
+end, { type = "regex" })
+
+-- Tag newly discovered rooms with an area: `map-area <slug> [display name]`.
+-- New rooms inherit taPackage.currentAreaId at discovery time.
+createAlias("^map-area (.+)$", function(matches)
+    local arg = matches[2]
+    local slug, name = arg:match("^(%S+)%s+(.+)$")
+    if not slug then slug, name = arg:match("^(%S+)$"), nil end
+    taPackage.currentAreaId = taPackage.db.ensureArea(slug, name)
+    echo("[map] current area: " .. slug)
+end, { type = "regex" })
 
 -- =========================================================================
 -- Combat triggers

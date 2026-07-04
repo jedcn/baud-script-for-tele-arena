@@ -17,18 +17,57 @@ local db = dbOpen("tele-arena.db")
 db:execute("PRAGMA journal_mode = WAL")
 db:execute("PRAGMA busy_timeout = 5000")
 
+-- Schema-introspection helpers (used by the migrations below and reused for
+-- the player_spells column check further down).
+local function tableExists(tbl)
+    local row = db:queryOne(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", tbl)
+    return row ~= nil
+end
+
+local function tableHasColumn(tbl, col)
+    local rows = db:query("PRAGMA table_info(" .. tbl .. ")")
+    for _, row in ipairs(rows or {}) do
+        if row.name == col then return true end
+    end
+    return false
+end
+
+-- Room-graph migration. The original rooms/room_exits schema keyed rooms by
+-- display name, so identically-named rooms (every "cave") collapsed into one
+-- row and their exits overwrote each other. The new schema keys rooms by an
+-- auto-incrementing integer id and resolves identity from the walk graph. When
+-- the old name-keyed tables are detected (rooms exists but has no `id` column),
+-- rename them aside so nothing is lost, then create the fresh id-keyed tables.
+-- Guarded so it's a no-op once migrated, and idempotent across reloadScript().
+if tableExists("rooms") and not tableHasColumn("rooms", "id") then
+    pcall(function() db:execute("ALTER TABLE rooms RENAME TO rooms_legacy") end)
+    if tableExists("room_exits") then
+        pcall(function() db:execute("ALTER TABLE room_exits RENAME TO room_exits_legacy") end)
+    end
+end
+
+db:execute([[CREATE TABLE IF NOT EXISTS areas (
+  id   INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL
+)]])
+
 db:execute([[CREATE TABLE IF NOT EXISTS rooms (
-  name          TEXT PRIMARY KEY,
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug          TEXT UNIQUE NOT NULL,
+  name          TEXT NOT NULL,
   description   TEXT,
+  area_id       INTEGER REFERENCES areas(id),
   first_visited TEXT,
   visits        INTEGER NOT NULL DEFAULT 0
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS room_exits (
-  from_room  TEXT NOT NULL REFERENCES rooms(name),
+  from_id    INTEGER NOT NULL REFERENCES rooms(id),
   direction  TEXT NOT NULL,
-  to_room    TEXT REFERENCES rooms(name),
-  PRIMARY KEY (from_room, direction)
+  to_id      INTEGER REFERENCES rooms(id),
+  PRIMARY KEY (from_id, direction)
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS monsters (
@@ -128,15 +167,8 @@ db:execute([[CREATE TABLE IF NOT EXISTS player_spells (
 -- Migration: player_spells predates the `kind` column. Add it if missing and
 -- backfill the known spells so historical rows stay queryable by kind. The
 -- PRAGMA check keeps this idempotent across reloads (SQLite has no
--- ADD COLUMN IF NOT EXISTS).
-local function tableHasColumn(tbl, col)
-    local rows = db:query("PRAGMA table_info(" .. tbl .. ")")
-    for _, row in ipairs(rows or {}) do
-        if row.name == col then return true end
-    end
-    return false
-end
-
+-- ADD COLUMN IF NOT EXISTS). tableHasColumn is defined near the top of this
+-- module (it's also used by the room-graph migration).
 if not tableHasColumn("player_spells", "kind") then
     -- pcall guards the rare false-negative: if the column already exists but
     -- the PRAGMA check missed it, a reload must not crash on a duplicate
@@ -152,26 +184,101 @@ local function now()
     return os.date("%Y-%m-%dT%H:%M:%S")
 end
 
-function TaDb.visitRoom(name, description)
-    db:execute(
-      "INSERT OR IGNORE INTO rooms (name, description, first_visited, visits) VALUES (?, ?, ?, 0)",
-      name, description or "", now()
-    )
-    db:execute("UPDATE rooms SET visits = visits + 1 WHERE name = ?", name)
-    dbLog("[DB\xE2\x86\x92rooms] " .. name)
+-- =========================================================================
+-- Room graph
+--
+-- Rooms are identified by an integer id, not their display name, so that
+-- identically-named rooms (every "cave") stay distinct. Identity is resolved
+-- topologically by the caller in main.lua: a new room is discovered only when
+-- you step through an exit whose destination isn't known yet.
+-- =========================================================================
+
+-- Turn a display name into a URL-ish slug: "north plaza" -> "north-plaza".
+local function baseSlug(name)
+    local s = (name or ""):lower()
+    s = s:gsub("[^%w]+", "-")
+    s = s:gsub("^%-+", ""):gsub("%-+$", "")
+    if s == "" then s = "room" end
+    return s
 end
 
-function TaDb.recordExit(fromRoom, direction, toRoom)
-    db:execute(
-        "INSERT OR REPLACE INTO room_exits (from_room, direction, to_room) VALUES (?, ?, ?)",
-        fromRoom, direction, toRoom or ""
-    )
-    dbLog("[DB\xE2\x86\x92room_exits] " .. fromRoom .. " --" .. direction .. "--> " .. (toRoom or "?"))
+-- Return a collision-free slug for `name`: the base slug if unused, else the
+-- base with the lowest free "-N" suffix (cave, cave-1, cave-2, ...).
+function TaDb.slugForName(name)
+    local base = baseSlug(name)
+    if not db:queryOne("SELECT 1 AS n FROM rooms WHERE slug = ?", base) then
+        return base
+    end
+    local i = 1
+    while db:queryOne("SELECT 1 AS n FROM rooms WHERE slug = ?", base .. "-" .. i) do
+        i = i + 1
+    end
+    return base .. "-" .. i
 end
 
-function TaDb.upsertRoomDescription(name, description)
-    db:execute("UPDATE rooms SET description = ? WHERE name = ?", description, name)
-    dbLog("[DB\xE2\x86\x92rooms] desc: " .. name)
+-- Ensure an area row exists; return its id. Idempotent.
+function TaDb.ensureArea(slug, name)
+    db:execute("INSERT OR IGNORE INTO areas (slug, name) VALUES (?, ?)", slug, name or slug)
+    local row = db:queryOne("SELECT id FROM areas WHERE slug = ?", slug)
+    return row and row.id
+end
+
+-- Insert a newly discovered room (visits starts at 0; the caller records the
+-- visit) and return its id.
+function TaDb.discoverRoom(name, areaId)
+    local slug = TaDb.slugForName(name)
+    db:execute(
+        "INSERT INTO rooms (slug, name, description, area_id, first_visited, visits) VALUES (?, ?, NULL, ?, ?, 0)",
+        slug, name, areaId, now()
+    )
+    local row = db:queryOne("SELECT id FROM rooms WHERE slug = ?", slug)
+    local id = row and row.id
+    dbLog("[DB\xE2\x86\x92rooms] discovered #" .. tostring(id) .. " " .. slug)
+    return id
+end
+
+-- The recorded destination of an exit, or nil if the exit is unknown or its
+-- destination is still unexplored (a NULL to_id stub from `ex`).
+function TaDb.exitDestination(fromId, dir)
+    local row = db:queryOne(
+        "SELECT to_id FROM room_exits WHERE from_id = ? AND direction = ?", fromId, dir)
+    return row and row.to_id
+end
+
+-- Record a confirmed edge with a concrete destination (a walked exit).
+function TaDb.linkExit(fromId, dir, toId)
+    db:execute(
+        "INSERT OR REPLACE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
+        fromId, dir, toId
+    )
+    dbLog("[DB\xE2\x86\x92room_exits] #" .. tostring(fromId) .. " --" .. dir .. "--> #" .. tostring(toId))
+end
+
+-- Seed a known-but-unexplored exit (destination NULL) from the `ex` command.
+-- INSERT OR IGNORE so it never clobbers an already-known destination.
+function TaDb.recordKnownExit(fromId, dir)
+    db:execute(
+        "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, NULL)",
+        fromId, dir
+    )
+end
+
+function TaDb.recordVisit(roomId)
+    db:execute("UPDATE rooms SET visits = visits + 1 WHERE id = ?", roomId)
+end
+
+function TaDb.setRoomDescription(roomId, description)
+    db:execute("UPDATE rooms SET description = ? WHERE id = ?", description, roomId)
+    dbLog("[DB\xE2\x86\x92rooms] desc: #" .. tostring(roomId))
+end
+
+-- All room ids sharing a display name; used to resolve a cold-start room
+-- (no prior room to walk from) when the name is unambiguous.
+function TaDb.roomIdsByName(name)
+    local rows = db:query("SELECT id FROM rooms WHERE name = ?", name) or {}
+    local ids = {}
+    for _, row in ipairs(rows) do ids[#ids + 1] = row.id end
+    return ids
 end
 
 function TaDb.upsertMonster(name, description)

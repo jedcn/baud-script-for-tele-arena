@@ -1212,37 +1212,95 @@ describe("ta_db", function()
         helper.clearDbCalls()
     end)
 
-    describe("visitRoom", function()
+    describe("slugForName", function()
 
-        it("upserts via INSERT OR IGNORE then UPDATE", function()
-            TaDb.visitRoom("north plaza", nil)
-            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO rooms"))
-            assert.is_not_nil(helper.findDbCall("execute", "UPDATE rooms"))
+        it("returns the base slug when it is unused", function()
+            helper.mockDbOneRow = nil  -- every collision probe finds nothing
+            assert.are.equal("north-plaza", TaDb.slugForName("north plaza"))
         end)
 
-        it("passes room name as first param to INSERT", function()
-            TaDb.visitRoom("north plaza", nil)
-            local call = helper.findDbCall("execute", "INSERT OR IGNORE INTO rooms")
-            assert.are.equal("north plaza", call.params[1])
-        end)
-
-        it("echoes the room name", function()
-            TaDb.visitRoom("north plaza", nil)
-            assert.are.equal("[DB\xE2\x86\x92rooms] north plaza", helper.echoCalls[1])
+        it("suffixes the lowest free -N when the base is taken", function()
+            -- Probe returns a row for cave and cave-1, nothing for cave-2.
+            helper.mockDbOneRow = function(_, params)
+                local slug = params[1]
+                if slug == "cave" or slug == "cave-1" then return { n = 1 } end
+                return nil
+            end
+            assert.are.equal("cave-2", TaDb.slugForName("cave"))
         end)
 
     end)
 
-    describe("recordExit", function()
+    describe("discoverRoom", function()
 
-        it("inserts an exit and echoes it", function()
-            TaDb.recordExit("north plaza", "east", "arena")
-            local call = helper.findDbCall("execute", "room_exits")
+        it("inserts the room and returns its new id", function()
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                    return { id = 6 }
+                end
+                return nil  -- slug is free
+            end
+            local id = TaDb.discoverRoom("cave", 3)
+            assert.are.equal(6, id)
+            local ins = helper.findDbCall("execute", "INSERT INTO rooms")
+            assert.is_not_nil(ins)
+            assert.are.equal("cave", ins.params[1])  -- slug
+            assert.are.equal("cave", ins.params[2])  -- name
+            assert.are.equal(3, ins.params[3])       -- area_id
+        end)
+
+    end)
+
+    describe("exitDestination", function()
+
+        it("returns the recorded destination id", function()
+            helper.mockDbOneRow = { to_id = 5 }
+            assert.are.equal(5, TaDb.exitDestination(2, "ne"))
+        end)
+
+        it("returns nil for an unexplored (NULL) or missing exit", function()
+            helper.mockDbOneRow = { to_id = nil }
+            assert.is_nil(TaDb.exitDestination(2, "ne"))
+            helper.mockDbOneRow = nil
+            assert.is_nil(TaDb.exitDestination(2, "w"))
+        end)
+
+    end)
+
+    describe("linkExit", function()
+
+        it("upserts a concrete edge", function()
+            TaDb.linkExit(5, "ne", 6)
+            local call = helper.findDbCall("execute", "INSERT OR REPLACE INTO room_exits")
             assert.is_not_nil(call)
-            assert.are.equal("north plaza", call.params[1])
-            assert.are.equal("east", call.params[2])
-            assert.are.equal("arena", call.params[3])
-            assert.are.equal("[DB\xE2\x86\x92room_exits] north plaza --east--> arena", helper.echoCalls[1])
+            assert.are.equal(5, call.params[1])
+            assert.are.equal("ne", call.params[2])
+            assert.are.equal(6, call.params[3])
+        end)
+
+    end)
+
+    describe("recordKnownExit", function()
+
+        it("seeds a NULL-destination stub without clobbering", function()
+            TaDb.recordKnownExit(5, "w")
+            local call = helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits")
+            assert.is_not_nil(call)
+            assert.are.equal(5, call.params[1])
+            assert.are.equal("w", call.params[2])
+        end)
+
+    end)
+
+    describe("ensureArea", function()
+
+        it("inserts if absent and returns the id", function()
+            helper.mockDbOneRow = { id = 3 }
+            local id = TaDb.ensureArea("first-town", "First Town")
+            assert.are.equal(3, id)
+            local ins = helper.findDbCall("execute", "INSERT OR IGNORE INTO areas")
+            assert.are.equal("first-town", ins.params[1])
+            assert.are.equal("First Town", ins.params[2])
         end)
 
     end)
@@ -1425,43 +1483,76 @@ describe("World map triggers", function()
         helper.clearDbCalls()
     end)
 
+    -- Stub queryOne so a room discovery resolves to a fixed new id and slug
+    -- probes report "unused". exitDestination (a different SELECT) still returns
+    -- nil, so entries take the "unknown exit -> discover" path unless overridden.
+    local function stubDiscover(id)
+        helper.mockDbOneRow = function(sql)
+            if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                return { id = id }
+            end
+            return nil
+        end
+    end
+
     describe("room entry trigger", function()
 
-        it("sets currentRoom", function()
+        it("sets currentRoom to the normalized name", function()
+            stubDiscover(1)
             helper.simulateLine("You're in the north plaza.")
             assert.are.equal("north plaza", taPackage.currentRoom)
         end)
 
-        it("calls visitRoom via echo", function()
-            helper.simulateLine("You're in the north plaza.")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "north plaza") then found = true end
+        it("discovers a room through an unknown exit and links both directions", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "ne"
+            stubDiscover(6)
+            helper.simulateLine("You're in the tavern.")
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            local edges = {}
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute"
+                    and string.find(c.sql, "INSERT OR REPLACE INTO room_exits", 1, true) then
+                    edges[#edges + 1] = c.params
+                end
             end
-            assert.is_true(found)
+            assert.are.equal(2, #edges)
+            assert.are.same({ 5, "ne", 6 }, edges[1])  -- forward edge
+            assert.are.same({ 6, "sw", 5 }, edges[2])  -- reverse back-edge
+            assert.are.equal(6, taPackage.currentRoomId)
+        end)
+
+        it("re-enters a known room without discovering a new one", function()
+            taPackage.currentRoomId = 6
+            taPackage.prevRoomId = 6
+            taPackage.pendingDirection = "sw"
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 5 }
+                end
+                return nil
+            end
+            helper.simulateLine("You're in the north plaza.")
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            assert.are.equal(5, taPackage.currentRoomId)
+            local visit = helper.findDbCall("execute", "UPDATE rooms SET visits")
+            assert.are.equal(5, visit.params[1])
         end)
 
         it("clears pendingDirection after entry", function()
             taPackage.pendingDirection = "n"
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            stubDiscover(9)
             helper.simulateLine("You're in the north plaza.")
             assert.is_nil(taPackage.pendingDirection)
-        end)
-
-        it("calls recordExit when pendingDirection and prevRoom are set", function()
-            taPackage.currentRoom = "market"
-            taPackage.pendingDirection = "north"
-            taPackage.prevRoom = "market"
-            helper.simulateLine("You're in the north plaza.")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "room_exits") then found = true end
-            end
-            assert.is_true(found)
         end)
 
         it("records zero loot when monster died but no gold found before room change", function()
             taPackage.lastKilledMonster = "huge rat"
             taPackage.pendingLootCheck = true
+            stubDiscover(1)
             helper.simulateLine("You're in the north plaza.")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
@@ -1469,6 +1560,16 @@ describe("World map triggers", function()
             end
             assert.is_true(found)
             assert.is_nil(taPackage.pendingLootCheck)
+        end)
+
+        it("recognizes on/at and no-article room forms", function()
+            stubDiscover(1)
+            helper.simulateLine("You're on a path.")
+            assert.are.equal("path", taPackage.currentRoom)
+            helper.simulateLine("You're at an intersection.")
+            assert.are.equal("intersection", taPackage.currentRoom)
+            helper.simulateLine("You're in small cavern.")
+            assert.are.equal("small cavern", taPackage.currentRoom)
         end)
 
     end)
@@ -1480,15 +1581,86 @@ describe("World map triggers", function()
             assert.are.equal("n", taPackage.pendingDirection)
         end)
 
-        it("sets prevRoom when player moves", function()
+        it("captures prevRoom and prevRoomId when player moves", function()
             taPackage.currentRoom = "market"
+            taPackage.currentRoomId = 4
             helper.simulateAlias("e")
             assert.are.equal("market", taPackage.prevRoom)
+            assert.are.equal(4, taPackage.prevRoomId)
         end)
 
         it("sends the movement command", function()
             helper.simulateAlias("s")
             assert.are.equal("s", helper.sendCalls[1])
+        end)
+
+        it("supports up and down", function()
+            helper.simulateAlias("u")
+            assert.are.equal("u", taPackage.pendingDirection)
+            helper.simulateAlias("d")
+            assert.are.equal("d", taPackage.pendingDirection)
+        end)
+
+    end)
+
+    describe("ex exits capture", function()
+
+        it("seeds a NULL stub per listed direction", function()
+            taPackage.currentRoomId = 5
+            helper.simulateLine("Exits: n,e,sw.")
+            local dirs = {}
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute"
+                    and string.find(c.sql, "INSERT OR IGNORE INTO room_exits", 1, true) then
+                    assert.are.equal(5, c.params[1])
+                    dirs[#dirs + 1] = c.params[2]
+                end
+            end
+            assert.are.same({ "n", "e", "sw" }, dirs)
+        end)
+
+        it("is a no-op when the current room is unknown", function()
+            taPackage.currentRoomId = nil
+            helper.simulateLine("Exits: n,s.")
+            assert.is_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
+        end)
+
+    end)
+
+    describe("failed move", function()
+
+        it("clears pendingDirection without touching the graph", function()
+            taPackage.pendingDirection = "e"
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.is_nil(taPackage.pendingDirection)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            assert.is_nil(helper.findDbCall("execute", "room_exits"))
+        end)
+
+    end)
+
+    describe("map-area alias", function()
+
+        it("sets currentAreaId and new rooms inherit it", function()
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then return { id = 7 } end
+                return nil
+            end
+            helper.simulateAlias("map-area first-town First Town")
+            assert.are.equal(3, taPackage.currentAreaId)
+            local area = helper.findDbCall("execute", "INSERT OR IGNORE INTO areas")
+            assert.are.equal("first-town", area.params[1])
+            assert.are.equal("First Town", area.params[2])
+
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "n"
+            helper.simulateLine("You're in a cave.")
+            local ins = helper.findDbCall("execute", "INSERT INTO rooms")
+            assert.are.equal(3, ins.params[3])  -- area_id inherited
         end)
 
     end)
