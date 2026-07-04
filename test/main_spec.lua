@@ -2004,6 +2004,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaProfile = "second"
             taPackage.character.name = "Tojolias"
             taPackage.character.vitalityCurrent = 313
+            taPackage.character.gold = 2900
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
@@ -2013,7 +2014,9 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
             assert.are.equal("POST", call.options.method)
             assert.are.equal("2nd Arena Check-In", call.options.headers["X-Title"])
-            assert.are.equal("[Tojolias] Current XP:620,046 Current HP:313", call.options.body)
+            assert.are.equal(
+                "[Tojolias] Current XP:620,046 Current HP:313 Current Gold:2,900",
+                call.options.body)
         end)
 
         it("first-arena XP check does not fire an ntfy notification", function()

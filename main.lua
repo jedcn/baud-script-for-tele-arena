@@ -1652,11 +1652,13 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
         if not lastNtfy or (now - lastNtfy) >= 900 then
             taPackage.arenaLastNtfyTime = now
             local hp = getVitality()
+            local gold = getGold()
             httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
                 method = "POST",
                 headers = { ["X-Title"] = "2nd Arena Check-In" },
                 body = "[" .. (taPackage.character.name or "?") .. "] Current XP:"
-                    .. formatWithCommas(xp) .. " Current HP:" .. (hp or "?"),
+                    .. formatWithCommas(xp) .. " Current HP:" .. (hp or "?")
+                    .. " Current Gold:" .. (gold and formatWithCommas(gold) or "?"),
             })
         end
     end
