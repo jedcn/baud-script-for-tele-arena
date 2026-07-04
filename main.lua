@@ -101,6 +101,17 @@ function formatWithCommas(n)
     return s
 end
 
+-- Fire-and-forget push to our ntfy topic. `title` becomes the notification
+-- title (ntfy's X-Title header), `body` the message. No callback — a failed
+-- ping must never disturb whatever loop triggered it.
+function sendNtfy(title, body)
+    httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
+        method = "POST",
+        headers = { ["X-Title"] = title },
+        body = body,
+    })
+end
+
 function setClass(value)
     taPackage.character.class = value
 end
@@ -358,6 +369,38 @@ function getXpForNextLevel(xp, class)
     if currentLevel >= 25 then return nil end
     local thresholds = xpThresholds[class or "Warrior"]
     return thresholds[currentLevel + 1]
+end
+
+-- Push a "ready to train for the next level" notification the moment XP crosses
+-- a level threshold. We track the XP-derived level in character.earnedLevel and
+-- alert once each time it climbs. XP doesn't reset on training, so after
+-- training the earned level holds until the next threshold — one clean alert
+-- per level. Fires regardless of arena profile; runs on every status poll.
+function checkLevelUpNotification(xp)
+    local class = getClass()
+    -- Only act on classes we have a real XP table for; getLevelForXp silently
+    -- falls back to Warrior otherwise, which would give a wrong threshold.
+    if not (xp and class and xpThresholds[class]) then return end
+    local newEarned = getLevelForXp(xp, class)
+    local prev = taPackage.character.earnedLevel
+    if prev == nil then
+        -- First observation: seed silently so we only alert on later crossings,
+        -- not on every fresh login / script reload.
+        taPackage.character.earnedLevel = newEarned
+        return
+    end
+    if newEarned > prev then
+        taPackage.character.earnedLevel = newEarned
+        local threshold = xpThresholds[class][newEarned]
+        -- The XP table is indexed one above the in-game level (matching the
+        -- status bar's getXpForNextLevel): crossing thresholds[N] makes you
+        -- eligible to train for in-game level N-1.
+        local trainLevel = newEarned - 1
+        sendNtfy("Time to Level Up!",
+            (taPackage.character.name or "?") .. " just passed "
+                .. formatWithCommas(threshold)
+                .. " and is ready to train for level " .. trainLevel)
+    end
 end
 
 -- Progress through the current level, from just-leveled (blue) to about-to-level
@@ -1606,6 +1649,7 @@ end
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     setExperience(matches[2])
+    checkLevelUpNotification(tonumber(matches[2]))
     -- Follow-session XP accounting. `ta.follow` records the starting XP and
     -- `ta.unfollow` records the ending XP by sending `status` and waiting for the
     -- Experience line below; a pending flag tells us which capture this line is
@@ -1653,13 +1697,10 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             taPackage.arenaLastNtfyTime = now
             local hp = getVitality()
             local gold = getGold()
-            httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
-                method = "POST",
-                headers = { ["X-Title"] = "2nd Arena Check-In" },
-                body = "[" .. (taPackage.character.name or "?") .. "] Current XP:"
+            sendNtfy("2nd Arena Check-In",
+                "[" .. (taPackage.character.name or "?") .. "] Current XP:"
                     .. formatWithCommas(xp) .. " Current HP:" .. (hp or "?")
-                    .. " Current Gold:" .. (gold and formatWithCommas(gold) or "?"),
-            })
+                    .. " Current Gold:" .. (gold and formatWithCommas(gold) or "?"))
         end
     end
 end, { type = "regex" })
