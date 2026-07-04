@@ -9,22 +9,35 @@ const db = new Database(DB_PATH, { readonly: true });
 
 // ── Raw queries ────────────────────────────────────────────────────────────────
 
-const rooms = db.prepare(`
+// The room-graph schema (areas + the integer-keyed rooms) only exists after the
+// ta_db migration has run, which happens when baud loads the script. If you run
+// `just report` before that first launch, those tables/columns aren't there yet
+// — treat the map as empty rather than crashing with a raw SQLiteError.
+function hasTable(name: string): boolean {
+  return db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?"
+  ).get(name) != null;
+}
+const roomGraphReady = hasTable("areas") && hasTable("rooms");
+
+const rooms = roomGraphReady ? db.prepare(`
   SELECT r.id, r.slug, r.name, r.description, r.visits, r.first_visited, r.area_id,
          a.slug AS area_slug, a.name AS area_name
   FROM rooms r
   LEFT JOIN areas a ON a.id = r.area_id
   ORDER BY r.id
-`).all() as any[];
+`).all() as any[] : [];
 
-const areas = db.prepare(`SELECT id, slug, name FROM areas ORDER BY id`).all() as any[];
+const areas = roomGraphReady
+  ? db.prepare(`SELECT id, slug, name FROM areas ORDER BY id`).all() as any[]
+  : [];
 
-const exits = db.prepare(`
+const exits = roomGraphReady ? db.prepare(`
   SELECT e.from_id, e.direction, e.to_id, t.slug AS to_slug
   FROM room_exits e
   LEFT JOIN rooms t ON t.id = e.to_id
   ORDER BY e.from_id, e.direction
-`).all() as any[];
+`).all() as any[] : [];
 
 // direction -> "dir → destslug" strings, grouped by source room, for the table.
 const exitsByRoom = new Map<number, string[]>();
@@ -333,6 +346,7 @@ ${itemDrops.length > 0 ? table(
 ) : "<p class='note'>No item drops recorded yet.</p>"}
 
 <h2>World Map</h2>
+${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
 ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
 <div class="map-wrap"><svg id="map"></svg></div>
