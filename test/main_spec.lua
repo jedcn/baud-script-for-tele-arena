@@ -482,15 +482,15 @@ describe("Tele-Arena triggers", function()
         it("pushes when XP crosses the next-level threshold", function()
             taPackage.character.class = "Warrior"
             taPackage.character.name = "Tojolias"
-            helper.simulateLine("Experience:   792683")  -- seeds earned level 11
+            helper.simulateLine("Experience:   792683")  -- seeds earned level 12
             assert.are.equal(0, #helper.httpRequestCalls)
-            helper.simulateLine("Experience:   815600")  -- level-12 threshold
+            helper.simulateLine("Experience:   815600")  -- level-13 threshold
             assert.are.equal(1, #helper.httpRequestCalls)
             local call = helper.httpRequestCalls[1]
             assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
             assert.are.equal("Time to Level Up!", call.options.headers["X-Title"])
             assert.are.equal(
-                "Tojolias just passed 815,600 and is ready to train for level 12",
+                "Tojolias just passed 815,600 and is ready to train for level 13",
                 call.options.body)
         end)
 
@@ -504,10 +504,10 @@ describe("Tele-Arena triggers", function()
         it("does not re-fire while XP stays within the same level", function()
             taPackage.character.class = "Warrior"
             taPackage.character.name = "Tojolias"
-            helper.simulateLine("Experience:   792683")  -- seeds earned level 11
-            helper.simulateLine("Experience:   815600")  -- crosses to level 12
+            helper.simulateLine("Experience:   792683")  -- seeds earned level 12
+            helper.simulateLine("Experience:   815600")  -- crosses to level 13
             assert.are.equal(1, #helper.httpRequestCalls)
-            helper.simulateLine("Experience:   900000")  -- still level 12
+            helper.simulateLine("Experience:   900000")  -- still level 13
             assert.are.equal(1, #helper.httpRequestCalls)
         end)
 

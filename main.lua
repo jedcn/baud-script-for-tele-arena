@@ -392,14 +392,13 @@ function checkLevelUpNotification(xp)
     if newEarned > prev then
         taPackage.character.earnedLevel = newEarned
         local threshold = xpThresholds[class][newEarned]
-        -- The XP table is indexed one above the in-game level (matching the
-        -- status bar's getXpForNextLevel): crossing thresholds[N] makes you
-        -- eligible to train for in-game level N-1.
-        local trainLevel = newEarned - 1
+        -- thresholds[N] is the XP required to reach level N (verified against the
+        -- game's own `help Exp1` table and a real training event), so crossing it
+        -- means you've earned enough to train up to level N.
         sendNtfy("Time to Level Up!",
             (taPackage.character.name or "?") .. " just passed "
                 .. formatWithCommas(threshold)
-                .. " and is ready to train for level " .. trainLevel)
+                .. " and is ready to train for level " .. newEarned)
     end
 end
 
