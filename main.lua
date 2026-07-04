@@ -947,29 +947,37 @@ end
 
 -- Resolve the room we entered when there's no move to walk from (session start,
 -- recall, teleport): stay in the room we already believe we're in, else the
--- unique room with this name, else discover a fresh one.
+-- unique room with this name, else discover a fresh one. Returns the room id and
+-- whether it was newly discovered (provisional, i.e. a merge candidate).
 local function resolveColdStart(name)
     if taPackage.currentRoomId and name == taPackage.currentRoom then
-        return taPackage.currentRoomId
+        return taPackage.currentRoomId, false
     end
     local ids = taPackage.db.roomIdsByName(name)
-    if #ids == 1 then return ids[1] end
-    if #ids == 0 then return taPackage.db.discoverRoom(name, taPackage.currentAreaId) end
-    return ids[1]
+    if #ids == 1 then return ids[1], false end
+    if #ids == 0 then return taPackage.db.discoverRoom(name, taPackage.currentAreaId), true end
+    return ids[1], false
 end
 
 -- Topology-based room identity: when we arrive after moving `dir` from a known
 -- room, the room is whatever that exit already points to; only when the exit's
 -- destination is unknown do we mint a new room id and link both directions.
+-- A newly-minted room is flagged provisional: the `Exits:` handler may later
+-- fold it into an existing room once we know its exit-set (loop closure).
 local function handleRoomEntry(matches)
     local name = normalizeRoomName(matches[2])
 
     -- A kill with no gold found before we left records zero loot.
+    -- (Loot bookkeeping is independent of mapping mode.)
     if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
         taPackage.db.recordMonsterLoot(taPackage.lastKilledMonster, 0)
         taPackage.pendingLootCheck = nil
         taPackage.lastKilledMonster = nil
     end
+
+    -- Mapping mode gates the whole room graph: when off, we don't discover,
+    -- visit, link, or track position at all.
+    if not taPackage.mapping then return end
 
     local roomId
     if taPackage.pendingDirection and taPackage.prevRoomId then
@@ -977,14 +985,16 @@ local function handleRoomEntry(matches)
         local dest = taPackage.db.exitDestination(taPackage.prevRoomId, dir)
         if dest then
             roomId = dest                       -- re-entering a known room
+            taPackage.currentRoomProvisional = false
         else
             roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
             taPackage.db.linkExit(taPackage.prevRoomId, dir, roomId)
             local back = REVERSE_DIR[dir]
             if back then taPackage.db.linkExit(roomId, back, taPackage.prevRoomId) end
+            taPackage.currentRoomProvisional = true
         end
     else
-        roomId = resolveColdStart(name)
+        roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
     end
 
     taPackage.db.recordVisit(roomId)
@@ -993,6 +1003,10 @@ local function handleRoomEntry(matches)
     taPackage.prevRoom = taPackage.currentRoom
     taPackage.currentRoom = name
     taPackage.pendingDirection = nil
+
+    -- Probe the room's exits so the fingerprint reconcile (the `Exits:` handler)
+    -- can close loops. The reply isn't a room line, so it can't re-enter here.
+    send("ex")
 end
 
 -- One trigger per preposition (mutually exclusive prefixes, so no double-fire).
@@ -1013,11 +1027,28 @@ for _, dir in ipairs(moveDirections) do
     end, { type = "regex" })
 end
 
--- `ex` prints the current room's exits ("Exits: n,e,sw."). Seed each as a
--- known-but-unexplored exit so the map shows edges before they're walked.
+-- `ex` prints the current room's exits ("Exits: n,e,sw."). While mapping, use
+-- them for loop closure: if we provisionally minted this room but it's really an
+-- already-known one (same name + exit-set), fold the provisional into it. Then
+-- seed each exit as a known edge so the map shows it before it's walked.
 createTrigger("^Exits: (.+)\\.$", function(matches)
-    if not taPackage.currentRoomId then return end
-    for dir in matches[2]:gmatch("[^,%s]+") do
+    if not taPackage.mapping or not taPackage.currentRoomId then return end
+
+    local dirs = {}
+    for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
+
+    if taPackage.currentRoomProvisional then
+        local match = taPackage.db.findRoomByFingerprint(
+            taPackage.currentRoom, dirs, taPackage.currentRoomId)
+        if match then
+            taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
+            taPackage.currentRoomId = match
+            echo("[map] linked into #" .. match .. " (" .. taPackage.currentRoom .. ")")
+        end
+        taPackage.currentRoomProvisional = false
+    end
+
+    for _, dir in ipairs(dirs) do
         taPackage.db.recordKnownExit(taPackage.currentRoomId, dir)
     end
 end, { type = "regex" })
@@ -1036,6 +1067,31 @@ createAlias("^map-area (.+)$", function(matches)
     if not slug then slug, name = arg:match("^(%S+)$"), nil end
     taPackage.currentAreaId = taPackage.db.ensureArea(slug, name)
     echo("[map] current area: " .. slug)
+end, { type = "regex" })
+
+-- Mapping mode. Off by default; while on, room lines are recorded, each arrival
+-- auto-probes exits with `ex`, and provisional rooms are merged into known ones
+-- by fingerprint. Turning it off leaves the graph untouched during normal play.
+local function stopMapping()
+    taPackage.mapping = false
+end
+
+createAlias("^map-on$", function()
+    taPackage.mapping = true
+    -- Re-anchor cleanly: forget any stale move so the initial brief is treated
+    -- as a fresh arrival rather than a walked edge.
+    taPackage.pendingDirection = nil
+    taPackage.prevRoomId = nil
+    taPackage.currentRoomId = nil
+    echo("[map] mapping ON")
+    -- A bare return prints the "You're in X." brief for the room we're standing
+    -- in, which captures it (and auto-probes its exits).
+    send("")
+end, { type = "regex" })
+
+createAlias("^map-off$", function()
+    stopMapping()
+    echo("[map] mapping OFF")
 end, { type = "regex" })
 
 -- =========================================================================
@@ -2769,6 +2825,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "heal loop",             running = taPackage.healLoopActive == true, stop = stopHealLoop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
+        { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
     }
     for _, s in ipairs(scripts) do
         if s.running then

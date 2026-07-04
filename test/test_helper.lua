@@ -26,7 +26,14 @@ local function makeDb(name)
       return M.mockExecuteReturn or 0
     end,
     query = function(self, sql, ...)
-      table.insert(M.dbCalls, { method = "query", db = name, sql = sql, params = { ... } })
+      local params = { ... }
+      table.insert(M.dbCalls, { method = "query", db = name, sql = sql, params = params })
+      -- mockDbRows may be a static array (returned for every query) or a
+      -- function(sql, params) for tests that need different rows per query
+      -- (e.g. roomIdsByName vs roomExitDirections in one call).
+      if type(M.mockDbRows) == "function" then
+        return M.mockDbRows(sql, params)
+      end
       return M.mockDbRows or {}
     end,
     queryOne = function(self, sql, ...)

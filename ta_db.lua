@@ -281,6 +281,70 @@ function TaDb.roomIdsByName(name)
     return ids
 end
 
+-- The set of exit directions recorded for a room (walked edges + `ex` stubs),
+-- as a { [dir] = true } table. This is the room's exit-set "fingerprint".
+function TaDb.roomExitDirections(roomId)
+    local rows = db:query("SELECT direction FROM room_exits WHERE from_id = ?", roomId) or {}
+    local set = {}
+    for _, row in ipairs(rows) do set[row.direction] = true end
+    return set
+end
+
+-- Loop closure: find the one existing room that IS this room — same display
+-- name and the same exit-set (`dirs`, a list of directions) — excluding
+-- `excludeId` (the room we currently think we're in). Returns that room's id,
+-- or nil when there's no match or more than one (ambiguous, e.g. identical
+-- caves — left for a manual assert rather than guessed).
+function TaDb.findRoomByFingerprint(name, dirs, excludeId)
+    local want, wantCount = {}, 0
+    for _, dir in ipairs(dirs) do
+        if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
+    end
+    local match
+    for _, id in ipairs(TaDb.roomIdsByName(name)) do
+        if id ~= excludeId then
+            local have = TaDb.roomExitDirections(id)
+            local haveCount, ok = 0, true
+            for dir in pairs(have) do
+                haveCount = haveCount + 1
+                if not want[dir] then ok = false; break end
+            end
+            if ok and haveCount == wantCount then
+                if match then return nil end  -- ambiguous: >1 match
+                match = id
+            end
+        end
+    end
+    return match
+end
+
+-- Fold a provisional room into an existing one (loop closure): repoint every
+-- edge that pointed at `fromId` to `intoId`, move `fromId`'s outgoing edges onto
+-- `intoId` (without clobbering ones it already has), carry the visit count, then
+-- delete the provisional room.
+function TaDb.mergeRoomInto(fromId, intoId)
+    -- Move outgoing edges first (before inbound repointing can create self-loops).
+    local outgoing = db:query(
+        "SELECT direction, to_id FROM room_exits WHERE from_id = ?", fromId) or {}
+    for _, row in ipairs(outgoing) do
+        local dest = row.to_id
+        if dest == fromId then dest = intoId end  -- self-loop guard
+        db:execute(
+            "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
+            intoId, row.direction, dest
+        )
+    end
+    db:execute("DELETE FROM room_exits WHERE from_id = ?", fromId)
+    -- Repoint inbound edges (to_id isn't part of the PK, so this can't conflict).
+    db:execute("UPDATE room_exits SET to_id = ? WHERE to_id = ?", intoId, fromId)
+    db:execute(
+        "UPDATE rooms SET visits = visits + COALESCE((SELECT visits FROM rooms WHERE id = ?), 0) WHERE id = ?",
+        fromId, intoId
+    )
+    db:execute("DELETE FROM rooms WHERE id = ?", fromId)
+    dbLog("[DB\xE2\x86\x92rooms] merged #" .. tostring(fromId) .. " into #" .. tostring(intoId))
+end
+
 function TaDb.upsertMonster(name, description)
     db:execute(
         "INSERT OR IGNORE INTO monsters (name, description, first_seen, encounters) VALUES (?, ?, ?, 0)",

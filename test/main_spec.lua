@@ -1305,6 +1305,67 @@ describe("ta_db", function()
 
     end)
 
+    describe("findRoomByFingerprint", function()
+
+        -- Stub roomIdsByName and roomExitDirections per query. `existing` maps a
+        -- room id to its recorded exit-direction list.
+        local function stubRooms(name, ids, existing)
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    local rows = {}
+                    for _, id in ipairs(ids) do rows[#rows + 1] = { id = id } end
+                    return rows
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    local rows = {}
+                    for _, dir in ipairs(existing[params[1]] or {}) do
+                        rows[#rows + 1] = { direction = dir }
+                    end
+                    return rows
+                end
+                return {}
+            end
+        end
+
+        it("matches an existing room with the same name and exit-set", function()
+            stubRooms("north plaza", { 1, 5 }, { [1] = { "n", "s", "e" } })
+            assert.are.equal(1, TaDb.findRoomByFingerprint("north plaza", { "e", "n", "s" }, 5))
+        end)
+
+        it("does not match when the exit-set differs (distinct caves)", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s", "e" }, 5))
+        end)
+
+        it("returns nil when more than one room matches (ambiguous)", function()
+            stubRooms("cave", { 1, 2, 5 }, { [1] = { "n", "s" }, [2] = { "n", "s" } })
+            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5))
+        end)
+
+    end)
+
+    describe("mergeRoomInto", function()
+
+        it("repoints edges, carries visits, and deletes the provisional room", function()
+            -- Provisional room 5 has one outgoing edge 5 --nw--> 4.
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT direction, to_id FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "nw", to_id = 4 } }
+                end
+                return {}
+            end
+            TaDb.mergeRoomInto(5, 1)
+
+            local moved = helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits")
+            assert.are.same({ 1, "nw", 4 }, moved.params)  -- outgoing edge moved onto room 1
+            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM room_exits WHERE from_id"))
+            local repoint = helper.findDbCall("execute", "UPDATE room_exits SET to_id")
+            assert.are.same({ 1, 5 }, repoint.params)      -- inbound edges now point at 1
+            local del = helper.findDbCall("execute", "DELETE FROM rooms WHERE id")
+            assert.are.equal(5, del.params[1])
+        end)
+
+    end)
+
     describe("upsertMonster", function()
 
         it("upserts via INSERT OR IGNORE then UPDATE", function()
@@ -1480,6 +1541,7 @@ describe("World map triggers", function()
         helper.resetAll()
         dofile("main.lua")
         taPackage.db.debug = true
+        taPackage.mapping = true  -- these exercise the graph, which mapping mode gates
         helper.clearDbCalls()
     end)
 
@@ -1661,6 +1723,100 @@ describe("World map triggers", function()
             helper.simulateLine("You're in a cave.")
             local ins = helper.findDbCall("execute", "INSERT INTO rooms")
             assert.are.equal(3, ins.params[3])  -- area_id inherited
+        end)
+
+    end)
+
+    describe("mapping mode", function()
+
+        it("ignores room lines when mapping is off, but still records loot", function()
+            taPackage.mapping = false
+            taPackage.lastKilledMonster = "huge rat"
+            taPackage.pendingLootCheck = true
+            helper.simulateLine("You're in the north plaza.")
+            -- loot bookkeeping still runs...
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT INTO monster_loot"))
+            -- ...but the graph is untouched
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET visits"))
+            assert.is_nil(taPackage.currentRoomId)
+        end)
+
+        it("auto-sends ex on arrival while mapping", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in the north plaza.")
+            local sentEx = false
+            for _, c in ipairs(helper.sendCalls) do if c == "ex" then sentEx = true end end
+            assert.is_true(sentEx)
+        end)
+
+        it("flags a newly discovered room as provisional, a reused one as not", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "se"
+            stubDiscover(6)
+            helper.simulateLine("You're in the north plaza.")
+            assert.is_true(taPackage.currentRoomProvisional)
+
+            helper.clearDbCalls()
+            taPackage.currentRoomId = 6
+            taPackage.prevRoomId = 6
+            taPackage.pendingDirection = "sw"
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then return { to_id = 5 } end
+                return nil
+            end
+            helper.simulateLine("You're in the north plaza.")
+            assert.is_false(taPackage.currentRoomProvisional)
+        end)
+
+        it("closes the loop: merges a provisional room into a fingerprint match on ex", function()
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "north plaza"
+            taPackage.currentRoomProvisional = true
+            -- Room 1 (existing) shares the name and the observed exit-set {n,s}.
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 1 }, { id = 5 } }
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then return { { direction = "n" }, { direction = "s" } } end
+                    return {}
+                end
+                return {}  -- mergeRoomInto's "SELECT direction, to_id ..." -> no outgoing edges
+            end
+            helper.simulateLine("Exits: n,s.")
+            assert.are.equal(1, taPackage.currentRoomId)          -- folded into the original
+            assert.is_false(taPackage.currentRoomProvisional)
+            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+        end)
+
+        it("does not merge a non-provisional room, but still seeds its exits", function()
+            taPackage.currentRoomId = 1
+            taPackage.currentRoom = "north plaza"
+            taPackage.currentRoomProvisional = false
+            helper.simulateLine("Exits: n,s.")
+            assert.are.equal(1, taPackage.currentRoomId)
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms"))
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
+        end)
+
+    end)
+
+    describe("mapping mode aliases", function()
+
+        it("map-on enables mapping and re-scans the current room", function()
+            taPackage.mapping = false
+            helper.simulateAlias("map-on")
+            assert.is_true(taPackage.mapping)
+            local bareSent = false
+            for _, c in ipairs(helper.sendCalls) do if c == "" then bareSent = true end end
+            assert.is_true(bareSent)
+        end)
+
+        it("map-off disables mapping", function()
+            taPackage.mapping = true
+            helper.simulateAlias("map-off")
+            assert.is_false(taPackage.mapping)
         end)
 
     end)
@@ -5203,16 +5359,18 @@ describe("ta.follow", function()
             dofile("main.lua")
         end)
 
-        it("stops the kill, heal loop, arena, and tavern scripts together", function()
+        it("stops the kill, heal loop, arena, tavern, and mapping scripts together", function()
             taPackage.killActive = true
             taPackage.healLoopActive = true
             taPackage.arenaState = "fighting"
             taPackage.tavernMode = true
+            taPackage.mapping = true
             helper.simulateAlias("stop-all-scripts")
             assert.is_falsy(taPackage.killActive)
             assert.is_false(taPackage.healLoopActive)
             assert.is_nil(taPackage.arenaState)
             assert.is_false(taPackage.tavernMode)
+            assert.is_false(taPackage.mapping)
         end)
 
         it("is a safe no-op when nothing is running", function()
@@ -5241,6 +5399,13 @@ describe("ta.follow", function()
             assert.is_true(echoed("[all] Stopped heal loop."))
             assert.is_true(echoed("[all] Stopped kill."))
             assert.is_true(echoed("[all] Stopped hang-around-in-tavern."))
+        end)
+
+        it("stops mapping too", function()
+            taPackage.mapping = true
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_false(taPackage.mapping)
+            assert.is_true(echoed("[all] Stopped mapping."))
         end)
 
         it("reports scripts that were not running", function()
