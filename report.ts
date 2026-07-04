@@ -10,13 +10,35 @@ const db = new Database(DB_PATH, { readonly: true });
 // ── Raw queries ────────────────────────────────────────────────────────────────
 
 const rooms = db.prepare(`
-  SELECT r.name, r.description, r.visits, r.first_visited,
-         GROUP_CONCAT(re.direction || ' → ' || COALESCE(re.to_room,'?'), ', ') AS exits
+  SELECT r.id, r.slug, r.name, r.description, r.visits, r.first_visited, r.area_id,
+         a.slug AS area_slug, a.name AS area_name
   FROM rooms r
-  LEFT JOIN room_exits re ON re.from_room = r.name
-  GROUP BY r.name
-  ORDER BY r.first_visited
+  LEFT JOIN areas a ON a.id = r.area_id
+  ORDER BY r.id
 `).all() as any[];
+
+const areas = db.prepare(`SELECT id, slug, name FROM areas ORDER BY id`).all() as any[];
+
+const exits = db.prepare(`
+  SELECT e.from_id, e.direction, e.to_id, t.slug AS to_slug
+  FROM room_exits e
+  LEFT JOIN rooms t ON t.id = e.to_id
+  ORDER BY e.from_id, e.direction
+`).all() as any[];
+
+// direction -> "dir → destslug" strings, grouped by source room, for the table.
+const exitsByRoom = new Map<number, string[]>();
+for (const e of exits) {
+  if (!exitsByRoom.has(e.from_id)) exitsByRoom.set(e.from_id, []);
+  exitsByRoom.get(e.from_id)!.push(`${e.direction} → ${e.to_slug ?? "?"}`);
+}
+
+// Compact node/edge payload for the interactive map (embedded as JSON below).
+const graphData = {
+  areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
+  rooms: rooms.map(r => ({ id: r.id, slug: r.slug, area_id: r.area_id })),
+  exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id })),
+};
 
 const monsters = db.prepare(`
   SELECT name, description, first_seen, encounters
@@ -203,7 +225,14 @@ const lootRows = allMonsters
     return [esc(m), l.kills, l.drops, pct(l.drops, l.kills), l.totalGold, avg(l.totalGold, l.drops)];
   });
 
-const roomRows = rooms.map(r => [esc(r.name), r.visits, r.first_visited?.slice(0,10) ?? "—", esc(r.exits ?? "none")]);
+const roomRows = rooms.map(r => [
+  esc(r.slug),
+  esc(r.name),
+  esc(r.area_slug ?? "—"),
+  r.visits,
+  r.first_visited?.slice(0,10) ?? "—",
+  esc((exitsByRoom.get(r.id) ?? []).join(", ") || "none"),
+]);
 
 const serviceRows = services.map(s => [esc(s.name), esc(s.location), s.cost != null ? s.cost + " gp" : "—", s.uses]);
 
@@ -216,12 +245,15 @@ const monsterCards = monsters.map(m => `
     <p class="meta">First seen: ${m.first_seen?.slice(0,10) ?? "—"} · Encounters: ${m.encounters}</p>
   </div>`).join("\n");
 
-const roomCards = rooms.map(r => `
+const roomCards = rooms.map(r => {
+  const rx = exitsByRoom.get(r.id);
+  return `
   <div class="card">
-    <h3>${esc(r.name)}</h3>
+    <h3>${esc(r.slug)}</h3>
     <p class="desc">${esc(r.description || "(no description yet)")}</p>
-    <p class="meta">First visited: ${r.first_visited?.slice(0,10) ?? "—"} · Visits: ${r.visits}${r.exits ? ` · Exits: ${esc(r.exits)}` : ""}</p>
-  </div>`).join("\n");
+    <p class="meta">Area: ${esc(r.area_slug ?? "—")} · Visits: ${r.visits}${rx ? ` · Exits: ${esc(rx.join(", "))}` : ""}</p>
+  </div>`;
+}).join("\n");
 
 // ── Full HTML ─────────────────────────────────────────────────────────────────
 
@@ -250,6 +282,12 @@ const html = `<!DOCTYPE html>
   .desc { color: var(--muted); font-size: 0.85rem; margin: 0.4rem 0; line-height: 1.5; }
   .meta { color: var(--muted); font-size: 0.75rem; margin-top: 0.5rem; }
   .note { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; font-style: italic; }
+  .map-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; }
+  #map { width: 100%; height: 620px; display: block; cursor: grab; touch-action: none; }
+  #map text { fill: var(--text); font-size: 11px; pointer-events: none; user-select: none; }
+  #map .edge-dir { fill: var(--muted); font-size: 9px; }
+  .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+  .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -295,10 +333,15 @@ ${itemDrops.length > 0 ? table(
 ) : "<p class='note'>No item drops recorded yet.</p>"}
 
 <h2>World Map</h2>
+${rooms.length > 0 ? `
+<div id="map-legend" class="map-legend"></div>
+<div class="map-wrap"><svg id="map"></svg></div>
+<p class="note">Drag rooms to rearrange · scroll to zoom · hollow stubs are known exits not yet walked.</p>
+` : ""}
 ${table(
-  ["Room", "Visits", "First Visited", "Exits"],
+  ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
   roomRows,
-  { alignRight: [1] }
+  { alignRight: [3] }
 )}
 
 <h2>Services</h2>
@@ -331,6 +374,170 @@ ${roomCards || "<p class='note'>No rooms visited yet.</p>"}
 <div class="cards">
 ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
 </div>
+
+<script>
+(function(){
+  var GRAPH = ${JSON.stringify(graphData)};
+  var svg = document.getElementById('map');
+  if(!svg) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
+  var areaColor = {};
+  GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
+
+  var legend = document.getElementById('map-legend');
+  if(legend){
+    GRAPH.areas.forEach(function(a){
+      var span = document.createElement('span');
+      span.innerHTML = '<span class="swatch" style="background:'+areaColor[a.id]+'"></span>'+a.slug;
+      legend.appendChild(span);
+    });
+    var un = document.createElement('span');
+    un.innerHTML = '<span class="swatch" style="background:transparent;border:1px solid var(--muted)"></span>unexplored exit';
+    legend.appendChild(un);
+  }
+
+  var W = svg.clientWidth || 900, H = 620;
+  var nodes = [], byId = {};
+  GRAPH.rooms.forEach(function(r){
+    var n = { id:'r'+r.id, label:r.slug, color: areaColor[r.area_id] || '#8b949e', stub:false,
+              x: W/2 + (Math.random()-0.5)*360, y: H/2 + (Math.random()-0.5)*360, vx:0, vy:0 };
+    nodes.push(n); byId[n.id] = n;
+  });
+  var links = [];
+  GRAPH.exits.forEach(function(e, i){
+    var from = byId['r'+e.from];
+    if(!from) return;
+    var to;
+    if(e.to == null){
+      to = { id:'s'+i, label:'', color:'#30363d', stub:true,
+             x: from.x + (Math.random()-0.5)*60, y: from.y + (Math.random()-0.5)*60, vx:0, vy:0 };
+      nodes.push(to); byId[to.id] = to;
+    } else {
+      to = byId['r'+e.to];
+      if(!to) return;
+    }
+    links.push({ source:from, target:to, dir:e.dir, stub: e.to == null });
+  });
+
+  var defs = document.createElementNS(NS,'defs');
+  defs.innerHTML = '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6e7681"/></marker>';
+  svg.appendChild(defs);
+  var root = document.createElementNS(NS,'g');
+  svg.appendChild(root);
+
+  var linkEls = links.map(function(l){
+    var line = document.createElementNS(NS,'line');
+    line.setAttribute('stroke', l.stub ? '#30363d' : '#484f58');
+    line.setAttribute('stroke-width', l.stub ? '1' : '1.5');
+    if(l.stub) line.setAttribute('stroke-dasharray','3,3');
+    line.setAttribute('marker-end','url(#arrow)');
+    root.appendChild(line);
+    var t = document.createElementNS(NS,'text');
+    t.setAttribute('class','edge-dir');
+    t.textContent = l.dir;
+    root.appendChild(t);
+    return { line:line, label:t };
+  });
+
+  var nodeEls = nodes.map(function(n){
+    var g = document.createElementNS(NS,'g');
+    var c = document.createElementNS(NS,'circle');
+    c.setAttribute('r', n.stub ? 4 : 10);
+    c.setAttribute('fill', n.stub ? 'transparent' : n.color);
+    c.setAttribute('stroke', n.stub ? '#6e7681' : '#0d1117');
+    c.setAttribute('stroke-width', n.stub ? 1 : 1.5);
+    if(n.stub) c.setAttribute('stroke-dasharray','2,2');
+    g.appendChild(c);
+    if(!n.stub){
+      var t = document.createElementNS(NS,'text');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dy','-14');
+      t.textContent = n.label;
+      g.appendChild(t);
+    }
+    root.appendChild(g);
+    c.style.cursor = 'grab';
+    c.addEventListener('pointerdown', function(ev){ dragging = n; ev.stopPropagation(); svg.setPointerCapture(ev.pointerId); });
+    return { node:n, group:g };
+  });
+
+  var tx = 0, ty = 0, scale = 1;
+  function applyTransform(){ root.setAttribute('transform','translate('+tx+','+ty+') scale('+scale+')'); }
+  applyTransform();
+
+  function toGraph(ev){
+    var rect = svg.getBoundingClientRect();
+    return { x: (ev.clientX - rect.left - tx)/scale, y: (ev.clientY - rect.top - ty)/scale };
+  }
+
+  var dragging = null, panning = false, panStart = null;
+  svg.addEventListener('pointerdown', function(ev){ if(dragging) return; panning = true; panStart = { x:ev.clientX - tx, y:ev.clientY - ty }; });
+  svg.addEventListener('pointermove', function(ev){
+    if(dragging){ var p = toGraph(ev); dragging.x = p.x; dragging.y = p.y; dragging.vx = 0; dragging.vy = 0; }
+    else if(panning){ tx = ev.clientX - panStart.x; ty = ev.clientY - panStart.y; applyTransform(); }
+  });
+  function endPointer(){ dragging = null; panning = false; }
+  svg.addEventListener('pointerup', endPointer);
+  svg.addEventListener('pointercancel', endPointer);
+  svg.addEventListener('wheel', function(ev){
+    ev.preventDefault();
+    var rect = svg.getBoundingClientRect();
+    var mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    var factor = ev.deltaY < 0 ? 1.1 : 1/1.1;
+    var ns = Math.max(0.2, Math.min(4, scale*factor));
+    tx = mx - (mx - tx) * (ns/scale);
+    ty = my - (my - ty) * (ns/scale);
+    scale = ns; applyTransform();
+  }, { passive:false });
+
+  function tick(){
+    var i, j;
+    for(i=0;i<nodes.length;i++) for(j=i+1;j<nodes.length;j++){
+      var a=nodes[i], b=nodes[j];
+      var dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy; if(d2<0.01) d2=0.01;
+      var d=Math.sqrt(d2);
+      var rep=((a.stub||b.stub)?1200:5500)/d2;
+      var fx=dx/d*rep, fy=dy/d*rep;
+      a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+    }
+    for(i=0;i<links.length;i++){
+      var l=links[i], la=l.source, lb=l.target;
+      var ldx=lb.x-la.x, ldy=lb.y-la.y, ld=Math.sqrt(ldx*ldx+ldy*ldy); if(ld<0.01) ld=0.01;
+      var L=l.stub?50:120, k=0.02, f=(ld-L)*k;
+      var lfx=ldx/ld*f, lfy=ldy/ld*f;
+      la.vx+=lfx; la.vy+=lfy; lb.vx-=lfx; lb.vy-=lfy;
+    }
+    for(i=0;i<nodes.length;i++){
+      var n=nodes[i]; if(n===dragging) continue;
+      n.vx += (W/2 - n.x)*0.0008; n.vy += (H/2 - n.y)*0.0008;
+      n.x += n.vx*0.85; n.y += n.vy*0.85;
+      n.vx *= 0.82; n.vy *= 0.82;
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  function render(){
+    var i;
+    for(i=0;i<linkEls.length;i++){
+      var l=links[i], e=linkEls[i], a=l.source, b=l.target;
+      var dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      var ra=a.stub?4:10, rb=(b.stub?4:10)+5;
+      var x1=a.x+dx/d*ra, y1=a.y+dy/d*ra, x2=b.x-dx/d*rb, y2=b.y-dy/d*rb;
+      e.line.setAttribute('x1',x1); e.line.setAttribute('y1',y1);
+      e.line.setAttribute('x2',x2); e.line.setAttribute('y2',y2);
+      e.label.setAttribute('x',(x1+x2)/2); e.label.setAttribute('y',(y1+y2)/2 - 2);
+    }
+    for(i=0;i<nodeEls.length;i++){
+      var ne=nodeEls[i];
+      ne.group.setAttribute('transform','translate('+ne.node.x+','+ne.node.y+')');
+    }
+  }
+
+  tick();
+})();
+</script>
 
 </body>
 </html>`;
