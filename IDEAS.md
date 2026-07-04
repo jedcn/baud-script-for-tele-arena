@@ -164,3 +164,39 @@ Still open:
 - Overlap with the auto-join-the-fight triggers: `confer kill <monster>` plus
   the leader's own attack line both fire, but the second is a no-op once a
   kill is already active.
+
+## Room Mapping — next phase
+
+The mapper (rooms/exits/areas in `ta_db.lua`, `just report` graph) now has
+mapping mode (`map-on`/`map-off`), auto-`ex` on each move, and loop closure:
+when you arrive via an unwalked edge into an already-known room, it fingerprints
+the room by **name + exit-set** and folds the provisional duplicate into the
+existing one. Its design is adapted from Mudlet's bundled `generic_mapper`
+(`~/src/Mudlet/src/mudlet-lua/lua/generic-mapper/`), whose `check_room` /
+`find_link` / `find_me` we studied. Three of its ideas are deferred:
+
+### Manual "I'm in room N" assert
+
+`map-here <slug|id>` to force-identify the room you're standing in as a known
+one, merging any provisional duplicate into it. This is the escape hatch for
+when the automatic fingerprint is genuinely **ambiguous** — two rooms with the
+same name *and* the same exit-set (e.g. identical `cave` rooms), which we
+deliberately refuse to merge on a guess. Mudlet's equivalent of a manual
+relocate / `setRoomIDbyHash`.
+
+### Relocate when lost (`find_me`)
+
+On cold start / after a recall or teleport, `resolveColdStart` picks by unique
+name and otherwise takes the first same-named room — a guess when the name is
+ambiguous. Mudlet's `find_me` instead does a global fingerprint search: use the
+exit-set (from the auto-`ex`) to pick the *right* existing room rather than
+guessing, and flag when it still can't tell.
+
+### Retag the current room's area
+
+`retag-area <slug>` to set the area of the room you're standing in. `map-area`
+only stamps an area on rooms at *discovery* time, so you must switch areas
+*before* stepping across a boundary — impractical when you don't know you're
+entering, say, the mountains until you've arrived. A retag-in-place command
+fixes the boundary room after the fact (area is otherwise only set at discovery
+and never revisited).
