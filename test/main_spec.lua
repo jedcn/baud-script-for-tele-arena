@@ -6007,3 +6007,49 @@ describe("hang-around-in-tavern", function()
     end)
 
 end)
+
+describe("message-me-when-you-see", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("pushes an ntfy notification the first time the phrase is seen", function()
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        assert.are.equal(0, #helper.httpRequestCalls)
+
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+
+        local call = helper.httpRequestCalls[1]
+        assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
+        assert.are.equal("message-me-when-you-see", call.options.headers["X-Title"])
+        assert.are.equal(
+            "Heads up- I just saw: odd tingling sensation washes over",
+            call.options.body)
+    end)
+
+    it("only fires once even if the phrase reappears", function()
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+    end)
+
+    it("accepts an unquoted phrase", function()
+        helper.simulateAlias("message-me-when-you-see odd tingling sensation washes over")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal(
+            "Heads up- I just saw: odd tingling sensation washes over",
+            helper.httpRequestCalls[1].options.body)
+    end)
+
+    it("stays silent until the phrase actually appears", function()
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("Nothing unusual happens.")
+        assert.are.equal(0, #helper.httpRequestCalls)
+    end)
+
+end)

@@ -1127,6 +1127,25 @@ createAlias("^map-off$", function()
     echo("[map] mapping OFF")
 end, { type = "regex" })
 
+-- message-me-when-you-see "<phrase>" — arm a one-shot ntfy watcher. The first
+-- server line containing <phrase> pushes a single notification, then a guard
+-- flag keeps the trigger quiet forever after. (baud doesn't expose
+-- removeTrigger to Lua, so we self-disarm with the flag rather than tearing
+-- the trigger down.) A literal trigger matches <phrase> anywhere in the line.
+createAlias("^message-me-when-you-see (.+)$", function(matches)
+    local arg = matches[2]
+    -- Accept the phrase with or without surrounding double quotes.
+    local phrase = arg:match('^"(.*)"$') or arg
+    local fired = false
+    createTrigger(phrase, function()
+        if fired then return end
+        fired = true
+        sendNtfy("message-me-when-you-see", "Heads up- I just saw: " .. phrase)
+        echo("[watch] notified: " .. phrase)
+    end)
+    echo("[watch] will message you once when I see: " .. phrase)
+end, { type = "regex" })
+
 -- =========================================================================
 -- Combat triggers
 -- =========================================================================
