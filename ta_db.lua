@@ -402,6 +402,12 @@ function TaDb.roomName(roomId)
     return row and row.name
 end
 
+-- The full row for a room by its (unique) slug, or nil. Used by `map-here` to
+-- re-anchor at a known room when the name alone is ambiguous.
+function TaDb.roomBySlug(slug)
+    return db:queryOne("SELECT id, name, area_id, x, y, z FROM rooms WHERE slug = ?", slug)
+end
+
 -- The set of exit directions recorded for a room (walked edges + `ex` stubs),
 -- as a { [dir] = true } table. This is the room's exit-set "fingerprint".
 function TaDb.roomExitDirections(roomId)

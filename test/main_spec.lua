@@ -1488,6 +1488,23 @@ describe("ta_db", function()
 
     end)
 
+    describe("roomBySlug", function()
+
+        it("returns the room row for a slug", function()
+            helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
+            local room = TaDb.roomBySlug("cave-11")
+            assert.are.equal(91, room.id)
+            assert.are.equal("cave", room.name)
+            assert.are.equal(-4, room.x)
+        end)
+
+        it("returns nil for an unknown slug", function()
+            helper.mockDbOneRow = nil
+            assert.is_nil(TaDb.roomBySlug("nope"))
+        end)
+
+    end)
+
     describe("setRoomTrap", function()
 
         it("writes the trap type for the room", function()
@@ -2099,6 +2116,46 @@ describe("World map triggers", function()
             helper.simulateLine("You're in a cave.")
             local ins = helper.findDbCall("execute", "INSERT INTO rooms")
             assert.are.equal(3, ins.params[3])  -- area_id inherited
+        end)
+
+    end)
+
+    describe("map-here alias", function()
+
+        it("anchors currentRoomId, coord, and area from the named room", function()
+            taPackage.mapping = false
+            helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
+            helper.simulateAlias("map-here cave-11")
+            assert.is_true(taPackage.mapping)
+            assert.are.equal(91, taPackage.currentRoomId)
+            assert.are.equal("cave", taPackage.currentRoom)
+            assert.are.equal(2, taPackage.currentAreaId)
+            assert.are.same({ x = -4, y = -11, z = -1 }, taPackage.coord)
+            assert.is_nil(taPackage.prevRoomId)
+            assert.is_nil(taPackage.pendingDirection)
+            assert.is_false(taPackage.currentRoomProvisional)
+        end)
+
+        it("does not reprint or re-resolve (no room INSERT, no visit)", function()
+            helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
+            helper.simulateAlias("map-here cave-11")
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET visits"))
+        end)
+
+        it("leaves coord nil when the room has no stored coordinate", function()
+            helper.mockDbOneRow = { id = 5, name = "cave", area_id = 2, x = nil, y = nil, z = nil }
+            helper.simulateAlias("map-here cave")
+            assert.are.equal(5, taPackage.currentRoomId)
+            assert.is_nil(taPackage.coord)
+        end)
+
+        it("does nothing for an unknown slug", function()
+            taPackage.currentRoomId = 7
+            helper.mockDbOneRow = nil
+            helper.simulateAlias("map-here bogus")
+            assert.are.equal(7, taPackage.currentRoomId)  -- unchanged
+            assert.is_true(tableContains(helper.echoCalls, "[map] no room with slug: bogus"))
         end)
 
     end)

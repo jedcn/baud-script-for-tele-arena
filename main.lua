@@ -1200,6 +1200,39 @@ createAlias("^map-area (.+)$", function(matches)
     echo("[map] current area: " .. slug)
 end, { type = "regex" })
 
+-- Manually assert which room you're standing in: `map-here cave-11`. Needed
+-- when resuming a session in an ambiguously-named room (every cave is "cave",
+-- so map-on's name lookup can't tell them apart). Turns mapping on and anchors
+-- currentRoomId/coord/area from the named room's stored row, without reprinting
+-- or re-resolving, so the next move dead-reckons from the right place. Use the
+-- unique slug (shown in the report / `map-list-areas` uses the same slugs).
+createAlias("^map-here (.+)$", function(matches)
+    local slug = matches[2]:match("^%s*(.-)%s*$")
+    local room = taPackage.db.roomBySlug(slug)
+    if not room then
+        echo("[map] no room with slug: " .. slug)
+        return
+    end
+    taPackage.mapping = true
+    taPackage.currentAreaId = room.area_id
+    taPackage.currentRoomId = room.id
+    taPackage.currentRoom = room.name
+    taPackage.currentRoomProvisional = false
+    taPackage.prevRoomId = nil
+    taPackage.prevRoom = nil
+    taPackage.pendingDirection = nil
+    if room.x ~= nil then
+        taPackage.coord = { x = room.x, y = room.y, z = room.z }
+    else
+        taPackage.coord = nil
+    end
+    echo("[map] anchored at " .. slug .. " (#" .. tostring(room.id) .. ")"
+        .. (taPackage.coord
+            and (" coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y
+                 .. "," .. taPackage.coord.z .. ")")
+            or ""))
+end, { type = "regex" })
+
 -- List every area slug we've mapped, one per line.
 createAlias("^map-list-areas$", function()
     local areas = taPackage.db.listAreas()
