@@ -303,6 +303,11 @@ const html = `<!DOCTYPE html>
   #map .edge-dir { fill: var(--muted); font-size: 9px; }
   #map .map-label { fill: var(--text); font-size: 12px; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; user-select: none; }
   #map .map-label-sel { fill: #fff; font-weight: 600; }
+  #map .vbadge { fill: var(--text); font-size: 11px; pointer-events: none; user-select: none; }
+  .floor-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .floor-tab { background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.7rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
+  .floor-tab:hover { color: var(--text); }
+  .floor-tab.active { background: var(--blue); color: var(--bg); border-color: var(--blue); font-weight: 600; }
   tr[data-room-id] { cursor: pointer; }
   tr[data-room-id]:hover td { background: var(--surface); }
   tr[data-room-id].sel td { background: rgba(88,166,255,0.16); }
@@ -366,8 +371,9 @@ ${itemDrops.length > 0 ? table(
 ${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
 ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
+<div id="floor-tabs" class="floor-tabs"></div>
 <div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
-<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked. (Up/down exits are omitted for now.)</p>
+<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits on the cell directly above/below its neighbor).</p>
 ` : ""}
 ${table(
   ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
@@ -428,48 +434,56 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     legend.appendChild(un);
   }
 
-  // --- Direction → grid offset (col, row); row increases downward, so n = up. ---
-  // Only the 8 compass exits participate in layout; u/d are ignored for now.
+  // --- Direction → grid offset (col, row); row increases downward, so n = up.
+  //     u/d don't move you on the plane -- they change floor (see VERT). ---
   var OFF = { n:[0,-1], s:[0,1], e:[1,0], w:[-1,0], ne:[1,-1], nw:[-1,-1], se:[1,1], sw:[-1,1] };
+  var VERT = { u:1, d:-1 };
 
   var roomById = {};
   GRAPH.rooms.forEach(function(r){ roomById[r.id] = r; });
 
-  // Adjacency from walked (to != null) compass edges; collect stubs (to == null) too.
+  // Adjacency now includes u/d so vertically-linked rooms join the same component.
+  // Compass edges move you on the plane; u/d edges carry a floor delta instead.
   var adj = {}, stubs = [];
   GRAPH.rooms.forEach(function(r){ adj[r.id] = []; });
   GRAPH.exits.forEach(function(e){
-    if(!OFF[e.dir]) return;                         // skip u/d and anything unexpected
-    if(e.to == null){ stubs.push(e); return; }
-    if(!roomById[e.from] || !roomById[e.to]) return;
-    adj[e.from].push({ dir:e.dir, to:e.to });
+    if(OFF[e.dir]){
+      if(e.to == null){ stubs.push(e); return; }          // unexplored compass exit
+      if(roomById[e.from] && roomById[e.to]) adj[e.from].push({ dir:e.dir, to:e.to, vert:0 });
+    } else if(VERT[e.dir] && e.to != null && roomById[e.from] && roomById[e.to]){
+      adj[e.from].push({ dir:e.dir, to:e.to, vert:VERT[e.dir] });
+    }
   });
 
-  // --- Lay out each connected component on its own integer grid, then tile them. ---
+  // --- Lay out each component on a 3D integer grid (col, row, floor), then tile. ---
   var seen = {}, components = [];
   GRAPH.rooms.forEach(function(rootRoom){
     if(seen[rootRoom.id]) return;
     var lpos = {}, locc = {};
-    function lkey(c,r){ return c+','+r; }
-    function lfindFree(c,r){                          // spiral out to nearest empty cell
-      if(!(lkey(c,r) in locc)) return [c,r];
+    function lkey(c,r,f){ return f+':'+c+','+r; }
+    function lfindFree(c,r,f){                          // spiral out within the same floor
+      if(!(lkey(c,r,f) in locc)) return [c,r];
       for(var rad=1; rad<400; rad++){
         for(var dc=-rad; dc<=rad; dc++) for(var dr=-rad; dr<=rad; dr++){
           if(Math.max(Math.abs(dc),Math.abs(dr)) !== rad) continue;
-          if(!(lkey(c+dc,r+dr) in locc)) return [c+dc,r+dr];
+          if(!(lkey(c+dc,r+dr,f) in locc)) return [c+dc,r+dr];
         }
       }
       return [c,r];
     }
-    function lplace(id,c,r){ lpos[id]={c:c,r:r}; locc[lkey(c,r)]=id; seen[id]=true; }
-    lplace(rootRoom.id, 0, 0);
+    function lplace(id,c,r,f){ lpos[id]={c:c,r:r,f:f}; locc[lkey(c,r,f)]=id; seen[id]=true; }
+    lplace(rootRoom.id, 0, 0, 0);
     var q = [rootRoom.id];
     while(q.length){
       var cur = q.shift(), base = lpos[cur];
       adj[cur].forEach(function(ed){
-        if(seen[ed.to]) return;                       // already placed; edge drawn as connector
-        var o = OFF[ed.dir], cell = lfindFree(base.c + o[0], base.r + o[1]);
-        lplace(ed.to, cell[0], cell[1]);
+        if(seen[ed.to]) return;                       // already placed; drawn as connector/badge
+        if(ed.vert){
+          lplace(ed.to, base.c, base.r, base.f + ed.vert);       // same cell, one floor up/down
+        } else {
+          var o = OFF[ed.dir], cl = lfindFree(base.c + o[0], base.r + o[1], base.f);
+          lplace(ed.to, cl[0], cl[1], base.f);
+        }
         q.push(ed.to);
       });
     }
@@ -480,13 +494,19 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     components.push({ lpos:lpos, ids:ids, minc:minc, maxc:maxc, minr:minr, maxr:maxr });
   });
 
-  // Tile components left-to-right with a gap; produce final global cells.
+  // Tile components left-to-right with a gap; floor is preserved.
   var cell = {}, GAP = 2, cursor = 0;
   components.forEach(function(cp){
     cp.ids.forEach(function(id){ var p = cp.lpos[id];
-      cell[id] = { c: cursor + (p.c - cp.minc), r: (p.r - cp.minr) }; });
+      cell[id] = { c: cursor + (p.c - cp.minc), r: (p.r - cp.minr), f: p.f }; });
     cursor += (cp.maxc - cp.minc) + 1 + GAP;
   });
+
+  // Distinct floors present, sorted high → low (upper floors first).
+  var floorSet = {};
+  GRAPH.rooms.forEach(function(r){ if(cell[r.id]) floorSet[cell[r.id].f] = true; });
+  var floors = Object.keys(floorSet).map(Number).sort(function(a,b){ return b - a; });
+  function floorLabel(f){ return f === 0 ? 'Ground' : (f > 0 ? 'Up ' + f : 'Down ' + (-f)); }
 
   // --- Geometry: stop-sign octagons on a square grid (truncated-square tiling). ---
   var R = 36;                                         // octagon circumradius
@@ -504,54 +524,21 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var root = document.createElementNS(NS,'g');
   svg.appendChild(root);
 
-  // Connector lines under the octagons (hidden for touching neighbors, visible for
-  // long/relocated links so non-grid connections stay legible).
-  GRAPH.exits.forEach(function(e){
-    if(!OFF[e.dir] || e.to == null) return;
-    if(!cell[e.from] || !cell[e.to]) return;
-    var a = centerOf(e.from), b = centerOf(e.to);
-    var line = document.createElementNS(NS,'line');
-    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
-    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
-    line.setAttribute('stroke','#484f58'); line.setAttribute('stroke-width','2');
-    root.appendChild(line);
-  });
-
-  // Stubs: dashed ghost octagon one cell away in the missing exit's direction.
-  stubs.forEach(function(e){
-    if(!cell[e.from]) return;
-    var a = centerOf(e.from), o = OFF[e.dir];
-    var len = Math.sqrt(o[0]*o[0] + o[1]*o[1]);
-    var gx = a.x + o[0]/len * PITCH * 0.82, gy = a.y + o[1]/len * PITCH * 0.82;
-    var spur = document.createElementNS(NS,'line');
-    spur.setAttribute('x1',a.x); spur.setAttribute('y1',a.y);
-    spur.setAttribute('x2',gx); spur.setAttribute('y2',gy);
-    spur.setAttribute('stroke','#6e7681'); spur.setAttribute('stroke-width','1');
-    spur.setAttribute('stroke-dasharray','3,3');
-    root.appendChild(spur);
-    var ghost = document.createElementNS(NS,'polygon');
-    ghost.setAttribute('points', octPoints(gx,gy,R*0.42));
-    ghost.setAttribute('fill','transparent');
-    ghost.setAttribute('stroke','#6e7681'); ghost.setAttribute('stroke-width','1');
-    ghost.setAttribute('stroke-dasharray','2,2');
-    root.appendChild(ghost);
-    var dl = document.createElementNS(NS,'text');
-    dl.setAttribute('class','edge-dir'); dl.setAttribute('text-anchor','middle');
-    dl.setAttribute('x',gx); dl.setAttribute('y',gy+3);
-    dl.textContent = e.dir;
-    root.appendChild(dl);
-  });
-
-  // --- Detail panel: clicking a room shows its name, description, and exits. ---
+  // --- Detail panel + lookups. ---
   var roomInfo = {};
   GRAPH.rooms.forEach(function(r){ roomInfo[r.id] = r; });
-  var exitsFrom = {};
-  GRAPH.rooms.forEach(function(r){ exitsFrom[r.id] = []; });
-  GRAPH.exits.forEach(function(e){ if(exitsFrom[e.from]) exitsFrom[e.from].push(e); });
+  var exitsFrom = {}, vertExits = {};
+  GRAPH.rooms.forEach(function(r){ exitsFrom[r.id] = []; vertExits[r.id] = []; });
+  GRAPH.exits.forEach(function(e){
+    if(exitsFrom[e.from]) exitsFrom[e.from].push(e);
+    if(VERT[e.dir] && e.to != null && vertExits[e.from]) vertExits[e.from].push(e);
+  });
 
   var panel = document.getElementById('room-panel');
-  var octByRoom = {}, rowByRoom = {}, selectedOct = null, selectedRow = null, selectedId = null;
-  var hoverLabel = null, selectLabel = null;
+  var octByRoom = {}, rowByRoom = {}, tabByFloor = {};
+  var selectedOct = null, selectedRow = null, selectedId = null;
+  var hoverLabel = null, selectLabel = null, currentFloor = 0;
+  function onFloor(id){ return cell[id] && cell[id].f === currentFloor; }
   function labelAt(el, id){
     if(!el || !cell[id]) return;
     var c = centerOf(id);
@@ -580,6 +567,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var html = '<h3>' + escapeHtml(r.name || r.slug) + '</h3>';
     var sub = [escapeHtml(r.slug)];
     if(r.area_slug) sub.push(escapeHtml(r.area_slug));
+    if(cell[id]) sub.push(floorLabel(cell[id].f));
     sub.push((r.visits || 0) + (r.visits === 1 ? ' visit' : ' visits'));
     html += '<div class="rp-sub">' + sub.join(' · ') + '</div>';
     html += r.description
@@ -597,51 +585,118 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     }
     panel.innerHTML = html;
   }
-  function selectRoom(id){
-    if(selectedOct){ selectedOct.setAttribute('stroke','#0d1117'); selectedOct.setAttribute('stroke-width','1.5'); }
-    var el = octByRoom[id];
+  function applySelectionHighlight(){
+    if(selectedOct){ selectedOct.setAttribute('stroke','#0d1117'); selectedOct.setAttribute('stroke-width','1.5'); selectedOct = null; }
+    if(selectedId == null || !onFloor(selectedId)){ if(selectLabel) selectLabel.style.display = 'none'; return; }
+    var el = octByRoom[selectedId];
     if(el){ el.setAttribute('stroke','#e6edf3'); el.setAttribute('stroke-width','3'); selectedOct = el; }
+    labelAt(selectLabel, selectedId);
+  }
+  function selectRoom(id){
+    selectedId = id;
     if(selectedRow) selectedRow.classList.remove('sel');
     var row = rowByRoom[id];
     if(row){ row.classList.add('sel'); selectedRow = row; }
-    selectedId = id;
-    labelAt(selectLabel, id);
+    var f = cell[id] ? cell[id].f : currentFloor;
+    if(f !== currentFloor) drawFloor(f);            // redraw re-applies the highlight
+    else applySelectionHighlight();
     if(hoverLabel) hoverLabel.style.display = 'none';
     showRoom(id);
   }
 
-  // Room octagons (identity comes from the panel on click, not crowded labels).
-  GRAPH.rooms.forEach(function(r){
-    if(!cell[r.id]) return;
-    var c = centerOf(r.id);
-    var oct = document.createElementNS(NS,'polygon');
-    oct.setAttribute('points', octPoints(c.x, c.y, R));
-    oct.setAttribute('fill', areaColor[r.area_id] || '#8b949e');
-    oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
-    oct.style.cursor = 'pointer';
-    oct.addEventListener('click', function(){ selectRoom(r.id); });
-    oct.addEventListener('mouseenter', function(){ if(r.id !== selectedId) labelAt(hoverLabel, r.id); });
-    oct.addEventListener('mouseleave', function(){ if(hoverLabel) hoverLabel.style.display = 'none'; });
-    root.appendChild(oct);
-    octByRoom[r.id] = oct;
-  });
+  // --- Render a single floor into the (cleared) root group. ---
+  function drawFloor(f){
+    currentFloor = f;
+    while(root.firstChild) root.removeChild(root.firstChild);
+    octByRoom = {};
 
-  // Floating name labels, drawn on top of the octagons: one follows the hover,
-  // one stays pinned to the selected room.
-  hoverLabel = document.createElementNS(NS,'text');
-  hoverLabel.setAttribute('class','map-label'); hoverLabel.setAttribute('text-anchor','middle');
-  hoverLabel.style.display = 'none'; root.appendChild(hoverLabel);
-  selectLabel = document.createElementNS(NS,'text');
-  selectLabel.setAttribute('class','map-label map-label-sel'); selectLabel.setAttribute('text-anchor','middle');
-  selectLabel.style.display = 'none'; root.appendChild(selectLabel);
+    // compass connectors between rooms on this floor
+    GRAPH.exits.forEach(function(e){
+      if(!OFF[e.dir] || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
+      var a = centerOf(e.from), b = centerOf(e.to);
+      var line = document.createElementNS(NS,'line');
+      line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+      line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+      line.setAttribute('stroke','#484f58'); line.setAttribute('stroke-width','2');
+      root.appendChild(line);
+    });
+
+    // stubs: dashed ghost octagon one cell away in the missing exit's direction
+    stubs.forEach(function(e){
+      if(!onFloor(e.from)) return;
+      var a = centerOf(e.from), o = OFF[e.dir];
+      var len = Math.sqrt(o[0]*o[0] + o[1]*o[1]);
+      var gx = a.x + o[0]/len * PITCH * 0.82, gy = a.y + o[1]/len * PITCH * 0.82;
+      var spur = document.createElementNS(NS,'line');
+      spur.setAttribute('x1',a.x); spur.setAttribute('y1',a.y);
+      spur.setAttribute('x2',gx); spur.setAttribute('y2',gy);
+      spur.setAttribute('stroke','#6e7681'); spur.setAttribute('stroke-width','1');
+      spur.setAttribute('stroke-dasharray','3,3');
+      root.appendChild(spur);
+      var ghost = document.createElementNS(NS,'polygon');
+      ghost.setAttribute('points', octPoints(gx,gy,R*0.42));
+      ghost.setAttribute('fill','transparent');
+      ghost.setAttribute('stroke','#6e7681'); ghost.setAttribute('stroke-width','1');
+      ghost.setAttribute('stroke-dasharray','2,2');
+      root.appendChild(ghost);
+      var dl = document.createElementNS(NS,'text');
+      dl.setAttribute('class','edge-dir'); dl.setAttribute('text-anchor','middle');
+      dl.setAttribute('x',gx); dl.setAttribute('y',gy+3);
+      dl.textContent = e.dir;
+      root.appendChild(dl);
+    });
+
+    // room octagons + up/down badges
+    GRAPH.rooms.forEach(function(r){
+      if(!onFloor(r.id)) return;
+      var c = centerOf(r.id);
+      var oct = document.createElementNS(NS,'polygon');
+      oct.setAttribute('points', octPoints(c.x, c.y, R));
+      oct.setAttribute('fill', areaColor[r.area_id] || '#8b949e');
+      oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
+      oct.style.cursor = 'pointer';
+      oct.addEventListener('click', function(){ selectRoom(r.id); });
+      oct.addEventListener('mouseenter', function(){ if(r.id !== selectedId) labelAt(hoverLabel, r.id); });
+      oct.addEventListener('mouseleave', function(){ if(hoverLabel) hoverLabel.style.display = 'none'; });
+      root.appendChild(oct);
+      octByRoom[r.id] = oct;
+
+      vertExits[r.id].forEach(function(ed){
+        var up = ed.dir === 'u';
+        var bx = c.x + R*0.52, by = c.y + (up ? -R*0.42 : R*0.42);
+        var g = document.createElementNS(NS,'g');
+        g.style.cursor = 'pointer';
+        var circ = document.createElementNS(NS,'circle');
+        circ.setAttribute('cx',bx); circ.setAttribute('cy',by); circ.setAttribute('r','9');
+        circ.setAttribute('fill','#0d1117'); circ.setAttribute('stroke','#e6edf3'); circ.setAttribute('stroke-width','1');
+        g.appendChild(circ);
+        var tri = document.createElementNS(NS,'text');
+        tri.setAttribute('class','vbadge'); tri.setAttribute('text-anchor','middle');
+        tri.setAttribute('x',bx); tri.setAttribute('y',by + 3.5);
+        tri.textContent = up ? '\\u25B2' : '\\u25BC';
+        g.appendChild(tri);
+        g.addEventListener('click', function(ev){ ev.stopPropagation(); selectRoom(ed.to); centerOn(ed.to); });
+        root.appendChild(g);
+      });
+    });
+
+    // floating labels on top (recreated each redraw)
+    hoverLabel = document.createElementNS(NS,'text');
+    hoverLabel.setAttribute('class','map-label'); hoverLabel.setAttribute('text-anchor','middle');
+    hoverLabel.style.display = 'none'; root.appendChild(hoverLabel);
+    selectLabel = document.createElementNS(NS,'text');
+    selectLabel.setAttribute('class','map-label map-label-sel'); selectLabel.setAttribute('text-anchor','middle');
+    selectLabel.style.display = 'none'; root.appendChild(selectLabel);
+
+    floors.forEach(function(ff){ if(tabByFloor[ff]) tabByFloor[ff].classList.toggle('active', ff === f); });
+    applySelectionHighlight();
+  }
 
   // --- Pan / zoom. ---
   var W = svg.clientWidth || 900, H = 620;
   var tx = 0, ty = 0, scale = 1;
   function applyTransform(){ root.setAttribute('transform','translate('+tx+','+ty+') scale('+scale+')'); }
-
-  // Fit the whole map into view on first render.
-  (function fit(){
+  function fit(){                                     // fit all rooms (floors share x/y) into view
     var minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity, any=false;
     GRAPH.rooms.forEach(function(r){ if(!cell[r.id]) return; any=true;
       var c=centerOf(r.id); minX=Math.min(minX,c.x); maxX=Math.max(maxX,c.x);
@@ -652,7 +707,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     tx = (W - gw*scale)/2 - (minX - PAD)*scale;
     ty = (H - gh*scale)/2 - (minY - PAD)*scale;
     applyTransform();
-  })();
+  }
 
   var panning = false, panStart = null;
   svg.addEventListener('pointerdown', function(ev){ panning = true; panStart = { x:ev.clientX - tx, y:ev.clientY - ty }; });
@@ -681,6 +736,18 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     applyTransform();
   }
 
+  // --- Floor selector tabs (only shown when there's more than one floor). ---
+  var tabsEl = document.getElementById('floor-tabs');
+  if(tabsEl && floors.length > 1){
+    floors.forEach(function(f){
+      var b = document.createElement('button');
+      b.className = 'floor-tab'; b.textContent = floorLabel(f);
+      b.addEventListener('click', function(){ drawFloor(f); });
+      tabsEl.appendChild(b);
+      tabByFloor[f] = b;
+    });
+  }
+
   // Deep-link: clicking a Room table row selects it here and brings it into view.
   var wrap = document.querySelector('.map-wrap');
   Array.prototype.forEach.call(document.querySelectorAll('tr[data-room-id]'), function(tr){
@@ -692,6 +759,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       if(wrap) wrap.scrollIntoView({ behavior:'smooth', block:'center' });
     });
   });
+
+  // Initial render: Ground if present, else the topmost floor.
+  drawFloor(floorSet[0] ? 0 : (floors.length ? floors[0] : 0));
+  fit();
 })();
 </script>
 
