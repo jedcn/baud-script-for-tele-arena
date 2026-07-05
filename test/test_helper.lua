@@ -80,14 +80,30 @@ local function regexToLuaPattern(pattern)
     return luaPattern
 end
 
+local nextTriggerId = 0
+
 function createTrigger(pattern, callback, options)
     local luaPattern = regexToLuaPattern(pattern)
+    nextTriggerId = nextTriggerId + 1
+    local id = "trigger_" .. nextTriggerId
     table.insert(M.triggers, {
+        id = id,
         pattern = luaPattern,
         originalPattern = pattern,
         callback = callback,
         options = options or {}
     })
+    return id
+end
+
+function removeTrigger(id)
+    for i, trigger in ipairs(M.triggers) do
+        if trigger.id == id then
+            table.remove(M.triggers, i)
+            return true
+        end
+    end
+    return false
 end
 
 function createAlias(pattern, callback, options)
@@ -140,7 +156,11 @@ function httpRequest(url, options, callback)
 end
 
 function M.simulateLine(text)
-    for _, trigger in ipairs(M.triggers) do
+    -- Iterate over a snapshot so a trigger callback that removes itself (or any
+    -- trigger) via removeTrigger doesn't disturb this loop.
+    local snapshot = {}
+    for _, trigger in ipairs(M.triggers) do snapshot[#snapshot + 1] = trigger end
+    for _, trigger in ipairs(snapshot) do
         local matches = {string.match(text, trigger.pattern)}
         if #matches > 0 or string.match(text, trigger.pattern) then
             if #matches == 0 then matches = {} end

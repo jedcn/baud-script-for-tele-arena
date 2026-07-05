@@ -6037,6 +6037,14 @@ describe("message-me-when-you-see", function()
         assert.are.equal(1, #helper.httpRequestCalls)
     end)
 
+    it("removes its own trigger after firing", function()
+        local before = #helper.triggers
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        assert.are.equal(before + 1, #helper.triggers)
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(before, #helper.triggers)
+    end)
+
     it("accepts an unquoted phrase", function()
         helper.simulateAlias("message-me-when-you-see odd tingling sensation washes over")
         helper.simulateLine("An odd tingling sensation washes over you briefly!")
