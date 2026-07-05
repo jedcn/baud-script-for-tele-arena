@@ -1061,6 +1061,19 @@ local function handleRoomEntry(matches)
         taPackage.coord = c
     end
 
+    -- If we just passed through a locked door (the unlock message stashed the
+    -- key/door before this brief arrived), tag the edge we crossed -- and its
+    -- reverse, since the door blocks both ways -- so the map knows a key is
+    -- needed here. Do this after the edges are linked above.
+    if taPackage.pendingLock and taPackage.pendingDirection and taPackage.prevRoomId then
+        local dir = taPackage.pendingDirection
+        local lk = taPackage.pendingLock
+        taPackage.db.setExitLock(taPackage.prevRoomId, dir, lk.key, lk.door)
+        local back = REVERSE_DIR[dir]
+        if back then taPackage.db.setExitLock(roomId, back, lk.key, lk.door) end
+    end
+    taPackage.pendingLock = nil
+
     echo("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
         .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional)
         .. " coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y .. "," .. taPackage.coord.z .. ")")
@@ -1149,6 +1162,23 @@ end, { type = "regex" })
 -- A rejected move: clear the pending direction so the next room line doesn't
 -- record a phantom exit from the room we never actually left.
 createTrigger("^Sorry, there's no exit in that direction\\.$", function()
+    taPackage.pendingDirection = nil
+end, { type = "regex" })
+
+-- Passing through a locked door prints this just before the destination brief.
+-- Stash the key/door; handleRoomEntry tags the crossed edge (and its reverse)
+-- once it has linked them. Both are recorded lowercase to match room/dir slugs.
+createTrigger("^Your (.+) key unlocks the (.+) door and allows you to pass through\\.$", function(matches)
+    taPackage.pendingLock = { key = matches[2], door = matches[3] }
+end, { type = "regex" })
+
+-- A locked door we lack the key for turns us back, like a failed move. Record
+-- the exit as a locked door (key unknown) so the map shows it, then clear the
+-- pending direction so the reprinted room isn't mistaken for an arrival.
+createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", function(matches)
+    if taPackage.mapping and taPackage.currentRoomId and taPackage.pendingDirection then
+        taPackage.db.setExitLock(taPackage.currentRoomId, taPackage.pendingDirection, nil, matches[2])
+    end
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 

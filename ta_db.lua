@@ -80,8 +80,20 @@ db:execute([[CREATE TABLE IF NOT EXISTS room_exits (
   from_id    INTEGER NOT NULL REFERENCES rooms(id),
   direction  TEXT NOT NULL,
   to_id      INTEGER REFERENCES rooms(id),
+  lock_key   TEXT,
+  lock_door  TEXT,
   PRIMARY KEY (from_id, direction)
 )]])
+
+-- Migration: room_exits predates the lock columns. A locked exit records the
+-- door's material (lock_door, e.g. "bronze") and the key that opens it
+-- (lock_key, e.g. "bronze") when known -- a blocked exit we lack the key for
+-- has lock_door set and lock_key NULL. Add the columns if missing; idempotent.
+for _, col in ipairs({ "lock_key", "lock_door" }) do
+    if not tableHasColumn("room_exits", col) then
+        pcall(function() db:execute("ALTER TABLE room_exits ADD COLUMN " .. col .. " TEXT") end)
+    end
+end
 
 db:execute([[CREATE TABLE IF NOT EXISTS monsters (
   name        TEXT PRIMARY KEY,
@@ -279,6 +291,23 @@ function TaDb.recordKnownExit(fromId, dir)
         "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, NULL)",
         fromId, dir
     )
+end
+
+-- Tag an exit as a locked door. `key` is the key that opens it (nil when we
+-- only know the door blocked us), `door` its material. The exit may not have
+-- been walked yet (a door we were turned away from), so ensure a stub row
+-- exists first, then set the lock columns without disturbing to_id.
+function TaDb.setExitLock(fromId, dir, key, door)
+    db:execute(
+        "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, NULL)",
+        fromId, dir
+    )
+    db:execute(
+        "UPDATE room_exits SET lock_key = ?, lock_door = ? WHERE from_id = ? AND direction = ?",
+        key, door, fromId, dir
+    )
+    dbLog("[DB\xE2\x86\x92room_exits] lock #" .. tostring(fromId) .. " " .. dir
+        .. " door=" .. tostring(door) .. " key=" .. tostring(key))
 end
 
 function TaDb.recordVisit(roomId)

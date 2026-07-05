@@ -1297,6 +1297,27 @@ describe("ta_db", function()
 
     end)
 
+    describe("setExitLock", function()
+
+        it("ensures a stub then sets the lock columns", function()
+            TaDb.setExitLock(5, "n", "bronze", "bronze")
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
+            local upd = helper.findDbCall("execute", "UPDATE room_exits SET lock_key")
+            assert.is_not_nil(upd)
+            assert.are.same({ "bronze", "bronze", 5, "n" }, upd.params)
+        end)
+
+        it("records a door whose key is unknown", function()
+            TaDb.setExitLock(5, "e", nil, "iron")
+            local upd = helper.findDbCall("execute", "UPDATE room_exits SET lock_key")
+            assert.is_nil(upd.params[1])          -- key unknown
+            assert.are.equal("iron", upd.params[2])
+            assert.are.equal(5, upd.params[3])
+            assert.are.equal("e", upd.params[4])
+        end)
+
+    end)
+
     describe("ensureArea", function()
 
         it("inserts if absent and returns the id", function()
@@ -1921,6 +1942,44 @@ describe("World map triggers", function()
             helper.simulateLine("You're in the magic shop.")
             assert.are.equal(13, taPackage.currentRoomId)
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
+    end)
+
+    describe("locked doors", function()
+
+        it("tags the crossed edge and its reverse after passing a locked door", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "n"
+            stubDiscover(6)
+            -- The unlock line arrives just before the destination brief.
+            helper.simulateLine("Your bronze key unlocks the bronze door and allows you to pass through.")
+            assert.are.same({ key = "bronze", door = "bronze" }, taPackage.pendingLock)
+            helper.simulateLine("You're in a cave.")
+            local locks = {}
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute"
+                    and string.find(c.sql, "UPDATE room_exits SET lock_key", 1, true) then
+                    locks[#locks + 1] = c.params
+                end
+            end
+            assert.are.same({ "bronze", "bronze", 5, "n" }, locks[1])  -- crossed edge
+            assert.are.same({ "bronze", "bronze", 6, "s" }, locks[2])  -- reverse (door blocks both ways)
+            assert.is_nil(taPackage.pendingLock)
+        end)
+
+        it("records a blocked door we lack the key for and clears the pending direction", function()
+            taPackage.currentRoomId = 5
+            taPackage.pendingDirection = "e"
+            helper.simulateLine("The locked iron door prevents your exit in that direction.")
+            local upd = helper.findDbCall("execute", "UPDATE room_exits SET lock_key")
+            assert.is_not_nil(upd)
+            assert.is_nil(upd.params[1])           -- key unknown
+            assert.are.equal("iron", upd.params[2])
+            assert.are.equal(5, upd.params[3])
+            assert.are.equal("e", upd.params[4])
+            assert.is_nil(taPackage.pendingDirection)
         end)
 
     end)
