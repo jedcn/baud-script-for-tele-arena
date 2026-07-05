@@ -854,13 +854,17 @@ local function isRoomLine(line)
         or string.match(line, "^You are inside ")
 end
 
+-- A look description runs until the paired `ex` reply ("Exits: ...") — a
+-- reliable, unambiguous terminator — so we don't have to sniff for room-ish
+-- lines. We also bail on a real move (the "You're" contraction; note a look's
+-- own first line is "You are ...", which we KEEP as description) or a failed
+-- command.
 local function isRoomDescTerminator(line)
-    return string.match(line, "^Sorry,")
-        or isRoomLine(line)
-        or string.match(line, "^There is ")
-        or string.match(line, "^An? .+ enters ")
-        or string.match(line, DIRECTION_PATTERN)
-        or isHealthLine(line)
+    return string.match(line, "^Exits:")
+        or string.match(line, "^Sorry,")
+        or string.match(line, "^You're in ")
+        or string.match(line, "^You're on ")
+        or string.match(line, "^You're at ")
 end
 
 local function cleanRoomDesc(desc)
@@ -1007,8 +1011,10 @@ local function handleRoomEntry(matches)
     taPackage.currentRoom = name
     taPackage.pendingDirection = nil
 
-    -- Probe the room's exits so the fingerprint reconcile (the `Exits:` handler)
-    -- can close loops. The reply isn't a room line, so it can't re-enter here.
+    -- While mapping, capture the room: `look` for its description, then `ex`
+    -- for its exits. The `ex` reply ("Exits: ...") both ends the look capture
+    -- and drives loop closure. Neither reply is a room line, so no re-entry.
+    send("look")
     send("ex")
 end
 

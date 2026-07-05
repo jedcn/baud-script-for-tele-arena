@@ -1387,6 +1387,14 @@ describe("ta_db", function()
             assert.are.same({ 1, 5 }, reset.params)
         end)
 
+        it("carries the provisional's description onto the target", function()
+            helper.mockDbRows = function() return {} end
+            TaDb.mergeRoomInto(5, 1)
+            local desc = helper.findDbCall("execute", "SET description = COALESCE")
+            assert.is_not_nil(desc)
+            assert.are.same({ 5, 1 }, desc.params)  -- COALESCE(target, provisional #5) into #1
+        end)
+
     end)
 
     describe("upsertMonster", function()
@@ -1765,12 +1773,27 @@ describe("World map triggers", function()
             assert.is_nil(taPackage.currentRoomId)
         end)
 
-        it("auto-sends ex on arrival while mapping", function()
+        it("auto-sends look and ex on arrival while mapping", function()
             stubDiscover(1)
             helper.simulateLine("You're in the north plaza.")
-            local sentEx = false
-            for _, c in ipairs(helper.sendCalls) do if c == "ex" then sentEx = true end end
-            assert.is_true(sentEx)
+            local sent = {}
+            for _, c in ipairs(helper.sendCalls) do sent[c] = true end
+            assert.is_true(sent["look"])
+            assert.is_true(sent["ex"])
+        end)
+
+        it("captures the room description via look, ended by the ex reply", function()
+            taPackage.currentRoomId = 5
+            -- The look's own first line is "You are in ..." — kept, not a terminator.
+            helper.simulateLine("look")
+            helper.simulateLine("You are in the village tavern. The smoke from the oil lamps")
+            helper.simulateLine("leaves many shadows and unlit corners.")
+            helper.simulateLine("Exits: sw,u.")
+            local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+            assert.is_not_nil(desc)
+            assert.are.equal(5, desc.params[2])
+            assert.is_truthy(desc.params[1]:find("village tavern", 1, true))
+            assert.is_truthy(desc.params[1]:find("unlit corners", 1, true))
         end)
 
         it("flags a newly discovered room as provisional, a reused one as not", function()

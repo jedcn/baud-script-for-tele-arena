@@ -358,6 +358,12 @@ function TaDb.mergeRoomInto(fromId, intoId)
         "UPDATE rooms SET visits = visits + COALESCE((SELECT visits FROM rooms WHERE id = ?), 0) WHERE id = ?",
         fromId, intoId
     )
+    -- Keep the provisional room's description if the target hasn't got one yet
+    -- (the description is captured on arrival, before this merge runs).
+    db:execute(
+        "UPDATE rooms SET description = COALESCE(description, (SELECT description FROM rooms WHERE id = ?)) WHERE id = ?",
+        fromId, intoId
+    )
     db:execute("DELETE FROM rooms WHERE id = ?", fromId)
     dbLog("[DB\xE2\x86\x92rooms] merged #" .. tostring(fromId) .. " into #" .. tostring(intoId))
 end
