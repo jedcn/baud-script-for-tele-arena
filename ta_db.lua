@@ -60,8 +60,21 @@ db:execute([[CREATE TABLE IF NOT EXISTS rooms (
   description   TEXT,
   area_id       INTEGER REFERENCES areas(id),
   first_visited TEXT,
-  visits        INTEGER NOT NULL DEFAULT 0
+  visits        INTEGER NOT NULL DEFAULT 0,
+  x             INTEGER,
+  y             INTEGER,
+  z             INTEGER
 )]])
+
+-- Migration: rooms predates the x/y/z coordinate columns. Coordinates are
+-- dead-reckoned from movement deltas (see main.lua) and let identically-named
+-- rooms (every "cave") be told apart by position, which the name+exit-set
+-- fingerprint can't do. Add the columns if missing; idempotent across reloads.
+for _, col in ipairs({ "x", "y", "z" }) do
+    if not tableHasColumn("rooms", col) then
+        pcall(function() db:execute("ALTER TABLE rooms ADD COLUMN " .. col .. " INTEGER") end)
+    end
+end
 
 db:execute([[CREATE TABLE IF NOT EXISTS room_exits (
   from_id    INTEGER NOT NULL REFERENCES rooms(id),
@@ -277,6 +290,36 @@ function TaDb.setRoomDescription(roomId, description)
     dbLog("[DB\xE2\x86\x92rooms] desc: #" .. tostring(roomId))
 end
 
+-- The dead-reckoned coordinate stamped on a room, as { x, y, z }, or nil when
+-- the room has no coordinate yet (x IS NULL). Coordinates are area-local: only
+-- their relative offsets matter, so the origin per area is wherever mapping
+-- first anchored.
+function TaDb.roomCoord(roomId)
+    local row = db:queryOne("SELECT x, y, z FROM rooms WHERE id = ?", roomId)
+    if not row or row.x == nil then return nil end
+    return { x = row.x, y = row.y, z = row.z }
+end
+
+function TaDb.setRoomCoord(roomId, x, y, z)
+    db:execute("UPDATE rooms SET x = ?, y = ?, z = ? WHERE id = ?", x, y, z, roomId)
+    dbLog("[DB\xE2\x86\x92rooms] coord: #" .. tostring(roomId)
+        .. " (" .. tostring(x) .. "," .. tostring(y) .. "," .. tostring(z) .. ")")
+end
+
+-- Coordinate-based identity: the one room in `areaId` with this display name
+-- sitting at exactly (x, y, z), excluding `excludeId`. Returns its id, or nil
+-- when nothing matches or more than one does (ambiguous — don't guess). This is
+-- a stronger signal than the name+exit-set fingerprint: two "cave" rooms at
+-- different coordinates are provably distinct, and one we return to by a
+-- different path lands on its original coordinate and closes the loop.
+function TaDb.findRoomAtCoord(areaId, name, x, y, z, excludeId)
+    local rows = db:query(
+        "SELECT id FROM rooms WHERE area_id = ? AND name = ? AND x = ? AND y = ? AND z = ? AND id <> ?",
+        areaId, name, x, y, z, excludeId or -1) or {}
+    if #rows ~= 1 then return nil end
+    return rows[1].id
+end
+
 -- All room ids sharing a display name; used to resolve a cold-start room
 -- (no prior room to walk from) when the name is unambiguous.
 function TaDb.roomIdsByName(name)
@@ -306,7 +349,14 @@ end
 -- `excludeId` (the room we currently think we're in). Returns that room's id,
 -- or nil when there's no match or more than one (ambiguous, e.g. identical
 -- caves — left for a manual assert rather than guessed).
-function TaDb.findRoomByFingerprint(name, dirs, excludeId)
+--
+-- `coord` (optional { x, y, z }) is a hard guard against over-merging: a
+-- candidate whose stored coordinate disagrees with `coord` is a provably
+-- different room, so it's skipped even if its name and exit-set match. This is
+-- what keeps two distinct caves that share a fingerprint from collapsing once
+-- coordinates are known; when `coord` is nil (nothing to dead-reckon from) the
+-- guard is inert and we fall back to name+exit-set alone.
+function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord)
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
@@ -314,6 +364,11 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId)
     local match
     for _, id in ipairs(TaDb.roomIdsByName(name)) do
         if id ~= excludeId then
+            local cand = coord and TaDb.roomCoord(id)
+            if cand and (cand.x ~= coord.x or cand.y ~= coord.y or cand.z ~= coord.z) then
+                -- Different coordinate: provably not this room. Skip.
+                goto continue
+            end
             local have = TaDb.roomExitDirections(id)
             local haveCount, ok = 0, true
             for dir in pairs(have) do
@@ -325,6 +380,7 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId)
                 match = id
             end
         end
+        ::continue::
     end
     return match
 end
@@ -369,6 +425,14 @@ function TaDb.mergeRoomInto(fromId, intoId)
     db:execute(
         "UPDATE rooms SET description = COALESCE(description, (SELECT description FROM rooms WHERE id = ?)) WHERE id = ?",
         fromId, intoId
+    )
+    -- Likewise carry the provisional's dead-reckoned coordinate when the target
+    -- has none, so coordinate identity can recognize this room on a later visit.
+    db:execute(
+        "UPDATE rooms SET x = COALESCE(x, (SELECT x FROM rooms WHERE id = ?)),"
+        .. " y = COALESCE(y, (SELECT y FROM rooms WHERE id = ?)),"
+        .. " z = COALESCE(z, (SELECT z FROM rooms WHERE id = ?)) WHERE id = ?",
+        fromId, fromId, fromId, intoId
     )
     db:execute("DELETE FROM rooms WHERE id = ?", fromId)
     dbLog("[DB\xE2\x86\x92rooms] merged #" .. tostring(fromId) .. " into #" .. tostring(intoId))

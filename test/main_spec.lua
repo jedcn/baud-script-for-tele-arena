@@ -1346,6 +1346,72 @@ describe("ta_db", function()
             assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5))
         end)
 
+        it("skips a name+exit-set match whose coordinate disagrees", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }  -- candidate #1 sits elsewhere
+                end
+                return nil
+            end
+            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
+        end)
+
+        it("keeps a name+exit-set match whose coordinate agrees", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 5, y = 5, z = 0 }))
+        end)
+
+        it("keeps a match whose coordinate is unknown (guard is inert)", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = nil  -- candidate #1 has no stored coordinate
+            assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
+        end)
+
+    end)
+
+    describe("coordinates", function()
+
+        it("roomCoord returns the stored coordinate", function()
+            helper.mockDbOneRow = { x = 3, y = -2, z = 1 }
+            assert.are.same({ x = 3, y = -2, z = 1 }, TaDb.roomCoord(7))
+        end)
+
+        it("roomCoord returns nil when the room has no coordinate", function()
+            helper.mockDbOneRow = { x = nil, y = nil, z = nil }
+            assert.is_nil(TaDb.roomCoord(7))
+            helper.mockDbOneRow = nil
+            assert.is_nil(TaDb.roomCoord(7))
+        end)
+
+        it("setRoomCoord writes x/y/z for the room", function()
+            TaDb.setRoomCoord(7, 3, -2, 1)
+            local call = helper.findDbCall("execute", "UPDATE rooms SET x = ?, y = ?, z = ?")
+            assert.is_not_nil(call)
+            assert.are.same({ 3, -2, 1, 7 }, call.params)
+        end)
+
+        it("findRoomAtCoord returns the unique room at the coordinate", function()
+            helper.mockDbRows = { { id = 12 } }
+            assert.are.equal(12, TaDb.findRoomAtCoord(2, "cave", 4, 4, 0, 9))
+        end)
+
+        it("findRoomAtCoord returns nil when nothing matches", function()
+            helper.mockDbRows = {}
+            assert.is_nil(TaDb.findRoomAtCoord(2, "cave", 4, 4, 0, 9))
+        end)
+
+        it("findRoomAtCoord returns nil when more than one room matches", function()
+            helper.mockDbRows = { { id = 12 }, { id = 13 } }
+            assert.is_nil(TaDb.findRoomAtCoord(2, "cave", 4, 4, 0, 9))
+        end)
+
     end)
 
     describe("mergeRoomInto", function()
@@ -1708,6 +1774,66 @@ describe("World map triggers", function()
             helper.simulateLine("You are in a large cavern.")  -- the look's first line
             assert.are.equal("large cavern", taPackage.currentRoom)  -- unchanged
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
+        it("stamps the origin coordinate on a cold-start room", function()
+            stubDiscover(1)  -- no pendingDirection: nothing to dead-reckon from
+            helper.simulateLine("You're in a cave.")
+            local call = helper.findDbCall("execute", "UPDATE rooms SET x = ?, y = ?, z = ?")
+            assert.is_not_nil(call)
+            assert.are.same({ 0, 0, 0, 1 }, call.params)
+            assert.are.same({ x = 0, y = 0, z = 0 }, taPackage.coord)
+        end)
+
+        it("dead-reckons the coordinate of a room reached through an unknown exit", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "n"
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                    return { id = 1 }                       -- freshly minted room id
+                elseif string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    if params[1] == 5 then return { x = 0, y = 0, z = 0 } end  -- prev room
+                    return nil                              -- minted room has no coord yet
+                end
+                return nil                                  -- exitDestination: unknown exit
+            end
+            helper.mockDbRows = {}                           -- findRoomAtCoord: no match
+            helper.simulateLine("You're in a cave.")
+            local call = helper.findDbCall("execute", "UPDATE rooms SET x = ?, y = ?, z = ?")
+            assert.are.same({ 0, 1, 0, 1 }, call.params)     -- north is +y
+            assert.are.same({ x = 0, y = 1, z = 0 }, taPackage.coord)
+        end)
+
+        it("identifies a room by coordinate and closes the loop without discovering", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "n"
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    if params[1] == 5 then return { x = 0, y = 0, z = 0 } end  -- prev room
+                    return { x = 0, y = 1, z = 0 }          -- room #8's stored coord
+                end
+                return nil                                  -- exitDestination: unknown exit
+            end
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT id FROM rooms WHERE area_id", 1, true) then
+                    return { { id = 8 } }                    -- the room already at (0,1,0)
+                end
+                return {}
+            end
+            helper.simulateLine("You're in a cave.")
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- no discovery
+            assert.are.equal(8, taPackage.currentRoomId)
+            local edges = {}
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute"
+                    and string.find(c.sql, "INSERT OR REPLACE INTO room_exits", 1, true) then
+                    edges[#edges + 1] = c.params
+                end
+            end
+            assert.are.same({ 5, "n", 8 }, edges[1])         -- forward edge into the loop
+            assert.are.same({ 8, "s", 5 }, edges[2])         -- reverse back-edge
         end)
 
     end)

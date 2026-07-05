@@ -946,6 +946,18 @@ local REVERSE_DIR = {
     u = "d", d = "u",
 }
 
+-- Grid displacement of each move, as { dx, dy, dz }: north is +y, east is +x,
+-- up is +z. Dead-reckoning these from a room's stored coordinate gives the
+-- coordinate of the room we walk into, which distinguishes identically-named
+-- rooms by position and closes loops the topology alone misses. Coordinates are
+-- area-local — only relative offsets matter, so the per-area origin is wherever
+-- mapping first anchored (see handleRoomEntry).
+local DIR_DELTA = {
+    n = { 0, 1, 0 }, s = { 0, -1, 0 }, e = { 1, 0, 0 }, w = { -1, 0, 0 },
+    ne = { 1, 1, 0 }, nw = { -1, 1, 0 }, se = { 1, -1, 0 }, sw = { -1, -1, 0 },
+    u = { 0, 0, 1 }, d = { 0, 0, -1 },
+}
+
 -- Turn the phrase after "You're in/on/at ..." into a canonical room name by
 -- dropping a leading article: "the tavern" -> "tavern", "a cave" -> "cave",
 -- "an intersection" -> "intersection", "small cavern" -> "small cavern".
@@ -987,6 +999,18 @@ local function handleRoomEntry(matches)
     -- visit, link, or track position at all.
     if not taPackage.mapping then return end
 
+    -- The coordinate we expect to arrive at: the room we left plus the move's
+    -- grid delta. nil when we have no prior coordinate to walk from (a cold
+    -- start, or a prev room that was never anchored).
+    local arriveCoord
+    if taPackage.pendingDirection and taPackage.prevRoomId then
+        local delta = DIR_DELTA[taPackage.pendingDirection]
+        local base = taPackage.db.roomCoord(taPackage.prevRoomId)
+        if delta and base then
+            arriveCoord = { x = base.x + delta[1], y = base.y + delta[2], z = base.z + delta[3] }
+        end
+    end
+
     local roomId
     if taPackage.pendingDirection and taPackage.prevRoomId then
         local dir = taPackage.pendingDirection
@@ -1001,18 +1025,45 @@ local function handleRoomEntry(matches)
             -- name so we don't overwrite the wrong room.
             roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
         else
-            roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
+            -- Unknown exit. Before minting a new room, try to identify it by
+            -- coordinate: a same-area, same-name room already recorded at this
+            -- exact (x, y, z) is the room we just walked into (a loop the
+            -- topology didn't know closed). Otherwise it's genuinely new.
+            local coordMatch = arriveCoord and taPackage.db.findRoomAtCoord(
+                taPackage.currentAreaId, name,
+                arriveCoord.x, arriveCoord.y, arriveCoord.z, taPackage.prevRoomId)
+            if coordMatch then
+                roomId = coordMatch
+                taPackage.currentRoomProvisional = false
+            else
+                roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
+                taPackage.currentRoomProvisional = true
+            end
             taPackage.db.linkExit(taPackage.prevRoomId, dir, roomId)
             local back = REVERSE_DIR[dir]
             if back then taPackage.db.linkExit(roomId, back, taPackage.prevRoomId) end
-            taPackage.currentRoomProvisional = true
         end
     else
         roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
     end
 
+    -- Anchor this room's coordinate. Adopt a stored coordinate when the room
+    -- already has one (trust the persisted map over dead-reckoning, which drifts
+    -- when a move is missed); otherwise stamp the coordinate we computed, or the
+    -- origin for a cold anchor with nothing to walk from. taPackage.coord is the
+    -- cursor the next move dead-reckons from.
+    local stored = taPackage.db.roomCoord(roomId)
+    if stored then
+        taPackage.coord = stored
+    else
+        local c = arriveCoord or { x = 0, y = 0, z = 0 }
+        taPackage.db.setRoomCoord(roomId, c.x, c.y, c.z)
+        taPackage.coord = c
+    end
+
     echo("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
-        .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional))
+        .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional)
+        .. " coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y .. "," .. taPackage.coord.z .. ")")
 
     taPackage.db.recordVisit(roomId)
     taPackage.prevRoomId = taPackage.currentRoomId
@@ -1078,7 +1129,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
         local match = taPackage.db.findRoomByFingerprint(
-            taPackage.currentRoom, dirs, taPackage.currentRoomId)
+            taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord)
         echo("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
             .. " val=" .. tostring(match))
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
@@ -1133,6 +1184,7 @@ createAlias("^map-on$", function()
     taPackage.pendingDirection = nil
     taPackage.prevRoomId = nil
     taPackage.currentRoomId = nil
+    taPackage.coord = nil
     echo("[map] mapping ON")
     -- A bare return prints the "You're in X." brief for the room we're standing
     -- in, which captures it (and auto-probes its exits).
