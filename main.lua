@@ -1084,6 +1084,14 @@ createTrigger("^Sorry, there's no exit in that direction\\.$", function()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
+-- Moving too quickly makes the character trip instead of moving — no room
+-- change happens, but the game then reprints the current room. Clear the
+-- pending direction so that reprint is treated as a re-scan of the room we're
+-- still in, not an arrival through the exit we tried to take.
+createTrigger("^In your haste, you trip and fall!$", function()
+    taPackage.pendingDirection = nil
+end, { type = "regex" })
+
 -- Tag newly discovered rooms with an area: `map-area <slug> [display name]`.
 -- New rooms inherit taPackage.currentAreaId at discovery time.
 createAlias("^map-area (.+)$", function(matches)

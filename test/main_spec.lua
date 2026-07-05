@@ -1755,6 +1755,26 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "room_exits"))
         end)
 
+        it("treats a trip-and-fall as a rejected move (clears pendingDirection)", function()
+            taPackage.pendingDirection = "n"
+            helper.simulateLine("In your haste, you trip and fall!")
+            assert.is_nil(taPackage.pendingDirection)
+        end)
+
+        it("does not mis-resolve the reprint after a trip-and-fall", function()
+            -- In the magic shop (#13), 'go n' too fast -> trip -> the game reprints
+            -- "You're in the magic shop." With pendingDirection cleared, this must
+            -- resolve back to #13, not follow the n-edge onto another room.
+            taPackage.currentRoom = "magic shop"
+            taPackage.currentRoomId = 13
+            taPackage.prevRoomId = 13
+            taPackage.pendingDirection = "n"
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.simulateLine("You're in the magic shop.")
+            assert.are.equal(13, taPackage.currentRoomId)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
     end)
 
     describe("map-area alias", function()
