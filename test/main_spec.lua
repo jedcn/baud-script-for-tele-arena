@@ -2471,22 +2471,30 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(before, #helper.echoCalls)
         end)
 
-        it("second-arena XP check fires an ntfy notification", function()
+        it("second-arena XP check fires a Markdown ntfy notification", function()
             taPackage.arenaProfile = "second"
             taPackage.character.name = "Tojolias"
+            taPackage.character.class = "Warrior"
             taPackage.character.vitalityCurrent = 313
             taPackage.character.gold = 2900
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
+            -- Warrior level 12 threshold is 588,700 and level 13 is 815,600, so
+            -- 815,600 - 620,046 = 195,554 XP remain until the next level.
             helper.simulateLine("Experience:   620046")
             assert.are.equal(1, #helper.httpRequestCalls)
             local call = helper.httpRequestCalls[1]
             assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
             assert.are.equal("POST", call.options.method)
             assert.are.equal("2nd Arena Check-In", call.options.headers["X-Title"])
+            assert.are.equal("true", call.options.headers["X-Markdown"])
             assert.are.equal(
-                "[Tojolias] Current XP:620,046 Current HP:313 Current Gold:2,900",
+                "[Tojolias]\n"
+                    .. "- XP Until Level Up: 195,554\n"
+                    .. "- XP: 620,046\n"
+                    .. "- HP: 313\n"
+                    .. "- Gold: 2,900",
                 call.options.body)
         end)
 

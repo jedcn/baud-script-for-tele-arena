@@ -102,12 +102,17 @@ function formatWithCommas(n)
 end
 
 -- Fire-and-forget push to our ntfy topic. `title` becomes the notification
--- title (ntfy's X-Title header), `body` the message. No callback — a failed
+-- title (ntfy's X-Title header), `body` the message. Pass markdown=true to have
+-- ntfy render the body as Markdown (X-Markdown header). No callback — a failed
 -- ping must never disturb whatever loop triggered it.
-function sendNtfy(title, body)
+function sendNtfy(title, body, markdown)
+    local headers = { ["X-Title"] = title }
+    if markdown then
+        headers["X-Markdown"] = "true"
+    end
     httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
         method = "POST",
-        headers = { ["X-Title"] = title },
+        headers = headers,
         body = body,
     })
 end
@@ -1888,10 +1893,16 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             taPackage.arenaLastNtfyTime = now
             local hp = getVitality()
             local gold = getGold()
-            sendNtfy("2nd Arena Check-In",
-                "[" .. (taPackage.character.name or "?") .. "] Current XP:"
-                    .. formatWithCommas(xp) .. " Current HP:" .. (hp or "?")
-                    .. " Current Gold:" .. (gold and formatWithCommas(gold) or "?"))
+            local nextThreshold = getXpForNextLevel(xp, getClass())
+            local lines = { "[" .. (taPackage.character.name or "?") .. "]" }
+            if nextThreshold then
+                lines[#lines + 1] = "- XP Until Level Up: "
+                    .. formatWithCommas(nextThreshold - xp)
+            end
+            lines[#lines + 1] = "- XP: " .. formatWithCommas(xp)
+            lines[#lines + 1] = "- HP: " .. (hp or "?")
+            lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
+            sendNtfy("2nd Arena Check-In", table.concat(lines, "\n"), true)
         end
     end
 end, { type = "regex" })
