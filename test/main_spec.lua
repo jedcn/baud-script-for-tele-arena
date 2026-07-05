@@ -3,6 +3,15 @@
 
 local helper = require("test.test_helper")
 
+-- True when `list` (e.g. helper.echoCalls) contains `value`. Handy for asserting
+-- an echo was emitted without depending on its position among other echoes.
+local function tableContains(list, value)
+    for _, v in ipairs(list) do
+        if v == value then return true end
+    end
+    return false
+end
+
 describe("Warrior XP table", function()
 
     before_each(function()
@@ -1331,6 +1340,50 @@ describe("ta_db", function()
 
     end)
 
+    describe("listAreas", function()
+
+        it("returns the area rows", function()
+            helper.mockDbRows = { { slug = "first-town", name = "first-town" },
+                                  { slug = "first-dungeon", name = "first-dungeon" } }
+            local areas = TaDb.listAreas()
+            assert.are.equal(2, #areas)
+            assert.are.equal("first-town", areas[1].slug)
+            assert.are.equal("first-dungeon", areas[2].slug)
+        end)
+
+    end)
+
+    describe("areaIdBySlug", function()
+
+        it("returns the area id for a known slug", function()
+            helper.mockDbOneRow = { id = 2 }
+            assert.are.equal(2, TaDb.areaIdBySlug("first-dungeon"))
+        end)
+
+        it("returns nil for an unknown slug", function()
+            helper.mockDbOneRow = nil
+            assert.is_nil(TaDb.areaIdBySlug("nope"))
+        end)
+
+    end)
+
+    describe("resetArea", function()
+
+        it("nulls inbound edges, deletes the area's exits and rooms, returns the count", function()
+            helper.mockExecuteReturn = 33
+            local removed = TaDb.resetArea(2)
+            assert.are.equal(33, removed)
+            local nullEdges = helper.findDbCall("execute", "UPDATE room_exits SET to_id = NULL WHERE to_id IN")
+            assert.is_not_nil(nullEdges)
+            assert.are.same({ 2 }, nullEdges.params)
+            local delExits = helper.findDbCall("execute", "DELETE FROM room_exits WHERE from_id IN")
+            assert.are.same({ 2 }, delExits.params)
+            local delRooms = helper.findDbCall("execute", "DELETE FROM rooms WHERE area_id")
+            assert.are.same({ 2 }, delRooms.params)
+        end)
+
+    end)
+
     describe("findRoomByFingerprint", function()
 
         -- Stub roomIdsByName and roomExitDirections per query. `existing` maps a
@@ -2046,6 +2099,53 @@ describe("World map triggers", function()
             helper.simulateLine("You're in a cave.")
             local ins = helper.findDbCall("execute", "INSERT INTO rooms")
             assert.are.equal(3, ins.params[3])  -- area_id inherited
+        end)
+
+    end)
+
+    describe("map-list-areas alias", function()
+
+        it("echoes each area slug", function()
+            helper.mockDbRows = { { slug = "first-town", name = "first-town" },
+                                  { slug = "first-dungeon", name = "first-dungeon" } }
+            helper.simulateAlias("map-list-areas")
+            assert.is_true(tableContains(helper.echoCalls, "first-town"))
+            assert.is_true(tableContains(helper.echoCalls, "first-dungeon"))
+        end)
+
+        it("reports when nothing has been mapped", function()
+            helper.mockDbRows = {}
+            helper.simulateAlias("map-list-areas")
+            assert.is_true(tableContains(helper.echoCalls, "[map] no areas mapped yet"))
+        end)
+
+    end)
+
+    describe("map-reset-area alias", function()
+
+        it("resets the named area and forgets the mapping anchor", function()
+            taPackage.currentRoomId = 42
+            taPackage.prevRoomId = 41
+            taPackage.pendingDirection = "n"
+            taPackage.coord = { x = 1, y = 2, z = 0 }
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 2 } end
+                return nil
+            end
+            helper.mockExecuteReturn = 33
+            helper.simulateAlias("map-reset-area first-dungeon")
+            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE area_id"))
+            assert.is_nil(taPackage.currentRoomId)
+            assert.is_nil(taPackage.prevRoomId)
+            assert.is_nil(taPackage.pendingDirection)
+            assert.is_nil(taPackage.coord)
+        end)
+
+        it("does nothing for an unknown area slug", function()
+            helper.mockDbOneRow = nil  -- areaIdBySlug finds no area
+            helper.simulateAlias("map-reset-area bogus")
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE area_id"))
+            assert.is_true(tableContains(helper.echoCalls, "[map] no such area: bogus"))
         end)
 
     end)

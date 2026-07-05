@@ -253,6 +253,35 @@ function TaDb.ensureArea(slug, name)
     return id
 end
 
+-- Every known area as { slug = , name = } rows, in discovery order.
+function TaDb.listAreas()
+    return db:query("SELECT slug, name FROM areas ORDER BY id") or {}
+end
+
+-- The area id for a slug, or nil if there's no such area.
+function TaDb.areaIdBySlug(slug)
+    local row = db:queryOne("SELECT id FROM areas WHERE slug = ?", slug)
+    return row and row.id
+end
+
+-- Wipe an area's rooms and exits so it can be re-walked from scratch, leaving
+-- every other area intact. Edges from OTHER areas that pointed into this one are
+-- reverted to unexplored stubs (to_id = NULL) so they don't dangle at a deleted
+-- room. The area row itself is kept, so the slug survives for re-mapping.
+-- Returns the number of rooms removed.
+function TaDb.resetArea(areaId)
+    db:execute(
+        "UPDATE room_exits SET to_id = NULL WHERE to_id IN (SELECT id FROM rooms WHERE area_id = ?)",
+        areaId)
+    db:execute(
+        "DELETE FROM room_exits WHERE from_id IN (SELECT id FROM rooms WHERE area_id = ?)",
+        areaId)
+    local removed = db:execute("DELETE FROM rooms WHERE area_id = ?", areaId)
+    dbLog("[DB\xE2\x86\x92rooms] reset area #" .. tostring(areaId)
+        .. " (" .. tostring(removed) .. " rooms)")
+    return removed
+end
+
 -- Insert a newly discovered room (visits starts at 0; the caller records the
 -- visit) and return its id.
 function TaDb.discoverRoom(name, areaId)

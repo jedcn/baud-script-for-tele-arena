@@ -1200,6 +1200,38 @@ createAlias("^map-area (.+)$", function(matches)
     echo("[map] current area: " .. slug)
 end, { type = "regex" })
 
+-- List every area slug we've mapped, one per line.
+createAlias("^map-list-areas$", function()
+    local areas = taPackage.db.listAreas()
+    if #areas == 0 then
+        echo("[map] no areas mapped yet")
+        return
+    end
+    for _, a in ipairs(areas) do
+        echo(a.slug)
+    end
+end, { type = "regex" })
+
+-- Wipe one area so it can be re-walked from scratch (e.g. after a messy first
+-- pass): `map-reset-area first-dungeon`. Leaves other areas intact and keeps the
+-- area row, then forgets the mapping anchor so a now-deleted room can't be
+-- re-linked from stale state — run map-on afterward to start re-mapping.
+createAlias("^map-reset-area (.+)$", function(matches)
+    local slug = matches[2]:match("^%s*(.-)%s*$")
+    local areaId = taPackage.db.areaIdBySlug(slug)
+    if not areaId then
+        echo("[map] no such area: " .. slug)
+        return
+    end
+    local removed = taPackage.db.resetArea(areaId)
+    taPackage.currentRoomId = nil
+    taPackage.prevRoomId = nil
+    taPackage.pendingDirection = nil
+    taPackage.coord = nil
+    echo("[map] reset area " .. slug .. " (" .. tostring(removed)
+        .. " rooms removed). Run map-on to re-map it.")
+end, { type = "regex" })
+
 -- Mapping mode. Off by default; while on, room lines are recorded, each arrival
 -- auto-probes exits with `ex`, and provisional rooms are merged into known ones
 -- by fingerprint. Turning it off leaves the graph untouched during normal play.
