@@ -329,6 +329,20 @@ const html = `<!DOCTYPE html>
 <h1>Tele-Arena — Pelayo's Field Notes</h1>
 <p class="meta-line">Generated ${generatedAt}</p>
 
+<h2>World Map</h2>
+${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
+${rooms.length > 0 ? `
+<div id="map-legend" class="map-legend"></div>
+<div id="floor-tabs" class="floor-tabs"></div>
+<div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
+<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits on the cell directly above/below its neighbor).</p>
+` : ""}
+${table(
+  ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
+  roomRows,
+  { alignRight: [3], rowAttrs: rooms.map(r => `data-room-id="${r.id}"`) }
+)}
+
 <h2>Player Combat</h2>
 <p class="note">Attacks made by Pelayo against each monster.</p>
 ${table(
@@ -366,20 +380,6 @@ ${itemDrops.length > 0 ? table(
   itemDrops.map(d => [esc(d.monster), esc(d.item), d.recorded_at?.slice(0,10) ?? "—"]),
   {}
 ) : "<p class='note'>No item drops recorded yet.</p>"}
-
-<h2>World Map</h2>
-${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
-${rooms.length > 0 ? `
-<div id="map-legend" class="map-legend"></div>
-<div id="floor-tabs" class="floor-tabs"></div>
-<div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
-<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits on the cell directly above/below its neighbor).</p>
-` : ""}
-${table(
-  ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
-  roomRows,
-  { alignRight: [3], rowAttrs: rooms.map(r => `data-room-id="${r.id}"`) }
-)}
 
 <h2>Services</h2>
 ${table(
