@@ -175,14 +175,28 @@ existing one. Its design is adapted from Mudlet's bundled `generic_mapper`
 (`~/src/Mudlet/src/mudlet-lua/lua/generic-mapper/`), whose `check_room` /
 `find_link` / `find_me` we studied. Three of its ideas are deferred:
 
-### Manual "I'm in room N" assert
+### Manual "I'm in room N" assert — BUILT (`map-here <slug>`)
 
-`map-here <slug|id>` to force-identify the room you're standing in as a known
-one, merging any provisional duplicate into it. This is the escape hatch for
-when the automatic fingerprint is genuinely **ambiguous** — two rooms with the
-same name *and* the same exit-set (e.g. identical `cave` rooms), which we
-deliberately refuse to merge on a guess. Mudlet's equivalent of a manual
-relocate / `setRoomIDbyHash`.
+`map-here <slug>` force-anchors at a known room: it turns mapping on and sets
+currentRoomId / currentRoom / currentAreaId / coord from the room's stored row,
+with no reprint or name resolution, so the next move dead-reckons from the right
+place. This is the escape hatch for resuming in an **ambiguous** room (every
+`cave` shares a name, so `map-on`'s name lookup can't pick the right one) and it
+also guarantees the correct area is inherited (vs. a null area on a cold start
+with no `map-area`). Unknown slug is a no-op with a message.
+
+**Deferred enhancement — verify before anchoring.** Today `map-here` trusts the
+slug blindly; asserting the wrong room silently corrupts the map. Make it check
+the *live* room against the record before committing: on `map-here filthy-cavern`
+send `look`/`ex`, and when the room brief + `Exits:` return, compare the **name +
+exit-set** to what's stored for that slug. On match, commit the anchor; on
+mismatch, bail with `Cannot begin mapping! This location doesn't match what's on
+record for <slug>` and stay un-anchored. Key on name + exit-set (both exact and
+stable — `ex` lists a locked-door direction regardless of lock state, so no false
+alarms); treat the stored description as a soft signal only (wrapping / partial-
+capture noise), maybe surfaced in the mismatch report but not gating. Cost: this
+makes `map-here` async — the confirm/reject prints a beat later when `ex`
+returns, instead of instantly. (User's idea, 2026-07-05; deferred, not urgent.)
 
 ### Relocate when lost (`find_me`)
 
