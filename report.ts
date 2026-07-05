@@ -21,7 +21,7 @@ function hasTable(name: string): boolean {
 const roomGraphReady = hasTable("areas") && hasTable("rooms");
 
 const rooms = roomGraphReady ? db.prepare(`
-  SELECT r.id, r.slug, r.name, r.description, r.visits, r.first_visited, r.area_id,
+  SELECT r.id, r.slug, r.name, r.description, r.visits, r.first_visited, r.area_id, r.trap,
          a.slug AS area_slug, a.name AS area_name
   FROM rooms r
   LEFT JOIN areas a ON a.id = r.area_id
@@ -51,7 +51,7 @@ const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
   rooms: rooms.map(r => ({ id: r.id, slug: r.slug, name: r.name, description: r.description,
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
-                           first_visited: r.first_visited })),
+                           first_visited: r.first_visited, trap: r.trap })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug })),
 };
 
@@ -315,6 +315,7 @@ const html = `<!DOCTYPE html>
   #room-panel h3 { margin: 0 0 0.15rem; font-size: 1rem; color: var(--text); word-break: break-word; }
   #room-panel .rp-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.6rem; }
   #room-panel .rp-desc { color: var(--text); line-height: 1.5; margin: 0.6rem 0 0.2rem; }
+  #room-panel .rp-trap { color: #f85149; font-weight: 600; }
   #room-panel .rp-label { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin: 1rem 0 0.35rem; }
   #room-panel ul.rp-exits { list-style: none; margin: 0; padding: 0; }
   #room-panel ul.rp-exits li { padding: 0.15rem 0; border-bottom: 1px solid var(--border); }
@@ -419,6 +420,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   if(!svg) return;
   var NS = 'http://www.w3.org/2000/svg';
   var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
+  var TRAP_COLOR = '#f85149';                          // trapped rooms are painted red
   var areaColor = {};
   GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
 
@@ -432,6 +434,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var un = document.createElement('span');
     un.innerHTML = '<span class="swatch" style="background:transparent;border:1px solid var(--muted)"></span>unexplored exit';
     legend.appendChild(un);
+    var tr = document.createElement('span');
+    tr.innerHTML = '<span class="swatch" style="background:'+TRAP_COLOR+'"></span>trap';
+    legend.appendChild(tr);
   }
 
   // --- Direction → grid offset (col, row); row increases downward, so n = up.
@@ -573,6 +578,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     html += r.description
       ? '<div class="rp-desc">' + escapeHtml(r.description) + '</div>'
       : '<div class="rp-desc rp-empty">No description captured yet.</div>';
+    if(r.trap){
+      html += '<div class="rp-label">Trap</div>';
+      html += '<div class="rp-trap">' + escapeHtml(r.trap) + '</div>';
+    }
     html += '<div class="rp-label">Exits</div>';
     if(exs.length){
       html += '<ul class="rp-exits">';
@@ -652,7 +661,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       var c = centerOf(r.id);
       var oct = document.createElementNS(NS,'polygon');
       oct.setAttribute('points', octPoints(c.x, c.y, R));
-      oct.setAttribute('fill', areaColor[r.area_id] || '#8b949e');
+      // A trapped room is painted red so hazards stand out at a glance,
+      // overriding its area color; the panel names the specific trap.
+      oct.setAttribute('fill', r.trap ? TRAP_COLOR : (areaColor[r.area_id] || '#8b949e'));
       oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
       oct.style.cursor = 'pointer';
       oct.addEventListener('click', function(){ selectRoom(r.id); });
