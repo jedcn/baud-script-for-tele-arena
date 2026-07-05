@@ -1308,13 +1308,25 @@ local function vitalityColor(current, max)
     end
 end
 
+-- Format an integer with thousands separators (e.g. 1234567 -> "1,234,567").
+-- Handles a leading minus sign and leaves non-numbers untouched.
+local function commafy(value)
+    if value == nil then return nil end
+    local s = tostring(value)
+    local sign, digits = s:match("^(%-?)(%d+)$")
+    if not digits then return s end
+    local formatted = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+    formatted = formatted:gsub("^,", "")
+    return sign .. formatted
+end
+
 local function status()
     local charStatus = getCharacterStatus() or "?"
     local vitalityCurrent, vitalityMax = getVitality()
     local manaCurrent, manaMax = getMana()
     local xp = getExperience()
     local nextLevelXp = xp and getXpForNextLevel(xp, getClass())
-    local gold = getGold() and tostring(getGold()) or "?"
+    local gold = getGold() and commafy(getGold()) or "?"
 
     local charName = taPackage.character.name
     local charClass = getClass()
@@ -1336,21 +1348,21 @@ local function status()
         { text = nameText, fg = "white" },
         { text = "HP:" },
         {
-            text = vitalityCurrent and tostring(vitalityCurrent) or "?",
+            text = vitalityCurrent and commafy(vitalityCurrent) or "?",
             fg = vitalityColor(vitalityCurrent, vitalityMax)
         },
-        { text = vitalityMax and ("/ " .. tostring(vitalityMax)) or "", fg = "white" },
+        { text = vitalityMax and ("/ " .. commafy(vitalityMax)) or "", fg = "white" },
     }
     if manaMax and manaMax > 0 then
         table.insert(segments, { text = "MP:", fg = "green" })
-        table.insert(segments, { text = manaCurrent and tostring(manaCurrent) or "?", fg = "cyan" })
-        table.insert(segments, { text = "/ " .. tostring(manaMax), fg = "cyan" })
+        table.insert(segments, { text = manaCurrent and commafy(manaCurrent) or "?", fg = "cyan" })
+        table.insert(segments, { text = "/ " .. commafy(manaMax), fg = "cyan" })
     end
     local tail = {
         { text = "XP:" },
-        { text = xp and tostring(xp) or "?", fg = xpColor(xp, getClass()) },
+        { text = xp and commafy(xp) or "?", fg = xpColor(xp, getClass()) },
         {
-            text = xp and ("/ " .. (nextLevelXp and tostring(nextLevelXp) or "max")) or "",
+            text = xp and ("/ " .. (nextLevelXp and commafy(nextLevelXp) or "max")) or "",
             fg = "white"
         },
         { text = "Status:" },

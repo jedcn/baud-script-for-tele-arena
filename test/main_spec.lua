@@ -644,8 +644,8 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("Experience:   710")
             local segments = capturedFn()
-            assert.are.equal("710",    segments[6].text)   -- no MP, XP at [6]
-            assert.are.equal("/ 1125", segments[7].text)
+            assert.are.equal("710",     segments[6].text)   -- no MP, XP at [6]
+            assert.are.equal("/ 1,125", segments[7].text)
             assert.are.equal("white",  segments[7].fg)
         end)
 
@@ -653,7 +653,7 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("Experience:   11594700")
             local segments = capturedFn()
-            assert.are.equal("11594700", segments[6].text)  -- no MP, XP at [6]
+            assert.are.equal("11,594,700", segments[6].text)  -- no MP, XP at [6]
             assert.are.equal("/ max",    segments[7].text)
         end)
 
@@ -683,6 +683,11 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("yellow", capturedFn()[11].fg)
         end)
 
+        it("formats large gold amounts with commas", function()
+            helper.simulateLine("You are carrying 1234567 gold crowns.")
+            assert.are.equal("1,234,567", capturedFn()[11].text)
+        end)
+
         it("colors MP label green and values cyan", function()
             helper.simulateLine("Mana:         2 / 3")
             local segments = capturedFn()
@@ -700,7 +705,7 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("10",      segments[3].text)
             assert.are.equal("/ 26",    segments[4].text)
             assert.are.equal("354",     segments[6].text)   -- no MP, XP at [6]
-            assert.are.equal("/ 1125",  segments[7].text)
+            assert.are.equal("/ 1,125", segments[7].text)
             assert.are.equal("Healthy", segments[9].text)   -- Status at [9]
         end)
 
