@@ -2098,7 +2098,7 @@ describe("World map triggers", function()
 
     describe("map-area alias", function()
 
-        it("sets currentAreaId and new rooms inherit it", function()
+        it("sets the area and new rooms inherit it", function()
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
                 if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then return { id = 7 } end
@@ -2116,6 +2116,27 @@ describe("World map triggers", function()
             helper.simulateLine("You're in a cave.")
             local ins = helper.findDbCall("execute", "INSERT INTO rooms")
             assert.are.equal(3, ins.params[3])  -- area_id inherited
+        end)
+
+        it("begins mapping here: turns mapping on, resets the anchor, bare-returns", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = 99  -- stale anchor from before
+            taPackage.prevRoomId = 98
+            taPackage.pendingDirection = "n"
+            taPackage.coord = { x = 5, y = 5, z = 0 }
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                return nil
+            end
+            helper.simulateAlias("map-area caves")
+            assert.is_true(taPackage.mapping)
+            assert.is_nil(taPackage.currentRoomId)
+            assert.is_nil(taPackage.prevRoomId)
+            assert.is_nil(taPackage.pendingDirection)
+            assert.is_nil(taPackage.coord)
+            local bareSent = false
+            for _, c in ipairs(helper.sendCalls) do if c == "" then bareSent = true end end
+            assert.is_true(bareSent)
         end)
 
     end)
@@ -2314,19 +2335,16 @@ describe("World map triggers", function()
 
     describe("mapping mode aliases", function()
 
-        it("map-on enables mapping and re-scans the current room", function()
-            taPackage.mapping = false
-            helper.simulateAlias("map-on")
-            assert.is_true(taPackage.mapping)
-            local bareSent = false
-            for _, c in ipairs(helper.sendCalls) do if c == "" then bareSent = true end end
-            assert.is_true(bareSent)
-        end)
-
         it("map-off disables mapping", function()
             taPackage.mapping = true
             helper.simulateAlias("map-off")
             assert.is_false(taPackage.mapping)
+        end)
+
+        it("map-on no longer exists (folded into map-area / map-here)", function()
+            taPackage.mapping = false
+            helper.simulateAlias("map-on")
+            assert.is_false(taPackage.mapping)  -- no alias matched, nothing happened
         end)
 
     end)

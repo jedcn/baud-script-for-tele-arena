@@ -1190,22 +1190,40 @@ createTrigger("^In your haste, you trip and fall!$", function()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
--- Tag newly discovered rooms with an area: `map-area <slug> [display name]`.
--- New rooms inherit taPackage.currentAreaId at discovery time.
+-- Begin mapping from the room you're standing in. Clear any stale anchor so the
+-- brief that follows is treated as a fresh arrival (not a walked edge), then a
+-- bare return prints that brief, which handleRoomEntry captures (and auto-probes
+-- its exits). Shared by map-area; map-here anchors precisely instead.
+local function startMappingHere()
+    taPackage.mapping = true
+    taPackage.pendingDirection = nil
+    taPackage.prevRoomId = nil
+    taPackage.currentRoomId = nil
+    taPackage.coord = nil
+    send("")
+end
+
+-- Start mapping a (usually fresh) area from where you stand: `map-area caves`
+-- or `map-area caves The Caves`. Ensures the area, tags it current so newly
+-- discovered rooms inherit it, and begins mapping here — no separate command to
+-- turn mapping on. To resume in an already-mapped area, use `map-here <slug>`
+-- (which anchors at a known room); `map-area` cold-starts by name, so it's for
+-- fresh areas or a uniquely-named entry room.
 createAlias("^map-area (.+)$", function(matches)
     local arg = matches[2]
     local slug, name = arg:match("^(%S+)%s+(.+)$")
     if not slug then slug, name = arg:match("^(%S+)$"), nil end
     taPackage.currentAreaId = taPackage.db.ensureArea(slug, name)
-    echo("[map] current area: " .. slug)
+    echo("[map] mapping " .. slug .. " from here")
+    startMappingHere()
 end, { type = "regex" })
 
--- Manually assert which room you're standing in: `map-here cave-11`. Needed
--- when resuming a session in an ambiguously-named room (every cave is "cave",
--- so map-on's name lookup can't tell them apart). Turns mapping on and anchors
--- currentRoomId/coord/area from the named room's stored row, without reprinting
--- or re-resolving, so the next move dead-reckons from the right place. Use the
--- unique slug (shown in the report / `map-list-areas` uses the same slugs).
+-- Resume mapping at a known room: `map-here cave-11`. Use this in an
+-- already-mapped area — especially an ambiguously-named room (every cave is
+-- "cave", so map-area's cold-start-by-name can't tell them apart). Turns
+-- mapping on and anchors currentRoomId/coord/area from the named room's stored
+-- row, without reprinting or re-resolving, so the next move dead-reckons from
+-- the right place. Use the unique slug (shown in the report / `map-list-areas`).
 createAlias("^map-here (.+)$", function(matches)
     local slug = matches[2]:match("^%s*(.-)%s*$")
     local room = taPackage.db.roomBySlug(slug)
@@ -1248,7 +1266,7 @@ end, { type = "regex" })
 -- Wipe one area so it can be re-walked from scratch (e.g. after a messy first
 -- pass): `map-reset-area first-dungeon`. Leaves other areas intact and keeps the
 -- area row, then forgets the mapping anchor so a now-deleted room can't be
--- re-linked from stale state — run map-on afterward to start re-mapping.
+-- re-linked from stale state — run `map-area <slug>` afterward to start re-mapping.
 createAlias("^map-reset-area (.+)$", function(matches)
     local slug = matches[2]:match("^%s*(.-)%s*$")
     local areaId = taPackage.db.areaIdBySlug(slug)
@@ -1262,29 +1280,17 @@ createAlias("^map-reset-area (.+)$", function(matches)
     taPackage.pendingDirection = nil
     taPackage.coord = nil
     echo("[map] reset area " .. slug .. " (" .. tostring(removed)
-        .. " rooms removed). Run map-on to re-map it.")
+        .. " rooms removed). Run map-area " .. slug .. " to re-map it.")
 end, { type = "regex" })
 
 -- Mapping mode. Off by default; while on, room lines are recorded, each arrival
 -- auto-probes exits with `ex`, and provisional rooms are merged into known ones
 -- by fingerprint. Turning it off leaves the graph untouched during normal play.
+-- Mapping is turned ON by map-area (fresh area) or map-here (resume at a known
+-- room); map-off stops it.
 local function stopMapping()
     taPackage.mapping = false
 end
-
-createAlias("^map-on$", function()
-    taPackage.mapping = true
-    -- Re-anchor cleanly: forget any stale move so the initial brief is treated
-    -- as a fresh arrival rather than a walked edge.
-    taPackage.pendingDirection = nil
-    taPackage.prevRoomId = nil
-    taPackage.currentRoomId = nil
-    taPackage.coord = nil
-    echo("[map] mapping ON")
-    -- A bare return prints the "You're in X." brief for the room we're standing
-    -- in, which captures it (and auto-probes its exits).
-    send("")
-end, { type = "regex" })
 
 createAlias("^map-off$", function()
     stopMapping()
