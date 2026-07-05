@@ -63,16 +63,18 @@ db:execute([[CREATE TABLE IF NOT EXISTS rooms (
   visits        INTEGER NOT NULL DEFAULT 0,
   x             INTEGER,
   y             INTEGER,
-  z             INTEGER
+  z             INTEGER,
+  trap          TEXT
 )]])
 
 -- Migration: rooms predates the x/y/z coordinate columns. Coordinates are
 -- dead-reckoned from movement deltas (see main.lua) and let identically-named
 -- rooms (every "cave") be told apart by position, which the name+exit-set
--- fingerprint can't do. Add the columns if missing; idempotent across reloads.
-for _, col in ipairs({ "x", "y", "z" }) do
-    if not tableHasColumn("rooms", col) then
-        pcall(function() db:execute("ALTER TABLE rooms ADD COLUMN " .. col .. " INTEGER") end)
+-- fingerprint can't do. `trap` records a hazard sprung in the room (e.g.
+-- "spiked trap", "trap door"). Add the columns if missing; idempotent.
+for _, colDef in ipairs({ { "x", "INTEGER" }, { "y", "INTEGER" }, { "z", "INTEGER" }, { "trap", "TEXT" } }) do
+    if not tableHasColumn("rooms", colDef[1]) then
+        pcall(function() db:execute("ALTER TABLE rooms ADD COLUMN " .. colDef[1] .. " " .. colDef[2]) end)
     end
 end
 
@@ -333,6 +335,13 @@ function TaDb.setRoomCoord(roomId, x, y, z)
     db:execute("UPDATE rooms SET x = ?, y = ?, z = ? WHERE id = ?", x, y, z, roomId)
     dbLog("[DB\xE2\x86\x92rooms] coord: #" .. tostring(roomId)
         .. " (" .. tostring(x) .. "," .. tostring(y) .. "," .. tostring(z) .. ")")
+end
+
+-- Record that a hazard (trap type string) sprang in this room. Last write wins;
+-- a room has one trap in practice, and re-tagging on a repeat visit is a no-op.
+function TaDb.setRoomTrap(roomId, trap)
+    db:execute("UPDATE rooms SET trap = ? WHERE id = ?", trap, roomId)
+    dbLog("[DB\xE2\x86\x92rooms] trap: #" .. tostring(roomId) .. " " .. tostring(trap))
 end
 
 -- Coordinate-based identity: the one room in `areaId` with this display name

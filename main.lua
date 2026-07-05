@@ -1321,20 +1321,33 @@ end, { type = "regex" })
 -- Traps hurt us without ever printing a damage number, so we can't subtract the
 -- hit directly. Stash our current HP and ask the server for a fresh status
 -- ("st"); the Vitality trigger above recovers the loss and badges "TRAP <n>".
--- Point additional trap-message triggers at handleTrap as we discover them.
-local function handleTrap()
+-- `trapType` also tags the current room as trapped (while mapping) so the map
+-- remembers where the hazard is. Point additional trap-message triggers at
+-- handleTrap as we discover them, passing their trap type.
+local function handleTrap(trapType)
+    if trapType and taPackage.mapping and taPackage.currentRoomId then
+        taPackage.db.setRoomTrap(taPackage.currentRoomId, trapType)
+    end
     taPackage.trapHpBefore = getVitality()
     send("st")
 end
 
 createTrigger("^A spiked trap catches your foot and pain shoots up your leg!$",
-    handleTrap, { type = "regex" })
+    function() handleTrap("spiked trap") end, { type = "regex" })
 
 createTrigger("^Several crossbow bolts fire from holes in the walls, striking you!$",
-    handleTrap, { type = "regex" })
+    function() handleTrap("crossbow trap") end, { type = "regex" })
 
 createTrigger("^Several large stones fall on you from above!$",
-    handleTrap, { type = "regex" })
+    function() handleTrap("falling rocks") end, { type = "regex" })
+
+-- A trap door drops us to the room below without a directional move. It deals no
+-- HP we track here, so just tag the room that has the trap door (while mapping).
+createTrigger("^You just fell through a trap door in the floor!$", function()
+    if taPackage.mapping and taPackage.currentRoomId then
+        taPackage.db.setRoomTrap(taPackage.currentRoomId, "trap door")
+    end
+end, { type = "regex" })
 
 -- Advanced monsters cast area-effect spells that hit everyone nearby without
 -- printing a damage number — just like a trap. Use the identical trick: stash

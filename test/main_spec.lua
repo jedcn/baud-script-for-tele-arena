@@ -1435,6 +1435,17 @@ describe("ta_db", function()
 
     end)
 
+    describe("setRoomTrap", function()
+
+        it("writes the trap type for the room", function()
+            TaDb.setRoomTrap(7, "spiked trap")
+            local call = helper.findDbCall("execute", "UPDATE rooms SET trap = ?")
+            assert.is_not_nil(call)
+            assert.are.same({ "spiked trap", 7 }, call.params)
+        end)
+
+    end)
+
     describe("mergeRoomInto", function()
 
         it("repoints edges, carries visits, and deletes the provisional room", function()
@@ -1980,6 +1991,37 @@ describe("World map triggers", function()
             assert.are.equal(5, upd.params[3])
             assert.are.equal("e", upd.params[4])
             assert.is_nil(taPackage.pendingDirection)
+        end)
+
+    end)
+
+    describe("room traps", function()
+
+        it("tags the current room with the trap type sprung there", function()
+            taPackage.currentRoomId = 5
+            helper.simulateLine("A spiked trap catches your foot and pain shoots up your leg!")
+            local call = helper.findDbCall("execute", "UPDATE rooms SET trap = ?")
+            assert.is_not_nil(call)
+            assert.are.same({ "spiked trap", 5 }, call.params)
+        end)
+
+        it("distinguishes crossbow, falling-rock, and trap-door hazards", function()
+            taPackage.currentRoomId = 5
+            helper.simulateLine("Several crossbow bolts fire from holes in the walls, striking you!")
+            assert.are.equal("crossbow trap", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
+            helper.clearDbCalls()
+            helper.simulateLine("Several large stones fall on you from above!")
+            assert.are.equal("falling rocks", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
+            helper.clearDbCalls()
+            helper.simulateLine("You just fell through a trap door in the floor!")
+            assert.are.equal("trap door", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
+        end)
+
+        it("does not tag a room when mapping is off", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = 5
+            helper.simulateLine("A spiked trap catches your foot and pain shoots up your leg!")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET trap = ?"))
         end)
 
     end)
