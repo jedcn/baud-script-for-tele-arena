@@ -176,10 +176,10 @@ function pct(n: number, d: number) { return d === 0 ? "—" : Math.round((n / d)
 function avg(n: number, d: number) { return d === 0 ? "—" : (n / d).toFixed(1); }
 function esc(s: string) { return (s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-function table(headers: string[], rows: (string | number)[][], opts: { alignRight?: number[] } = {}) {
+function table(headers: string[], rows: (string | number)[][], opts: { alignRight?: number[]; rowAttrs?: (string | undefined)[] } = {}) {
   const ths = headers.map((h, i) => `<th${opts.alignRight?.includes(i) ? ' class="r"' : ""}>${h}</th>`).join("");
-  const trs = rows.map(row =>
-    "<tr>" + row.map((cell, i) =>
+  const trs = rows.map((row, ri) =>
+    `<tr${opts.rowAttrs?.[ri] ? " " + opts.rowAttrs![ri] : ""}>` + row.map((cell, i) =>
       `<td${opts.alignRight?.includes(i) ? ' class="r"' : ""}>${cell ?? "—"}</td>`
     ).join("") + "</tr>"
   ).join("\n");
@@ -301,6 +301,11 @@ const html = `<!DOCTYPE html>
   #map { flex: 1 1 auto; min-width: 0; height: 620px; display: block; cursor: grab; touch-action: none; }
   #map text { fill: var(--text); font-size: 11px; pointer-events: none; user-select: none; }
   #map .edge-dir { fill: var(--muted); font-size: 9px; }
+  #map .map-label { fill: var(--text); font-size: 12px; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; user-select: none; }
+  #map .map-label-sel { fill: #fff; font-weight: 600; }
+  tr[data-room-id] { cursor: pointer; }
+  tr[data-room-id]:hover td { background: var(--surface); }
+  tr[data-room-id].sel td { background: rgba(88,166,255,0.16); }
   #room-panel { flex: 0 0 300px; border-left: 1px solid var(--border); height: 620px; padding: 1.1rem 1.2rem; box-sizing: border-box; overflow-y: auto; font-size: 0.85rem; }
   #room-panel h3 { margin: 0 0 0.15rem; font-size: 1rem; color: var(--text); word-break: break-word; }
   #room-panel .rp-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.6rem; }
@@ -367,7 +372,7 @@ ${rooms.length > 0 ? `
 ${table(
   ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
   roomRows,
-  { alignRight: [3] }
+  { alignRight: [3], rowAttrs: rooms.map(r => `data-room-id="${r.id}"`) }
 )}
 
 <h2>Services</h2>
@@ -545,7 +550,15 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   GRAPH.exits.forEach(function(e){ if(exitsFrom[e.from]) exitsFrom[e.from].push(e); });
 
   var panel = document.getElementById('room-panel');
-  var octByRoom = {}, selectedOct = null;
+  var octByRoom = {}, rowByRoom = {}, selectedOct = null, selectedRow = null, selectedId = null;
+  var hoverLabel = null, selectLabel = null;
+  function labelAt(el, id){
+    if(!el || !cell[id]) return;
+    var c = centerOf(id);
+    el.setAttribute('x', c.x); el.setAttribute('y', c.y - R - 7);
+    el.textContent = roomInfo[id].name || roomInfo[id].slug;
+    el.style.display = '';
+  }
   function escapeHtml(s){
     return String(s).replace(/[&<>"]/g, function(ch){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch];
@@ -588,6 +601,12 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     if(selectedOct){ selectedOct.setAttribute('stroke','#0d1117'); selectedOct.setAttribute('stroke-width','1.5'); }
     var el = octByRoom[id];
     if(el){ el.setAttribute('stroke','#e6edf3'); el.setAttribute('stroke-width','3'); selectedOct = el; }
+    if(selectedRow) selectedRow.classList.remove('sel');
+    var row = rowByRoom[id];
+    if(row){ row.classList.add('sel'); selectedRow = row; }
+    selectedId = id;
+    labelAt(selectLabel, id);
+    if(hoverLabel) hoverLabel.style.display = 'none';
     showRoom(id);
   }
 
@@ -601,9 +620,20 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
     oct.style.cursor = 'pointer';
     oct.addEventListener('click', function(){ selectRoom(r.id); });
+    oct.addEventListener('mouseenter', function(){ if(r.id !== selectedId) labelAt(hoverLabel, r.id); });
+    oct.addEventListener('mouseleave', function(){ if(hoverLabel) hoverLabel.style.display = 'none'; });
     root.appendChild(oct);
     octByRoom[r.id] = oct;
   });
+
+  // Floating name labels, drawn on top of the octagons: one follows the hover,
+  // one stays pinned to the selected room.
+  hoverLabel = document.createElementNS(NS,'text');
+  hoverLabel.setAttribute('class','map-label'); hoverLabel.setAttribute('text-anchor','middle');
+  hoverLabel.style.display = 'none'; root.appendChild(hoverLabel);
+  selectLabel = document.createElementNS(NS,'text');
+  selectLabel.setAttribute('class','map-label map-label-sel'); selectLabel.setAttribute('text-anchor','middle');
+  selectLabel.style.display = 'none'; root.appendChild(selectLabel);
 
   // --- Pan / zoom. ---
   var W = svg.clientWidth || 900, H = 620;
@@ -642,6 +672,26 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     ty = my - (my - ty) * (ns/scale);
     scale = ns; applyTransform();
   }, { passive:false });
+
+  // Pan the map so a given room sits in the middle of the viewport.
+  function centerOn(id){
+    if(!cell[id]) return;
+    var c = centerOf(id);
+    tx = W/2 - c.x*scale; ty = H/2 - c.y*scale;
+    applyTransform();
+  }
+
+  // Deep-link: clicking a Room table row selects it here and brings it into view.
+  var wrap = document.querySelector('.map-wrap');
+  Array.prototype.forEach.call(document.querySelectorAll('tr[data-room-id]'), function(tr){
+    var id = +tr.getAttribute('data-room-id');
+    rowByRoom[id] = tr;
+    tr.addEventListener('click', function(){
+      selectRoom(id);
+      centerOn(id);
+      if(wrap) wrap.scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+  });
 })();
 </script>
 
