@@ -879,7 +879,8 @@ createTrigger("^(.+)$", function(matches)
     local line = trimLine(matches[2])
 
     if taPackage.monsterDb.state == "accumulating_room" then
-        if line == "look" or line == "l" then return end
+        -- Skip our own echoed commands (look starts the capture, ex ends it).
+        if line == "look" or line == "l" or line == "ex" then return end
         if isRoomDescTerminator(line) then
             local lines = taPackage.monsterDb.accumulatedLines
             if #lines > 0 and taPackage.currentRoomId then

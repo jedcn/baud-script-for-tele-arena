@@ -1784,16 +1784,18 @@ describe("World map triggers", function()
 
         it("captures the room description via look, ended by the ex reply", function()
             taPackage.currentRoomId = 5
-            -- The look's own first line is "You are in ..." — kept, not a terminator.
+            -- Real stream order: look echo, prose, ex echo, then Exits.
             helper.simulateLine("look")
             helper.simulateLine("You are in the village tavern. The smoke from the oil lamps")
             helper.simulateLine("leaves many shadows and unlit corners.")
+            helper.simulateLine("ex")   -- our echoed ex command, must be skipped
             helper.simulateLine("Exits: sw,u.")
             local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
             assert.is_not_nil(desc)
             assert.are.equal(5, desc.params[2])
-            assert.is_truthy(desc.params[1]:find("village tavern", 1, true))
+            assert.is_truthy(desc.params[1]:find("^You are in the village tavern"))  -- no "ex " prefix
             assert.is_truthy(desc.params[1]:find("unlit corners", 1, true))
+            assert.is_nil(desc.params[1]:find("ex ", 1, true))
         end)
 
         it("flags a newly discovered room as provisional, a reused one as not", function()
