@@ -1863,6 +1863,19 @@ describe("World map triggers", function()
             assert.is_nil(desc.params[1]:find("ex ", 1, true))
         end)
 
+        it("captures a cave description whose look opens with 'You're in'", function()
+            taPackage.currentRoomId = 14
+            helper.simulateLine("look")
+            helper.simulateLine("You're in a damp, poorly lit cave. Glowing lichens and fungi provide")
+            helper.simulateLine("an eerie greenish light. The exits are to the north and south.")
+            helper.simulateLine("ex")
+            helper.simulateLine("Exits: n,s.")
+            local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+            assert.is_not_nil(desc)
+            assert.is_truthy(desc.params[1]:find("damp, poorly lit cave", 1, true))
+            assert.is_truthy(desc.params[1]:find("greenish light", 1, true))
+        end)
+
         it("flags a newly discovered room as provisional, a reused one as not", function()
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5

@@ -859,17 +859,15 @@ local function isRoomLine(line)
         or string.match(line, "^You are inside ")
 end
 
--- A look description runs until the paired `ex` reply ("Exits: ...") — a
--- reliable, unambiguous terminator — so we don't have to sniff for room-ish
--- lines. We also bail on a real move (the "You're" contraction; note a look's
--- own first line is "You are ...", which we KEEP as description) or a failed
--- command.
+-- A look description runs until the paired `ex` reply ("Exits: ...") — the one
+-- reliable terminator, and only our auto-`ex` produces it (look prose describes
+-- exits in English, never as "Exits:"). We must NOT terminate on room-brief
+-- phrasings: a cave's look opens "You're in a damp, poorly lit cave. Glowing
+-- lichens..." — bailing on "^You're in " would swallow the whole description.
+-- (`Sorry,` covers a command failing mid-look.)
 local function isRoomDescTerminator(line)
     return string.match(line, "^Exits:")
         or string.match(line, "^Sorry,")
-        or string.match(line, "^You're in ")
-        or string.match(line, "^You're on ")
-        or string.match(line, "^You're at ")
 end
 
 local function cleanRoomDesc(desc)
