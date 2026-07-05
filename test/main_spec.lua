@@ -1693,6 +1693,23 @@ describe("World map triggers", function()
             assert.are.equal("small cavern", taPackage.currentRoom)
         end)
 
+        it("treats a 'You are ...' move brief as an arrival when idle", function()
+            stubDiscover(1)
+            helper.simulateLine("You are inside the dungeon entrance.")
+            assert.are.equal("dungeon entrance", taPackage.currentRoom)
+            helper.simulateLine("You are in a large cavern.")
+            assert.are.equal("large cavern", taPackage.currentRoom)
+        end)
+
+        it("ignores a 'You are ...' line while accumulating a look description", function()
+            taPackage.currentRoom = "large cavern"
+            taPackage.currentRoomId = 5
+            taPackage.monsterDb.state = "accumulating_room"  -- mid-look
+            helper.simulateLine("You are in a large cavern.")  -- the look's first line
+            assert.are.equal("large cavern", taPackage.currentRoom)  -- unchanged
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
     end)
 
     describe("movement alias", function()

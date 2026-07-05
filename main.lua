@@ -1031,12 +1031,26 @@ local function handleRoomEntry(matches)
 end
 
 -- One trigger per preposition (mutually exclusive prefixes, so no double-fire).
--- Only the "You're" contraction is a real move; "You are ..." lines belong to
--- the look description and must not be treated as room entries.
+-- The "You're" contraction is always a move brief.
 createTrigger("^You're in (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're inside (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're on (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're at (.+)\\.$", handleRoomEntry, { type = "regex" })
+
+-- Some rooms print their move brief with "You are ..." instead of the "You're"
+-- contraction (e.g. "You are inside the dungeon entrance.", "You are in a large
+-- cavern."). That exact phrasing is ALSO the first line of every look
+-- description, so it's ambiguous by wording. The tell: a look line arrives while
+-- we're accumulating a description; a move brief arrives when we're idle. Only
+-- treat "You are ..." as an arrival when we're not mid-look.
+local function handleRoomEntryUnlessLooking(matches)
+    if taPackage.monsterDb.state == "accumulating_room" then return end
+    handleRoomEntry(matches)
+end
+createTrigger("^You are in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You are inside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You are on (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You are at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
 for _, dir in ipairs(moveDirections) do
