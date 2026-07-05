@@ -49,8 +49,10 @@ for (const e of exits) {
 // Compact node/edge payload for the interactive map (embedded as JSON below).
 const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
-  rooms: rooms.map(r => ({ id: r.id, slug: r.slug, area_id: r.area_id })),
-  exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id })),
+  rooms: rooms.map(r => ({ id: r.id, slug: r.slug, name: r.name, description: r.description,
+                           area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
+                           first_visited: r.first_visited })),
+  exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug })),
 };
 
 const monsters = db.prepare(`
@@ -295,10 +297,20 @@ const html = `<!DOCTYPE html>
   .desc { color: var(--muted); font-size: 0.85rem; margin: 0.4rem 0; line-height: 1.5; }
   .meta { color: var(--muted); font-size: 0.75rem; margin-top: 0.5rem; }
   .note { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; font-style: italic; }
-  .map-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; }
-  #map { width: 100%; height: 620px; display: block; cursor: grab; touch-action: none; }
+  .map-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; display: flex; }
+  #map { flex: 1 1 auto; min-width: 0; height: 620px; display: block; cursor: grab; touch-action: none; }
   #map text { fill: var(--text); font-size: 11px; pointer-events: none; user-select: none; }
   #map .edge-dir { fill: var(--muted); font-size: 9px; }
+  #room-panel { flex: 0 0 300px; border-left: 1px solid var(--border); height: 620px; padding: 1.1rem 1.2rem; box-sizing: border-box; overflow-y: auto; font-size: 0.85rem; }
+  #room-panel h3 { margin: 0 0 0.15rem; font-size: 1rem; color: var(--text); word-break: break-word; }
+  #room-panel .rp-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.6rem; }
+  #room-panel .rp-desc { color: var(--text); line-height: 1.5; margin: 0.6rem 0 0.2rem; }
+  #room-panel .rp-label { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin: 1rem 0 0.35rem; }
+  #room-panel ul.rp-exits { list-style: none; margin: 0; padding: 0; }
+  #room-panel ul.rp-exits li { padding: 0.15rem 0; border-bottom: 1px solid var(--border); }
+  #room-panel ul.rp-exits li:last-child { border-bottom: none; }
+  #room-panel .rp-dir { display: inline-block; min-width: 2.4em; color: var(--blue); font-weight: 600; }
+  #room-panel .rp-empty { color: var(--muted); font-style: italic; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
   .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
 </style>
@@ -349,7 +361,7 @@ ${itemDrops.length > 0 ? table(
 ${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
 ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
-<div class="map-wrap"><svg id="map"></svg></div>
+<div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
 <p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked. (Up/down exits are omitted for now.)</p>
 ` : ""}
 ${table(
@@ -525,7 +537,61 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     root.appendChild(dl);
   });
 
-  // Room octagons + labels.
+  // --- Detail panel: clicking a room shows its name, description, and exits. ---
+  var roomInfo = {};
+  GRAPH.rooms.forEach(function(r){ roomInfo[r.id] = r; });
+  var exitsFrom = {};
+  GRAPH.rooms.forEach(function(r){ exitsFrom[r.id] = []; });
+  GRAPH.exits.forEach(function(e){ if(exitsFrom[e.from]) exitsFrom[e.from].push(e); });
+
+  var panel = document.getElementById('room-panel');
+  var octByRoom = {}, selectedOct = null;
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(ch){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch];
+    });
+  }
+  var DIR_ORDER = { n:0, ne:1, e:2, se:3, s:4, sw:5, w:6, nw:7, u:8, d:9 };
+  function destLabel(e){
+    if(e.to == null) return '<span class="rp-empty">unexplored</span>';
+    var r = roomInfo[e.to];
+    return escapeHtml((r && (r.name || r.slug)) || e.to_slug || '?');
+  }
+  function showRoom(id){
+    if(!panel) return;
+    var r = roomInfo[id];
+    if(!r){ return; }
+    var exs = exitsFrom[id].slice().sort(function(a,b){
+      return (DIR_ORDER[a.dir] ?? 99) - (DIR_ORDER[b.dir] ?? 99);
+    });
+    var html = '<h3>' + escapeHtml(r.name || r.slug) + '</h3>';
+    var sub = [escapeHtml(r.slug)];
+    if(r.area_slug) sub.push(escapeHtml(r.area_slug));
+    sub.push((r.visits || 0) + (r.visits === 1 ? ' visit' : ' visits'));
+    html += '<div class="rp-sub">' + sub.join(' · ') + '</div>';
+    html += r.description
+      ? '<div class="rp-desc">' + escapeHtml(r.description) + '</div>'
+      : '<div class="rp-desc rp-empty">No description captured yet.</div>';
+    html += '<div class="rp-label">Exits</div>';
+    if(exs.length){
+      html += '<ul class="rp-exits">';
+      exs.forEach(function(e){
+        html += '<li><span class="rp-dir">' + escapeHtml(e.dir) + '</span> ' + destLabel(e) + '</li>';
+      });
+      html += '</ul>';
+    } else {
+      html += '<div class="rp-empty">none recorded</div>';
+    }
+    panel.innerHTML = html;
+  }
+  function selectRoom(id){
+    if(selectedOct){ selectedOct.setAttribute('stroke','#0d1117'); selectedOct.setAttribute('stroke-width','1.5'); }
+    var el = octByRoom[id];
+    if(el){ el.setAttribute('stroke','#e6edf3'); el.setAttribute('stroke-width','3'); selectedOct = el; }
+    showRoom(id);
+  }
+
+  // Room octagons (identity comes from the panel on click, not crowded labels).
   GRAPH.rooms.forEach(function(r){
     if(!cell[r.id]) return;
     var c = centerOf(r.id);
@@ -533,11 +599,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     oct.setAttribute('points', octPoints(c.x, c.y, R));
     oct.setAttribute('fill', areaColor[r.area_id] || '#8b949e');
     oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
+    oct.style.cursor = 'pointer';
+    oct.addEventListener('click', function(){ selectRoom(r.id); });
     root.appendChild(oct);
-    var t = document.createElementNS(NS,'text');
-    t.setAttribute('text-anchor','middle'); t.setAttribute('dy','4');
-    t.textContent = r.slug;
-    root.appendChild(t);
+    octByRoom[r.id] = oct;
   });
 
   // --- Pan / zoom. ---
