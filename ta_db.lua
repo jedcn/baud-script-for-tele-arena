@@ -327,20 +327,32 @@ end
 -- edge that pointed at `fromId` to `intoId`, move `fromId`'s outgoing edges onto
 -- `intoId` (without clobbering ones it already has), carry the visit count, then
 -- delete the provisional room.
+--
+-- A merge must never create a SELF-LOOP (a room exit pointing at itself). The
+-- common case that would: the provisional room's reverse back-edge points at
+-- `intoId` (e.g. we walked intoId --dir--> provisional, so provisional has a
+-- back-edge to intoId). Naively repointing turns that into intoId --> intoId.
+-- Those spurious self-loops corrupt exitDestination and silently swallow real
+-- rooms, so we drop the edge back to an unexplored stub instead.
 function TaDb.mergeRoomInto(fromId, intoId)
-    -- Move outgoing edges first (before inbound repointing can create self-loops).
+    -- Move outgoing edges, but never one that would point intoId at itself.
     local outgoing = db:query(
         "SELECT direction, to_id FROM room_exits WHERE from_id = ?", fromId) or {}
     for _, row in ipairs(outgoing) do
         local dest = row.to_id
-        if dest == fromId then dest = intoId end  -- self-loop guard
-        db:execute(
-            "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
-            intoId, row.direction, dest
-        )
+        if dest == fromId then dest = intoId end
+        if dest ~= intoId then
+            db:execute(
+                "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
+                intoId, row.direction, dest
+            )
+        end
     end
     db:execute("DELETE FROM room_exits WHERE from_id = ?", fromId)
-    -- Repoint inbound edges (to_id isn't part of the PK, so this can't conflict).
+    -- An inbound edge FROM intoId to the provisional (intoId --dir--> fromId)
+    -- would repoint to a self-loop; reset it to an unexplored stub instead.
+    db:execute("UPDATE room_exits SET to_id = NULL WHERE from_id = ? AND to_id = ?", intoId, fromId)
+    -- Repoint the remaining inbound edges (to_id isn't part of the PK).
     db:execute("UPDATE room_exits SET to_id = ? WHERE to_id = ?", intoId, fromId)
     db:execute(
         "UPDATE rooms SET visits = visits + COALESCE((SELECT visits FROM rooms WHERE id = ?), 0) WHERE id = ?",

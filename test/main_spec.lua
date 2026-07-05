@@ -1358,10 +1358,33 @@ describe("ta_db", function()
             local moved = helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits")
             assert.are.same({ 1, "nw", 4 }, moved.params)  -- outgoing edge moved onto room 1
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM room_exits WHERE from_id"))
-            local repoint = helper.findDbCall("execute", "UPDATE room_exits SET to_id")
+            local repoint = helper.findDbCall("execute", "SET to_id = ? WHERE to_id")
             assert.are.same({ 1, 5 }, repoint.params)      -- inbound edges now point at 1
             local del = helper.findDbCall("execute", "DELETE FROM rooms WHERE id")
             assert.are.equal(5, del.params[1])
+        end)
+
+        it("never creates a self-loop when folding a reverse back-edge", function()
+            -- Provisional #5's only edge is its back-edge 5 --sw--> 1 (the merge
+            -- target). Naive repointing would make 1 --sw--> 1.
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT direction, to_id FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "sw", to_id = 1 } }
+                end
+                return {}
+            end
+            TaDb.mergeRoomInto(5, 1)
+
+            -- No outgoing edge is re-added pointing room 1 at itself.
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute"
+                    and string.find(c.sql, "INSERT OR IGNORE INTO room_exits", 1, true) then
+                    assert.is_false(c.params[1] == c.params[3])  -- from_id ~= to_id
+                end
+            end
+            -- Inbound edges from the target are reset to unexplored stubs, not looped.
+            local reset = helper.findDbCall("execute", "SET to_id = NULL WHERE from_id")
+            assert.are.same({ 1, 5 }, reset.params)
         end)
 
     end)
