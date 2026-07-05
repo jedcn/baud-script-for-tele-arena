@@ -350,7 +350,7 @@ ${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — l
 ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
 <div class="map-wrap"><svg id="map"></svg></div>
-<p class="note">Drag rooms to rearrange · scroll to zoom · hollow stubs are known exits not yet walked.</p>
+<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked. (Up/down exits are omitted for now.)</p>
 ` : ""}
 ${table(
   ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
@@ -411,87 +411,160 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     legend.appendChild(un);
   }
 
-  var W = svg.clientWidth || 900, H = 620;
-  var nodes = [], byId = {};
-  GRAPH.rooms.forEach(function(r){
-    var n = { id:'r'+r.id, label:r.slug, color: areaColor[r.area_id] || '#8b949e', stub:false,
-              x: W/2 + (Math.random()-0.5)*360, y: H/2 + (Math.random()-0.5)*360, vx:0, vy:0 };
-    nodes.push(n); byId[n.id] = n;
-  });
-  var links = [];
-  GRAPH.exits.forEach(function(e, i){
-    var from = byId['r'+e.from];
-    if(!from) return;
-    var to;
-    if(e.to == null){
-      to = { id:'s'+i, label:'', color:'#30363d', stub:true,
-             x: from.x + (Math.random()-0.5)*60, y: from.y + (Math.random()-0.5)*60, vx:0, vy:0 };
-      nodes.push(to); byId[to.id] = to;
-    } else {
-      to = byId['r'+e.to];
-      if(!to) return;
-    }
-    links.push({ source:from, target:to, dir:e.dir, stub: e.to == null });
+  // --- Direction → grid offset (col, row); row increases downward, so n = up. ---
+  // Only the 8 compass exits participate in layout; u/d are ignored for now.
+  var OFF = { n:[0,-1], s:[0,1], e:[1,0], w:[-1,0], ne:[1,-1], nw:[-1,-1], se:[1,1], sw:[-1,1] };
+
+  var roomById = {};
+  GRAPH.rooms.forEach(function(r){ roomById[r.id] = r; });
+
+  // Adjacency from walked (to != null) compass edges; collect stubs (to == null) too.
+  var adj = {}, stubs = [];
+  GRAPH.rooms.forEach(function(r){ adj[r.id] = []; });
+  GRAPH.exits.forEach(function(e){
+    if(!OFF[e.dir]) return;                         // skip u/d and anything unexpected
+    if(e.to == null){ stubs.push(e); return; }
+    if(!roomById[e.from] || !roomById[e.to]) return;
+    adj[e.from].push({ dir:e.dir, to:e.to });
   });
 
-  var defs = document.createElementNS(NS,'defs');
-  defs.innerHTML = '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6e7681"/></marker>';
-  svg.appendChild(defs);
+  // --- Lay out each connected component on its own integer grid, then tile them. ---
+  var seen = {}, components = [];
+  GRAPH.rooms.forEach(function(rootRoom){
+    if(seen[rootRoom.id]) return;
+    var lpos = {}, locc = {};
+    function lkey(c,r){ return c+','+r; }
+    function lfindFree(c,r){                          // spiral out to nearest empty cell
+      if(!(lkey(c,r) in locc)) return [c,r];
+      for(var rad=1; rad<400; rad++){
+        for(var dc=-rad; dc<=rad; dc++) for(var dr=-rad; dr<=rad; dr++){
+          if(Math.max(Math.abs(dc),Math.abs(dr)) !== rad) continue;
+          if(!(lkey(c+dc,r+dr) in locc)) return [c+dc,r+dr];
+        }
+      }
+      return [c,r];
+    }
+    function lplace(id,c,r){ lpos[id]={c:c,r:r}; locc[lkey(c,r)]=id; seen[id]=true; }
+    lplace(rootRoom.id, 0, 0);
+    var q = [rootRoom.id];
+    while(q.length){
+      var cur = q.shift(), base = lpos[cur];
+      adj[cur].forEach(function(ed){
+        if(seen[ed.to]) return;                       // already placed; edge drawn as connector
+        var o = OFF[ed.dir], cell = lfindFree(base.c + o[0], base.r + o[1]);
+        lplace(ed.to, cell[0], cell[1]);
+        q.push(ed.to);
+      });
+    }
+    var ids = Object.keys(lpos), minc=Infinity, maxc=-Infinity, minr=Infinity, maxr=-Infinity;
+    ids.forEach(function(id){ var p=lpos[id];
+      minc=Math.min(minc,p.c); maxc=Math.max(maxc,p.c);
+      minr=Math.min(minr,p.r); maxr=Math.max(maxr,p.r); });
+    components.push({ lpos:lpos, ids:ids, minc:minc, maxc:maxc, minr:minr, maxr:maxr });
+  });
+
+  // Tile components left-to-right with a gap; produce final global cells.
+  var cell = {}, GAP = 2, cursor = 0;
+  components.forEach(function(cp){
+    cp.ids.forEach(function(id){ var p = cp.lpos[id];
+      cell[id] = { c: cursor + (p.c - cp.minc), r: (p.r - cp.minr) }; });
+    cursor += (cp.maxc - cp.minc) + 1 + GAP;
+  });
+
+  // --- Geometry: stop-sign octagons on a square grid (truncated-square tiling). ---
+  var R = 36;                                         // octagon circumradius
+  var APO = R * Math.cos(Math.PI/8);                  // center → flat-edge distance
+  var PITCH = 2 * APO;                                // cell spacing so cardinal edges touch
+  var PAD = R + 24;
+  function centerOf(id){ var p = cell[id]; return { x: PAD + p.c*PITCH, y: PAD + p.r*PITCH }; }
+  function octPoints(x,y,rad){
+    var pts = [];
+    for(var k=0;k<8;k++){ var a = Math.PI/8 + k*Math.PI/4;
+      pts.push((x+rad*Math.cos(a)).toFixed(1)+','+(y+rad*Math.sin(a)).toFixed(1)); }
+    return pts.join(' ');
+  }
+
   var root = document.createElementNS(NS,'g');
   svg.appendChild(root);
 
-  var linkEls = links.map(function(l){
+  // Connector lines under the octagons (hidden for touching neighbors, visible for
+  // long/relocated links so non-grid connections stay legible).
+  GRAPH.exits.forEach(function(e){
+    if(!OFF[e.dir] || e.to == null) return;
+    if(!cell[e.from] || !cell[e.to]) return;
+    var a = centerOf(e.from), b = centerOf(e.to);
     var line = document.createElementNS(NS,'line');
-    line.setAttribute('stroke', l.stub ? '#30363d' : '#484f58');
-    line.setAttribute('stroke-width', l.stub ? '1' : '1.5');
-    if(l.stub) line.setAttribute('stroke-dasharray','3,3');
-    line.setAttribute('marker-end','url(#arrow)');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','#484f58'); line.setAttribute('stroke-width','2');
     root.appendChild(line);
+  });
+
+  // Stubs: dashed ghost octagon one cell away in the missing exit's direction.
+  stubs.forEach(function(e){
+    if(!cell[e.from]) return;
+    var a = centerOf(e.from), o = OFF[e.dir];
+    var len = Math.sqrt(o[0]*o[0] + o[1]*o[1]);
+    var gx = a.x + o[0]/len * PITCH * 0.82, gy = a.y + o[1]/len * PITCH * 0.82;
+    var spur = document.createElementNS(NS,'line');
+    spur.setAttribute('x1',a.x); spur.setAttribute('y1',a.y);
+    spur.setAttribute('x2',gx); spur.setAttribute('y2',gy);
+    spur.setAttribute('stroke','#6e7681'); spur.setAttribute('stroke-width','1');
+    spur.setAttribute('stroke-dasharray','3,3');
+    root.appendChild(spur);
+    var ghost = document.createElementNS(NS,'polygon');
+    ghost.setAttribute('points', octPoints(gx,gy,R*0.42));
+    ghost.setAttribute('fill','transparent');
+    ghost.setAttribute('stroke','#6e7681'); ghost.setAttribute('stroke-width','1');
+    ghost.setAttribute('stroke-dasharray','2,2');
+    root.appendChild(ghost);
+    var dl = document.createElementNS(NS,'text');
+    dl.setAttribute('class','edge-dir'); dl.setAttribute('text-anchor','middle');
+    dl.setAttribute('x',gx); dl.setAttribute('y',gy+3);
+    dl.textContent = e.dir;
+    root.appendChild(dl);
+  });
+
+  // Room octagons + labels.
+  GRAPH.rooms.forEach(function(r){
+    if(!cell[r.id]) return;
+    var c = centerOf(r.id);
+    var oct = document.createElementNS(NS,'polygon');
+    oct.setAttribute('points', octPoints(c.x, c.y, R));
+    oct.setAttribute('fill', areaColor[r.area_id] || '#8b949e');
+    oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
+    root.appendChild(oct);
     var t = document.createElementNS(NS,'text');
-    t.setAttribute('class','edge-dir');
-    t.textContent = l.dir;
+    t.setAttribute('text-anchor','middle'); t.setAttribute('dy','4');
+    t.textContent = r.slug;
     root.appendChild(t);
-    return { line:line, label:t };
   });
 
-  var nodeEls = nodes.map(function(n){
-    var g = document.createElementNS(NS,'g');
-    var c = document.createElementNS(NS,'circle');
-    c.setAttribute('r', n.stub ? 4 : 10);
-    c.setAttribute('fill', n.stub ? 'transparent' : n.color);
-    c.setAttribute('stroke', n.stub ? '#6e7681' : '#0d1117');
-    c.setAttribute('stroke-width', n.stub ? 1 : 1.5);
-    if(n.stub) c.setAttribute('stroke-dasharray','2,2');
-    g.appendChild(c);
-    if(!n.stub){
-      var t = document.createElementNS(NS,'text');
-      t.setAttribute('text-anchor','middle');
-      t.setAttribute('dy','-14');
-      t.textContent = n.label;
-      g.appendChild(t);
-    }
-    root.appendChild(g);
-    c.style.cursor = 'grab';
-    c.addEventListener('pointerdown', function(ev){ dragging = n; ev.stopPropagation(); svg.setPointerCapture(ev.pointerId); });
-    return { node:n, group:g };
-  });
-
+  // --- Pan / zoom. ---
+  var W = svg.clientWidth || 900, H = 620;
   var tx = 0, ty = 0, scale = 1;
   function applyTransform(){ root.setAttribute('transform','translate('+tx+','+ty+') scale('+scale+')'); }
-  applyTransform();
 
-  function toGraph(ev){
-    var rect = svg.getBoundingClientRect();
-    return { x: (ev.clientX - rect.left - tx)/scale, y: (ev.clientY - rect.top - ty)/scale };
-  }
+  // Fit the whole map into view on first render.
+  (function fit(){
+    var minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity, any=false;
+    GRAPH.rooms.forEach(function(r){ if(!cell[r.id]) return; any=true;
+      var c=centerOf(r.id); minX=Math.min(minX,c.x); maxX=Math.max(maxX,c.x);
+      minY=Math.min(minY,c.y); maxY=Math.max(maxY,c.y); });
+    if(!any){ applyTransform(); return; }
+    var gw = (maxX-minX) + 2*PAD, gh = (maxY-minY) + 2*PAD;
+    scale = Math.max(0.2, Math.min(1.4, Math.min(W/gw, H/gh)));
+    tx = (W - gw*scale)/2 - (minX - PAD)*scale;
+    ty = (H - gh*scale)/2 - (minY - PAD)*scale;
+    applyTransform();
+  })();
 
-  var dragging = null, panning = false, panStart = null;
-  svg.addEventListener('pointerdown', function(ev){ if(dragging) return; panning = true; panStart = { x:ev.clientX - tx, y:ev.clientY - ty }; });
+  var panning = false, panStart = null;
+  svg.addEventListener('pointerdown', function(ev){ panning = true; panStart = { x:ev.clientX - tx, y:ev.clientY - ty }; });
   svg.addEventListener('pointermove', function(ev){
-    if(dragging){ var p = toGraph(ev); dragging.x = p.x; dragging.y = p.y; dragging.vx = 0; dragging.vy = 0; }
-    else if(panning){ tx = ev.clientX - panStart.x; ty = ev.clientY - panStart.y; applyTransform(); }
+    if(!panning) return; tx = ev.clientX - panStart.x; ty = ev.clientY - panStart.y; applyTransform();
   });
-  function endPointer(){ dragging = null; panning = false; }
+  function endPointer(){ panning = false; }
   svg.addEventListener('pointerup', endPointer);
   svg.addEventListener('pointercancel', endPointer);
   svg.addEventListener('wheel', function(ev){
@@ -504,52 +577,6 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     ty = my - (my - ty) * (ns/scale);
     scale = ns; applyTransform();
   }, { passive:false });
-
-  function tick(){
-    var i, j;
-    for(i=0;i<nodes.length;i++) for(j=i+1;j<nodes.length;j++){
-      var a=nodes[i], b=nodes[j];
-      var dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy; if(d2<0.01) d2=0.01;
-      var d=Math.sqrt(d2);
-      var rep=((a.stub||b.stub)?1200:5500)/d2;
-      var fx=dx/d*rep, fy=dy/d*rep;
-      a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
-    }
-    for(i=0;i<links.length;i++){
-      var l=links[i], la=l.source, lb=l.target;
-      var ldx=lb.x-la.x, ldy=lb.y-la.y, ld=Math.sqrt(ldx*ldx+ldy*ldy); if(ld<0.01) ld=0.01;
-      var L=l.stub?50:120, k=0.02, f=(ld-L)*k;
-      var lfx=ldx/ld*f, lfy=ldy/ld*f;
-      la.vx+=lfx; la.vy+=lfy; lb.vx-=lfx; lb.vy-=lfy;
-    }
-    for(i=0;i<nodes.length;i++){
-      var n=nodes[i]; if(n===dragging) continue;
-      n.vx += (W/2 - n.x)*0.0008; n.vy += (H/2 - n.y)*0.0008;
-      n.x += n.vx*0.85; n.y += n.vy*0.85;
-      n.vx *= 0.82; n.vy *= 0.82;
-    }
-    render();
-    requestAnimationFrame(tick);
-  }
-
-  function render(){
-    var i;
-    for(i=0;i<linkEls.length;i++){
-      var l=links[i], e=linkEls[i], a=l.source, b=l.target;
-      var dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1;
-      var ra=a.stub?4:10, rb=(b.stub?4:10)+5;
-      var x1=a.x+dx/d*ra, y1=a.y+dy/d*ra, x2=b.x-dx/d*rb, y2=b.y-dy/d*rb;
-      e.line.setAttribute('x1',x1); e.line.setAttribute('y1',y1);
-      e.line.setAttribute('x2',x2); e.line.setAttribute('y2',y2);
-      e.label.setAttribute('x',(x1+x2)/2); e.label.setAttribute('y',(y1+y2)/2 - 2);
-    }
-    for(i=0;i<nodeEls.length;i++){
-      var ne=nodeEls[i];
-      ne.group.setAttribute('transform','translate('+ne.node.x+','+ne.node.y+')');
-    }
-  }
-
-  tick();
 })();
 </script>
 
