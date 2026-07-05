@@ -1623,6 +1623,8 @@ describe("World map triggers", function()
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 5 }
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "north plaza" }  -- edge dest's name matches the arrival
                 end
                 return nil
             end
@@ -1631,6 +1633,27 @@ describe("World map triggers", function()
             assert.are.equal(5, taPackage.currentRoomId)
             local visit = helper.findDbCall("execute", "UPDATE rooms SET visits")
             assert.are.equal(5, visit.params[1])
+        end)
+
+        it("re-resolves when a known edge points at a differently-named room", function()
+            -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
+            -- game reprints "You're in the magic shop." The edge 13--n-->10 points
+            -- at south plaza, so the name won't match -> stay put, don't corrupt #10.
+            taPackage.currentRoom = "magic shop"
+            taPackage.currentRoomId = 13
+            taPackage.prevRoomId = 13
+            taPackage.pendingDirection = "n"
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 10 }
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "south plaza" }  -- edge dest is NOT the magic shop
+                end
+                return nil
+            end
+            helper.simulateLine("You're in the magic shop.")
+            assert.are.equal(13, taPackage.currentRoomId)  -- stayed in the magic shop
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- no new room
         end)
 
         it("clears pendingDirection after entry", function()

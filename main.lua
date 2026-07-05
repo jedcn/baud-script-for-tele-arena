@@ -988,9 +988,15 @@ local function handleRoomEntry(matches)
     if taPackage.pendingDirection and taPackage.prevRoomId then
         local dir = taPackage.pendingDirection
         local dest = taPackage.db.exitDestination(taPackage.prevRoomId, dir)
-        if dest then
-            roomId = dest                       -- re-entering a known room
+        if dest and taPackage.db.roomName(dest) == name then
+            roomId = dest                       -- known edge, confirmed by name
             taPackage.currentRoomProvisional = false
+        elseif dest then
+            -- The edge points at a room with a DIFFERENT name than we arrived in
+            -- — a stale edge or a spurious room re-display (the game sometimes
+            -- reprints the current room on a move). Don't trust it; re-resolve by
+            -- name so we don't overwrite the wrong room.
+            roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
         else
             roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
             taPackage.db.linkExit(taPackage.prevRoomId, dir, roomId)

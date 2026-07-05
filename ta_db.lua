@@ -286,6 +286,12 @@ function TaDb.roomIdsByName(name)
     return ids
 end
 
+-- The display name recorded for a room id (nil if the room is gone).
+function TaDb.roomName(roomId)
+    local row = db:queryOne("SELECT name FROM rooms WHERE id = ?", roomId)
+    return row and row.name
+end
+
 -- The set of exit directions recorded for a room (walked edges + `ex` stubs),
 -- as a { [dir] = true } table. This is the room's exit-set "fingerprint".
 function TaDb.roomExitDirections(roomId)
