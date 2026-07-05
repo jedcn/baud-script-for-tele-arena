@@ -218,21 +218,26 @@ end
 
 -- Ensure an area row exists; return its id. Idempotent.
 function TaDb.ensureArea(slug, name)
-    db:execute("INSERT OR IGNORE INTO areas (slug, name) VALUES (?, ?)", slug, name or slug)
+    local changes = db:execute("INSERT OR IGNORE INTO areas (slug, name) VALUES (?, ?)", slug, name or slug)
     local row = db:queryOne("SELECT id FROM areas WHERE slug = ?", slug)
-    return row and row.id
+    local id = row and row.id
+    echo("[mapdbg] ensureArea slug=" .. tostring(slug) .. " INSERT changes=" .. tostring(changes)
+        .. " -> id=" .. tostring(id) .. " (" .. type(id) .. ")")
+    return id
 end
 
 -- Insert a newly discovered room (visits starts at 0; the caller records the
 -- visit) and return its id.
 function TaDb.discoverRoom(name, areaId)
     local slug = TaDb.slugForName(name)
-    db:execute(
+    local changes = db:execute(
         "INSERT INTO rooms (slug, name, description, area_id, first_visited, visits) VALUES (?, ?, NULL, ?, ?, 0)",
         slug, name, areaId, now()
     )
     local row = db:queryOne("SELECT id FROM rooms WHERE slug = ?", slug)
     local id = row and row.id
+    echo("[mapdbg] discoverRoom slug=" .. tostring(slug) .. " INSERT changes=" .. tostring(changes)
+        .. " -> id=" .. tostring(id) .. " (" .. type(id) .. ")")
     dbLog("[DB\xE2\x86\x92rooms] discovered #" .. tostring(id) .. " " .. slug)
     return id
 end

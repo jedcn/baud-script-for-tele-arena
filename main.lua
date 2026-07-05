@@ -997,6 +997,9 @@ local function handleRoomEntry(matches)
         roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
     end
 
+    echo("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
+        .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional))
+
     taPackage.db.recordVisit(roomId)
     taPackage.prevRoomId = taPackage.currentRoomId
     taPackage.currentRoomId = roomId
@@ -1032,18 +1035,27 @@ end
 -- already-known one (same name + exit-set), fold the provisional into it. Then
 -- seed each exit as a known edge so the map shows it before it's walked.
 createTrigger("^Exits: (.+)\\.$", function(matches)
+    echo("[mapdbg] Exits trigger: mapping=" .. tostring(taPackage.mapping)
+        .. " currentRoomId=" .. tostring(taPackage.currentRoomId)
+        .. " (" .. type(taPackage.currentRoomId) .. ")")
     if not taPackage.mapping or not taPackage.currentRoomId then return end
 
     local dirs = {}
     for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
 
     if taPackage.currentRoomProvisional then
+        echo("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
+            .. " id=" .. tostring(taPackage.currentRoomId)
+            .. " dirs=" .. table.concat(dirs, ","))
         local match = taPackage.db.findRoomByFingerprint(
             taPackage.currentRoom, dirs, taPackage.currentRoomId)
-        if match then
+        echo("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
+            .. " val=" .. tostring(match))
+        -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
+        if type(match) == "number" then
             taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
             taPackage.currentRoomId = match
-            echo("[map] linked into #" .. match .. " (" .. taPackage.currentRoom .. ")")
+            echo("[map] linked into #" .. tostring(match) .. " (" .. tostring(taPackage.currentRoom) .. ")")
         end
         taPackage.currentRoomProvisional = false
     end
