@@ -1157,6 +1157,25 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     for _, dir in ipairs(dirs) do
         taPackage.db.recordKnownExit(taPackage.currentRoomId, dir)
     end
+
+    -- Guide exploration: flag which listed exits still lead somewhere unmapped.
+    -- An exit is "mapped" once it has a walked destination; otherwise it's a stub
+    -- we've never stepped through (including the ones we just seeded above, whose
+    -- to_id is NULL). This is a [map] line, not [mapdbg] -- it's a real aid.
+    local unexplored, mapped = {}, {}
+    for _, dir in ipairs(dirs) do
+        if taPackage.db.exitDestination(taPackage.currentRoomId, dir) then
+            mapped[#mapped + 1] = dir
+        else
+            unexplored[#unexplored + 1] = dir
+        end
+    end
+    if #unexplored > 0 then
+        echo("[map] unexplored exits: " .. table.concat(unexplored, ", ")
+            .. (#mapped > 0 and ("  (mapped: " .. table.concat(mapped, ", ") .. ")") or ""))
+    else
+        echo("[map] all exits mapped: " .. table.concat(mapped, ", "))
+    end
 end, { type = "regex" })
 
 -- A rejected move: clear the pending direction so the next room line doesn't

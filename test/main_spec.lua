@@ -1991,6 +1991,35 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
         end)
 
+        it("reports which listed exits are unexplored vs mapped", function()
+            taPackage.currentRoomId = 111
+            -- ne and nw already lead somewhere; s is a stub (no destination).
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    local dir = params[2]
+                    if dir == "ne" then return { to_id = 50 } end
+                    if dir == "nw" then return { to_id = 60 } end
+                    return { to_id = nil }  -- s unexplored
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: ne,s,nw.")
+            assert.is_true(tableContains(helper.echoCalls,
+                "[map] unexplored exits: s  (mapped: ne, nw)"))
+        end)
+
+        it("reports when every listed exit is already mapped", function()
+            taPackage.currentRoomId = 111
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 50 }  -- every direction leads somewhere
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: n,s.")
+            assert.is_true(tableContains(helper.echoCalls, "[map] all exits mapped: n, s"))
+        end)
+
     end)
 
     describe("failed move", function()
