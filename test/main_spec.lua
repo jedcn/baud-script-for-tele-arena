@@ -2274,6 +2274,17 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET trap = ?"))
         end)
 
+        it("primes a downward move on a trap-door fall so the pit maps a floor below", function()
+            taPackage.currentRoomId = 146
+            taPackage.currentRoom = "cave"
+            helper.simulateLine("You just fell through a trap door in the floor!")
+            -- tagged the room we fell from
+            assert.are.same({ "trap door", 146 }, helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params)
+            -- and set up the fall as a downward move so the next brief dead-reckons z-1
+            assert.are.equal("d", taPackage.pendingDirection)
+            assert.are.equal(146, taPackage.prevRoomId)
+        end)
+
     end)
 
     describe("map-area alias", function()

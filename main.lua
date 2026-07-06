@@ -1498,11 +1498,18 @@ createTrigger("^Several crossbow bolts fire from holes in the walls, striking yo
 createTrigger("^Several large stones fall on you from above!$",
     function() handleTrap("falling rocks") end, { type = "regex" })
 
--- A trap door drops us to the room below without a directional move. It deals no
--- HP we track here, so just tag the room that has the trap door (while mapping).
+-- A trap door drops us to the room directly below without a directional move.
+-- Tag the room we fell from with the trap, and — crucially — prime a downward
+-- move so the destination brief is dead-reckoned as z-1 (right floor, directly
+-- below) and linked with a d/u edge. Without this the fall cold-starts the pit
+-- at the origin (0,0,0), stranding it and everything after it on the wrong
+-- floor. It deals no HP we track here.
 createTrigger("^You just fell through a trap door in the floor!$", function()
     if taPackage.mapping and taPackage.currentRoomId then
         taPackage.db.setRoomTrap(taPackage.currentRoomId, "trap door")
+        taPackage.prevRoom = taPackage.currentRoom
+        taPackage.prevRoomId = taPackage.currentRoomId
+        taPackage.pendingDirection = "d"
     end
 end, { type = "regex" })
 
