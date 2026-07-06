@@ -597,8 +597,8 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("?", segments[3].text)   -- HP current
             -- MP hidden when mana max is nil
             assert.are.equal("?", segments[6].text)   -- XP current
-            assert.are.equal("?", segments[9].text)   -- Status
-            assert.are.equal("?", segments[11].text)  -- Gold
+            assert.are.equal("?", segments[10].text)  -- Status
+            assert.are.equal("?", segments[12].text)  -- Gold
         end)
 
         it("shows player name in first segment when class is unknown", function()
@@ -658,6 +658,28 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("white",  segments[7].fg)
         end)
 
+        it("shows XP remaining to next level in parentheses", function()
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("Experience:   710")
+            local segments = capturedFn()
+            assert.are.equal("(415)", segments[8].text)  -- 1,125 - 710
+            assert.are.equal("cyan",  segments[8].fg)
+        end)
+
+        it("formats large XP-remaining with commas", function()
+            helper.simulateLine("Class:        Acolyte")
+            helper.simulateLine("Experience:   56737")
+            -- next threshold for Acolyte above 56,737 is 78,200
+            local segments = capturedFn()
+            assert.are.equal("(21,463)", segments[8].text)
+        end)
+
+        it("shows no XP-remaining segment at max level", function()
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("Experience:   11594700")
+            assert.are.equal("", capturedFn()[8].text)
+        end)
+
         it("shows XP as current/max at max level", function()
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("Experience:   11594700")
@@ -669,32 +691,32 @@ describe("Tele-Arena triggers", function()
         it("shows captured Status value", function()
             helper.simulateLine("Status:       Healthy")
             local segments = capturedFn()
-            assert.are.equal("Healthy", segments[9].text)   -- no MP, Status at [9]
+            assert.are.equal("Healthy", segments[10].text)   -- no MP, Status at [10]
         end)
 
         it("colors status red when Thirsty", function()
             helper.simulateLine("Status:       Thirsty")
-            assert.are.equal("red", capturedFn()[9].fg)
+            assert.are.equal("red", capturedFn()[10].fg)
         end)
 
         it("colors status red when Hungry", function()
             helper.simulateLine("Status:       Hungry")
-            assert.are.equal("red", capturedFn()[9].fg)
+            assert.are.equal("red", capturedFn()[10].fg)
         end)
 
         it("colors status white when Healthy", function()
             helper.simulateLine("Status:       Healthy")
-            assert.are.equal("white", capturedFn()[9].fg)
+            assert.are.equal("white", capturedFn()[10].fg)
         end)
 
         it("colors gold amount yellow", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
-            assert.are.equal("yellow", capturedFn()[11].fg)
+            assert.are.equal("yellow", capturedFn()[12].fg)
         end)
 
         it("formats large gold amounts with commas", function()
             helper.simulateLine("You are carrying 1234567 gold crowns.")
-            assert.are.equal("1,234,567", capturedFn()[11].text)
+            assert.are.equal("1,234,567", capturedFn()[12].text)
         end)
 
         it("colors MP label green and values cyan", function()
@@ -715,7 +737,7 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("/ 26",    segments[4].text)
             assert.are.equal("354",     segments[6].text)   -- no MP, XP at [6]
             assert.are.equal("/ 1,125", segments[7].text)
-            assert.are.equal("Healthy", segments[9].text)   -- Status at [9]
+            assert.are.equal("Healthy", segments[10].text)   -- Status at [10]
         end)
 
         it("colors vitality green at or above 66%", function()

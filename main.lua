@@ -1580,6 +1580,10 @@ local function status()
             text = xp and ("/ " .. (nextLevelXp and commafy(nextLevelXp) or "max")) or "",
             fg = "white"
         },
+        {
+            text = (xp and nextLevelXp) and ("(" .. commafy(nextLevelXp - xp) .. ")") or "",
+            fg = "cyan"
+        },
         { text = "Status:" },
         { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },
         { text = "Gold:" },
