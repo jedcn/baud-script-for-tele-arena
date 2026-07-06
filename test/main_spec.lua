@@ -6305,6 +6305,26 @@ describe("Attack badges", function()
         assert.is_true(badge.bold)
     end)
 
+    it("echoes a green HEALED BY badge when a party member minor-heals us", function()
+        helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY PELAYO FOR 6 ", badge.text)
+        assert.are.equal("#16a34a", badge.color)
+        assert.are.equal("#e0e0e0", badge.backgroundColor)
+        assert.is_true(badge.bold)
+    end)
+
+    it("echoes a green HEALED BY badge when a party member heals us", function()
+        helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY PELAYO FOR 14 ", badge.text)
+        assert.are.equal("#16a34a", badge.color)
+        assert.are.equal("#e0e0e0", badge.backgroundColor)
+        assert.is_true(badge.bold)
+    end)
+
     -- Traps print no damage number; we stash HP, ask for "st", and recover the
     -- loss from the fresh Vitality line.
     describe("trap badges", function()

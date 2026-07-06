@@ -2730,7 +2730,9 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
 end, { type = "regex" })
 
 createTrigger("^(.+) just intoned a minor healing spell for you which healed (\\d+) damage!$", function(matches)
+    local healer = matches[2]
     local amount = tonumber(matches[3])
+    healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
     local current = taPackage.character.vitalityCurrent
     local max = taPackage.character.vitalityMax
     if current and amount then
@@ -2739,7 +2741,9 @@ createTrigger("^(.+) just intoned a minor healing spell for you which healed (\\
 end, { type = "regex" })
 
 createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) damage!$", function(matches)
+    local healer = matches[2]
     local amount = tonumber(matches[3])
+    healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
     local current = taPackage.character.vitalityCurrent
     local max = taPackage.character.vitalityMax
     if current and amount then
