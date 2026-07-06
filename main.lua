@@ -1207,10 +1207,13 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         return
     end
 
+    -- Nothing to do (and nothing to debug-log) unless we're actively mapping;
+    -- this guard sits before the [mapdbg] echo so a plain `ex` during normal
+    -- play stays quiet.
+    if not taPackage.mapping or not taPackage.currentRoomId then return end
     echo("[mapdbg] Exits trigger: mapping=" .. tostring(taPackage.mapping)
         .. " currentRoomId=" .. tostring(taPackage.currentRoomId)
         .. " (" .. type(taPackage.currentRoomId) .. ")")
-    if not taPackage.mapping or not taPackage.currentRoomId then return end
 
     if taPackage.currentRoomProvisional then
         echo("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)

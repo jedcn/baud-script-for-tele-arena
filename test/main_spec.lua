@@ -2089,6 +2089,17 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
         end)
 
+        it("emits no [mapdbg] on a plain ex while not mapping", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = 42
+            helper.simulateLine("Exits: n,sw.")
+            local leaked = false
+            for _, m in ipairs(helper.echoCalls) do
+                if string.find(m, "[mapdbg] Exits trigger", 1, true) then leaked = true end
+            end
+            assert.is_false(leaked)
+        end)
+
         it("reports which listed exits are unexplored vs mapped", function()
             taPackage.currentRoomId = 111
             -- ne and nw already lead somewhere; s is a stub (no destination).
