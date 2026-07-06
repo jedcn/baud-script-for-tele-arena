@@ -214,3 +214,19 @@ only stamps an area on rooms at *discovery* time, so you must switch areas
 entering, say, the mountains until you've arrived. A retag-in-place command
 fixes the boundary room after the fact (area is otherwise only set at discovery
 and never revisited).
+
+### Systemic desync guard — validate a move against the room's known exit-set
+
+Every "stop everything, delete corruption" incident so far (pit-trap fall,
+`You at ...` broken brief, `look <dir>`, rest-rejection) has been the SAME
+failure: the mapper's `pendingDirection`/position drifts from reality and it
+mints a phantom room. We've fixed each *trigger* one at a time. A single
+systemic guard would catch the whole class at the source: when about to mint a
+new room by walking `dir` from room X, first check that `dir` is in X's recorded
+exit-set (from its `ex`). If it isn't — e.g. `215 se→` when 215's exits are only
+`e,w` — the move is a provable desync: refuse to mint, and re-resolve by
+name/coord (or clear pendingDirection and treat as a re-scan) instead of
+inventing a room through an exit that doesn't exist. Caveat: only applies when
+X's exit-set is known (ex captured); skip the guard otherwise. Reach for this if
+incidents keep happening after the per-trigger fixes — decide once we've mapped
+~2 new regions cleanly (if they're clean, the per-trigger fixes sufficed).
