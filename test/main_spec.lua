@@ -1516,6 +1516,18 @@ describe("ta_db", function()
 
     end)
 
+    describe("setPlayerLocation", function()
+
+        it("upserts the character's current room", function()
+            TaDb.setPlayerLocation("Pelayo", 110)
+            local call = helper.findDbCall("execute", "INSERT INTO player_location")
+            assert.is_not_nil(call)
+            assert.are.equal("Pelayo", call.params[1])
+            assert.are.equal(110, call.params[2])
+        end)
+
+    end)
+
     describe("mergeRoomInto", function()
 
         it("repoints edges, carries visits, and deletes the provisional room", function()
@@ -2020,6 +2032,23 @@ describe("World map triggers", function()
             assert.is_true(tableContains(helper.echoCalls, "[map] all exits mapped: n, s"))
         end)
 
+        it("records the character's location after capturing exits", function()
+            taPackage.currentRoomId = 110
+            taPackage.character.name = "Pelayo"
+            helper.simulateLine("Exits: n,s.")
+            local loc = helper.findDbCall("execute", "INSERT INTO player_location")
+            assert.is_not_nil(loc)
+            assert.are.equal("Pelayo", loc.params[1])
+            assert.are.equal(110, loc.params[2])
+        end)
+
+        it("does not record location without a logged-in character name", function()
+            taPackage.currentRoomId = 110
+            taPackage.character.name = nil
+            helper.simulateLine("Exits: n,s.")
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO player_location"))
+        end)
+
     end)
 
     describe("failed move", function()
@@ -2184,6 +2213,16 @@ describe("World map triggers", function()
             assert.is_nil(taPackage.prevRoomId)
             assert.is_nil(taPackage.pendingDirection)
             assert.is_false(taPackage.currentRoomProvisional)
+        end)
+
+        it("stamps the player's location at the anchor room", function()
+            taPackage.character.name = "Pelayo"
+            helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
+            helper.simulateAlias("map-here cave-11")
+            local loc = helper.findDbCall("execute", "INSERT INTO player_location")
+            assert.is_not_nil(loc)
+            assert.are.equal("Pelayo", loc.params[1])
+            assert.are.equal(91, loc.params[2])
         end)
 
         it("does not reprint or re-resolve (no room INSERT, no visit)", function()

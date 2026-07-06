@@ -97,6 +97,15 @@ for _, col in ipairs({ "lock_key", "lock_door" }) do
     end
 end
 
+-- Last known room per character, so `just report` can mark "you are here". A
+-- character maps into the shared DB under its own name; last-known (not live)
+-- is the intended semantics — it persists where a character logged off.
+db:execute([[CREATE TABLE IF NOT EXISTS player_location (
+  player     TEXT PRIMARY KEY,
+  room_id    INTEGER REFERENCES rooms(id),
+  updated_at TEXT
+)]])
+
 db:execute([[CREATE TABLE IF NOT EXISTS monsters (
   name        TEXT PRIMARY KEY,
   description TEXT,
@@ -343,6 +352,17 @@ end
 
 function TaDb.recordVisit(roomId)
     db:execute("UPDATE rooms SET visits = visits + 1 WHERE id = ?", roomId)
+end
+
+-- Remember which room a character is standing in (for the report's "you are
+-- here" marker). Upsert keyed by character name.
+function TaDb.setPlayerLocation(player, roomId)
+    db:execute(
+        "INSERT INTO player_location (player, room_id, updated_at) VALUES (?, ?, ?) "
+        .. "ON CONFLICT(player) DO UPDATE SET room_id = excluded.room_id, updated_at = excluded.updated_at",
+        player, roomId, now()
+    )
+    dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ #" .. tostring(roomId))
 end
 
 function TaDb.setRoomDescription(roomId, description)

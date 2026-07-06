@@ -1176,6 +1176,12 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     else
         echo("[map] all exits mapped: " .. table.concat(mapped, ", "))
     end
+
+    -- Remember where this character is now (settled room id, after any merge),
+    -- so `just report` can mark "you are here". Needs the logged-in name.
+    if taPackage.character and taPackage.character.name then
+        taPackage.db.setPlayerLocation(taPackage.character.name, taPackage.currentRoomId)
+    end
 end, { type = "regex" })
 
 -- A rejected move: clear the pending direction so the next room line doesn't
@@ -1262,6 +1268,11 @@ createAlias("^map-here (.+)$", function(matches)
         taPackage.coord = { x = room.x, y = room.y, z = room.z }
     else
         taPackage.coord = nil
+    end
+    -- Stamp location now so the report's "you are here" marker is right the
+    -- moment you anchor, not only after the first move (map-here sends no ex).
+    if taPackage.character and taPackage.character.name then
+        taPackage.db.setPlayerLocation(taPackage.character.name, room.id)
     end
     echo("[map] anchored at " .. slug .. " (#" .. tostring(room.id) .. ")"
         .. (taPackage.coord

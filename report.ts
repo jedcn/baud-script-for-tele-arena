@@ -39,6 +39,18 @@ const exits = roomGraphReady ? db.prepare(`
   ORDER BY e.from_id, e.direction
 `).all() as any[] : [];
 
+// Last known room per character, for the "you are here" marker on the map.
+const playerLocations = (roomGraphReady && hasTable("player_location")) ? db.prepare(`
+  SELECT player, room_id, updated_at FROM player_location WHERE room_id IS NOT NULL
+`).all() as any[] : [];
+
+// room id -> [character names] standing there.
+const playersByRoom = new Map<number, string[]>();
+for (const p of playerLocations) {
+  if (!playersByRoom.has(p.room_id)) playersByRoom.set(p.room_id, []);
+  playersByRoom.get(p.room_id)!.push(p.player);
+}
+
 // direction -> "dir → destslug" strings, grouped by source room, for the table.
 const exitsByRoom = new Map<number, string[]>();
 for (const e of exits) {
@@ -51,7 +63,8 @@ const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
   rooms: rooms.map(r => ({ id: r.id, slug: r.slug, name: r.name, description: r.description,
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
-                           first_visited: r.first_visited, trap: r.trap })),
+                           first_visited: r.first_visited, trap: r.trap,
+                           players: playersByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug })),
 };
 
@@ -316,6 +329,7 @@ const html = `<!DOCTYPE html>
   #room-panel .rp-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.6rem; }
   #room-panel .rp-desc { color: var(--text); line-height: 1.5; margin: 0.6rem 0 0.2rem; }
   #room-panel .rp-trap { color: #f85149; font-weight: 600; }
+  #room-panel .rp-here { color: #e3b341; font-weight: 600; margin-bottom: 0.3rem; }
   #room-panel .rp-label { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin: 1rem 0 0.35rem; }
   #room-panel ul.rp-exits { list-style: none; margin: 0; padding: 0; }
   #room-panel ul.rp-exits li { padding: 0.15rem 0; border-bottom: 1px solid var(--border); }
@@ -421,6 +435,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var NS = 'http://www.w3.org/2000/svg';
   var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
   var TRAP_COLOR = '#f85149';                          // trapped rooms are painted red
+  var PLAYER_COLOR = '#e3b341';                         // "you are here" — a character's room
   var areaColor = {};
   GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
 
@@ -437,6 +452,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var tr = document.createElement('span');
     tr.innerHTML = '<span class="swatch" style="background:'+TRAP_COLOR+'"></span>trap';
     legend.appendChild(tr);
+    var pl = document.createElement('span');
+    pl.innerHTML = '<span class="swatch" style="background:'+PLAYER_COLOR+'"></span>you are here';
+    legend.appendChild(pl);
   }
 
   // --- Direction → grid offset (col, row); row increases downward, so n = up.
@@ -575,6 +593,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     if(cell[id]) sub.push(floorLabel(cell[id].f));
     sub.push((r.visits || 0) + (r.visits === 1 ? ' visit' : ' visits'));
     html += '<div class="rp-sub">' + sub.join(' · ') + '</div>';
+    if(r.players && r.players.length){
+      html += '<div class="rp-here">▸ ' + r.players.map(escapeHtml).join(', ') + '</div>';
+    }
     html += r.description
       ? '<div class="rp-desc">' + escapeHtml(r.description) + '</div>'
       : '<div class="rp-desc rp-empty">No description captured yet.</div>';
@@ -661,9 +682,12 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       var c = centerOf(r.id);
       var oct = document.createElementNS(NS,'polygon');
       oct.setAttribute('points', octPoints(c.x, c.y, R));
-      // A trapped room is painted red so hazards stand out at a glance,
-      // overriding its area color; the panel names the specific trap.
-      oct.setAttribute('fill', r.trap ? TRAP_COLOR : (areaColor[r.area_id] || '#8b949e'));
+      // A character's current room wins (yellow, "you are here"), then a trapped
+      // room (red), else the area color. The panel names the specific trap and
+      // any players present.
+      var occupied = r.players && r.players.length;
+      oct.setAttribute('fill', occupied ? PLAYER_COLOR
+        : (r.trap ? TRAP_COLOR : (areaColor[r.area_id] || '#8b949e')));
       oct.setAttribute('stroke','#0d1117'); oct.setAttribute('stroke-width','1.5');
       oct.style.cursor = 'pointer';
       oct.addEventListener('click', function(){ selectRoom(r.id); });
