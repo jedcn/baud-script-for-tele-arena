@@ -33,7 +33,7 @@ const areas = roomGraphReady
   : [];
 
 const exits = roomGraphReady ? db.prepare(`
-  SELECT e.from_id, e.direction, e.to_id, t.slug AS to_slug
+  SELECT e.from_id, e.direction, e.to_id, e.lock_key, e.lock_door, t.slug AS to_slug
   FROM room_exits e
   LEFT JOIN rooms t ON t.id = e.to_id
   ORDER BY e.from_id, e.direction
@@ -65,7 +65,8 @@ const graphData = {
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
                            first_visited: r.first_visited, trap: r.trap,
                            players: playersByRoom.get(r.id) ?? [] })),
-  exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug })),
+  exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
+                           lock_key: e.lock_key, lock_door: e.lock_door })),
 };
 
 const monsters = db.prepare(`
@@ -330,6 +331,7 @@ const html = `<!DOCTYPE html>
   #room-panel .rp-desc { color: var(--text); line-height: 1.5; margin: 0.6rem 0 0.2rem; }
   #room-panel .rp-trap { color: #f85149; font-weight: 600; }
   #room-panel .rp-here { color: #e3b341; font-weight: 600; margin-bottom: 0.3rem; }
+  #room-panel .rp-door { color: #db6d28; font-weight: 600; }
   #room-panel .rp-label { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin: 1rem 0 0.35rem; }
   #room-panel ul.rp-exits { list-style: none; margin: 0; padding: 0; }
   #room-panel ul.rp-exits li { padding: 0.15rem 0; border-bottom: 1px solid var(--border); }
@@ -436,6 +438,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
   var TRAP_COLOR = '#f85149';                          // trapped rooms are painted red
   var PLAYER_COLOR = '#e3b341';                         // "you are here" — a character's room
+  var DOOR_COLOR = '#db6d28';                            // locked-door edges (orange)
   var areaColor = {};
   GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
 
@@ -455,6 +458,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var pl = document.createElement('span');
     pl.innerHTML = '<span class="swatch" style="background:'+PLAYER_COLOR+'"></span>you are here';
     legend.appendChild(pl);
+    var dr = document.createElement('span');
+    dr.innerHTML = '<span class="swatch" style="background:'+DOOR_COLOR+'"></span>locked door';
+    legend.appendChild(dr);
   }
 
   // --- Direction → grid offset (col, row); row increases downward, so n = up.
@@ -615,6 +621,22 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     }
     panel.innerHTML = html;
   }
+  // Door detail: clicking a locked-door edge shows the door, which rooms it
+  // sits between, and the key that opens it.
+  function showDoor(e){
+    if(!panel) return;
+    var A = roomInfo[e.from], B = roomInfo[e.to];
+    var an = A ? (A.name || A.slug) : ('#' + e.from);
+    var bn = B ? (B.name || B.slug) : ('#' + e.to);
+    var html = '<h3>' + escapeHtml((e.lock_door || 'locked') + ' door') + '</h3>';
+    html += '<div class="rp-sub">locked door</div>';
+    html += '<div class="rp-desc">Between <span class="rp-door">' + escapeHtml(an)
+      + '</span> and <span class="rp-door">' + escapeHtml(bn) + '</span>.</div>';
+    if(e.lock_key){
+      html += '<div class="rp-label">Key</div><div class="rp-door">' + escapeHtml(e.lock_key) + ' key</div>';
+    }
+    panel.innerHTML = html;
+  }
   function applySelectionHighlight(){
     if(selectedOct){ selectedOct.setAttribute('stroke','#0d1117'); selectedOct.setAttribute('stroke-width','1.5'); selectedOct = null; }
     if(selectedId == null || !onFloor(selectedId)){ if(selectLabel) selectLabel.style.display = 'none'; return; }
@@ -640,15 +662,44 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     while(root.firstChild) root.removeChild(root.firstChild);
     octByRoom = {};
 
-    // compass connectors between rooms on this floor
+    // compass connectors between rooms on this floor. A locked-door edge is
+    // drawn in the door color and gets a clickable lock badge at its midpoint
+    // (deduped across the two directions of the same doorway).
+    var doorBadgeDrawn = {};
     GRAPH.exits.forEach(function(e){
       if(!OFF[e.dir] || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
       var a = centerOf(e.from), b = centerOf(e.to);
+      var locked = !!e.lock_door;
       var line = document.createElementNS(NS,'line');
       line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
       line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
-      line.setAttribute('stroke','#484f58'); line.setAttribute('stroke-width','2');
+      line.setAttribute('stroke', locked ? DOOR_COLOR : '#484f58');
+      line.setAttribute('stroke-width', locked ? '3' : '2');
+      if(locked){
+        line.style.cursor = 'pointer';
+        line.addEventListener('click', function(){ showDoor(e); });
+      }
       root.appendChild(line);
+      if(locked){
+        var pairKey = Math.min(e.from, e.to) + '-' + Math.max(e.from, e.to);
+        if(!doorBadgeDrawn[pairKey]){
+          doorBadgeDrawn[pairKey] = true;
+          var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+          var g = document.createElementNS(NS,'g');
+          g.style.cursor = 'pointer';
+          var circ = document.createElementNS(NS,'circle');
+          circ.setAttribute('cx',mx); circ.setAttribute('cy',my); circ.setAttribute('r','8');
+          circ.setAttribute('fill','#0d1117'); circ.setAttribute('stroke',DOOR_COLOR); circ.setAttribute('stroke-width','2');
+          g.appendChild(circ);
+          var t = document.createElementNS(NS,'text');
+          t.setAttribute('class','vbadge'); t.setAttribute('text-anchor','middle');
+          t.setAttribute('x',mx); t.setAttribute('y',my + 3.5);
+          t.textContent = '\\uD83D\\uDD12';               // 🔒 padlock
+          g.appendChild(t);
+          g.addEventListener('click', function(){ showDoor(e); });
+          root.appendChild(g);
+        }
+      }
     });
 
     // stubs: dashed ghost octagon one cell away in the missing exit's direction
