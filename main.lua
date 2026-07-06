@@ -490,11 +490,13 @@ end
 local BADGE_BG = "#e0e0e0"
 local OUTGOING_FG = "#2563eb" -- blue: damage we deal
 local INCOMING_FG = "#ff5fd7" -- pink/red: damage we take
+local HEAL_FG = "#16a34a" -- green: healing we cast (blue is reserved for damage dealt)
 local function badge(fg, text)
     cechoBg(fg, BADGE_BG, " " .. text .. " ", true)
 end
 local function outgoingBadge(text) badge(OUTGOING_FG, text) end
 local function incomingBadge(text) badge(INCOMING_FG, text) end
+local function healingBadge(text) badge(HEAL_FG, text) end
 
 -- On entering the arena, pull our character sheet (st) and inventory (i) so the
 -- script's tracked state is populated right away instead of waiting for the
@@ -2716,6 +2718,7 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     -- land message doesn't name the spell, so record whichever heal we last
     -- cast (motu = self, kamotu = group); both produce this same line.
     taPackage.castPending = false
+    healingBadge("HEALED " .. string.upper(target) .. " FOR " .. amount)
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", target, "hit", amount, "heal")
     if target == taPackage.character.name then
         local current = taPackage.character.vitalityCurrent
