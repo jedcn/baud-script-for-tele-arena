@@ -1290,6 +1290,14 @@ createTrigger("^In your haste, you trip and fall!$", function()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
+-- Trying to move while still resting is rejected outright — no room change. Like
+-- the other rejected moves, clear the pending direction so a stale one can't be
+-- dead-reckoned onto the next arrival (which would mint a phantom room in the
+-- wrong direction). Separate from the arena-mode retry trigger elsewhere.
+createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function()
+    taPackage.pendingDirection = nil
+end, { type = "regex" })
+
 -- Begin mapping from the room you're standing in. Clear any stale anchor so the
 -- brief that follows is treated as a fresh arrival (not a walked edge), then a
 -- bare return prints that brief, which handleRoomEntry captures (and auto-probes

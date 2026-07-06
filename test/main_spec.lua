@@ -2215,6 +2215,12 @@ describe("World map triggers", function()
             assert.is_nil(taPackage.pendingDirection)
         end)
 
+        it("treats a rest-rejected move as rejected (clears pendingDirection)", function()
+            taPackage.pendingDirection = "se"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_nil(taPackage.pendingDirection)
+        end)
+
         it("does not mis-resolve the reprint after a trip-and-fall", function()
             -- In the magic shop (#13), 'go n' too fast -> trip -> the game reprints
             -- "You're in the magic shop." With pendingDirection cleared, this must
