@@ -1952,6 +1952,12 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
         end)
 
+        it("treats the broken 'You at ...' brief as an arrival", function()
+            stubDiscover(1)
+            helper.simulateLine("You at the bottom of a stairwell.")
+            assert.are.equal("bottom of a stairwell", taPackage.currentRoom)
+        end)
+
         it("stamps the origin coordinate on a cold-start room", function()
             stubDiscover(1)  -- no pendingDirection: nothing to dead-reckon from
             helper.simulateLine("You're in a cave.")

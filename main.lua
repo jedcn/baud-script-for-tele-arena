@@ -1124,6 +1124,14 @@ createTrigger("^You are inside (.+)\\.$", handleRoomEntryUnlessLooking, { type =
 createTrigger("^You are on (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 createTrigger("^You are at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
+-- A few rooms have a grammatically broken move brief that drops the verb
+-- entirely: "You at the bottom of a stairwell." (no "'re"/"are"). It's a real,
+-- consistent game quirk, and without a matching trigger the arrival is missed —
+-- the mapper stays in the room above, then mis-links everything you map next and
+-- mints duplicates when you climb back. Treated like the "You are ..." forms
+-- (idle-only, so a look line can't spoof it). Only "at" has been seen so far.
+createTrigger("^You at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+
 local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
 for _, dir in ipairs(moveDirections) do
     createAlias("^" .. dir .. "$", function()
