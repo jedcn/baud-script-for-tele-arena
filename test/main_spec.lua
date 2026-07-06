@@ -1550,6 +1550,46 @@ describe("ta_db", function()
 
     end)
 
+    describe("roomsMatchingFingerprint", function()
+
+        local function stub(ids_slugs, exitmap)
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "rooms WHERE name", 1, true) then
+                    local rows = {}
+                    for _, it in ipairs(ids_slugs) do
+                        rows[#rows + 1] = { id = it[1], slug = it[2] }
+                    end
+                    return rows
+                elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                    local rows = {}
+                    for _, dir in ipairs(exitmap[params[1]] or {}) do
+                        rows[#rows + 1] = { direction = dir }
+                    end
+                    return rows
+                end
+                return {}
+            end
+        end
+
+        it("returns every room whose name and exit-set match", function()
+            stub({ { 4, "cave-3" }, { 9, "cave-8" }, { 12, "cave-11" } },
+                 { [4] = { "e", "w" }, [9] = { "e", "w" }, [12] = { "n", "s" } })
+            local m = TaDb.roomsMatchingFingerprint("cave", { "e", "w" })
+            assert.are.equal(2, #m)
+            local slugs = {}
+            for _, x in ipairs(m) do slugs[x.slug] = true end
+            assert.is_true(slugs["cave-3"])
+            assert.is_true(slugs["cave-8"])
+            assert.is_nil(slugs["cave-11"])  -- different exit-set
+        end)
+
+        it("returns empty when nothing matches", function()
+            stub({ { 4, "cave-3" } }, { [4] = { "n" } })
+            assert.are.equal(0, #TaDb.roomsMatchingFingerprint("cave", { "e", "w" }))
+        end)
+
+    end)
+
     describe("mergeRoomInto", function()
 
         it("repoints edges, carries visits, and deletes the provisional room", function()
@@ -2069,6 +2109,66 @@ describe("World map triggers", function()
             taPackage.character.name = nil
             helper.simulateLine("Exits: n,s.")
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO player_location"))
+        end)
+
+    end)
+
+    describe("map-print-room-slug", function()
+
+        it("probes the current room with a bare return then ex", function()
+            helper.simulateAlias("map-print-room-slug")
+            assert.is_not_nil(taPackage.slugProbe)
+            local sentBare, sentEx = false, false
+            for _, c in ipairs(helper.sendCalls) do
+                if c == "" then sentBare = true elseif c == "ex" then sentEx = true end
+            end
+            assert.is_true(sentBare)
+            assert.is_true(sentEx)
+        end)
+
+        it("captures the room name for the probe without mapping", function()
+            taPackage.slugProbe = { name = nil }
+            taPackage.mapping = true  -- probe wins even when mapping is on
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cave", taPackage.slugProbe.name)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- no discovery
+        end)
+
+        it("prints the definitive slug when exactly one room matches", function()
+            taPackage.slugProbe = { name = "cave" }
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "rooms WHERE name", 1, true) then
+                    return { { id = 4, slug = "cave-3" } }
+                elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                    return { { direction = "e" }, { direction = "w" } }
+                end
+                return {}
+            end
+            helper.simulateLine("Exits: e,w.")
+            assert.is_nil(taPackage.slugProbe)  -- probe consumed
+            local hit = false
+            for _, m in ipairs(helper.echoCalls) do
+                if string.find(m, "map-here cave-3", 1, true) then hit = true end
+            end
+            assert.is_true(hit)
+        end)
+
+        it("prints all candidates when several rooms match", function()
+            taPackage.slugProbe = { name = "cave" }
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "rooms WHERE name", 1, true) then
+                    return { { id = 4, slug = "cave-3" }, { id = 9, slug = "cave-8" } }
+                elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                    return { { direction = "e" }, { direction = "w" } }
+                end
+                return {}
+            end
+            helper.simulateLine("Exits: e,w.")
+            local hit = false
+            for _, m in ipairs(helper.echoCalls) do
+                if string.find(m, "cave-3", 1, true) and string.find(m, "cave-8", 1, true) then hit = true end
+            end
+            assert.is_true(hit)
         end)
 
     end)

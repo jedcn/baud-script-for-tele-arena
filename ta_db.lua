@@ -407,6 +407,31 @@ function TaDb.findRoomAtCoord(areaId, name, x, y, z, excludeId)
     return rows[1].id
 end
 
+-- Every known room whose display name AND exit-set match (name, dirs), as a
+-- list of { id, slug, x, y, z }. Unlike findRoomByFingerprint (which returns a
+-- single unambiguous match or nil), this returns ALL candidates — used by
+-- `map-print-room-slug` to show what room you might be standing in.
+function TaDb.roomsMatchingFingerprint(name, dirs)
+    local want, wantCount = {}, 0
+    for _, dir in ipairs(dirs) do
+        if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
+    end
+    local out = {}
+    local rows = db:query("SELECT id, slug, x, y, z FROM rooms WHERE name = ?", name) or {}
+    for _, row in ipairs(rows) do
+        local have = TaDb.roomExitDirections(row.id)
+        local haveCount, ok = 0, true
+        for dir in pairs(have) do
+            haveCount = haveCount + 1
+            if not want[dir] then ok = false; break end
+        end
+        if ok and haveCount == wantCount then
+            out[#out + 1] = { id = row.id, slug = row.slug, x = row.x, y = row.y, z = row.z }
+        end
+    end
+    return out
+end
+
 -- All room ids sharing a display name; used to resolve a cold-start room
 -- (no prior room to walk from) when the name is unambiguous.
 function TaDb.roomIdsByName(name)

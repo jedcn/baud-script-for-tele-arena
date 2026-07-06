@@ -989,6 +989,14 @@ end
 local function handleRoomEntry(matches)
     local name = normalizeRoomName(matches[2])
 
+    -- A `map-print-room-slug` probe just wants this brief's room name; capture it
+    -- and stop, so the probe's bare return doesn't disturb the map (the paired
+    -- `ex` resolves and prints in the Exits handler). Takes priority over mapping.
+    if taPackage.slugProbe then
+        taPackage.slugProbe.name = name
+        return
+    end
+
     -- A kill with no gold found before we left records zero loot.
     -- (Loot bookkeeping is independent of mapping mode.)
     if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
@@ -1126,18 +1134,53 @@ for _, dir in ipairs(moveDirections) do
     end, { type = "regex" })
 end
 
+-- Resolve and print what room a `map-print-room-slug` probe is standing in,
+-- from the captured name + observed exit-set: the definitive slug when exactly
+-- one known room matches, every candidate when several do (with coords to help
+-- you pick), or nothing-matches. The output is what you'd pass to `map-here`.
+local function printRoomSlugCandidates(name, dirs)
+    local exits = table.concat(dirs, ",")
+    if not name then
+        echo("[map] couldn't read the room name — try map-print-room-slug again")
+        return
+    end
+    local matches = taPackage.db.roomsMatchingFingerprint(name, dirs)
+    if #matches == 0 then
+        echo("[map] no known room matches '" .. name .. "' with exits " .. exits
+            .. " (new room? use map-area to start mapping here)")
+    elseif #matches == 1 then
+        echo("[map] this is " .. matches[1].slug .. "  ->  map-here " .. matches[1].slug)
+    else
+        local parts = {}
+        for _, m in ipairs(matches) do
+            local coord = (m.x ~= nil) and (" (" .. m.x .. "," .. m.y .. "," .. m.z .. ")") or ""
+            parts[#parts + 1] = m.slug .. coord
+        end
+        echo("[map] " .. #matches .. " candidates for '" .. name .. "' [" .. exits .. "]: "
+            .. table.concat(parts, ", "))
+    end
+end
+
 -- `ex` prints the current room's exits ("Exits: n,e,sw."). While mapping, use
 -- them for loop closure: if we provisionally minted this room but it's really an
 -- already-known one (same name + exit-set), fold the provisional into it. Then
 -- seed each exit as a known edge so the map shows it before it's walked.
 createTrigger("^Exits: (.+)\\.$", function(matches)
+    local dirs = {}
+    for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
+
+    -- A `map-print-room-slug` probe: identify (don't map) and print, then stop.
+    if taPackage.slugProbe then
+        local probe = taPackage.slugProbe
+        taPackage.slugProbe = nil
+        printRoomSlugCandidates(probe.name, dirs)
+        return
+    end
+
     echo("[mapdbg] Exits trigger: mapping=" .. tostring(taPackage.mapping)
         .. " currentRoomId=" .. tostring(taPackage.currentRoomId)
         .. " (" .. type(taPackage.currentRoomId) .. ")")
     if not taPackage.mapping or not taPackage.currentRoomId then return end
-
-    local dirs = {}
-    for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
 
     if taPackage.currentRoomProvisional then
         echo("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
@@ -1281,6 +1324,17 @@ createAlias("^map-here (.+)$", function(matches)
             and (" coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y
                  .. "," .. taPackage.coord.z .. ")")
             or ""))
+end, { type = "regex" })
+
+-- Identify the room you're standing in without committing to it: re-reads the
+-- room (bare return -> name, `ex` -> exit-set), consults the DB, and prints the
+-- matching slug — or all candidates when name+exits are ambiguous — so you know
+-- what to pass to `map-here`. Read-only; the capture happens in handleRoomEntry
+-- and the Exits handler (both check taPackage.slugProbe).
+createAlias("^map-print-room-slug$", function()
+    taPackage.slugProbe = { name = nil }
+    send("")
+    send("ex")
 end, { type = "regex" })
 
 -- List every area slug we've mapped, one per line.
