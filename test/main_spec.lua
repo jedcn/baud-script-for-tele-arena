@@ -1958,6 +1958,24 @@ describe("World map triggers", function()
             assert.are.equal("bottom of a stairwell", taPackage.currentRoom)
         end)
 
+        it("does not mint a phantom room from a 'look <dir>' peek", function()
+            taPackage.currentRoom = "cave"
+            taPackage.currentRoomId = 5
+            stubDiscover(99)
+            helper.simulateLine("look e")                       -- peek east
+            assert.is_true(taPackage.suppressRoomEntry)
+            helper.simulateLine("You're in an enormous natural cavern.")  -- the neighbor
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- no phantom
+            assert.are.equal("cave", taPackage.currentRoom)      -- still where we were
+            assert.is_falsy(taPackage.suppressRoomEntry)         -- flag consumed
+        end)
+
+        it("a real move clears a stale look-suppress flag", function()
+            taPackage.suppressRoomEntry = true                   -- e.g. a look that hit a wall
+            helper.simulateAlias("n")
+            assert.is_nil(taPackage.suppressRoomEntry)
+        end)
+
         it("stamps the origin coordinate on a cold-start room", function()
             stubDiscover(1)  -- no pendingDirection: nothing to dead-reckon from
             helper.simulateLine("You're in a cave.")

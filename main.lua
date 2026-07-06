@@ -795,6 +795,17 @@ createTrigger("^l$", function()
     taPackage.monsterDb.accumulatedLines = {}
 end, { type = "regex" })
 
+-- `look <dir>` / `l <dir>` peeks at the adjacent room; its reply opens with
+-- "You're in <that room>." — indistinguishable from an arrival brief. Flag it so
+-- the very next room brief is ignored rather than mapped as a phantom room. A
+-- real move clears the flag (see the movement aliases), so a look that returns
+-- no room (a wall) can't leave the flag armed against your next real arrival.
+local function suppressNextRoomEntry()
+    taPackage.suppressRoomEntry = true
+end
+createTrigger("^look ([nsewud][sewn]?)$", suppressNextRoomEntry, { type = "regex" })
+createTrigger("^l ([nsewud][sewn]?)$", suppressNextRoomEntry, { type = "regex" })
+
 -- After 1 hour a monster in the same room is treated as a new encounter:
 -- by then it has healed back to full health and is effectively a fresh data point.
 local PRESENCE_TIMEOUT = 3600
@@ -987,6 +998,14 @@ end
 -- A newly-minted room is flagged provisional: the `Exits:` handler may later
 -- fold it into an existing room once we know its exit-set (loop closure).
 local function handleRoomEntry(matches)
+    -- A `look <dir>` peek prints the neighbor's "You're in ..." brief, identical
+    -- to an arrival. Suppress that one line so we don't mint a phantom room for a
+    -- room we only glanced at (and don't fire the auto look/ex for it).
+    if taPackage.suppressRoomEntry then
+        taPackage.suppressRoomEntry = false
+        return
+    end
+
     local name = normalizeRoomName(matches[2])
 
     -- A `map-print-room-slug` probe just wants this brief's room name; capture it
@@ -1135,6 +1154,9 @@ createTrigger("^You at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex"
 local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
 for _, dir in ipairs(moveDirections) do
     createAlias("^" .. dir .. "$", function()
+        -- A real move: this arrival must not be suppressed, even if a prior
+        -- `look <dir>` returned no room and left the flag armed.
+        taPackage.suppressRoomEntry = nil
         taPackage.pendingDirection = dir
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.prevRoomId = taPackage.currentRoomId
