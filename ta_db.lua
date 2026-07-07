@@ -491,14 +491,14 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord)
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
     end
-    -- Every same-name room whose exit-set is exactly the one we observed. The
-    -- exit-set is the fingerprint; coordinate is deliberately NOT a gate here.
-    -- Dead-reckoning drifts around a loop -- walk a non-Euclidean circuit and
-    -- you arrive back at a known room with a shifted coordinate -- so gating on
-    -- exact coordinate would reject the very room the loop just closed onto.
-    local matches = {}
+    local match
     for _, id in ipairs(TaDb.roomIdsByName(name)) do
         if id ~= excludeId then
+            local cand = coord and TaDb.roomCoord(id)
+            if cand and (cand.x ~= coord.x or cand.y ~= coord.y or cand.z ~= coord.z) then
+                -- Different coordinate: provably not this room. Skip.
+                goto continue
+            end
             local have = TaDb.roomExitDirections(id)
             local haveCount, ok = 0, true
             for dir in pairs(have) do
@@ -506,35 +506,13 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord)
                 if not want[dir] then ok = false; break end
             end
             if ok and haveCount == wantCount then
-                matches[#matches + 1] = id
+                if match then return nil end  -- ambiguous: >1 match
+                match = id
             end
         end
+        ::continue::
     end
-    -- Exactly one room in the whole map shares this name and exit-set: it's
-    -- almost certainly the room we just re-entered, wherever dead-reckoning
-    -- thinks we are. Close the loop onto it regardless of coordinate.
-    if #matches == 1 then return matches[1] end
-    if #matches == 0 then return nil end
-    -- Several rooms share the fingerprint (exit-sets repeat -- many "town
-    -- sewers" are just nw,se). Here coordinate earns its keep as a tiebreaker:
-    -- pick the one nearest our dead-reckoned position, but only if there's a
-    -- single unmistakable nearest. No coordinate, or a tie, stays ambiguous.
-    if not coord then return nil end
-    local best, bestDist, tie
-    for _, id in ipairs(matches) do
-        local c = TaDb.roomCoord(id)
-        if c then
-            local dist = math.abs(c.x - coord.x) + math.abs(c.y - coord.y)
-                + math.abs(c.z - coord.z)
-            if not bestDist or dist < bestDist then
-                best, bestDist, tie = id, dist, false
-            elseif dist == bestDist then
-                tie = true
-            end
-        end
-    end
-    if tie then return nil end
-    return best
+    return match
 end
 
 -- Fold a provisional room into an existing one (loop closure): repoint every

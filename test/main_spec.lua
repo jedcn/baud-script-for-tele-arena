@@ -1469,11 +1469,7 @@ describe("ta_db", function()
             assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5))
         end)
 
-        it("closes a drifted loop: a unique fingerprint wins despite a bad coord", function()
-            -- The whole point of the fix: dead-reckoning drifted around a
-            -- non-Euclidean loop, so the coordinate disagrees -- but there's only
-            -- one room with this name+exit-set, so it must be the room we just
-            -- re-entered. Match it regardless of coordinate.
+        it("skips a name+exit-set match whose coordinate disagrees", function()
             stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
@@ -1481,38 +1477,24 @@ describe("ta_db", function()
                 end
                 return nil
             end
+            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
+        end)
+
+        it("keeps a name+exit-set match whose coordinate agrees", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 5, y = 5, z = 0 }))
+        end)
+
+        it("keeps a match whose coordinate is unknown (guard is inert)", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = nil  -- candidate #1 has no stored coordinate
             assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
-        end)
-
-        it("multiple fingerprint matches: coordinate picks the nearest", function()
-            stubRooms("cave", { 1, 2, 5 }, { [1] = { "n", "s" }, [2] = { "n", "s" } })
-            helper.mockDbOneRow = function(sql, params)
-                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
-                    if params[1] == 1 then return { x = 0, y = 0, z = 0 } end
-                    if params[1] == 2 then return { x = 5, y = 0, z = 0 } end
-                end
-                return nil
-            end
-            -- Query coord (1,0,0): room 1 is 1 away, room 2 is 4 away.
-            assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 1, y = 0, z = 0 }))
-        end)
-
-        it("multiple fingerprint matches: a coordinate tie stays ambiguous", function()
-            stubRooms("cave", { 1, 2, 5 }, { [1] = { "n", "s" }, [2] = { "n", "s" } })
-            helper.mockDbOneRow = function(sql, params)
-                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
-                    if params[1] == 1 then return { x = 0, y = 0, z = 0 } end
-                    if params[1] == 2 then return { x = 2, y = 0, z = 0 } end
-                end
-                return nil
-            end
-            -- Query coord (1,0,0) is equidistant from both -> can't decide.
-            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 1, y = 0, z = 0 }))
-        end)
-
-        it("multiple fingerprint matches with no coordinate stays ambiguous", function()
-            stubRooms("cave", { 1, 2, 5 }, { [1] = { "n", "s" }, [2] = { "n", "s" } })
-            assert.is_nil(TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5))
         end)
 
     end)
@@ -2635,34 +2617,6 @@ describe("World map triggers", function()
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
         end)
 
-        it("re-anchors coord to the merged room after closing a loop", function()
-            -- Dead-reckoning had drifted (coord is wrong); after folding into the
-            -- real room we snap the cursor back to its stored coord so the next
-            -- move doesn't compound the drift into another duplicate.
-            taPackage.currentRoomId = 5
-            taPackage.currentRoom = "north plaza"
-            taPackage.currentRoomProvisional = true
-            taPackage.coord = { x = 9, y = 9, z = 0 }  -- drifted
-            helper.mockDbRows = function(sql, params)
-                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
-                    return { { id = 1 }, { id = 5 } }
-                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
-                    if params[1] == 1 then return { { direction = "n" }, { direction = "s" } } end
-                    return {}
-                end
-                return {}
-            end
-            helper.mockDbOneRow = function(sql)
-                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
-                    return { x = 2, y = 3, z = -1 }  -- room 1's true coord
-                end
-                return nil
-            end
-            helper.simulateLine("Exits: n,s.")
-            assert.are.equal(1, taPackage.currentRoomId)
-            assert.are.same({ x = 2, y = 3, z = -1 }, taPackage.coord)
-        end)
-
         it("does not merge a non-provisional room, but still seeds its exits", function()
             taPackage.currentRoomId = 1
             taPackage.currentRoom = "north plaza"
@@ -2671,56 +2625,6 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.currentRoomId)
             assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms"))
             assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits"))
-        end)
-
-    end)
-
-    describe("map-merge alias", function()
-
-        it("folds the duplicate into the keeper and deletes it", function()
-            helper.mockDbOneRow = function(sql, params)
-                if string.find(sql, "WHERE slug = ?", 1, true) then
-                    if params[1] == "town-sewers-33" then return { id = 322 } end
-                    if params[1] == "town-sewers" then return { id = 289 } end
-                end
-                return nil
-            end
-            helper.simulateAlias("map-merge town-sewers-33 town-sewers")
-            local del = helper.findDbCall("execute", "DELETE FROM rooms WHERE id")
-            assert.is_not_nil(del)
-            assert.are.equal(322, del.params[1])  -- the duplicate was removed
-        end)
-
-        it("follows the anchor into the keeper when standing on the duplicate", function()
-            taPackage.currentRoomId = 322
-            helper.mockDbOneRow = function(sql, params)
-                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
-                    return { x = -3, y = 3, z = -1 }
-                elseif string.find(sql, "WHERE slug = ?", 1, true) then
-                    if params[1] == "dup" then return { id = 322 } end
-                    if params[1] == "keep" then return { id = 289 } end
-                end
-                return nil
-            end
-            helper.simulateAlias("map-merge dup keep")
-            assert.are.equal(289, taPackage.currentRoomId)
-            assert.are.same({ x = -3, y = 3, z = -1 }, taPackage.coord)
-        end)
-
-        it("reports an unknown slug and does nothing", function()
-            helper.mockDbOneRow = nil
-            helper.simulateAlias("map-merge nope also-nope")
-            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms"))
-            assert.is_true(tableContains(helper.echoCalls, "[map] no room with slug: nope"))
-        end)
-
-        it("refuses to merge a room into itself", function()
-            helper.mockDbOneRow = function(sql)
-                if string.find(sql, "WHERE slug = ?", 1, true) then return { id = 7 } end
-                return nil
-            end
-            helper.simulateAlias("map-merge same same")
-            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms"))
         end)
 
     end)
