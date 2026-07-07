@@ -230,3 +230,52 @@ inventing a room through an exit that doesn't exist. Caveat: only applies when
 X's exit-set is known (ex captured); skip the guard otherwise. Reach for this if
 incidents keep happening after the per-trigger fixes — decide once we've mapped
 ~2 new regions cleanly (if they're clean, the per-trigger fixes sufficed).
+
+## World Map Improvements
+
+Two related upgrades to how the World Map presents rooms.
+
+### De-emphasize filler rooms, emphasize unique ones
+
+Most rooms are the same room repeated over and over — a `cave`, a `cavern`, a
+`forest path` — with nothing to distinguish them but their id. They dominate the
+World Map visually and drown out the handful of rooms that actually matter (named
+landmarks, shops, boss lairs, locked-door junctions). When rendering the map,
+either **de-emphasize** the repeated filler (dim/shrink/desaturate rooms whose
+name recurs many times) **or** **emphasize** the genuinely unique ones (rooms
+with a one-of-a-kind name, or otherwise flagged as significant) so they stand out.
+
+Things to figure out:
+- How to classify "filler" vs. "unique" — probably by name-frequency across the
+  map (a name that appears N+ times is filler), possibly combined with an
+  explicit "significant" flag on rooms we care about.
+- Which visual treatment reads best: dimming the common rooms, brightening the
+  rare ones, or both.
+- Whether to let the threshold be tunable, since a name common in one region may
+  be rare overall.
+
+### Associate fixed monsters with rooms and surface them in the side panel
+
+Some monsters wander in randomly, but others **always** occupy a specific room —
+e.g. the **Stygian Dragon** is always in the **enormous cavern**. These fixed
+spawns often gate progression: the first time the Stygian Dragon is killed each
+day it **always** drops the **electrum key**, which is **always required** to
+open the door to the north of that room.
+
+Make it possible to associate one or more monsters with a given room, record what
+they carry / what it unlocks, and pull that information up in the room side panel
+so I can see, when looking at a room, "this room always contains the Stygian
+Dragon, which drops the electrum key (first kill of the day) → opens the north
+door."
+
+Things to figure out:
+- Where fixed monster/room associations live (a new table keyed by room id, or an
+  extension of the existing room record).
+- What to store per association: monster name, guaranteed drop, drop condition
+  (e.g. "first kill of the day"), and what the drop is for (which door/lock it
+  opens).
+- How the side panel renders it, and whether to cross-link the drop to the room
+  whose locked door it opens (we already draw locked-door badges — tie the key to
+  the door).
+- Whether "first kill of the day" state should be tracked live (have we already
+  taken the key today?) or just documented.
