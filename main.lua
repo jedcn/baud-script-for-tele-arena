@@ -2200,12 +2200,12 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
         .. gained .. " XP (total: " .. xp .. ")")
     -- Phone notification for the second arena so progress is visible off-screen.
     -- The XP echo above runs every 5 min, but a check-in every 5 min is too
-    -- chatty for a phone, so throttle the ping to every 15 min. Fire-and-forget
+    -- chatty for a phone, so throttle the ping to every 30 min. Fire-and-forget
     -- (no callback) — a failed ping must never disturb the fight loop.
     if taPackage.arenaProfile == "second" then
         local now = os.time()
         local lastNtfy = taPackage.arenaLastNtfyTime
-        if not lastNtfy or (now - lastNtfy) >= 900 then
+        if not lastNtfy or (now - lastNtfy) >= 1800 then
             taPackage.arenaLastNtfyTime = now
             local hp = getVitality()
             local gold = getGold()
