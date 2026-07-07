@@ -439,6 +439,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var TRAP_COLOR = '#f85149';                          // trapped rooms are painted red
   var PLAYER_COLOR = '#e3b341';                         // "you are here" — a character's room
   var DOOR_COLOR = '#db6d28';                            // locked-door edges (orange)
+  var FERRY_COLOR = '#39c5cf';                           // great-lake ferry ("passage") edges (cyan)
   var areaColor = {};
   GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
 
@@ -461,6 +462,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var dr = document.createElement('span');
     dr.innerHTML = '<span class="swatch" style="background:'+DOOR_COLOR+'"></span>locked door';
     legend.appendChild(dr);
+    var fy = document.createElement('span');
+    fy.innerHTML = '<span class="swatch" style="background:'+FERRY_COLOR+'"></span>ferry (buy passage)';
+    legend.appendChild(fy);
   }
 
   // --- Direction → grid offset (col, row); row increases downward, so n = up.
@@ -682,6 +686,29 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       line.setAttribute('stroke', locked ? DOOR_COLOR : '#484f58');
       line.setAttribute('stroke-width', locked ? '3' : '2');
       root.appendChild(line);
+    });
+
+    // Great-lake ferry ("passage"): a non-compass edge between the two towns'
+    // docks. It doesn't move you on the grid (the towns have independent
+    // coordinates), so it's absent from the layout adjacency and never distorts
+    // either town's shape; draw it as a distinct dashed cyan connector labelled
+    // "ferry" so it reads as a boat crossing, not a walkable corridor. Each
+    // undirected crossing is stored both ways, so draw it once (from < to).
+    GRAPH.exits.forEach(function(e){
+      if(e.dir !== 'passage' || e.to == null || e.from >= e.to) return;
+      if(!onFloor(e.from) || !onFloor(e.to)) return;
+      var a = centerOf(e.from), b = centerOf(e.to);
+      var line = document.createElementNS(NS,'line');
+      line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+      line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+      line.setAttribute('stroke', FERRY_COLOR); line.setAttribute('stroke-width','2');
+      line.setAttribute('stroke-dasharray','6,4');
+      root.appendChild(line);
+      var lbl = document.createElementNS(NS,'text');
+      lbl.setAttribute('class','edge-dir'); lbl.setAttribute('text-anchor','middle');
+      lbl.setAttribute('x',(a.x+b.x)/2); lbl.setAttribute('y',(a.y+b.y)/2 - 4);
+      lbl.textContent = 'ferry';
+      root.appendChild(lbl);
     });
 
     // stubs: dashed ghost octagon one cell away in the missing exit's direction
