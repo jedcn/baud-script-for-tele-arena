@@ -1227,6 +1227,13 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         if type(match) == "number" then
             taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
             taPackage.currentRoomId = match
+            -- Re-anchor dead-reckoning to the room we just closed the loop onto.
+            -- The provisional's coord had drifted; without this snap the drift
+            -- keeps compounding and the *next* move mints another duplicate
+            -- (e.g. going `u` from a re-entered sewer entrance re-minted the
+            -- path room above it).
+            local snapped = taPackage.db.roomCoord(match)
+            if snapped then taPackage.coord = snapped end
             echo("[map] linked into #" .. tostring(match) .. " (" .. tostring(taPackage.currentRoom) .. ")")
         end
         taPackage.currentRoomProvisional = false
@@ -1422,6 +1429,29 @@ createAlias("^map-reset-area (.+)$", function(matches)
     taPackage.coord = nil
     echo("[map] reset area " .. slug .. " (" .. tostring(removed)
         .. " rooms removed). Run map-area " .. slug .. " to re-map it.")
+end, { type = "regex" })
+
+-- Manually fold one room into another: `map-merge <dup> <keep>`. Use when you
+-- spot a duplicate the auto-closer missed -- e.g. a non-Euclidean loop drifted
+-- so far that the fingerprint match was ambiguous. Moves <dup>'s edges onto
+-- <keep>, repoints everything that pointed at <dup>, and deletes <dup>. Pass
+-- unique slugs (the ones shown in the report / `map-print-room-slug`).
+createAlias("^map-merge (\\S+) (\\S+)$", function(matches)
+    local dupSlug, keepSlug = matches[2], matches[3]
+    local dup = taPackage.db.roomBySlug(dupSlug)
+    local keep = taPackage.db.roomBySlug(keepSlug)
+    if not dup then echo("[map] no room with slug: " .. dupSlug); return end
+    if not keep then echo("[map] no room with slug: " .. keepSlug); return end
+    if dup.id == keep.id then echo("[map] can't merge a room into itself"); return end
+    taPackage.db.mergeRoomInto(dup.id, keep.id)
+    -- If we were anchored on the room we just deleted, follow it into the keeper
+    -- so the session doesn't dead-reckon from a now-gone id.
+    if taPackage.currentRoomId == dup.id then
+        taPackage.currentRoomId = keep.id
+        local c = taPackage.db.roomCoord(keep.id)
+        if c then taPackage.coord = c end
+    end
+    echo("[map] merged " .. dupSlug .. " into " .. keepSlug)
 end, { type = "regex" })
 
 -- Mapping mode. Off by default; while on, room lines are recorded, each arrival
