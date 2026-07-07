@@ -669,9 +669,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     octByRoom = {};
 
     // compass connectors between rooms on this floor. A locked-door edge is
-    // drawn in the door color and gets a clickable lock badge at its midpoint
-    // (deduped across the two directions of the same doorway).
-    var doorBadgeDrawn = {};
+    // drawn in the door color; its 🔒 badge is drawn in a later pass (after the
+    // octagons) so it isn't hidden — cardinal neighbours touch edge-to-edge, so
+    // a badge at the shared edge would otherwise be painted over by the rooms.
     GRAPH.exits.forEach(function(e){
       if(!OFF[e.dir] || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
       var a = centerOf(e.from), b = centerOf(e.to);
@@ -681,31 +681,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
       line.setAttribute('stroke', locked ? DOOR_COLOR : '#484f58');
       line.setAttribute('stroke-width', locked ? '3' : '2');
-      if(locked){
-        line.style.cursor = 'pointer';
-        line.addEventListener('click', function(){ showDoor(e); });
-      }
       root.appendChild(line);
-      if(locked){
-        var pairKey = Math.min(e.from, e.to) + '-' + Math.max(e.from, e.to);
-        if(!doorBadgeDrawn[pairKey]){
-          doorBadgeDrawn[pairKey] = true;
-          var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-          var g = document.createElementNS(NS,'g');
-          g.style.cursor = 'pointer';
-          var circ = document.createElementNS(NS,'circle');
-          circ.setAttribute('cx',mx); circ.setAttribute('cy',my); circ.setAttribute('r','8');
-          circ.setAttribute('fill','#0d1117'); circ.setAttribute('stroke',DOOR_COLOR); circ.setAttribute('stroke-width','2');
-          g.appendChild(circ);
-          var t = document.createElementNS(NS,'text');
-          t.setAttribute('class','vbadge'); t.setAttribute('text-anchor','middle');
-          t.setAttribute('x',mx); t.setAttribute('y',my + 3.5);
-          t.textContent = '\\uD83D\\uDD12';               // 🔒 padlock
-          g.appendChild(t);
-          g.addEventListener('click', function(){ showDoor(e); });
-          root.appendChild(g);
-        }
-      }
     });
 
     // stubs: dashed ghost octagon one cell away in the missing exit's direction
@@ -770,6 +746,32 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
         g.addEventListener('click', function(ev){ ev.stopPropagation(); selectRoom(ed.to); centerOn(ed.to); });
         root.appendChild(g);
       });
+    });
+
+    // locked-door 🔒 badges, drawn ON TOP of the octagons so they show even when
+    // the two rooms touch edge-to-edge (cardinal neighbours have no gap). One per
+    // doorway (deduped across its two directions), clickable for the door detail.
+    var doorBadgeDrawn = {};
+    GRAPH.exits.forEach(function(e){
+      if(!OFF[e.dir] || !e.lock_door || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
+      var pairKey = Math.min(e.from, e.to) + '-' + Math.max(e.from, e.to);
+      if(doorBadgeDrawn[pairKey]) return;
+      doorBadgeDrawn[pairKey] = true;
+      var a = centerOf(e.from), b = centerOf(e.to);
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      var g = document.createElementNS(NS,'g');
+      g.style.cursor = 'pointer';
+      var circ = document.createElementNS(NS,'circle');
+      circ.setAttribute('cx',mx); circ.setAttribute('cy',my); circ.setAttribute('r','9');
+      circ.setAttribute('fill','#0d1117'); circ.setAttribute('stroke',DOOR_COLOR); circ.setAttribute('stroke-width','2');
+      g.appendChild(circ);
+      var t = document.createElementNS(NS,'text');
+      t.setAttribute('class','vbadge'); t.setAttribute('text-anchor','middle');
+      t.setAttribute('x',mx); t.setAttribute('y',my + 3.5);
+      t.textContent = '\\uD83D\\uDD12';                    // 🔒 padlock
+      g.appendChild(t);
+      g.addEventListener('click', function(){ showDoor(e); });
+      root.appendChild(g);
     });
 
     // floating labels on top (recreated each redraw)
