@@ -629,7 +629,18 @@ end, { type = "regex" })
 
 -- Buying passage across the great lake charges us, but the ship message doesn't
 -- report the fare, so fire an inventory check to re-capture our current gold.
+--
+-- The ferry is also a real map edge. It teleports between the two towns' docks,
+-- which share the name "docks", so without recording the crossing the mapper
+-- would fold the far docks into the near one by name and then mis-link the next
+-- move across the seam. Record it as a "passage" move (mirroring a move alias):
+-- the arrival brief then links the two docks with a bidirectional ferry edge.
+-- "passage" has no grid delta, so it never distorts either town's coordinates.
 createTrigger("^You buy passage across the great lake and board a ship", function()
+    taPackage.suppressRoomEntry = nil
+    taPackage.prevRoom = taPackage.currentRoom
+    taPackage.prevRoomId = taPackage.currentRoomId
+    taPackage.pendingDirection = "passage"
     send("i")
 end, { type = "regex" })
 
@@ -957,6 +968,9 @@ local REVERSE_DIR = {
     n = "s", s = "n", e = "w", w = "e",
     ne = "sw", sw = "ne", nw = "se", se = "nw",
     u = "d", d = "u",
+    -- The great-lake ferry ("buy passage") is a symmetric teleport between the two
+    -- towns' docks: crossing back is the same "passage", not a compass reverse.
+    passage = "passage",
 }
 
 -- Grid displacement of each move, as { dx, dy, dz }: north is +y, east is +x,

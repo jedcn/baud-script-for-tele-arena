@@ -398,6 +398,17 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("i", helper.sendCalls[1])
         end)
 
+        it("records the crossing as a bidirectional 'passage' move", function()
+            -- The ferry is a real map edge, so buying passage must set up a
+            -- "passage" move from the docks we're leaving. The arrival brief then
+            -- links the two docks; the reverse of a passage is a passage.
+            taPackage.currentRoomId = 7
+            taPackage.currentRoom = "docks"
+            helper.simulateLine("You buy passage across the great lake and board a ship...")
+            assert.are.equal("passage", taPackage.pendingDirection)
+            assert.are.equal(7, taPackage.prevRoomId)
+        end)
+
         it("does not fire on unrelated lines", function()
             helper.simulateLine("You board a ship at the docks.")
             assert.are.equal(0, #helper.sendCalls)
