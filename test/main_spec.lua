@@ -1220,6 +1220,22 @@ describe("Arena combat", function()
 
     end)
 
+    describe("Acolyte", function()
+
+        it("does not self-heal on physical exhaustion (leaves for the temple instead)", function()
+            setClass("Acolyte")
+            taPackage.character.name = "Pelayo"
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.sendCalls = {}
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.is_nil(cmd:match("^cast motu"))
+            end
+        end)
+
+    end)
+
     describe("loop guard", function()
 
         it("does not continue the spell loop outside arena fighting", function()

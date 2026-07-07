@@ -2771,9 +2771,10 @@ end, { type = "regex" })
 createTrigger("^You are still physically exhausted from your previous activities!$", function(matches)
     if not taPackage.arenaState then return end
     arenaDebugEcho("exhausted")
-    if taPackage.character.name == "Pelayo" then
-        send("cast motu pelayo")
-    end
+    -- An Acolyte does NOT self-heal here. Casting motu on ourselves mid-fight
+    -- keeps us in the arena past the point where we should leave; instead we
+    -- let checkFleeArena pull us out at the regular flee threshold and buy
+    -- healing at the temple like every other class.
     -- A stable combat generation (not the per-send retry counter) keeps these
     -- timers alive even though the cast loop keeps firing arenaSend meanwhile.
     local gen = taPackage.arenaCombatGen or 0
