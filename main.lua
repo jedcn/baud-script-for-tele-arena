@@ -1324,7 +1324,21 @@ createAlias("^map-area (.+)$", function(matches)
     local arg = matches[2]
     local slug, name = arg:match("^(%S+)%s+(.+)$")
     if not slug then slug, name = arg:match("^(%S+)$"), nil end
-    taPackage.currentAreaId = taPackage.db.ensureArea(slug, name)
+    local areaId = taPackage.db.ensureArea(slug, name)
+    -- If we're already anchored on a room (e.g. we ran `map-here <prev-area
+    -- room>`, walked across a frontier into this fresh area, and stopped on the
+    -- entry room), that entry room was discovered under the *previous* area's id
+    -- — the frontier lived on a room of that area. Re-file the room we're
+    -- standing in into the new area so the seam ends up split cleanly between
+    -- the two areas. Do this before startMappingHere clears currentRoomId, so we
+    -- move the room the session already knows we're in rather than re-resolving
+    -- an ambiguous name.
+    local anchored = taPackage.currentRoomId
+    if anchored then
+        taPackage.db.setRoomArea(anchored, areaId)
+        echo("[map] moved current room into " .. slug)
+    end
+    taPackage.currentAreaId = areaId
     echo("[map] mapping " .. slug .. " from here")
     startMappingHere()
 end, { type = "regex" })

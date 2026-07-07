@@ -273,6 +273,18 @@ function TaDb.areaIdBySlug(slug)
     return row and row.id
 end
 
+-- Move a single room into a different area, preserving all its exits (including
+-- the seam back to its old area). Used when a frontier walk crosses into a fresh
+-- area: the entry room is discovered under the *previous* area's id (the
+-- frontier lives on a room of that area), so `map-area <new>` re-files the room
+-- you're standing in here. Returns true if a row was updated.
+function TaDb.setRoomArea(roomId, areaId)
+    local changes = db:execute("UPDATE rooms SET area_id = ? WHERE id = ?", areaId, roomId)
+    dbLog("[DB\xE2\x86\x92rooms] moved room #" .. tostring(roomId)
+        .. " -> area #" .. tostring(areaId))
+    return changes and changes > 0
+end
+
 -- Wipe an area's rooms and exits so it can be re-walked from scratch, leaving
 -- every other area intact. Edges from OTHER areas that pointed into this one are
 -- reverted to unexplored stubs (to_id = NULL) so they don't dangle at a deleted

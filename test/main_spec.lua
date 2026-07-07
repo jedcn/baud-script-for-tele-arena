@@ -2387,6 +2387,33 @@ describe("World map triggers", function()
             assert.is_true(bareSent)
         end)
 
+        it("re-files the room you're standing in into the new area", function()
+            -- Crossed a frontier into a fresh area and stopped on the entry room,
+            -- which was discovered under the previous area's id. map-area moves it.
+            taPackage.currentRoomId = 42
+            taPackage.currentAreaId = 7  -- previous (second-town) area
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                return nil
+            end
+            helper.simulateAlias("map-area sewers The Sewers")
+            local moved = helper.findDbCall("execute", "UPDATE rooms SET area_id")
+            assert.is_not_nil(moved)
+            assert.are.equal(3, moved.params[1])   -- new area id
+            assert.are.equal(42, moved.params[2])  -- the anchored room
+            assert.are.equal(3, taPackage.currentAreaId)
+        end)
+
+        it("does not move any room when there's no current anchor", function()
+            taPackage.currentRoomId = nil
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                return nil
+            end
+            helper.simulateAlias("map-area caves")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET area_id"))
+        end)
+
     end)
 
     describe("map-here alias", function()
