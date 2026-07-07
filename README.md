@@ -24,7 +24,9 @@ is no separate "mapping on":
   room you're standing in, e.g. `map-area mountains` or
   `map-area mountains The Misty Mountains`. It tags the area (new rooms inherit
   it) and begins mapping here, cold-starting by the room's name. Use this for a
-  never-before-mapped area or when your current room has a unique name.
+  never-before-mapped area or when your current room has a unique name. It also
+  **re-files the room you're standing in** into the new area — see
+  [Connecting a new area across a seam](#connecting-a-new-area-across-a-seam).
 
 - **`map-here <slug>`** — resume mapping in an **already-mapped** area by
   anchoring at a known room, e.g. `map-here filthy-cavern`. Use this when the
@@ -33,6 +35,33 @@ is no separate "mapping on":
   your next move dead-reckons from the right place.
 
 - **`map-off`** — stop mapping. The map is left untouched during normal play.
+
+## Connecting a new area across a seam
+
+When a new area is reached through an exit of an area you've already mapped —
+e.g. a `down` from a town room leads into the sewers — that doorway (the
+**seam**) needs to belong to *both* areas: the exit stays on the old area's
+room, and the room on the far side belongs to the new area.
+
+Walk it in this order:
+
+1. **`map-here <room>`** — anchor on the old-area room that holds the exit into
+   the new area (use its unique slug; seam rooms often share an ambiguous name).
+   This gives you a connected session so the crossing gets linked.
+2. **Walk through the exit** and stop on the first room of the new area. The
+   crossing is recorded automatically (the exit and its reverse are linked), but
+   that first room is still filed under the **old** area for now — the exit that
+   discovered it lived on an old-area room.
+3. **`map-area <slug> [display name]`** — register the new area, make it current
+   for everything you map from here on, **and move the room you're standing in
+   into it**. That last part is what splits the seam cleanly: the exit stays on
+   the old area's room, and its destination now lives in the new area.
+
+Then keep walking to map the rest.
+
+Because `map-area` re-files whatever room you're anchored in, run it **only once
+you've actually stepped into the new area** — if you run it while still standing
+on a room that belongs to the old area, it will move that room too.
 
 ## Finding out where you are
 
