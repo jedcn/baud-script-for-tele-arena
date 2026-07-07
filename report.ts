@@ -613,7 +613,13 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     if(exs.length){
       html += '<ul class="rp-exits">';
       exs.forEach(function(e){
-        html += '<li><span class="rp-dir">' + escapeHtml(e.dir) + '</span> ' + destLabel(e) + '</li>';
+        // Annotate a locked exit inline so the door + key show right in the room's
+        // exit list (not only on the map's door line).
+        var lock = e.lock_door
+          ? ' <span class="rp-door">🔒 ' + escapeHtml(e.lock_door)
+            + (e.lock_key ? ' (' + escapeHtml(e.lock_key) + ' key)' : '') + '</span>'
+          : '';
+        html += '<li><span class="rp-dir">' + escapeHtml(e.dir) + '</span> ' + destLabel(e) + lock + '</li>';
       });
       html += '</ul>';
     } else {
