@@ -681,6 +681,12 @@ end, { type = "regex" })
 createTrigger("^While searching the area, you notice (.+), which you add to your$", function(matches)
     recordSearchItem(matches[2])
 end, { type = "regex" })
+-- Same discovery, but your inventory was full so you couldn't pick it up. The
+-- item still exists in this room, so record it the same way -- the map cares
+-- where a key was *found*, not whether we happened to be carrying room for it.
+createTrigger("^While searching the area, you notice (.+), but you can't carry it\\.$", function(matches)
+    recordSearchItem(matches[2])
+end, { type = "regex" })
 
 createTrigger("^You gave (\\d+) gold coins to (.+)\\.$", function(matches)
     local amount = tonumber(matches[2])

@@ -192,6 +192,18 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(54, call.params[4])
         end)
 
+        it("records an item noticed but not carried (inventory full) against the room", function()
+            taPackage.lastKilledMonster = "anaconda"
+            taPackage.mapping = true
+            taPackage.currentRoomId = 54
+            helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_not_nil(call)
+            assert.are.equal("anaconda", call.params[1])
+            assert.are.equal("a ruby key", call.params[2])
+            assert.are.equal(54, call.params[4])   -- room_id -- item still in this room
+        end)
+
         it("leaves the pickup room NULL when not mapping (currentRoomId is stale)", function()
             taPackage.lastKilledMonster = "anaconda"
             taPackage.mapping = false
