@@ -58,13 +58,31 @@ for (const e of exits) {
   exitsByRoom.get(e.from_id)!.push(`${e.direction} → ${e.to_slug ?? "?"}`);
 }
 
+// Items found while searching corpses, grouped by the room they were found in,
+// so the map can answer "where do I find the ruby key". Guard the room_id column
+// for DBs migrated before it existed.
+function hasColumn(table: string, col: string): boolean {
+  try { return (db.prepare(`PRAGMA table_info(${table})`).all() as any[]).some(c => c.name === col); }
+  catch { return false; }
+}
+const roomItemDrops = (roomGraphReady && hasTable("item_drops") && hasColumn("item_drops", "room_id"))
+  ? db.prepare(`SELECT item, room_id FROM item_drops WHERE room_id IS NOT NULL`).all() as any[]
+  : [];
+const itemsByRoom = new Map<number, string[]>();
+for (const d of roomItemDrops) {
+  if (!itemsByRoom.has(d.room_id)) itemsByRoom.set(d.room_id, []);
+  const list = itemsByRoom.get(d.room_id)!;
+  if (!list.includes(d.item)) list.push(d.item);   // distinct items per room
+}
+
 // Compact node/edge payload for the interactive map (embedded as JSON below).
 const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
   rooms: rooms.map(r => ({ id: r.id, slug: r.slug, name: r.name, description: r.description,
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
                            first_visited: r.first_visited, trap: r.trap,
-                           players: playersByRoom.get(r.id) ?? [] })),
+                           players: playersByRoom.get(r.id) ?? [],
+                           items: itemsByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
                            lock_key: e.lock_key, lock_door: e.lock_door })),
 };
@@ -337,6 +355,8 @@ const html = `<!DOCTYPE html>
   #room-panel ul.rp-exits li { padding: 0.15rem 0; border-bottom: 1px solid var(--border); }
   #room-panel ul.rp-exits li:last-child { border-bottom: none; }
   #room-panel .rp-dir { display: inline-block; min-width: 2.4em; color: var(--blue); font-weight: 600; }
+  #room-panel ul.rp-items { list-style: none; margin: 0; padding: 0; }
+  #room-panel ul.rp-items li { padding: 0.15rem 0; color: var(--text); }
   #room-panel .rp-empty { color: var(--muted); font-style: italic; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
   .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
@@ -650,6 +670,14 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       html += '<div class="rp-label">Trap</div>';
       html += '<div class="rp-trap">' + escapeHtml(r.trap) + '</div>';
     }
+    if(r.items && r.items.length){
+      html += '<div class="rp-label">Items found here</div>';
+      html += '<ul class="rp-items">' + r.items.map(function(it){
+        // Flag keys -- they're the payoff for finding a locked door's match.
+        var key = /\\bkey\\b/i.test(it) ? '🔑 ' : '';
+        return '<li>' + key + escapeHtml(it) + '</li>';
+      }).join('') + '</ul>';
+    }
     html += '<div class="rp-label">Exits</div>';
     if(exs.length){
       html += '<ul class="rp-exits">';
@@ -792,6 +820,18 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       oct.addEventListener('mouseleave', function(){ if(hoverLabel) hoverLabel.style.display = 'none'; });
       root.appendChild(oct);
       octByRoom[r.id] = oct;
+
+      // Key marker: a 🔑 on rooms where a key was found, so the payoff for a
+      // locked door is findable at a glance. Sits at the top-left corner, clear
+      // of the up/down badges (top-right) and the name label (above).
+      if((r.items || []).some(function(it){ return /\\bkey\\b/i.test(it); })){
+        var km = document.createElementNS(NS,'text');
+        km.setAttribute('text-anchor','middle'); km.setAttribute('font-size','13');
+        km.setAttribute('x', c.x - R*0.5); km.setAttribute('y', c.y - R*0.34);
+        km.style.pointerEvents = 'none';
+        km.textContent = '🔑';
+        root.appendChild(km);
+      }
 
       vertExits[r.id].forEach(function(ed){
         var up = ed.dir === 'u';
