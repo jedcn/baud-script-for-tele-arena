@@ -562,7 +562,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       // tightest same-floor pair clears that. A uniform scale is a similarity
       // transform, so it can't introduce a crossing or change any direction --
       // it just zooms the component until nothing overlaps.
-      var MIN_SEP = 1.08, tight = Infinity;
+      var MIN_SEP = 1.08, MAX_SCALE = 3, tight = Infinity;
       for(var a=0; a<nodes.length; a++){
         for(var b=a+1; b<nodes.length; b++){
           var pa = lpos[nodes[a]], pb = lpos[nodes[b]];
@@ -572,7 +572,15 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
         }
       }
       if(tight < MIN_SEP && tight > 0){
-        var s = MIN_SEP / tight;
+        // Cap the blow-up. Two DISTINCT rooms can dead-reckon to the same
+        // coordinate in this non-Euclidean world (a real loop misclosure the
+        // grid can't hold), so the relaxation can land them almost on top of
+        // each other -- tight -> 0 -> MIN_SEP/tight -> a scale of hundreds that
+        // explodes the whole component off-screen (fit() then clamps to 0.2 and
+        // the floor renders blank). A uniform scale can't pull coincident points
+        // apart anyway, so past MAX_SCALE we stop and accept a local overlap of
+        // the offending pair rather than blanking every room on the floor.
+        var s = Math.min(MAX_SCALE, MIN_SEP / tight);
         nodes.forEach(function(id){ lpos[id].c *= s; lpos[id].r *= s; });
       }
     })();
