@@ -352,7 +352,7 @@ ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
 <div id="floor-tabs" class="floor-tabs"></div>
 <div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
-<p class="note">Position encodes direction — north is up, east is right, diagonals at the corners · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits on the cell directly above/below its neighbor).</p>
+<p class="note">Position follows direction — north is up, east is right, diagonals at the corners — but rooms are relaxed to lie flat, so a loop the game never drew on a true grid stays untangled (directions are approximate near such loops) · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits above/below its neighbor).</p>
 ` : ""}
 ${table(
   ["Room", "Name", "Area", "Visits", "First Visited", "Exits"],
@@ -492,19 +492,8 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var seen = {}, components = [];
   GRAPH.rooms.forEach(function(rootRoom){
     if(seen[rootRoom.id]) return;
-    var lpos = {}, locc = {};
-    function lkey(c,r,f){ return f+':'+c+','+r; }
-    function lfindFree(c,r,f){                          // spiral out within the same floor
-      if(!(lkey(c,r,f) in locc)) return [c,r];
-      for(var rad=1; rad<400; rad++){
-        for(var dc=-rad; dc<=rad; dc++) for(var dr=-rad; dr<=rad; dr++){
-          if(Math.max(Math.abs(dc),Math.abs(dr)) !== rad) continue;
-          if(!(lkey(c+dc,r+dr,f) in locc)) return [c+dc,r+dr];
-        }
-      }
-      return [c,r];
-    }
-    function lplace(id,c,r,f){ lpos[id]={c:c,r:r,f:f}; locc[lkey(c,r,f)]=id; seen[id]=true; }
+    var lpos = {};
+    function lplace(id,c,r,f){ lpos[id]={c:c,r:r,f:f}; seen[id]=true; }
     lplace(rootRoom.id, 0, 0, 0);
     var q = [rootRoom.id];
     while(q.length){
@@ -514,12 +503,40 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
         if(ed.vert){
           lplace(ed.to, base.c, base.r, base.f + ed.vert);       // same cell, one floor up/down
         } else {
-          var o = OFF[ed.dir], cl = lfindFree(base.c + o[0], base.r + o[1], base.f);
-          lplace(ed.to, cl[0], cl[1], base.f);
+          var o = OFF[ed.dir];                                    // raw dead-reckon; relaxed below
+          lplace(ed.to, base.c + o[0], base.r + o[1], base.f);
         }
         q.push(ed.to);
       });
     }
+
+    // Relax the raw seed into float positions that satisfy every edge direction
+    // at once (Gauss-Seidel least-squares). A non-Euclidean loop can't sit on a
+    // grid, so rather than dump its misclosure onto one edge -- which the eye
+    // reads as crossings and overlaps -- spread it evenly across the loop. u/d
+    // edges target a zero planar offset, pinning vertically-linked rooms to the
+    // same (col,row) so floors stay stacked for the ▲/▼ badge logic.
+    (function(){
+      var nodes = Object.keys(lpos), inc = {};
+      nodes.forEach(function(id){ inc[id] = []; });
+      nodes.forEach(function(id){
+        adj[id].forEach(function(ed){
+          if(!(ed.to in lpos)) return;
+          var t = ed.vert ? [0,0] : OFF[ed.dir];
+          inc[id].push({ o: ed.to, sx: -t[0], sy: -t[1] });        // pos[id] = pos[to] - t
+          inc[ed.to].push({ o: +id, sx: t[0], sy: t[1] });         // pos[to] = pos[id] + t
+        });
+      });
+      for(var it=0; it<300; it++){
+        nodes.forEach(function(id){
+          var arr = inc[id]; if(!arr.length) return;
+          var sx = 0, sy = 0;
+          for(var k=0; k<arr.length; k++){ sx += lpos[arr[k].o].c + arr[k].sx; sy += lpos[arr[k].o].r + arr[k].sy; }
+          lpos[id].c = sx/arr.length; lpos[id].r = sy/arr.length;
+        });
+      }
+    })();
+
     var ids = Object.keys(lpos), minc=Infinity, maxc=-Infinity, minr=Infinity, maxr=-Infinity;
     ids.forEach(function(id){ var p=lpos[id];
       minc=Math.min(minc,p.c); maxc=Math.max(maxc,p.c);
