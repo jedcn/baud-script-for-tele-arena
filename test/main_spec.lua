@@ -3899,6 +3899,60 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ring gong", helper.sendCalls[2])
         end)
 
+        -- Regression: a thirst/hunger tick between our swing and its resolution
+        -- flips state to "tavern" while arenaMonster is still set; the swing then
+        -- lands the kill. The death must still clear arenaMonster even though we
+        -- are no longer "fighting", or the errand's return path resumes swinging
+        -- at a corpse forever (something-went-wrong-focused.log).
+        it("clears arenaMonster when the kill lands after an errand departed", function()
+            taPackage.arenaState = "tavern"
+            taPackage.arenaMonster = "troll"
+            setHP(80, 100)
+            helper.simulateLine("The troll falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaMonster)
+            -- Still walking to the bar: no ring/scan should fire mid-errand.
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("rings for a fresh monster on arriving home after a mid-errand kill", function()
+            -- The troll died during the bar trip, so arenaMonster is already nil.
+            -- Arriving back in the arena must ring, not attack the dead troll.
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = nil
+            taPackage.arenaJourney = { steps = { "n" }, index = 6, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("ringing", taPackage.arenaState)
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[#helper.sendCalls])
+        end)
+
+    end)
+
+    describe("lost target (attack whiffs on a monster that is gone)", function()
+
+        -- Belt-and-suspenders for any stale arenaMonster: the game answers a
+        -- swing at an absent monster with "Sorry, you don't see "X" nearby." and
+        -- nothing else re-drives the loop, so without this the run wedges
+        -- re-attacking a ghost and never rings (something-went-wrong-focused.log).
+        it("clears the monster and scans to ring when the target is gone", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "troll"
+            helper.simulateLine("Sorry, you don't see \"troll\" nearby.")
+            assert.is_nil(taPackage.arenaMonster)
+            assert.are.equal("ringing", taPackage.arenaState)
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("ignores the line when not fighting (e.g. mid-errand)", function()
+            taPackage.arenaState = "tavern"
+            helper.simulateLine("Sorry, you don't see \"troll\" nearby.")
+            assert.are.equal("tavern", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
     end)
 
     describe("auto-training", function()

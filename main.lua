@@ -2502,15 +2502,24 @@ createTrigger("^The .+ dodged your attack!$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
-    if taPackage.arenaState ~= "fighting" and taPackage.arenaState ~= "fleeing" then return end
     -- Only react to the death of the monster we are actually fighting. The arena
-    -- is shared, so another player's kill prints this same line; reacting to it
-    -- would ring the gong (or end our fight) while our own monster is still
-    -- alive and beating on us unseen.
+    -- is shared, so another player's kill prints this same line; the name match
+    -- is what tells our kill from theirs. This runs BEFORE any state gate on
+    -- purpose: clearing the dead monster is correct in every state, and it must
+    -- happen even when the kill lands after an errand has already flipped us out
+    -- of "fighting". A thirst/hunger tick between our swing and its resolution
+    -- calls departForTavern → state "tavern" while arenaMonster is still set; if
+    -- the swing then kills the monster, an earlier state guard here dropped the
+    -- death line, arenaMonster stayed set, and the errand's return path
+    -- (arenaResumeInCombat) resumed swinging at a corpse forever — never ringing
+    -- the gong (see something-went-wrong-focused.log).
     if matches[2] ~= taPackage.arenaMonster then return end
     taPackage.arenaMonster = nil
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
+    -- Follow-up actions (ring for a fresh monster / go train) only make sense
+    -- while actively fighting. If the monster died during an errand trip, we
+    -- just clear it here; arenaResumeInCombat will ring on arrival home.
     if taPackage.arenaState == "fighting" and not checkFleeArena() then
         if checkTrainingNeeded() then
             echo("[arena] Leveling up — heading to training hall.")
@@ -2523,6 +2532,23 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
             arenaScanRoom()
         end
     end
+end, { type = "regex" })
+
+-- Self-healing net for a lost target. If we ever end up swinging at a monster
+-- that isn't here — a kill dropped in a race window, another player's move that
+-- displaced it, or any stale arenaMonster — the game answers our attack with
+-- "Sorry, you don't see "troll" nearby." Nothing else re-drives the loop after
+-- that line (no monster hit/miss/death follows a whiffed attack), so without
+-- this the run wedges: it keeps re-attacking a ghost and never rings. Treat it
+-- as "the monster is gone": clear it and ring for a fresh one. See
+-- something-went-wrong-focused.log.
+createTrigger("^Sorry, you don't see \".+\" nearby\\.$", function()
+    if taPackage.arenaState ~= "fighting" then return end
+    arenaDebugEcho("target-gone")
+    taPackage.arenaMonster = nil
+    taPackage.arenaState = "ringing"
+    taPackage.arenaRingPending = false
+    arenaScanRoom()
 end, { type = "regex" })
 
 createTrigger("^The .+ attacked you .+ for \\d+ damage!$", function()
