@@ -535,6 +535,26 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
           lpos[id].c = sx/arr.length; lpos[id].r = sy/arr.length;
         });
       }
+
+      // The relaxation can compress an edge below one cell where a loop's
+      // misclosure is absorbed, so octagons overlap. A room's octagon fits in a
+      // circumcircle ~1.08 cells across; scale the whole component up until its
+      // tightest same-floor pair clears that. A uniform scale is a similarity
+      // transform, so it can't introduce a crossing or change any direction --
+      // it just zooms the component until nothing overlaps.
+      var MIN_SEP = 1.08, tight = Infinity;
+      for(var a=0; a<nodes.length; a++){
+        for(var b=a+1; b<nodes.length; b++){
+          var pa = lpos[nodes[a]], pb = lpos[nodes[b]];
+          if(pa.f !== pb.f) continue;
+          var d = Math.sqrt((pb.c-pa.c)*(pb.c-pa.c) + (pb.r-pa.r)*(pb.r-pa.r));
+          if(d > 0 && d < tight) tight = d;
+        }
+      }
+      if(tight < MIN_SEP && tight > 0){
+        var s = MIN_SEP / tight;
+        nodes.forEach(function(id){ lpos[id].c *= s; lpos[id].r *= s; });
+      }
     })();
 
     var ids = Object.keys(lpos), minc=Infinity, maxc=-Infinity, minr=Infinity, maxr=-Infinity;
