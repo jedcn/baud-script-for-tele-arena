@@ -171,11 +171,16 @@ db:execute([[CREATE TABLE IF NOT EXISTS monster_loot (
   recorded_at TEXT NOT NULL
 )]])
 
+-- room_id is last to match what the migration below produces for pre-existing
+-- DBs (ALTER ... ADD COLUMN appends), so fresh and migrated schemas are
+-- identical. It records where the item was found (notably keys for locked
+-- doors), NULL when we weren't mapping and so don't reliably know the room.
 db:execute([[CREATE TABLE IF NOT EXISTS item_drops (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   monster     TEXT NOT NULL,
   item        TEXT NOT NULL,
-  recorded_at TEXT NOT NULL
+  recorded_at TEXT NOT NULL,
+  room_id     INTEGER REFERENCES rooms(id)
 )]])
 
 -- Append-only log of every spell we cast. `kind` ('offense' | 'heal') groups
@@ -214,6 +219,16 @@ if not tableHasColumn("player_spells", "kind") then
     end)
     db:execute("UPDATE player_spells SET kind = 'heal' WHERE spell IN ('motu', 'kamotu')")
     db:execute("UPDATE player_spells SET kind = 'offense' WHERE spell = 'komiza'")
+end
+
+-- Migration: item_drops predates the `room_id` column (where the item was
+-- found). Add it if missing; historical rows keep NULL. Added without the
+-- REFERENCES clause the fresh schema carries, since SQLite ADD COLUMN rejects it
+-- -- the column is otherwise identical and foreign keys aren't enforced here.
+if not tableHasColumn("item_drops", "room_id") then
+    pcall(function()
+        db:execute("ALTER TABLE item_drops ADD COLUMN room_id INTEGER")
+    end)
 end
 
 local function now()
@@ -724,12 +739,16 @@ function TaDb.recordPlayerSpell(spell, target, outcome, amount, kind)
     dbLog(msg)
 end
 
-function TaDb.recordItemDrop(monster, item)
+-- roomId is where the item was found (nil when unknown -> NULL), letting the
+-- map answer "where do I find the ruby key" -- valuable for the keys that open
+-- locked doors.
+function TaDb.recordItemDrop(monster, item, roomId)
     db:execute(
-        "INSERT INTO item_drops (monster, item, recorded_at) VALUES (?, ?, ?)",
-        monster, item, now()
+        "INSERT INTO item_drops (monster, item, recorded_at, room_id) VALUES (?, ?, ?, ?)",
+        monster, item, now(), roomId
     )
-    dbLog("[DB\xE2\x86\x92item_drops] " .. monster .. " dropped: " .. item)
+    dbLog("[DB\xE2\x86\x92item_drops] " .. monster .. " dropped: " .. item
+        .. " @ room #" .. tostring(roomId))
 end
 
 return TaDb

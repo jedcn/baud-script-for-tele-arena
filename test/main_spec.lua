@@ -163,6 +163,45 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(5, getGold())
         end)
 
+        it("records an item found while searching, against the current room, once", function()
+            taPackage.lastKilledMonster = "anaconda"
+            taPackage.mapping = true
+            taPackage.currentRoomId = 54
+            helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_not_nil(call)
+            assert.are.equal("anaconda", call.params[1])
+            assert.are.equal("a ruby key", call.params[2])
+            assert.are.equal(54, call.params[4])   -- room_id
+            -- one-line and wrapped triggers are mutually exclusive: exactly one fires
+            local n = 0
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute" and string.find(c.sql, "INSERT INTO item_drops", 1, true) then n = n + 1 end
+            end
+            assert.are.equal(1, n)
+        end)
+
+        it("records the wrapped first-line pickup (game split it across two lines)", function()
+            taPackage.lastKilledMonster = "anaconda"
+            taPackage.mapping = true
+            taPackage.currentRoomId = 54
+            helper.simulateLine("While searching the area, you notice a ruby key, which you add to your")
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_not_nil(call)
+            assert.are.equal("a ruby key", call.params[2])
+            assert.are.equal(54, call.params[4])
+        end)
+
+        it("leaves the pickup room NULL when not mapping (currentRoomId is stale)", function()
+            taPackage.lastKilledMonster = "anaconda"
+            taPackage.mapping = false
+            taPackage.currentRoomId = 999   -- stale anchor from an old session
+            helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_not_nil(call)
+            assert.is_nil(call.params[4])
+        end)
+
         it("sets gold when carrying gold and items", function()
             helper.simulateLine("You are carrying 675 gold crowns, and a shortsword.")
             assert.are.equal(675, getGold())
@@ -1897,6 +1936,25 @@ describe("ta_db", function()
         it("records zero gold", function()
             TaDb.recordMonsterLoot("huge rat", 0)
             assert.are.equal("[DB\xE2\x86\x92monster_loot] huge rat: 0 gold", helper.echoCalls[1])
+        end)
+
+    end)
+
+    describe("recordItemDrop", function()
+
+        it("records monster, item, and the room it was found in", function()
+            TaDb.recordItemDrop("anaconda", "a ruby key", 54)
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_not_nil(call)
+            assert.are.equal("anaconda", call.params[1])
+            assert.are.equal("a ruby key", call.params[2])
+            assert.are.equal(54, call.params[4])   -- room_id
+        end)
+
+        it("stores a nil room as NULL", function()
+            TaDb.recordItemDrop("anaconda", "a ruby key", nil)
+            local call = helper.findDbCall("execute", "INSERT INTO item_drops")
+            assert.is_nil(call.params[4])
         end)
 
     end)

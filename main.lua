@@ -664,10 +664,22 @@ createTrigger("^You found (\\d+) gold crowns while searching the area\\.$", func
     taPackage.lastKilledMonster = nil
 end, { type = "regex" })
 
-createTrigger("^While searching the area, you notice (.+), which you add to your possessions\\.$", function(matches)
-    local item = matches[2]
+-- An item found while searching a corpse. The game hard-wraps this line at the
+-- terminal width, so it arrives whole (short items) or split after "...add to
+-- your" (the "possessions." lands on the next line). Match both forms -- they're
+-- mutually exclusive, so only one fires per pickup. Record it against the room
+-- we're standing in (only trusted while mapping; currentRoomId is stale
+-- otherwise) so the map can show where items -- notably door keys -- are found.
+local function recordSearchItem(item)
     local monster = taPackage.lastKilledMonster or "unknown"
-    taPackage.db.recordItemDrop(monster, item)
+    local roomId = taPackage.mapping and taPackage.currentRoomId or nil
+    taPackage.db.recordItemDrop(monster, item, roomId)
+end
+createTrigger("^While searching the area, you notice (.+), which you add to your possessions\\.$", function(matches)
+    recordSearchItem(matches[2])
+end, { type = "regex" })
+createTrigger("^While searching the area, you notice (.+), which you add to your$", function(matches)
+    recordSearchItem(matches[2])
 end, { type = "regex" })
 
 createTrigger("^You gave (\\d+) gold coins to (.+)\\.$", function(matches)
