@@ -1080,20 +1080,17 @@ local function handleRoomEntry(matches)
             -- name so we don't overwrite the wrong room.
             roomId, taPackage.currentRoomProvisional = resolveColdStart(name)
         else
-            -- Unknown exit. Before minting a new room, try to identify it by
-            -- coordinate: a same-area, same-name room already recorded at this
-            -- exact (x, y, z) is the room we just walked into (a loop the
-            -- topology didn't know closed). Otherwise it's genuinely new.
-            local coordMatch = arriveCoord and taPackage.db.findRoomAtCoord(
-                taPackage.currentAreaId, name,
-                arriveCoord.x, arriveCoord.y, arriveCoord.z, taPackage.prevRoomId)
-            if coordMatch then
-                roomId = coordMatch
-                taPackage.currentRoomProvisional = false
-            else
-                roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
-                taPackage.currentRoomProvisional = true
-            end
+            -- Unknown exit: mint a provisional room and link the edge. We do NOT
+            -- identify the room by coordinate here -- that was exit-blind, and in
+            -- this non-Euclidean world two distinct rooms can dead-reckon to the
+            -- same coordinate, so a coordinate-only match glued unrelated rooms
+            -- together (a {se,nw} room folded onto a 4-exit one). Identity is
+            -- resolved in the Exits handler instead, which checks the exit-set:
+            -- findRoomByFingerprint (exact coord + exit-set) closes grid-aligned
+            -- loops, findLoopClosure (topology + return door) closes drifted ones,
+            -- and a genuinely new room simply stays.
+            roomId = taPackage.db.discoverRoom(name, taPackage.currentAreaId)
+            taPackage.currentRoomProvisional = true
             taPackage.db.linkExit(taPackage.prevRoomId, dir, roomId)
             local back = REVERSE_DIR[dir]
             if back then taPackage.db.linkExit(roomId, back, taPackage.prevRoomId) end

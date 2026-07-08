@@ -2181,26 +2181,25 @@ describe("World map triggers", function()
             assert.are.same({ x = 0, y = 1, z = 0 }, taPackage.coord)
         end)
 
-        it("identifies a room by coordinate and closes the loop without discovering", function()
+        it("mints a provisional on an unknown exit and links it, deferring closure to Exits", function()
+            -- We no longer identify the arrival room by coordinate here (that was
+            -- exit-blind and glued distinct rooms that dead-reckon to the same
+            -- spot). An unknown exit always mints a provisional and links the
+            -- edge; the Exits handler folds it into a real room only if the
+            -- exit-set matches. So a discovery DOES happen at this step.
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
             taPackage.pendingDirection = "n"
-            helper.mockDbOneRow = function(sql, params)
-                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
-                    if params[1] == 5 then return { x = 0, y = 0, z = 0 } end  -- prev room
-                    return { x = 0, y = 1, z = 0 }          -- room #8's stored coord
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                    return { id = 8 }                       -- discoverRoom's new id
                 end
-                return nil                                  -- exitDestination: unknown exit
-            end
-            helper.mockDbRows = function(sql)
-                if string.find(sql, "SELECT id FROM rooms WHERE area_id", 1, true) then
-                    return { { id = 8 } }                    -- the room already at (0,1,0)
-                end
-                return {}
+                return nil                                  -- exitDestination unknown; no coord stored
             end
             helper.simulateLine("You're in a cave.")
-            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- no discovery
+            assert.is_not_nil(helper.findDbCall("execute", "INSERT INTO rooms"))  -- provisional minted
             assert.are.equal(8, taPackage.currentRoomId)
+            assert.is_true(taPackage.currentRoomProvisional)
             local edges = {}
             for _, c in ipairs(helper.dbCalls) do
                 if c.method == "execute"
@@ -2208,7 +2207,7 @@ describe("World map triggers", function()
                     edges[#edges + 1] = c.params
                 end
             end
-            assert.are.same({ 5, "n", 8 }, edges[1])         -- forward edge into the loop
+            assert.are.same({ 5, "n", 8 }, edges[1])         -- forward edge
             assert.are.same({ 8, "s", 5 }, edges[2])         -- reverse back-edge
         end)
 
