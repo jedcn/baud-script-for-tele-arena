@@ -1126,6 +1126,10 @@ local function handleRoomEntry(matches)
     taPackage.currentRoomId = roomId
     taPackage.prevRoom = taPackage.currentRoom
     taPackage.currentRoom = name
+    -- Remember how we got here for the Exits handler's loop-closure check: it
+    -- runs after pendingDirection is cleared, and needs the direction walked to
+    -- know which return door a closure candidate must still have open.
+    taPackage.currentEntryDir = taPackage.pendingDirection
     taPackage.pendingDirection = nil
 
     -- While mapping, capture the room: `look` for its description, then `ex`
@@ -1237,10 +1241,27 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord)
         echo("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
             .. " val=" .. tostring(match))
+        -- Coordinates drift across this world's non-Euclidean loops, so when the
+        -- coordinate match misses, trust the door we walked through instead: the
+        -- room we re-entered is the same-name, same-exit-set room whose exit back
+        -- the way we came is still unexplored. Topology over 30-year-old grid math.
+        if type(match) ~= "number" and taPackage.currentEntryDir then
+            local back = REVERSE_DIR[taPackage.currentEntryDir]
+            match = taPackage.db.findLoopClosure(
+                taPackage.currentRoom, dirs, taPackage.currentRoomId, back)
+            echo("[mapdbg] findLoopClosure back=" .. tostring(back)
+                .. " -> type=" .. type(match) .. " val=" .. tostring(match))
+        end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then
             taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
             taPackage.currentRoomId = match
+            -- Re-anchor dead-reckoning to the room we closed onto: its stored
+            -- coordinate is consistent with its already-mapped neighbours, while
+            -- the drifted provisional's was not. Without this the drift compounds
+            -- into another duplicate on the next move.
+            local snapped = taPackage.db.roomCoord(match)
+            if snapped then taPackage.coord = snapped end
             echo("[map] linked into #" .. tostring(match) .. " (" .. tostring(taPackage.currentRoom) .. ")")
         end
         taPackage.currentRoomProvisional = false

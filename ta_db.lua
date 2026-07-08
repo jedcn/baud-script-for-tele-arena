@@ -515,6 +515,41 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord)
     return match
 end
 
+-- Topological loop closure, for when coordinates have drifted too far to trust
+-- (this world's rooms never really sat on a grid). Among same-name rooms whose
+-- exit-set exactly matches the one we just observed, the room we re-entered is
+-- the one whose exit back the way we came (`back` = reverse of the direction we
+-- walked) still exists but is unexplored: we walked through that door from the
+-- far side, so it must be here and not yet lead anywhere. An already-walked
+-- `back` commits that room to a different neighbour, so it can't be this one.
+-- Returns the unique such room, or nil if there's none or more than one.
+function TaDb.findLoopClosure(name, dirs, excludeId, back)
+    if not back then return nil end
+    local want, wantCount = {}, 0
+    for _, dir in ipairs(dirs) do
+        if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
+    end
+    local match
+    for _, id in ipairs(TaDb.roomIdsByName(name)) do
+        if id ~= excludeId then
+            local have = TaDb.roomExitDirections(id)
+            local haveCount, ok = 0, true
+            for dir in pairs(have) do
+                haveCount = haveCount + 1
+                if not want[dir] then ok = false; break end
+            end
+            -- Same exit-set, and the return door exists but is still unwalked
+            -- (a real numeric to_id means it already leads somewhere else).
+            if ok and haveCount == wantCount and have[back]
+                and type(TaDb.exitDestination(id, back)) ~= "number" then
+                if match then return nil end  -- ambiguous: >1 candidate
+                match = id
+            end
+        end
+    end
+    return match
+end
+
 -- Fold a provisional room into an existing one (loop closure): repoint every
 -- edge that pointed at `fromId` to `intoId`, move `fromId`'s outgoing edges onto
 -- `intoId` (without clobbering ones it already has), carry the visit count, then
@@ -538,6 +573,18 @@ function TaDb.mergeRoomInto(fromId, intoId)
                 "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
                 intoId, row.direction, dest
             )
+            -- If intoId already had this exit as an unexplored stub, fill it with
+            -- the destination the provisional walked (the IGNORE above kept the
+            -- stub). This is what completes a loop closure: the room we folded in
+            -- knew where its back-edge went, but intoId's matching exit was still
+            -- an open frontier. Only ever upgrade a NULL stub; never clobber an
+            -- exit that already leads somewhere real.
+            if type(dest) == "number" then
+                db:execute(
+                    "UPDATE room_exits SET to_id = ? WHERE from_id = ? AND direction = ? AND to_id IS NULL",
+                    dest, intoId, row.direction
+                )
+            end
         end
     end
     db:execute("DELETE FROM room_exits WHERE from_id = ?", fromId)

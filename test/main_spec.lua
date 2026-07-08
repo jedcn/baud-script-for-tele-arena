@@ -1499,6 +1499,68 @@ describe("ta_db", function()
 
     end)
 
+    describe("findLoopClosure", function()
+
+        -- Stub roomIdsByName + roomExitDirections (like stubRooms above) and, via
+        -- mockDbOneRow, exitDestination for each room's `back` exit. `dests` maps
+        -- a room id to the to_id of its return exit (a number = already walked;
+        -- nil/absent = an unexplored return door).
+        local function stub(name, ids, exits, dests)
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    local rows = {}
+                    for _, id in ipairs(ids) do rows[#rows + 1] = { id = id } end
+                    return rows
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    local rows = {}
+                    for _, dir in ipairs(exits[params[1]] or {}) do
+                        rows[#rows + 1] = { direction = dir }
+                    end
+                    return rows
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = (dests or {})[params[1]] }
+                end
+                return nil
+            end
+        end
+
+        it("closes onto the room whose return door is unexplored", function()
+            -- We walked sw; the return door is ne. Room 1 (real ts-5) has ne,nw,sw
+            -- with an unexplored ne -> that's the loop closure.
+            stub("town sewers", { 1, 9 }, { [1] = { "ne", "nw", "sw" } }, { [1] = nil })
+            assert.are.equal(1, TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
+        end)
+
+        it("rejects a look-alike whose return door is already walked", function()
+            -- Same name + exit-set, but its ne already leads to room 7: it commits
+            -- to a different neighbour, so it isn't the room we just entered.
+            stub("town sewers", { 1, 9 }, { [1] = { "ne", "nw", "sw" } }, { [1] = 7 })
+            assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
+        end)
+
+        it("does not match when the exit-set differs", function()
+            stub("town sewers", { 1, 9 }, { [1] = { "ne", "sw" } }, { [1] = nil })
+            assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
+        end)
+
+        it("returns nil when two candidates both qualify (ambiguous)", function()
+            stub("town sewers", { 1, 2, 9 },
+                { [1] = { "ne", "nw", "sw" }, [2] = { "ne", "nw", "sw" } },
+                { [1] = nil, [2] = nil })
+            assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
+        end)
+
+        it("returns nil without a back direction", function()
+            stub("town sewers", { 1, 9 }, { [1] = { "ne", "nw", "sw" } }, { [1] = nil })
+            assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, nil))
+        end)
+
+    end)
+
     describe("coordinates", function()
 
         it("roomCoord returns the stored coordinate", function()
@@ -1667,6 +1729,35 @@ describe("ta_db", function()
             local desc = helper.findDbCall("execute", "SET description = COALESCE")
             assert.is_not_nil(desc)
             assert.are.same({ 5, 1 }, desc.params)  -- COALESCE(target, provisional #5) into #1
+        end)
+
+        it("fills the target's unexplored stub with the provisional's destination", function()
+            -- Loop closure: provisional #5 knows 5 --ne--> 4, but the target #1's
+            -- own ne is still an open frontier. The IGNORE keeps the stub, so a
+            -- follow-up UPDATE must upgrade #1's NULL ne to 4.
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT direction, to_id FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "ne", to_id = 4 } }
+                end
+                return {}
+            end
+            TaDb.mergeRoomInto(5, 1)
+            local fill = helper.findDbCall("execute", "SET to_id = ? WHERE from_id = ? AND direction = ? AND to_id IS NULL")
+            assert.is_not_nil(fill)
+            assert.are.same({ 4, 1, "ne" }, fill.params)  -- #1's ne frontier filled with 4
+        end)
+
+        it("does not fill a stub when the provisional's edge is itself unexplored", function()
+            -- Provisional's own edge has no destination (NULL), so there's nothing
+            -- to promote a frontier to -- guard on a real numeric destination.
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT direction, to_id FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "ne", to_id = nil } }
+                end
+                return {}
+            end
+            TaDb.mergeRoomInto(5, 1)
+            assert.is_nil(helper.findDbCall("execute", "SET to_id = ? WHERE from_id = ? AND direction = ? AND to_id IS NULL"))
         end)
 
     end)
@@ -2615,6 +2706,74 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.currentRoomId)          -- folded into the original
             assert.is_false(taPackage.currentRoomProvisional)
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+        end)
+
+        it("closes a drifted loop by topology when the coordinate match misses", function()
+            -- We walked sw into provisional 5; dead-reckoning drifted, so the
+            -- fingerprint (coordinate) match misses. The fallback uses the return
+            -- door (ne): room 1 has the same exit-set with an unexplored ne, so
+            -- it's the closure. Coord then snaps to room 1's stored position.
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "town sewers"
+            taPackage.currentRoomProvisional = true
+            taPackage.currentEntryDir = "sw"        -- back = ne
+            taPackage.coord = { x = 9, y = 9, z = 0 }  -- drifted
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 1 }, { id = 5 } }
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then
+                        return { { direction = "ne" }, { direction = "nw" }, { direction = "sw" } }
+                    end
+                    return {}
+                end
+                return {}  -- mergeRoomInto outgoing -> none
+            end
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 0, y = 0, z = 0 }   -- room 1 sits elsewhere -> fingerprint misses
+                elseif string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = nil }           -- room 1's ne return door is unexplored
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: ne,nw,sw.")
+            assert.are.equal(1, taPackage.currentRoomId)          -- closed onto room 1 topologically
+            assert.is_false(taPackage.currentRoomProvisional)
+            assert.are.same({ x = 0, y = 0, z = 0 }, taPackage.coord)  -- re-anchored to room 1
+            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+        end)
+
+        it("does not topo-close when the return door already leads somewhere", function()
+            -- Same shape, but room 1's ne is already walked (leads to 7): it's a
+            -- look-alike, not the room we entered, so no merge -> no duplicate fold.
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "town sewers"
+            taPackage.currentRoomProvisional = true
+            taPackage.currentEntryDir = "sw"
+            taPackage.coord = { x = 9, y = 9, z = 0 }
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 1 }, { id = 5 } }
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then
+                        return { { direction = "ne" }, { direction = "nw" }, { direction = "sw" } }
+                    end
+                    return {}
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 0, y = 0, z = 0 }
+                elseif string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 7 }             -- ne already leads to room 7
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: ne,nw,sw.")
+            assert.are.equal(5, taPackage.currentRoomId)          -- stayed the provisional
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
         end)
 
         it("does not merge a non-provisional room, but still seeds its exits", function()
