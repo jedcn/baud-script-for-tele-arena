@@ -739,9 +739,16 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     showRoom(id);
   }
 
+  // Remember the floor you were last looking at across refreshes. localStorage
+  // can throw under file:// in some browsers, so guard every access.
+  var FLOOR_KEY = 'ta-report-floor';
+  function saveFloor(f){ try { localStorage.setItem(FLOOR_KEY, String(f)); } catch(e){} }
+  function loadFloor(){ try { var v = localStorage.getItem(FLOOR_KEY); return v == null ? null : Number(v); } catch(e){ return null; } }
+
   // --- Render a single floor into the (cleared) root group. ---
   function drawFloor(f){
     currentFloor = f;
+    saveFloor(f);
     while(root.firstChild) root.removeChild(root.firstChild);
     octByRoom = {};
 
@@ -966,8 +973,12 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     });
   });
 
-  // Initial render: Ground if present, else the topmost floor.
-  drawFloor(floorSet[0] ? 0 : (floors.length ? floors[0] : 0));
+  // Initial render: the floor from last visit if it still exists, else Ground if
+  // present, else the topmost floor.
+  var saved = loadFloor();
+  var initialFloor = (saved != null && floorSet[saved]) ? saved
+    : (floorSet[0] ? 0 : (floors.length ? floors[0] : 0));
+  drawFloor(initialFloor);
   fit();
 })();
 </script>
