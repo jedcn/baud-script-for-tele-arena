@@ -5947,6 +5947,13 @@ describe("ta.follow", function()
             assert.are.equal("cave lizard", taPackage.killTarget)
         end)
 
+        it("'k <monster>' shorthand behaves like 'kill <monster>'", function()
+            helper.simulateAlias("k cave lizard")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("cave lizard", taPackage.killTarget)
+            assert.are.equal("a cave", helper.sendCalls[1])
+        end)
+
         it("does not set killDebug without a debug suffix", function()
             helper.simulateAlias("kill cave lizard")
             assert.is_falsy(taPackage.killDebug)

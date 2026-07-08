@@ -3233,7 +3233,7 @@ taPackage.startKill = startKill
 
 -- `kill <target>` melees (and casts) a single monster. An optional trailing
 -- " debug" turns on the kill-loop trace for this fight.
-createAlias("^kill (.+)$", function(matches)
+local function handleKillAlias(matches)
     local rest = matches[2]
     local target, debug = rest, false
     local stripped = rest:match("^(.-) debug$")
@@ -3241,7 +3241,12 @@ createAlias("^kill (.+)$", function(matches)
         target, debug = stripped, true
     end
     startKill(target, debug)
-end, { type = "regex" })
+end
+
+createAlias("^kill (.+)$", handleKillAlias, { type = "regex" })
+
+-- Shorthand: `k <monster>` behaves exactly like `kill <monster>`.
+createAlias("^k (.+)$", handleKillAlias, { type = "regex" })
 
 local function stopKill()
     killDebugEcho("kill-stop")
