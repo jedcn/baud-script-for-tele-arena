@@ -1130,6 +1130,16 @@ local function handleRoomEntry(matches)
         .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional)
         .. " coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y .. "," .. taPackage.coord.z .. ")")
 
+    -- Follow the room we entered into its area. If a session starts in one area
+    -- (e.g. `map-here path-4` in second-town) and then walks across a frontier
+    -- into a known room of another area (down into the sewers), adopt that area
+    -- so rooms minted onward are filed where we actually are, not where the
+    -- session happened to begin. A room just minted above already carries
+    -- currentAreaId, so this is a no-op for it; a legacy row with no area (nil)
+    -- leaves the current area untouched.
+    local enteredArea = taPackage.db.roomArea(roomId)
+    if enteredArea then taPackage.currentAreaId = enteredArea end
+
     taPackage.db.recordVisit(roomId)
     taPackage.prevRoomId = taPackage.currentRoomId
     taPackage.currentRoomId = roomId

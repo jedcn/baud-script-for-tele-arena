@@ -2211,6 +2211,53 @@ describe("World map triggers", function()
             assert.are.same({ 8, "s", 5 }, edges[2])         -- reverse back-edge
         end)
 
+        it("adopts the entered known room's area so rooms minted onward inherit it", function()
+            -- Session started in second-town (area 7) via map-here, then walked
+            -- across a frontier into a known sewers room (area 8). Creation of
+            -- subsequent rooms must follow us into the sewers, not stay in 7.
+            taPackage.currentAreaId = 7
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "d"
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 340 }                      -- known edge 5 --d--> 340
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "town sewers" }             -- dest name confirms the edge
+                elseif string.find(sql, "SELECT area_id FROM rooms", 1, true) then
+                    return { area_id = 8 }                      -- 340 lives in the sewers
+                elseif string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 0, y = 0, z = -1 }             -- stored coord for 340
+                end
+                return nil
+            end
+            helper.simulateLine("You're in the town sewers.")
+            assert.are.equal(340, taPackage.currentRoomId)
+            assert.are.equal(8, taPackage.currentAreaId)        -- followed the room into its area
+        end)
+
+        it("leaves the current area untouched when the entered room has no area", function()
+            taPackage.currentAreaId = 7
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.pendingDirection = "n"
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 60 }                       -- known edge to a legacy room
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "cave" }
+                elseif string.find(sql, "SELECT area_id FROM rooms", 1, true) then
+                    return { area_id = nil }                    -- unfiled legacy row
+                elseif string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 0, y = 0, z = 0 }
+                end
+                return nil
+            end
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal(60, taPackage.currentRoomId)
+            assert.are.equal(7, taPackage.currentAreaId)        -- unchanged
+        end)
+
     end)
 
     describe("movement alias", function()

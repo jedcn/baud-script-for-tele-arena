@@ -474,6 +474,14 @@ function TaDb.roomName(roomId)
     return row and row.name
 end
 
+-- The area a room belongs to, or nil when the room is unknown or unfiled (a
+-- legacy row with a NULL area_id). Used on room entry to follow a known room
+-- into its area so newly minted rooms inherit where we actually are.
+function TaDb.roomArea(roomId)
+    local row = db:queryOne("SELECT area_id FROM rooms WHERE id = ?", roomId)
+    return row and row.area_id
+end
+
 -- The full row for a room by its (unique) slug, or nil. Used by `map-here` to
 -- re-anchor at a known room when the name alone is ambiguous.
 function TaDb.roomBySlug(slug)
