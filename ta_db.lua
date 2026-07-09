@@ -364,13 +364,18 @@ end
 -- only know the door blocked us), `door` its material. The exit may not have
 -- been walked yet (a door we were turned away from), so ensure a stub row
 -- exists first, then set the lock columns without disturbing to_id.
+--
+-- A nil `key` means "we don't know the key right now" (a turn-away because we
+-- lack it this session, or a re-locked door), NOT "the key we recorded before
+-- is wrong". So COALESCE the key: only ever fill it in, never clobber a key we
+-- previously learned back to NULL. `door` is always known at both call sites.
 function TaDb.setExitLock(fromId, dir, key, door)
     db:execute(
         "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, NULL)",
         fromId, dir
     )
     db:execute(
-        "UPDATE room_exits SET lock_key = ?, lock_door = ? WHERE from_id = ? AND direction = ?",
+        "UPDATE room_exits SET lock_key = COALESCE(?, lock_key), lock_door = ? WHERE from_id = ? AND direction = ?",
         key, door, fromId, dir
     )
     dbLog("[DB\xE2\x86\x92room_exits] lock #" .. tostring(fromId) .. " " .. dir

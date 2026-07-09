@@ -1425,6 +1425,14 @@ describe("ta_db", function()
             assert.are.equal("e", upd.params[4])
         end)
 
+        it("never clobbers a known key back to NULL (COALESCE)", function()
+            -- A turn-away ("locked stone door prevents your exit") passes key=nil
+            -- but must not erase a key we learned earlier by walking through.
+            TaDb.setExitLock(5, "e", nil, "iron")
+            local upd = helper.findDbCall("execute", "UPDATE room_exits SET lock_key")
+            assert.is_not_nil(string.find(upd.sql, "COALESCE(?, lock_key)", 1, true))
+        end)
+
     end)
 
     describe("ensureArea", function()
