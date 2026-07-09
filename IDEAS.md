@@ -215,6 +215,17 @@ entering, say, the mountains until you've arrived. A retag-in-place command
 fixes the boundary room after the fact (area is otherwise only set at discovery
 and never revisited).
 
+**Related bug (observed 2026-07-09, desert).** Running `map-area desert The
+Desert` mid-walk did *not* propagate to rooms discovered *afterward* — the
+expectation is that once you set the area, every newly-discovered room inherits
+it and you only hand-fix the ones visited before the command. Instead only the
+first room (crude-stone-building, id 538) ended up desert while everything
+discovered later (539–549) stayed sewers, so `map-area` isn't reliably setting
+the "current area" that discovery reads from. Worth confirming whether
+`map-area` updates `currentAreaId` (used at discovery) at all, or only writes
+the areas row / one room. Low priority; the whole desert region was retagged by
+hand for now.
+
 ### Systemic desync guard — validate a move against the room's known exit-set
 
 Every "stop everything, delete corruption" incident so far (pit-trap fall,
