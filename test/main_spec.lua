@@ -1435,6 +1435,42 @@ describe("ta_db", function()
 
     end)
 
+    describe("room notes", function()
+
+        it("addRoomNote inserts the note and returns the new id", function()
+            helper.mockDbOneRow = { id = 7 }   -- last_insert_rowid()
+            local id = TaDb.addRoomNote(12, "say komi here to open the south door")
+            assert.are.equal(7, id)
+            local ins = helper.findDbCall("execute", "INSERT INTO room_notes")
+            assert.is_not_nil(ins)
+            assert.are.equal(12, ins.params[1])
+            assert.are.equal("say komi here to open the south door", ins.params[2])
+        end)
+
+        it("roomNotes returns the room's notes oldest-first", function()
+            helper.mockDbRows = { { id = 1, note = "first" }, { id = 2, note = "second" } }
+            local notes = TaDb.roomNotes(12)
+            assert.are.equal(2, #notes)
+            assert.are.equal("first", notes[1].note)
+            local q = helper.findDbCall("query", "FROM room_notes WHERE room_id")
+            assert.are.same({ 12 }, q.params)
+        end)
+
+        it("roomNotes returns an empty table when a room has none", function()
+            helper.mockDbRows = nil
+            assert.are.same({}, TaDb.roomNotes(99))
+        end)
+
+        it("deleteRoomNote removes one note by id and returns the count", function()
+            helper.mockExecuteReturn = 1
+            local removed = TaDb.deleteRoomNote(7)
+            assert.are.equal(1, removed)
+            local del = helper.findDbCall("execute", "DELETE FROM room_notes WHERE id")
+            assert.are.same({ 7 }, del.params)
+        end)
+
+    end)
+
     describe("ensureArea", function()
 
         it("inserts if absent and returns the id", function()
@@ -2037,6 +2073,20 @@ describe("World map triggers", function()
             stubDiscover(1)
             helper.simulateLine("You're in the north plaza.")
             assert.are.equal("north plaza", taPackage.currentRoom)
+        end)
+
+        it("echoes any notes on the room it enters", function()
+            stubDiscover(1)
+            -- Return note rows only for the room_notes query; {} for everything else
+            -- (fingerprint/exit lookups) so the entry path isn't disturbed.
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "FROM room_notes", 1, true) then
+                    return { { id = 1, note = "pull lever or a trap fires ahead" } }
+                end
+                return {}
+            end
+            helper.simulateLine("You're in the north plaza.")
+            assert.is_true(tableContains(helper.echoCalls, "[note] pull lever or a trap fires ahead"))
         end)
 
         it("discovers a room through an unknown exit and links both directions", function()
@@ -2735,6 +2785,107 @@ describe("World map triggers", function()
             helper.simulateAlias("map-reset-area bogus")
             assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE area_id"))
             assert.is_true(tableContains(helper.echoCalls, "[map] no such area: bogus"))
+        end)
+
+    end)
+
+    describe("map-add-note alias", function()
+
+        -- roomBySlug is a queryOne on "... FROM rooms WHERE slug = ?"; addRoomNote
+        -- ends with a "last_insert_rowid()" queryOne. Route both from one stub.
+        local function stubSlug(knownSlug, roomId, newNoteId)
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "FROM rooms WHERE slug", 1, true) then
+                    if params[1] == knownSlug then return { id = roomId } end
+                    return nil
+                end
+                if string.find(sql, "last_insert_rowid", 1, true) then
+                    return { id = newNoteId }
+                end
+                return nil
+            end
+        end
+
+        it("attaches a note to the current room when the first word isn't a slug", function()
+            taPackage.mapping = true
+            taPackage.currentRoomId = 12
+            stubSlug("no-such-slug", nil, 3)
+            helper.simulateAlias("map-add-note say komi here to open the south door")
+            local ins = helper.findDbCall("execute", "INSERT INTO room_notes")
+            assert.is_not_nil(ins)
+            assert.are.equal(12, ins.params[1])
+            assert.are.equal("say komi here to open the south door", ins.params[2])
+        end)
+
+        it("attaches to a room named by slug, stripping the slug from the note", function()
+            taPackage.mapping = false          -- by-slug works even when not mapping
+            taPackage.currentRoomId = nil
+            stubSlug("cave-11", 20, 8)
+            helper.simulateAlias("map-add-note cave-11 pull lever to disarm the trap ahead")
+            local ins = helper.findDbCall("execute", "INSERT INTO room_notes")
+            assert.is_not_nil(ins)
+            assert.are.equal(20, ins.params[1])
+            assert.are.equal("pull lever to disarm the trap ahead", ins.params[2])
+        end)
+
+        it("refuses when not anchored and no slug is given", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = nil
+            stubSlug("cave-11", 20, 8)          -- "say" won't match, so no target
+            helper.simulateAlias("map-add-note say komi here")
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO room_notes"))
+            assert.is_true(tableContains(helper.echoCalls,
+                "[map] not anchored on a room -- map first, or target one by slug:"
+                .. " map-add-note <room-slug> say komi here"))
+        end)
+
+    end)
+
+    describe("map-notes alias", function()
+
+        it("lists the current room's notes with their ids", function()
+            taPackage.mapping = true
+            taPackage.currentRoomId = 12
+            helper.mockDbRows = { { id = 4, note = "say komi to open south" },
+                                  { id = 5, note = "rest is safe here" } }
+            helper.simulateAlias("map-notes")
+            assert.is_true(tableContains(helper.echoCalls, "  #4  say komi to open south"))
+            assert.is_true(tableContains(helper.echoCalls, "  #5  rest is safe here"))
+        end)
+
+        it("lists a room named by slug", function()
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "FROM rooms WHERE slug", 1, true) then return { id = 20 } end
+                return nil
+            end
+            helper.mockDbRows = { { id = 9, note = "lever here" } }
+            helper.simulateAlias("map-notes cave-11")
+            assert.is_true(tableContains(helper.echoCalls, "[map] notes on cave-11:"))
+            assert.is_true(tableContains(helper.echoCalls, "  #9  lever here"))
+        end)
+
+        it("reports an unknown slug", function()
+            helper.mockDbOneRow = nil
+            helper.simulateAlias("map-notes bogus-room")
+            assert.is_true(tableContains(helper.echoCalls, "[map] no such room: bogus-room"))
+        end)
+
+    end)
+
+    describe("map-del-note alias", function()
+
+        it("deletes a note by id", function()
+            helper.mockExecuteReturn = 1
+            helper.simulateAlias("map-del-note 7")
+            local del = helper.findDbCall("execute", "DELETE FROM room_notes WHERE id")
+            assert.are.same({ 7 }, del.params)
+            assert.is_true(tableContains(helper.echoCalls, "[map] deleted note #7"))
+        end)
+
+        it("reports when there's no such note", function()
+            helper.mockExecuteReturn = 0
+            helper.simulateAlias("map-del-note 999")
+            assert.is_true(tableContains(helper.echoCalls, "[map] no note #999"))
         end)
 
     end)

@@ -1157,6 +1157,14 @@ local function handleRoomEntry(matches)
     taPackage.currentEntryDir = taPackage.pendingDirection
     taPackage.pendingDirection = nil
 
+    -- Surface any notes on the room we just entered, so a warning ("pull lever
+    -- here or a trap fires ahead") reaches us *before* we act -- a note we only
+    -- ever see in the report is useless in the moment. Only runs while mapping,
+    -- which is the sole time currentRoomId is trustworthy.
+    for _, n in ipairs(taPackage.db.roomNotes(roomId)) do
+        echo("[note] " .. n.note)
+    end
+
     -- While mapping, capture the room: `look` for its description, then `ex`
     -- for its exits. The `ex` reply ("Exits: ...") both ends the look capture
     -- and drives loop closure. Neither reply is a room line, so no re-entry.
@@ -1482,6 +1490,85 @@ createAlias("^map-reset-area (.+)$", function(matches)
     taPackage.coord = nil
     echo("[map] reset area " .. slug .. " (" .. tostring(removed)
         .. " rooms removed). Run map-area " .. slug .. " to re-map it.")
+end, { type = "regex" })
+
+-- Attach a freeform note to a room: `map-add-note say komi here to open the
+-- south door`. Two forms, disambiguated by the first token:
+--   map-add-note <text>          -> note goes on the room you're standing in
+--   map-add-note <slug> <text>   -> note goes on the named room (any room)
+-- The by-slug form exists because a note often describes a *remote* effect --
+-- a lever here disables a trap 20 rooms away -- so you want to annotate a room
+-- you're not standing in. It also works when mapping is off (currentRoomId is
+-- only trusted while mapping). The current-room form falls through when the
+-- first word isn't a known room slug (real slugs are hyphenated, e.g.
+-- `first-dungeon-12`, so a note starting with an ordinary word won't collide).
+createAlias("^map-add-note (.+)$", function(matches)
+    local rest = matches[2]:match("^%s*(.-)%s*$")
+    if rest == "" then
+        echo("[map] usage: map-add-note <text>   or   map-add-note <room-slug> <text>")
+        return
+    end
+    local firstTok, remainder = rest:match("^(%S+)%s+(.+)$")
+    local targetId, targetSlug, noteText
+    if firstTok then
+        local row = taPackage.db.roomBySlug(firstTok)
+        if row then
+            targetId, targetSlug, noteText = row.id, firstTok, remainder
+        end
+    end
+    if not targetId then
+        targetId = taPackage.mapping and taPackage.currentRoomId or nil
+        noteText = rest
+        if not targetId then
+            echo("[map] not anchored on a room -- map first, or target one by slug:"
+                .. " map-add-note <room-slug> " .. rest)
+            return
+        end
+    end
+    local id = taPackage.db.addRoomNote(targetId, noteText)
+    echo("[map] note #" .. tostring(id) .. " added to " .. (targetSlug or "here") .. ": " .. noteText)
+end, { type = "regex" })
+
+-- List the notes on a room, with their ids (so you can prune with map-del-note).
+-- Bare form lists the current room; `map-notes <slug>` lists a named room.
+local function echoRoomNotes(roomId, label)
+    local notes = taPackage.db.roomNotes(roomId)
+    if #notes == 0 then
+        echo("[map] no notes on " .. label)
+        return
+    end
+    echo("[map] notes on " .. label .. ":")
+    for _, n in ipairs(notes) do
+        echo("  #" .. tostring(n.id) .. "  " .. n.note)
+    end
+end
+createAlias("^map-notes$", function()
+    local roomId = taPackage.mapping and taPackage.currentRoomId or nil
+    if not roomId then
+        echo("[map] not anchored on a room -- list one by slug: map-notes <room-slug>")
+        return
+    end
+    echoRoomNotes(roomId, "here")
+end, { type = "regex" })
+createAlias("^map-notes (.+)$", function(matches)
+    local slug = matches[2]:match("^%s*(.-)%s*$")
+    local row = taPackage.db.roomBySlug(slug)
+    if not row then
+        echo("[map] no such room: " .. slug)
+        return
+    end
+    echoRoomNotes(row.id, slug)
+end, { type = "regex" })
+
+-- Prune one note by its id (from map-notes): `map-del-note 7`.
+createAlias("^map-del-note (\\d+)$", function(matches)
+    local id = tonumber(matches[2])
+    local removed = taPackage.db.deleteRoomNote(id)
+    if removed and removed > 0 then
+        echo("[map] deleted note #" .. tostring(id))
+    else
+        echo("[map] no note #" .. tostring(id))
+    end
 end, { type = "regex" })
 
 -- Mapping mode. Off by default; while on, room lines are recorded, each arrival

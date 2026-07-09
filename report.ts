@@ -75,6 +75,17 @@ for (const d of roomItemDrops) {
   if (!list.includes(d.item)) list.push(d.item);   // distinct items per room
 }
 
+// Freeform per-room notes, grouped by room, so the panel can show a lever/riddle
+// annotation right where you'd look for it. Guard the table for older DBs.
+const roomNotes = (roomGraphReady && hasTable("room_notes"))
+  ? db.prepare(`SELECT room_id, note FROM room_notes ORDER BY room_id, id`).all() as any[]
+  : [];
+const notesByRoom = new Map<number, string[]>();
+for (const n of roomNotes) {
+  if (!notesByRoom.has(n.room_id)) notesByRoom.set(n.room_id, []);
+  notesByRoom.get(n.room_id)!.push(n.note);
+}
+
 // Compact node/edge payload for the interactive map (embedded as JSON below).
 const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
@@ -82,7 +93,8 @@ const graphData = {
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
                            first_visited: r.first_visited, trap: r.trap,
                            players: playersByRoom.get(r.id) ?? [],
-                           items: itemsByRoom.get(r.id) ?? [] })),
+                           items: itemsByRoom.get(r.id) ?? [],
+                           notes: notesByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
                            lock_key: e.lock_key, lock_door: e.lock_door })),
 };
@@ -357,6 +369,8 @@ const html = `<!DOCTYPE html>
   #room-panel .rp-dir { display: inline-block; min-width: 2.4em; color: var(--blue); font-weight: 600; }
   #room-panel ul.rp-items { list-style: none; margin: 0; padding: 0; }
   #room-panel ul.rp-items li { padding: 0.15rem 0; color: var(--text); }
+  #room-panel ul.rp-notes { list-style: none; margin: 0; padding: 0; }
+  #room-panel ul.rp-notes li { padding: 0.2rem 0.5rem; margin: 0.2rem 0; color: var(--text); border-left: 3px solid #e3b341; background: rgba(227,179,65,0.08); border-radius: 2px; }
   #room-panel .rp-empty { color: var(--muted); font-style: italic; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
   .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
@@ -684,6 +698,12 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
         // Flag keys -- they're the payoff for finding a locked door's match.
         var key = /\\bkey\\b/i.test(it) ? '🔑 ' : '';
         return '<li>' + key + escapeHtml(it) + '</li>';
+      }).join('') + '</ul>';
+    }
+    if(r.notes && r.notes.length){
+      html += '<div class="rp-label">Notes</div>';
+      html += '<ul class="rp-notes">' + r.notes.map(function(n){
+        return '<li>' + escapeHtml(n) + '</li>';
       }).join('') + '</ul>';
     }
     html += '<div class="rp-label">Exits</div>';

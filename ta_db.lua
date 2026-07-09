@@ -97,6 +97,18 @@ for _, col in ipairs({ "lock_key", "lock_door" }) do
     end
 end
 
+-- Freeform per-room annotations. Unlike locks/traps (which live on the exit or
+-- room as structured columns), a note captures human understanding that has no
+-- clean relational shape -- notably remote couplings the graph can't express:
+-- "pull lever here or a trap fires 20 rooms ahead", "say komi here to open the
+-- south door". Many notes may accumulate on one room; each is one row.
+db:execute([[CREATE TABLE IF NOT EXISTS room_notes (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_id    INTEGER NOT NULL REFERENCES rooms(id),
+  note       TEXT NOT NULL,
+  created_at TEXT NOT NULL
+)]])
+
 -- Last known room per character, so `just report` can mark "you are here". A
 -- character maps into the shared DB under its own name; last-known (not live)
 -- is the intended semantics — it persists where a character logged off.
@@ -423,6 +435,28 @@ end
 function TaDb.setRoomTrap(roomId, trap)
     db:execute("UPDATE rooms SET trap = ? WHERE id = ?", trap, roomId)
     dbLog("[DB\xE2\x86\x92rooms] trap: #" .. tostring(roomId) .. " " .. tostring(trap))
+end
+
+-- Attach a freeform note to a room. Notes accumulate (never overwrite), so a
+-- lever room can gather several discoveries over time. Returns the new note id.
+function TaDb.addRoomNote(roomId, note)
+    db:execute("INSERT INTO room_notes (room_id, note, created_at) VALUES (?, ?, ?)",
+        roomId, note, now())
+    local row = db:queryOne("SELECT last_insert_rowid() AS id")
+    local id = row and row.id
+    dbLog("[DB\xE2\x86\x92room_notes] +#" .. tostring(id) .. " room=" .. tostring(roomId))
+    return id
+end
+
+-- Every note on a room, oldest first, as { id, note, created_at } rows.
+function TaDb.roomNotes(roomId)
+    return db:query("SELECT id, note, created_at FROM room_notes WHERE room_id = ? ORDER BY id", roomId) or {}
+end
+
+-- Remove one note by its id. Returns the number of rows deleted (0 if no such
+-- note), so the caller can tell the user whether anything was pruned.
+function TaDb.deleteRoomNote(id)
+    return db:execute("DELETE FROM room_notes WHERE id = ?", id)
 end
 
 -- Coordinate-based identity: the one room in `areaId` with this display name
