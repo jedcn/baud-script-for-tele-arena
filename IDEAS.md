@@ -231,6 +231,25 @@ X's exit-set is known (ex captured); skip the guard otherwise. Reach for this if
 incidents keep happening after the per-trigger fixes — decide once we've mapped
 ~2 new regions cleanly (if they're clean, the per-trigger fixes sufficed).
 
+### Cosmetic: de-collide overlapping rooms on the rendered map
+
+Two topologically-distinct rooms can dead-reckon onto the same grid cell, so the
+World Map renders them on top of each other. **The underlying data is correct —
+this is purely cosmetic**, so there's no rush and nothing to delete/merge.
+
+Known instance: **town-sewers-145 (id 508)** and **town-sewers-167 (id 532)** both
+land at `(11,1,-3)`. 145 is 140's NE dead-end (`{sw}` back only); 167 is 160's NW
+through-room (`{ne,se}`). They share no edge — only the dead-reckoned coordinate.
+Verified in-game that 140 genuinely has a NE exit, and the mapper can't mis-merge
+them (identity is by exit-set; coordinate-only matching was removed in `aa16520`).
+
+The fix belongs in the **renderer** (`report.ts`), not the DB: `report.ts` ignores
+stored `x/y/z` and re-derives layout from topology + relaxation, so the overlap is
+a relaxation artifact. Detect when two rooms resolve to the same layout cell and
+nudge one into an adjacent free cell for display only. Do NOT edit stored
+coordinates — each room's coordinate is individually-correct dead-reckoning, and
+changing one corrupts the cursor future moves reckon from.
+
 ## World Map Improvements
 
 Two related upgrades to how the World Map presents rooms.
