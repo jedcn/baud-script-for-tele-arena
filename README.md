@@ -9,8 +9,9 @@ on, every room you enter is recorded — its name, description, exits, and an
 `(x, y, z)` coordinate dead-reckoned from your moves (north is +y, east is +x,
 up is +z). Identical rooms (every cave is named "cave") are told apart by that
 coordinate, so loops close correctly instead of collapsing into one room. Traps
-and locked doors are captured as you hit them. The map is stored in
-`tele-arena.db` and rendered by `just report`.
+and locked doors are captured as you hit them, and you can attach freeform
+[room notes](#room-notes) for mechanics the graph can't express. The map is
+stored in `tele-arena.db` and rendered by `just report`.
 
 Move with the normal direction aliases — `n s e w ne nw se sw u d`. While
 mapping, each move both walks you in-game and advances your position on the map.
@@ -79,6 +80,38 @@ on a room that belongs to the old area, it will move that room too.
   `map-reset-area first-dungeon`. Leaves every other area intact. Follow it with
   `map-area <slug>` to begin re-mapping.
 
+## Room notes
+
+Some rooms have mechanics the graph can't express as structured data — a riddle
+solved by typing `say komi` that slides open the local doors, or a **remote**
+coupling like a lever here that disables a trap 20 rooms away, or a stone here
+that opens a door somewhere else. Locks and traps are stored as columns on the
+exit/room, but these couplings have no clean relational shape (and when you act,
+you often don't even know the far room's id). Capture them as freeform notes
+instead — prose that records your understanding of what to do and why.
+
+- **`map-add-note <text>`** — attach a note to the room you're standing in,
+  e.g. `map-add-note say komi here to open the S and E doors`.
+
+- **`map-add-note <room-slug> <text>`** — attach a note to **any** room by slug,
+  e.g. `map-add-note cave-11 pull lever here or a trap fires 20 rooms ahead`.
+  Use this to annotate the *far* room a remote effect lands in — and note it
+  works even when mapping is off. The two forms are told apart by whether the
+  first word is a known room slug; real slugs are hyphenated (`first-dungeon-12`),
+  so an ordinary note that happens to start with a word like "say" won't collide.
+
+- **`map-notes`** / **`map-notes <slug>`** — list a room's notes, each with an id.
+
+- **`map-del-note <id>`** — remove one note by its id (from `map-notes`).
+
+Notes **accumulate** (a new one never overwrites an old one), so a room can
+gather several discoveries over time. They surface two ways: on **room entry**
+they echo as `[note] …` *before* you act — so a warning like "pull lever or a
+trap fires ahead" reaches you in the moment, not just after — and in the
+`just report` room panel as a highlighted Notes list. (Entry echo only fires
+while mapping, the one time your position is known; the by-slug form exists so
+you can still annotate a room you aren't standing in.)
+
 ## Viewing the map
 
 - **`just report`** — regenerate and open `report.html`. The World Map is an
@@ -90,3 +123,6 @@ on a room that belongs to the old area, it will move that room too.
     joins, and the key)
   - **yellow** — "you are here" (a character's last known room while mapping)
   - **dashed octagon** — a known but unexplored exit (a frontier to walk)
+
+  Any [room notes](#room-notes) you've added show in the clicked room's detail
+  panel under **Notes**.
