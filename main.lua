@@ -1700,6 +1700,9 @@ createTrigger("^Several crossbow bolts fire from holes in the walls, striking yo
 createTrigger("^Several large stones fall on you from above!$",
     function() handleTrap("falling rocks") end, { type = "regex" })
 
+createTrigger("^A huge stone block slams down on you from above!$",
+    function() handleTrap("falling block") end, { type = "regex" })
+
 -- A trap door drops us to the room directly below without a directional move.
 -- Tag the room we fell from with the trap, and — crucially — prime a downward
 -- move so the destination brief is dead-reckoned as z-1 (right floor, directly

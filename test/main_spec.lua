@@ -2596,6 +2596,9 @@ describe("World map triggers", function()
             helper.simulateLine("Several large stones fall on you from above!")
             assert.are.equal("falling rocks", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
             helper.clearDbCalls()
+            helper.simulateLine("A huge stone block slams down on you from above!")
+            assert.are.equal("falling block", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
+            helper.clearDbCalls()
             helper.simulateLine("You just fell through a trap door in the floor!")
             assert.are.equal("trap door", helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params[1])
         end)
@@ -7055,6 +7058,7 @@ describe("Attack badges", function()
             "A spiked trap catches your foot and pain shoots up your leg!",
             "Several crossbow bolts fire from holes in the walls, striking you!",
             "Several large stones fall on you from above!",
+            "A huge stone block slams down on you from above!",
         }
 
         before_each(function()
