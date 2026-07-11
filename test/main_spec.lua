@@ -639,6 +639,49 @@ describe("Tele-Arena triggers", function()
     end)
 
     -- =========================================================================
+    -- Encumberance trigger
+    -- =========================================================================
+
+    describe("Encumberance trigger", function()
+
+        it("captures current and max encumberance", function()
+            helper.simulateLine("Encumberance: 1000 / 1000")
+            local current, max = getEncumberance()
+            assert.are.equal(1000, current)
+            assert.are.equal(1000, max)
+        end)
+
+        it("captures when current is below max", function()
+            helper.simulateLine("Encumberance: 250 / 1000")
+            local current, max = getEncumberance()
+            assert.are.equal(250, current)
+            assert.are.equal(1000, max)
+        end)
+
+        it("computes the percentage of max", function()
+            helper.simulateLine("Encumberance: 750 / 1000")
+            assert.are.equal(75, getEncumberancePercent())
+        end)
+
+        it("reports 100% when fully encumbered", function()
+            helper.simulateLine("Encumberance: 1000 / 1000")
+            assert.are.equal(100, getEncumberancePercent())
+        end)
+
+        it("percentage is nil when encumberance is unknown", function()
+            assert.is_nil(getEncumberancePercent())
+        end)
+
+        it("does not fire on unrelated lines", function()
+            helper.simulateLine("Vitality:     26 / 26")
+            local current, max = getEncumberance()
+            assert.is_nil(current)
+            assert.is_nil(max)
+        end)
+
+    end)
+
+    -- =========================================================================
     -- Status bar segments
     -- =========================================================================
 
@@ -3641,6 +3684,8 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.name = "Tojolias"
             taPackage.character.class = "Warrior"
             taPackage.character.vitalityCurrent = 313
+            taPackage.character.encumberanceCurrent = 750
+            taPackage.character.encumberanceMax = 1000
             taPackage.character.gold = 2900
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
@@ -3659,6 +3704,7 @@ describe("ring-gong-and-fight-in-arena", function()
                     .. "- XP Until Level Up: 195,554\n"
                     .. "- XP: 620,046\n"
                     .. "- HP: 313\n"
+                    .. "- Encumberance: 75%\n"
                     .. "- Gold: 2,900",
                 call.options.body)
         end)

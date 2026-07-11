@@ -70,6 +70,25 @@ function getVitality()
     return taPackage.character.vitalityCurrent, taPackage.character.vitalityMax
 end
 
+-- Encumberance is the game's carried-weight gauge, printed on the "st" sheet as
+-- "current / max" (e.g. 1000 / 1000 = fully loaded). Stored like Vitality/Mana.
+function setEncumberance(current, max)
+    taPackage.character.encumberanceCurrent = tonumber(current)
+    taPackage.character.encumberanceMax = tonumber(max)
+end
+
+function getEncumberance()
+    return taPackage.character.encumberanceCurrent, taPackage.character.encumberanceMax
+end
+
+-- Encumberance as a whole-number percentage of max (0-100+), or nil if either
+-- value is missing or max is 0. Display-only helper for notifications.
+function getEncumberancePercent()
+    local current, max = getEncumberance()
+    if not current or not max or max == 0 then return nil end
+    return math.floor((current / max) * 100 + 0.5)
+end
+
 function setMana(current, max)
     taPackage.character.manaCurrent = tonumber(current)
     taPackage.character.manaMax = tonumber(max)
@@ -512,6 +531,10 @@ end, { type = "regex" })
 
 createTrigger("^Mana:\\s+(\\d+) / (\\d+)$", function(matches)
     setMana(matches[2], matches[3])
+end, { type = "regex" })
+
+createTrigger("^Encumberance:\\s+(\\d+) / (\\d+)$", function(matches)
+    setEncumberance(matches[2], matches[3])
 end, { type = "regex" })
 
 createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
@@ -2381,6 +2404,8 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             end
             lines[#lines + 1] = "- XP: " .. formatWithCommas(xp)
             lines[#lines + 1] = "- HP: " .. (hp or "?")
+            local encPct = getEncumberancePercent()
+            lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
             lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
             sendNtfy("2nd Arena Check-In", table.concat(lines, "\n"), true)
         end
