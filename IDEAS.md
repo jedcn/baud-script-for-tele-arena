@@ -56,6 +56,46 @@ Pages converted so far:
 - `PROMOTIONS.md` — stat gains at promotion for all 8 classes
 - `PROMOTED_EXP_CHART.md` — full 105-level post-promotion XP table
 
+## Post-Promotion XP Tables
+
+The status bar's XP-to-next-level readout (`getXpForNextLevel` →
+`xpThresholds` in `main.lua`) only knows the **pre-promotion** ladder
+(levels 1–25), sourced from `docs/help/EXP1.md` / `EXP2.md`. At level 25 a
+character can promote onto a completely separate, renumbered ladder that runs
+to level 105 (`docs/shrine/PROMOTED_EXP_CHART.md`). We have no tables for it,
+so a promoted character's status bar would be stuck showing `/ max` forever.
+
+**Promotion swaps the class name** (not a mode flag). Per
+`docs/shrine/PROMOTIONS.md`: Warrior→Knight, Hunter→Beast Master,
+Archer→Master Archer, Rogue→Blackguard, Acolyte→High Priest, Druid→Arch Druid,
+Sorceror→Arch Magus, Necrolyte→Necromancer. The game prints the new name on the
+`Class:` line, so `getClass()` returns it and it flows straight into the status
+bar — no other plumbing needed once the tables exist.
+
+Scope, when a character actually nears promotion:
+
+1. **Fix the class-capture regex first (latent bug).** `main.lua:587` uses
+   `^Class:\s+(\S+)$` — a single non-whitespace token. Five of the promoted
+   names contain a space (`High Priest`, `Arch Druid`, `Arch Magus`,
+   `Master Archer`, `Beast Master`), so the line **won't match at all** and
+   `getClass()` would keep returning the stale pre-promotion name. Widen to
+   `^Class:\s+(.+?)$` (matching the `Weapon:` trigger just below it) and add a
+   test with `Class: High Priest`.
+2. **Add 8 promoted tables to `xpThresholds`** from `PROMOTED_EXP_CHART.md`.
+   The chart's 4 columns expand to 8 keys via the existing alias pattern
+   (`Necrolyte = Acolyte`): `High Priest`/`Necromancer` share a column,
+   `Arch Druid`/`Arch Magus` share, `Knight`/`Master Archer`/`Beast Master`
+   share, and `Blackguard` is alone — so 4 literal tables + 4 aliases. Include
+   entries up to level 105 or the bar hits `/ max` prematurely.
+3. Nothing else — `getXpForNextLevel`, `xpColor`, and the "to go" formatting
+   all key off `getClass()` and just work once the name flows through.
+
+**Not needed now (YAGNI).** No character has ever promoted; the current ceiling
+is level 15 — promotion isn't possible until 25. The exact in-game format of a
+promoted `Class:` line is also unconfirmed (no log has one), so it's worth
+eyeballing one real line before trusting the regex widening. Build this when a
+character is actually approaching level 25.
+
 ## Scrape In-Game Help
 
 Automate walking through the game's help system:
