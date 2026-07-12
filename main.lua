@@ -1654,6 +1654,13 @@ createTrigger("^The (.+) dodged your attack!$", function(matches)
     )
 end, { type = "regex" })
 
+-- Forward declaration: the incoming-damage handlers below need to re-evaluate
+-- the flee decision the moment HP drops, but checkFleeArena is defined much
+-- later (alongside the other arena-state helpers). Declaring it here and
+-- assigning to it later (see `function checkFleeArena()`, no `local`) lets the
+-- damage triggers close over the eventual definition.
+local checkFleeArena
+
 -- All incoming-damage lines do the same three things: subtract the hit from our
 -- vitality, badge "TOOK N", and record the attack. The generic "attacked you ...
 -- for N damage!" phrasing covers ordinary swings, but many enemies deal damage
@@ -1685,6 +1692,13 @@ for _, pattern in ipairs(incomingDamagePatterns) do
         end
         incomingBadge("TOOK " .. damage)
         taPackage.db.recordMonsterAttack(monster, "hit", damage)
+        -- React to the damage itself, not just to our own swings. Flee was
+        -- otherwise only checked when one of our attacks resolved, so a burst of
+        -- incoming damage during a gap in our attack cycle (e.g. a swing bounced
+        -- on "physically exhausted" and is waiting out its 30s retry) could push
+        -- us well below the flee threshold yet sit there taking hits until the
+        -- next swing finally landed.
+        checkFleeArena()
     end, { type = "regex" })
 end
 
@@ -2308,7 +2322,9 @@ end
 -- a cave bear's worst round (23) with a small margin.
 local FLEE_HP_FRACTION = 0.75
 local FLEE_HP_FLOOR = 25
-local function checkFleeArena()
+-- Assigns to the forward-declared local above (no `local` keyword) so the
+-- incoming-damage triggers, defined earlier in the file, can call it.
+function checkFleeArena()
     if taPackage.arenaState ~= "fighting" then return false end
     local hp = taPackage.character.vitalityCurrent
     local maxHp = taPackage.character.vitalityMax

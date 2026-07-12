@@ -4257,6 +4257,35 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(1, count)
         end)
 
+        -- Special-verb damage lines ("breathed flames", boulder, bite, charge, …)
+        -- only match the incoming-damage handler that subtracts HP; unlike the
+        -- generic "attacked you" phrasing they have no counter-attack trigger, so
+        -- before the fix nothing re-evaluated the flee decision when one landed. A
+        -- chimera's flame breath could then drop HP well below the flee threshold
+        -- and just sit there taking hits until our own next swing resolved — which,
+        -- if that swing had bounced on exhaustion, was a full 30s away.
+        it("flees on a special-verb hit (breathed flames) that crosses the threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "chimera"
+            setHP(100, 100)
+            -- First breath (TOOK 23) → 77, still above the 75-HP threshold.
+            helper.simulateLine("The chimera breathed flames at you for 23 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            -- Second breath (TOOK 42) → 35, below threshold → flee immediately,
+            -- without waiting for one of our own swings to resolve.
+            helper.simulateLine("The chimera breathed flames at you for 42 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("does not flee on a special-verb hit while HP stays above the threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "chimera"
+            setHP(90, 100)
+            helper.simulateLine("The chimera breathed flames at you for 10 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
     end)
 
     describe("fleeing and healing", function()
