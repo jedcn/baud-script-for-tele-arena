@@ -793,6 +793,36 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("/ max",    segments[7].text)
         end)
 
+        it("collapses XP to '<remaining> to go' once over 1,000,000", function()
+            helper.simulateLine("Class:        Acolyte")
+            helper.simulateLine("Experience:   1622269")
+            local segments = capturedFn()
+            -- No MP: name[1], HP:[2..4]. Compact XP tail: label[5], remaining[6].
+            assert.are.equal("XP:", segments[5].text)
+            assert.are.equal("120,531 to go", segments[6].text)  -- 1,742,800 - 1,622,269
+            assert.are.equal("cyan", segments[6].fg)
+        end)
+
+        it("shifts Status/Gold in after the compact XP tail over 1,000,000", function()
+            helper.simulateLine("Class:        Acolyte")
+            helper.simulateLine("Experience:   1622269")
+            helper.simulateLine("Status:       Healthy")
+            helper.simulateLine("You are carrying 557 gold crowns.")
+            local segments = capturedFn()
+            assert.are.equal("Status:",  segments[7].text)
+            assert.are.equal("Healthy",  segments[8].text)
+            assert.are.equal("Gold:",    segments[9].text)
+            assert.are.equal("557",      segments[10].text)
+        end)
+
+        it("keeps the full XP reading at or below 1,000,000", function()
+            helper.simulateLine("Class:        Acolyte")
+            helper.simulateLine("Experience:   972800")  -- level 13, under 1M
+            local segments = capturedFn()
+            assert.are.equal("972,800",   segments[6].text)
+            assert.are.equal("/ 1,315,900", segments[7].text)
+        end)
+
         it("shows captured Status value", function()
             helper.simulateLine("Status:       Healthy")
             local segments = capturedFn()

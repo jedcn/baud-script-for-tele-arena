@@ -1876,23 +1876,36 @@ local function status()
         table.insert(segments, { text = manaCurrent and commafy(manaCurrent) or "?", fg = "cyan" })
         table.insert(segments, { text = "/ " .. commafy(manaMax), fg = "cyan" })
     end
-    local tail = {
-        { text = "XP:" },
-        { text = xp and commafy(xp) or "?", fg = xpColor(xp, getClass()) },
-        {
-            text = xp and ("/ " .. (nextLevelXp and commafy(nextLevelXp) or "max")) or "",
-            fg = "white"
-        },
-        {
-            text = (xp and nextLevelXp) and ("(" .. commafy(nextLevelXp - xp) .. ")") or "",
-            fg = "cyan"
-        },
+    -- Past 1,000,000 XP the full "1,622,269 / 1,742,800 (120,531)" reading gets
+    -- too wide, so collapse it to just the remaining "<xp remaining> to go".
+    local tail
+    if xp and xp > 1000000 and nextLevelXp then
+        tail = {
+            { text = "XP:" },
+            { text = commafy(nextLevelXp - xp) .. " to go", fg = "cyan" },
+        }
+    else
+        tail = {
+            { text = "XP:" },
+            { text = xp and commafy(xp) or "?", fg = xpColor(xp, getClass()) },
+            {
+                text = xp and ("/ " .. (nextLevelXp and commafy(nextLevelXp) or "max")) or "",
+                fg = "white"
+            },
+            {
+                text = (xp and nextLevelXp) and ("(" .. commafy(nextLevelXp - xp) .. ")") or "",
+                fg = "cyan"
+            },
+        }
+    end
+    local tailRest = {
         { text = "Status:" },
         { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },
         { text = "Gold:" },
         { text = gold,       fg = "yellow" },
     }
     for _, seg in ipairs(tail) do table.insert(segments, seg) end
+    for _, seg in ipairs(tailRest) do table.insert(segments, seg) end
     return segments
 end
 
