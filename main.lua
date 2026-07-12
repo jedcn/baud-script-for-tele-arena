@@ -3073,14 +3073,6 @@ createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) da
     end
 end, { type = "regex" })
 
-createAlias("^cast\\.ice.dart (.+)$", function(matches)
-    send("cast komiza " .. matches[2])
-end, { type = "regex" })
-
-createAlias("^cast\\.fire.dart (.+)$", function(matches)
-    send("cast toduza " .. matches[2])
-end, { type = "regex" })
-
 createOutboundTrigger("^cast komiza ", function()
     local current = taPackage.character.manaCurrent
     if current then
@@ -3138,32 +3130,6 @@ createOutboundTrigger("^cast motu ", function()
     taPackage.lastSpellCast = "motu"
 end, { type = "regex" })
 
--- Heal spells, weakest to strongest: motu (Minor Heal, 1 MP) via
--- cast.minor.heal and kamotu (Heal, 2 MP) via cast.heal. Each has a self form
--- (no arg → the caster) and a targeted form. Gimotu (Greater Heal, 4 MP,
--- level 8) will join this family as cast.greater.heal once we can learn it.
-createAlias("^cast\\.minor\\.heal$", function()
-    local name = taPackage.character.name
-    if name then
-        send("cast motu " .. name:lower())
-    end
-end, { type = "regex" })
-
-createAlias("^cast\\.minor\\.heal (.+)$", function(matches)
-    send("cast motu " .. matches[2])
-end, { type = "regex" })
-
-createAlias("^cast\\.heal$", function()
-    local name = taPackage.character.name
-    if name then
-        send("cast kamotu " .. name:lower())
-    end
-end, { type = "regex" })
-
-createAlias("^cast\\.heal (.+)$", function(matches)
-    send("cast kamotu " .. matches[2])
-end, { type = "regex" })
-
 -- =========================================================================
 -- Spell-name translation aliases (Acolyte / High Priest)
 -- =========================================================================
@@ -3173,8 +3139,7 @@ end, { type = "regex" })
 --
 -- Targeted spells take a <target>. Area spells (translation contains "area")
 -- hit everyone in the room and take no target, so their alias ends in `-area`
--- and sends the bare `cast <spell>`. The older cast.minor.heal / cast.heal
--- aliases above additionally provide a self-cast (no-arg) form for those two.
+-- and sends the bare `cast <spell>`.
 
 -- Translation alias -> intoned name, for spells that take a target.
 local castTranslations = {

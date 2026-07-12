@@ -5396,82 +5396,6 @@ describe("errand vs. in-flight gong summon", function()
 
 end)
 
-describe("cast.heal alias", function()
-
-    before_each(function()
-        helper.resetAll()
-        dofile("main.lua")
-    end)
-
-    it("sends cast kamotu <character name> with no argument", function()
-        taPackage.character.name = "Pelayo"
-        helper.simulateAlias("cast.heal")
-        assert.are.equal("cast kamotu pelayo", helper.sendCalls[1])
-    end)
-
-    it("lowercases the character name", function()
-        taPackage.character.name = "Tojolias"
-        helper.simulateAlias("cast.heal")
-        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
-    end)
-
-    it("sends nothing when no argument and character name is unknown", function()
-        taPackage.character.name = nil
-        helper.simulateAlias("cast.heal")
-        assert.are.equal(0, #helper.sendCalls)
-    end)
-
-    it("sends cast kamotu <target> with one argument", function()
-        helper.simulateAlias("cast.heal tojolias")
-        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
-    end)
-
-    it("sends cast kamotu <target> regardless of character name", function()
-        taPackage.character.name = "Pelayo"
-        helper.simulateAlias("cast.heal tojolias")
-        assert.are.equal("cast kamotu tojolias", helper.sendCalls[1])
-    end)
-
-end)
-
-describe("cast.minor.heal alias", function()
-
-    before_each(function()
-        helper.resetAll()
-        dofile("main.lua")
-    end)
-
-    it("sends cast motu <character name> with no argument", function()
-        taPackage.character.name = "Pelayo"
-        helper.simulateAlias("cast.minor.heal")
-        assert.are.equal("cast motu pelayo", helper.sendCalls[1])
-    end)
-
-    it("lowercases the character name", function()
-        taPackage.character.name = "Tojolias"
-        helper.simulateAlias("cast.minor.heal")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
-    end)
-
-    it("sends nothing when no argument and character name is unknown", function()
-        taPackage.character.name = nil
-        helper.simulateAlias("cast.minor.heal")
-        assert.are.equal(0, #helper.sendCalls)
-    end)
-
-    it("sends cast motu <target> with one argument", function()
-        helper.simulateAlias("cast.minor.heal tojolias")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
-    end)
-
-    it("sends cast motu <target> regardless of character name", function()
-        taPackage.character.name = "Pelayo"
-        helper.simulateAlias("cast.minor.heal tojolias")
-        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
-    end)
-
-end)
-
 describe("spell-name translation aliases", function()
 
     before_each(function()
@@ -5531,34 +5455,6 @@ describe("spell-name translation aliases", function()
         helper.simulateAlias("cast-minor-heal tojolias")
         assert.are.equal(1, #helper.sendCalls)
         assert.are.equal("cast motu tojolias", helper.sendCalls[1])
-    end)
-
-end)
-
-describe("cast.ice.dart alias", function()
-
-    before_each(function()
-        helper.resetAll()
-        dofile("main.lua")
-    end)
-
-    it("sends cast komiza <target>", function()
-        helper.simulateAlias("cast.ice.dart tojolias")
-        assert.are.equal("cast komiza tojolias", helper.sendCalls[1])
-    end)
-
-end)
-
-describe("cast.fire.dart alias", function()
-
-    before_each(function()
-        helper.resetAll()
-        dofile("main.lua")
-    end)
-
-    it("sends cast toduza <target>", function()
-        helper.simulateAlias("cast.fire.dart tojolias")
-        assert.are.equal("cast toduza tojolias", helper.sendCalls[1])
     end)
 
 end)
