@@ -5472,6 +5472,69 @@ describe("cast.minor.heal alias", function()
 
 end)
 
+describe("spell-name translation aliases", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    -- Targeted spells: alias <target> -> cast <intoned> <target>.
+    local targeted = {
+        ["cast-minor-heal"]       = "motu",
+        ["cast-heal"]             = "kamotu",
+        ["cast-minor-hurt"]       = "tami",
+        ["cast-cure-poison"]      = "dobudani",
+        ["cast-greater-heal"]     = "gimotu",
+        ["cast-hurt"]             = "katami",
+        ["cast-deific-heal"]      = "kusamotu",
+        ["cast-greater-hurt"]     = "gitami",
+        ["cast-remove-paralysis"] = "takumi",
+        ["cast-deific-hurt"]      = "kusatami",
+        ["cast-restore-stats"]    = "ganazi",
+    }
+
+    for alias, spell in pairs(targeted) do
+        it(alias .. " <target> sends cast " .. spell .. " <target>", function()
+            helper.simulateAlias(alias .. " tojolias")
+            assert.are.equal("cast " .. spell .. " tojolias", helper.sendCalls[1])
+            assert.are.equal(1, #helper.sendCalls)
+        end)
+    end
+
+    -- Area spells: alias (no target) -> cast <intoned>.
+    local area = {
+        ["cast-minor-heal-area"]   = "motumaru",
+        ["cast-heal-area"]         = "kamotumaru",
+        ["cast-cure-poison-area"]  = "dobudanimaru",
+        ["cast-greater-heal-area"] = "gimotumaru",
+        ["cast-deific-heal-area"]  = "kusamotumaru",
+    }
+
+    for alias, spell in pairs(area) do
+        it(alias .. " sends bare cast " .. spell, function()
+            helper.simulateAlias(alias)
+            assert.are.equal("cast " .. spell, helper.sendCalls[1])
+            assert.are.equal(1, #helper.sendCalls)
+        end)
+    end
+
+    -- The area alias must not also fire the same-stem targeted alias, and
+    -- vice-versa (they differ only by a trailing "-area" vs a space + target).
+    it("does not fire the targeted alias for an area cast", function()
+        helper.simulateAlias("cast-minor-heal-area")
+        assert.are.equal(1, #helper.sendCalls)
+        assert.are.equal("cast motumaru", helper.sendCalls[1])
+    end)
+
+    it("does not fire the area alias for a targeted cast", function()
+        helper.simulateAlias("cast-minor-heal tojolias")
+        assert.are.equal(1, #helper.sendCalls)
+        assert.are.equal("cast motu tojolias", helper.sendCalls[1])
+    end)
+
+end)
+
 describe("cast.ice.dart alias", function()
 
     before_each(function()

@@ -3165,6 +3165,54 @@ createAlias("^cast\\.heal (.+)$", function(matches)
 end, { type = "regex" })
 
 -- =========================================================================
+-- Spell-name translation aliases (Acolyte / High Priest)
+-- =========================================================================
+-- The spellbook uses opaque intoned names (motu, gitami, kusamotu, ...). These
+-- aliases let you cast by plain English instead: `cast-greater-heal foo` sends
+-- `cast gimotu foo`. Full list and translations: docs/shrine/SPELLS.md.
+--
+-- Targeted spells take a <target>. Area spells (translation contains "area")
+-- hit everyone in the room and take no target, so their alias ends in `-area`
+-- and sends the bare `cast <spell>`. The older cast.minor.heal / cast.heal
+-- aliases above additionally provide a self-cast (no-arg) form for those two.
+
+-- Translation alias -> intoned name, for spells that take a target.
+local castTranslations = {
+    ["cast-minor-heal"]       = "motu",
+    ["cast-heal"]             = "kamotu",
+    ["cast-minor-hurt"]       = "tami",
+    ["cast-cure-poison"]      = "dobudani",
+    ["cast-greater-heal"]     = "gimotu",
+    ["cast-hurt"]             = "katami",
+    ["cast-deific-heal"]      = "kusamotu",
+    ["cast-greater-hurt"]     = "gitami",
+    ["cast-remove-paralysis"] = "takumi",
+    ["cast-deific-hurt"]      = "kusatami",
+    ["cast-restore-stats"]    = "ganazi",
+}
+
+for alias, spell in pairs(castTranslations) do
+    createAlias("^" .. alias .. " (.+)$", function(matches)
+        send("cast " .. spell .. " " .. matches[2])
+    end, { type = "regex" })
+end
+
+-- Area spells impact everyone in the room; no target argument.
+local castAreaTranslations = {
+    ["cast-minor-heal-area"]   = "motumaru",
+    ["cast-heal-area"]         = "kamotumaru",
+    ["cast-cure-poison-area"]  = "dobudanimaru",
+    ["cast-greater-heal-area"] = "gimotumaru",
+    ["cast-deific-heal-area"]  = "kusamotumaru",
+}
+
+for alias, spell in pairs(castAreaTranslations) do
+    createAlias("^" .. alias .. "$", function()
+        send("cast " .. spell)
+    end, { type = "regex" })
+end
+
+-- =========================================================================
 -- Kill a single target
 -- =========================================================================
 
