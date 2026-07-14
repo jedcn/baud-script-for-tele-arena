@@ -1680,6 +1680,7 @@ local incomingDamagePatterns = {
     "^The (.+) viciously bit you for (\\d+) damage!$",
     "^The (.+) lashed out with its tail for (\\d+) damage!$",
     "^The (.+) charged you for (\\d+) damage!$",
+    "^The (.+) expelled a ball of fire at you for (\\d+) damage!$",
 }
 
 for _, pattern in ipairs(incomingDamagePatterns) do

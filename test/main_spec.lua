@@ -403,6 +403,14 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(80, max)
         end)
 
+        it("reduces vitality for a hydra's fireball", function()
+            helper.simulateLine("Vitality:    100 / 100")
+            helper.simulateLine("The hydra expelled a ball of fire at you for 78 damage!")
+            local current, max = getVitality()
+            assert.are.equal(22, current)
+            assert.are.equal(100, max)
+        end)
+
         it("ignores a boulder thrown at another player", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
@@ -7082,6 +7090,10 @@ describe("Attack badges", function()
 
     it("badges a minotaur chieftain's charge special attack", function()
         assertIncomingHit("The minotaur chieftain charged you for 42 damage!", " TOOK 42 ")
+    end)
+
+    it("badges a hydra's fireball special attack", function()
+        assertIncomingHit("The hydra expelled a ball of fire at you for 78 damage!", " TOOK 78 ")
     end)
 
     it("does not badge a special attack that lands on a party member", function()
