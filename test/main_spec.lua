@@ -4343,6 +4343,15 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("fighting", taPackage.arenaState)
         end)
 
+        it("subtracts HP on a flame giant's blast of flame", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "flame giant"
+            setHP(500, 500)
+            helper.simulateLine("The flame giant exhaled a blast of flame at you for 388 damage!")
+            local current = getVitality()
+            assert.are.equal(112, current)
+        end)
+
     end)
 
     describe("fleeing and healing", function()
