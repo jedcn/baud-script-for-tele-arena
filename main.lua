@@ -500,6 +500,16 @@ reRollBuilds.halfOgreWarrior = function(s)
     return accepted, reRollStatSummary(s)
 end
 
+-- Half-Ogre Hunter: simple hard floors — Phy >= 28 AND Sta >= 29 AND Agi >= 15,
+-- other stats ignored. Max stats are Phy=29 Sta=30 Agi=17, so this accepts up to
+-- one point below max on the two physicals (mirroring the Warrior build) and keeps
+-- Agi in the 15-29 attack tier. Vitality is not matched — it is fully derived from
+-- Stamina.
+reRollBuilds.halfOgreHunter = function(s)
+    local accepted = s.physique >= 28 and s.stamina >= 29 and s.agility >= 15
+    return accepted, reRollStatSummary(s)
+end
+
 -- A normalized, color-coded badge echoed right after a combat line so the
 -- result doesn't get lost in the fast scroll of party/monster chatter. Both
 -- badges share the same bold, padded, near-white block so they read as a
@@ -1932,6 +1942,13 @@ end, { type = "regex" })
 
 createAlias("^re-roll-half-ogre-warrior$", function()
     taPackage.reRollMatcher = reRollBuilds.halfOgreWarrior
+    taPackage.reRolling = true
+    reRollResetStats()
+    send("status")
+end, { type = "regex" })
+
+createAlias("^re-roll-half-ogre-hunter$", function()
+    taPackage.reRollMatcher = reRollBuilds.halfOgreHunter
     taPackage.reRolling = true
     reRollResetStats()
     send("status")

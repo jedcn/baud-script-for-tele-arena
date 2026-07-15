@@ -29,6 +29,20 @@ AND Agility >= 15. No deficit math; Int, Kno, and Cha are ignored entirely.
 
 ---
 
+## Half-Ogre Hunter
+
+**Alias:** `re-roll-half-ogre-hunter` (stop with `re-roll-stop`)
+
+**Max stats:** Int=14 Kno=14 Phy=29 Sta=30 Agi=17 Cha=13
+
+**Approach:** Simple hard floors — reroll until Physique >= 28 AND Stamina >= 29
+AND Agility >= 15. No deficit math; Int, Kno, and Cha are ignored entirely.
+This mirrors the Half-Ogre Warrior recipe: accept up to one point below max on the
+two physical stats (Phy caps at 29, Sta at 30) and keep Agility in the 15-29 attack
+tier. Vitality is never matched — it is fully derived from Stamina.
+
+---
+
 ## Dwarf Acolyte
 
 **Max stats:** Int=20 Kno=21 Phy=20 Sta=22 Agi=17 Cha=17
