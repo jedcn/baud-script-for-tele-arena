@@ -585,6 +585,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
         taPackage.reRollTimerPending = false
         echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
+        sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
     else
         local time = os.date("%H:%M:%S")
         echo("[re-roll] #" .. n .. " at " .. time .. " — " .. summary .. " — re-rolling...")
