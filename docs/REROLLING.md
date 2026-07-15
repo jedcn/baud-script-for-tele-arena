@@ -35,10 +35,11 @@ AND Agility >= 15. No deficit math; Int, Kno, and Cha are ignored entirely.
 
 **Max stats:** Int=14 Kno=14 Phy=29 Sta=30 Agi=17 Cha=13
 
-**Approach:** Exact max on all three physicals — reroll until Physique == 29 AND
-Stamina == 30 AND Agility == 17. No slack and no deficit math; Int, Kno, and Cha
-are ignored entirely. Only an all-max roll on these three is accepted. Vitality is
-never matched — it is fully derived from Stamina.
+**Approach:** Simple hard floors — reroll until Physique >= 28 AND Stamina >= 29
+AND Agility >= 15. No deficit math; Int, Kno, and Cha are ignored entirely.
+This mirrors the Half-Ogre Warrior recipe: accept up to one point below max on the
+two physical stats (Phy caps at 29, Sta at 30) and keep Agility in the 15-29 attack
+tier. Vitality is never matched — it is fully derived from Stamina.
 
 ---
 
