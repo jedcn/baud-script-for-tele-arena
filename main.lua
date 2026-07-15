@@ -3087,7 +3087,14 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     end
 end, { type = "regex" })
 
-createTrigger("^(.+) just intoned a minor healing spell for you which healed (\\d+) damage!$", function(matches)
+-- A party member healing us badges "HEALED BY <healer> FOR N" and adds the
+-- amount back to our vitality. The heal comes in several tiers (minor, normal,
+-- "very powerful") that differ only in the adjective, so drive them all from
+-- one handler. The "very powerful" line is long enough that Tele-Arena's
+-- server-side word-wrap pushes the trailing " damage!" onto the next physical
+-- line, which arrives as a separate (ignored) line — so its pattern ends at the
+-- number, while the shorter tiers still carry " damage!".
+local function applyPartyHeal(matches)
     local healer = matches[2]
     local amount = tonumber(matches[3])
     healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
@@ -3096,18 +3103,17 @@ createTrigger("^(.+) just intoned a minor healing spell for you which healed (\\
     if current and amount then
         taPackage.character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
     end
-end, { type = "regex" })
+end
 
-createTrigger("^(.+) just intoned a healing spell for you which healed (\\d+) damage!$", function(matches)
-    local healer = matches[2]
-    local amount = tonumber(matches[3])
-    healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
-    local current = taPackage.character.vitalityCurrent
-    local max = taPackage.character.vitalityMax
-    if current and amount then
-        taPackage.character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
-    end
-end, { type = "regex" })
+local partyHealPatterns = {
+    "^(.+) just intoned a minor healing spell for you which healed (\\d+) damage!$",
+    "^(.+) just intoned a healing spell for you which healed (\\d+) damage!$",
+    "^(.+) just intoned a very powerful healing spell for you which healed (\\d+)$",
+}
+
+for _, pattern in ipairs(partyHealPatterns) do
+    createTrigger(pattern, applyPartyHeal, { type = "regex" })
+end
 
 createOutboundTrigger("^cast komiza ", function()
     local current = taPackage.character.manaCurrent

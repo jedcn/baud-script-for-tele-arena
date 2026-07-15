@@ -350,6 +350,19 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(22, current)
         end)
 
+        -- The "very powerful" heal line is long enough that Tele-Arena's
+        -- server-side wrap pushes " damage!" onto the next physical line, so the
+        -- trigger sees only "...which healed 129" and the trailing "damage!"
+        -- arrives as a separate, ignored line.
+        it("increases vitality for a wrapped very-powerful heal (no trailing damage!)", function()
+            helper.simulateLine("Vitality:    20 / 200")
+            helper.simulateLine("Pelayo just intoned a very powerful healing spell for you which healed 129")
+            helper.simulateLine("damage!")
+            local current, max = getVitality()
+            assert.are.equal(149, current)
+            assert.are.equal(200, max)
+        end)
+
     end)
 
     -- =========================================================================
@@ -7128,6 +7141,16 @@ describe("Attack badges", function()
         local badge = lastBadge()
         assert.is_not_nil(badge)
         assert.are.equal(" HEALED BY PELAYO FOR 14 ", badge.text)
+        assert.are.equal("#16a34a", badge.color)
+        assert.are.equal("#e0e0e0", badge.backgroundColor)
+        assert.is_true(badge.bold)
+    end)
+
+    it("echoes a green HEALED BY badge for a wrapped very-powerful heal", function()
+        helper.simulateLine("Pelayo just intoned a very powerful healing spell for you which healed 129")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY PELAYO FOR 129 ", badge.text)
         assert.are.equal("#16a34a", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
         assert.is_true(badge.bold)
