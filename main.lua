@@ -500,13 +500,11 @@ reRollBuilds.halfOgreWarrior = function(s)
     return accepted, reRollStatSummary(s)
 end
 
--- Half-Ogre Hunter: simple hard floors — Phy >= 28 AND Sta >= 29 AND Agi >= 15,
--- other stats ignored. Max stats are Phy=29 Sta=30 Agi=17, so this accepts up to
--- one point below max on the two physicals (mirroring the Warrior build) and keeps
--- Agi in the 15-29 attack tier. Vitality is not matched — it is fully derived from
--- Stamina.
+-- Half-Ogre Hunter: exact max on all three physicals — Phy == 29 AND Sta == 30 AND
+-- Agi == 17, other stats ignored. No slack; only an all-max roll on these three is
+-- accepted. Vitality is not matched — it is fully derived from Stamina.
 reRollBuilds.halfOgreHunter = function(s)
-    local accepted = s.physique >= 28 and s.stamina >= 29 and s.agility >= 15
+    local accepted = s.physique >= 29 and s.stamina >= 30 and s.agility >= 17
     return accepted, reRollStatSummary(s)
 end
 
