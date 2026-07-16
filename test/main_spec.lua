@@ -4267,6 +4267,37 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ring gong", helper.sendCalls[2])
         end)
 
+        -- The training hall refuses anyone under a stat potion, so on earning a
+        -- level we keep fighting (draining the potions) rather than walking to the
+        -- hall while any is still active.
+        it("keeps ringing (not training) while stat potions are still active", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.is_nil(taPackage.arenaTrainingPhase)
+            assert.are.equal("", helper.sendCalls[1])  -- scanned, did not walk to train
+        end)
+
+        it("trains once the stat potions have drained to zero", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.arenaPotionsActive = 0
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("training", taPackage.arenaState)
+            assert.are.equal(1, taPackage.arenaTrainingPhase)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
         -- Regression: a thirst/hunger tick between our swing and its resolution
         -- flips state to "tavern" while arenaMonster is still set; the swing then
         -- lands the kill. The death must still clear arenaMonster even though we
@@ -4351,6 +4382,43 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("You're in the training hall.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.is_nil(taPackage.arenaTrainingPhase)
+        end)
+
+        -- After buying training we bank the level locally (the game's own Level
+        -- line lags until the next status poll, and a stale level would re-trigger
+        -- a training trip on the next kill) and flag a potion restock for the way
+        -- home, since we drained them to be allowed to train.
+        it("banks the level and re-buys potions after training", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaTrainingPhase = 2
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.arenaPotionsActive = 0
+            helper.simulateLine("You're in the training hall.")
+            assert.are.equal(2, taPackage.character.level)  -- banked locally
+            assert.is_true(taPackage.needsPotions)          -- restock on the way home
+        end)
+
+        -- Backstop: if we reach the hall while still potion-tainted, it refuses us
+        -- ("...whole and untainted..."). We did not actually level, so undo the
+        -- optimistic bump/restock and keep draining until the potion wears off.
+        it("recovers when training is refused for being potion-tainted", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.level = 2      -- optimistically bumped by the train handler
+            taPackage.needsPotions = true
+            taPackage.arenaPotionsActive = 0
+            helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
+            assert.are.equal(1, taPackage.character.level)  -- bump undone
+            assert.is_nil(taPackage.needsPotions)           -- restock cancelled
+            assert.are.equal(1, taPackage.arenaPotionsActive)  -- forced positive: keep draining
+        end)
+
+        it("ignores the training-refused line outside an arena session", function()
+            taPackage.arenaState = nil
+            taPackage.character.level = 2
+            helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
+            assert.are.equal(2, taPackage.character.level)  -- untouched
         end)
 
     end)
@@ -5418,6 +5486,32 @@ describe("magic-shop potion runs", function()
             taPackage.arenaState = nil
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.is_nil(taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("decrements the active-potion count on each wear-off", function()
+            taPackage.arenaProfile = "second"
+            taPackage.arenaState = "fighting"
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal(1, taPackage.arenaPotionsActive)
+        end)
+
+        -- When a level is owed we deliberately let the potions lapse (the hall
+        -- refuses a potion-tainted character), so a wear-off must NOT trigger a
+        -- restock — we drain and keep fighting instead.
+        it("drains instead of restocking when a level is owed", function()
+            taPackage.arenaProfile = "first"
+            taPackage.arenaState = "fighting"
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("fighting", taPackage.arenaState)  -- no shop trip
+            assert.is_nil(taPackage.arenaJourney)
+            assert.is_nil(taPackage.needsPotions)
+            assert.are.equal(1, taPackage.arenaPotionsActive)  -- one drained
             assert.are.equal(0, #helper.sendCalls)
         end)
 

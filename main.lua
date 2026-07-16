@@ -2220,6 +2220,12 @@ end
 -- the right route per arena) is defined further down.
 local departForTavern
 
+-- Forward declaration: the errand-service points below must not restock potions
+-- while we owe a training trip (the hall refuses a potion-tainted character), but
+-- checkTrainingNeeded is defined further down (it needs getLevel/getExperience).
+-- Assigned later via `function checkTrainingNeeded()`.
+local checkTrainingNeeded
+
 -- Head to the magic shop to restock the strength/agility potions. Both arenas
 -- reach the same shop by different routes, chosen by profile. Always a journey,
 -- so even the first arena walks it one paced step at a time.
@@ -2238,7 +2244,11 @@ end
 -- arena's room-name return, so a potion that wore off mid-errand is serviced
 -- whichever way we walked home. departForShop/Tavern pick the route per arena.
 local function arenaArrivedHome()
-    if taPackage.needsPotions then
+    -- Skip a restock while a level is owed: we are deliberately draining the stat
+    -- potions so the training hall will accept us (checkTrainingNeeded stays true
+    -- until we train). needsPotions is left set so the restock happens later, once
+    -- we've trained and it flips false. Food/drink still get serviced.
+    if taPackage.needsPotions and not checkTrainingNeeded() then
         departForShop()
     elseif taPackage.needsDrinks or taPackage.needsMeal then
         departForTavern()
@@ -2273,7 +2283,10 @@ end
 -- made even when it was flagged mid-fight. Mirrors arenaArrivedHome, but the
 -- no-errand case rings rather than resuming a (nonexistent) fight.
 local function arenaRingOrErrand()
-    if taPackage.needsPotions then
+    -- As in arenaArrivedHome: don't restock potions while a level is owed — we
+    -- are draining them on purpose so the training hall will accept us. Ring and
+    -- keep fighting (which wears them down); the restock waits until after we train.
+    if taPackage.needsPotions and not checkTrainingNeeded() then
         departForShop()
     elseif taPackage.needsDrinks or taPackage.needsMeal then
         departForTavern()
@@ -2330,6 +2343,10 @@ local function arenaJourneyOnMovement(room)
         send("buy hyssop")
         send("drink rowan")
         send("drink hyssop")
+        -- Both stat potions are now up again. Tracked so that when a level is
+        -- owed we know how many wear-off lines to wait for before it is safe to
+        -- train (see arenaTryTrain / the wear-off trigger).
+        taPackage.arenaPotionsActive = 2
         taPackage.needsPotions = nil
         taPackage.arenaState = "returning"
         arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM, SHOP_ROOM)
@@ -2338,7 +2355,9 @@ local function arenaJourneyOnMovement(room)
     end
 end
 
-local function checkTrainingNeeded()
+-- Assigns to the forward-declared local above (no `local` keyword) so
+-- departForShop, defined earlier, can refuse to restock while a level is owed.
+function checkTrainingNeeded()
     -- The second arena has no training hall — never leave to train from it.
     -- Short-circuiting here disables both the XP-trigger and death-handler
     -- training transitions at once, so a level-up there just keeps fighting.
@@ -2351,6 +2370,24 @@ local function checkTrainingNeeded()
     if not thresholds then return false end
     local nextThreshold = thresholds[lvl + 1]
     return nextThreshold ~= nil and xp >= nextThreshold
+end
+
+-- Head to the training hall to bank an earned level — but only when it is safe.
+-- The hall refuses anyone under a strength/agility potion ("Your mind and body
+-- must be whole and untainted before you may train."), so once we have earned a
+-- level we stop refreshing potions (see departForShop and the wear-off trigger)
+-- and keep fighting until they lapse. arenaPotionsActive counts how many are
+-- still up; only when it reaches 0 do we walk to the hall. Call at a safe
+-- decision point (a clear ring gap or just after a kill); returns true once we
+-- have set out to train, so the caller skips its normal ring.
+local function arenaTryTrain()
+    if not checkTrainingNeeded() then return false end
+    if (taPackage.arenaPotionsActive or 0) > 0 then return false end
+    echo("[arena] Leveling up — heading to training hall.")
+    taPackage.arenaState = "training"
+    taPackage.arenaTrainingPhase = 1
+    arenaSend("w")
+    return true
 end
 
 -- Flee at 75% of max HP, but never below an absolute floor. The percentage
@@ -2424,11 +2461,10 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
         end
         taPackage.followSessionStartXp = nil
     end
-    if taPackage.arenaState == "ringing" and checkTrainingNeeded() then
-        echo("[arena] Leveling up — heading to training hall.")
-        taPackage.arenaState = "training"
-        taPackage.arenaTrainingPhase = 1
-        arenaSend("w")
+    -- Between monsters and enough XP to level: head to train, but only once our
+    -- stat potions have lapsed (arenaTryTrain returns false while any is active,
+    -- in which case we fall through and keep ringing/fighting so they wear off).
+    if taPackage.arenaState == "ringing" and arenaTryTrain() then
         return
     end
     if not taPackage.arenaXpCheckPending then return end
@@ -2489,6 +2525,9 @@ local function beginArenaSession(profile, debug)
     taPackage.arenaOwnSummonPending = false
     taPackage.arenaProbePending = false
     taPackage.arenaParchedStreak = 0
+    -- Unknown how many stat potions are up at session start; 0 self-corrects on
+    -- the first wear-off/restock. Only matters for the train-when-clean gate.
+    taPackage.arenaPotionsActive = 0
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = debug and " (debug mode)" or ""
@@ -2543,6 +2582,7 @@ local function stopArena()
     taPackage.arenaJourney = nil
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
+    taPackage.arenaPotionsActive = nil
     -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
@@ -2693,12 +2733,11 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     -- while actively fighting. If the monster died during an errand trip, we
     -- just clear it here; arenaResumeInCombat will ring on arrival home.
     if taPackage.arenaState == "fighting" and not checkFleeArena() then
-        if checkTrainingNeeded() then
-            echo("[arena] Leveling up — heading to training hall.")
-            taPackage.arenaState = "training"
-            taPackage.arenaTrainingPhase = 1
-            arenaSend("w")
-        else
+        -- Train if a level is owed and our potions have lapsed; otherwise ring
+        -- for the next monster. While a level is owed but potions are still
+        -- active, arenaTryTrain returns false, so we keep fighting — which both
+        -- banks more XP and wears the potions down toward the safe-to-train point.
+        if not arenaTryTrain() then
             taPackage.arenaState = "ringing"
             taPackage.arenaRingPending = false
             arenaScanRoom()
@@ -2769,6 +2808,19 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
             arenaSend("s")
             taPackage.arenaState = "returning"
             taPackage.arenaTrainingPhase = nil
+            -- We drained our stat potions to be allowed to train, so bank the
+            -- level locally now: the game's own `Level:` line only refreshes on
+            -- the next status poll, and until it does a stale level would keep
+            -- checkTrainingNeeded() true and re-trigger a training trip on the
+            -- very next kill. If we had banked more than one level, it stays true
+            -- (correctly) and we train again once home; otherwise re-buy the
+            -- potions we let lapse on the way back. A refusal (the "untainted"
+            -- trigger below) undoes this.
+            local lvl = getLevel()
+            if lvl then setLevel(lvl + 1) end
+            if not checkTrainingNeeded() then
+                taPackage.needsPotions = true
+            end
         end
     elseif taPackage.arenaState == "fleeing" then
         if room == "north plaza" then
@@ -2857,12 +2909,39 @@ end, { type = "regex" })
 -- back. A second wear-off line mid-trip just re-sets the flag (idempotent).
 createTrigger("^An odd tingling sensation washes over you briefly!$", function()
     if not taPackage.arenaState then return end
+    -- One of our two stat potions lapsed. Track it so we know when they are all
+    -- gone: the training hall refuses us while any is active (see arenaTryTrain).
+    local active = math.max((taPackage.arenaPotionsActive or 0) - 1, 0)
+    taPackage.arenaPotionsActive = active
+    if checkTrainingNeeded() then
+        -- A level is owed. We are deliberately letting the potions wear off so
+        -- the hall will accept us — do NOT restock. The ring/kill decision points
+        -- send us to train once this count reaches 0.
+        echo("[arena] Potion lapsed (" .. active
+            .. " still active) — draining before training.")
+        return
+    end
     taPackage.needsPotions = true
     if arenaCanDepartNow() then
         departForShop()
     else
         echo("[arena] A potion wore off — will restock at next shop visit.")
     end
+end, { type = "regex" })
+
+-- Backstop for a mistimed training trip. We normally reach the hall only once
+-- arenaPotionsActive has drained to 0, but if that count was off (e.g. a potion
+-- we didn't drink was still active) the hall refuses us with this line. We did
+-- NOT actually level, so undo the optimistic level bump and potion re-buy from
+-- the training handler, and force the drain count positive so the ring loop
+-- keeps fighting until the next wear-off and then retries training.
+createTrigger("^Your mind and body must be whole and untainted before you may train\\.$", function()
+    if not taPackage.arenaState then return end
+    local lvl = getLevel()
+    if lvl then setLevel(lvl - 1) end
+    taPackage.needsPotions = nil
+    taPackage.arenaPotionsActive = math.max(taPackage.arenaPotionsActive or 0, 1)
+    echo("[arena] Training refused — still potion-tainted; fighting until it wears off.")
 end, { type = "regex" })
 
 createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(matches)
