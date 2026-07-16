@@ -2942,6 +2942,15 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         setGold((getGold() or 0) - cost)
         taPackage.db.recordService("training", "guild", cost)
         echo("[arena] Trained to level " .. newLevel .. " (" .. cost .. " gold).")
+        -- Off-screen heads-up that the drain-then-train actually completed. This
+        -- fires on the confirmed level-up (distinct from checkLevelUpNotification's
+        -- "Time to Level Up!", which fires earlier when the XP threshold is crossed).
+        local lines = { "[" .. (taPackage.character.name or "?") .. "] trained to level "
+            .. newLevel .. "!" }
+        lines[#lines + 1] = "- Training cost: " .. formatWithCommas(cost) .. " gold"
+        local gold = getGold()
+        lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
+        sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
     end
     if not checkTrainingNeeded() then
         taPackage.needsPotions = true

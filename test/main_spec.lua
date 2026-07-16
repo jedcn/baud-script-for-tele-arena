@@ -4427,6 +4427,21 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(500, taPackage.character.gold)
         end)
 
+        it("pushes a level-up ntfy on a successful train", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.name = "Tojolias"
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120
+            taPackage.character.gold = 500
+            helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+            assert.are.equal(1, #helper.httpRequestCalls)
+            local call = helper.httpRequestCalls[1]
+            assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
+            assert.are.equal("Leveled Up!", call.options.headers["X-Title"])
+            assert.is_truthy(call.options.body:find("trained to level 2", 1, true))
+        end)
+
         -- Backstop: if we reach the hall while still potion-tainted, it refuses us
         -- ("...whole and untainted..."). The success line never fires, so we were
         -- neither leveled nor charged; just force the drain count positive so we
