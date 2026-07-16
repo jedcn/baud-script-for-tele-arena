@@ -2440,11 +2440,11 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     local gained = startXp and (xp - startXp) or 0
     echo("[arena] " .. os.date("%H:%M:%S") .. " — " .. minutes .. " min, +"
         .. gained .. " XP (total: " .. xp .. ")")
-    -- Phone notification for the second arena so progress is visible off-screen.
-    -- The XP echo above runs every 5 min, but a check-in every 5 min is too
-    -- chatty for a phone, so throttle the ping to every 30 min. Fire-and-forget
-    -- (no callback) — a failed ping must never disturb the fight loop.
-    if taPackage.arenaProfile == "second" then
+    -- Phone notification so arena progress is visible off-screen. The XP echo
+    -- above runs every 5 min, but a check-in every 5 min is too chatty for a
+    -- phone, so throttle the ping to every 30 min. Fire-and-forget (no callback)
+    -- — a failed ping must never disturb the fight loop.
+    do
         local now = os.time()
         local lastNtfy = taPackage.arenaLastNtfyTime
         if not lastNtfy or (now - lastNtfy) >= 1800 then
@@ -2462,7 +2462,9 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             local encPct = getEncumberancePercent()
             lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
             lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
-            sendNtfy("2nd Arena Check-In", table.concat(lines, "\n"), true)
+            local title = taPackage.arenaProfile == "second"
+                and "2nd Arena Check-In" or "Arena Check-In"
+            sendNtfy(title, table.concat(lines, "\n"), true)
         end
     end
 end, { type = "regex" })

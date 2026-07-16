@@ -3864,13 +3864,18 @@ describe("ring-gong-and-fight-in-arena", function()
                 call.options.body)
         end)
 
-        it("first-arena XP check does not fire an ntfy notification", function()
+        it("first-arena XP check fires an ntfy notification with a first-arena title", function()
             taPackage.arenaProfile = "first"
+            taPackage.character.name = "Tojolias"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   800")
-            assert.are.equal(0, #helper.httpRequestCalls)
+            assert.are.equal(1, #helper.httpRequestCalls)
+            local call = helper.httpRequestCalls[1]
+            assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
+            assert.are.equal("Arena Check-In", call.options.headers["X-Title"])
+            assert.are.equal("true", call.options.headers["X-Markdown"])
         end)
 
         it("ntfy notification only fires on the periodic XP check", function()
