@@ -2804,23 +2804,15 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
             taPackage.arenaTrainingPhase = 2
             arenaSend("n")
         elseif phase == 2 then
+            -- Send the purchase and start walking home. Whether it succeeded is
+            -- decided by the guild-hall's reply: the "rigorous ... training
+            -- session" success line (banks the level, charges the fee, re-buys
+            -- potions) or the "...whole and untainted..." refusal, both handled by
+            -- their own triggers below.
             send("buy training")
             arenaSend("s")
             taPackage.arenaState = "returning"
             taPackage.arenaTrainingPhase = nil
-            -- We drained our stat potions to be allowed to train, so bank the
-            -- level locally now: the game's own `Level:` line only refreshes on
-            -- the next status poll, and until it does a stale level would keep
-            -- checkTrainingNeeded() true and re-trigger a training trip on the
-            -- very next kill. If we had banked more than one level, it stays true
-            -- (correctly) and we train again once home; otherwise re-buy the
-            -- potions we let lapse on the way back. A refusal (the "untainted"
-            -- trigger below) undoes this.
-            local lvl = getLevel()
-            if lvl then setLevel(lvl + 1) end
-            if not checkTrainingNeeded() then
-                taPackage.needsPotions = true
-            end
         end
     elseif taPackage.arenaState == "fleeing" then
         if room == "north plaza" then
@@ -2929,17 +2921,41 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
     end
 end, { type = "regex" })
 
+-- Guild-hall confirmation that a training session succeeded (its reply to `buy
+-- training`; the message runs three lines, we key on the first). Do the things
+-- that only make sense once we've actually leveled:
+--   * Bank the level locally. The game's own `Level:` line lags until the next
+--     status poll, and a stale level would keep checkTrainingNeeded() true and
+--     re-trigger a training trip on the next kill.
+--   * Charge the fee. Training costs (next level x 5) gold — see help/TUTORIAL
+--     ("level 2 costs 10 gold") — and the success line carries no crown amount to
+--     parse, so we compute it from the level we just reached.
+--   * Re-buy the stat potions we drained to be allowed to train — unless another
+--     banked level is still owed, in which case keep draining and train again.
+createTrigger("^After a rigorous mental and physical training session, you managed to blend$", function()
+    if not taPackage.arenaState then return end
+    local lvl = getLevel()
+    if lvl then
+        local newLevel = lvl + 1
+        setLevel(newLevel)
+        local cost = newLevel * 5
+        setGold((getGold() or 0) - cost)
+        taPackage.db.recordService("training", "guild", cost)
+        echo("[arena] Trained to level " .. newLevel .. " (" .. cost .. " gold).")
+    end
+    if not checkTrainingNeeded() then
+        taPackage.needsPotions = true
+    end
+end, { type = "regex" })
+
 -- Backstop for a mistimed training trip. We normally reach the hall only once
 -- arenaPotionsActive has drained to 0, but if that count was off (e.g. a potion
 -- we didn't drink was still active) the hall refuses us with this line. We did
--- NOT actually level, so undo the optimistic level bump and potion re-buy from
--- the training handler, and force the drain count positive so the ring loop
--- keeps fighting until the next wear-off and then retries training.
+-- NOT level and were not charged (the success trigger above never fired), so just
+-- force the drain count positive: the ring loop keeps fighting until the next
+-- wear-off and then retries training.
 createTrigger("^Your mind and body must be whole and untainted before you may train\\.$", function()
     if not taPackage.arenaState then return end
-    local lvl = getLevel()
-    if lvl then setLevel(lvl - 1) end
-    taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = math.max(taPackage.arenaPotionsActive or 0, 1)
     echo("[arena] Training refused — still potion-tainted; fighting until it wears off.")
 end, { type = "regex" })
