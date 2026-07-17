@@ -1800,6 +1800,17 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.pendingLootCheck = true
 end, { type = "regex" })
 
+-- An area-of-effect spell hits every hostile monster at once, e.g. "The warlock
+-- just discharged a storm of ice shards at hostile monsters in the area!". The
+-- game word-wraps that onto two lines, breaking after "in the", so we match the
+-- first line only. The AOE signature is "at hostile monsters in the" — do NOT
+-- key on "discharged" alone: the common single-target cast ("... discharged a
+-- small shard of ice at the huge rat!") uses the same verb. An AOE resolves its
+-- damage across the whole room at once, so we `st` to read the resulting XP.
+createTrigger("^.+ just discharged .+ at hostile monsters in the", function()
+    send("st")
+end, { type = "regex" })
+
 -- =========================================================================
 -- Service triggers
 -- =========================================================================

@@ -369,6 +369,25 @@ describe("Tele-Arena triggers", function()
     -- Incoming damage trigger
     -- =========================================================================
 
+    describe("AOE spell trigger", function()
+
+        it("runs st when an AOE spell is cast (wrapped first line)", function()
+            helper.simulateLine("The warlock just discharged a storm of ice shards at hostile monsters in the")
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("runs st when the AOE line is not wrapped", function()
+            helper.simulateLine("The warlock just discharged a storm of ice shards at hostile monsters in the area!")
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("ignores a single-target discharge", function()
+            helper.simulateLine("Johnsonite just discharged a small shard of ice at the huge rat!")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("Incoming damage trigger", function()
 
         it("reduces current vitality by damage amount", function()
