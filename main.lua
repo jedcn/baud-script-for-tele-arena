@@ -3557,7 +3557,7 @@ local function stopKill()
 end
 taPackage.stopKill = stopKill
 
-createAlias("^stop-kill$", function()
+createAlias("^kill-stop$", function()
     stopKill()
 end, { type = "regex" })
 
