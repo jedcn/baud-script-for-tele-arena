@@ -2032,12 +2032,24 @@ end
 -- The arena brief lists occupants as "There is a hobgoblin, a huge rat, and a
 -- female kobold here." Pull the first monster's name so we can engage it. The
 -- leading word is an article ("a"/"an"/"the") or a count ("two huge rats"); a
--- count means a plural noun, so drop the trailing "s" to match the singular
--- name the death line ("The huge rat falls...") and our attack target use.
+-- count means a plural noun, which we reduce to the singular the death line
+-- ("The huge rat falls...") and our attack target use.
 local ARENA_ARTICLE_WORDS = {
     a = true, an = true, the = true,
     two = true, three = true, four = true, five = true, six = true,
 }
+-- Reduce a plural monster noun to its singular. Most plurals just add "s"
+-- ("dragons" -> "dragon", "ogre mages" -> "ogre mage"), but some take an "-i"
+-- plural instead ("affreeti" -> "affreet", "efreeti" -> "efreet"), so when
+-- there's no trailing "s" fall back to stripping a trailing "i".
+local function singularizeMonster(noun)
+    if noun:match("s$") then
+        return (noun:gsub("s$", ""))
+    elseif noun:match("i$") then
+        return (noun:gsub("i$", ""))
+    end
+    return noun
+end
 local function firstArenaMonster(contents)
     if not contents or contents == "nobody" then return nil end
     local first = (contents:match("^([^,]+)") or contents):match("^%s*(.-)%s*$")
@@ -2045,7 +2057,7 @@ local function firstArenaMonster(contents)
     if article and ARENA_ARTICLE_WORDS[article:lower()] then
         local a = article:lower()
         if a ~= "a" and a ~= "an" and a ~= "the" then
-            rest = rest:gsub("s$", "")
+            rest = singularizeMonster(rest)
         end
         return rest
     end
