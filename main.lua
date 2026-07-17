@@ -3546,6 +3546,7 @@ createAlias("^k (.+)$", handleKillAlias, { type = "regex" })
 local function stopKill()
     killDebugEcho("kill-stop")
     taPackage.killActive = false
+    taPackage.killAllActive = false
     taPackage.killDebug = false
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
@@ -3553,9 +3554,70 @@ local function stopKill()
     taPackage.healTarget = nil
     taPackage.groupHealPhase = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
+    taPackage.killAllGeneration = (taPackage.killAllGeneration or 0) + 1
     echo("[kill] Stopped.")
 end
 taPackage.stopKill = stopKill
+
+-- `kill-all` clears a room of monsters one at a time. It sends a bare return to
+-- print the room brief, engages the first monster listed, and — once that
+-- monster dies (see the death trigger below) — re-scans and engages the next,
+-- repeating until the room holds no monster.
+--
+-- The occupant line names the monsters: "There is a warlock here." for one, or
+-- "There are three warlocks here." / "There is a warlock, a goblin, and a rat
+-- here." for several. firstArenaMonster picks the first and de-pluralises a
+-- count word, so "three warlocks" -> "warlock". A player stands on their own
+-- line ("Pelayo is here.") which never matches, so we only ever lock onto a
+-- monster.
+--
+-- The scan is a self-timing probe: after sending the bare return it arms a
+-- timer keyed to killAllGeneration. If no occupant line resolves the scan
+-- within the window — an empty room prints "There is nobody here.", but a room
+-- with players and no monster omits that line entirely — the timer fires and
+-- ends the sweep so it can't hang. Locking onto a monster (or seeing "nobody")
+-- bumps killAllGeneration, which cancels the pending timer.
+local KILL_ALL_SCAN_MS = 2000
+local function killAllScan()
+    if not taPackage.killAllActive then return end
+    local gen = (taPackage.killAllGeneration or 0) + 1
+    taPackage.killAllGeneration = gen
+    send("")
+    createTimer(KILL_ALL_SCAN_MS, function()
+        if taPackage.killAllActive and (taPackage.killAllGeneration or 0) == gen then
+            taPackage.killAllActive = false
+            echo("[kill] No monster here — kill-all done.")
+        end
+    end, { repeating = false })
+end
+taPackage.killAllScan = killAllScan
+
+createAlias("^kill-all$", function()
+    if taPackage.arenaState then
+        echo("[kill] Cannot start — arena session is active.")
+        return
+    end
+    taPackage.killAllActive = true
+    killAllScan()
+end, { type = "regex" })
+
+-- Response to the kill-all probe: the room brief's occupant line. Engage the
+-- first monster, or end the sweep when the room is clear ("nobody"). The \S+
+-- matches either "is" or "are" so single and multi-monster briefs both hit.
+createTrigger("^There \\S+ (.+) here\\.$", function(matches)
+    if not taPackage.killAllActive then return end
+    -- A scan is resolving: bump the generation to cancel its timeout.
+    taPackage.killAllGeneration = (taPackage.killAllGeneration or 0) + 1
+    local monster = firstArenaMonster(matches[2])
+    if monster then
+        if not startKill(monster) then
+            taPackage.killAllActive = false
+        end
+    else
+        taPackage.killAllActive = false
+        echo("[kill] No monster here — kill-all done.")
+    end
+end, { type = "regex" })
 
 createAlias("^kill-stop$", function()
     stopKill()
@@ -3774,6 +3836,11 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.healTarget = nil
     taPackage.groupHealPhase = nil
     echo("[kill] " .. matches[2] .. " is dead.")
+    -- A kill-all sweep re-scans the room for the next monster; the scan ends
+    -- the sweep on its own when nothing is left.
+    if taPackage.killAllActive then
+        killAllScan()
+    end
 end, { type = "regex" })
 
 createTrigger("^You are still physically exhausted from your previous activities!$", function()

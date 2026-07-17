@@ -6528,6 +6528,80 @@ describe("ta.follow", function()
             assert.is_nil(taPackage.killTarget)
         end)
 
+        describe("kill-all", function()
+            it("sends a bare return to probe the room", function()
+                helper.simulateAlias("kill-all")
+                assert.are.equal("", helper.sendCalls[1])
+                assert.is_true(taPackage.killAllActive)
+            end)
+
+            it("engages the first monster from the room brief", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("You're in a flagstone corridor.")
+                helper.simulateLine("There is a warlock here.")
+                helper.simulateLine("Tojolias is here.")
+                assert.is_true(taPackage.killActive)
+                assert.are.equal("warlock", taPackage.killTarget)
+            end)
+
+            it("ignores player lines and never targets a player", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("Tojolias is here.")
+                assert.is_falsy(taPackage.killActive)
+                assert.is_nil(taPackage.killTarget)
+            end)
+
+            it("de-pluralises a monster count", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are three warlocks here.")
+                assert.is_true(taPackage.killActive)
+                assert.are.equal("warlock", taPackage.killTarget)
+            end)
+
+            it("re-scans and re-engages after a monster dies", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are three warlocks here.")
+                helper.sendCalls = {}
+                helper.simulateLine("The warlock falls to the ground lifeless!")
+                -- The death re-scans the room...
+                assert.are.equal("", helper.sendCalls[1])
+                assert.is_true(taPackage.killAllActive)
+                -- ...and the brief with one fewer warlock re-engages it.
+                helper.simulateLine("There are two warlocks here.")
+                assert.is_true(taPackage.killActive)
+                assert.are.equal("warlock", taPackage.killTarget)
+            end)
+
+            it("ends the sweep when the room is clear", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There is a warlock here.")
+                helper.simulateLine("The warlock falls to the ground lifeless!")
+                helper.simulateLine("There is nobody here.")
+                assert.is_falsy(taPackage.killAllActive)
+                assert.is_falsy(taPackage.killActive)
+            end)
+
+            it("does not start when an arena session is active", function()
+                taPackage.arenaState = "fighting"
+                helper.sendCalls = {}
+                helper.simulateAlias("kill-all")
+                assert.is_falsy(taPackage.killAllActive)
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            it("kill-stop halts an in-progress sweep", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There is a warlock here.")
+                helper.simulateAlias("kill-stop")
+                assert.is_falsy(taPackage.killAllActive)
+                assert.is_falsy(taPackage.killActive)
+                -- A later death line must not restart the sweep.
+                helper.sendCalls = {}
+                helper.simulateLine("The warlock falls to the ground lifeless!")
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+        end)
+
         it("does not start when arena session is active", function()
             taPackage.arenaState = "fighting"
             helper.sendCalls = {}
