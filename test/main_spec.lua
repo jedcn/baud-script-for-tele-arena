@@ -3647,6 +3647,10 @@ describe("ring-gong-and-fight-in-arena", function()
         dofile("main.lua")
         helper.clearDbCalls()
         setClass("Warrior")
+        -- Real sessions always run through beginArenaSession("first"), which sets
+        -- the profile; the training gate now keys on it (ARENA_HAS_TRAINING), so
+        -- default it here for tests that drive combat without the alias.
+        taPackage.arenaProfile = "first"
     end)
 
     local function setHP(current, max)

@@ -2165,15 +2165,49 @@ local ARENA_ROOM = "arena"
 -- with a large HP margin (something-went-wrong.log still had ~200/318 after 20
 -- minutes stuck).
 local ARENA_PARCHED_LIMIT = 20
-local SECOND_ARENA = {
-    arenaRoom  = ARENA_ROOM,
-    templeRoom = "temple",
-    barRoom    = "inn",
-    toTemple   = { "s", "s", "s", "s" },
-    fromTemple = { "n", "n", "n", "n" },
-    toBar      = { "s", "s", "w", "w", "sw", "sw" },
-    fromBar    = { "ne", "ne", "e", "e", "n", "n" },
+-- Per-profile navigation for the "paced route" arenas (second, third): their
+-- temple/bar/shop/training rooms are distant, reached by fixed direction
+-- step-lists walked one paced step at a time — unlike the first arena's
+-- adjacent rooms, which are navigated by reacting to room names. arenaNav()
+-- returns the active profile's config, or nil for the first arena (absent from
+-- this table), which is the test the paced-vs-room-name branches key on.
+--
+-- The second arena has no training hall (checkTrainingNeeded gates on
+-- ARENA_HAS_TRAINING below); the third does, so it also carries a toTraining/
+-- fromTraining route and a trainingRoom name.
+local ARENA_NAV = {
+    second = {
+        arenaRoom  = ARENA_ROOM,
+        templeRoom = "temple",
+        barRoom    = "inn",
+        toTemple   = { "s", "s", "s", "s" },
+        fromTemple = { "n", "n", "n", "n" },
+        toBar      = { "s", "s", "w", "w", "sw", "sw" },
+        fromBar    = { "ne", "ne", "e", "e", "n", "n" },
+    },
+    third = {
+        arenaRoom    = ARENA_ROOM,
+        templeRoom   = "temple",
+        barRoom      = "tavern",
+        trainingRoom = "guild hall",
+        toTemple     = { "sw", "se", "ne", "e" },
+        fromTemple   = { "w", "sw", "nw", "ne" },
+        toBar        = { "sw", "nw" },
+        fromBar      = { "se", "ne" },
+        toTraining   = { "sw", "se", "ne", "n" },
+        fromTraining = { "s", "sw", "nw", "ne" },
+    },
 }
+
+-- Which profiles have a training hall to bank earned levels. The first arena
+-- reaches its hall by room-name nav; the third walks a paced route (both drive
+-- the same buy-training flow). The second arena has none, so a level-up there
+-- just keeps fighting. Absent = false.
+local ARENA_HAS_TRAINING = { first = true, third = true }
+
+local function arenaNav()
+    return ARENA_NAV[taPackage.arenaProfile]
+end
 
 -- Strength/agility potions (rowan, hyssop) from the magic shop. Both arenas
 -- reach the same "magic shop" room by different routes. This is a reactive
@@ -2184,6 +2218,7 @@ local SHOP_ROOM = "magic shop"
 local ARENA_SHOP = {
     first  = { to = { "w", "s", "s" },                from = { "n", "n", "e" } },
     second = { to = { "s", "s", "w", "w", "n", "n" }, from = { "s", "s", "e", "e", "n", "n" } },
+    third  = { to = { "sw", "se", "se", "se" },       from = { "nw", "nw", "nw", "ne" } },
 }
 
 -- Send the next queued direction. index counts steps already sent, so bumping
@@ -2233,9 +2268,10 @@ end
 -- ("The barmaid brings you a drink..."), but the buy commands are the same and
 -- our navigation doesn't depend on those lines, so we just walk there.
 local function departForBar()
+    local nav = arenaNav()
     taPackage.arenaState = "tavern"
     echo("[arena] Heading to bar.")
-    arenaJourneyStart(SECOND_ARENA.toBar, SECOND_ARENA.barRoom, SECOND_ARENA.arenaRoom)
+    arenaJourneyStart(nav.toBar, nav.barRoom, nav.arenaRoom)
 end
 
 -- Forward declaration: arenaJourneyOnMovement chains to the tavern/bar when a
@@ -2357,7 +2393,19 @@ local function arenaJourneyOnMovement(room)
         end
         taPackage.arenaParchedStreak = 0
         taPackage.arenaState = "returning"
-        arenaJourneyStart(SECOND_ARENA.fromBar, SECOND_ARENA.arenaRoom, SECOND_ARENA.barRoom)
+        local nav = arenaNav()
+        arenaJourneyStart(nav.fromBar, nav.arenaRoom, nav.barRoom)
+    elseif st == "training" then
+        -- Arrived at the guild hall (paced arenas with a training hall). Send the
+        -- purchase and immediately start walking home — its success/refusal is
+        -- handled by their own triggers, and we don't wait for the reply (mirrors
+        -- the first arena's room-name training, which also walks off right after
+        -- "buy training"). Banking the level, charging the fee, and re-buying
+        -- potions happen in the success trigger.
+        send("buy training")
+        taPackage.arenaState = "returning"
+        local nav = arenaNav()
+        arenaJourneyStart(nav.fromTraining, nav.arenaRoom, nav.trainingRoom)
     elseif st == "potions" then
         -- Arrived at the magic shop. Re-buy and re-drink both potions — the
         -- wear-off line is identical for each, so we refresh both — then walk
@@ -2381,10 +2429,11 @@ end
 -- Assigns to the forward-declared local above (no `local` keyword) so
 -- departForShop, defined earlier, can refuse to restock while a level is owed.
 function checkTrainingNeeded()
-    -- The second arena has no training hall — never leave to train from it.
-    -- Short-circuiting here disables both the XP-trigger and death-handler
-    -- training transitions at once, so a level-up there just keeps fighting.
-    if taPackage.arenaProfile == "second" then return false end
+    -- Only profiles with a training hall ever leave to train (the second arena
+    -- has none). Short-circuiting here disables both the XP-trigger and
+    -- death-handler training transitions at once, so a level-up in a
+    -- hall-less arena just keeps fighting.
+    if not ARENA_HAS_TRAINING[taPackage.arenaProfile] then return false end
     local xp  = getExperience()
     local cls = getClass()
     local lvl = getLevel()
@@ -2408,8 +2457,18 @@ local function arenaTryTrain()
     if (taPackage.arenaPotionsActive or 0) > 0 then return false end
     echo("[arena] Leveling up — heading to training hall.")
     taPackage.arenaState = "training"
-    taPackage.arenaTrainingPhase = 1
-    arenaSend("w")
+    local nav = arenaNav()
+    if nav then
+        -- Paced arena: walk the fixed route to the guild hall. Arrival there
+        -- (arenaJourneyOnMovement, st == "training") sends "buy training" and
+        -- starts the walk home.
+        arenaJourneyStart(nav.toTraining, nav.trainingRoom, nav.arenaRoom)
+    else
+        -- First arena: adjacent room-name navigation drives the trip (the
+        -- "You're in the" handler advances phase 1 → 2 → buy → return).
+        taPackage.arenaTrainingPhase = 1
+        arenaSend("w")
+    end
     return true
 end
 
@@ -2431,8 +2490,9 @@ function checkFleeArena()
     if hp and hp < fleeThreshold then
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
-        if taPackage.arenaProfile == "second" then
-            arenaJourneyStart(SECOND_ARENA.toTemple, SECOND_ARENA.templeRoom, SECOND_ARENA.arenaRoom)
+        local nav = arenaNav()
+        if nav then
+            arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
         else
             arenaSend("w")
         end
@@ -2442,7 +2502,7 @@ function checkFleeArena()
 end
 
 function departForTavern()
-    if taPackage.arenaProfile == "second" then
+    if arenaNav() then
         departForBar()
         return
     end
@@ -2521,16 +2581,17 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             local encPct = getEncumberancePercent()
             lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
             lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
-            local title = taPackage.arenaProfile == "second"
-                and "2nd Arena Check-In" or "Arena Check-In"
+            local titles = { second = "2nd Arena Check-In", third = "3rd Arena Check-In" }
+            local title = titles[taPackage.arenaProfile] or "Arena Check-In"
             sendNtfy(title, table.concat(lines, "\n"), true)
         end
     end
 end, { type = "regex" })
 
 -- Start an arena session. profile "first" is the original adjacent-rooms arena;
--- profile "second" shares this combat engine but walks its distant temple/bar
--- one paced step at a time (see the second-arena navigation section).
+-- profiles "second" and "third" share this combat engine but walk their distant
+-- temple/bar/shop one paced step at a time (see ARENA_NAV). The third arena also
+-- has a training hall (reached by a paced route); the second does not.
 local function beginArenaSession(profile, debug)
     taPackage.arenaProfile = profile
     taPackage.arenaDebug = debug
@@ -2575,6 +2636,14 @@ createAlias("^ring-gong-and-fight-in-second-arena(.*)$", function(matches)
         return
     end
     beginArenaSession("second", matches[2] == " debug")
+end, { type = "regex" })
+
+createAlias("^ring-gong-and-fight-in-third-arena(.*)$", function(matches)
+    if not getClass() then
+        echo("[arena] Class unknown — run 'st' first so casters cast.")
+        return
+    end
+    beginArenaSession("third", matches[2] == " debug")
 end, { type = "regex" })
 
 local function stopArena()
@@ -2644,6 +2713,10 @@ createAlias("^stop-ring-gong-and-fight-in-arena$", function()
 end, { type = "regex" })
 
 createAlias("^stop-ring-gong-and-fight-in-second-arena$", function()
+    stopArena()
+end, { type = "regex" })
+
+createAlias("^stop-ring-gong-and-fight-in-third-arena$", function()
     stopArena()
 end, { type = "regex" })
 
@@ -2820,7 +2893,9 @@ createTrigger("^You're in the (.+)\\.$", function(matches)
         arenaJourneyOnMovement(room)
         return
     end
-    if taPackage.arenaProfile == "second" then return end
+    -- Paced arenas (second, third) drive every leg by step-list, never by room
+    -- name, so a stray room line with no active journey is a no-op for them.
+    if arenaNav() then return end
     if taPackage.arenaState == "training" then
         local phase = taPackage.arenaTrainingPhase or 1
         if phase == 1 and room == "north plaza" then
@@ -2997,9 +3072,10 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
     -- The second arena always walks back to the arena from the temple; if it is
     -- also hungry/thirsty, the arrival handler sets out for the bar (a separate
     -- round trip) rather than trying to route temple->bar directly.
-    if taPackage.arenaProfile == "second" then
+    local nav = arenaNav()
+    if nav then
         taPackage.arenaState = "returning"
-        arenaJourneyStart(SECOND_ARENA.fromTemple, SECOND_ARENA.arenaRoom, SECOND_ARENA.templeRoom)
+        arenaJourneyStart(nav.fromTemple, nav.arenaRoom, nav.templeRoom)
         return
     end
     if taPackage.needsDrinks or taPackage.needsMeal then
