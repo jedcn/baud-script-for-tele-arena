@@ -2958,6 +2958,20 @@ createTrigger("^You're on a (.+)\\.$", function(matches)
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
 
+-- Paced routes also thread through generically-named rooms whose brief takes the
+-- article "a"/"an" — the third arena's temple/bar/shop/training legs (and every
+-- reverse) each hop through a chain of "You're in an underground plaza." rooms.
+-- The "in the" trigger above only matches "the", so without this the paced walk
+-- never counts those arrivals and wedges after its first step: a real flee
+-- fired "sw", landed in "an underground plaza", and then just sat there because
+-- the journey never advanced (see the 2026-07-18 third-arena flee log). Feed
+-- them to the walk handler too; inert unless a paced journey is active, so the
+-- first arena's name-based navigation is untouched.
+createTrigger("^You're in an? (.+)\\.$", function(matches)
+    if not taPackage.arenaJourney then return end
+    arenaJourneyOnMovement(matches[2])
+end, { type = "regex" })
+
 -- Moving between rooms too quickly makes the character trip and fall. No room
 -- line follows, so the step-driven walk above would stall forever waiting to
 -- enter a room it never does. Re-send the current step after a longer pause to

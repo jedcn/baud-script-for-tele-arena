@@ -5594,6 +5594,37 @@ describe("ring-gong-and-fight-in-third-arena", function()
             assert.is_nil(taPackage.arenaJourney)
         end)
 
+        -- Regression: the real flee leg threads through "You're in an underground
+        -- plaza." rooms (article "an"), which the "in the" movement trigger never
+        -- matched — so the walk wedged after the first "sw" and never advanced (the
+        -- 2026-07-18 flee log). Drive the whole leg one arrival at a time to prove
+        -- every "an underground plaza" hop now counts and schedules the next step.
+        it("walks the full flee leg through 'an underground plaza' hops to the temple", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(10, 100)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+
+            helper.simulateLine("You're in an underground plaza.")
+            stepTimer.cb()
+            assert.are.equal("se", helper.sendCalls[#helper.sendCalls])
+
+            helper.simulateLine("You're in the town square.")
+            stepTimer.cb()
+            assert.are.equal("ne", helper.sendCalls[#helper.sendCalls])
+
+            helper.simulateLine("You're in an underground plaza.")
+            stepTimer.cb()
+            assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
+
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("healing", taPackage.arenaState)
+            assert.are.equal("buy healing", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaJourney)
+        end)
+
         it("walks back to the arena starting 'w' after healing", function()
             taPackage.arenaState = "healing"
             helper.simulateLine("The priests heal all your wounds for 3 crowns.")
