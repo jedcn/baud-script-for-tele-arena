@@ -2480,13 +2480,19 @@ end
 -- a cave bear's worst round (23) with a small margin.
 local FLEE_HP_FRACTION = 0.75
 local FLEE_HP_FLOOR = 25
+-- Per-profile overrides of the flee floor. The third arena's monsters hit far
+-- harder than a cave bear, so keep a much larger absolute HP reserve there —
+-- flee before dropping below 400 regardless of the 75% rule. Profiles absent
+-- here use FLEE_HP_FLOOR.
+local FLEE_HP_FLOOR_BY_PROFILE = { third = 400 }
 -- Assigns to the forward-declared local above (no `local` keyword) so the
 -- incoming-damage triggers, defined earlier in the file, can call it.
 function checkFleeArena()
     if taPackage.arenaState ~= "fighting" then return false end
     local hp = taPackage.character.vitalityCurrent
     local maxHp = taPackage.character.vitalityMax
-    local fleeThreshold = maxHp and math.max(math.floor(maxHp * FLEE_HP_FRACTION), FLEE_HP_FLOOR) or FLEE_HP_FLOOR
+    local floor = FLEE_HP_FLOOR_BY_PROFILE[taPackage.arenaProfile] or FLEE_HP_FLOOR
+    local fleeThreshold = maxHp and math.max(math.floor(maxHp * FLEE_HP_FRACTION), floor) or floor
     if hp and hp < fleeThreshold then
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"

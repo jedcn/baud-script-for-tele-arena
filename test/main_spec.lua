@@ -5565,6 +5565,26 @@ describe("ring-gong-and-fight-in-third-arena", function()
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
+        -- The third arena uses a 400 HP flee floor (its monsters hit far harder).
+        -- At 500 max HP the 75% rule alone would only flee below 375, so these two
+        -- cases isolate the floor: it makes us flee at 390 and stay at 410.
+        it("flees below the 400 HP floor even when above 75% of max", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(390, 500)  -- above 75% (375) but under the 400 floor
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("does not flee just above the 400 floor", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(410, 500)  -- above both the 400 floor and 75% (375), so no flee
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
         it("buys healing on arriving at the temple", function()
             taPackage.arenaState = "fleeing"
             taPackage.arenaJourney = { steps = { "sw", "se", "ne", "e" }, index = 4, arriveRoom = "temple" }
@@ -5635,10 +5655,12 @@ describe("ring-gong-and-fight-in-third-arena", function()
             taPackage.arenaProfile = "third"
         end)
 
+        -- HP kept well above the third arena's 400 flee floor (75% of 1000 = 750),
+        -- so the monster-death handler trains rather than fleeing first.
         it("walks the paced route to the guild hall on a banked level (first step 'sw')", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(80, 100)
+            setHP(900, 1000)
             taPackage.character.experience = 1120  -- Rogue level 2 threshold
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
@@ -5652,7 +5674,7 @@ describe("ring-gong-and-fight-in-third-arena", function()
         it("keeps fighting (no train) while a stat potion is still active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(80, 100)
+            setHP(900, 1000)
             taPackage.character.experience = 1120
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
