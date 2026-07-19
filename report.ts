@@ -374,6 +374,11 @@ const html = `<!DOCTYPE html>
   #room-panel .rp-empty { color: var(--muted); font-style: italic; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
   .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
+  .area-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+  .area-filters .af-label { text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin-right: 0.15rem; }
+  .area-filters label { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; user-select: none; }
+  .area-filters label .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+  .area-filters input { cursor: pointer; margin: 0; }
 </style>
 </head>
 <body>
@@ -384,6 +389,7 @@ const html = `<!DOCTYPE html>
 ${!roomGraphReady ? `<p class="note">Room-graph schema not initialized yet — launch baud once to run the migration, then map some rooms.</p>` : ""}
 ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
+<div id="area-filters" class="area-filters"></div>
 <div id="floor-tabs" class="floor-tabs"></div>
 <div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
 <p class="note">Position follows direction — north is up, east is right, diagonals at the corners — but rooms are relaxed to lie flat, so a loop the game never drew on a true grid stays untangled (directions are approximate near such loops) · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits above/below its neighbor).</p>
@@ -477,6 +483,18 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var areaColor = {};
   GRAPH.areas.forEach(function(a,i){ areaColor[a.id] = PALETTE[i % PALETTE.length]; });
 
+  // Area filter: the set of area ids whose checkbox is ticked. Empty means "no
+  // filter" — the whole world renders. Tick one or more areas and the map shows
+  // only those rooms, centered on them (see applyAreaFilter). Starts empty so the
+  // report opens on the full map.
+  var checkedAreas = {};
+  function anyChecked(){ for(var k in checkedAreas){ if(checkedAreas[k]) return true; } return false; }
+  function areaVisible(id){
+    if(!anyChecked()) return true;
+    var r = roomById[id];
+    return !!(r && checkedAreas[r.area_id]);
+  }
+
   var legend = document.getElementById('map-legend');
   if(legend){
     GRAPH.areas.forEach(function(a){
@@ -499,6 +517,31 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var fy = document.createElement('span');
     fy.innerHTML = '<span class="swatch" style="background:'+FERRY_COLOR+'"></span>ferry (buy passage)';
     legend.appendChild(fy);
+  }
+
+  // One checkbox per area. All start unchecked, so the map opens showing every
+  // area. Ticking an area (or several) filters the map down to those rooms and
+  // recenters on them; unticking the last one restores the full map.
+  var filtersEl = document.getElementById('area-filters');
+  if(filtersEl && GRAPH.areas.length){
+    var flabel = document.createElement('span');
+    flabel.className = 'af-label';
+    flabel.textContent = 'Show area:';
+    filtersEl.appendChild(flabel);
+    GRAPH.areas.forEach(function(a){
+      var label = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.addEventListener('change', function(){
+        if(cb.checked) checkedAreas[a.id] = true; else delete checkedAreas[a.id];
+        applyAreaFilter();
+      });
+      var sw = document.createElement('span');
+      sw.className = 'swatch'; sw.style.background = areaColor[a.id];
+      label.appendChild(cb); label.appendChild(sw);
+      label.appendChild(document.createTextNode(a.slug));
+      filtersEl.appendChild(label);
+    });
   }
 
   // --- Direction → grid offset (col, row); row increases downward, so n = up.
@@ -651,6 +694,8 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var selectedOct = null, selectedRow = null, selectedId = null;
   var hoverLabel = null, selectLabel = null, currentFloor = 0;
   function onFloor(id){ return cell[id] && cell[id].f === currentFloor; }
+  // A room is drawn when it's on the current floor AND passes the area filter.
+  function roomVisible(id){ return onFloor(id) && areaVisible(id); }
   function labelAt(el, id){
     if(!el || !cell[id]) return;
     var c = centerOf(id);
@@ -777,7 +822,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     // octagons) so it isn't hidden — cardinal neighbours touch edge-to-edge, so
     // a badge at the shared edge would otherwise be painted over by the rooms.
     GRAPH.exits.forEach(function(e){
-      if(!OFF[e.dir] || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
+      if(!OFF[e.dir] || e.to == null || !roomVisible(e.from) || !roomVisible(e.to)) return;
       var a = centerOf(e.from), b = centerOf(e.to);
       var locked = !!e.lock_door;
       var line = document.createElementNS(NS,'line');
@@ -796,7 +841,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     // undirected crossing is stored both ways, so draw it once (from < to).
     GRAPH.exits.forEach(function(e){
       if(e.dir !== 'passage' || e.to == null || e.from >= e.to) return;
-      if(!onFloor(e.from) || !onFloor(e.to)) return;
+      if(!roomVisible(e.from) || !roomVisible(e.to)) return;
       var a = centerOf(e.from), b = centerOf(e.to);
       var line = document.createElementNS(NS,'line');
       line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
@@ -813,7 +858,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
 
     // stubs: dashed ghost octagon one cell away in the missing exit's direction
     stubs.forEach(function(e){
-      if(!onFloor(e.from)) return;
+      if(!roomVisible(e.from)) return;
       var a = centerOf(e.from), o = OFF[e.dir];
       var len = Math.sqrt(o[0]*o[0] + o[1]*o[1]);
       var gx = a.x + o[0]/len * PITCH * 0.82, gy = a.y + o[1]/len * PITCH * 0.82;
@@ -838,7 +883,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
 
     // room octagons + up/down badges
     GRAPH.rooms.forEach(function(r){
-      if(!onFloor(r.id)) return;
+      if(!roomVisible(r.id)) return;
       var c = centerOf(r.id);
       var oct = document.createElementNS(NS,'polygon');
       oct.setAttribute('points', octPoints(c.x, c.y, R));
@@ -892,7 +937,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     // doorway (deduped across its two directions), clickable for the door detail.
     var doorBadgeDrawn = {};
     GRAPH.exits.forEach(function(e){
-      if(!OFF[e.dir] || !e.lock_door || e.to == null || !onFloor(e.from) || !onFloor(e.to)) return;
+      if(!OFF[e.dir] || !e.lock_door || e.to == null || !roomVisible(e.from) || !roomVisible(e.to)) return;
       var pairKey = Math.min(e.from, e.to) + '-' + Math.max(e.from, e.to);
       if(doorBadgeDrawn[pairKey]) return;
       doorBadgeDrawn[pairKey] = true;
@@ -929,9 +974,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   var W = svg.clientWidth || 900, H = 620;
   var tx = 0, ty = 0, scale = 1;
   function applyTransform(){ root.setAttribute('transform','translate('+tx+','+ty+') scale('+scale+')'); }
-  function fit(){                                     // fit all rooms (floors share x/y) into view
+  // Fit the rooms matching pred (default: every room; floors share x/y) into view.
+  function fitToRooms(pred){
     var minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity, any=false;
-    GRAPH.rooms.forEach(function(r){ if(!cell[r.id]) return; any=true;
+    GRAPH.rooms.forEach(function(r){ if(!cell[r.id] || (pred && !pred(r))) return; any=true;
       var c=centerOf(r.id); minX=Math.min(minX,c.x); maxX=Math.max(maxX,c.x);
       minY=Math.min(minY,c.y); maxY=Math.max(maxY,c.y); });
     if(!any){ applyTransform(); return; }
@@ -940,6 +986,31 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     tx = (W - gw*scale)/2 - (minX - PAD)*scale;
     ty = (H - gh*scale)/2 - (minY - PAD)*scale;
     applyTransform();
+  }
+  function fit(){ fitToRooms(null); }
+
+  // Re-render for the current area-filter selection. With areas ticked, jump to
+  // the floor holding the most of those rooms (so checking an upstairs-only area
+  // actually reveals it), redraw, then recenter on just the ticked rooms. With
+  // nothing ticked, redraw the current floor and fit the whole world back in.
+  function applyAreaFilter(){
+    if(anyChecked()){
+      var counts = {};
+      GRAPH.rooms.forEach(function(r){
+        if(!cell[r.id] || !checkedAreas[r.area_id]) return;
+        counts[cell[r.id].f] = (counts[cell[r.id].f] || 0) + 1;
+      });
+      var target = counts[currentFloor] ? currentFloor : null;
+      if(target == null){
+        var bestN = -1;
+        Object.keys(counts).forEach(function(f){ if(counts[f] > bestN){ bestN = counts[f]; target = Number(f); } });
+      }
+      drawFloor(target == null ? currentFloor : target);
+      fitToRooms(function(r){ return onFloor(r.id) && !!checkedAreas[r.area_id]; });
+    } else {
+      drawFloor(currentFloor);
+      fit();
+    }
   }
 
   var panning = false, panStart = null;
