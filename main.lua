@@ -2482,9 +2482,9 @@ local FLEE_HP_FRACTION = 0.75
 local FLEE_HP_FLOOR = 25
 -- Per-profile overrides of the flee floor. The third arena's monsters hit far
 -- harder than a cave bear, so keep a much larger absolute HP reserve there —
--- flee before dropping below 400 regardless of the 75% rule. Profiles absent
+-- flee before dropping below 500 regardless of the 75% rule. Profiles absent
 -- here use FLEE_HP_FLOOR.
-local FLEE_HP_FLOOR_BY_PROFILE = { third = 400 }
+local FLEE_HP_FLOOR_BY_PROFILE = { third = 500 }
 -- Assigns to the forward-declared local above (no `local` keyword) so the
 -- incoming-damage triggers, defined earlier in the file, can call it.
 function checkFleeArena()

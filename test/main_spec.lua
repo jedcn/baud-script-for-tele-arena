@@ -5565,22 +5565,22 @@ describe("ring-gong-and-fight-in-third-arena", function()
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        -- The third arena uses a 400 HP flee floor (its monsters hit far harder).
-        -- At 500 max HP the 75% rule alone would only flee below 375, so these two
-        -- cases isolate the floor: it makes us flee at 390 and stay at 410.
-        it("flees below the 400 HP floor even when above 75% of max", function()
+        -- The third arena uses a 500 HP flee floor (its monsters hit far harder).
+        -- At 600 max HP the 75% rule alone would only flee below 450, so these two
+        -- cases isolate the floor: it makes us flee at 490 and stay at 510.
+        it("flees below the 500 HP floor even when above 75% of max", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(390, 500)  -- above 75% (375) but under the 400 floor
+            setHP(490, 600)  -- above 75% (450) but under the 500 floor
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("does not flee just above the 400 floor", function()
+        it("does not flee just above the 500 floor", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(410, 500)  -- above both the 400 floor and 75% (375), so no flee
+            setHP(510, 600)  -- above both the 500 floor and 75% (450), so no flee
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
         end)
@@ -5686,7 +5686,7 @@ describe("ring-gong-and-fight-in-third-arena", function()
             taPackage.arenaProfile = "third"
         end)
 
-        -- HP kept well above the third arena's 400 flee floor (75% of 1000 = 750),
+        -- HP kept well above the third arena's 500 flee floor (75% of 1000 = 750),
         -- so the monster-death handler trains rather than fleeing first.
         it("walks the paced route to the guild hall on a banked level (first step 'sw')", function()
             taPackage.arenaState = "fighting"
