@@ -4623,6 +4623,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("starts returning east after healing", function()
             taPackage.arenaState = "healing"
+            taPackage.character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("e", helper.sendCalls[1])
@@ -4704,6 +4705,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("goes to tavern state after healing when thirsty", function()
             taPackage.arenaState = "healing"
             taPackage.needsDrinks = true
+            taPackage.character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("tavern", taPackage.arenaState)
             assert.are.equal("e", helper.sendCalls[1])
@@ -4856,9 +4858,71 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("does not affect state when arenaState is not healing", function()
             taPackage.arenaState = "fighting"
+            taPackage.character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("fighting", taPackage.arenaState)
             assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("leaving the game when broke during an arena run", function()
+
+        it("exits and stops when healing is unaffordable", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You can't afford healing.")
+            assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("exits and stops when a rowan potion is unaffordable", function()
+            taPackage.arenaState = "potions"
+            helper.simulateLine("You can't afford a rowan potion.")
+            assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("exits and stops when a hyssop potion is unaffordable", function()
+            taPackage.arenaState = "potions"
+            helper.simulateLine("You can't afford a hyssop potion.")
+            assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("does nothing on a can't-afford line outside arena/tavern", function()
+            helper.simulateLine("You can't afford healing.")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
+        end)
+
+        it("exits and stops when gold falls below the 100 floor", function()
+            taPackage.arenaState = "fighting"
+            taPackage.character.gold = 500
+            helper.simulateLine("You found 3 gold crowns while searching the orc's corpse.")
+            assert.is_not_nil(taPackage.arenaState)  -- 503 is fine
+            helper.sendCalls = {}
+            taPackage.character.gold = 130
+            helper.simulateLine("The priests heal all your wounds for 40 crowns.")  -- -> 90
+            assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        it("stays in the game at exactly the 100 floor", function()
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("You are carrying 100 gold crowns.")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        it("ignores a low balance when no arena run is active", function()
+            taPackage.arenaState = nil
+            helper.simulateLine("You are carrying 5 gold crowns.")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("x", cmd)
+            end
         end)
 
     end)
@@ -5234,6 +5298,7 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
         it("walks back to the arena, starting with north", function()
             taPackage.arenaState = "healing"
+            taPackage.character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 3 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
@@ -5635,6 +5700,7 @@ describe("ring-gong-and-fight-in-third-arena", function()
 
         it("walks back to the arena starting 'w' after healing", function()
             taPackage.arenaState = "healing"
+            taPackage.character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 3 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[#helper.sendCalls])

@@ -152,8 +152,16 @@ function getLevel()
     return taPackage.character.level
 end
 
+-- Forward declaration: setGold is the single chokepoint every gold change flows
+-- through, so the arena's "below the minimum to keep going" safety check hangs
+-- off it. The real definition (with the floor and the emergency exit) lives
+-- alongside the other arena helpers much later; assigning to this local there
+-- (see `function checkArenaGoldFloor()`, no `local`) lets setGold close over it.
+local checkArenaGoldFloor
+
 function setGold(value)
     taPackage.character.gold = tonumber(value)
+    if checkArenaGoldFloor then checkArenaGoldFloor() end
 end
 
 function getGold()
@@ -2698,6 +2706,25 @@ local function arenaEmergencyExit(reason)
     stopArena()
 end
 
+-- The arena loop only stays alive while it can pay the temple for healing and
+-- the shop for potions. If our gold ever falls below this floor, the next such
+-- trip is one bad roll away from a "can't afford" wedge that grinds the
+-- character to death, so bail out of the game now while the balance is still
+-- positive. Assigns to the local forward-declared up by setGold so every gold
+-- change is checked; a nil balance (not yet read) is left alone. Returns true
+-- when it triggered the exit.
+local ARENA_MIN_GOLD = 100
+function checkArenaGoldFloor()
+    if not taPackage.arenaState then return false end
+    local gold = getGold()
+    if gold and gold < ARENA_MIN_GOLD then
+        arenaEmergencyExit("Gold below " .. ARENA_MIN_GOLD .. " (" .. gold
+            .. ") — can't sustain healing/potions")
+        return true
+    end
+    return false
+end
+
 -- Count consecutive thirst/hunger ticks that go unrelieved. A tick means the
 -- game is draining 1 HP; if we rack up ARENA_PARCHED_LIMIT in a row without
 -- ringing the gong or buying a drink/meal (both reset the streak), the errand
@@ -3196,13 +3223,18 @@ createTrigger("^You're thirsty\\.$", function()
     send("buy drink")
 end, { type = "regex" })
 
--- A purchase we asked for was refused for lack of funds ("You can't afford
--- drink.", "You can't afford a meal."). In tavern mode the only things we ever
--- try to buy are meals and drinks, so any affordability failure is ours: quit
--- before hunger/thirst grinds us down.
+-- A purchase we asked for was refused for lack of funds. In tavern mode the only
+-- things we buy are meals and drinks ("You can't afford drink.", "... a meal.");
+-- in an arena run it's healing ("You can't afford healing.") and potions
+-- ("... a rowan potion.", "... a hyssop potion."). Either way an affordability
+-- failure is ours and means we're broke: quit at once before hunger/thirst or
+-- the next unhealed fight grinds the character down.
 createTrigger("^You can't afford (.+)\\.$", function(matches)
-    if not taPackage.tavernMode then return end
-    tavernExitGame("Out of money (can't afford " .. matches[2] .. ")")
+    if taPackage.tavernMode then
+        tavernExitGame("Out of money (can't afford " .. matches[2] .. ")")
+    elseif taPackage.arenaState then
+        arenaEmergencyExit("Out of money (can't afford " .. matches[2] .. ")")
+    end
 end, { type = "regex" })
 
 -- A fresh Vitality reading — from our poll, or any status check. If we've
