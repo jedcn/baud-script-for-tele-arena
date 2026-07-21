@@ -3255,7 +3255,12 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
     local cmd = taPackage.arenaLastCmd
     local gen = taPackage.arenaRetryGeneration or 0
     if cmd then
-        createTimer(30000, function()
+        -- In a flee we're taking hits every round, so poll for the rest clock to
+        -- clear every 2s (matching the heat-of-battle retry) rather than waiting
+        -- the full 30s a non-urgent errand walk can afford. Each retry that's
+        -- still blocked re-emits this line, so the 2s cadence re-arms naturally.
+        local delay = taPackage.arenaState == "fleeing" and 2000 or 30000
+        createTimer(delay, function()
             if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
                 arenaSend(cmd)
             end

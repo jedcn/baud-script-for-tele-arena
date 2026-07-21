@@ -4878,8 +4878,16 @@ describe("ring-gong-and-fight-in-arena", function()
             timerCreated = nil
         end)
 
-        it("creates 30s timer on move-rate-limit when arena is active", function()
+        it("creates 2s timer on move-rate-limit while fleeing", function()
             taPackage.arenaState = "fleeing"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_not_nil(timerCreated)
+            assert.are.equal(2000, timerCreated.interval)
+        end)
+
+        it("creates 30s timer on move-rate-limit for a non-flee errand walk", function()
+            taPackage.arenaState = "tavern"
             taPackage.arenaLastCmd = "w"
             helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
             assert.is_not_nil(timerCreated)
