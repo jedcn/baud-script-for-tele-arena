@@ -1914,13 +1914,14 @@ local function status()
         table.insert(segments, { text = manaCurrent and commafy(manaCurrent) or "?", fg = "cyan" })
         table.insert(segments, { text = "/ " .. commafy(manaMax), fg = "cyan" })
     end
-    -- Past 1,000,000 XP the full "1,622,269 / 1,742,800 (120,531)" reading gets
-    -- too wide, so collapse it to just the remaining "<xp remaining> to go".
+    -- When more than 10,000 XP remains to the next level, the full
+    -- "56,737 / 78,200 (21,463)" reading gets too wide, so collapse it to just
+    -- the remaining "(<xp remaining>)".
     local tail
-    if xp and xp > 1000000 and nextLevelXp then
+    if xp and nextLevelXp and (nextLevelXp - xp) > 10000 then
         tail = {
             { text = "XP:" },
-            { text = commafy(nextLevelXp - xp) .. " to go", fg = "cyan" },
+            { text = "(" .. commafy(nextLevelXp - xp) .. ")", fg = "cyan" },
         }
     else
         tail = {

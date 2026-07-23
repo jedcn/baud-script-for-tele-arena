@@ -811,12 +811,13 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("cyan",  segments[8].fg)
         end)
 
-        it("formats large XP-remaining with commas", function()
-            helper.simulateLine("Class:        Acolyte")
-            helper.simulateLine("Experience:   56737")
-            -- next threshold for Acolyte above 56,737 is 78,200
+        it("formats XP-remaining with commas in the full reading", function()
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("Experience:   30000")
+            -- next threshold for Warrior above 30,000 is 36,000; 6,000 remains
+            -- (<= 10,000, so still the full current/next/(remaining) reading)
             local segments = capturedFn()
-            assert.are.equal("(21,463)", segments[8].text)
+            assert.are.equal("(6,000)", segments[8].text)
         end)
 
         it("shows no XP-remaining segment at max level", function()
@@ -833,17 +834,27 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("/ max",    segments[7].text)
         end)
 
-        it("collapses XP to '<remaining> to go' once over 1,000,000", function()
+        it("collapses XP to '(<remaining>)' when more than 10,000 remains", function()
             helper.simulateLine("Class:        Acolyte")
             helper.simulateLine("Experience:   1622269")
             local segments = capturedFn()
             -- No MP: name[1], HP:[2..4]. Compact XP tail: label[5], remaining[6].
             assert.are.equal("XP:", segments[5].text)
-            assert.are.equal("120,531 to go", segments[6].text)  -- 1,742,800 - 1,622,269
+            assert.are.equal("(120,531)", segments[6].text)  -- 1,742,800 - 1,622,269
             assert.are.equal("cyan", segments[6].fg)
         end)
 
-        it("shifts Status/Gold in after the compact XP tail over 1,000,000", function()
+        it("keeps the full reading when 10,000 or less remains", function()
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("Experience:   26000")  -- next is 36,000; exactly 10,000 remains
+            local segments = capturedFn()
+            -- Full tail: XP:[5], current[6], / next[7], (remaining)[8].
+            assert.are.equal("26,000",   segments[6].text)
+            assert.are.equal("/ 36,000", segments[7].text)
+            assert.are.equal("(10,000)", segments[8].text)
+        end)
+
+        it("shifts Status/Gold in after the compact XP tail", function()
             helper.simulateLine("Class:        Acolyte")
             helper.simulateLine("Experience:   1622269")
             helper.simulateLine("Status:       Healthy")
@@ -855,12 +866,13 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("557",      segments[10].text)
         end)
 
-        it("keeps the full XP reading at or below 1,000,000", function()
-            helper.simulateLine("Class:        Acolyte")
-            helper.simulateLine("Experience:   972800")  -- level 13, under 1M
+        it("collapses on remaining XP even at low total XP", function()
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("Experience:   20000")  -- next is 36,000; 16,000 remains
             local segments = capturedFn()
-            assert.are.equal("972,800",   segments[6].text)
-            assert.are.equal("/ 1,315,900", segments[7].text)
+            -- Compact tail keyed off remaining (>10k), not absolute XP: label[5], remaining[6].
+            assert.are.equal("XP:",      segments[5].text)
+            assert.are.equal("(16,000)", segments[6].text)
         end)
 
         it("shows captured Status value", function()
