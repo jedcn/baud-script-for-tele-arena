@@ -437,25 +437,6 @@ end
 -- Progress through the current level, from just-leveled (blue) to about-to-level
 -- (red), walking across the color wheel through violet/magenta/pink in between.
 -- All light/readable tints so the value stays visible against a dark status bar.
---   1: first fifth   ( 0-20%)  light blue
---   2: second fifth  (20-40%)  light blue-violet
---   3: third fifth   (40-60%)  light purple/magenta
---   4: fourth fifth  (60-80%)  light pink-red
---   5: fifth fifth   (80-99%)  light red
-local xpProgressColors = { "#66b3ff", "#9b8cff", "#e066e0", "#ff6699", "#ff6666" }
-
-local function xpColor(xp, class)
-    if not xp then return "white" end
-    local level = getLevelForXp(xp, class)
-    local thresholds = xpThresholds[class or "Warrior"]
-    if level >= 25 then return xpProgressColors[5] end
-    local levelStart = thresholds[level]
-    local levelEnd   = thresholds[level + 1]
-    local progress   = (xp - levelStart) / (levelEnd - levelStart)
-    local idx        = math.min(5, math.floor(progress * 5) + 1)
-    return xpProgressColors[idx]
-end
-
 -- =========================================================================
 -- Triggers
 -- =========================================================================
@@ -1914,29 +1895,20 @@ local function status()
         table.insert(segments, { text = manaCurrent and commafy(manaCurrent) or "?", fg = "cyan" })
         table.insert(segments, { text = "/ " .. commafy(manaMax), fg = "cyan" })
     end
-    -- When more than 10,000 XP remains to the next level, the full
-    -- "56,737 / 78,200 (21,463)" reading gets too wide, so collapse it to just
-    -- the remaining "(<xp remaining>)".
-    local tail
-    if xp and nextLevelXp and (nextLevelXp - xp) > 10000 then
-        tail = {
-            { text = "XP:" },
-            { text = "(" .. commafy(nextLevelXp - xp) .. ")", fg = "cyan" },
-        }
+    -- Only ever show the XP remaining to the next level as "(<xp remaining>)".
+    -- "?" when XP is unknown, "(max)" at the top level where there's no next.
+    local remainingText
+    if not xp then
+        remainingText = "?"
+    elseif nextLevelXp then
+        remainingText = "(" .. commafy(nextLevelXp - xp) .. ")"
     else
-        tail = {
-            { text = "XP:" },
-            { text = xp and commafy(xp) or "?", fg = xpColor(xp, getClass()) },
-            {
-                text = xp and ("/ " .. (nextLevelXp and commafy(nextLevelXp) or "max")) or "",
-                fg = "white"
-            },
-            {
-                text = (xp and nextLevelXp) and ("(" .. commafy(nextLevelXp - xp) .. ")") or "",
-                fg = "cyan"
-            },
-        }
+        remainingText = "(max)"
     end
+    local tail = {
+        { text = "XP:" },
+        { text = remainingText, fg = "cyan" },
+    }
     local tailRest = {
         { text = "Status:" },
         { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },
