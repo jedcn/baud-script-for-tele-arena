@@ -3651,6 +3651,77 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- One alias now covers all three arenas: the arena is an argument, spelled
+    -- out or as a digit, with an optional "debug". "rg" is the short form.
+    describe("arena selector argument", function()
+
+        it("defaults to the first arena when no arena is given", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena")
+            assert.are.equal("first", taPackage.arenaProfile)
+        end)
+
+        it("accepts spelled-out arena names", function()
+            for word, profile in pairs({ first = "first", second = "second", third = "third" }) do
+                helper.simulateAlias("ring-gong-and-fight-in-arena " .. word)
+                assert.are.equal(profile, taPackage.arenaProfile)
+            end
+        end)
+
+        it("accepts arena digits", function()
+            for digit, profile in pairs({ ["1"] = "first", ["2"] = "second", ["3"] = "third" }) do
+                helper.simulateAlias("ring-gong-and-fight-in-arena " .. digit)
+                assert.are.equal(profile, taPackage.arenaProfile)
+            end
+        end)
+
+        it("leaves debug off by default", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena second")
+            assert.is_false(taPackage.arenaDebug)
+        end)
+
+        it("turns on debug alongside the arena", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena second debug")
+            assert.are.equal("second", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaDebug)
+        end)
+
+        it("accepts bare debug (first arena)", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena debug")
+            assert.are.equal("first", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaDebug)
+        end)
+
+        it("refuses to start on an unknown argument", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena fourth")
+            assert.is_nil(taPackage.arenaState)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "fourth", 1, true) and string.find(msg, "usage", 1, true) then
+                    warned = true
+                end
+            end
+            assert.is_true(warned)
+        end)
+
+        it("starts the named arena from the short 'rg' alias", function()
+            helper.simulateAlias("rg 2")
+            assert.are.equal("second", taPackage.arenaProfile)
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("takes debug on the short alias too", function()
+            helper.simulateAlias("rg 3 debug")
+            assert.are.equal("third", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaDebug)
+        end)
+
+        it("defaults the short alias to the first arena", function()
+            helper.simulateAlias("rg")
+            assert.are.equal("first", taPackage.arenaProfile)
+        end)
+
+    end)
+
     describe("stop alias", function()
 
         it("clears arenaState", function()
@@ -5164,7 +5235,7 @@ end)
 -- time (moving too fast makes the character fall), and both arenas' rooms are
 -- named "arena"/"temple", so travel is keyed off arenaProfile == "second".
 
-describe("ring-gong-and-fight-in-second-arena", function()
+describe("ring-gong-and-fight-in-arena second", function()
 
     before_each(function()
         helper.resetAll()
@@ -5180,12 +5251,12 @@ describe("ring-gong-and-fight-in-second-arena", function()
     describe("alias", function()
 
         it("sets arenaProfile to 'second'", function()
-            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena second")
             assert.are.equal("second", taPackage.arenaProfile)
         end)
 
         it("starts ringing and scans the room like the first arena", function()
-            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena second")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("", helper.sendCalls[1])
             assert.is_true(taPackage.arenaProbePending)
@@ -5193,7 +5264,7 @@ describe("ring-gong-and-fight-in-second-arena", function()
 
         it("does not start when class is unknown", function()
             setClass(nil)
-            helper.simulateAlias("ring-gong-and-fight-in-second-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena second")
             assert.is_nil(taPackage.arenaState)
         end)
 
@@ -5557,7 +5628,7 @@ describe("ring-gong-and-fight-in-second-arena", function()
 end)
 
 -- =========================================================================
--- ring-gong-and-fight-in-third-arena
+-- ring-gong-and-fight-in-arena third
 --
 -- Same shared combat/XP/potion engine as the other two, but a new combination:
 -- paced-route navigation (like the second arena) AND a training hall (like the
@@ -5565,7 +5636,7 @@ end)
 -- direction step-lists (ARENA_NAV.third); a banked level walks a paced route to
 -- the "guild hall" rather than the first arena's room-name trip.
 -- =========================================================================
-describe("ring-gong-and-fight-in-third-arena", function()
+describe("ring-gong-and-fight-in-arena third", function()
 
     before_each(function()
         helper.resetAll()
@@ -5581,12 +5652,12 @@ describe("ring-gong-and-fight-in-third-arena", function()
     describe("alias", function()
 
         it("sets arenaProfile to 'third'", function()
-            helper.simulateAlias("ring-gong-and-fight-in-third-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena third")
             assert.are.equal("third", taPackage.arenaProfile)
         end)
 
         it("starts ringing and scans the room like the other arenas", function()
-            helper.simulateAlias("ring-gong-and-fight-in-third-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena third")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("", helper.sendCalls[1])
             assert.is_true(taPackage.arenaProbePending)
@@ -5594,7 +5665,7 @@ describe("ring-gong-and-fight-in-third-arena", function()
 
         it("does not start when class is unknown", function()
             setClass(nil)
-            helper.simulateAlias("ring-gong-and-fight-in-third-arena")
+            helper.simulateAlias("ring-gong-and-fight-in-arena third")
             assert.is_nil(taPackage.arenaState)
         end)
 

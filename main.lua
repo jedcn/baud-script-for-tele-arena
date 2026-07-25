@@ -2629,29 +2629,53 @@ local function beginArenaSession(profile, debug)
     arenaScanRoom()
 end
 
-createAlias("^ring-gong-and-fight-in-arena(.*)$", function(matches)
-    if not getClass() then
-        echo("[arena] Class unknown — run 'st' first so casters cast.")
-        return
-    end
-    beginArenaSession("first", matches[2] == " debug")
-end, { type = "regex" })
+-- Which arena a selector word means. Both the spelled-out names and the digits
+-- are accepted so the long alias and the two-letter one read naturally
+-- ("ring-gong-and-fight-in-arena second", "rg 2").
+local ARENA_PROFILE_BY_ARG = {
+    ["1"] = "first",  first  = "first",
+    ["2"] = "second", second = "second",
+    ["3"] = "third",  third  = "third",
+}
 
-createAlias("^ring-gong-and-fight-in-second-arena(.*)$", function(matches)
-    if not getClass() then
-        echo("[arena] Class unknown — run 'st' first so casters cast.")
-        return
-    end
-    beginArenaSession("second", matches[2] == " debug")
-end, { type = "regex" })
+local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <first|second|third> [debug]"
 
-createAlias("^ring-gong-and-fight-in-third-arena(.*)$", function(matches)
+-- Parse the "<arena> [debug]" tail of the ring-gong aliases. Order doesn't
+-- matter and both words are optional; a bare alias means the first arena, which
+-- is what it meant before the three per-arena aliases were folded into one.
+-- Returns profile, debug — or nil plus the offending word.
+local function parseArenaAliasArgs(rest)
+    local profile, debug = "first", false
+    for word in (rest or ""):gmatch("%S+") do
+        local lowered = word:lower()
+        if lowered == "debug" then
+            debug = true
+        elseif ARENA_PROFILE_BY_ARG[lowered] then
+            profile = ARENA_PROFILE_BY_ARG[lowered]
+        else
+            return nil, nil, word
+        end
+    end
+    return profile, debug
+end
+
+local function handleArenaAlias(matches)
+    local profile, debug, badWord = parseArenaAliasArgs(matches[2])
+    if badWord then
+        echo("[arena] Unknown argument '" .. badWord .. "' — " .. ARENA_ALIAS_USAGE)
+        return
+    end
     if not getClass() then
         echo("[arena] Class unknown — run 'st' first so casters cast.")
         return
     end
-    beginArenaSession("third", matches[2] == " debug")
-end, { type = "regex" })
+    beginArenaSession(profile, debug)
+end
+
+createAlias("^ring-gong-and-fight-in-arena(.*)$", handleArenaAlias, { type = "regex" })
+
+-- Short form: "rg 2", "rg 3 debug". Same handler, same arguments.
+createAlias("^rg(.*)$", handleArenaAlias, { type = "regex" })
 
 local function stopArena()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
