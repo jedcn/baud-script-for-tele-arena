@@ -2041,6 +2041,72 @@ local function arenaRing()
     arenaSend("ring gong")
 end
 
+-- =========================================================================
+-- Team mode: one monster, several characters
+-- =========================================================================
+-- Several characters share an arena and must summon exactly ONE monster between
+-- them. Four clients that all see an empty room and all ring at once produce
+-- four monsters, which is how a party gets killed.
+--
+-- The coordination runs entirely through the game, because the game already
+-- provides both halves of it. Rings are broadcast to everyone in the arena
+-- ("Castor just rang the great gong!"), which makes them a shared, serialized
+-- lock; and the brief the probe prints names everyone standing here, which gives
+-- every client the same roster to order itself against. So:
+--
+--   * each character waits (its position in the roster) x GAP before ringing
+--   * seeing anyone else's ring cancels its pending ring (see the gong triggers)
+--   * a spawn is adopted whoever rang it (see arenaAdoptSummon)
+--
+-- In the steady state only the first character in the order sends anything at
+-- all; the rest never reach their timer. Nobody is designated the leader, which
+-- matters because characters constantly walk out for potions, healing, drink and
+-- training — a leader would take the whole team idle with it. Instead the
+-- absentee simply stops appearing in the brief, and whoever is now first rings
+-- on the very next probe. A roster of one is exactly the solo behaviour.
+--
+-- The gap wants to be comfortably longer than the round trip for a ring to be
+-- echoed back to everyone, so that the runner-up has really seen the winner's
+-- ring before its own timer fires.
+local ARENA_TEAM_RING_GAP_MS = 2000
+
+-- Our place in the ring order: how many of the other characters here sort before
+-- our name. Counting rather than sorting sidesteps the question of whether we
+-- appear in our own roster (we don't — the game omits us from the brief) since
+-- an equal name is not "before" us either way.
+local function arenaTeamRingSlot()
+    local me = taPackage.character.name
+    -- Without a name we can't place ourselves, so take the front of the order and
+    -- behave like solo. Ringing a beat early is recoverable; never ringing is not.
+    if not me then return 0 end
+    local ahead = 0
+    for _, other in ipairs(taPackage.arenaTeamRoster or {}) do
+        if other:lower() < me:lower() then ahead = ahead + 1 end
+    end
+    return ahead
+end
+
+-- Ring, but only after letting everyone ahead of us go first. Slot 0 rings
+-- immediately — the common case, and identical to the solo path.
+local function arenaTeamRing()
+    local slot = arenaTeamRingSlot()
+    taPackage.arenaTeamSlot = slot
+    arenaDebugEcho("team-ring-slot-" .. slot)
+    if slot == 0 then
+        arenaRing()
+        return
+    end
+    -- Guarded on the ring generation, which is what the observed-ring triggers
+    -- bump to call this off when someone ahead of us rings first.
+    local gen = taPackage.arenaRingGen or 0
+    createTimer(slot * ARENA_TEAM_RING_GAP_MS, function()
+        if taPackage.arenaState ~= "ringing" then return end
+        if (taPackage.arenaRingGen or 0) ~= gen then return end
+        arenaDebugEcho("team-ring-turn")
+        arenaRing()
+    end, { repeating = false })
+end
+
 -- The arena brief lists occupants as "There is a hobgoblin, a huge rat, and a
 -- female kobold here." Pull the first monster's name so we can engage it. The
 -- leading word is an article ("a"/"an"/"the") or a count ("two huge rats"); a
@@ -2092,6 +2158,15 @@ end
 -- earlier deadlock: a dropped retry left the character idle, see
 -- logs/session-pollux-2026-06-28T16-09-01.log). arenaEngage bumps arenaRingGen
 -- the instant we lock onto a monster, which stops the pump.
+--
+-- In team mode the pump has to outlast our wait for a turn to ring, because
+-- re-scanning bumps arenaRingGen and that is exactly what cancels a pending
+-- ring. At the fixed 3s a character in slot 2 (4s of stagger) would be re-probed
+-- before its turn ever came and would never ring at all — so widen the window by
+-- our own stagger. The slot is the one the last probe worked out; on the very
+-- first probe of a session it is 0, so a character deep in the order can lose
+-- one cycle before the window catches up. That self-corrects immediately and
+-- keeps the pump's anti-wedge guarantee intact.
 local function arenaScanRoom()
     if taPackage.arenaState ~= "ringing" then return end
     local gen = (taPackage.arenaRingGen or 0) + 1
@@ -2102,7 +2177,9 @@ local function arenaScanRoom()
     -- has walked out on an errand stops holding a slot in the ring order.
     taPackage.arenaTeamRoster = {}
     send("")
-    createTimer(ARENA_RING_RETRY_MS, function()
+    local retryMs = ARENA_RING_RETRY_MS
+        + (taPackage.arenaTeamSlot or 0) * ARENA_TEAM_RING_GAP_MS
+    createTimer(retryMs, function()
         if taPackage.arenaState == "ringing" and (taPackage.arenaRingGen or 0) == gen then
             arenaScanRoom()
         end
@@ -2353,6 +2430,10 @@ local function arenaRingOrErrand()
         departForShop()
     elseif taPackage.needsDrinks or taPackage.needsMeal then
         departForTavern()
+    elseif taPackage.arenaTeam then
+        -- Someone has to summon, but only one of us: wait for our turn in the
+        -- ring order rather than ringing on top of a team-mate.
+        arenaTeamRing()
     else
         arenaRing()
     end
@@ -2843,26 +2924,67 @@ createTrigger("^You just rang the great gong!$", function()
     taPackage.arenaOwnSummonPending = true
 end, { type = "regex" })
 
--- Adopt a freshly-spawned monster, but only the one that followed *our* ring
--- (arenaOwnSummonPending). Without that guard a monster summoned by another
--- player sharing the arena gets adopted and our real fight is forgotten. The
--- two arenas spawn with different flavor text — the first through a dungeon
--- gate, the second in a puff of smoke — but the adoption rule is identical.
-local function arenaAdoptOwnSummon(name)
+-- Somebody else in the arena rang. Solo, that is none of our business — the
+-- trigger below adopts only the monster that followed our OWN ring. In team
+-- mode it is the signal the whole design rests on: the game has just told every
+-- client, in one serialized broadcast, that a summon is on its way, so anyone
+-- still waiting for a turn must stand down or we get a second monster.
+--
+-- Bumping the ring generation is what calls off our pending ring (see
+-- arenaTeamRing) and any in-flight scan. That leaves nothing armed, so re-arm
+-- one pump tick: if the summon never arrives — the ringer bounced off "still
+-- physically exhausted", or walked out — we go back to probing rather than
+-- standing in the arena forever waiting for a monster that is not coming.
+createTrigger("^(.+) just rang the great gong!$", function(matches)
+    -- "You just rang the great gong!" is our own ring, owned by the trigger
+    -- above; this pattern matches it too, so let that one keep it.
+    if matches[2] == "You" then return end
+    if not taPackage.arenaTeam then return end
     if taPackage.arenaState ~= "ringing" then return end
-    if not taPackage.arenaOwnSummonPending then return end
+    arenaDebugEcho("team-ring-yielded-to-" .. matches[2])
+    local gen = (taPackage.arenaRingGen or 0) + 1
+    taPackage.arenaRingGen = gen
+    taPackage.arenaRingPending = false
+    -- Abandon any brief still arriving. The ring can land in the middle of our
+    -- own probe, and the floor line that ends that brief is what drives the ring
+    -- decision — so leaving the probe live would walk us straight into ringing on
+    -- top of the summon we just stood down for. The re-armed pump probes again in
+    -- a moment, by which time the monster is here to be adopted.
+    taPackage.arenaProbePending = false
+    createTimer(ARENA_RING_RETRY_MS, function()
+        if taPackage.arenaState == "ringing" and (taPackage.arenaRingGen or 0) == gen then
+            arenaScanRoom()
+        end
+    end, { repeating = false })
+end, { type = "regex" })
+
+-- Adopt a freshly-spawned monster. Solo, only the one that followed *our* ring
+-- (arenaOwnSummonPending): without that guard a monster summoned by another
+-- player sharing the arena gets adopted and our real fight is forgotten.
+--
+-- Team mode wants exactly the opposite, and that is the point of it — one
+-- monster in the arena and everybody swinging at it, whoever summoned it. So
+-- there is no "was it ours" test: any spawn arriving while we are looking for
+-- something to fight is ours to fight. Not tracking whose ring it was also means
+-- a broadcast we somehow missed cannot leave us idle next to a live monster.
+--
+-- The arenas spawn with different flavor text — the first through a dungeon
+-- gate, the second in a puff of smoke — but the adoption rule is identical.
+local function arenaAdoptSummon(name)
+    if taPackage.arenaState ~= "ringing" then return end
+    if not taPackage.arenaTeam and not taPackage.arenaOwnSummonPending then return end
     taPackage.arenaOwnSummonPending = false
     arenaEngage(name)
 end
 
 createTrigger("^An? (.+) enters the arena through the dungeon gate!$", function(matches)
-    arenaAdoptOwnSummon(matches[2])
+    arenaAdoptSummon(matches[2])
 end, { type = "regex" })
 
 -- Second arena: the summoned monster materializes instead of walking in. The
 -- smoke's color varies, so match any word(s) before "smoke".
 createTrigger("^An? (.+) appears in a puff of .+ smoke!$", function(matches)
-    arenaAdoptOwnSummon(matches[2])
+    arenaAdoptSummon(matches[2])
 end, { type = "regex" })
 
 -- Response to the bare-return probe from arenaScanRoom: the arena brief's

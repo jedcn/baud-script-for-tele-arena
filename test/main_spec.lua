@@ -4777,6 +4777,233 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- The whole point of team mode: several characters see the same empty arena
+    -- at the same moment and exactly one of them rings.
+    describe("team staggered gong ring", function()
+
+        -- Walk the brief the way the game prints it: the roster line, then the
+        -- floor line that ends it and drives the ring decision.
+        local function probeFindsEmptyArenaWith(rosterLine)
+            taPackage.arenaTeam = true
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            taPackage.arenaTeamRoster = {}
+            if rosterLine then helper.simulateLine(rosterLine) end
+            helper.simulateLine("There is nothing on the floor.")
+        end
+
+        local function rangGong()
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "ring gong" then return true end
+            end
+            return false
+        end
+
+        it("rings straight away when first in the order", function()
+            taPackage.character.name = "Castor"
+            probeFindsEmptyArenaWith("Pelayo and Tojolias are here.")
+            assert.is_true(rangGong())
+            assert.are.equal(0, taPackage.arenaTeamSlot)
+        end)
+
+        it("holds off when someone sorts ahead of us", function()
+            taPackage.character.name = "Pelayo"
+            probeFindsEmptyArenaWith("Castor and Tojolias are here.")
+            assert.is_false(rangGong())
+            assert.are.equal(1, taPackage.arenaTeamSlot)
+        end)
+
+        it("takes a slot per character ahead of us", function()
+            taPackage.character.name = "Tojolias"
+            probeFindsEmptyArenaWith("Castor, Pelayo, and Johnsonite are here.")
+            assert.is_false(rangGong())
+            assert.are.equal(3, taPackage.arenaTeamSlot)
+        end)
+
+        it("orders case-insensitively", function()
+            taPackage.character.name = "castor"
+            probeFindsEmptyArenaWith("Pelayo is here.")
+            assert.are.equal(0, taPackage.arenaTeamSlot)
+        end)
+
+        -- Alone in the arena, team mode has to behave exactly like a solo run.
+        it("rings immediately when nobody else is here", function()
+            taPackage.character.name = "Tojolias"
+            probeFindsEmptyArenaWith(nil)
+            assert.is_true(rangGong())
+            assert.are.equal(0, taPackage.arenaTeamSlot)
+        end)
+
+        it("rings once its turn comes round", function()
+            taPackage.character.name = "Pelayo"
+            probeFindsEmptyArenaWith("Castor is here.")
+            assert.is_false(rangGong())
+            helper.fireTimers(1 * 2000)
+            assert.is_true(rangGong())
+        end)
+
+        -- A character that walked out for potions or healing stops appearing in
+        -- the brief, so the next one along inherits the front of the order. This
+        -- is what makes the team survive without a designated leader.
+        it("moves up the order when the character ahead leaves the arena", function()
+            taPackage.character.name = "Pelayo"
+            probeFindsEmptyArenaWith("Castor is here.")
+            assert.are.equal(1, taPackage.arenaTeamSlot)
+            probeFindsEmptyArenaWith(nil)
+            assert.is_true(rangGong())
+            assert.are.equal(0, taPackage.arenaTeamSlot)
+        end)
+
+        -- Re-probing bumps arenaRingGen, which is what cancels a pending ring. If
+        -- the pump kept its solo 3s interval it would re-probe a slot-2 character
+        -- before its 4s turn arrived, every cycle, and that character would never
+        -- ring at all.
+        it("widens the scan pump so a late slot still gets its turn", function()
+            -- A kill drops us back into "ringing", which re-probes and arms the
+            -- pump using the slot the previous probe worked out.
+            taPackage.arenaTeam = true
+            taPackage.arenaTeamSlot = 2
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "dragon"
+            helper.timers = {}
+            helper.simulateLine("The dragon falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal(1, #helper.timers)
+            assert.are.equal(3000 + 2 * 2000, helper.timers[1].interval)
+        end)
+
+        it("leaves the scan pump at its solo interval in slot 0", function()
+            taPackage.arenaTeam = true
+            taPackage.arenaTeamSlot = 0
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "dragon"
+            helper.timers = {}
+            helper.simulateLine("The dragon falls to the ground lifeless!")
+            assert.are.equal(3000, helper.timers[1].interval)
+        end)
+
+        it("leaves the solo ring unstaggered", function()
+            taPackage.character.name = "Tojolias"
+            taPackage.arenaTeam = false
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.simulateLine("Castor and Pelayo are here.")
+            helper.simulateLine("There is nothing on the floor.")
+            assert.is_true(rangGong())
+        end)
+
+        -- The broadcast ring is the lock. Whoever gets it out first has claimed
+        -- the summon, and everyone still counting down has to stand down.
+        describe("standing down when someone else rings first", function()
+
+            it("cancels a pending ring", function()
+                taPackage.character.name = "Pelayo"
+                probeFindsEmptyArenaWith("Castor is here.")
+                helper.simulateLine("Castor just rang the great gong!")
+                helper.fireTimers(1 * 2000)
+                assert.is_false(rangGong())
+            end)
+
+            -- Nothing is armed once we stand down, so without a fresh pump tick
+            -- a summon that never lands (the ringer bounced off "still
+            -- physically exhausted", or walked out) would leave us idle forever.
+            it("re-arms the scan pump so a summon that never lands can't wedge us", function()
+                taPackage.character.name = "Pelayo"
+                probeFindsEmptyArenaWith("Castor is here.")
+                helper.timers = {}
+                helper.simulateLine("Castor just rang the great gong!")
+                assert.are.equal(1, #helper.timers)
+                helper.fireTimers()
+                assert.are.equal("", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            -- The ring can land in the middle of our own probe. The floor line
+            -- ending that brief is what drives the ring decision, so if the probe
+            -- were left live a slot-0 character would ring on top of the very
+            -- summon it just stood down for.
+            it("abandons a brief that is still arriving", function()
+                taPackage.character.name = "Castor"
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "ringing"
+                taPackage.arenaProbePending = true
+                taPackage.arenaTeamRoster = {}
+                helper.simulateLine("Pelayo just rang the great gong!")
+                helper.simulateLine("There is nothing on the floor.")
+                assert.is_false(rangGong())
+            end)
+
+            it("is not fooled by our own ring", function()
+                taPackage.character.name = "Castor"
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "ringing"
+                local genBefore = taPackage.arenaRingGen
+                helper.simulateLine("You just rang the great gong!")
+                assert.are.equal(genBefore, taPackage.arenaRingGen)
+                assert.is_true(taPackage.arenaOwnSummonPending)
+            end)
+
+            it("ignores another player's ring outside team mode", function()
+                taPackage.arenaTeam = false
+                taPackage.arenaState = "ringing"
+                local genBefore = taPackage.arenaRingGen
+                helper.simulateLine("Castor just rang the great gong!")
+                assert.are.equal(genBefore, taPackage.arenaRingGen)
+            end)
+
+            it("ignores another player's ring while we are already fighting", function()
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "hobgoblin"
+                helper.simulateLine("Castor just rang the great gong!")
+                assert.are.equal("fighting", taPackage.arenaState)
+                assert.are.equal("hobgoblin", taPackage.arenaMonster)
+            end)
+
+        end)
+
+        -- Having stood down, we still have to fight the thing our team-mate
+        -- summoned — otherwise standing down would just mean not fighting.
+        describe("adopting a team-mate's summon", function()
+
+            before_each(function()
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "ringing"
+                taPackage.arenaOwnSummonPending = false
+                helper.mockDbOneRow = { description = "A hobgoblin." }
+            end)
+
+            it("engages a monster we did not summon (first arena)", function()
+                helper.simulateLine("A hobgoblin enters the arena through the dungeon gate!")
+                assert.are.equal("hobgoblin", taPackage.arenaMonster)
+                assert.are.equal("fighting", taPackage.arenaState)
+            end)
+
+            it("engages a monster we did not summon (puff of smoke)", function()
+                helper.simulateLine("A hobgoblin appears in a puff of green smoke!")
+                assert.are.equal("hobgoblin", taPackage.arenaMonster)
+                assert.are.equal("fighting", taPackage.arenaState)
+            end)
+
+            it("still ignores a summon that is not ours outside team mode", function()
+                taPackage.arenaTeam = false
+                helper.simulateLine("A hobgoblin enters the arena through the dungeon gate!")
+                assert.is_nil(taPackage.arenaMonster)
+                assert.are.equal("ringing", taPackage.arenaState)
+            end)
+
+            -- A spawn arriving mid-fight belongs to nobody here: we already have
+            -- a monster, and swapping targets would abandon it half-killed.
+            it("does not steal our attention while already fighting", function()
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "cave bear"
+                helper.simulateLine("A hobgoblin enters the arena through the dungeon gate!")
+                assert.are.equal("cave bear", taPackage.arenaMonster)
+            end)
+
+        end)
+
+    end)
+
     describe("thirsty and hungry during arena", function()
 
         it("departs for tavern immediately when thirsty while fighting", function()
