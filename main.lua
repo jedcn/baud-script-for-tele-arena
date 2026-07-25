@@ -2098,6 +2098,9 @@ local function arenaScanRoom()
     taPackage.arenaRingGen = gen
     taPackage.arenaProbePending = true
     taPackage.arenaRingPending = false
+    -- Each probe re-learns who is in the arena from scratch, so a character that
+    -- has walked out on an errand stops holding a slot in the ring order.
+    taPackage.arenaTeamRoster = {}
     send("")
     createTimer(ARENA_RING_RETRY_MS, function()
         if taPackage.arenaState == "ringing" and (taPackage.arenaRingGen or 0) == gen then
@@ -2876,6 +2879,45 @@ createTrigger("^There is (.+) here\\.$", function(matches)
     else
         arenaRingOrErrand()
     end
+end, { type = "regex" })
+
+-- Team mode's roster: who else is standing in the arena right now. The brief the
+-- probe already prints names them on their own line, between the monsters and
+-- the floor line:
+--
+--     There is a stygian dragon here.        <- monsters (see the trigger above)
+--     Tojolias and Teekywiki are here.       <- this line; we are never in it
+--     There is nothing on the floor.         <- terminator (see the trigger below)
+--
+-- so a ring order can be derived from data we are already fetching, with no
+-- designated leader and nothing to configure (see arenaTeamRing).
+--
+-- Two triggers rather than one with an "is|are" alternation: baud's patterns are
+-- translated to Lua patterns for the tests, and Lua has no alternation. Being
+-- anchored on " is here.$" / " are here.$" is also what keeps the brief's other
+-- lines out of the roster — "There is nobody here." ends in "nobody here.", and
+-- the monster line in "<monster> here.", so neither can match.
+local function arenaCaptureRoster(blob)
+    -- Only while a probe is outstanding: this is the arena brief we asked for,
+    -- not a room we happen to be walking through.
+    if not taPackage.arenaTeam then return end
+    if not taPackage.arenaProbePending then return end
+    -- "A", "A and B", "A, B, and C" — flatten the conjunction to a plain
+    -- comma-separated list, then split. The Oxford comma leaves an empty field
+    -- behind ("B, and C" -> "B, , C"), which the emptiness check drops.
+    local roster = {}
+    for name in (blob:gsub(" and ", ", ") .. ","):gmatch("%s*(.-)%s*,") do
+        if name ~= "" then roster[#roster + 1] = name end
+    end
+    taPackage.arenaTeamRoster = roster
+end
+
+createTrigger("^(.+) is here\\.$", function(matches)
+    arenaCaptureRoster(matches[2])
+end, { type = "regex" })
+
+createTrigger("^(.+) are here\\.$", function(matches)
+    arenaCaptureRoster(matches[2])
 end, { type = "regex" })
 
 -- The "There is nobody here." occupant line only appears when the room is

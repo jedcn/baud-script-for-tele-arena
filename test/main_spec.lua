@@ -4708,6 +4708,75 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- Team mode derives its ring order from the arena brief the probe already
+    -- prints, so getting the roster out of that brief is the foundation for
+    -- everything below it.
+    describe("team roster from the room brief", function()
+
+        before_each(function()
+            taPackage.arenaTeam = true
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            -- arenaScanRoom empties the roster as it sends the probe, so the
+            -- brief always lands on a clean slate.
+            taPackage.arenaTeamRoster = {}
+        end)
+
+        it("reads a single other player", function()
+            helper.simulateLine("Pelayo is here.")
+            assert.are.same({ "Pelayo" }, taPackage.arenaTeamRoster)
+        end)
+
+        it("reads a two-player conjunction", function()
+            helper.simulateLine("Tojolias and Teekywiki are here.")
+            assert.are.same({ "Tojolias", "Teekywiki" }, taPackage.arenaTeamRoster)
+        end)
+
+        it("reads an Oxford-comma list without leaving an empty entry", function()
+            helper.simulateLine("Pelayo, Tojolias, and Johnsonite are here.")
+            assert.are.same({ "Pelayo", "Tojolias", "Johnsonite" }, taPackage.arenaTeamRoster)
+        end)
+
+        it("reads a four-player list", function()
+            helper.simulateLine("Castor, Pelayo, Teekywiki, and Tojolias are here.")
+            assert.are.same({ "Castor", "Pelayo", "Teekywiki", "Tojolias" },
+                taPackage.arenaTeamRoster)
+        end)
+
+        -- The empty-room line ends in "nobody here.", not " is here.", so the
+        -- anchored pattern cannot match it. If that ever regressed, "There" would
+        -- silently join the roster and push everyone down a slot.
+        it("does not take 'There' from the empty-room line", function()
+            helper.simulateLine("There is nobody here.")
+            assert.are.same({}, taPackage.arenaTeamRoster)
+        end)
+
+        it("does not take a monster from the occupant line", function()
+            helper.simulateLine("There is a hobgoblin here.")
+            assert.are.same({}, taPackage.arenaTeamRoster)
+        end)
+
+        it("does not take a plural monster count from the occupant line", function()
+            helper.simulateLine("There are three warlocks here.")
+            assert.are.same({}, taPackage.arenaTeamRoster)
+        end)
+
+        it("ignores the roster line outside team mode", function()
+            taPackage.arenaTeam = false
+            helper.simulateLine("Pelayo is here.")
+            assert.are.same({}, taPackage.arenaTeamRoster)
+        end)
+
+        -- Scoped to the brief we asked for, so a player standing in some room we
+        -- walk through on an errand never enters the arena roster.
+        it("ignores the roster line when no probe is pending", function()
+            taPackage.arenaProbePending = false
+            helper.simulateLine("Pelayo is here.")
+            assert.are.same({}, taPackage.arenaTeamRoster)
+        end)
+
+    end)
+
     describe("thirsty and hungry during arena", function()
 
         it("departs for tavern immediately when thirsty while fighting", function()
