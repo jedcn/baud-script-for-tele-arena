@@ -14,6 +14,7 @@ M.cechoBgCalls = {}
 M.httpPostCalls = {}
 M.httpRequestCalls = {}
 M.dbCalls = {}
+M.timers = {}
 M.mockDbOneRow = nil
 M.mockDbRows = {}
 M.mockExecuteReturn = nil
@@ -122,8 +123,30 @@ function createOutboundTrigger(pattern, callback, options)
     })
 end
 
+-- Timers never fire on their own here: the script arms them constantly (scan
+-- pumps, paced walks, retries) and letting them run would make every test
+-- reentrant. Instead we record each one so a test can fire exactly the timer it
+-- cares about via M.fireTimers. The script has no timer-cancellation API — it
+-- guards stale callbacks with generation counters — so firing a "cancelled"
+-- timer is legitimate and is how those guards get tested.
 function createTimer(interval, callback, options)
+    table.insert(M.timers, { interval = interval, callback = callback, options = options or {} })
     return "mock_timer_id"
+end
+
+-- Fire every timer armed so far, oldest first, and clear the queue. Callbacks
+-- commonly arm follow-up timers (the scan pump re-arms itself); those land in
+-- the fresh queue rather than being fired in this pass, so a self-arming pump
+-- advances one tick per call instead of looping forever. `interval` optionally
+-- restricts the pass to timers armed for exactly that many milliseconds.
+function M.fireTimers(interval)
+    local pending = M.timers
+    M.timers = {}
+    for _, timer in ipairs(pending) do
+        if interval == nil or timer.interval == interval then
+            timer.callback()
+        end
+    end
 end
 
 function setStatus(fn) end
@@ -220,6 +243,7 @@ function M.resetAll()
     for k in pairs(M.httpPostCalls) do M.httpPostCalls[k] = nil end
     for k in pairs(M.httpRequestCalls) do M.httpRequestCalls[k] = nil end
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
+    M.timers = {}
     M.mockDbOneRow = nil
     M.mockDbRows = {}
     M.mockExecuteReturn = nil
