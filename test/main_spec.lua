@@ -3722,6 +3722,53 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- team-fight-in-arena starts the very same session as the solo aliases, with
+    -- one extra flag. These cover the flag and the shared argument parsing; the
+    -- cooperative behaviour itself is exercised under "team arena fighting".
+    describe("team-fight-in-arena alias", function()
+
+        it("starts a team session in the first arena by default", function()
+            helper.simulateAlias("team-fight-in-arena")
+            assert.are.equal("first", taPackage.arenaProfile)
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
+        it("takes the same arena selector as the solo aliases", function()
+            helper.simulateAlias("team-fight-in-arena third")
+            assert.are.equal("third", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
+        it("takes debug alongside the arena", function()
+            helper.simulateAlias("team-fight-in-arena second debug")
+            assert.are.equal("second", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaDebug)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
+        it("refuses to start on an unknown argument", function()
+            helper.simulateAlias("team-fight-in-arena fourth")
+            assert.is_nil(taPackage.arenaState)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "team-fight-in-arena", 1, true)
+                    and string.find(msg, "fourth", 1, true) then
+                    warned = true
+                end
+            end
+            assert.is_true(warned)
+        end)
+
+        -- The solo aliases must stay solo: a stray team flag would make them
+        -- wait on a roster that nobody else is part of.
+        it("leaves the solo aliases in solo mode", function()
+            helper.simulateAlias("rg 2")
+            assert.is_false(taPackage.arenaTeam)
+        end)
+
+    end)
+
     describe("stop alias", function()
 
         it("clears arenaState", function()
@@ -7594,6 +7641,20 @@ describe("ta.follow", function()
             assert.is_nil(taPackage.arenaState)
             assert.is_false(taPackage.tavernMode)
             assert.is_false(taPackage.mapping)
+        end)
+
+        -- Team mode rides on the same session as a solo arena run, so the one
+        -- stopArena teardown covers it — but a leftover arenaTeam flag would make
+        -- the NEXT solo run silently cooperative, so assert it is cleared too.
+        it("clears team-mode state along with the arena session", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaTeam = true
+            taPackage.arenaTeamRoster = { "Pelayo" }
+            taPackage.arenaTeamSlot = 2
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.arenaTeam)
+            assert.is_nil(taPackage.arenaTeamRoster)
+            assert.is_nil(taPackage.arenaTeamSlot)
         end)
 
         it("is a safe no-op when nothing is running", function()

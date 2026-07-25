@@ -2599,9 +2599,17 @@ end, { type = "regex" })
 -- profiles "second" and "third" share this combat engine but walk their distant
 -- temple/bar/shop one paced step at a time (see ARENA_NAV). The third arena also
 -- has a training hall (reached by a paced route); the second does not.
-local function beginArenaSession(profile, debug)
+--
+-- `team` turns on cooperative fighting: several characters share the arena and
+-- coordinate so only one monster is ever summoned, and everybody swings at it.
+-- It is a flag on the same session, not a second loop — every errand (thirst,
+-- potions, flee-and-heal, training) stays per-character and untouched.
+local function beginArenaSession(profile, debug, team)
     taPackage.arenaProfile = profile
     taPackage.arenaDebug = debug
+    taPackage.arenaTeam = team
+    taPackage.arenaTeamRoster = {}
+    taPackage.arenaTeamSlot = 0
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
     taPackage.arenaLastNtfyTime = nil
@@ -2622,7 +2630,8 @@ local function beginArenaSession(profile, debug)
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     local debugSuffix = debug and " (debug mode)" or ""
-    echo("[arena] Session started" .. debugSuffix .. ". XP: " .. startXpStr)
+    local teamSuffix = team and " (team mode)" or ""
+    echo("[arena] Session started" .. teamSuffix .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
     -- Scan the room before the first ring: another player may already have a
     -- monster in here, and we should clear it before summoning our own.
@@ -2639,6 +2648,7 @@ local ARENA_PROFILE_BY_ARG = {
 }
 
 local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <first|second|third> [debug]"
+local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <first|second|third> [debug]"
 
 -- Parse the "<arena> [debug]" tail of the ring-gong aliases. Order doesn't
 -- matter and both words are optional; a bare alias means the first arena, which
@@ -2659,23 +2669,37 @@ local function parseArenaAliasArgs(rest)
     return profile, debug
 end
 
-local function handleArenaAlias(matches)
-    local profile, debug, badWord = parseArenaAliasArgs(matches[2])
+-- Shared body of the solo and team aliases: same arguments, same class check,
+-- same session — only the team flag differs.
+local function startArenaFromAlias(rest, team, usage)
+    local profile, debug, badWord = parseArenaAliasArgs(rest)
     if badWord then
-        echo("[arena] Unknown argument '" .. badWord .. "' — " .. ARENA_ALIAS_USAGE)
+        echo("[arena] Unknown argument '" .. badWord .. "' — " .. usage)
         return
     end
     if not getClass() then
         echo("[arena] Class unknown — run 'st' first so casters cast.")
         return
     end
-    beginArenaSession(profile, debug)
+    beginArenaSession(profile, debug, team)
+end
+
+local function handleArenaAlias(matches)
+    startArenaFromAlias(matches[2], false, ARENA_ALIAS_USAGE)
 end
 
 createAlias("^ring-gong-and-fight-in-arena(.*)$", handleArenaAlias, { type = "regex" })
 
 -- Short form: "rg 2", "rg 3 debug". Same handler, same arguments.
 createAlias("^rg(.*)$", handleArenaAlias, { type = "regex" })
+
+-- Cooperative version: run this in every session that is fighting the same
+-- arena together. The characters coordinate through the game itself — see the
+-- roster/stagger machinery below — so no leader needs designating and no extra
+-- arguments are needed beyond the usual arena selector.
+createAlias("^team-fight-in-arena(.*)$", function(matches)
+    startArenaFromAlias(matches[2], true, ARENA_TEAM_ALIAS_USAGE)
+end, { type = "regex" })
 
 local function stopArena()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
@@ -2703,6 +2727,9 @@ local function stopArena()
     taPackage.arenaProbePending = nil
     taPackage.arenaProfile = nil
     taPackage.arenaJourney = nil
+    taPackage.arenaTeam = nil
+    taPackage.arenaTeamRoster = nil
+    taPackage.arenaTeamSlot = nil
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
