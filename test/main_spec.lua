@@ -4801,6 +4801,10 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "ringing"
             taPackage.arenaProbePending = true
             taPackage.arenaTeamRoster = {}
+            -- The real probe runs through arenaScanRoom, which clears the ring
+            -- guard so the cycle can ring again; without this a second probe
+            -- can't ring and a retry test would pass for the wrong reason.
+            taPackage.arenaRingPending = false
             if rosterLine then helper.simulateLine(rosterLine) end
             helper.simulateLine("There is nothing on the floor.")
         end
@@ -4853,6 +4857,69 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_false(rangGong())
             helper.fireTimers(1 * 2000)
             assert.is_true(rangGong())
+        end)
+
+        -- The double-summon from the first live team run. Slot 0's fast path has
+        -- no pending timer, so a ring that keeps bouncing off "physically
+        -- exhausted" gets re-sent blind every pump tick with nothing for an
+        -- incoming ring to cancel — and lands on top of the team-mate who rang
+        -- while we were blocked. Retries take the timer path so the gen guard
+        -- can call them off.
+        describe("slot 0 retrying after an exhausted ring", function()
+
+            it("rings straight away on the first attempt", function()
+                taPackage.character.name = "Castor"
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.is_true(rangGong())
+            end)
+
+            it("waits a gap on the retry instead of ringing blind", function()
+                taPackage.character.name = "Castor"
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.is_true(rangGong())
+                -- The ring bounced; the pump re-probes and we come round again.
+                helper.sendCalls = {}
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.are.equal(0, taPackage.arenaTeamSlot)
+                assert.is_false(rangGong())
+                helper.fireTimers(2000)
+                assert.is_true(rangGong())
+            end)
+
+            it("stands down when the team-mate rings during that gap", function()
+                taPackage.character.name = "Castor"
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                helper.sendCalls = {}
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.is_false(rangGong())
+                helper.simulateLine("Pelayo just rang the great gong!")
+                helper.fireTimers(2000)
+                assert.is_false(rangGong())
+            end)
+
+            -- Alone there is nobody to collide with, so the wait would be dead
+            -- time on every retry of a solo run.
+            it("keeps the fast path on retries when alone", function()
+                taPackage.character.name = "Castor"
+                probeFindsEmptyArenaWith(nil)
+                helper.sendCalls = {}
+                probeFindsEmptyArenaWith(nil)
+                assert.is_true(rangGong())
+            end)
+
+            it("restores the fast path once a monster is engaged", function()
+                taPackage.character.name = "Castor"
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                probeFindsEmptyArenaWith("Pelayo is here.")   -- a retry
+                helper.mockDbOneRow = { description = "A hobgoblin." }
+                helper.simulateLine("A hobgoblin appears in a puff of green smoke!")
+                assert.are.equal("fighting", taPackage.arenaState)
+                helper.simulateLine("The hobgoblin falls to the ground lifeless!")
+                helper.sendCalls = {}
+                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.is_true(rangGong())
+            end)
+
         end)
 
         -- A character that walked out for potions or healing stops appearing in

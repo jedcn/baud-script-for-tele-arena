@@ -2111,20 +2111,40 @@ local function arenaTeamRingSlot()
     return ahead
 end
 
--- Ring, but only after letting everyone ahead of us go first. Slot 0 rings
--- immediately — the common case, and identical to the solo path.
+-- Ring, but only after letting everyone ahead of us go first.
+--
+-- Slot 0 rings immediately, but only on its FIRST attempt of a summon cycle.
+-- That fast path is what makes the common case cost nothing, and while our ring
+-- lands it is also harmless. It stops being harmless once the ring is bouncing
+-- off "still physically exhausted": we then re-ring blind every pump tick, with
+-- no pending timer for an incoming ring to cancel, so the moment our physical
+-- clock happens to recover we summon on top of whoever rang while we were
+-- blocked. That double-summoned an ogress mage AND a stone giant onto the party
+-- at 19:01:18 (logs/session-kerhak-team-fight-2026-07-25T18-58-34.log:462) —
+-- Kerhak was correctly slot 0, but had been blocked for 12s, so Teekywiki's
+-- turn came around and both rings landed a heartbeat apart.
+--
+-- On a retry the reason to hurry is gone, so take the same timer path as
+-- everyone else and let the arenaRingGen guard call it off. A character that is
+-- genuinely alone (empty roster) keeps the fast path on every attempt: there is
+-- nobody to collide with, and the wait would just be dead time.
 local function arenaTeamRing()
     local slot = arenaTeamRingSlot()
     taPackage.arenaTeamSlot = slot
     arenaDebugEcho("team-ring-slot-" .. slot)
-    if slot == 0 then
+    local attempts = taPackage.arenaRingAttempts or 0
+    taPackage.arenaRingAttempts = attempts + 1
+    local alone = #(taPackage.arenaTeamRoster or {}) == 0
+    if slot == 0 and (attempts == 0 or alone) then
         arenaRing()
         return
     end
     -- Guarded on the ring generation, which is what the observed-ring triggers
-    -- bump to call this off when someone ahead of us rings first.
+    -- bump to call this off when someone ahead of us rings first. Slot 0 has no
+    -- stagger of its own, so give it one gap — still inside the pump's window
+    -- (ARENA_RING_RETRY_MS) so the re-scan can't outrun our own turn.
     local gen = taPackage.arenaRingGen or 0
-    createTimer(slot * ARENA_TEAM_RING_GAP_MS, function()
+    createTimer(math.max(slot, 1) * ARENA_TEAM_RING_GAP_MS, function()
         if taPackage.arenaState ~= "ringing" then return end
         if (taPackage.arenaRingGen or 0) ~= gen then return end
         arenaDebugEcho("team-ring-turn")
@@ -2221,6 +2241,8 @@ local function arenaEngage(name)
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
+    -- This summon cycle is over, so the next one starts fresh on the fast path.
+    taPackage.arenaRingAttempts = 0
     -- First sighting of this monster: grab its description for the bestiary. The
     -- name we store comes from the game's own reply ("The female troll seems to
     -- be in good physical health."), not from what we typed, so addressing it by
