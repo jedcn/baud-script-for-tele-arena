@@ -2792,15 +2792,9 @@ local function arenaCheckParched()
     return false
 end
 
-createAlias("^stop-ring-gong-and-fight-in-arena$", function()
-    stopArena()
-end, { type = "regex" })
-
-createAlias("^stop-ring-gong-and-fight-in-second-arena$", function()
-    stopArena()
-end, { type = "regex" })
-
-createAlias("^stop-ring-gong-and-fight-in-third-arena$", function()
+-- One stop for every arena: stopArena() clears the profile along with the rest
+-- of the session, so there was never anything per-arena about stopping.
+createAlias("^stop-arena-fight$", function()
     stopArena()
 end, { type = "regex" })
 

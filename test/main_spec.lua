@@ -3726,33 +3726,33 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("clears arenaState", function()
             taPackage.arenaState = "fighting"
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaState)
         end)
 
         it("clears arenaMonster", function()
             taPackage.arenaMonster = "lizard man"
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaMonster)
         end)
 
         it("clears arenaLastCmd", function()
             taPackage.arenaLastCmd = "a lizard"
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaLastCmd)
         end)
 
         it("clears session tracking state", function()
             taPackage.arenaSessionStartXp = 500
             taPackage.arenaSessionStartTime = os.time()
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaSessionStartXp)
             assert.is_nil(taPackage.arenaSessionStartTime)
         end)
 
         it("bumps arenaXpTimerGen to cancel pending timer", function()
             taPackage.arenaXpTimerGen = 2
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.are.equal(3, taPackage.arenaXpTimerGen)
         end)
 
@@ -3760,7 +3760,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaSessionStartXp = 400
             taPackage.arenaSessionStartTime = os.time() - 600  -- 10 minutes ago
             taPackage.character = { experience = 1400 }
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "+1000 XP") and string.find(msg, "10 minutes") then
@@ -3772,7 +3772,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("skips summary when no session was started", function()
             taPackage.arenaSessionStartXp = nil
-            helper.simulateAlias("stop-ring-gong-and-fight-in-arena")
+            helper.simulateAlias("stop-arena-fight")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
                 if string.find(msg, "Session over") then found = true end
@@ -5281,7 +5281,7 @@ describe("ring-gong-and-fight-in-arena second", function()
             taPackage.arenaProfile = "second"
             taPackage.arenaJourney = { steps = { "s" }, index = 0, arriveRoom = "temple" }
             taPackage.arenaState = "fighting"
-            helper.simulateAlias("stop-ring-gong-and-fight-in-second-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaProfile)
             assert.is_nil(taPackage.arenaJourney)
             assert.is_nil(taPackage.arenaState)
@@ -5677,7 +5677,7 @@ describe("ring-gong-and-fight-in-arena third", function()
             taPackage.arenaProfile = "third"
             taPackage.arenaJourney = { steps = { "sw" }, index = 0, arriveRoom = "temple" }
             taPackage.arenaState = "fighting"
-            helper.simulateAlias("stop-ring-gong-and-fight-in-third-arena")
+            helper.simulateAlias("stop-arena-fight")
             assert.is_nil(taPackage.arenaProfile)
             assert.is_nil(taPackage.arenaJourney)
             assert.is_nil(taPackage.arenaState)
@@ -6082,7 +6082,7 @@ describe("magic-shop potion runs", function()
         taPackage.arenaProfile = "second"
         taPackage.needsPotions = true
         taPackage.arenaState = "potions"
-        helper.simulateAlias("stop-ring-gong-and-fight-in-second-arena")
+        helper.simulateAlias("stop-arena-fight")
         assert.is_nil(taPackage.needsPotions)
     end)
 
