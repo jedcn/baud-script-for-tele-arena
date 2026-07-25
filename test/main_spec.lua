@@ -4857,6 +4857,74 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("emergency exit retries until the game confirms", function()
+
+        local timers
+
+        before_each(function()
+            helper.resetAll()
+            timers = {}
+            _G.createTimer = function(interval, cb, opts)
+                table.insert(timers, { interval = interval, cb = cb, opts = opts })
+                return "mock_timer"
+            end
+            dofile("main.lua")
+            helper.clearDbCalls()
+        end)
+
+        local function countX()
+            local n = 0
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "x" then n = n + 1 end
+            end
+            return n
+        end
+
+        it("sends x immediately and arms a 2s retry, tearing down the run", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You can't afford healing.")
+            assert.are.equal(1, countX())
+            assert.is_true(taPackage.arenaExitPending)
+            assert.is_nil(taPackage.arenaState)  -- session torn down
+            assert.are.equal(2000, timers[#timers].interval)
+        end)
+
+        it("re-sends x when the retry timer fires (still rest-blocked)", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You can't afford healing.")
+            assert.are.equal(1, countX())
+            -- The game rejects the move; firing the armed retry re-sends x and
+            -- re-arms the next attempt.
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            timers[#timers].cb()
+            assert.are.equal(2, countX())
+            timers[#timers].cb()
+            assert.are.equal(3, countX())
+        end)
+
+        it("stops retrying once the game confirms Exiting Tele-Arena...", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You can't afford healing.")
+            local armed = timers[#timers]
+            helper.simulateLine("Exiting Tele-Arena...")
+            assert.is_false(taPackage.arenaExitPending)
+            -- A stale timer that fires after confirmation must not re-send x.
+            armed.cb()
+            assert.are.equal(1, countX())
+        end)
+
+        it("stops retrying when the run is stopped manually", function()
+            taPackage.arenaState = "fleeing"
+            helper.simulateLine("You can't afford healing.")
+            local armed = timers[#timers]
+            taPackage.stopArena()
+            assert.is_false(taPackage.arenaExitPending)
+            armed.cb()
+            assert.are.equal(1, countX())
+        end)
+
+    end)
+
     describe("rate limiting", function()
 
         local timerCreated

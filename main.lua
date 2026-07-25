@@ -2662,6 +2662,10 @@ local function stopArena()
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
+    -- Cancel any in-flight emergency-exit retry loop (a manual stop or
+    -- stop-all-scripts means halt everything). arenaEmergencyExit calls stopArena
+    -- first and re-arms this afterward, so its own loop survives.
+    taPackage.arenaExitPending = false
     -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
@@ -2673,11 +2677,35 @@ taPackage.stopArena = stopArena
 -- unserviceable thirst/hunger loop would otherwise grind the character to death
 -- (see something-went-wrong.log). Leaving the game with "x" preserves the
 -- character and stops all damage; tear the session down so no stale timer re-arms.
+--
+-- "x" is treated like a move, so if we're still physically exhausted from the
+-- last swing the game rejects it ("Sorry, you'll have to rest a while before you
+-- can move.") — and if we'd fired a single "x" and torn down the session, nothing
+-- would retry, leaving the character sitting in the arena taking damage: the exact
+-- death-by-attrition this exit exists to prevent. So tear down the normal arena
+-- state (no stale combat timer re-arms) but keep a minimal loop alive that re-sends
+-- "x" every 2s until the game confirms with "Exiting Tele-Arena...". A generation
+-- guard cancels an older loop if a new exit (or a restarted run) supersedes it.
 local function arenaEmergencyExit(reason)
     echo("[arena] " .. reason .. " — leaving the game (x).")
-    send("x")
     stopArena()
+    local gen = (taPackage.arenaExitGen or 0) + 1
+    taPackage.arenaExitGen = gen
+    taPackage.arenaExitPending = true
+    local function tryExit()
+        if not taPackage.arenaExitPending or taPackage.arenaExitGen ~= gen then return end
+        send("x")
+        createTimer(2000, tryExit, { repeating = false })
+    end
+    tryExit()
 end
+
+-- The game acknowledges a successful "x" with this line before dropping to the
+-- BBS "<< hit return >>" prompt — the character is out of the arena and safe from
+-- damage. Clear the pending flag so arenaEmergencyExit's retry loop stops.
+createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
+    taPackage.arenaExitPending = false
+end, { type = "regex" })
 
 -- The arena loop only stays alive while it can pay the temple for healing and
 -- the shop for potions. If our gold ever falls below this floor, the next such
