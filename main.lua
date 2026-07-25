@@ -1995,6 +1995,17 @@ local function arenaDebugEcho(label)
     end
 end
 
+-- The game takes a SINGLE word as a target and prefix-matches it, so a
+-- two-word monster has to be addressed by its first word only: "female troll"
+-- is targeted as "female". Passing the whole name is not merely ignored — the
+-- command stops being recognised at all and the line is broadcast to the room as
+-- speech instead ("-- Message sent --", and everyone else reads "From Kerhak:
+-- look female troll"). That is noise at best, and in team mode it spams the
+-- whole party, so every command that names the monster goes through here.
+local function arenaTarget(name)
+    return name:match("^(%S+)")
+end
+
 -- Melee: everyone swings each round with a physical attack, casters included.
 -- Only swing while actually fighting. Once flee triggers (state "fleeing"),
 -- every physical action resets the game's movement cooldown, so a stray swing
@@ -2008,7 +2019,7 @@ local function arenaAttack()
     if name then
         if taPackage.arenaAttackPending then return end
         taPackage.arenaAttackPending = true
-        local target = name:match("^(%S+)")
+        local target = arenaTarget(name)
         arenaDebugEcho("attack-sent")
         arenaSend("a " .. target)
     end
@@ -2025,7 +2036,7 @@ local function arenaCast()
     if not name then return end
     if taPackage.arenaCastPending then return end
     taPackage.arenaCastPending = true
-    local target = name:match("^(%S+)")
+    local target = arenaTarget(name)
     arenaDebugEcho("cast-sent")
     arenaSend("cast toduza " .. target)
 end
@@ -2196,8 +2207,12 @@ local function arenaEngage(name)
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
+    -- First sighting of this monster: grab its description for the bestiary. The
+    -- name we store comes from the game's own reply ("The female troll seems to
+    -- be in good physical health."), not from what we typed, so addressing it by
+    -- the single-word target still files it under its full name.
     if not taPackage.db.monsterHasDescription(name) then
-        send("look " .. name)
+        send("look " .. arenaTarget(name))
     end
     arenaAttack()
     arenaCast()

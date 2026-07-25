@@ -4046,11 +4046,15 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_falsy(taPackage.arenaOwnSummonPending)
         end)
 
+        -- The look has to name the monster the same single-word way the attack
+        -- does. "look huge rat" is not a command the game recognises at all — it
+        -- gets broadcast to the room as speech instead ("From Kerhak: look huge
+        -- rat"), which in team mode spams every character in the arena.
         it("looks at monster before attacking when description is unknown", function()
             taPackage.arenaState = "ringing"
             helper.mockDbOneRow = nil
             helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
-            assert.are.equal("look huge rat", helper.sendCalls[1])
+            assert.are.equal("look huge", helper.sendCalls[1])
             assert.are.equal("a huge", helper.sendCalls[2])
         end)
 
@@ -4066,8 +4070,17 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "ringing"
             helper.mockDbOneRow = { description = "" }
             helper.simulateLine("A huge rat enters the arena through the dungeon gate!")
-            assert.are.equal("look huge rat", helper.sendCalls[1])
+            assert.are.equal("look huge", helper.sendCalls[1])
             assert.are.equal("a huge", helper.sendCalls[2])
+        end)
+
+        -- A one-word monster needs no truncation; this is the case that already
+        -- worked, and must keep working.
+        it("looks at a single-word monster by its whole name", function()
+            taPackage.arenaState = "ringing"
+            helper.mockDbOneRow = nil
+            helper.simulateLine("A hobgoblin enters the arena through the dungeon gate!")
+            assert.are.equal("look hobgoblin", helper.sendCalls[1])
         end)
 
     end)
