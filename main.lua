@@ -1618,7 +1618,10 @@ local function armPhraseWatcher(aliasName, arg, andExit)
     local triggerId
     triggerId = createTrigger(phrase, function()
         removeTrigger(triggerId)
-        sendNtfy(aliasName, "Heads up- I just saw: " .. phrase)
+        -- Name the character rather than saying "I": several characters can be
+        -- watching at once, so the push has to say which one tripped it.
+        sendNtfy(aliasName, "Heads up- " .. (taPackage.character.name or "?")
+            .. " just saw: " .. phrase)
         echo("[watch] notified: " .. phrase)
         if andExit then
             echo("[watch] leaving the game (x).")

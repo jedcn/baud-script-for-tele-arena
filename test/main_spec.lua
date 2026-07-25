@@ -8123,6 +8123,7 @@ describe("message-me-when-you-see", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
+        taPackage.character.name = "Grond"
     end)
 
     it("pushes an ntfy notification the first time the phrase is seen", function()
@@ -8136,7 +8137,7 @@ describe("message-me-when-you-see", function()
         assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
         assert.are.equal("message-me-when-you-see", call.options.headers["X-Title"])
         assert.are.equal(
-            "Heads up- I just saw: odd tingling sensation washes over",
+            "Heads up- Grond just saw: odd tingling sensation washes over",
             call.options.body)
     end)
 
@@ -8160,7 +8161,16 @@ describe("message-me-when-you-see", function()
         helper.simulateLine("An odd tingling sensation washes over you briefly!")
         assert.are.equal(1, #helper.httpRequestCalls)
         assert.are.equal(
-            "Heads up- I just saw: odd tingling sensation washes over",
+            "Heads up- Grond just saw: odd tingling sensation washes over",
+            helper.httpRequestCalls[1].options.body)
+    end)
+
+    it("falls back to ? when the character name isn't known yet", function()
+        taPackage.character.name = nil
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(
+            "Heads up- ? just saw: odd tingling sensation washes over",
             helper.httpRequestCalls[1].options.body)
     end)
 
@@ -8190,6 +8200,7 @@ describe("message-me-and-exit-when-you-see", function()
             return "mock_timer"
         end
         dofile("main.lua")
+        taPackage.character.name = "Grond"
     end)
 
     local function countX()
@@ -8213,7 +8224,7 @@ describe("message-me-and-exit-when-you-see", function()
         assert.are.equal("message-me-and-exit-when-you-see",
             call.options.headers["X-Title"])
         assert.are.equal(
-            "Heads up- I just saw: odd tingling sensation washes over",
+            "Heads up- Grond just saw: odd tingling sensation washes over",
             call.options.body)
         assert.are.equal(1, countX())
         assert.is_true(taPackage.exitGamePending)
