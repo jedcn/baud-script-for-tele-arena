@@ -129,22 +129,25 @@ end
 -- cares about via M.fireTimers. The script has no timer-cancellation API — it
 -- guards stale callbacks with generation counters — so firing a "cancelled"
 -- timer is legitimate and is how those guards get tested.
-function createTimer(interval, callback, options)
+local function recordingCreateTimer(interval, callback, options)
     table.insert(M.timers, { interval = interval, callback = callback, options = options or {} })
     return "mock_timer_id"
 end
+createTimer = recordingCreateTimer
 
--- Fire every timer armed so far, oldest first, and clear the queue. Callbacks
--- commonly arm follow-up timers (the scan pump re-arms itself); those land in
--- the fresh queue rather than being fired in this pass, so a self-arming pump
--- advances one tick per call instead of looping forever. `interval` optionally
--- restricts the pass to timers armed for exactly that many milliseconds.
+-- Fire every timer armed so far, oldest first. Callbacks commonly arm follow-up
+-- timers (the scan pump re-arms itself); those are queued rather than fired in
+-- this pass, so a self-arming pump advances one tick per call instead of looping
+-- forever. `interval` optionally restricts the pass to timers armed for exactly
+-- that many milliseconds — the ones it skips stay queued for a later pass.
 function M.fireTimers(interval)
     local pending = M.timers
     M.timers = {}
     for _, timer in ipairs(pending) do
         if interval == nil or timer.interval == interval then
             timer.callback()
+        else
+            table.insert(M.timers, timer)
         end
     end
 end
@@ -244,6 +247,13 @@ function M.resetAll()
     for k in pairs(M.httpRequestCalls) do M.httpRequestCalls[k] = nil end
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
     M.timers = {}
+    -- Several describe blocks swap in their own _G.createTimer to capture one
+    -- specific timer, and most never put ours back. Left alone that leaks into
+    -- every later block in the file — timers silently stop being recorded, and
+    -- anything relying on M.timers sees an empty queue for reasons nothing in
+    -- the test explains. Restoring it here scopes those stubs to their own block
+    -- (they install after resetAll, so they still win where they are used).
+    createTimer = recordingCreateTimer
     M.mockDbOneRow = nil
     M.mockDbRows = {}
     M.mockExecuteReturn = nil
