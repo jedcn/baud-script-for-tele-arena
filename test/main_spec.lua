@@ -4884,7 +4884,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fleeing"
             helper.simulateLine("You can't afford healing.")
             assert.are.equal(1, countX())
-            assert.is_true(taPackage.arenaExitPending)
+            assert.is_true(taPackage.exitGamePending)
             assert.is_nil(taPackage.arenaState)  -- session torn down
             assert.are.equal(2000, timers[#timers].interval)
         end)
@@ -4907,7 +4907,7 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("You can't afford healing.")
             local armed = timers[#timers]
             helper.simulateLine("Exiting Tele-Arena...")
-            assert.is_false(taPackage.arenaExitPending)
+            assert.is_false(taPackage.exitGamePending)
             -- A stale timer that fires after confirmation must not re-send x.
             armed.cb()
             assert.are.equal(1, countX())
@@ -4918,7 +4918,7 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("You can't afford healing.")
             local armed = timers[#timers]
             taPackage.stopArena()
-            assert.is_false(taPackage.arenaExitPending)
+            assert.is_false(taPackage.exitGamePending)
             armed.cb()
             assert.are.equal(1, countX())
         end)
