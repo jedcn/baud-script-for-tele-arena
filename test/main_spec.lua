@@ -5383,12 +5383,30 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(30000, timerCreated.interval)
         end)
 
-        it("creates 30s timer on attack-rate-limit when arena is active", function()
+        it("polls every 2s on attack-rate-limit when arena is active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaLastCmd = "a skeleton"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
             assert.is_not_nil(timerCreated)
-            assert.are.equal(30000, timerCreated.interval)
+            assert.are.equal(2000, timerCreated.interval)
+        end)
+
+        -- The re-arm triggers all match combat lines addressed to US, so a monster
+        -- busy with a teammate leaves this retry as the ONLY thing that resumes
+        -- our swing. At the old 30s that was a 30s hole in team damage output.
+        it("resumes the swing itself when only a teammate is being attacked", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "stone giant"
+            taPackage.arenaLastCmd = "a stone"
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
+            local retry = timerCreated
+            assert.are.equal(2000, retry.interval)
+            -- Rounds go by in which the monster names the teammate, not us.
+            helper.sendCalls = {}
+            helper.simulateLine("The stone giant's poorly executed attack misses Kerhak!")
+            assert.are.equal(0, #helper.sendCalls)  -- nothing re-armed us
+            retry.cb()
+            assert.are.equal("a stone", helper.sendCalls[1])
         end)
 
         it("does NOT schedule a retry on exhaustion while ringing (pump owns it)", function()

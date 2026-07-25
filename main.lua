@@ -2046,6 +2046,20 @@ end
 -- physically exhausted" — the same retry treatment the swing gets keeps the
 -- loop alive. The pending guard means a stale retry timer can't double-ring.
 local ARENA_RING_RETRY_MS = 3000
+
+-- How long to wait before re-swinging after the game rejects an attack with
+-- "still physically exhausted". This is a POLL, not an estimate of the cooldown:
+-- a retry that's still too early just re-emits the same line and re-arms the
+-- next poll, so the cadence costs at most one interval of latency and never has
+-- to be tuned to the real clock. It used to be a flat 30s, on the assumption
+-- that some combat line would always re-drive the loop sooner. That holds solo —
+-- the monster only ever attacks us — but not in team mode, where a monster
+-- busy with a teammate prints lines that name THEM ("...misses Kerhak!"), so
+-- none of our re-arm triggers fire and the fallback becomes the actual cadence.
+-- That cost Kerhak a 30s idle mid-fight while Teekywiki solo'd a stone giant
+-- (18:59:05 -> 18:59:35 in logs/session-kerhak-team-fight-2026-07-25T18-58-34.log).
+local ARENA_EXHAUSTED_RETRY_MS = 2000
+
 local function arenaRing()
     if taPackage.arenaRingPending then return end
     taPackage.arenaRingPending = true
@@ -3570,9 +3584,9 @@ createTrigger("^You are still physically exhausted from your previous activities
         -- outstanding retry. Let the pump own ring liveness.
         return
     else
-        -- Melee is on cooldown; retry the swing once the physical clock recovers.
+        -- Melee is on cooldown; poll until the physical clock recovers.
         taPackage.arenaAttackPending = false
-        createTimer(30000, function()
+        createTimer(ARENA_EXHAUSTED_RETRY_MS, function()
             if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
                 arenaAttack()
             end
