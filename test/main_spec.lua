@@ -8170,4 +8170,114 @@ describe("message-me-when-you-see", function()
         assert.are.equal(0, #helper.httpRequestCalls)
     end)
 
+    it("does not exit the game", function()
+        helper.simulateAlias('message-me-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+end)
+
+describe("message-me-and-exit-when-you-see", function()
+
+    local timers
+
+    before_each(function()
+        helper.resetAll()
+        timers = {}
+        _G.createTimer = function(interval, cb, opts)
+            table.insert(timers, { interval = interval, cb = cb, opts = opts })
+            return "mock_timer"
+        end
+        dofile("main.lua")
+    end)
+
+    local function countX()
+        local n = 0
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "x" then n = n + 1 end
+        end
+        return n
+    end
+
+    it("notifies and leaves the game when the phrase is seen", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        assert.are.equal(0, #helper.httpRequestCalls)
+        assert.are.equal(0, countX())
+
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+
+        assert.are.equal(1, #helper.httpRequestCalls)
+        local call = helper.httpRequestCalls[1]
+        assert.are.equal("message-me-and-exit-when-you-see",
+            call.options.headers["X-Title"])
+        assert.are.equal(
+            "Heads up- I just saw: odd tingling sensation washes over",
+            call.options.body)
+        assert.are.equal(1, countX())
+        assert.is_true(taPackage.exitGamePending)
+        assert.are.equal(2000, timers[#timers].interval)
+    end)
+
+    it("re-sends x when the retry timer fires (still rest-blocked)", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, countX())
+
+        helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+        timers[#timers].cb()
+        assert.are.equal(2, countX())
+        timers[#timers].cb()
+        assert.are.equal(3, countX())
+    end)
+
+    it("stops retrying once the game confirms Exiting Tele-Arena...", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        local armed = timers[#timers]
+
+        helper.simulateLine("Exiting Tele-Arena...")
+        assert.is_false(taPackage.exitGamePending)
+        armed.cb()
+        assert.are.equal(1, countX())
+    end)
+
+    it("only fires once even if the phrase reappears", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("Exiting Tele-Arena...")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal(1, countX())
+    end)
+
+    it("accepts an unquoted phrase", function()
+        helper.simulateAlias(
+            "message-me-and-exit-when-you-see odd tingling sensation washes over")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal(1, countX())
+    end)
+
+    it("stays silent and stays put until the phrase appears", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("Nothing unusual happens.")
+        assert.are.equal(0, #helper.httpRequestCalls)
+        assert.are.equal(0, countX())
+    end)
+
+    it("does not also fire the non-exiting watcher alias", function()
+        helper.simulateAlias(
+            'message-me-and-exit-when-you-see "odd tingling sensation washes over"')
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal("message-me-and-exit-when-you-see",
+            helper.httpRequestCalls[1].options.headers["X-Title"])
+    end)
+
 end)

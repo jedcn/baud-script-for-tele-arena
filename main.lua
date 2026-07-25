@@ -1608,21 +1608,38 @@ createAlias("^map-off$", function()
     echo("[map] mapping OFF")
 end, { type = "regex" })
 
--- message-me-when-you-see "<phrase>" — arm a one-shot ntfy watcher. The first
--- server line containing <phrase> pushes a single notification, then the
--- trigger removes itself so it never fires again. A literal trigger matches
--- <phrase> anywhere in the line.
-createAlias("^message-me-when-you-see (.+)$", function(matches)
-    local arg = matches[2]
+-- Arm a one-shot ntfy watcher. The first server line containing <phrase> pushes
+-- a single notification, then the trigger removes itself so it never fires
+-- again. A literal trigger matches <phrase> anywhere in the line. When
+-- andExit is set, we also leave the game afterwards.
+local function armPhraseWatcher(aliasName, arg, andExit)
     -- Accept the phrase with or without surrounding double quotes.
     local phrase = arg:match('^"(.*)"$') or arg
     local triggerId
     triggerId = createTrigger(phrase, function()
         removeTrigger(triggerId)
-        sendNtfy("message-me-when-you-see", "Heads up- I just saw: " .. phrase)
+        sendNtfy(aliasName, "Heads up- I just saw: " .. phrase)
         echo("[watch] notified: " .. phrase)
+        if andExit then
+            echo("[watch] leaving the game (x).")
+            taPackage.exitGameWithRetry()
+        end
     end)
-    echo("[watch] will message you once when I see: " .. phrase)
+    echo("[watch] will message you once when I see: " .. phrase
+        .. (andExit and " (then leaving the game)" or ""))
+end
+
+-- message-me-when-you-see "<phrase>" — notify and stay put.
+createAlias("^message-me-when-you-see (.+)$", function(matches)
+    armPhraseWatcher("message-me-when-you-see", matches[2], false)
+end, { type = "regex" })
+
+-- message-me-and-exit-when-you-see "<phrase>" — notify, then get out of the
+-- game with "x" so the character is safe from damage by the time the push
+-- reaches your phone. Notify *first*: the exit retry loop can take seconds when
+-- we're rest-blocked, and the whole point is to hear about the phrase.
+createAlias("^message-me-and-exit-when-you-see (.+)$", function(matches)
+    armPhraseWatcher("message-me-and-exit-when-you-see", matches[2], true)
 end, { type = "regex" })
 
 -- =========================================================================
