@@ -3946,6 +3946,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaProfile = "second"
             taPackage.character.name = "Tojolias"
             taPackage.character.class = "Warrior"
+            taPackage.character.level = 12
             taPackage.character.vitalityCurrent = 313
             taPackage.character.encumberanceCurrent = 750
             taPackage.character.encumberanceMax = 1000
@@ -3965,11 +3966,37 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(
                 "[Tojolias]\n"
                     .. "- XP Until Level Up: 195,554\n"
-                    .. "- XP: 620,046\n"
+                    .. "- Lvl: 12\n"
                     .. "- HP: 313\n"
                     .. "- Encumberance: 75%\n"
                     .. "- Gold: 2,900",
                 call.options.body)
+        end)
+
+        it("marks an earned-but-untrained level with a caret on the Lvl line", function()
+            taPackage.arenaProfile = "second"
+            taPackage.character.name = "Tojolias"
+            taPackage.character.class = "Warrior"
+            -- Still reported as level 11 by the game, but 620,046 XP is past the
+            -- 588,700 a Warrior needs for level 12: earned, not yet trained.
+            taPackage.character.level = 11
+            taPackage.character.vitalityCurrent = 313
+            taPackage.character.encumberanceCurrent = 750
+            taPackage.character.encumberanceMax = 1000
+            taPackage.character.gold = 2900
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620046")
+            assert.are.equal(1, #helper.httpRequestCalls)
+            assert.are.equal(
+                "[Tojolias]\n"
+                    .. "- XP Until Level Up: 195,554\n"
+                    .. "- Lvl: 11^\n"
+                    .. "- HP: 313\n"
+                    .. "- Encumberance: 75%\n"
+                    .. "- Gold: 2,900",
+                helper.httpRequestCalls[1].options.body)
         end)
 
         it("first-arena XP check fires an ntfy notification with a first-arena title", function()

@@ -2893,7 +2893,12 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
                 lines[#lines + 1] = "- XP Until Level Up: "
                     .. formatWithCommas(nextThreshold - xp)
             end
-            lines[#lines + 1] = "- XP: " .. formatWithCommas(xp)
+            -- The raw XP total says little on a phone; the level does, and a "^"
+            -- glued to it (as on the status bar) says this character has earned
+            -- a level it hasn't trained for yet.
+            local level = getLevel()
+            lines[#lines + 1] = "- Lvl: " .. (level or "?")
+                .. (hasUntrainedLevel() and "^" or "")
             lines[#lines + 1] = "- HP: " .. (hp or "?")
             local encPct = getEncumberancePercent()
             lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
