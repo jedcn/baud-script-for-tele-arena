@@ -6148,22 +6148,33 @@ describe("ring-gong-and-fight-in-arena third", function()
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        -- The third arena uses a 500 HP flee floor (its monsters hit far harder).
-        -- At 600 max HP the 75% rule alone would only flee below 450, so these two
-        -- cases isolate the floor: it makes us flee at 490 and stay at 510.
-        it("flees below the 500 HP floor even when above 75% of max", function()
+        -- The third arena uses a 400 HP flee floor (its monsters hit far harder).
+        -- At 500 max HP the 75% rule alone would only flee below 375, so these two
+        -- cases isolate the floor: it makes us flee at 390 and stay at 410.
+        it("flees below the 400 HP floor even when above 75% of max", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(490, 600)  -- above 75% (450) but under the 500 floor
+            setHP(390, 500)  -- above 75% (375) but under the 400 floor
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("does not flee just above the 500 floor", function()
+        it("does not flee just above the 400 floor", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(510, 600)  -- above both the 500 floor and 75% (450), so no flee
+            setHP(410, 500)  -- above both the 400 floor and 75% (375), so no flee
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- The point of the lowering: at 500 a character whose max HP sits at or
+        -- below the floor could never be above it, so it fled immediately and the
+        -- third arena was unenterable.
+        it("lets a 450 max HP character fight rather than flee on sight", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(450, 450)  -- full health, under the old 500 floor
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
         end)

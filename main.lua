@@ -2618,9 +2618,18 @@ local FLEE_HP_FRACTION = 0.75
 local FLEE_HP_FLOOR = 25
 -- Per-profile overrides of the flee floor. The third arena's monsters hit far
 -- harder than a cave bear, so keep a much larger absolute HP reserve there —
--- flee before dropping below 500 regardless of the 75% rule. Profiles absent
+-- flee before dropping below this regardless of the 75% rule. Profiles absent
 -- here use FLEE_HP_FLOOR.
-local FLEE_HP_FLOOR_BY_PROFILE = { third = 500 }
+--
+-- 400, lowered from 500: at 500 a character whose max HP is at or below the
+-- floor can never be above it, so it flees on the first tick and the third
+-- arena never gets started at all. 400 is what the current roster can actually
+-- clear. Note this is now BELOW a flame giant's worst observed hit (380) plus
+-- any margin: fleeing at 399 leaves 19 HP against that hit, so the floor no
+-- longer guarantees surviving the round in which the flee is decided. It buys
+-- entry to the arena, not safety inside it — the real protection there is
+-- killing fast enough as a team that the round never comes.
+local FLEE_HP_FLOOR_BY_PROFILE = { third = 400 }
 -- Assigns to the forward-declared local above (no `local` keyword) so the
 -- incoming-damage triggers, defined earlier in the file, can call it.
 function checkFleeArena()
