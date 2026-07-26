@@ -8112,6 +8112,13 @@ describe("ta.follow", function()
             assert.is_true(echoed("[all] arena not running."))
         end)
 
+        it("stops the train-and-exit watch too", function()
+            taPackage.trainWatch = { triggers = {} }
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.trainWatch)
+            assert.is_true(echoed("[all] Stopped train-and-exit."))
+        end)
+
     end)
 
     describe("group-heal decision logging", function()
@@ -8879,6 +8886,169 @@ describe("wait-for-potions-to-wear-off-and-exit", function()
         helper.simulateLine("An odd tingling sensation washes over you briefly!")
         assert.are.equal(1, #helper.httpRequestCalls)
         assert.are.equal(1, countX())
+    end)
+
+end)
+
+describe("train-and-exit-once-potions-wear-off", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.character.name = "Grond"
+        setLevel(12)
+        setGold(500)
+    end)
+
+    local function countSends(cmd)
+        local n = 0
+        for _, sent in ipairs(helper.sendCalls) do
+            if sent == cmd then n = n + 1 end
+        end
+        return n
+    end
+
+    local function echoed(needle)
+        for _, text in ipairs(helper.echoCalls) do
+            if text:find(needle, 1, true) then return true end
+        end
+        return false
+    end
+
+    -- Run the alias and answer its bare return with the guild hall's brief.
+    local function arm()
+        helper.simulateAlias("train-and-exit-once-potions-wear-off")
+        helper.simulateLine("You're in the guild hall.")
+    end
+
+    it("confirms the room off the bare return's brief before arming", function()
+        helper.simulateAlias("train-and-exit-once-potions-wear-off")
+        assert.are.equal(1, countSends(""))
+        assert.is_false(echoed("[train] Waiting in the guild hall"))
+
+        helper.simulateLine("You're in the guild hall.")
+        assert.is_not_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] Waiting in the guild hall"))
+    end)
+
+    it("refuses to arm outside a guild hall", function()
+        helper.simulateAlias("train-and-exit-once-potions-wear-off")
+        helper.simulateLine("You're in the north plaza.")
+        assert.is_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] Not in a guild hall (room: the north plaza)"))
+        -- and a later potion expiry does nothing at all
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(0, countSends("buy training"))
+        assert.are.equal(0, countSends("x"))
+    end)
+
+    -- A brief that never arrives (not in the game, wedged connection) must not
+    -- leave us armed with no idea where we are standing.
+    it("gives up when no room brief comes back", function()
+        helper.simulateAlias("train-and-exit-once-potions-wear-off")
+        helper.fireTimers()
+        assert.is_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] No room brief came back"))
+    end)
+
+    it("keeps the armed watch when the confirmation timeout fires late", function()
+        arm()
+        helper.fireTimers()
+        assert.is_not_nil(taPackage.trainWatch)
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, countSends("buy training"))
+    end)
+
+    -- The room brief only decides the arming; room lines during the long wait that
+    -- follows are none of the watch's business.
+    it("ignores room briefs once armed", function()
+        arm()
+        helper.simulateLine("You're in the north plaza.")
+        assert.is_not_nil(taPackage.trainWatch)
+    end)
+
+    it("buys training when a potion wears off, then leaves the game", function()
+        arm()
+        assert.are.equal(0, countSends("buy training"))
+
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, countSends("buy training"))
+        -- Still in the game: we wait for the hall's verdict before exiting.
+        assert.are.equal(0, countSends("x"))
+
+        helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+        assert.are.equal(1, countSends("x"))
+        assert.is_true(taPackage.exitGamePending)
+        assert.is_nil(taPackage.trainWatch)
+    end)
+
+    it("banks the level and pushes the existing level-up notification", function()
+        arm()
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+        assert.are.equal(13, getLevel())
+        assert.are.equal(435, getGold()) -- 500 - 13 * 5
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal("Leveled Up!", helper.httpRequestCalls[1].options.headers["X-Title"])
+        assert.is_true(helper.httpRequestCalls[1].options.body:find("[Grond] trained to level 13!", 1, true) ~= nil)
+    end)
+
+    -- Both stat potions are normally up, so the first tingle can still leave us
+    -- tainted. Keep waiting rather than exiting without the level.
+    it("keeps waiting when the hall says we are still tainted", function()
+        arm()
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
+        assert.are.equal(0, countSends("x"))
+        assert.is_not_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] Still potion-tainted"))
+
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(2, countSends("buy training"))
+        helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+        assert.are.equal(1, countSends("x"))
+    end)
+
+    it("only buys once while waiting for the hall's verdict", function()
+        arm()
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, countSends("buy training"))
+    end)
+
+    it("leaves the game when no training is owed after all", function()
+        arm()
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("You are not ready for any further training, you must first prove")
+        assert.are.equal(1, countSends("x"))
+        assert.is_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] No training owed"))
+    end)
+
+    it("stops on stop-train-and-exit and stops listening", function()
+        arm()
+        helper.simulateAlias("stop-train-and-exit")
+        assert.is_nil(taPackage.trainWatch)
+        assert.is_true(echoed("[train] Stopped waiting to train."))
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(0, countSends("buy training"))
+    end)
+
+    it("does not arm a second watch when run twice", function()
+        arm()
+        helper.simulateAlias("train-and-exit-once-potions-wear-off")
+        assert.is_true(echoed("[train] Already waiting to train"))
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, countSends("buy training"))
+    end)
+
+    -- Outside this watch (and outside an arena run) the training-success trigger
+    -- must stay inert: nothing asked us to bank a level or leave the game.
+    it("leaves the success line alone when no watch is armed", function()
+        helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+        assert.are.equal(12, getLevel())
+        assert.are.equal(0, #helper.httpRequestCalls)
+        assert.are.equal(0, countSends("x"))
     end)
 
 end)

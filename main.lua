@@ -1654,6 +1654,142 @@ createAlias("^wait-for-potions-to-wear-off-and-exit$", function()
         "An odd tingling sensation washes over", true)
 end, { type = "regex" })
 
+-- train-and-exit-once-potions-wear-off — wait out the stat potions in the guild
+-- hall, bank the level the instant they lapse, then leave the game.
+--
+-- What wait-for-potions-to-wear-off-and-exit leaves you holding: the hall refuses
+-- a potion-tainted character ("Your mind and body must be whole and untainted
+-- before you may train."), a rowan/hyssop potion takes 10-20 minutes of real time
+-- to wear off, and being pushed the wear-off line still means logging back in to
+-- buy the training. Waiting *in* the game isn't free either — hunger and thirst
+-- keep ticking damage at an idle character — so this buys the training the moment
+-- it becomes possible and leaves the game as soon as the hall has answered.
+--
+-- Both potions are normally up and their wear-off lines are identical, so the
+-- first tingle can still leave us tainted. Rather than count them (the arena
+-- loop's arenaPotionsActive; a hand-driven character has no reliable count) let
+-- the hall arbitrate: on the taint refusal, go back to waiting for the next
+-- tingle. The heads-up push is the existing "Leveled Up!" one on the "rigorous
+-- ... training session" trigger further down, which this watch enables outside an
+-- arena run.
+local TRAIN_WATCH_ROOM = "guild hall"
+-- How long to wait for the room brief our bare return asks for. It comes straight
+-- back; this only has to outlast a hiccup.
+local TRAIN_WATCH_CONFIRM_MS = 5000
+
+-- Tear down every trigger the watch armed. Shared by its own exit paths and by
+-- stop-train-and-exit / stop-all-scripts, so a stop can never leave something
+-- behind still listening for a tingle we no longer care about.
+local function stopTrainWatch()
+    local watch = taPackage.trainWatch
+    if not watch then return false end
+    for _, id in ipairs(watch.triggers) do removeTrigger(id) end
+    taPackage.trainWatch = nil
+    return true
+end
+
+-- The hall has answered (either way) — nothing is left to wait for, so stop
+-- taking hunger/thirst damage for no reason and get out.
+local function trainWatchFinish(reason)
+    stopTrainWatch()
+    echo("[train] " .. reason .. " — leaving the game (x).")
+    taPackage.exitGameWithRetry()
+end
+
+-- Arm the four lines this watch lives on. Literal (non-regex) triggers: each
+-- phrase is a distinctive fragment of a longer message, and the success and
+-- not-ready replies both wrap onto a second line, so matching a fragment
+-- anywhere in the line is exactly what we want.
+local function trainWatchArm(watch)
+    local triggers = watch.triggers
+    -- Tells the confirmation timeout below that a brief did arrive in time.
+    watch.armed = true
+
+    -- A potion lapsed. Ask the hall to train; its reply decides whether we are
+    -- done or still tainted. Further tingles are ignored until it answers, so two
+    -- potions expiring in the same breath can't buy training twice.
+    triggers[#triggers + 1] = createTrigger("An odd tingling sensation washes over", function()
+        if taPackage.trainWatch ~= watch or watch.awaitingVerdict then return end
+        watch.awaitingVerdict = true
+        echo("[train] A potion wore off — buying training.")
+        send("buy training")
+    end)
+
+    -- Trained. Banking the level, charging the fee and pushing the "Leveled Up!"
+    -- notification all belong to the training-success trigger further down (it
+    -- runs first, being armed at load time); all that is left here is the exit.
+    triggers[#triggers + 1] = createTrigger("After a rigorous mental and physical training session", function()
+        if taPackage.trainWatch ~= watch then return end
+        trainWatchFinish("Trained")
+    end)
+
+    -- Refused: the other potion is still up. Back to waiting for the next tingle.
+    triggers[#triggers + 1] = createTrigger("whole and untainted before you may train", function()
+        if taPackage.trainWatch ~= watch then return end
+        watch.awaitingVerdict = false
+        echo("[train] Still potion-tainted — waiting for the next potion to wear off.")
+    end)
+
+    -- No level was owed after all (the XP threshold we thought we had crossed
+    -- wasn't). Nothing will ever come of waiting here, so leave.
+    triggers[#triggers + 1] = createTrigger("You are not ready for any further training", function()
+        if taPackage.trainWatch ~= watch then return end
+        trainWatchFinish("No training owed")
+    end)
+
+    echo("[train] Waiting in the " .. TRAIN_WATCH_ROOM
+        .. " for the potions to wear off; will buy training, then leave the game (x).")
+end
+
+createAlias("^train-and-exit-once-potions-wear-off$", function()
+    if taPackage.trainWatch then
+        echo("[train] Already waiting to train (stop-train-and-exit cancels it).")
+        return
+    end
+    -- Claim the slot before the room check so a double-typed alias can't arm two
+    -- watches during the confirmation window.
+    local watch = { triggers = {} }
+    taPackage.trainWatch = watch
+    -- Don't commit to a 20-minute wait in the wrong room — confirm off a brief we
+    -- asked for rather than any cached room, since the mapper's currentRoom is only
+    -- maintained while mapping is on and this has to work in ordinary play. A bare
+    -- return prints the room brief (a plain `look` prints the description instead).
+    local roomTrigger
+    roomTrigger = createTrigger("^You're in (.+)\\.$", function(matches)
+        if taPackage.trainWatch ~= watch then return end
+        -- One brief answers the question; drop the trigger so the long wait that
+        -- follows isn't matching every room line the game prints.
+        removeTrigger(roomTrigger)
+        watch.triggers = {}
+        local room = matches[2]
+        if not room:find(TRAIN_WATCH_ROOM, 1, true) then
+            taPackage.trainWatch = nil
+            echo("[train] Not in a " .. TRAIN_WATCH_ROOM .. " (room: " .. room
+                .. "). Walk into one first, then run train-and-exit-once-potions-wear-off.")
+            return
+        end
+        trainWatchArm(watch)
+    end, { type = "regex" })
+    watch.triggers[1] = roomTrigger
+    send("")
+    -- No brief came back (not in the game yet, or the connection is wedged). Better
+    -- to say so than to sit armed with no idea where we are standing.
+    createTimer(TRAIN_WATCH_CONFIRM_MS, function()
+        if taPackage.trainWatch ~= watch or watch.armed then return end
+        stopTrainWatch()
+        echo("[train] No room brief came back — not arming. Try again in the "
+            .. TRAIN_WATCH_ROOM .. ".")
+    end, { repeating = false })
+end, { type = "regex" })
+
+createAlias("^stop-train-and-exit$", function()
+    if stopTrainWatch() then
+        echo("[train] Stopped waiting to train.")
+    else
+        echo("[train] Not waiting to train.")
+    end
+end, { type = "regex" })
+
 -- =========================================================================
 -- Combat triggers
 -- =========================================================================
@@ -3383,7 +3519,10 @@ end, { type = "regex" })
 --   * Re-buy the stat potions we drained to be allowed to train — unless another
 --     banked level is still owed, in which case keep draining and train again.
 createTrigger("^After a rigorous mental and physical training session, you managed to blend$", function()
-    if not taPackage.arenaState then return end
+    -- Usually an arena run's doing, but the train-and-exit watch drives the same
+    -- purchase by hand, and the level bank, the fee and the push are wanted either
+    -- way — without this the hand-driven training would silently notify nobody.
+    if not (taPackage.arenaState or taPackage.trainWatch) then return end
     local lvl = getLevel()
     if lvl then
         local newLevel = lvl + 1
@@ -3402,7 +3541,10 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
         sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
     end
-    if not checkTrainingNeeded() then
+    -- Restocking is an arena-loop concern only: outside a run there is no errand
+    -- trip to hang the flag on, and leaving it set would send the next run to the
+    -- shop for no reason.
+    if taPackage.arenaState and not checkTrainingNeeded() then
         taPackage.needsPotions = true
     end
 end, { type = "regex" })
@@ -4144,6 +4286,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
+        { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
     }
     for _, s in ipairs(scripts) do
         if s.running then
