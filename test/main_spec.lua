@@ -8829,3 +8829,56 @@ describe("message-me-and-exit-when-you-see", function()
     end)
 
 end)
+
+describe("wait-for-potions-to-wear-off-and-exit", function()
+
+    before_each(function()
+        helper.resetAll()
+        _G.createTimer = function() return "mock_timer" end
+        dofile("main.lua")
+        taPackage.character.name = "Grond"
+    end)
+
+    local function countX()
+        local n = 0
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "x" then n = n + 1 end
+        end
+        return n
+    end
+
+    it("notifies and leaves the game when a potion wears off", function()
+        helper.simulateAlias("wait-for-potions-to-wear-off-and-exit")
+        assert.are.equal(0, #helper.httpRequestCalls)
+        assert.are.equal(0, countX())
+
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+
+        assert.are.equal(1, #helper.httpRequestCalls)
+        local call = helper.httpRequestCalls[1]
+        assert.are.equal("wait-for-potions-to-wear-off-and-exit",
+            call.options.headers["X-Title"])
+        assert.are.equal(
+            "Heads up- Grond just saw: An odd tingling sensation washes over",
+            call.options.body)
+        assert.are.equal(1, countX())
+        assert.is_true(taPackage.exitGamePending)
+    end)
+
+    it("stays silent and stays put until a potion wears off", function()
+        helper.simulateAlias("wait-for-potions-to-wear-off-and-exit")
+        helper.simulateLine("Nothing unusual happens.")
+        assert.are.equal(0, #helper.httpRequestCalls)
+        assert.are.equal(0, countX())
+    end)
+
+    it("only fires once even if another potion wears off", function()
+        helper.simulateAlias("wait-for-potions-to-wear-off-and-exit")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("Exiting Tele-Arena...")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        assert.are.equal(1, #helper.httpRequestCalls)
+        assert.are.equal(1, countX())
+    end)
+
+end)

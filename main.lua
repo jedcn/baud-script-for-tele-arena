@@ -1645,6 +1645,15 @@ createAlias("^message-me-and-exit-when-you-see (.+)$", function(matches)
     armPhraseWatcher("message-me-and-exit-when-you-see", matches[2], true)
 end, { type = "regex" })
 
+-- wait-for-potions-to-wear-off-and-exit — the one phrase we wait on often
+-- enough to deserve its own name: the line the game prints when a potion runs
+-- out. Same behaviour as message-me-and-exit-when-you-see with that phrase,
+-- just without having to remember the wording.
+createAlias("^wait-for-potions-to-wear-off-and-exit$", function()
+    armPhraseWatcher("wait-for-potions-to-wear-off-and-exit",
+        "An odd tingling sensation washes over", true)
+end, { type = "regex" })
+
 -- =========================================================================
 -- Combat triggers
 -- =========================================================================
