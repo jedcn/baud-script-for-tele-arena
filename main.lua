@@ -403,6 +403,21 @@ function getXpForNextLevel(xp, class)
     return thresholds[currentLevel + 1]
 end
 
+-- True when we have banked enough XP for a level we haven't trained for yet:
+-- the level our XP earns us has outrun the level the game reports. Training is
+-- a manual trip to a guild hall (and some arenas have none), so that gap can
+-- stay open for a long time — the status bar flags it with a "^".
+-- Deliberately independent of checkTrainingNeeded, which additionally gates on
+-- the arena profile: the mark is about the character, not about whether the
+-- arena script is about to act on it.
+function hasUntrainedLevel()
+    local xp, class, level = getExperience(), getClass(), getLevel()
+    -- Any unknown, or a class we have no XP table for, means we can't tell —
+    -- and getLevelForXp would silently fall back to the Warrior table.
+    if not (xp and class and level and xpThresholds[class]) then return false end
+    return getLevelForXp(xp, class) > level
+end
+
 -- Push a "ready to train for the next level" notification the moment XP crosses
 -- a level threshold. We track the XP-derived level in character.earnedLevel and
 -- alert once each time it climbs. XP doesn't reset on training, so after
@@ -2074,6 +2089,12 @@ local function status()
         { text = "XP:" },
         { text = remainingText, fg = "cyan" },
     }
+    -- A red "^" hangs off the XP figure when we have earned a level but not yet
+    -- trained for it. `glue` renders it flush ("(184,893)^") so it reads as a
+    -- mark on the XP rather than a field of its own.
+    if hasUntrainedLevel() then
+        table.insert(tail, { text = "^", fg = "red", glue = true })
+    end
     local tailRest = {
         { text = "Status:" },
         { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },

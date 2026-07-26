@@ -782,6 +782,43 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("(max)", segments[6].text)
         end)
 
+        it("marks earned-but-untrained levels with a red glued caret", function()
+            -- Kerhak: level 11 Hunter with 630,707 XP. A Hunter needs 588,700
+            -- for level 12, so the level is earned but not yet trained.
+            helper.simulateLine("Class:        Hunter")
+            helper.simulateLine("Level:        11")
+            helper.simulateLine("Experience:   630707")
+            local segments = capturedFn()
+            assert.are.equal("(184,893)", segments[6].text)  -- 815,600 - 630,707
+            assert.are.equal("^",    segments[7].text)
+            assert.are.equal("red",  segments[7].fg)
+            assert.is_true(segments[7].glue)
+        end)
+
+        it("shows no caret once the earned level has been trained", function()
+            helper.simulateLine("Class:        Hunter")
+            helper.simulateLine("Level:        12")
+            helper.simulateLine("Experience:   630707")
+            local segments = capturedFn()
+            assert.are.equal("(184,893)", segments[6].text)
+            assert.are.equal("Status:", segments[7].text)
+        end)
+
+        it("shows no caret when short of the next threshold", function()
+            helper.simulateLine("Class:        Hunter")
+            helper.simulateLine("Level:        11")
+            helper.simulateLine("Experience:   588699")  -- one short of level 12
+            local segments = capturedFn()
+            assert.are.equal("Status:", segments[7].text)
+        end)
+
+        it("shows no caret when the level is unknown", function()
+            helper.simulateLine("Class:        Hunter")
+            helper.simulateLine("Experience:   630707")
+            local segments = capturedFn()
+            assert.are.equal("Status:", segments[7].text)
+        end)
+
         it("shifts Status/Gold in after the XP tail", function()
             helper.simulateLine("Class:        Acolyte")
             helper.simulateLine("Experience:   1622269")
