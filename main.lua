@@ -4348,12 +4348,21 @@ end, { type = "regex" })
 -- recorded. Mapping stays off afterwards: sixteen scripted rooms leave the
 -- mapper's anchor far behind, and silently resuming would mis-link every
 -- manual move that followed. The user is told to re-anchor with `map-here`.
+-- `killAll` clears the destination of monsters on arrival, which is how we get
+-- at a key: the game auto-searches each corpse, and a key turns up in one of
+-- them ("While searching the area, you notice a ruby key...").
 local NAV_ROUTES = {
     ["sewers/town-sewers-18"] = {
         from  = "second-town/north-plaza",
         steps = { "sw", "d", "se", "sw", "s", "se", "se", "sw",
                   "se", "se", "ne", "ne", "se", "se", "se", "e" },
         door  = { dir = "s", key = "ruby" },
+    },
+    -- Leg 2: on from the stone door to the room the ruby key comes out of.
+    ["sewers/town-sewers-54"] = {
+        from    = "sewers/town-sewers-18",
+        steps   = { "e", "ne", "n", "ne", "ne", "nw", "nw", "n", "ne", "se", "se", "se" },
+        killAll = true,
     },
 }
 -- Exposed so tests can register a route without editing the table above.
@@ -4640,6 +4649,23 @@ local function navRecoverAfterRefusedMove()
     end, { repeating = false })
 end
 
+-- Hand off to `kill-all` once a route that asked for it has arrived. The walk
+-- is already finished by this point, so the sweep owns the room briefs its own
+-- scan produces. Paced a beat so the arrival settles first, and re-checked on
+-- the way in: navGen moves if the user stopped us in the meantime.
+local function navScheduleSweep(destination)
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_STEP_DELAY_MS, function()
+        if (taPackage.navGen or 0) ~= gen then return end
+        if taPackage.arenaState then
+            navEcho("An arena session is active — not starting kill-all at " .. destination .. ".")
+            return
+        end
+        taPackage.killAllActive = true
+        taPackage.killAllScan()
+    end, { repeating = false })
+end
+
 -- Advance the walk one room at a time. Called for every arrival brief while a
 -- walk is active (hooked into handleRoomEntry, which owns all the phrasings).
 local function navOnRoomBrief(room)
@@ -4683,6 +4709,11 @@ local function navOnRoomBrief(room)
         if j.door then
             navEcho("Arrived at " .. j.destination .. ".")
             navScheduleDoor()
+        elseif j.killAll then
+            local dest = j.destination
+            stopNavigate()
+            navEcho("Arrived at " .. dest .. " — clearing the room with kill-all.")
+            navScheduleSweep(dest)
         else
             local dest = j.destination
             stopNavigate()
@@ -4714,6 +4745,7 @@ local function navStart(destination, route, arriveName, startFloor)
         steps        = route.steps,
         index        = 0,
         door         = route.door,
+        killAll      = route.killAll,
         arriveName   = arriveName,
         phase        = "walking",
         mappingWasOn = mappingWasOn,
@@ -4855,6 +4887,58 @@ end, { type = "regex" })
 createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove, { type = "regex" })
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$",
     navRecoverAfterRefusedMove, { type = "regex" })
+
+-- Something engaged us mid-route. The game refuses the move and prints no room
+-- line, so without this the walk simply stops dead with nothing on screen to
+-- explain it -- and this is the single most common refusal in the logs (11,655
+-- of them), which the sewers routes will meet sooner or later. Retrying is
+-- futile while a monster is on us, so stop and say what to do about it.
+createTrigger("^You cannot leave in the heat of battle!$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    local dest = j.destination
+    stopNavigate()
+    navEcho("Something has me in combat, so I can't walk on to " .. dest .. ".")
+    navEcho("  Deal with it (kill-all, or flee), then run navigate-to " .. dest .. " again"
+        .. " — it re-checks where I am, so it'll pick up wherever I've ended up.")
+end, { type = "regex" })
+
+-- =========================================================================
+-- Clearing the destination for a key
+-- =========================================================================
+--
+-- The game auto-searches every corpse and announces what it turns up. That is
+-- how a door key is come by -- there is no `search` to send, we just read the
+-- replies. The wording wraps at the terminal width, so the "add to your
+-- possessions." form arrives whole or split; both are matched.
+
+-- Announce a key during a sweep. Fetching one is the entire reason a route
+-- walks to a monster room, and the line is easy to lose in combat spam.
+-- The capture carries the article ("a ruby key"), which reads wrong in a
+-- sentence and is wrong again in a `get` command, so strip it as on the floor.
+local function navNoteKeyFound(item)
+    if not (taPackage.killAllActive or taPackage.killActive) then return end
+    local name = navStripArticle(item)
+    if not name:find("key", 1, true) then return end
+    navEcho("Got the " .. name .. ".")
+end
+createTrigger("^While searching the area, you notice (.+), which you add to your possessions\\.$",
+    function(matches) navNoteKeyFound(matches[2]) end, { type = "regex" })
+createTrigger("^While searching the area, you notice (.+), which you add to your$",
+    function(matches) navNoteKeyFound(matches[2]) end, { type = "regex" })
+
+-- The pack was full when the search turned something up, so the item -- quite
+-- possibly the key we came for -- is still lying on the floor. Killing anything
+-- else cannot help while we have nowhere to put what we find, so end the sweep
+-- and say exactly how to recover.
+createTrigger("^While searching the area, you notice (.+), but you can't carry it\\.$", function(matches)
+    if not (taPackage.killAllActive or taPackage.killActive) then return end
+    local item = navStripArticle(matches[2])
+    taPackage.stopKill()
+    navEcho("Couldn't carry the " .. item .. " — pack is full, so it's still on the floor here.")
+    navEcho("  Stopped the sweep. Drop or stow something, `get " .. item .. "`,"
+        .. " then kill-all again to finish the room.")
+end, { type = "regex" })
 
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear

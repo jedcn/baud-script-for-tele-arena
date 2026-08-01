@@ -9741,6 +9741,106 @@ describe("navigate-to", function()
 
     end)
 
+    -- A route can end by clearing the room, which is how a door key is come by:
+    -- the game auto-searches each corpse and announces what it finds.
+    describe("clearing the destination", function()
+
+        local function arriveWithSweep()
+            route({ killAll = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(1000)
+            brief("town sewers")
+            helper.fireTimers(1000)
+            brief("town sewers")          -- 3rd and last step: arrived
+        end
+
+        it("hands off to kill-all after arriving", function()
+            arriveWithSweep()
+            assert.is_truthy(lastEchoes():find("clearing the room with kill-all", 1, true))
+            assert.is_falsy(taPackage.killAllActive)   -- paced, not immediate
+            helper.fireTimers(1000)
+            assert.is_true(taPackage.killAllActive)
+        end)
+
+        it("does not start the sweep if the walk was stopped first", function()
+            arriveWithSweep()
+            helper.simulateAlias("stop-navigating")
+            helper.fireTimers(1000)
+            assert.is_falsy(taPackage.killAllActive)
+        end)
+
+        it("announces a key found while searching a corpse", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
+            helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
+            assert.is_truthy(lastEchoes():find("Got the ruby key.", 1, true))
+        end)
+
+        -- The line hard-wraps at the terminal width, so "possessions." lands on
+        -- the following line and the first form never matches.
+        it("announces a key when the line wrapped", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
+            helper.simulateLine("While searching the area, you notice a ruby key, which you add to your")
+            assert.is_truthy(lastEchoes():find("Got the ruby key.", 1, true))
+        end)
+
+        it("stays quiet about ordinary loot", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
+            helper.simulateLine("While searching the area, you notice a waterskin, which you add to your possessions.")
+            assert.is_falsy(lastEchoes():find("Got the waterskin", 1, true))
+        end)
+
+        it("stops the sweep when the pack is too full to take what was found", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
+            assert.is_true(taPackage.killAllActive)
+            helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
+            assert.is_falsy(taPackage.killAllActive)
+            local out = lastEchoes()
+            assert.is_truthy(out:find("Couldn't carry the ruby key", 1, true))
+            assert.is_truthy(out:find("get ruby key", 1, true))
+        end)
+
+        it("ignores a full pack when no sweep is running", function()
+            helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
+            assert.is_falsy(lastEchoes():find("Stopped the sweep", 1, true))
+        end)
+
+    end)
+
+    -- The most common refused move in the logs by a wide margin (11,655 of
+    -- them). It prints no room line, so without handling the walk stops dead
+    -- and says nothing at all.
+    describe("interrupted by combat", function()
+
+        it("stops the walk and says how to resume", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_nil(taPackage.navigate)
+            local out = lastEchoes()
+            assert.is_truthy(out:find("has me in combat", 1, true))
+            assert.is_truthy(out:find("navigate-to sewers/town-sewers-18 again", 1, true))
+        end)
+
+        it("does not retry the step", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            helper.fireTimers(2000)
+            helper.fireTimers(1000)
+            assert.are.equal(1, sent("sw"))
+        end)
+
+    end)
+
     describe("stopping", function()
 
         local function startWalking()
