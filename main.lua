@@ -1288,11 +1288,17 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     local dirs = {}
     for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
 
-    -- A `map-print-room-slug` probe: identify (don't map) and print, then stop.
+    -- A room probe: identify (don't map), then stop. `map-print-room-slug` just
+    -- prints the candidates; a probe that carries an onResolve callback wants
+    -- them instead (navigate-to checks them against a route's starting room).
     if taPackage.slugProbe then
         local probe = taPackage.slugProbe
         taPackage.slugProbe = nil
-        printRoomSlugCandidates(probe.name, dirs)
+        if probe.onResolve then
+            probe.onResolve(probe.name, dirs)
+        else
+            printRoomSlugCandidates(probe.name, dirs)
+        end
         return
     end
 
