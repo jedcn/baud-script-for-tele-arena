@@ -4481,16 +4481,162 @@ local function navScheduleDoor()
     end, { repeating = false })
 end
 
--- A move the game refused outright: no room change happens, but the game may
--- reprint the room we're still in. Flag it so the reprint isn't counted as an
--- arrival, and re-send the step after a longer pause.
+-- =========================================================================
+-- What's on the floor, and what a fall shook loose
+-- =========================================================================
+--
+-- Tripping sometimes knocks an item out of the pack onto the floor. The game
+-- says nothing when it happens -- the line after "you trip and fall!" is just
+-- our next command -- so the only way to notice is to look at the floor and
+-- compare it with what was there before. Walking on without looking loses the
+-- item for good.
+--
+-- Hence: remember every room's floor as we enter it, and after a trip take a
+-- fresh reading. Anything that appeared is ours. Comparing against the room's
+-- own floor (rather than against our inventory) is what stops us pocketing
+-- somebody else's litter -- the sewers genuinely have a rue potion lying in
+-- one room, and it is not ours to take.
+--
+-- The wording, from the logs:
+--     There is nothing on the floor.
+--     There is a waterskin lying on the floor.
+--     There is a bronze key, and an electrum key lying on the floor.
+--     There is a bronze key, a waterskin, and a bronze key lying on the floor.
+-- Always "There is", even for a list; an Oxford comma before "and"; and the
+-- same item can appear twice. That last point makes this a MULTISET compare --
+-- with a set, dropping a second bronze key next to one already lying there
+-- would look like nothing had changed.
+
+-- "a bronze key" / "and an electrum key" -> "bronze key" / "electrum key".
+-- The article test requires trailing whitespace so "anemone potion" survives.
+local function navStripArticle(s)
+    return (s:gsub("^%s+", ""):gsub("%s+$", ""):gsub("^and%s+", ""):gsub("^an?%s+", ""))
+end
+
+local function navParseFloorItems(phrase)
+    local items = {}
+    for part in (phrase .. ","):gmatch("([^,]+),") do
+        local item = navStripArticle(part)
+        if item ~= "" then items[#items + 1] = item end
+    end
+    return items
+end
+
+local function navFloorCounts(items)
+    local counts = {}
+    for _, item in ipairs(items or {}) do counts[item] = (counts[item] or 0) + 1 end
+    return counts
+end
+
+-- Items present in `after` beyond what `before` held, repeated by how many
+-- extra copies appeared. This is the list of things the fall shook loose.
+local function navNewFloorItems(before, after)
+    local had, now = navFloorCounts(before), navFloorCounts(after)
+    local out = {}
+    for item, n in pairs(now) do
+        for _ = 1, n - (had[item] or 0) do out[#out + 1] = item end
+    end
+    table.sort(out)
+    return out
+end
+
+-- Re-send the step we tripped on, after the usual pacing pause.
+local function navScheduleResend()
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_STEP_DELAY_MS, function()
+        if taPackage.navigate and (taPackage.navGen or 0) == gen then navResendStep() end
+    end, { repeating = false })
+end
+
+-- Handle a floor line. Which reading it is depends on why we asked:
+--   * during the opening room probe -- stash it, so the very first step is
+--     already covered if it trips (without this the starting room's floor is
+--     unknown and anything lying there would look like ours);
+--   * on arrival     -- record it as this room's "before";
+--   * after a trip   -- diff it and pick up whatever we shook loose.
+local function navOnFloorLine(items)
+    local probe = taPackage.slugProbe
+    if probe and probe.nav then
+        probe.floor = items
+        return
+    end
+    local j = taPackage.navigate
+    if not j then return end
+
+    if j.floorPhase ~= "tripcheck" then
+        j.floor = items
+        j.floorPhase = nil
+        return
+    end
+    j.floorPhase = nil
+
+    local dropped = navNewFloorItems(j.floor, items)
+    if #dropped == 0 then
+        -- Nothing of ours. Adopt the reading anyway: someone else may have
+        -- dropped or taken something while we stood here, and that is the
+        -- baseline a second trip in this room must compare against.
+        j.floor = items
+        navEcho("Nothing dropped in the fall.")
+    else
+        for _, item in ipairs(dropped) do
+            navEcho("The fall shook loose " .. item .. " — picking it back up.")
+            send("get " .. item)
+        end
+        -- Picking them up puts the floor back as it was, so j.floor stands.
+    end
+
+    j.phase = "walking"
+    navScheduleResend()
+end
+
+createTrigger("^There is nothing on the floor\\.$", function()
+    navOnFloorLine({})
+end, { type = "regex" })
+
+createTrigger("^There is (.+) lying on the floor\\.$", function(matches)
+    navOnFloorLine(navParseFloorItems(matches[2]))
+end, { type = "regex" })
+
+-- Picking a dropped item back up can fail, and encumbrance is the likely
+-- reason. Say so plainly: the walk goes on, but something of ours is now lying
+-- in a sewer and only this line will tell you.
+createTrigger("^You can't carry anything else\\.$", function()
+    if not taPackage.navigate then return end
+    navEcho("Couldn't pick it up — pack is full. Item left on the floor here.")
+end, { type = "regex" })
+
+createTrigger("^Sorry, you can't carry that much more weight!$", function()
+    if not taPackage.navigate then return end
+    navEcho("Couldn't pick it up — too heavy. Item left on the floor here.")
+end, { type = "regex" })
+
+-- A move the game refused outright. No room change happens and, as the live
+-- walk on 2026-08-01 showed, no room line follows either -- so nothing would
+-- prompt us to look around. Wait out the stumble, then take a fresh reading of
+-- the floor (the bare return below) before walking on, because the fall may
+-- have cost us an item. `blocked` guards the case where the game DOES reprint
+-- the room, so that reprint isn't miscounted as an arrival.
 local function navRecoverAfterRefusedMove()
     local j = taPackage.navigate
     if not j then return end
     j.blocked = true
     local gen = taPackage.navGen or 0
     createTimer(NAV_TRIP_RETRY_MS, function()
-        if taPackage.navigate and (taPackage.navGen or 0) == gen then navResendStep() end
+        local walk = taPackage.navigate
+        if not walk or (taPackage.navGen or 0) ~= gen then return end
+        walk.blocked = nil
+        if walk.floor == nil then
+            -- We never saw this room's floor, so we can't tell our dropped item
+            -- from what was already lying here. Taking a guess risks pocketing
+            -- someone else's; walk on and say why.
+            navEcho("Tripped, but I never saw this room's floor — not risking a"
+                .. " pick-up that might not be mine.")
+            navScheduleResend()
+            return
+        end
+        walk.phase = "tripcheck"
+        walk.floorPhase = "tripcheck"
+        send("")
     end, { repeating = false })
 end
 
@@ -4505,6 +4651,10 @@ local function navOnRoomBrief(room)
         j.blocked = nil
         return
     end
+
+    -- The brief our own post-trip bare return produced. We never left the room,
+    -- so this is not an arrival -- it's here to carry the floor line behind it.
+    if j.phase == "tripcheck" then return end
 
     if j.phase == "door" then
         local key, dir = j.doorOpenedByKey, j.door.dir
@@ -4545,7 +4695,10 @@ local function navOnRoomBrief(room)
 end
 taPackage.navOnRoomBrief = navOnRoomBrief
 
-local function navStart(destination, route, arriveName)
+-- `startFloor` is what was lying in the starting room, captured by the opening
+-- probe. Without it a trip on the very first step would have nothing to compare
+-- against, and anything already on the floor there would look like ours.
+local function navStart(destination, route, arriveName, startFloor)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -4564,6 +4717,7 @@ local function navStart(destination, route, arriveName)
         arriveName   = arriveName,
         phase        = "walking",
         mappingWasOn = mappingWasOn,
+        floor        = startFloor,
     }
     navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
     navStep()
@@ -4605,7 +4759,11 @@ createAlias("^navigate-to (.+)$", function(matches)
     local gen = (taPackage.navGen or 0) + 1
     taPackage.navGen = gen
     taPackage.suppressRoomEntry = nil
-    taPackage.slugProbe = {
+    -- Declared before the table so onResolve can read back what the probe
+    -- collected -- notably `floor`, which the bare return's floor line fills in
+    -- a moment after this closure is built.
+    local probe
+    probe = {
         name = nil,
         nav  = true,
         onResolve = function(name, dirs)
@@ -4616,7 +4774,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                navStart(destination, route, destRoom.name)
+                navStart(destination, route, destRoom.name, probe.floor)
                 return
             end
             local here
@@ -4637,6 +4795,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             navEcho("  The route to " .. destination .. " starts at " .. route.from .. ".")
         end,
     }
+    taPackage.slugProbe = probe
     send("")
     send("ex")
     createTimer(NAV_PROBE_TIMEOUT_MS, function()

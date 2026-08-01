@@ -9297,10 +9297,21 @@ describe("navigate-to", function()
         return r
     end
 
-    -- Answer the start probe with a room's name and exit-set.
-    local function answerProbe(roomId)
+    -- A room brief, in the order the game prints it: room line, occupants,
+    -- floor. `floor` is the text after "There is " (nil means a bare floor).
+    local function brief(roomName, floor)
+        helper.simulateLine("You're in the " .. roomName .. ".")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine(floor and ("There is " .. floor .. " lying on the floor.")
+                                  or "There is nothing on the floor.")
+    end
+
+    -- Answer the start probe with a room's brief and exit-set. The floor line
+    -- lands before `Exits:` in the real game, which is what lets the probe carry
+    -- the starting room's floor into the walk.
+    local function answerProbe(roomId, floor)
         local r = ROOMS[roomId]
-        helper.simulateLine("You're in the " .. r.name .. ".")
+        brief(r.name, floor)
         helper.simulateLine("Exits: " .. table.concat(r.exits, ",") .. ".")
     end
 
@@ -9478,21 +9489,130 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        -- A trip is now two-phase: wait out the stumble, look at the floor (the
+        -- fall may have cost us an item), then walk on.
         it("re-sends the same step after a trip, without advancing", function()
             startWalking()
             assert.are.equal(1, sent("sw"))
             helper.simulateLine("In your haste, you trip and fall!")
-            helper.simulateLine("You're in the north plaza.")  -- the reprint, not an arrival
             helper.fireTimers(2000)
-            assert.are.equal(2, sent("sw"))   -- same step again
-            assert.are.equal(0, sent("d"))    -- and the walk did not advance
+            brief("north plaza")               -- the reply to our floor check
+            helper.fireTimers(1000)
+            assert.are.equal(2, sent("sw"))    -- same step again
+            assert.are.equal(0, sent("d"))     -- and the walk did not advance
+        end)
+
+        it("swallows a room reprint after a trip rather than counting it", function()
+            startWalking()
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.simulateLine("You're in the north plaza.")  -- reprint, not an arrival
+            helper.fireTimers(2000)
+            brief("north plaza")
+            helper.fireTimers(1000)
+            assert.are.equal(2, sent("sw"))
+            assert.are.equal(0, sent("d"))
         end)
 
         it("recovers the same way from being told to rest", function()
             startWalking()
             helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
             helper.fireTimers(2000)
+            brief("north plaza")
+            helper.fireTimers(1000)
             assert.are.equal(2, sent("sw"))
+        end)
+
+    end)
+
+    -- Tripping sometimes shakes an item out of the pack, and the game says
+    -- nothing when it does, so the only tell is the floor changing.
+    describe("items dropped in a fall", function()
+
+        local function tripAfterStartingOn(startFloor)
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274, startFloor)
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(2000)
+        end
+
+        it("looks at the floor before walking on", function()
+            tripAfterStartingOn(nil)
+            assert.are.equal(2, sent(""))  -- the opening probe, then the floor check
+        end)
+
+        it("picks up an item that appeared", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a yarrow potion")
+            assert.are.equal(1, sent("get yarrow potion"))
+            assert.is_truthy(lastEchoes():find("shook loose yarrow potion", 1, true))
+        end)
+
+        -- The case that motivated comparing against the room's floor rather than
+        -- our inventory: the sewers really do have a rue potion lying in one room.
+        it("leaves an item that was already there", function()
+            tripAfterStartingOn("a rue potion")
+            brief("north plaza", "a rue potion")
+            assert.are.equal(0, sent("get rue potion"))
+            assert.is_truthy(lastEchoes():find("Nothing dropped in the fall.", 1, true))
+        end)
+
+        it("picks up only what is new when something was already there", function()
+            tripAfterStartingOn("a rue potion")
+            helper.simulateLine("There is a rue potion, and a yarrow potion lying on the floor.")
+            assert.are.equal(1, sent("get yarrow potion"))
+            assert.are.equal(0, sent("get rue potion"))
+        end)
+
+        -- Duplicates are real ("a bronze key, a waterskin, and a bronze key"),
+        -- so the comparison counts copies rather than treating the floor as a set.
+        it("notices a second copy of an item already on the floor", function()
+            tripAfterStartingOn("a bronze key")
+            helper.simulateLine("There is a bronze key, and a bronze key lying on the floor.")
+            assert.are.equal(1, sent("get bronze key"))
+        end)
+
+        it("walks on when nothing was dropped", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza")
+            helper.fireTimers(1000)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+        it("walks on after picking something up", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a yarrow potion")
+            helper.fireTimers(1000)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+        it("reports a pick-up refused for encumbrance", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a yarrow potion")
+            helper.simulateLine("You can't carry anything else.")
+            assert.is_truthy(lastEchoes():find("pack is full", 1, true))
+        end)
+
+        -- Guessing here risks pocketing someone else's property.
+        it("refuses to guess when the room's floor was never seen", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("You're on a path.")   -- arrival with no floor line
+            taPackage.navigate.floor = nil             -- so this room's floor is unknown
+            helper.fireTimers(1000)
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(2000)
+            assert.is_truthy(lastEchoes():find("never saw this room's floor", 1, true))
+            assert.are.equal(1, sent(""))              -- no floor check sent
+        end)
+
+        it("tracks the floor of each room it walks into", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274, "a rue potion")
+            brief("path", "a torch")                   -- arrival in the next room
+            assert.are.same({ "torch" }, taPackage.navigate.floor)
         end)
 
     end)
