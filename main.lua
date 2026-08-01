@@ -1086,6 +1086,17 @@ local function handleRoomEntry(matches)
         return
     end
 
+    -- A paced walk (`navigate-to`) advances one room at a time on these briefs.
+    -- It hooks in here rather than owning its own room triggers so it inherits
+    -- every phrasing of the arrival line -- "You're in/inside/on/at", the "You
+    -- are ..." variants, and the verbless "You at ..." -- along with the two
+    -- guards above, which stop a `look <dir>` peek or a `look` reply being
+    -- counted as a move. (Miscounting arrivals is exactly how the arena's paced
+    -- walk wedged in July 2026; see arenaJourneyOnMovement.) It sits ahead of
+    -- the mapping gate below because a walk has to work with mapping off. The
+    -- hook is installed by the navigation section further down.
+    if taPackage.navOnRoomBrief then taPackage.navOnRoomBrief(name) end
+
     -- A kill with no gold found before we left records zero loot.
     -- (Loot bookkeeping is independent of mapping mode.)
     if taPackage.pendingLootCheck and taPackage.lastKilledMonster then
@@ -4305,6 +4316,352 @@ createAlias("^stop-heal-allies-in-loop$", function()
     stopHealLoop()
 end, { type = "regex" })
 
+-- =========================================================================
+-- Navigate to a destination
+-- =========================================================================
+--
+-- `navigate-to <area>/<room>` walks a hand-written route from one known room to
+-- somewhere far away. We deliberately don't path-find over the mapped graph:
+-- it's full of unwalked stubs and locked doors the graph can't reason about,
+-- and its two edges into third-town are visibly mis-mapped. Every route here is
+-- a step list copied from a walk that actually worked.
+--
+-- Each route names the single room it starts from. Before moving we identify
+-- the room we're standing in by name + exit-set -- the same fingerprint
+-- `map-print-room-slug` uses, because names alone are hopeless here (194 rooms
+-- are called "cave", 176 "stonework corridor", 170 "town sewers") -- and refuse
+-- to walk unless it is that room. The two rooms named "north plaza" make the
+-- point: they differ only by exit-set, so a name-only check would happily walk
+-- the sewers route from the wrong town.
+--
+-- `door` is an optional final probe: a direction out of the destination that is
+-- known to be gated by a locked door. We walk the route, then try it, and
+-- report whether we could pass. Fetching the key is not wired up yet.
+local NAV_ROUTES = {
+    ["sewers/town-sewers-18"] = {
+        from  = "second-town/north-plaza",
+        steps = { "sw", "d", "se", "sw", "s", "se", "se", "sw",
+                  "se", "se", "ne", "ne", "se", "se", "se", "e" },
+        door  = { dir = "s", key = "ruby" },
+    },
+}
+-- Exposed so tests can register a route without editing the table above.
+taPackage.navRoutes = NAV_ROUTES
+
+-- Pace between steps or the character trips and falls (see the trip trigger
+-- below). Same values the arena's paced walks settled on.
+local NAV_STEP_DELAY_MS = 1000
+local NAV_TRIP_RETRY_MS = 2000
+-- How long to wait for the room probe (bare return + `ex`) before giving up.
+-- Without this a swallowed reply leaves navigate-to armed and silent, with
+-- nothing on screen to explain why nothing happened.
+local NAV_PROBE_TIMEOUT_MS = 5000
+
+local function navEcho(msg) echo("[nav] " .. msg) end
+
+-- Stop walking. Bumping the generation invalidates any step or retry timer
+-- still in flight so a stale one can't resume a walk we've abandoned. Returns
+-- whether anything was actually running. Shared by stop-navigating and
+-- stop-all-scripts.
+local function stopNavigate()
+    local running = taPackage.navigate ~= nil
+    -- Only drop the probe if it's ours: map-print-room-slug may have one armed.
+    if taPackage.slugProbe and taPackage.slugProbe.nav then
+        taPackage.slugProbe = nil
+        running = true
+    end
+    taPackage.navigate = nil
+    taPackage.navGen = (taPackage.navGen or 0) + 1
+    return running
+end
+taPackage.stopNavigate = stopNavigate
+
+-- Split "<area>/<room>" and resolve it to exactly one room. Returns the room
+-- row, or nil plus a reason -- a malformed reference, an unknown area, an
+-- unknown room, or an ambiguous one. Every failure is reported rather than
+-- guessed past: picking one of three rooms named "underground plaza" and
+-- walking off would be worse than refusing.
+local function navResolveRef(ref)
+    local areaSlug, roomRef = ref:match("^([^/]+)/(.+)$")
+    if not areaSlug then
+        return nil, "'" .. ref .. "' isn't an <area>/<room> reference (try e.g. third-town/arena)"
+    end
+    local matches = taPackage.db.roomsInAreaMatching(areaSlug, roomRef)
+    if matches == nil then
+        local names = {}
+        for _, a in ipairs(taPackage.db.listAreas()) do names[#names + 1] = a.slug end
+        return nil, "there's no area called '" .. areaSlug .. "' (known areas: "
+            .. table.concat(names, ", ") .. ")"
+    end
+    if #matches == 0 then
+        return nil, "there's no room '" .. roomRef .. "' in " .. areaSlug
+    end
+    if #matches > 1 then
+        local slugs = {}
+        for _, m in ipairs(matches) do slugs[#slugs + 1] = areaSlug .. "/" .. m.slug end
+        return nil, "'" .. ref .. "' is ambiguous — did you mean " .. table.concat(slugs, ", ") .. "?"
+    end
+    return matches[1]
+end
+
+-- Walk one step the same way the manual n/s/e/w aliases do (main.lua's movement
+-- aliases), so a route walked with mapping ON is recorded as real edges rather
+-- than arriving as a sequence of unexplained teleports that mint phantom rooms.
+-- With mapping off this is inert bookkeeping.
+local function navSend(dir)
+    taPackage.suppressRoomEntry = nil
+    taPackage.pendingDirection = dir
+    taPackage.prevRoom = taPackage.currentRoom
+    taPackage.prevRoomId = taPackage.currentRoomId
+    send(dir)
+end
+
+-- Send the next queued direction. index counts steps already sent, so bumping
+-- it first and indexing gives the step we haven't walked yet.
+local function navStep()
+    local j = taPackage.navigate
+    if not j then return end
+    j.index = j.index + 1
+    local dir = j.steps[j.index]
+    if dir then navSend(dir) end
+end
+
+-- Re-send the current step without advancing, to recover from a move the game
+-- refused (a trip, or "rest a while first"): the step at j.index went out but
+-- never landed us anywhere new.
+local function navResendStep()
+    local j = taPackage.navigate
+    if not j then return end
+    j.blocked = nil
+    local dir = j.steps[j.index]
+    if dir then navSend(dir) end
+end
+
+local function navScheduleStep()
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_STEP_DELAY_MS, function()
+        if taPackage.navigate and (taPackage.navGen or 0) == gen then navStep() end
+    end, { repeating = false })
+end
+
+-- Try the route's final locked-door direction. Whether we get through is
+-- decided by the game's reply: the "locked ... prevents your exit" refusal, the
+-- "your <key> key unlocks" success, or -- if the door is simply open -- an
+-- ordinary arrival brief. All three are handled below.
+local function navScheduleDoor()
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_STEP_DELAY_MS, function()
+        local j = taPackage.navigate
+        if not j or (taPackage.navGen or 0) ~= gen then return end
+        j.phase = "door"
+        navEcho("Trying the " .. j.door.dir .. " door out of " .. j.destination .. ".")
+        navSend(j.door.dir)
+    end, { repeating = false })
+end
+
+-- A move the game refused outright: no room change happens, but the game may
+-- reprint the room we're still in. Flag it so the reprint isn't counted as an
+-- arrival, and re-send the step after a longer pause.
+local function navRecoverAfterRefusedMove()
+    local j = taPackage.navigate
+    if not j then return end
+    j.blocked = true
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_TRIP_RETRY_MS, function()
+        if taPackage.navigate and (taPackage.navGen or 0) == gen then navResendStep() end
+    end, { repeating = false })
+end
+
+-- Advance the walk one room at a time. Called for every arrival brief while a
+-- walk is active (hooked into handleRoomEntry, which owns all the phrasings).
+local function navOnRoomBrief(room)
+    local j = taPackage.navigate
+    if not j then return end
+
+    -- The reprint after a refused move is not an arrival; swallow exactly one.
+    if j.blocked then
+        j.blocked = nil
+        return
+    end
+
+    if j.phase == "door" then
+        taPackage.navigate = nil
+        if j.doorOpenedByKey then
+            navEcho("My " .. j.doorOpenedByKey .. " key opened the door — it's already ours, so"
+                .. " this leg needs no detour. Stopping here (" .. room .. ").")
+        else
+            navEcho("The " .. j.door.dir .. " door was open — through it into " .. room
+                .. ". Stopping here.")
+        end
+        return
+    end
+
+    if j.index >= #j.steps then
+        -- End of the step list. Confirm we're where the route said we'd be: a
+        -- name mismatch means a step went astray, and the door probe below
+        -- would then be tried from the wrong room.
+        if j.arriveName and room ~= j.arriveName then
+            taPackage.navigate = nil
+            navEcho("Walked the whole route but ended up in '" .. room .. "', not '"
+                .. j.arriveName .. "' — stopping rather than guessing. The route may be wrong.")
+            return
+        end
+        if j.door then
+            navEcho("Arrived at " .. j.destination .. ".")
+            navScheduleDoor()
+        else
+            taPackage.navigate = nil
+            navEcho("Arrived at " .. j.destination .. ".")
+        end
+        return
+    end
+
+    navScheduleStep()
+end
+taPackage.navOnRoomBrief = navOnRoomBrief
+
+local function navStart(destination, route, arriveName)
+    taPackage.navGen = (taPackage.navGen or 0) + 1
+    taPackage.navigate = {
+        destination = destination,
+        steps       = route.steps,
+        index       = 0,
+        door        = route.door,
+        arriveName  = arriveName,
+        phase       = "walking",
+    }
+    navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
+    navStep()
+end
+
+createAlias("^navigate-to (.+)$", function(matches)
+    local destination = matches[2]:match("^%s*(.-)%s*$")
+    local route = NAV_ROUTES[destination]
+    if not route then
+        local known = {}
+        for name in pairs(NAV_ROUTES) do known[#known + 1] = name end
+        table.sort(known)
+        navEcho("I don't know a route to '" .. destination .. "'."
+            .. (#known > 0 and (" I know: " .. table.concat(known, ", ") .. ".")
+                            or " No routes are recorded yet."))
+        return
+    end
+    if taPackage.navigate then
+        navEcho("Already walking to " .. taPackage.navigate.destination
+            .. " — run stop-navigating first.")
+        return
+    end
+
+    -- Resolve both ends before sending anything, so a typo in the route table is
+    -- reported standing still rather than halfway down a sewer.
+    local destRoom, destErr = navResolveRef(destination)
+    if not destRoom then
+        navEcho("Route destination " .. destErr)
+        return
+    end
+    local fromRoom, fromErr = navResolveRef(route.from)
+    if not fromRoom then
+        navEcho("Route start " .. fromErr)
+        return
+    end
+
+    -- Identify where we're standing before we move. A route is only valid from
+    -- one room; walked from anywhere else it marches the character into walls.
+    local gen = (taPackage.navGen or 0) + 1
+    taPackage.navGen = gen
+    taPackage.suppressRoomEntry = nil
+    taPackage.slugProbe = {
+        name = nil,
+        nav  = true,
+        onResolve = function(name, dirs)
+            if (taPackage.navGen or 0) ~= gen then return end
+            if not name then
+                navEcho("Couldn't read the room I'm in — try navigate-to " .. destination .. " again.")
+                return
+            end
+            local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
+            if #candidates == 1 and candidates[1].id == fromRoom.id then
+                navStart(destination, route, destRoom.name)
+                return
+            end
+            local here
+            if #candidates == 1 then
+                here = taPackage.db.roomRef(candidates[1].id) or candidates[1].slug
+            elseif #candidates == 0 then
+                here = "no room I have mapped"
+            else
+                local refs = {}
+                for _, c in ipairs(candidates) do
+                    refs[#refs + 1] = taPackage.db.roomRef(c.id) or c.slug
+                end
+                here = "one of " .. table.concat(refs, ", ") .. " — too ambiguous to act on"
+            end
+            navEcho("I don't know how to get there from here.")
+            navEcho("  I'm in '" .. name .. "' with exits " .. table.concat(dirs, ",")
+                .. ", which is " .. here .. ".")
+            navEcho("  The route to " .. destination .. " starts at " .. route.from .. ".")
+        end,
+    }
+    send("")
+    send("ex")
+    createTimer(NAV_PROBE_TIMEOUT_MS, function()
+        if (taPackage.navGen or 0) ~= gen then return end
+        if not (taPackage.slugProbe and taPackage.slugProbe.nav) then return end
+        taPackage.slugProbe = nil
+        navEcho("The game never told me what room I'm in — nothing sent. Try again.")
+    end, { repeating = false })
+end, { type = "regex" })
+
+createAlias("^stop-navigating$", function()
+    if stopNavigate() then
+        navEcho("Stopped walking.")
+    else
+        navEcho("Not currently walking anywhere.")
+    end
+end, { type = "regex" })
+
+-- A locked door we lack the key for. This is where the sewers route currently
+-- ends: getting the key means a detour to a monster room, which isn't built yet.
+createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", function(matches)
+    local j = taPackage.navigate
+    if not j then return end
+    local door, dest, want = matches[2], j.destination, j.door and j.door.key
+    stopNavigate()
+    navEcho("A locked " .. door .. " door blocks the way on from " .. dest
+        .. " and I don't have the key — I need to go get the key"
+        .. (want and (" (the " .. want .. " key)") or "") .. ".")
+end, { type = "regex" })
+
+-- We already hold the key: the door opens and the arrival brief follows, so the
+-- walk carries on by itself. Record which key it was; the brief handler reports
+-- it. This is the branch a second run takes to skip the key detour entirely.
+createTrigger("^Your (.+) key unlocks the (.+) door and allows you to pass through\\.$", function(matches)
+    local j = taPackage.navigate
+    if not j then return end
+    j.doorOpenedByKey = matches[2]
+end, { type = "regex" })
+
+-- A direction the game rejects outright can't be retried into working, and
+-- sending the rest of the route from a room it doesn't apply to only digs the
+-- hole deeper. Stop and say which step failed.
+createTrigger("^Sorry, there's no exit in that direction\\.$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    local dest = j.destination
+    local where = (j.phase == "door")
+        and ("the " .. j.door.dir .. " door out of " .. dest)
+        or ("step " .. j.index .. " of " .. #j.steps .. " (" .. tostring(j.steps[j.index]) .. ")")
+    stopNavigate()
+    navEcho("No exit that way at " .. where .. " — stopping."
+        .. " Either the route is wrong or I wasn't where I thought I was.")
+end, { type = "regex" })
+
+-- Moving too fast trips the character; resting blocks the move outright. Both
+-- refuse the move without changing rooms, so both recover the same way.
+createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove, { type = "regex" })
+createTrigger("^Sorry, you'll have to rest a while before you can move\\.$",
+    navRecoverAfterRefusedMove, { type = "regex" })
+
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear
 -- state). We check each script's "running" flag first so we can report, per
@@ -4318,6 +4675,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
+        { name = "navigate",              running = taPackage.navigate ~= nil,        stop = stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
     }
     for _, s in ipairs(scripts) do

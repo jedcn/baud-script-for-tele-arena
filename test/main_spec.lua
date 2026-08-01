@@ -9210,3 +9210,374 @@ describe("train-and-exit-once-potions-wear-off", function()
     end)
 
 end)
+
+describe("navigate-to", function()
+
+    -- A miniature world, enough for the reference lookups and the room
+    -- fingerprint probe. The two "north plaza" rooms are the point: they share a
+    -- display name and differ only by exit-set, which is why the start check
+    -- fingerprints rather than matching on the name.
+    local AREAS = { { id = 1, slug = "first-town" }, { id = 7, slug = "second-town" },
+                    { id = 8, slug = "sewers" }, { id = 14, slug = "third-town" } }
+    local ROOMS = {
+        [1]    = { id = 1,    slug = "north-plaza",          name = "north plaza",       area = 1,
+                   exits = { "e", "n", "ne", "nw", "s", "w" } },
+        [274]  = { id = 274,  slug = "north-plaza-1",        name = "north plaza",       area = 7,
+                   exits = { "e", "n", "s", "sw", "w" } },
+        [340]  = { id = 340,  slug = "town-sewers",          name = "town sewers",       area = 8,
+                   exits = { "u", "se" } },
+        [359]  = { id = 359,  slug = "town-sewers-18",       name = "town sewers",       area = 8,
+                   exits = { "e", "n", "s", "w" } },
+        [1012] = { id = 1012, slug = "underground-plaza",    name = "underground plaza", area = 14, exits = {} },
+        [1015] = { id = 1015, slug = "underground-plaza-1",  name = "underground plaza", area = 14, exits = {} },
+        [1019] = { id = 1019, slug = "underground-plaza-2",  name = "underground plaza", area = 14, exits = {} },
+    }
+
+    local function areaIdBySlug(slug)
+        for _, a in ipairs(AREAS) do if a.slug == slug then return a.id end end
+        return nil
+    end
+
+    local function installWorld()
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "FROM areas WHERE slug", 1, true) then
+                local id = areaIdBySlug(params[1])
+                return id and { id = id } or nil
+            end
+            if string.find(sql, "LEFT JOIN areas a ON a.id = r.area_id", 1, true) then
+                local r = ROOMS[params[1]]
+                if not r then return nil end
+                for _, a in ipairs(AREAS) do
+                    if a.id == r.area then return { slug = r.slug, area = a.slug } end
+                end
+                return { slug = r.slug, area = nil }
+            end
+            return nil
+        end
+        helper.mockDbRows = function(sql, params)
+            if string.find(sql, "FROM rooms WHERE area_id", 1, true) then
+                local out = {}
+                for _, r in pairs(ROOMS) do
+                    if r.area == params[1] then
+                        out[#out + 1] = { id = r.id, slug = r.slug, name = r.name }
+                    end
+                end
+                return out
+            end
+            if string.find(sql, "FROM rooms WHERE name", 1, true) then
+                local out = {}
+                for _, r in pairs(ROOMS) do
+                    if r.name == params[1] then out[#out + 1] = { id = r.id, slug = r.slug } end
+                end
+                return out
+            end
+            if string.find(sql, "FROM room_exits WHERE from_id", 1, true) then
+                local r = ROOMS[params[1]]
+                local out = {}
+                for _, d in ipairs(r and r.exits or {}) do out[#out + 1] = { direction = d } end
+                return out
+            end
+            if string.find(sql, "FROM areas ORDER BY id", 1, true) then
+                local out = {}
+                for _, a in ipairs(AREAS) do out[#out + 1] = { slug = a.slug, name = a.slug } end
+                return out
+            end
+            return {}
+        end
+    end
+
+    -- A short stand-in for the real 16-step sewers route, so the tests read as
+    -- tests of the engine rather than of one hard-coded direction list.
+    local ROUTE = { from = "second-town/north-plaza", steps = { "sw", "d", "se" } }
+
+    local function route(overrides)
+        local r = { from = ROUTE.from, steps = ROUTE.steps }
+        for k, v in pairs(overrides or {}) do r[k] = v end
+        taPackage.navRoutes["sewers/town-sewers-18"] = r
+        return r
+    end
+
+    -- Answer the start probe with a room's name and exit-set.
+    local function answerProbe(roomId)
+        local r = ROOMS[roomId]
+        helper.simulateLine("You're in the " .. r.name .. ".")
+        helper.simulateLine("Exits: " .. table.concat(r.exits, ",") .. ".")
+    end
+
+    local function sent(cmd)
+        local n = 0
+        for _, s in ipairs(helper.sendCalls) do if s == cmd then n = n + 1 end end
+        return n
+    end
+
+    local function lastEchoes()
+        return table.concat(helper.echoCalls, "\n")
+    end
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        installWorld()
+    end)
+
+    describe("choosing a route", function()
+
+        it("refuses an unknown destination and lists what it does know", function()
+            helper.simulateAlias("navigate-to nowhere/at-all")
+            assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'", 1, true))
+            assert.is_truthy(lastEchoes():find("sewers/town-sewers-18", 1, true))
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("reports an unknown area in a route rather than walking", function()
+            route({ from = "no-such-town/north-plaza" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("there's no area called 'no-such-town'", 1, true))
+            assert.are.equal(0, sent("sw"))
+        end)
+
+        it("reports an ambiguous room reference with the candidates", function()
+            route({ from = "third-town/underground-plaza" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("is ambiguous", 1, true))
+            assert.is_truthy(out:find("third-town/underground-plaza-1", 1, true))
+            assert.is_truthy(out:find("third-town/underground-plaza-2", 1, true))
+            assert.are.equal(0, sent("sw"))
+        end)
+
+    end)
+
+    describe("the start check", function()
+
+        it("probes the room before moving", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(1, sent(""))
+            assert.are.equal(1, sent("ex"))
+            assert.are.equal(0, sent("sw"))  -- nothing walked until the probe answers
+        end)
+
+        it("walks the first step when the fingerprint is the route's start", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        -- The whole reason the check fingerprints instead of matching on name.
+        it("refuses from the same-named room in another town", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(1)  -- first-town's north plaza: same name, different exits
+            local out = lastEchoes()
+            assert.is_truthy(out:find("I don't know how to get there from here.", 1, true))
+            assert.is_truthy(out:find("first-town/north-plaza", 1, true))
+            assert.is_truthy(out:find("starts at second-town/north-plaza", 1, true))
+            assert.are.equal(0, sent("sw"))
+        end)
+
+        it("refuses when the room matches nothing mapped", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateLine("You're in the mysterious grotto.")
+            helper.simulateLine("Exits: n,s.")
+            assert.is_truthy(lastEchoes():find("no room I have mapped", 1, true))
+            assert.are.equal(0, sent("sw"))
+        end)
+
+        it("reports a probe that never comes back", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.fireTimers(5000)
+            assert.is_truthy(lastEchoes():find("never told me what room I'm in", 1, true))
+            assert.are.equal(0, sent("sw"))
+        end)
+
+    end)
+
+    describe("walking", function()
+
+        local function startWalking()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("paces one step per arrival, in order", function()
+            startWalking()
+            assert.are.equal(1, sent("sw"))
+
+            helper.simulateLine("You're on a path.")
+            assert.are.equal(0, sent("d"))   -- not until the pacing delay elapses
+            helper.fireTimers(1000)
+            assert.are.equal(1, sent("d"))
+
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(1000)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        -- Keeps the mapper coherent when a walk happens with mapping on.
+        it("sets pendingDirection like a manual move", function()
+            startWalking()
+            assert.are.equal("sw", taPackage.pendingDirection)
+        end)
+
+        -- The room description a `look` produces opens with "You are in ...",
+        -- which is indistinguishable from an arrival by wording alone.
+        it("is not advanced by a look reply", function()
+            startWalking()
+            helper.simulateLine("look")           -- the game echoes the command
+            helper.simulateLine("You are in a wide sewer tunnel.")
+            helper.fireTimers(1000)
+            assert.are.equal(0, sent("d"))
+        end)
+
+        it("announces arrival at the end of the step list", function()
+            startWalking()
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")   -- 3rd and last step
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("stops rather than guessing when the last room is the wrong one", function()
+            startWalking()
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the grand hall.")
+            assert.is_truthy(lastEchoes():find("ended up in 'grand hall'", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+    end)
+
+    describe("moves the game refuses", function()
+
+        local function startWalking()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("stops on a direction with no exit and names the step", function()
+            startWalking()
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("step 1 of 3 (sw)", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("re-sends the same step after a trip, without advancing", function()
+            startWalking()
+            assert.are.equal(1, sent("sw"))
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.simulateLine("You're in the north plaza.")  -- the reprint, not an arrival
+            helper.fireTimers(2000)
+            assert.are.equal(2, sent("sw"))   -- same step again
+            assert.are.equal(0, sent("d"))    -- and the walk did not advance
+        end)
+
+        it("recovers the same way from being told to rest", function()
+            startWalking()
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            helper.fireTimers(2000)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+    end)
+
+    describe("the locked door at the end of a route", function()
+
+        local function walkToTheDoor()
+            route({ door = { dir = "s", key = "ruby" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")  -- arrived
+            helper.fireTimers(1000)                            -- door probe fires
+        end
+
+        it("tries the door direction after arriving", function()
+            walkToTheDoor()
+            assert.are.equal(1, sent("s"))
+        end)
+
+        it("stops and asks for the key when the door is locked", function()
+            walkToTheDoor()
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("A locked stone door blocks the way", 1, true))
+            assert.is_truthy(out:find("I need to go get the key (the ruby key).", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("reports the key it already holds when the door opens", function()
+            walkToTheDoor()
+            helper.simulateLine("Your ruby key unlocks the stone door and allows you to pass through.")
+            helper.simulateLine("You're in the town sewers.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("My ruby key opened the door", 1, true))
+            assert.is_truthy(out:find("needs no detour", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("says so when the door is simply open", function()
+            walkToTheDoor()
+            helper.simulateLine("You're in the town sewers.")
+            assert.is_truthy(lastEchoes():find("door was open", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+    end)
+
+    describe("stopping", function()
+
+        local function startWalking()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("stop-navigating halts the walk", function()
+            startWalking()
+            helper.simulateAlias("stop-navigating")
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("Stopped walking.", 1, true))
+            -- A step timer already in flight must not resume it.
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(1000)
+            assert.are.equal(0, sent("d"))
+        end)
+
+        it("stop-navigating says so when nothing is running", function()
+            helper.simulateAlias("stop-navigating")
+            assert.is_truthy(lastEchoes():find("Not currently walking anywhere.", 1, true))
+        end)
+
+        it("stop-all-scripts halts the walk too", function()
+            startWalking()
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("[all] Stopped navigate.", 1, true))
+        end)
+
+        it("refuses to start a second walk while one is running", function()
+            startWalking()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.is_truthy(lastEchoes():find("Already walking to", 1, true))
+        end)
+
+    end)
+
+end)
