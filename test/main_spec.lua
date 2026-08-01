@@ -9365,20 +9365,39 @@ describe("navigate-to", function()
     -- line carries the time since the previous traced event.
     describe("the timing trace", function()
 
-        it("stays quiet unless asked for", function()
+        -- On by default: a trip we have to remember to ask for is a trip we
+        -- mostly miss, and catching them is the whole point while the pace is
+        -- still being tuned.
+        it("traces a plain walk without being asked", function()
             route()
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
-            answerProbe(274)
-            assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))
-        end)
-
-        it("traces each step when debug is asked for", function()
-            route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 debug")
             answerProbe(274)
             local out = lastEchoes()
             assert.is_truthy(out:find("[nav|t]", 1, true))
             assert.is_truthy(out:find("send step 1/3 sw", 1, true))
+        end)
+
+        it("reports the pace and encumbrance it started with", function()
+            route()
+            setEncumberance(120, 200)
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("pace 1200ms, encumbrance 60%", 1, true))
+        end)
+
+        it("says so when encumbrance has never been read", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("encumbrance unknown (run st)", 1, true))
+        end)
+
+        it("can be silenced with quiet", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 quiet")
+            answerProbe(274)
+            assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))
+            assert.are.equal(1, sent("sw"))   -- and still walks
         end)
 
         it("still resolves the destination with debug appended", function()

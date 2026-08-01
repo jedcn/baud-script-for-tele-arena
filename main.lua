@@ -4930,18 +4930,31 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
     }
     navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
     if debug then
-        navEcho("Timing trace on, pacing " .. NAV_STEP_DELAY_MS .. "ms between steps.")
+        -- Record encumbrance alongside the pace. "In your haste" reads like a
+        -- speed check, but a loaded character is the other obvious candidate,
+        -- and if trips track the pack rather than the cadence then pacing is a
+        -- workaround for the wrong thing. nil until an `st` has been seen.
+        local load = getEncumberancePercent()
+        echo(string.format("[nav|t] trace on: pace %dms, encumbrance %s",
+            NAV_STEP_DELAY_MS, load and (load .. "%") or "unknown (run st)"))
     end
     navStep()
 end
 
 createAlias("^navigate-to (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
-    -- A trailing "debug" turns on the timing trace, following the arena
-    -- aliases' convention. The destination is whatever precedes it.
-    local destination, debug = arg, false
-    local withoutDebug = arg:match("^(.-)%s+debug$")
-    if withoutDebug then destination, debug = withoutDebug, true end
+    -- The timing trace is ON by default while we are still tuning the pace: the
+    -- whole reason it exists is to catch a trip when it happens, and a trip we
+    -- have to reproduce deliberately is one we mostly miss. `quiet` turns it
+    -- off; `debug` is accepted too, so asking for it explicitly still works.
+    local destination, debug = arg, true
+    local quiet = arg:match("^(.-)%s+quiet$")
+    local explicit = arg:match("^(.-)%s+debug$")
+    if quiet then
+        destination, debug = quiet, false
+    elseif explicit then
+        destination = explicit
+    end
     local route = NAV_ROUTES[destination]
     if not route then
         local known = {}
