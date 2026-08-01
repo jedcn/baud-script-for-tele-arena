@@ -527,6 +527,53 @@ function TaDb.roomBySlug(slug)
     return db:queryOne("SELECT id, name, area_id, x, y, z FROM rooms WHERE slug = ?", slug)
 end
 
+-- =========================================================================
+-- "<area>/<room>" room references
+-- =========================================================================
+--
+-- `rooms.slug` is globally unique, so duplicate names collect numeric suffixes
+-- in discovery order: the three arenas are `arena`, `arena-1`, `arena-2` and
+-- the three temples `temple`, `temple-1`, `temple-2`. Which suffix belongs to
+-- which town is unguessable, and re-walking an area renumbers them. So anything
+-- a human types or reads -- `navigate-to`'s routes, its error messages -- uses
+-- an "<area>/<room>" reference instead: `third-town/arena`.
+
+-- Rooms in `areaSlug` addressed by `ref`, the room half of such a reference. A
+-- room matches when its slug is exactly `ref`, or when its display name
+-- slugifies to `ref` -- so `sewers/town-sewers-18` (exact slug, needed because
+-- 170 rooms share the name "town sewers") and `third-town/town-square` (name
+-- form) both resolve. Returns nil when the AREA is unknown -- distinct from an
+-- empty list, which means the area exists but holds no such room -- otherwise
+-- every match, since the caller must reject an ambiguous reference rather than
+-- pick for the user. Areas are small (the largest, desert, has 246 rooms), so
+-- filtering in Lua keeps the slug rules in `baseSlug` alone instead of also
+-- teaching them to SQL.
+function TaDb.roomsInAreaMatching(areaSlug, ref)
+    local areaId = TaDb.areaIdBySlug(areaSlug)
+    if type(areaId) ~= "number" then return nil end
+    local rows = db:query("SELECT id, slug, name FROM rooms WHERE area_id = ?", areaId) or {}
+    local out = {}
+    for _, row in ipairs(rows) do
+        if row.slug == ref or baseSlug(row.name) == ref then
+            out[#out + 1] = { id = row.id, slug = row.slug, name = row.name }
+        end
+    end
+    return out
+end
+
+-- The inverse: the "<area>/<room>" reference for a room id, so an error message
+-- can name the room we are actually standing in using the same vocabulary the
+-- route table is written in. Falls back to the bare slug for a legacy row with
+-- no area, and nil when the room is unknown.
+function TaDb.roomRef(roomId)
+    local row = db:queryOne(
+        "SELECT r.slug AS slug, a.slug AS area FROM rooms r"
+        .. " LEFT JOIN areas a ON a.id = r.area_id WHERE r.id = ?", roomId)
+    if not row then return nil end
+    if type(row.area) ~= "string" or row.area == "" then return row.slug end
+    return row.area .. "/" .. row.slug
+end
+
 -- The set of exit directions recorded for a room (walked edges + `ex` stubs),
 -- as a { [dir] = true } table. This is the room's exit-set "fingerprint".
 function TaDb.roomExitDirections(roomId)

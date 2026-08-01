@@ -1854,6 +1854,100 @@ describe("ta_db", function()
 
     end)
 
+    describe("roomsInAreaMatching", function()
+
+        -- Stub an area lookup plus the rooms filed under it. `area` is the slug
+        -- the caller is allowed to resolve; anything else looks like an unknown
+        -- area (queryOne returns nil).
+        local function stub(area, rooms)
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "FROM areas WHERE slug", 1, true) then
+                    return params[1] == area and { id = 7 } or nil
+                end
+                return nil
+            end
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "FROM rooms WHERE area_id", 1, true) then
+                    return rooms
+                end
+                return {}
+            end
+        end
+
+        it("matches a room by its exact slug", function()
+            stub("sewers", {
+                { id = 358, slug = "town-sewers-17", name = "town sewers" },
+                { id = 359, slug = "town-sewers-18", name = "town sewers" },
+            })
+            local m = TaDb.roomsInAreaMatching("sewers", "town-sewers-18")
+            assert.are.equal(1, #m)
+            assert.are.equal(359, m[1].id)
+        end)
+
+        it("matches a room by its slugified display name", function()
+            stub("third-town", { { id = 1011, slug = "town-square", name = "town square" } })
+            local m = TaDb.roomsInAreaMatching("third-town", "town-square")
+            assert.are.equal(1, #m)
+            assert.are.equal(1011, m[1].id)
+        end)
+
+        -- The suffix an area's duplicate rooms get is unguessable, so the name
+        -- form has to reach a room whose slug does NOT equal it: "arena" must
+        -- find third-town's "arena-2".
+        it("finds a suffixed room by its unsuffixed name", function()
+            stub("third-town", { { id = 1014, slug = "arena-2", name = "arena" } })
+            local m = TaDb.roomsInAreaMatching("third-town", "arena")
+            assert.are.equal(1, #m)
+            assert.are.equal(1014, m[1].id)
+        end)
+
+        it("returns every candidate when the name form is ambiguous", function()
+            stub("third-town", {
+                { id = 1012, slug = "underground-plaza",   name = "underground plaza" },
+                { id = 1015, slug = "underground-plaza-1", name = "underground plaza" },
+                { id = 1019, slug = "underground-plaza-2", name = "underground plaza" },
+            })
+            -- Three rooms share the name, so the caller must reject rather than guess.
+            assert.are.equal(3, #TaDb.roomsInAreaMatching("third-town", "underground-plaza"))
+            -- ...and the exact slug still narrows it to one.
+            local one = TaDb.roomsInAreaMatching("third-town", "underground-plaza-2")
+            assert.are.equal(1, #one)
+            assert.are.equal(1019, one[1].id)
+        end)
+
+        it("returns an empty list when the area has no such room", function()
+            stub("sewers", { { id = 340, slug = "town-sewers", name = "town sewers" } })
+            assert.are.equal(0, #TaDb.roomsInAreaMatching("sewers", "no-such-room"))
+        end)
+
+        -- nil (unknown area) is deliberately distinct from an empty list (known
+        -- area, no such room) so navigate-to can report the two differently.
+        it("returns nil when the area itself is unknown", function()
+            stub("sewers", {})
+            assert.is_nil(TaDb.roomsInAreaMatching("nowhere", "town-sewers-18"))
+        end)
+
+    end)
+
+    describe("roomRef", function()
+
+        it("joins the area and room slugs", function()
+            helper.mockDbOneRow = { slug = "town-sewers-18", area = "sewers" }
+            assert.are.equal("sewers/town-sewers-18", TaDb.roomRef(359))
+        end)
+
+        it("falls back to the bare slug for a room with no area", function()
+            helper.mockDbOneRow = { slug = "orphan-room", area = nil }
+            assert.are.equal("orphan-room", TaDb.roomRef(99))
+        end)
+
+        it("returns nil for an unknown room", function()
+            helper.mockDbOneRow = nil
+            assert.is_nil(TaDb.roomRef(12345))
+        end)
+
+    end)
+
     describe("mergeRoomInto", function()
 
         it("repoints edges, carries visits, and deletes the provisional room", function()
