@@ -9544,8 +9544,45 @@ describe("navigate-to", function()
         it("picks up an item that appeared", function()
             tripAfterStartingOn(nil)
             brief("north plaza", "a yarrow potion")
-            assert.are.equal(1, sent("get yarrow potion"))
-            assert.is_truthy(lastEchoes():find("shook loose yarrow potion", 1, true))
+            assert.are.equal(1, sent("get yarrow"))
+            assert.is_truthy(lastEchoes():find("shook loose the yarrow potion", 1, true))
+        end)
+
+        -- `get` reads one word and ignores the rest, and which word answers is
+        -- not predictable: "a coil of rope" takes `get rope` but refuses
+        -- `get coil` — and `get coil of rope` is read as `get coil`, so passing
+        -- the whole name is no help. This is the live failure from 2026-08-01.
+        it("falls back to another word when the first is not recognised", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a coil of rope")
+            assert.are.equal(1, sent("get coil"))
+            helper.simulateLine("Sorry, but no such item is here.")
+            assert.are.equal(1, sent("get rope"))       -- last word next
+            assert.are.equal(0, sent("get coil of rope"))
+        end)
+
+        it("confirms the pick-up when the game accepts a word", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a coil of rope")
+            helper.simulateLine("Sorry, but no such item is here.")
+            helper.simulateLine("Ok, you got a coil of rope.")
+            assert.is_truthy(lastEchoes():find("Picked the coil of rope back up.", 1, true))
+        end)
+
+        it("gives up loudly when no word is recognised", function()
+            tripAfterStartingOn(nil)
+            brief("north plaza", "a coil of rope")
+            helper.simulateLine("Sorry, but no such item is here.")
+            helper.simulateLine("Sorry, but no such item is here.")
+            assert.is_truthy(lastEchoes():find("Couldn't work out how to pick the coil of rope", 1, true))
+        end)
+
+        it("works through several dropped items in turn", function()
+            tripAfterStartingOn(nil)
+            helper.simulateLine("There is a waterskin, and a torch lying on the floor.")
+            assert.are.equal(1, sent("get torch"))      -- alphabetical: torch first
+            helper.simulateLine("Ok, you got a torch.")
+            assert.are.equal(1, sent("get waterskin"))
         end)
 
         -- The case that motivated comparing against the room's floor rather than
@@ -9560,8 +9597,8 @@ describe("navigate-to", function()
         it("picks up only what is new when something was already there", function()
             tripAfterStartingOn("a rue potion")
             helper.simulateLine("There is a rue potion, and a yarrow potion lying on the floor.")
-            assert.are.equal(1, sent("get yarrow potion"))
-            assert.are.equal(0, sent("get rue potion"))
+            assert.are.equal(1, sent("get yarrow"))
+            assert.are.equal(0, sent("get rue"))
         end)
 
         -- Duplicates are real ("a bronze key, a waterskin, and a bronze key"),
@@ -9569,7 +9606,7 @@ describe("navigate-to", function()
         it("notices a second copy of an item already on the floor", function()
             tripAfterStartingOn("a bronze key")
             helper.simulateLine("There is a bronze key, and a bronze key lying on the floor.")
-            assert.are.equal(1, sent("get bronze key"))
+            assert.are.equal(1, sent("get bronze"))
         end)
 
         it("walks on when nothing was dropped", function()

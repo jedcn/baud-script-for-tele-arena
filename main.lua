@@ -4394,6 +4394,7 @@ local function stopNavigate()
         running = true
     end
     taPackage.navigate = nil
+    taPackage.navPickup = nil
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Mapping was on when we set off and we turned it off. Leave it off: we may
     -- be many rooms from where the mapper last knew we were (and, if the walk
@@ -4549,6 +4550,87 @@ local function navNewFloorItems(before, after)
     return out
 end
 
+-- =========================================================================
+-- Picking a dropped item back up
+-- =========================================================================
+--
+-- `get` matches a SINGLE word and ignores the rest of the argument, and which
+-- word answers is not predictable from the display name. From the logs:
+--
+--     a coil of rope      `get rope` works (9x); `get coil` does not (3x)
+--     a ration of food    `get ration` works, and so does `get rat`
+--     a wand of lightning `get wand` works
+--     a yarrow potion     `get yarrow` works, and so does `get potion`
+--
+-- So "coil of rope" answers to its LAST word while "ration of food" answers to
+-- its FIRST -- and passing the whole name is no help, because `get coil of
+-- rope` is read as `get coil` and fails just the same. That is exactly what
+-- went wrong on the 2026-08-01 walk: a rope shaken loose in the sewers was
+-- correctly spotted and then not recovered.
+--
+-- Rather than guess, try the words in turn -- first, then last, then any in
+-- between -- and let the game's refusal drive the next attempt. Refusals come
+-- back at once, so the ladder resolves well inside the pacing pause before the
+-- walk resumes.
+local function navPickupHandles(item)
+    local words = {}
+    for word in item:gmatch("%S+") do
+        -- "of" is never the handle; it only ever joins the two halves.
+        if word ~= "of" then words[#words + 1] = word end
+    end
+    if #words <= 1 then return { item } end
+    local handles = { words[1], words[#words] }
+    for i = 2, #words - 1 do handles[#handles + 1] = words[i] end
+    return handles
+end
+
+local navPickupSendCurrent
+
+-- Move to the next item we owe a pick-up for, or finish.
+local function navPickupNextItem()
+    local p = taPackage.navPickup
+    if not p then return end
+    p.queueIndex = p.queueIndex + 1
+    local item = p.queue[p.queueIndex]
+    if not item then
+        taPackage.navPickup = nil
+        return
+    end
+    p.item, p.handles, p.index = item, navPickupHandles(item), 1
+    navPickupSendCurrent()
+end
+
+navPickupSendCurrent = function()
+    local p = taPackage.navPickup
+    if p then send("get " .. p.handles[p.index]) end
+end
+
+local function navPickupStart(items)
+    taPackage.navPickup = { queue = items, queueIndex = 0 }
+    navPickupNextItem()
+end
+
+-- The game did not recognise the word we tried. Step down the ladder; when it
+-- runs out, say the item is being left behind rather than failing silently.
+createTrigger("^Sorry, but no such item is here\\.$", function()
+    local p = taPackage.navPickup
+    if not p then return end
+    p.index = p.index + 1
+    if p.handles[p.index] then
+        navPickupSendCurrent()
+        return
+    end
+    navEcho("Couldn't work out how to pick the " .. p.item .. " back up — it's on the floor here.")
+    navPickupNextItem()
+end, { type = "regex" })
+
+createTrigger("^Ok, you got (.+)\\.$", function(matches)
+    local p = taPackage.navPickup
+    if not p then return end
+    navEcho("Picked the " .. navStripArticle(matches[2]) .. " back up.")
+    navPickupNextItem()
+end, { type = "regex" })
+
 -- Re-send the step we tripped on, after the usual pacing pause.
 local function navScheduleResend()
     local gen = taPackage.navGen or 0
@@ -4587,10 +4669,9 @@ local function navOnFloorLine(items)
         j.floor = items
         navEcho("Nothing dropped in the fall.")
     else
-        for _, item in ipairs(dropped) do
-            navEcho("The fall shook loose " .. item .. " — picking it back up.")
-            send("get " .. item)
-        end
+        navEcho("The fall shook loose the " .. table.concat(dropped, ", the ")
+            .. " — picking it back up.")
+        navPickupStart(dropped)
         -- Picking them up puts the floor back as it was, so j.floor stands.
     end
 
