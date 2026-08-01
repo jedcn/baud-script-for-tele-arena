@@ -4381,15 +4381,48 @@ local NAV_ROUTES = {
 taPackage.navRoutes = NAV_ROUTES
 
 -- Pace between steps or the character trips and falls (see the trip trigger
--- below). Same values the arena's paced walks settled on.
-local NAV_STEP_DELAY_MS = 1000
+-- below). Measured across four walks at 1000ms: 4 trips in 60 moves, 6.7%,
+-- against a 1.13% baseline over the 72,354 hand-typed moves in the archived
+-- logs -- so a 1s cadence really does provoke them (p ~ 0.005), and 1200ms is
+-- the first step away from it. The four trips landed on steps 8, 10, 11 and
+-- 14, which looks like a flat per-move risk rather than fatigue setting in
+-- after some number of steps; navDebug below is there to replace that guess
+-- with measurements.
+local NAV_STEP_DELAY_MS = 1200
 local NAV_TRIP_RETRY_MS = 2000
+-- Exposed so tests fire the walk's timers by name rather than by a literal
+-- interval, which silently stops matching the moment the pacing is retuned.
+taPackage.navStepDelayMs = NAV_STEP_DELAY_MS
+taPackage.navTripRetryMs = NAV_TRIP_RETRY_MS
 -- How long to wait for the room probe (bare return + `ex`) before giving up.
 -- Without this a swallowed reply leaves navigate-to armed and silent, with
 -- nothing on screen to explain why nothing happened.
 local NAV_PROBE_TIMEOUT_MS = 5000
 
 local function navEcho(msg) echo("[nav] " .. msg) end
+
+-- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
+-- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
+-- and os.clock measures CPU rather than elapsed time. Fall back to whole
+-- seconds if the script is reloaded into a baud too old to have it -- the
+-- timings go coarse, but nothing breaks.
+local function navNowMs()
+    if nowMs then return nowMs() end
+    return os.time() * 1000
+end
+
+-- Timing trace for the paced walk, off unless `navigate-to <dest> debug` was
+-- used. Every line carries the wall clock and, more usefully, the gap since
+-- the previous traced event -- the question being asked here is what interval
+-- the game will accept without tripping us, and that is a question about gaps.
+local function navDebug(label)
+    local j = taPackage.navigate
+    if not (j and j.debug) then return end
+    local now = navNowMs()
+    local since = j.debugLast and (now - j.debugLast) or 0
+    j.debugLast = now
+    echo(string.format("[nav|t] %s +%dms  %s", os.date("%H:%M:%S"), since, label))
+end
 
 -- End a walk, however it ended -- arrival, locked door, error, or a manual
 -- stop. Every exit path funnels through here so the mapping notice below can't
@@ -4404,6 +4437,13 @@ local function stopNavigate()
     if taPackage.slugProbe and taPackage.slugProbe.nav then
         taPackage.slugProbe = nil
         running = true
+    end
+    -- Headline numbers for a traced walk, so the pacing question can be
+    -- answered without reading back through every step.
+    if j and j.debug then
+        local seconds = (navNowMs() - (j.startedAt or navNowMs())) / 1000
+        echo(string.format("[nav|t] walk ended: %d/%d steps, %d trip(s), %.1fs total, pace %dms",
+            j.index or 0, #(j.steps or {}), j.trips or 0, seconds, NAV_STEP_DELAY_MS))
     end
     taPackage.navigate = nil
     taPackage.navPickup = nil
@@ -4467,7 +4507,10 @@ local function navStep()
     if not j then return end
     j.index = j.index + 1
     local dir = j.steps[j.index]
-    if dir then navSend(dir) end
+    if dir then
+        navDebug("send step " .. j.index .. "/" .. #j.steps .. " " .. dir)
+        navSend(dir)
+    end
 end
 
 -- Re-send the current step without advancing, to recover from a move the game
@@ -4478,7 +4521,10 @@ local function navResendStep()
     if not j then return end
     j.blocked = nil
     local dir = j.steps[j.index]
-    if dir then navSend(dir) end
+    if dir then
+        navDebug("re-send step " .. j.index .. " " .. dir)
+        navSend(dir)
+    end
 end
 
 local function navScheduleStep()
@@ -4721,6 +4767,11 @@ end, { type = "regex" })
 local function navRecoverAfterRefusedMove()
     local j = taPackage.navigate
     if not j then return end
+    -- The measurement that matters: how long after the previous move the game
+    -- refused this one, and how far into the walk we were.
+    j.trips = (j.trips or 0) + 1
+    navDebug("TRIPPED on step " .. j.index .. "/" .. #j.steps
+        .. " (trip " .. j.trips .. " this walk, pace " .. NAV_STEP_DELAY_MS .. "ms)")
     j.blocked = true
     local gen = taPackage.navGen or 0
     createTimer(NAV_TRIP_RETRY_MS, function()
@@ -4792,7 +4843,12 @@ local function navOnRoomBrief(room)
 
     -- The brief our own post-trip bare return produced. We never left the room,
     -- so this is not an arrival -- it's here to carry the floor line behind it.
-    if j.phase == "tripcheck" then return end
+    if j.phase == "tripcheck" then
+        navDebug("floor check reply")
+        return
+    end
+
+    navDebug("arrived after step " .. j.index .. " (" .. room .. ")")
 
     if j.phase == "door" then
         local key, dir = j.doorOpenedByKey, j.door.dir
@@ -4847,7 +4903,7 @@ taPackage.navOnRoomBrief = navOnRoomBrief
 -- `startFloor` is what was lying in the starting room, captured by the opening
 -- probe. Without it a trip on the very first step would have nothing to compare
 -- against, and anything already on the floor there would look like ours.
-local function navStart(destination, route, arriveName, startFloor, destRoomId)
+local function navStart(destination, route, arriveName, startFloor, destRoomId, debug)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -4869,13 +4925,23 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId)
         phase        = "walking",
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
+        debug        = debug,
+        startedAt    = navNowMs(),
     }
     navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
+    if debug then
+        navEcho("Timing trace on, pacing " .. NAV_STEP_DELAY_MS .. "ms between steps.")
+    end
     navStep()
 end
 
 createAlias("^navigate-to (.+)$", function(matches)
-    local destination = matches[2]:match("^%s*(.-)%s*$")
+    local arg = matches[2]:match("^%s*(.-)%s*$")
+    -- A trailing "debug" turns on the timing trace, following the arena
+    -- aliases' convention. The destination is whatever precedes it.
+    local destination, debug = arg, false
+    local withoutDebug = arg:match("^(.-)%s+debug$")
+    if withoutDebug then destination, debug = withoutDebug, true end
     local route = NAV_ROUTES[destination]
     if not route then
         local known = {}
@@ -4925,7 +4991,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                navStart(destination, route, destRoom.name, probe.floor, destRoom.id)
+                navStart(destination, route, destRoom.name, probe.floor, destRoom.id, debug)
                 return
             end
             local here
