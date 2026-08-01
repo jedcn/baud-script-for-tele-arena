@@ -1093,8 +1093,9 @@ local function handleRoomEntry(matches)
     -- guards above, which stop a `look <dir>` peek or a `look` reply being
     -- counted as a move. (Miscounting arrivals is exactly how the arena's paced
     -- walk wedged in July 2026; see arenaJourneyOnMovement.) It sits ahead of
-    -- the mapping gate below because a walk has to work with mapping off. The
-    -- hook is installed by the navigation section further down.
+    -- the mapping gate below because a walk always runs with mapping off -- it
+    -- suspends mapping for its duration precisely so it can't write to the map
+    -- (see navStart). The hook is installed by the navigation section below.
     if taPackage.navOnRoomBrief then taPackage.navOnRoomBrief(name) end
 
     -- A kill with no gold found before we left records zero loot.
@@ -4337,6 +4338,16 @@ end, { type = "regex" })
 -- `door` is an optional final probe: a direction out of the destination that is
 -- known to be gated by a locked door. We walk the route, then try it, and
 -- report whether we could pass. Fetching the key is not wired up yet.
+--
+-- THE MAP IS READ-ONLY HERE. Navigating asks the map where it is and never
+-- tells it anything: no room is discovered, no visit counted, no exit linked,
+-- no coordinate stamped, no player location moved. Two things enforce that.
+-- First, every DB call in this section is a SELECT. Second, a walk suspends
+-- mapping mode for its duration (navStart), because with mapping ON the plain
+-- arrival briefs we generate would otherwise flow into handleRoomEntry and be
+-- recorded. Mapping stays off afterwards: sixteen scripted rooms leave the
+-- mapper's anchor far behind, and silently resuming would mis-link every
+-- manual move that followed. The user is told to re-anchor with `map-here`.
 local NAV_ROUTES = {
     ["sewers/town-sewers-18"] = {
         from  = "second-town/north-plaza",
@@ -4359,12 +4370,15 @@ local NAV_PROBE_TIMEOUT_MS = 5000
 
 local function navEcho(msg) echo("[nav] " .. msg) end
 
--- Stop walking. Bumping the generation invalidates any step or retry timer
--- still in flight so a stale one can't resume a walk we've abandoned. Returns
--- whether anything was actually running. Shared by stop-navigating and
--- stop-all-scripts.
+-- End a walk, however it ended -- arrival, locked door, error, or a manual
+-- stop. Every exit path funnels through here so the mapping notice below can't
+-- be forgotten on one of them. Bumping the generation invalidates any step or
+-- retry timer still in flight so a stale one can't resume a walk we've
+-- abandoned. Returns whether anything was actually running. Shared by
+-- stop-navigating and stop-all-scripts.
 local function stopNavigate()
-    local running = taPackage.navigate ~= nil
+    local j = taPackage.navigate
+    local running = j ~= nil
     -- Only drop the probe if it's ours: map-print-room-slug may have one armed.
     if taPackage.slugProbe and taPackage.slugProbe.nav then
         taPackage.slugProbe = nil
@@ -4372,6 +4386,14 @@ local function stopNavigate()
     end
     taPackage.navigate = nil
     taPackage.navGen = (taPackage.navGen or 0) + 1
+    -- Mapping was on when we set off and we turned it off. Leave it off: we may
+    -- be many rooms from where the mapper last knew we were (and, if the walk
+    -- was cut short, somewhere neither of us can name), so resuming would link
+    -- the next manual move from the wrong room and mint duplicates.
+    if j and j.mappingWasOn then
+        navEcho("Mapping is still off — the walk moved us well past the mapper's"
+            .. " anchor. Re-anchor with map-here <slug> before mapping again.")
+    end
     return running
 end
 taPackage.stopNavigate = stopNavigate
@@ -4404,15 +4426,15 @@ local function navResolveRef(ref)
     return matches[1]
 end
 
--- Walk one step the same way the manual n/s/e/w aliases do (main.lua's movement
--- aliases), so a route walked with mapping ON is recorded as real edges rather
--- than arriving as a sequence of unexplained teleports that mint phantom rooms.
--- With mapping off this is inert bookkeeping.
+-- Walk one step. Unlike the manual n/s/e/w aliases this deliberately leaves no
+-- trail for the mapper: `pendingDirection` is CLEARED, not set. Setting it would
+-- be an instruction to record an edge, and a stale one left behind at the end of
+-- a walk would dead-reckon the user's next manual move from a room sixteen steps
+-- away. Clearing `suppressRoomEntry` is unrelated bookkeeping -- it stops a
+-- leftover `look <dir>` flag from swallowing our first arrival brief.
 local function navSend(dir)
     taPackage.suppressRoomEntry = nil
-    taPackage.pendingDirection = dir
-    taPackage.prevRoom = taPackage.currentRoom
-    taPackage.prevRoomId = taPackage.currentRoomId
+    taPackage.pendingDirection = nil
     send(dir)
 end
 
@@ -4485,12 +4507,13 @@ local function navOnRoomBrief(room)
     end
 
     if j.phase == "door" then
-        taPackage.navigate = nil
-        if j.doorOpenedByKey then
-            navEcho("My " .. j.doorOpenedByKey .. " key opened the door — it's already ours, so"
+        local key, dir = j.doorOpenedByKey, j.door.dir
+        stopNavigate()
+        if key then
+            navEcho("My " .. key .. " key opened the door — it's already ours, so"
                 .. " this leg needs no detour. Stopping here (" .. room .. ").")
         else
-            navEcho("The " .. j.door.dir .. " door was open — through it into " .. room
+            navEcho("The " .. dir .. " door was open — through it into " .. room
                 .. ". Stopping here.")
         end
         return
@@ -4501,17 +4524,19 @@ local function navOnRoomBrief(room)
         -- name mismatch means a step went astray, and the door probe below
         -- would then be tried from the wrong room.
         if j.arriveName and room ~= j.arriveName then
-            taPackage.navigate = nil
+            local want = j.arriveName
+            stopNavigate()
             navEcho("Walked the whole route but ended up in '" .. room .. "', not '"
-                .. j.arriveName .. "' — stopping rather than guessing. The route may be wrong.")
+                .. want .. "' — stopping rather than guessing. The route may be wrong.")
             return
         end
         if j.door then
             navEcho("Arrived at " .. j.destination .. ".")
             navScheduleDoor()
         else
-            taPackage.navigate = nil
-            navEcho("Arrived at " .. j.destination .. ".")
+            local dest = j.destination
+            stopNavigate()
+            navEcho("Arrived at " .. dest .. ".")
         end
         return
     end
@@ -4522,13 +4547,23 @@ taPackage.navOnRoomBrief = navOnRoomBrief
 
 local function navStart(destination, route, arriveName)
     taPackage.navGen = (taPackage.navGen or 0) + 1
+    -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
+    -- ordinary room lines; with mapping on handleRoomEntry would happily record
+    -- visits, mint rooms and link edges from them. Remembered so the teardown
+    -- can say mapping is still off (see stopNavigate for why we don't restore).
+    local mappingWasOn = taPackage.mapping == true
+    if mappingWasOn then
+        taPackage.mapping = false
+        navEcho("Mapping was on — suspended it, the map won't be written to.")
+    end
     taPackage.navigate = {
-        destination = destination,
-        steps       = route.steps,
-        index       = 0,
-        door        = route.door,
-        arriveName  = arriveName,
-        phase       = "walking",
+        destination  = destination,
+        steps        = route.steps,
+        index        = 0,
+        door         = route.door,
+        arriveName   = arriveName,
+        phase        = "walking",
+        mappingWasOn = mappingWasOn,
     }
     navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
     navStep()

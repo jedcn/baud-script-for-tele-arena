@@ -9419,10 +9419,13 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("se"))
         end)
 
-        -- Keeps the mapper coherent when a walk happens with mapping on.
-        it("sets pendingDirection like a manual move", function()
+        -- The map is read-only to navigate-to. Setting pendingDirection is an
+        -- instruction to the mapper to record an edge, so a walk must not; a
+        -- stale one left behind would also dead-reckon the user's next manual
+        -- move from a room many steps away.
+        it("never sets pendingDirection", function()
             startWalking()
-            assert.are.equal("sw", taPackage.pendingDirection)
+            assert.is_nil(taPackage.pendingDirection)
         end)
 
         -- The room description a `look` produces opens with "You are in ...",
@@ -9537,6 +9540,83 @@ describe("navigate-to", function()
             helper.simulateLine("You're in the town sewers.")
             assert.is_truthy(lastEchoes():find("door was open", 1, true))
             assert.is_nil(taPackage.navigate)
+        end)
+
+    end)
+
+    -- navigate-to reads the map and never writes to it. Walking is not
+    -- exploring: the rooms on a route are already known, and recording a
+    -- scripted walk would count visits, stamp coordinates and move the player
+    -- location for a trip the map has nothing to learn from.
+    describe("leaving the map alone", function()
+
+        local function countExecutes()
+            local n = 0
+            for _, c in ipairs(helper.dbCalls) do
+                if c.method == "execute" then n = n + 1 end
+            end
+            return n
+        end
+
+        local function walkTheWholeRoute()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(1000)
+            helper.simulateLine("You're in the town sewers.")
+        end
+
+        it("suspends mapping mode for the walk", function()
+            taPackage.mapping = true
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_false(taPackage.mapping)
+            assert.is_truthy(lastEchoes():find("Mapping was on — suspended it", 1, true))
+        end)
+
+        it("writes nothing to the database, even with mapping on", function()
+            taPackage.mapping = true
+            local before = countExecutes()
+            walkTheWholeRoute()
+            assert.are.equal(before, countExecutes())
+        end)
+
+        it("does not send the mapper's look/ex probes on arrival", function()
+            taPackage.mapping = true
+            walkTheWholeRoute()
+            assert.are.equal(0, sent("look"))
+            -- The one `ex` is the start-of-walk room probe, not a per-room scan.
+            assert.are.equal(1, sent("ex"))
+        end)
+
+        -- Resuming would be worse than leaving it off: the mapper's anchor is
+        -- wherever the walk began, so the next manual move would link an edge
+        -- from a room many steps away and mint duplicates.
+        it("leaves mapping off afterwards and says how to re-anchor", function()
+            taPackage.mapping = true
+            walkTheWholeRoute()
+            assert.is_false(taPackage.mapping)
+            assert.is_truthy(lastEchoes():find("Re-anchor with map-here <slug>", 1, true))
+        end)
+
+        it("says nothing about mapping when it was already off", function()
+            taPackage.mapping = false
+            walkTheWholeRoute()
+            assert.is_falsy(lastEchoes():find("Re-anchor with map-here", 1, true))
+            assert.is_falsy(lastEchoes():find("Mapping was on", 1, true))
+        end)
+
+        it("still reports the anchor when a walk is stopped part-way", function()
+            taPackage.mapping = true
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateAlias("stop-navigating")
+            assert.is_truthy(lastEchoes():find("Re-anchor with map-here <slug>", 1, true))
         end)
 
     end)
