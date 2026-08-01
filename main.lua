@@ -4202,6 +4202,9 @@ local function stopKill()
     taPackage.groupHealPhase = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     taPackage.killAllGeneration = (taPackage.killAllGeneration or 0) + 1
+    -- A route's arrival sweep is over too; drop its bookkeeping so a later
+    -- hand-run sweep can't finish and report against it.
+    taPackage.navSweep = nil
     echo("[kill] Stopped.")
 end
 taPackage.stopKill = stopKill
@@ -4225,6 +4228,17 @@ taPackage.stopKill = stopKill
 -- ends the sweep so it can't hang. Locking onto a monster (or seeing "nobody")
 -- bumps killAllGeneration, which cancels the pending timer.
 local KILL_ALL_SCAN_MS = 2000
+
+-- The room is clear. Both endings -- the scan timing out and the occupant line
+-- reporting nobody -- go through here so anything waiting on the sweep hears
+-- about it exactly once. A route that arrived and started this sweep uses the
+-- hook to report what the room yielded (see the navigation section).
+local function killAllDone()
+    taPackage.killAllActive = false
+    echo("[kill] No monster here — kill-all done.")
+    if taPackage.navOnSweepDone then taPackage.navOnSweepDone() end
+end
+
 local function killAllScan()
     if not taPackage.killAllActive then return end
     local gen = (taPackage.killAllGeneration or 0) + 1
@@ -4232,8 +4246,7 @@ local function killAllScan()
     send("")
     createTimer(KILL_ALL_SCAN_MS, function()
         if taPackage.killAllActive and (taPackage.killAllGeneration or 0) == gen then
-            taPackage.killAllActive = false
-            echo("[kill] No monster here — kill-all done.")
+            killAllDone()
         end
     end, { repeating = false })
 end
@@ -4261,8 +4274,7 @@ createTrigger("^There \\S+ (.+) here\\.$", function(matches)
             taPackage.killAllActive = false
         end
     else
-        taPackage.killAllActive = false
-        echo("[kill] No monster here — kill-all done.")
+        killAllDone()
     end
 end, { type = "regex" })
 
@@ -4742,10 +4754,29 @@ local function navScheduleSweep(destination)
             navEcho("An arena session is active — not starting kill-all at " .. destination .. ".")
             return
         end
+        -- Marks this sweep as a route's, which is what scopes the full-pack
+        -- handling below: a kill-all run by hand is nobody's business but yours.
+        taPackage.navSweep = { destination = destination, uncarried = {} }
         taPackage.killAllActive = true
         taPackage.killAllScan()
     end, { repeating = false })
 end
+
+-- The room is clear. Report what it yielded, and stop here if anything had to
+-- be left behind -- that is the point at which a run should not carry on.
+local function navOnSweepDone()
+    local sweep = taPackage.navSweep
+    if not sweep then return end
+    taPackage.navSweep = nil
+    if #sweep.uncarried == 0 then
+        navEcho("Room cleared at " .. sweep.destination .. ".")
+        return
+    end
+    navEcho("Room cleared, but the pack was full: the "
+        .. table.concat(sweep.uncarried, ", the ") .. " is still on the floor here.")
+    navEcho("  Stopping. Drop or stow something, pick it up, then carry on.")
+end
+taPackage.navOnSweepDone = navOnSweepDone
 
 -- Advance the walk one room at a time. Called for every arrival brief while a
 -- walk is active (hooked into handleRoomEntry, which owns all the phrasings).
@@ -5009,16 +5040,22 @@ createTrigger("^While searching the area, you notice (.+), which you add to your
     function(matches) navNoteKeyFound(matches[2]) end, { type = "regex" })
 
 -- The pack was full when the search turned something up, so the item -- quite
--- possibly the key we came for -- is still lying on the floor. Killing anything
--- else cannot help while we have nowhere to put what we find, so end the sweep
--- and say exactly how to recover.
+-- possibly the key we came for -- is still lying on the floor.
+--
+-- Note it and FIGHT ON. Breaking off here would stop us attacking without
+-- stopping the room attacking us: the destination rooms on both sewers legs
+-- held four live monsters on arrival, so downing tools mid-sweep just means
+-- standing there being bitten. Clear the room first; navOnSweepDone above then
+-- stops the run once nothing is left swinging.
+--
+-- Scoped to a route's own sweep: a kill-all or a kill you ran by hand is left
+-- entirely alone, since a full pack may be irrelevant to what you're doing.
 createTrigger("^While searching the area, you notice (.+), but you can't carry it\\.$", function(matches)
-    if not (taPackage.killAllActive or taPackage.killActive) then return end
+    local sweep = taPackage.navSweep
+    if not sweep then return end
     local item = navStripArticle(matches[2])
-    taPackage.stopKill()
-    navEcho("Couldn't carry the " .. item .. " — pack is full, so it's still on the floor here.")
-    navEcho("  Stopped the sweep. Drop or stow something, `get " .. item .. "`,"
-        .. " then kill-all again to finish the room.")
+    sweep.uncarried[#sweep.uncarried + 1] = item
+    navEcho("Couldn't carry the " .. item .. " — pack is full. Clearing the room first.")
 end, { type = "regex" })
 
 -- Stops every long-running script at once. Each sub-stop is independent and

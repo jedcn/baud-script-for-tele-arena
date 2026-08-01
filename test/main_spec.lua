@@ -9831,20 +9831,50 @@ describe("navigate-to", function()
             assert.is_falsy(lastEchoes():find("Got the waterskin", 1, true))
         end)
 
-        it("stops the sweep when the pack is too full to take what was found", function()
+        -- Breaking off mid-sweep would stop us attacking without stopping the
+        -- room attacking us — both sewers destinations held four live monsters
+        -- on arrival. So the room gets finished first.
+        it("keeps fighting when the pack is too full to take what was found", function()
             arriveWithSweep()
             helper.fireTimers(1000)
             assert.is_true(taPackage.killAllActive)
             helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
-            assert.is_falsy(taPackage.killAllActive)
-            local out = lastEchoes()
-            assert.is_truthy(out:find("Couldn't carry the ruby key", 1, true))
-            assert.is_truthy(out:find("get ruby key", 1, true))
+            assert.is_true(taPackage.killAllActive)   -- still sweeping
+            assert.is_truthy(lastEchoes():find("Clearing the room first", 1, true))
         end)
 
-        it("ignores a full pack when no sweep is running", function()
+        it("stops the run once the room is clear, naming what was left behind", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
             helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
-            assert.is_falsy(lastEchoes():find("Stopped the sweep", 1, true))
+            helper.simulateLine("There is nobody here.")   -- room clear, sweep ends
+            local out = lastEchoes()
+            assert.is_truthy(out:find("the ruby key is still on the floor here", 1, true))
+            assert.is_truthy(out:find("Stopping.", 1, true))
+            assert.is_falsy(taPackage.killAllActive)
+        end)
+
+        it("reports a clean sweep when nothing was left behind", function()
+            arriveWithSweep()
+            helper.fireTimers(1000)
+            helper.simulateLine("There is nobody here.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("Room cleared at sewers/town-sewers-18.", 1, true))
+            assert.is_falsy(out:find("still on the floor", 1, true))
+        end)
+
+        -- A kill-all or kill run by hand is nobody's business but the user's; a
+        -- full pack there may be irrelevant to whatever they're doing.
+        it("leaves a hand-run sweep alone", function()
+            taPackage.killAllActive = true            -- as `kill-all` would
+            helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
+            assert.is_true(taPackage.killAllActive)
+            assert.is_falsy(lastEchoes():find("Clearing the room first", 1, true))
+        end)
+
+        it("ignores a full pack when nothing is running at all", function()
+            helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
+            assert.is_falsy(lastEchoes():find("Clearing the room first", 1, true))
         end)
 
     end)
