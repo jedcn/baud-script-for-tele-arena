@@ -4796,14 +4796,20 @@ local function navOnRoomBrief(room)
 
     if j.phase == "door" then
         local key, dir = j.doorOpenedByKey, j.door.dir
+        -- We are through the door, which means we are one room PAST the route's
+        -- stated destination. Name where that is from the map -- "town sewers"
+        -- is shared by 170 rooms and tells the user nothing about where they
+        -- have been left standing.
+        local beyond = j.destRoomId and taPackage.db.exitDestination(j.destRoomId, dir)
+        local where = (type(beyond) == "number" and taPackage.db.roomRef(beyond)) or room
         stopNavigate()
         if key then
-            navEcho("My " .. key .. " key opened the door — it's already ours, so"
-                .. " this leg needs no detour. Stopping here (" .. room .. ").")
+            navEcho("My " .. key .. " key opened the door — it's already ours, so this leg"
+                .. " needs no detour.")
         else
-            navEcho("The " .. dir .. " door was open — through it into " .. room
-                .. ". Stopping here.")
+            navEcho("The " .. dir .. " door was already open — walked through it.")
         end
+        navEcho("  Now one room past " .. j.destination .. ", standing in " .. where .. ".")
         return
     end
 
@@ -4841,7 +4847,7 @@ taPackage.navOnRoomBrief = navOnRoomBrief
 -- `startFloor` is what was lying in the starting room, captured by the opening
 -- probe. Without it a trip on the very first step would have nothing to compare
 -- against, and anything already on the floor there would look like ours.
-local function navStart(destination, route, arriveName, startFloor)
+local function navStart(destination, route, arriveName, startFloor, destRoomId)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -4859,6 +4865,7 @@ local function navStart(destination, route, arriveName, startFloor)
         door         = route.door,
         killAll      = route.killAll,
         arriveName   = arriveName,
+        destRoomId   = destRoomId,
         phase        = "walking",
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
@@ -4918,7 +4925,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                navStart(destination, route, destRoom.name, probe.floor)
+                navStart(destination, route, destRoom.name, probe.floor, destRoom.id)
                 return
             end
             local here

@@ -9695,8 +9695,33 @@ describe("navigate-to", function()
         it("says so when the door is simply open", function()
             walkToTheDoor()
             helper.simulateLine("You're in the town sewers.")
-            assert.is_truthy(lastEchoes():find("door was open", 1, true))
+            assert.is_truthy(lastEchoes():find("door was already open", 1, true))
             assert.is_nil(taPackage.navigate)
+        end)
+
+        -- Passing the door leaves us one room PAST the route's destination, and
+        -- "town sewers" (shared by 170 rooms) says nothing about where that is,
+        -- so the room is named from the map instead.
+        it("names the room beyond the door from the map", function()
+            -- 359 --s--> 425 is the ruby-keyed stone door in the real graph.
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "FROM areas WHERE slug", 1, true) then
+                    return params[1] == "second-town" and { id = 7 }
+                        or (params[1] == "sewers" and { id = 8 } or nil)
+                end
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 425 }
+                end
+                if string.find(sql, "LEFT JOIN areas a ON a.id = r.area_id", 1, true) then
+                    return params[1] == 425 and { slug = "town-sewers-62", area = "sewers" } or nil
+                end
+                return nil
+            end
+            walkToTheDoor()
+            helper.simulateLine("You're in the town sewers.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("standing in sewers/town-sewers-62", 1, true))
+            assert.is_truthy(out:find("one room past sewers/town-sewers-18", 1, true))
         end)
 
     end)
