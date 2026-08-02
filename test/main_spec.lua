@@ -5634,6 +5634,95 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("a stone", helper.sendCalls[1])
         end)
 
+        -- The physical cooldown is a fixed wall-clock timer that starts when a
+        -- swing is ACCEPTED. Reckoning the wait from that instant (rather than
+        -- polling the whole window) is what cuts ~10 rejected commands per
+        -- cooldown down to about one.
+        describe("physical cooldown reckoning", function()
+
+            local EXHAUSTED = "You are still physically exhausted from your previous activities!"
+
+            local function fighting()
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "skeleton"
+            end
+
+            it("stamps the swing time on hit, miss and dodge alike", function()
+                fighting()
+                helper.advanceMs(1000)
+                helper.simulateLine("Your attack hit the skeleton for 15 damage!")
+                assert.are.equal(1000, taPackage.arenaLastSwingAt)
+                helper.advanceMs(1000)
+                helper.simulateLine("Your attack missed!")
+                assert.are.equal(2000, taPackage.arenaLastSwingAt)
+                helper.advanceMs(1000)
+                helper.simulateLine("The skeleton dodged your attack!")
+                assert.are.equal(3000, taPackage.arenaLastSwingAt)
+            end)
+
+            it("waits out the remaining cooldown instead of polling it", function()
+                fighting()
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(5000)
+                timerCreated = nil
+                helper.simulateLine(EXHAUSTED)
+                -- 30s cooldown - 5s elapsed - 2s margin
+                assert.are.equal(23000, timerCreated.interval)
+            end)
+
+            it("does not restart the wait on a later rejection in the same cooldown", function()
+                -- The anti-drift property: timing from the rejection would arm a
+                -- fresh full cooldown here and stall us well past recovery.
+                fighting()
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(5000)
+                helper.simulateLine(EXHAUSTED)
+                assert.are.equal(23000, timerCreated.interval)
+                helper.advanceMs(20000)  -- now 25s past the swing
+                helper.simulateLine(EXHAUSTED)
+                assert.are.equal(3000, timerCreated.interval)
+            end)
+
+            it("drops to the tail poll once inside the margin", function()
+                fighting()
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(29000)
+                timerCreated = nil
+                helper.simulateLine(EXHAUSTED)
+                assert.are.equal(2000, timerCreated.interval)
+            end)
+
+            it("polls when no swing has landed to reckon from", function()
+                -- Straight after a ring: the gong spent the clock, not a swing.
+                fighting()
+                taPackage.arenaLastSwingAt = nil
+                helper.simulateLine(EXHAUSTED)
+                assert.are.equal(2000, timerCreated.interval)
+            end)
+
+            it("polls when the last swing is stale after an errand trip", function()
+                fighting()
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(600000)  -- ten minutes at the temple
+                timerCreated = nil
+                helper.simulateLine(EXHAUSTED)
+                assert.are.equal(2000, timerCreated.interval)
+            end)
+
+            it("still swings when the reckoned timer fires", function()
+                fighting()
+                taPackage.arenaLastCmd = "a skeleton"
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(5000)
+                timerCreated = nil
+                helper.simulateLine(EXHAUSTED)
+                helper.sendCalls = {}
+                timerCreated.cb()
+                assert.are.equal("a skeleton", helper.sendCalls[1])
+            end)
+
+        end)
+
         it("does NOT schedule a retry on exhaustion while ringing (pump owns it)", function()
             -- The scan pump re-arms itself; the exhaustion handler must not also
             -- schedule a retry (that shared-flag retry was the deadlock source).

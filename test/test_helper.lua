@@ -152,6 +152,19 @@ function M.fireTimers(interval)
     end
 end
 
+-- baud's millisecond clock. Held still by default so a test that doesn't care
+-- about time gets deterministic behaviour; M.advanceMs moves it for the tests
+-- that reckon against it (the physical-cooldown retry).
+M.currentMs = 0
+
+function nowMs()
+    return M.currentMs
+end
+
+function M.advanceMs(delta)
+    M.currentMs = M.currentMs + delta
+end
+
 function setStatus(fn) end
 
 function send(text)
@@ -257,6 +270,7 @@ function M.resetAll()
     M.mockDbOneRow = nil
     M.mockDbRows = {}
     M.mockExecuteReturn = nil
+    M.currentMs = 0
     taPackage = nil
 end
 

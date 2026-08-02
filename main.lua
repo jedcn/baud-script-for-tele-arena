@@ -2163,6 +2163,16 @@ end, { type = "regex" })
 
 
 
+-- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
+-- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
+-- and os.clock measures CPU rather than elapsed time. Fall back to whole
+-- seconds if the script is reloaded into a baud too old to have it -- the
+-- timings go coarse, but nothing breaks.
+local function nowMillis()
+    if nowMs then return nowMs() end
+    return os.time() * 1000
+end
+
 -- =========================================================================
 -- Ring gong and fight in arena
 -- =========================================================================
@@ -2231,17 +2241,46 @@ end
 -- loop alive. The pending guard means a stale retry timer can't double-ring.
 local ARENA_RING_RETRY_MS = 3000
 
--- How long to wait before re-swinging after the game rejects an attack with
--- "still physically exhausted". This is a POLL, not an estimate of the cooldown:
--- a retry that's still too early just re-emits the same line and re-arms the
--- next poll, so the cadence costs at most one interval of latency and never has
--- to be tuned to the real clock. It used to be a flat 30s, on the assumption
--- that some combat line would always re-drive the loop sooner. That holds solo —
--- the monster only ever attacks us — but not in team mode, where a monster
--- busy with a teammate prints lines that name THEM ("...misses Kerhak!"), so
--- none of our re-arm triggers fire and the fallback becomes the actual cadence.
--- That cost Kerhak a 30s idle mid-fight while Teekywiki solo'd a stone giant
--- (18:59:05 -> 18:59:35 in logs/session-kerhak-team-fight-2026-07-25T18-58-34.log).
+-- Recovering from "still physically exhausted" is dead reckoning, not a search.
+--
+-- The game grants a burst of swings and then refuses every physical action until
+-- a fixed wall-clock timer runs out. How many swings is a property of the
+-- character (class, agility, level — see docs/shrine/AGILITY.md); how long the
+-- recovery takes appears to be the same for everyone. So the burst size is
+-- deliberately NOT modelled here: we swing until the game says "exhausted",
+-- which uses whatever the character currently has and keeps working when a
+-- level-up grants another attack. The rejected swing that ends a burst is not
+-- waste — it is the signal that starts this clock.
+--
+-- Only the recovery is predicted, and the wait is timed from the last ACCEPTED
+-- swing rather than from the rejection: the server's clock started when that
+-- swing resolved, and the rejection reaches us a round-trip later, so timing
+-- from the rejection would start us late on every single cycle.
+--
+-- This replaced a blind 2s poll of the whole window, which spent ~69% of every
+-- attack command it sent on rejections (744 sent / ~228 resolved in
+-- logs/session-pelayo-2026-08-01T13-06-47.log — median 10 consecutive
+-- rejections per cooldown, max 20). The blind poll had in turn replaced a flat
+-- 30s retry, because 30s was fine solo — the monster only ever attacks us, so
+-- some combat line always re-drove the loop — but not in team mode, where a
+-- monster busy with a teammate prints lines that name THEM ("...misses
+-- Kerhak!"), so none of our re-arm triggers fire and the fallback became the
+-- actual cadence. That cost Kerhak a 30s idle mid-fight while Teekywiki solo'd
+-- a stone giant (18:59:05 -> 18:59:35 in
+-- logs/session-kerhak-team-fight-2026-07-25T18-58-34.log). Dead reckoning is
+-- immune to that: it depends on no incoming line at all.
+--
+-- Best estimate from clean runs across three characters is ~30-35s, but the old
+-- 2s poll granularity puts a floor on how precisely those logs can be read. Aim
+-- deliberately short of it — landing early costs one rejected swing and drops
+-- into the tail poll below, landing late wastes damage.
+local ARENA_PHYSICAL_COOLDOWN_MS = 30000
+local ARENA_COOLDOWN_MARGIN_MS = 2000
+
+-- Tail poll. Once the estimate says we should be recovered (or we have no recent
+-- swing to reckon from — a stale timestamp makes the computed wait negative and
+-- lands here), fall back to asking. Only the last seconds of the window get
+-- polled, so this costs about one extra command per cooldown rather than ten.
 local ARENA_EXHAUSTED_RETRY_MS = 2000
 
 local function arenaRing()
@@ -3306,25 +3345,29 @@ createTrigger("^There .+ on the floor\\.$", function()
     arenaRingOrErrand()
 end, { type = "regex" })
 
+-- Hit, miss and dodge all mean the same thing to the physical clock: the game
+-- ACCEPTED a swing and spent a tick of the burst. Stamping the time here is what
+-- lets the exhaustion handler below reckon the recovery from the right instant.
+local function arenaSwingAccepted(label)
+    taPackage.arenaAttackPending = false
+    taPackage.arenaLastSwingAt = nowMillis()
+    arenaDebugEcho(label)
+    if not checkFleeArena() then arenaAttack() end
+end
+
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function(matches)
     if taPackage.arenaState ~= "fighting" then return end
-    taPackage.arenaAttackPending = false
-    arenaDebugEcho("our-hit")
-    if not checkFleeArena() then arenaAttack() end
+    arenaSwingAccepted("our-hit")
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     if taPackage.arenaState ~= "fighting" then return end
-    taPackage.arenaAttackPending = false
-    arenaDebugEcho("our-miss")
-    if not checkFleeArena() then arenaAttack() end
+    arenaSwingAccepted("our-miss")
 end, { type = "regex" })
 
 createTrigger("^The .+ dodged your attack!$", function(matches)
     if taPackage.arenaState ~= "fighting" then return end
-    taPackage.arenaAttackPending = false
-    arenaDebugEcho("monster-dodge")
-    if not checkFleeArena() then arenaAttack() end
+    arenaSwingAccepted("monster-dodge")
 end, { type = "regex" })
 
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
@@ -3810,9 +3853,23 @@ createTrigger("^You are still physically exhausted from your previous activities
         -- outstanding retry. Let the pump own ring liveness.
         return
     else
-        -- Melee is on cooldown; poll until the physical clock recovers.
+        -- Melee is on cooldown. Reckon the wait from the last accepted swing
+        -- rather than polling the whole window; see ARENA_PHYSICAL_COOLDOWN_MS.
+        -- Whichever is larger wins, so a missing or stale timestamp (nothing
+        -- landed recently — we just got back from an errand, or the ring rather
+        -- than a swing spent the clock) makes the remainder negative and leaves
+        -- us on the tail poll, which is the old behaviour and always safe.
         taPackage.arenaAttackPending = false
-        createTimer(ARENA_EXHAUSTED_RETRY_MS, function()
+        local delay = ARENA_EXHAUSTED_RETRY_MS
+        local lastSwingAt = taPackage.arenaLastSwingAt
+        if lastSwingAt then
+            local remaining = ARENA_PHYSICAL_COOLDOWN_MS
+                - (nowMillis() - lastSwingAt)
+                - ARENA_COOLDOWN_MARGIN_MS
+            if remaining > delay then delay = remaining end
+        end
+        arenaDebugEcho("melee-retry in " .. delay .. "ms")
+        createTimer(delay, function()
             if taPackage.arenaState and (taPackage.arenaCombatGen or 0) == gen then
                 arenaAttack()
             end
@@ -4401,15 +4458,7 @@ local NAV_PROBE_TIMEOUT_MS = 5000
 
 local function navEcho(msg) echo("[nav] " .. msg) end
 
--- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
--- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
--- and os.clock measures CPU rather than elapsed time. Fall back to whole
--- seconds if the script is reloaded into a baud too old to have it -- the
--- timings go coarse, but nothing breaks.
-local function navNowMs()
-    if nowMs then return nowMs() end
-    return os.time() * 1000
-end
+local navNowMs = nowMillis
 
 -- Timing trace for the paced walk, off unless `navigate-to <dest> debug` was
 -- used. Every line carries the wall clock and, more usefully, the gap since
