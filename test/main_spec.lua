@@ -5709,6 +5709,19 @@ describe("ring-gong-and-fight-in-arena", function()
                 assert.are.equal(2000, timerCreated.interval)
             end)
 
+            -- Groundwork for measuring the gong's own cooldown. The stamp sits
+            -- ahead of the trigger's state gate on purpose, so it records the
+            -- acceptance even on the paths that return early, and it must not
+            -- disturb the swing clock the melee reckoning runs on.
+            it("stamps ring acceptance without touching the swing clock", function()
+                fighting()
+                taPackage.arenaLastSwingAt = 1000
+                helper.advanceMs(7000)
+                helper.simulateLine("You just rang the great gong!")
+                assert.are.equal(7000, taPackage.arenaLastRingAt)
+                assert.are.equal(1000, taPackage.arenaLastSwingAt)
+            end)
+
             it("still swings when the reckoned timer fires", function()
                 fighting()
                 taPackage.arenaLastCmd = "a skeleton"

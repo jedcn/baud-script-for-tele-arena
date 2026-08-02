@@ -2292,9 +2292,34 @@ local ARENA_COOLDOWN_MARGIN_MS = 2000
 -- polled, so this costs about one extra command per cooldown rather than ten.
 local ARENA_EXHAUSTED_RETRY_MS = 2000
 
+-- Milliseconds since a recorded stamp, or nil if we never recorded one. Used
+-- only by the tracing below, where "we have no idea" and "it was 0ms ago" have
+-- to stay distinguishable.
+local function arenaSince(stamp)
+    if not stamp then return nil end
+    return nowMillis() - stamp
+end
+
+local function arenaSinceLabel(stamp)
+    local since = arenaSince(stamp)
+    return since and (since .. "ms") or "never"
+end
+
+-- Ringing is measured, not yet reckoned. The melee cooldown turned out to be a
+-- fixed timer that could be dead-reckoned from the last accepted swing, and the
+-- gong is plainly on some cooldown too — 55 of the 64 rings sent in
+-- logs/session-pelayo-2026-08-02T11-15-31.log bounced off "still physically
+-- exhausted". But the two do NOT share a clock: in
+-- logs/session-pelayo-2026-08-02T09-47-30.log a ring was accepted ~19-22s after
+-- a killing blow that melee was still refusing at 35s. So this traces the gong's
+-- own timings — every send, every rejection, and every acceptance, each carrying
+-- how long it had been since the last accepted swing and the last accepted ring
+-- — and nothing here changes behaviour until those numbers say what to reckon.
 local function arenaRing()
     if taPackage.arenaRingPending then return end
     taPackage.arenaRingPending = true
+    arenaDebugEcho("ring-sent  since-swing " .. arenaSinceLabel(taPackage.arenaLastSwingAt)
+        .. "  since-ring " .. arenaSinceLabel(taPackage.arenaLastRingAt))
     arenaSend("ring gong")
 end
 
@@ -3213,6 +3238,13 @@ end, { type = "regex" })
 -- logs/session-pollux-2026-06-28T12-33-36.log, where Pollux latched onto
 -- Castor's spawns and piled up monsters it couldn't see.)
 createTrigger("^You just rang the great gong!$", function()
+    -- The gong's acceptance instant, which is what a future reckoning would have
+    -- to count from — the equivalent of arenaLastSwingAt for melee. Stamped
+    -- before the state gate below so the measurement survives the paths that
+    -- return early.
+    arenaDebugEcho("ring-accepted  since-swing " .. arenaSinceLabel(taPackage.arenaLastSwingAt)
+        .. "  since-ring " .. arenaSinceLabel(taPackage.arenaLastRingAt))
+    taPackage.arenaLastRingAt = nowMillis()
     -- The fight loop is alive again — clear any accumulated thirst/hunger streak
     -- so a later dry spell starts counting fresh (a bar round-trip ends with a
     -- ring back in the arena, so this is what resets the streak between trips).
@@ -3860,6 +3892,12 @@ createTrigger("^You are still physically exhausted from your previous activities
         -- the clock recovers. Scheduling our own retry here was the source of the
         -- deadlock — it shared flags with the pump and could drop the only
         -- outstanding retry. Let the pump own ring liveness.
+        --
+        -- Traced rather than acted on: paired with the ring-sent/ring-accepted
+        -- lines, this is what will say whether the gong can be reckoned the way
+        -- melee now is. See the comment on arenaRing.
+        arenaDebugEcho("ring-exhausted  since-swing " .. arenaSinceLabel(taPackage.arenaLastSwingAt)
+            .. "  since-ring " .. arenaSinceLabel(taPackage.arenaLastRingAt))
         return
     else
         -- Melee is on cooldown. Reckon the wait from the last accepted swing
