@@ -2241,6 +2241,23 @@ end
 -- loop alive. The pending guard means a stale retry timer can't double-ring.
 local ARENA_RING_RETRY_MS = 3000
 
+-- Floor, not a reckoning. The gong recovers against the last accepted SWING —
+-- logs/session-pelayo-2026-08-02T14-12-42.log shows all nine acceptances landing
+-- 19.0-25.5s after one, while the time since the previous ring scattered over
+-- 31-79s and predicted nothing. But unlike melee that window has no constant in
+-- it: one ring was accepted at 18.6s while others were still refused at 22.2s,
+-- and the spread does not track the size of the burst that ended the fight
+-- (r=0.22). So there is nothing here to dead-reckon.
+--
+-- What the data does support is a hard floor. No ring has ever been accepted
+-- below 19.0s, yet the pump used to start ringing the instant the monster died
+-- and retry every 3s — 56 of that session's 67 rejections came before 18s, about
+-- seven guaranteed-dead commands per kill. Holding until 18s removes them
+-- without risking a late summon, and the existing 3s pump then covers the
+-- variable 19-25.5s window in one to three probes, the same shape as the melee
+-- tail poll.
+local ARENA_RING_FLOOR_MS = 18000
+
 -- Recovering from "still physically exhausted" is dead reckoning, not a search.
 --
 -- The game grants a burst of swings and then refuses every physical action until
@@ -2317,6 +2334,22 @@ end
 -- — and nothing here changes behaviour until those numbers say what to reckon.
 local function arenaRing()
     if taPackage.arenaRingPending then return end
+    -- Below the floor the gong cannot possibly answer, so don't ask. The pump
+    -- re-scans on its own timer either way (arenaScanRoom arms it before any of
+    -- this runs), so declining here just skips the send and the next tick tries
+    -- again — it cannot wedge the summon loop. Worst case we hold for the length
+    -- of the floor, because arenaLastSwingAt only moves when a swing is accepted
+    -- and we are not swinging while we ring.
+    --
+    -- In team mode a held tick has already counted itself in arenaRingAttempts,
+    -- so the tick that finally rings takes the staggered path rather than the
+    -- fast one. That is a sub-second delay on a ~18s wait, and the stagger is
+    -- what stops two characters double-summoning, so it is the safe direction.
+    local sinceSwing = arenaSince(taPackage.arenaLastSwingAt)
+    if sinceSwing and sinceSwing < ARENA_RING_FLOOR_MS then
+        arenaDebugEcho("ring-held  since-swing " .. sinceSwing .. "ms")
+        return
+    end
     taPackage.arenaRingPending = true
     arenaDebugEcho("ring-sent  since-swing " .. arenaSinceLabel(taPackage.arenaLastSwingAt)
         .. "  since-ring " .. arenaSinceLabel(taPackage.arenaLastRingAt))

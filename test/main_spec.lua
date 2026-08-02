@@ -4299,6 +4299,63 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ring gong", helper.sendCalls[1])
         end)
 
+        -- The gong recovers against the last accepted SWING, and never answers
+        -- inside the first 18s of one. See ARENA_RING_FLOOR_MS.
+        describe("the ring floor", function()
+
+            local function probe()
+                taPackage.arenaProbePending = true
+                helper.simulateLine("There is nothing on the floor.")
+            end
+
+            it("holds the ring while the swing clock is inside the floor", function()
+                taPackage.arenaState = "ringing"
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(17999)
+                probe()
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            it("rings once the floor has passed", function()
+                taPackage.arenaState = "ringing"
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(18000)
+                probe()
+                assert.are.equal("ring gong", helper.sendCalls[1])
+            end)
+
+            it("rings immediately when no swing has landed to hold against", function()
+                -- First summon of a session: nothing has spent the clock yet.
+                taPackage.arenaState = "ringing"
+                taPackage.arenaLastSwingAt = nil
+                probe()
+                assert.are.equal("ring gong", helper.sendCalls[1])
+            end)
+
+            it("leaves a held tick able to ring on the next pump pass", function()
+                -- The held tick must not claim arenaRingPending, or the summon
+                -- loop would wedge behind a ring that was never sent.
+                taPackage.arenaState = "ringing"
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(3000)
+                probe()
+                assert.are.equal(0, #helper.sendCalls)
+                assert.is_falsy(taPackage.arenaRingPending)
+                helper.advanceMs(15000)
+                probe()
+                assert.are.equal("ring gong", helper.sendCalls[1])
+            end)
+
+            it("does not hold a ring after a long errand away from the arena", function()
+                taPackage.arenaState = "ringing"
+                taPackage.arenaLastSwingAt = 0
+                helper.advanceMs(600000)
+                probe()
+                assert.are.equal("ring gong", helper.sendCalls[1])
+            end)
+
+        end)
+
         it("does not ring on the floor line once a monster was engaged", function()
             taPackage.arenaState = "ringing"
             taPackage.arenaProbePending = true
