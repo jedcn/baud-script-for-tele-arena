@@ -5666,8 +5666,8 @@ describe("ring-gong-and-fight-in-arena", function()
                 helper.advanceMs(5000)
                 timerCreated = nil
                 helper.simulateLine(EXHAUSTED)
-                -- 30s cooldown - 5s elapsed - 2s margin
-                assert.are.equal(23000, timerCreated.interval)
+                -- 35s cooldown - 5s elapsed - 2s margin
+                assert.are.equal(28000, timerCreated.interval)
             end)
 
             it("does not restart the wait on a later rejection in the same cooldown", function()
@@ -5677,16 +5677,16 @@ describe("ring-gong-and-fight-in-arena", function()
                 taPackage.arenaLastSwingAt = 0
                 helper.advanceMs(5000)
                 helper.simulateLine(EXHAUSTED)
-                assert.are.equal(23000, timerCreated.interval)
+                assert.are.equal(28000, timerCreated.interval)
                 helper.advanceMs(20000)  -- now 25s past the swing
                 helper.simulateLine(EXHAUSTED)
-                assert.are.equal(3000, timerCreated.interval)
+                assert.are.equal(8000, timerCreated.interval)
             end)
 
             it("drops to the tail poll once inside the margin", function()
                 fighting()
                 taPackage.arenaLastSwingAt = 0
-                helper.advanceMs(29000)
+                helper.advanceMs(34000)
                 timerCreated = nil
                 helper.simulateLine(EXHAUSTED)
                 assert.are.equal(2000, timerCreated.interval)

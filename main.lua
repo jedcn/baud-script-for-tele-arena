@@ -2270,11 +2270,20 @@ local ARENA_RING_RETRY_MS = 3000
 -- logs/session-kerhak-team-fight-2026-07-25T18-58-34.log). Dead reckoning is
 -- immune to that: it depends on no incoming line at all.
 --
--- Best estimate from clean runs across three characters is ~30-35s, but the old
--- 2s poll granularity puts a floor on how precisely those logs can be read. Aim
--- deliberately short of it — landing early costs one rejected swing and drops
--- into the tail poll below, landing late wastes damage.
-local ARENA_PHYSICAL_COOLDOWN_MS = 30000
+-- Fitted to logs/session-pelayo-2026-08-02T09-47-30.log, where the reckoned
+-- retry landed at 28s on all eight cooldowns and the tail poll then measured the
+-- real recovery at 30/32/33/35/35/36/38s (median 35). The first estimate of 30s
+-- was 5s short, so every cycle paid 2-5 tail polls to cover the gap.
+--
+-- Aiming at 33s rather than the 35s median is the deliberate trade: firing early
+-- costs one rejected command and the tail poll picks it up, firing late wastes
+-- damage outright. Against that observed spread, 33s means most cooldowns are
+-- caught on the first or second probe, and the two fastest (30s, 32s) start
+-- 3s and 1s late — under 2% of a ~35s cycle.
+--
+-- n=8, so treat this as a fit rather than a constant of the game. If a later log
+-- shows the tail poll consistently firing several times, it is short again.
+local ARENA_PHYSICAL_COOLDOWN_MS = 35000
 local ARENA_COOLDOWN_MARGIN_MS = 2000
 
 -- Tail poll. Once the estimate says we should be recovered (or we have no recent
