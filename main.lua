@@ -4613,10 +4613,32 @@ local NAV_ROUTES = {
                      "se", "e", "s", "se", "sw", "se", "s", "se", "s", "s",
                      "se", "sw", "sw", "se", "sw", "se", "s" },
     },
+    -- Down into the stoneworks from the chamber the entrance route ends in.
+    -- The way in is a riddle: `say komi` is the answer, and saying it is what
+    -- opens the door.
+    --
+    -- Which is also why the map is no use here. It follows the first two moves
+    -- and then loses the thread at step 4, where the route goes `se` out of
+    -- stonework-chamber-23 -- a room whose own description says "the only
+    -- visible exits are east and west through stone archways", as does the
+    -- chamber beyond it. A door a riddle opens is a door `ex` never listed, so
+    -- there is nothing in the graph to check these against, and no variation on
+    -- step 4 traces any further. Recorded as walked, and trusted as walked.
+    ["town-3/stone-lvl-2"] = {
+        from  = "desert/stonework-chamber",
+        steps = { { cmd = "say komi" },
+                  "s", "e", "se", "se", "se", "sw", "sw", "se", "e", "ne",
+                  { cmd = "pull lever" },
+                  "se", "se", "e", "n", "n", "n", "ne", "se",
+                  { cmd = "push stone" },
+                  "nw", "sw", "s", "s", "w", "sw", "sw", "s", "sw", "sw", "s",
+                  "e", "e", "e", "e", "s", "e", "se",
+                  { cmd = "push stone" },
+                  "e", "e", "e", "d" },
+    },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    ["town-3/stone-lvl-2"]         = { pending = true },
     ["town-3/stone-lvl-3"]         = { pending = true },
     ["town-3/stone-lvl-4"]         = { pending = true },
     ["town-3/stone-lvl-5"]         = { pending = true },
