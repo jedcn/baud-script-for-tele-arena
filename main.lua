@@ -4653,18 +4653,17 @@ local NAV_ROUTES = {
     -- Level two down to level three, from the chamber stone-lvl-2 drops into.
     -- The way down is another riddle: `say arok`, three steps from the end.
     --
-    -- The start is a name with no exit-set, because that chamber has never had
-    -- an `ex` run in it -- the level-2 walk arrived and logged out. It is the
-    -- weakest start check we have (twenty-four rooms answer to "stonework
-    -- chamber"), and navigate-to says so when it uses it. One `ex` down there
-    -- and it can be made exact.
+    -- The start is a fingerprint rather than a map reference: `w` is step 1 and
+    -- `u` is the way back up to level two, and only two of the map's stonework
+    -- chambers carry that pair -- neither of them this one, which isn't mapped
+    -- at all.
     --
     -- Nothing here is checkable against the map, which stops at the riddle
     -- door two levels up. Six runs of a doubled direction -- s s, sw sw, ne ne,
     -- n n, ne ne, n n -- and a miscounted repeat is what went wrong three times
     -- on the level-2 leg, so those are where to look first if a step is refused.
     ["town-3/stone-lvl-3"] = {
-        from  = { room = "stonework chamber" },
+        from  = { room = "stonework chamber", exits = "w,u" },
         steps = { "w", "sw", "w", "sw", "w", "s", "s", "e", "ne", "e", "se",
                   "sw", "sw", "se", "sw", "w", "nw", "sw", "s",
                   { cmd = "pull lever" },
