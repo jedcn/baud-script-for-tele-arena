@@ -4775,11 +4775,16 @@ local NAV_TRIP_RETRY_MS = 2000
 -- How long to leave a monster alone before trying the blocked move again. A
 -- combat round lasts seconds, so hammering it only fills the screen.
 local NAV_COMBAT_RETRY_MS = 2000
+-- And how long to wait out being winded after a fight. Shorter, because
+-- nothing is happening to us while we get our breath back -- the sooner we
+-- find out we can move, the sooner the walk goes on.
+local NAV_REST_RETRY_MS = 1500
 -- Exposed so tests fire the walk's timers by name rather than by a literal
 -- interval, which silently stops matching the moment the pacing is retuned.
 taPackage.navStepDelayMs = NAV_STEP_DELAY_MS
 taPackage.navTripRetryMs = NAV_TRIP_RETRY_MS
 taPackage.navCombatRetryMs = NAV_COMBAT_RETRY_MS
+taPackage.navRestRetryMs = NAV_REST_RETRY_MS
 -- How long to wait for the room probe (bare return + `ex`) before giving up.
 -- Without this a swallowed reply leaves navigate-to armed and silent, with
 -- nothing on screen to explain why nothing happened.
@@ -4820,9 +4825,15 @@ local function stopNavigate()
     -- answered without reading back through every step.
     if j and j.debug then
         local seconds = (navNowMs() - (j.startedAt or navNowMs())) / 1000
+        -- Trips, being winded and being held in combat are three different
+        -- things with three different causes, and lumping them together is how
+        -- the pace got blamed for a dozen stalls it had nothing to do with.
+        local extra = ""
+        if (j.rests or 0) > 0 then extra = extra .. ", winded " .. j.rests .. "x" end
+        if (j.combatBlocks or 0) > 0 then extra = extra .. ", held in combat " .. j.combatBlocks .. "x" end
+        if (j.cures or 0) > 0 then extra = extra .. ", poisoned " .. j.cures .. "x" end
         echo(string.format("[nav|t] walk ended: %d/%d steps, %d trip(s), %.1fs total, pace %dms%s",
-            j.index or 0, #(j.steps or {}), j.trips or 0, seconds, NAV_STEP_DELAY_MS,
-            (j.cures or 0) > 0 and (", poisoned " .. j.cures .. "x") or ""))
+            j.index or 0, #(j.steps or {}), j.trips or 0, seconds, NAV_STEP_DELAY_MS, extra))
     end
     taPackage.navigate = nil
     taPackage.navPickup = nil
@@ -5790,11 +5801,35 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
     j.blocked = true
 end, { type = "regex" })
 
--- Moving too fast trips the character; resting blocks the move outright. Both
--- refuse the move without changing rooms, so both recover the same way.
 createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove, { type = "regex" })
-createTrigger("^Sorry, you'll have to rest a while before you can move\\.$",
-    navRecoverAfterRefusedMove, { type = "regex" })
+
+-- Being winded is not tripping, and treating it as one was wrong three ways.
+--
+-- Every occurrence of it in the runs so far -- twelve of them, across three
+-- errands -- landed on the FIRST move after a kill-all, and none on any other
+-- step. It is the fight catching up with us, not the pace: the character is out
+-- of breath, hasn't dropped anything and hasn't stumbled. So counting it as a
+-- trip put "5 trip(s), pace 1500ms" in the closing trace and made the pacing
+-- look like the culprit, which it isn't -- slowing the walk down would not
+-- avoid a single one of these. Checking the floor afterwards was wasted work
+-- too: twelve floor checks, twelve "Nothing dropped in the fall."
+--
+-- And it was slow. Each retry cost the 2s trip pause plus a bare return, its
+-- reply, and a pacing beat -- about 4.3s a go, three to five gos, 13 to 21
+-- seconds of it. Retrying straight away, with no floor check, roughly halves
+-- that.
+createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    j.rests = (j.rests or 0) + 1
+    navDebug("winded on step " .. j.index .. " (rest " .. j.rests .. ")")
+    if j.rests == 1 or j.rests % 5 == 0 then
+        navEcho("Winded from the fight — retrying the move (attempt " .. j.rests .. ").")
+    end
+    -- navResendStep clears this again; set in case the game reprints the room.
+    j.blocked = true
+    navScheduleResend(NAV_REST_RETRY_MS)
+end, { type = "regex" })
 
 -- Something engaged us mid-route: the game refuses the move and prints no room
 -- line. This is the commonest refusal in the logs by a wide margin (11,655 of

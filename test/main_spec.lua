@@ -9874,13 +9874,51 @@ describe("navigate-to", function()
             assert.are.equal(0, sent("d"))
         end)
 
-        it("recovers the same way from being told to rest", function()
-            startWalking()
-            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
-            helper.fireTimers(taPackage.navTripRetryMs)
-            brief("north plaza")
-            helper.fireTimers(taPackage.navStepDelayMs)
-            assert.are.equal(2, sent("sw"))
+        -- Being winded is the fight catching up, not the pace. Every one of the
+        -- twelve seen in play landed on the first move after a kill-all.
+        describe("winded after a fight", function()
+
+            it("retries the move without checking the floor", function()
+                startWalking()
+                -- The opening probe sends one bare return of its own.
+                local returns = sent("")
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.fireTimers(taPackage.navRestRetryMs)
+                assert.are.equal(2, sent("sw"))
+                -- No further bare return: nothing was dropped, nothing to look for.
+                assert.are.equal(returns, sent(""))
+                assert.is_falsy(lastEchoes():find("Nothing dropped in the fall", 1, true))
+            end)
+
+            it("is not counted as a trip", function()
+                startWalking()
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.simulateAlias("stop-navigating")
+                local out = lastEchoes()
+                assert.is_truthy(out:find("0 trip(s)", 1, true))
+                assert.is_truthy(out:find("winded 1x", 1, true))
+            end)
+
+            it("reports the first and then every fifth", function()
+                startWalking()
+                for _ = 1, 5 do
+                    helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                    helper.fireTimers(taPackage.navRestRetryMs)
+                end
+                local out = lastEchoes()
+                assert.are.equal(2, select(2, out:gsub("Winded from the fight", "")))
+                assert.is_truthy(out:find("attempt 5", 1, true))
+            end)
+
+            it("walks on once the move gets through", function()
+                startWalking()
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.fireTimers(taPackage.navRestRetryMs)
+                brief("north plaza")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(1, sent("d"))
+            end)
+
         end)
 
     end)
