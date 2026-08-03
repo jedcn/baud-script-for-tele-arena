@@ -4579,6 +4579,14 @@ local NAV_ROUTES = {
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
+    --
+    -- stoneworks-entrance is half-known already: it starts from
+    -- sewers/town-sewers-165 (where the hydra errand ends), goes `w` through
+    -- what looks like a secret door, and will want
+    -- requires = "verbena potion" -- a trap on the way poisons us, and the
+    -- cure is a `{ cmd = "drink verbena" }` step. Only the step list is
+    -- missing. The start room's fingerprint ("town sewers", exits s,w) is
+    -- unique, so the start check will work.
     ["town-3/stoneworks-entrance"] = { pending = true },
     ["town-3/stone-lvl-2"]         = { pending = true },
     ["town-3/stone-lvl-3"]         = { pending = true },
