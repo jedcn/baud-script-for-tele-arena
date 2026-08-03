@@ -4713,7 +4713,21 @@ local NAV_ROUTES = {
                   "s", "sw", "se", "sw", "s", "sw", "sw", "nw", "sw", "sw",
                   "nw", "n", "nw", "sw", "w", "s", "se", "se", "s", "d" },
     },
-    ["town-3/stone-lvl-6"]         = { pending = true },
+    -- Level five down to level six. One lever, no riddle, unguarded descent --
+    -- the same shape as the two floors above it, and the shortest of them.
+    --
+    -- Starts from a chamber with exits ne and u, which no other leg down here
+    -- begins from (levels three and four start on w,u, level five on se,u).
+    --
+    -- Six runs of a doubled direction: ne ne, ne ne, sw sw, ne ne, nw nw, n n.
+    ["town-3/stone-lvl-6"] = {
+        from  = { room = "stonework chamber", exits = "ne,u" },
+        steps = { "ne", "ne", "e", "ne", "ne", "se", "ne", "e", "se", "s",
+                  "sw", "sw", "se", "s",
+                  { cmd = "pull lever" },
+                  "n", "nw", "ne", "ne", "n", "nw", "ne", "nw", "nw", "n",
+                  "n", "d" },
+    },
     ["town-3/temple"]              = { pending = true },
 }
 -- Exposed so tests can register a route without editing the table above.
