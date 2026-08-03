@@ -4617,17 +4617,15 @@ local NAV_ROUTES = {
     -- The way in is a riddle: `say komi` is the answer, and saying it is what
     -- opens the door.
     --
-    -- Which is also why the map is no use here. It follows the first two moves
-    -- and then loses the thread at step 4, where the route goes `se` out of
-    -- stonework-chamber-23 -- a room whose own description says "the only
-    -- visible exits are east and west through stone archways", as does the
-    -- chamber beyond it. A door a riddle opens is a door `ex` never listed, so
-    -- there is nothing in the graph to check these against, and no variation on
-    -- step 4 traces any further. Recorded as walked, and trusted as walked.
+    -- The riddle's door is the east one, and the map is the evidence: the
+    -- chamber's `e` exit is listed and has never been walked through, which is
+    -- exactly the shape of a door nobody could open. Everything past it is
+    -- unmapped, so there is nothing in the graph to check these directions
+    -- against. Recorded as walked, and trusted as walked.
     ["town-3/stone-lvl-2"] = {
         from  = "desert/stonework-chamber",
         steps = { { cmd = "say komi" },
-                  "s", "e", "se", "se", "se", "sw", "sw", "se", "e", "ne",
+                  "e", "se", "se", "se", "sw", "sw", "se", "e", "ne",
                   { cmd = "pull lever" },
                   "se", "se", "e", "n", "n", "n", "ne", "se",
                   { cmd = "push stone" },
