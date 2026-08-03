@@ -4590,12 +4590,20 @@ local NAV_ROUTES = {
     -- nineteen steps, out through the building's east door and down the sandy
     -- passages into the desert.
     --
-    -- It then stops agreeing at step 19's `e`, where the map gives desert-7
-    -- exits nw and se only. Left as given: those desert rooms carry one or two
-    -- visits each, against the four or five behind every correction the map
-    -- has earned so far, so it hasn't the standing to overrule a real walk
-    -- here. A refused direction stops cleanly and names the step, which is a
-    -- cheaper way to settle it than guessing.
+    -- The map's word is worth nothing past that point, and the walk of
+    -- 2026-08-03 proved it: it called step 19's `e` impossible (desert-7 having
+    -- exits nw and se) and the `e` went through. Those desert rooms carry one
+    -- or two visits each against the four or five behind every correction the
+    -- map has earned in the sewers, and here it was simply incomplete. Nothing
+    -- from step 19 on is verifiable; these directions are the walk itself.
+    --
+    -- That walk also settled the tail. Step 35 was `se` and there is no `se`:
+    -- the room is desert-20, exits e, sw and nw, and the way into the
+    -- stoneworks is `sw se s`.
+    --
+    -- Step 1 springs a trap -- "Several crossbow bolts fire from holes in the
+    -- walls, striking you!" -- for about 44 vitality. Nothing to be done about
+    -- it, but don't walk this on a sliver of health.
     ["town-3/stoneworks-entrance"] = {
         from     = "sewers/town-sewers-165",
         requires = "verbena potion",
@@ -4603,7 +4611,7 @@ local NAV_ROUTES = {
         steps    = { "w", "w", "u", "u", "u", "e", "e", "s", "s", "s",
                      "w", "w", "w", "s", "sw", "sw", "sw", "sw", "se", "e",
                      "se", "e", "s", "se", "sw", "se", "s", "se", "s", "s",
-                     "se", "sw", "sw", "se", "se", "s" },
+                     "se", "sw", "sw", "se", "sw", "se", "s" },
     },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
