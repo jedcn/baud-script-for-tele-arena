@@ -6069,7 +6069,7 @@ describe("ring-gong-and-fight-in-arena second", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
@@ -6091,7 +6091,7 @@ describe("ring-gong-and-fight-in-arena second", function()
             setHP(10, 100)
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")  -- sends "s"
             helper.simulateLine("You're on a path.")
-            assert.is_not_nil(stepTimer)  -- a 1s pacing timer was armed
+            assert.is_not_nil(stepTimer)  -- the pacing timer was armed
             stepTimer.cb()
             assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
         end)
@@ -6132,7 +6132,7 @@ describe("ring-gong-and-fight-in-arena second", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
@@ -6175,7 +6175,7 @@ describe("ring-gong-and-fight-in-arena second", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
@@ -6465,7 +6465,7 @@ describe("ring-gong-and-fight-in-arena third", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
@@ -6569,7 +6569,7 @@ describe("ring-gong-and-fight-in-arena third", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
@@ -6607,7 +6607,7 @@ describe("ring-gong-and-fight-in-arena third", function()
 
         before_each(function()
             _G.createTimer = function(interval, cb, opts)
-                if interval == 1000 then stepTimer = { cb = cb } end
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil

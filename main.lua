@@ -2573,12 +2573,22 @@ end
 -- The first arena's adjacent temple/bar still use immediate room-name moves
 -- (no journey); both arenas' rooms are named "arena"/"temple", so a journey is
 -- driven by its own step list, never by matching a waypoint's name.
-local ARENA_STEP_DELAY_MS = 1000
+-- 1500ms, the same pace navigate-to settled on, and for the same reason. That
+-- was tuned by measurement rather than guesswork: at 1000ms a paced walk tripped
+-- 4 times in 60 moves (6.7%, against a 1.13% baseline over the 72,354 hand-typed
+-- moves in the archived logs), 1200 and 1300 both still tripped, and 1500 has
+-- since carried 250-odd scripted moves -- including a single 103-step walk --
+-- without one. These journeys move the same character through the same game, so
+-- there is no reason they should be paced faster than the pace we know works.
+local ARENA_STEP_DELAY_MS = 1500
 -- When a step is rejected because we moved too fast ("In your haste, you trip
 -- and fall!"), no room line is printed, so the step-driven walk would stall
 -- forever waiting for a room it never enters. Re-send the current step after a
 -- longer pause than the normal pacing to both recover the walk and back off.
 local ARENA_TRIP_RETRY_MS = 2000
+-- Exposed so tests catch the pacing timer by name rather than by a literal
+-- interval, which silently stops matching the moment the pace is retuned.
+taPackage.arenaStepDelayMs = ARENA_STEP_DELAY_MS
 local ARENA_ROOM = "arena"
 -- Consecutive unrelieved thirst/hunger ticks before we give up and leave the
 -- game. Each tick drains ~1 HP; a healthy loop rings the gong or buys a drink
