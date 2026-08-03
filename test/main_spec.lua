@@ -1903,16 +1903,32 @@ describe("ta_db", function()
 
         it("returns every candidate when the name form is ambiguous", function()
             stub("third-town", {
+                { id = 1012, slug = "plaza-a", name = "underground plaza" },
+                { id = 1015, slug = "plaza-b", name = "underground plaza" },
+                { id = 1019, slug = "plaza-c", name = "underground plaza" },
+            })
+            -- Three rooms share the name and none is called that, so the caller
+            -- must reject rather than guess.
+            assert.are.equal(3, #TaDb.roomsInAreaMatching("third-town", "underground-plaza"))
+            -- ...and the exact slug still narrows it to one.
+            local one = TaDb.roomsInAreaMatching("third-town", "plaza-c")
+            assert.are.equal(1, #one)
+            assert.are.equal(1019, one[1].id)
+        end)
+
+        -- The first room to claim a name keeps the bare slug and every later
+        -- namesake is suffixed, so the one room genuinely called
+        -- `underground-plaza` also answers to the name all three share. Match
+        -- both together and it becomes the one room that cannot be named.
+        it("lets an exact slug outrank the name it shares", function()
+            stub("third-town", {
                 { id = 1012, slug = "underground-plaza",   name = "underground plaza" },
                 { id = 1015, slug = "underground-plaza-1", name = "underground plaza" },
                 { id = 1019, slug = "underground-plaza-2", name = "underground plaza" },
             })
-            -- Three rooms share the name, so the caller must reject rather than guess.
-            assert.are.equal(3, #TaDb.roomsInAreaMatching("third-town", "underground-plaza"))
-            -- ...and the exact slug still narrows it to one.
-            local one = TaDb.roomsInAreaMatching("third-town", "underground-plaza-2")
-            assert.are.equal(1, #one)
-            assert.are.equal(1019, one[1].id)
+            local m = TaDb.roomsInAreaMatching("third-town", "underground-plaza")
+            assert.are.equal(1, #m)
+            assert.are.equal(1012, m[1].id)
         end)
 
         it("returns an empty list when the area has no such room", function()
@@ -9387,7 +9403,11 @@ describe("navigate-to", function()
                    exits = { "u", "se" } },
         [359]  = { id = 359,  slug = "town-sewers-18",       name = "town sewers",       area = 8,
                    exits = { "e", "n", "s", "w" } },
-        [1012] = { id = 1012, slug = "underground-plaza",    name = "underground plaza", area = 14, exits = {} },
+        -- Slugs are numbered globally but references resolve within one area,
+        -- so the room holding the bare `underground-plaza` slug can sit in a
+        -- different town from its namesakes. That is what leaves third-town
+        -- with two rooms sharing a name and neither answering to it.
+        [1012] = { id = 1012, slug = "underground-plaza",    name = "underground plaza", area = 1,  exits = {} },
         [1015] = { id = 1015, slug = "underground-plaza-1",  name = "underground plaza", area = 14, exits = {} },
         [1019] = { id = 1019, slug = "underground-plaza-2",  name = "underground plaza", area = 14, exits = {} },
     }
@@ -9534,6 +9554,18 @@ describe("navigate-to", function()
             assert.is_truthy(out:find("third-town/underground-plaza-1", 1, true))
             assert.is_truthy(out:find("third-town/underground-plaza-2", 1, true))
             assert.are.equal(0, sent("sw"))
+        end)
+
+        -- The room genuinely called `north-plaza` also answers to the display
+        -- name it shares with second-town's. Without the slug winning, the one
+        -- room named after itself is the one room that can't be named -- which
+        -- is what made desert/stonework-chamber unreachable.
+        it("takes the exact slug over the name it shares", function()
+            route({ from = "first-town/north-plaza" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(1)
+            assert.is_falsy(lastEchoes():find("is ambiguous", 1, true))
+            assert.are.equal(1, sent("sw"))
         end)
 
     end)

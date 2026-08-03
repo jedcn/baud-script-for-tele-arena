@@ -552,13 +552,23 @@ function TaDb.roomsInAreaMatching(areaSlug, ref)
     local areaId = TaDb.areaIdBySlug(areaSlug)
     if type(areaId) ~= "number" then return nil end
     local rows = db:query("SELECT id, slug, name FROM rooms WHERE area_id = ?", areaId) or {}
-    local out = {}
+    -- An exact slug match wins outright. Slugs are unique by construction, so
+    -- one is never really ambiguous -- but the FIRST room to claim a name keeps
+    -- the bare slug, and every later namesake gets a numeric suffix. So the one
+    -- room actually called `stonework-chamber` also answers to the display name
+    -- that twenty-three other chambers share, and matching both together made
+    -- it the one room in its area that could not be named at all.
+    local bySlug, byName = {}, {}
     for _, row in ipairs(rows) do
-        if row.slug == ref or baseSlug(row.name) == ref then
-            out[#out + 1] = { id = row.id, slug = row.slug, name = row.name }
+        local hit = { id = row.id, slug = row.slug, name = row.name }
+        if row.slug == ref then
+            bySlug[#bySlug + 1] = hit
+        elseif baseSlug(row.name) == ref then
+            byName[#byName + 1] = hit
         end
     end
-    return out
+    if #bySlug > 0 then return bySlug end
+    return byName
 end
 
 -- The inverse: the "<area>/<room>" reference for a room id, so an error message
