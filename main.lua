@@ -4676,12 +4676,15 @@ local NAV_ROUTES = {
     -- Level three down to level four. No riddle on this one, just a lever
     -- two-thirds of the way along, and an unguarded `d` at the end.
     --
-    -- Its start fingerprint is the same as stone-lvl-3's, because every level's
-    -- landing chamber looks alike: "stonework chamber", exits w and u. So the
-    -- check cannot tell one floor's chamber from another's, and running the
-    -- wrong one of the two legs would pass it. Left as is deliberately -- these
-    -- twelve are headed for three or four longer routes that carry their own
-    -- state, and the collision goes away when they do.
+    -- Its start fingerprint is the same as stone-lvl-3's -- "stonework
+    -- chamber", exits w and u -- so the check can't tell the two floors' start
+    -- chambers apart, and running the wrong one of the legs would pass it.
+    -- Left as is deliberately: these twelve are headed for three or four longer
+    -- routes that carry their own state, and the collision goes away then.
+    --
+    -- It is a coincidence of two floors rather than a rule, though. This leg
+    -- lands in a chamber with exits se and u, so stone-lvl-5 starts from
+    -- something the check can tell apart.
     --
     -- Nine runs of a doubled direction: w w, sw sw, se se, s s, n n, nw nw,
     -- ne ne, n n, nw nw. A repeat counted once too often is the commonest
