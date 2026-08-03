@@ -4576,18 +4576,39 @@ local NAV_ROUTES = {
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
                      { killAll = true } },
     },
+    -- Out of the sewers and across the desert. Step 2 is the pearl-keyed stone
+    -- door, so this wants the pearl key the hydra drops as well as the potion.
+    --
+    -- The cure is NOT a step. The walk that produced these directions typed
+    -- `drink verbena` after the second `w`, but the poisoning is a maybe -- see
+    -- onPoison above, which drinks if and when the game says we've been
+    -- poisoned, and doesn't waste a potion when it hasn't.
+    --
+    -- Recorded as given, with two places the map disagrees:
+    --
+    --   * Step 6, the fourth `u`. Three of them chain cleanly
+    --     (town-sewers-169 -> town sewer -> town sewer-1 -> the desert's crude
+    --     stone building) and the building has exits d, e, w -- no `u` at all.
+    --     Drop one `u` and the next `e` walks straight on through the door
+    --     into the sandy passages. High confidence: same "one repeat too many"
+    --     as the platinum errand's fourth `ne`.
+    --   * Step 20, the `e` after the first `se`. With one `u` dropped the
+    --     route runs cleanly to desert-7, which the map gives exits nw and se
+    --     -- no `e`. Lower confidence: these desert rooms carry one or two
+    --     visits each, against four or five in the sewers, so the map is
+    --     thinner here than where it has been right before.
+    ["town-3/stoneworks-entrance"] = {
+        from     = "sewers/town-sewers-165",
+        requires = "verbena potion",
+        onPoison = "drink verbena",
+        steps    = { "w", "w", "u", "u", "u", "u", "e", "e", "s", "s", "s",
+                     "w", "w", "w", "s", "sw", "sw", "sw", "sw", "se", "e",
+                     "se", "e", "s", "se", "sw", "se", "s", "se", "s", "s",
+                     "se", "sw", "sw", "se", "se", "s" },
+    },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    --
-    -- stoneworks-entrance is half-known already: it starts from
-    -- sewers/town-sewers-165 (where the hydra errand ends), goes `w` through
-    -- what looks like a secret door, and will want
-    -- requires = "verbena potion" -- a trap on the way poisons us, and the
-    -- cure is a `{ cmd = "drink verbena" }` step. Only the step list is
-    -- missing. The start room's fingerprint ("town sewers", exits s,w) is
-    -- unique, so the start check will work.
-    ["town-3/stoneworks-entrance"] = { pending = true },
     ["town-3/stone-lvl-2"]         = { pending = true },
     ["town-3/stone-lvl-3"]         = { pending = true },
     ["town-3/stone-lvl-4"]         = { pending = true },
