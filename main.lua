@@ -4540,18 +4540,15 @@ local NAV_ROUTES = {
     -- off, which is where you want to be standing with the key in hand, not
     -- back up at the ruby door.
     --
-    -- Recorded as given. The mapped graph agrees for ten steps and then
-    -- disagrees: it has town-sewers-100 (where step 10 lands) with exits n and
-    -- sw only, no ne, and reaches town-sewers-101 by `n`. Those rooms have four
-    -- or five visits each with reciprocal exits, so the map is fairly sure. If
-    -- step 11 is refused in play, the likely truth is `ne ne ne n` out and
-    -- `s sw sw sw w` back -- one repeat fewer each way.
+    -- Three `ne` up the corridor, not four -- the graph caught the extra one,
+    -- and its mirror in the return leg. Every step of both halves now walks
+    -- through the mapped graph: out to town-sewers-101 and back to -63.
     ["town-3/get-platinum-key"] = {
         from  = "sewers/town-sewers-18",
         to    = "sewers/town-sewers-63",
-        steps = { "s", "d", "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "ne", "n",
+        steps = { "s", "d", "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "n",
                   { killAll = true },
-                  "s", "sw", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
+                  "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
     },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
