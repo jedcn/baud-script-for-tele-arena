@@ -4697,7 +4697,22 @@ local NAV_ROUTES = {
                   "n", "n", "e", "ne", "nw", "w", "nw", "sw", "nw", "nw", "ne",
                   "ne", "nw", "n", "n", "nw", "nw", "n", "d" },
     },
-    ["town-3/stone-lvl-5"]         = { pending = true },
+    -- Level four down to level five. One lever, no riddle, and the descent at
+    -- the end is unguarded.
+    --
+    -- The first start check down here that can't be confused with another
+    -- floor's: exits se and u, where levels three and four both start from a
+    -- chamber with w and u.
+    --
+    -- Six runs of a doubled direction: se se, s s, ne ne, sw sw, sw sw, se se.
+    ["town-3/stone-lvl-5"] = {
+        from  = { room = "stonework chamber", exits = "se,u" },
+        steps = { "se", "s", "se", "se", "e", "s", "s", "se", "ne", "ne", "n",
+                  "ne", "nw", "ne", "n",
+                  { cmd = "pull lever" },
+                  "s", "sw", "se", "sw", "s", "sw", "sw", "nw", "sw", "sw",
+                  "nw", "n", "nw", "sw", "w", "s", "se", "se", "s", "d" },
+    },
     ["town-3/stone-lvl-6"]         = { pending = true },
     ["town-3/temple"]              = { pending = true },
 }
