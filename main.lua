@@ -4639,10 +4639,11 @@ local NAV_ROUTES = {
                   "se", "se", "e", "n", "n", "ne", "se",
                   { cmd = "push stone" },
                   "nw", "sw", "s", "s", "w", "sw", "sw", "s", "sw", "sw", "s",
-                  -- `s` then straight to `se`: the walk of 2026-08-03 was
-                  -- refused on an `e` between them, in a room offering only n
-                  -- and se.
-                  "e", "e", "e", "e", "s", "se",
+                  -- The tail, as the manual recovery of 2026-08-03 found it:
+                  -- `se e se` to the dead-end corridor (exits: nw, and nothing
+                  -- else) where the second stone is, and the stone opens the
+                  -- `e` that leads out of it.
+                  "e", "e", "e", "e", "s", "se", "e", "se",
                   { cmd = "push stone" },
                   "e", "e", "e", "d" },
     },
