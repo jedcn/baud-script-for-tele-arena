@@ -4673,7 +4673,27 @@ local NAV_ROUTES = {
                   { cmd = "say arok" },
                   "n", "n", "d" },
     },
-    ["town-3/stone-lvl-4"]         = { pending = true },
+    -- Level three down to level four. No riddle on this one, just a lever
+    -- two-thirds of the way along, and an unguarded `d` at the end.
+    --
+    -- Its start fingerprint is the same as stone-lvl-3's, because every level's
+    -- landing chamber looks alike: "stonework chamber", exits w and u. So the
+    -- check cannot tell one floor's chamber from another's, and running the
+    -- wrong one of the two legs would pass it. Left as is deliberately -- these
+    -- twelve are headed for three or four longer routes that carry their own
+    -- state, and the collision goes away when they do.
+    --
+    -- Nine runs of a doubled direction: w w, sw sw, se se, s s, n n, nw nw,
+    -- ne ne, n n, nw nw. A repeat counted once too often is the commonest
+    -- mistake in these lists, and nothing here can be checked against the map.
+    ["town-3/stone-lvl-4"] = {
+        from  = { room = "stonework chamber", exits = "w,u" },
+        steps = { "w", "sw", "s", "w", "w", "sw", "nw", "w", "s", "se", "sw",
+                  "sw", "se", "se", "ne", "se", "e", "se", "sw", "w", "s", "s",
+                  { cmd = "pull lever" },
+                  "n", "n", "e", "ne", "nw", "w", "nw", "sw", "nw", "nw", "ne",
+                  "ne", "nw", "n", "n", "nw", "nw", "n", "d" },
+    },
     ["town-3/stone-lvl-5"]         = { pending = true },
     ["town-3/stone-lvl-6"]         = { pending = true },
     ["town-3/temple"]              = { pending = true },
