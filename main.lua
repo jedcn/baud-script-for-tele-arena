@@ -4622,8 +4622,14 @@ local NAV_ROUTES = {
     -- exactly the shape of a door nobody could open. Everything past it is
     -- unmapped, so there is nothing in the graph to check these directions
     -- against. Recorded as walked, and trusted as walked.
+    -- The start is given as a fingerprint, not a map reference, because the map
+    -- cannot pick this room out: thirteen of the twenty-four mapped stonework
+    -- chambers share a name, an exit-set and a description with another, and
+    -- the record for the one desert-22 leads into contradicts itself -- its
+    -- description says "the only visible exits are east and west" while its
+    -- edges say e, n, s and w, and standing in it `ex` answers n,e,s.
     ["town-3/stone-lvl-2"] = {
-        from  = "desert/stonework-chamber",
+        from  = { room = "stonework chamber", exits = "n,e,s" },
         steps = { { cmd = "say komi" },
                   "e", "se", "se", "se", "sw", "sw", "se", "e", "ne",
                   { cmd = "pull lever" },
@@ -4730,6 +4736,20 @@ local function stopNavigate()
     return running
 end
 taPackage.stopNavigate = stopNavigate
+
+-- A set of exits reduced to one comparable string, from either a list (as the
+-- `ex` reply gives us) or a comma-separated spec (as a route writes one).
+-- Sorted, so "n,e,s" and the game's "e,n,s" are the same fingerprint.
+local function navExitKey(exits)
+    local out = {}
+    if type(exits) == "table" then
+        for _, d in ipairs(exits) do out[#out + 1] = d end
+    else
+        for d in tostring(exits):gmatch("[^,%s]+") do out[#out + 1] = d end
+    end
+    table.sort(out)
+    return table.concat(out, ",")
+end
 
 -- Split "<area>/<room>" and resolve it to exactly one room. Returns the room
 -- row, or nil plus a reason -- a malformed reference, an unknown area, an
@@ -5396,11 +5416,21 @@ createAlias("^navigate-to (.+)$", function(matches)
         end
         arriveName, destRoomId = destRoom.name, destRoom.id
     end
-    local fromRoom, fromErr = navResolveRef(route.from)
-    if not fromRoom then
-        navEcho("Route start " .. fromErr)
-        return
+    -- A route names its start either as a map reference or, where the map can't
+    -- tell one room from another, as a literal fingerprint (see navExitKey).
+    local fromRoom, fromErr, fromExits
+    if type(route.from) == "table" then
+        fromExits = navExitKey(route.from.exits)
+    else
+        fromRoom, fromErr = navResolveRef(route.from)
+        if not fromRoom then
+            navEcho("Route start " .. fromErr)
+            return
+        end
     end
+    local fromLabel = fromExits
+        and ("a room called '" .. route.from.room .. "' with exits " .. fromExits)
+        or route.from
 
     -- Identify where we're standing before we move. A route is only valid from
     -- one room; walked from anywhere else it marches the character into walls.
@@ -5420,11 +5450,27 @@ createAlias("^navigate-to (.+)$", function(matches)
                 navEcho("Couldn't read the room I'm in — try navigate-to " .. destination .. " again.")
                 return
             end
+            local function go()
+                navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
+            end
+            -- A fingerprint start asks the map nothing: the check is that the
+            -- room we're standing in looks the way the route says it should.
+            if fromExits then
+                if name == route.from.room and navExitKey(dirs) == fromExits then
+                    if route.requires then
+                        navCheckInventory(route.requires, gen, go)
+                    else
+                        go()
+                    end
+                    return
+                end
+                navEcho("I don't know how to get there from here.")
+                navEcho("  I'm in '" .. name .. "' with exits " .. navExitKey(dirs) .. ".")
+                navEcho("  The route to " .. destination .. " starts from " .. fromLabel .. ".")
+                return
+            end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                local function go()
-                    navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
-                end
                 -- We're in the right room; the only remaining question is
                 -- whether we're equipped for what's between here and there.
                 if route.requires then
@@ -5449,7 +5495,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             navEcho("I don't know how to get there from here.")
             navEcho("  I'm in '" .. name .. "' with exits " .. table.concat(dirs, ",")
                 .. ", which is " .. here .. ".")
-            navEcho("  The route to " .. destination .. " starts at " .. route.from .. ".")
+            navEcho("  The route to " .. destination .. " starts at " .. fromLabel .. ".")
         end,
     }
     taPackage.slugProbe = probe

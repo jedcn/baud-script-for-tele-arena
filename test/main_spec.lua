@@ -9570,6 +9570,59 @@ describe("navigate-to", function()
 
     end)
 
+    -- Where the map can't tell one room from another -- the stoneworks has
+    -- twenty-four chambers sharing eleven fingerprints between them -- a route
+    -- states its start literally instead of naming a room.
+    describe("a start given as a fingerprint", function()
+
+        local FROM = { room = "north plaza", exits = "e,n,s,sw,w" }
+
+        it("walks when the room we're in matches", function()
+            route({ from = FROM })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        -- The game lists exits in its own order; the route writes them in any.
+        it("does not care what order the exits are listed in", function()
+            route({ from = { room = "north plaza", exits = "w,sw,s,n,e" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        it("refuses when the exits don't match", function()
+            route({ from = FROM })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(1)               -- first-town's north plaza: more exits
+            assert.are.equal(0, sent("sw"))
+            local out = lastEchoes()
+            assert.is_truthy(out:find("I don't know how to get there from here.", 1, true))
+            assert.is_truthy(out:find("a room called 'north plaza' with exits e,n,s,sw,w", 1, true))
+        end)
+
+        it("refuses when the room name doesn't match", function()
+            route({ from = { room = "grand hall", exits = "e,n,s,sw,w" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(0, sent("sw"))
+            assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+        end)
+
+        -- A fingerprint start must not quietly skip the other pre-flight check.
+        it("still checks the pack for what the route needs", function()
+            route({ from = FROM, requires = "coil of rope" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("i"))
+            assert.are.equal(0, sent("sw"))
+            helper.simulateLine("You are carrying a coil of rope.")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+    end)
+
     -- The trace exists to answer a specific question: what interval the game
     -- will accept without tripping us. That is a question about gaps, so every
     -- line carries the time since the previous traced event.
