@@ -4633,7 +4633,10 @@ local NAV_ROUTES = {
         steps = { { cmd = "say komi" },
                   "e", "se", "se", "se", "sw", "sw", "se", "e", "ne",
                   { cmd = "pull lever" },
-                  "se", "se", "e", "n", "n", "n", "ne", "se",
+                  -- Two `n` here, not three: the walk of 2026-08-03 ran out of
+                  -- corridor on the third, in a room offering only ne and s --
+                  -- and `ne` is the step that follows.
+                  "se", "se", "e", "n", "n", "ne", "se",
                   { cmd = "push stone" },
                   "nw", "sw", "s", "s", "w", "sw", "sw", "s", "sw", "sw", "s",
                   "e", "e", "e", "e", "s", "e", "se",
