@@ -4579,13 +4579,15 @@ taPackage.navRoutes = NAV_ROUTES
 -- Pace between steps or the character trips and falls (see the trip trigger
 -- below). Measured across four walks at 1000ms: 4 trips in 60 moves, 6.7%,
 -- against a 1.13% baseline over the 72,354 hand-typed moves in the archived
--- logs -- so a 1s cadence really does provoke them (p ~ 0.005). 1200ms was the
--- first step away from it and wasn't enough: of two traced 16-step walks at
--- that pace, one tripped (step 8) and one didn't. So 1300ms. The trips so far
--- have landed on steps 8, 8, 10, 11 and 14, which looks like a flat per-move
--- risk rather than fatigue setting in after some number of steps; navDebug
--- below is there to replace that guess with measurements.
-local NAV_STEP_DELAY_MS = 1300
+-- logs -- so a 1s cadence really does provoke them (p ~ 0.005). Neither 1200ms
+-- nor 1300ms was enough: 1200 tripped on one of two traced walks, and 1300 kept
+-- tripping on the longer sewers errands. So 1500ms. The trips so far have
+-- landed on steps 8, 8, 10, 11 and 14, which looks like a flat per-move risk
+-- rather than fatigue setting in after some number of steps -- meaning a longer
+-- route is likelier to trip somewhere simply because it takes more moves, and
+-- the pace has to be low enough per move to make that rare. navDebug below is
+-- there to replace the guessing with measurements.
+local NAV_STEP_DELAY_MS = 1500
 local NAV_TRIP_RETRY_MS = 2000
 -- Exposed so tests fire the walk's timers by name rather than by a literal
 -- interval, which silently stops matching the moment the pacing is retuned.
