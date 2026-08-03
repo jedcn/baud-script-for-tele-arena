@@ -13,6 +13,22 @@ run label:
 report:
     bun report.ts && open report.html
 
+# Move every log out of ./logs into the sibling archive repo, so the working
+# logs directory only ever holds the current run's sessions.
+archive-logs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dest=../tele-arena-archived-session-logs
+    shopt -s nullglob dotglob
+    logs=(./logs/*)
+    if [ ${#logs[@]} -eq 0 ]; then
+        echo "archive-logs: ./logs is empty, nothing to move"
+        exit 0
+    fi
+    mkdir -p "$dest"
+    mv -n "${logs[@]}" "$dest"/
+    echo "archive-logs: moved ${#logs[@]} file(s) to $dest"
+
 # Snapshot the live DB into the sibling tele-arena-db repo (as a SQL dump) and
 # commit it. Run before a risky hand-edit instead of making a .db.bak copy.
 # Usage: just db-snapshot "why I'm about to change the DB"
