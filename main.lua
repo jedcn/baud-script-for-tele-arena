@@ -4657,8 +4657,9 @@ local function stopNavigate()
     -- answered without reading back through every step.
     if j and j.debug then
         local seconds = (navNowMs() - (j.startedAt or navNowMs())) / 1000
-        echo(string.format("[nav|t] walk ended: %d/%d steps, %d trip(s), %.1fs total, pace %dms",
-            j.index or 0, #(j.steps or {}), j.trips or 0, seconds, NAV_STEP_DELAY_MS))
+        echo(string.format("[nav|t] walk ended: %d/%d steps, %d trip(s), %.1fs total, pace %dms%s",
+            j.index or 0, #(j.steps or {}), j.trips or 0, seconds, NAV_STEP_DELAY_MS,
+            (j.cures or 0) > 0 and (", poisoned " .. j.cures .. "x") or ""))
     end
     taPackage.navigate = nil
     taPackage.navPickup = nil
@@ -5267,6 +5268,7 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         steps        = route.steps,
         index        = 0,
         door         = route.door,
+        onPoison     = route.onPoison,
         arriveName   = arriveName,
         destRoomId   = destRoomId,
         phase        = "walking",
@@ -5459,6 +5461,50 @@ createTrigger("^Sorry, there's no exit in that direction\\.$", function()
     stopNavigate()
     navEcho("No exit that way at " .. where .. " — stopping."
         .. " Either the route is wrong or I wasn't where I thought I was.")
+end, { type = "regex" })
+
+-- =========================================================================
+-- Getting poisoned on the way
+-- =========================================================================
+--
+-- A route declares `onPoison = "drink verbena"` and we drink when the game
+-- says we've been poisoned.
+--
+-- Reacting to the announcement, rather than putting the drink at a fixed step,
+-- is deliberate. In the archived logs poison on this stretch arrives from the
+-- sewer fauna -- an alligator, a frog, a giant spider -- and lands after a
+-- fight rather than on entering a particular room, so there is no step number
+-- to hang a cure on. A fixed step would be right about as often as it was
+-- wrong.
+--
+-- Safe to trigger on: "You're poisoned!" is an event, printed once per
+-- poisoning (one or two in a sewer run), not a status line repeated every
+-- round the way "You're thirsty." is -- which is what filled problem.log.
+createTrigger("^You're poisoned!$", function()
+    local j = taPackage.navigate
+    if not (j and j.onPoison) then return end
+    j.cures = (j.cures or 0) + 1
+    j.curePending = true
+    navDebug("poisoned on step " .. j.index .. " — " .. j.onPoison)
+    navEcho("Poisoned — " .. j.onPoison .. ".")
+    send(j.onPoison)
+end, { type = "regex" })
+
+createTrigger("^You feel somehow different after drinking the potion\\.$", function()
+    local j = taPackage.navigate
+    if not (j and j.curePending) then return end
+    j.curePending = nil
+    navEcho("  Drank it.")
+end, { type = "regex" })
+
+-- The cure isn't in the pack. The walk carries on, because stopping in a sewer
+-- while poisoned is not obviously better than walking out of it -- but only
+-- this line will tell you it happened.
+createTrigger("^Sorry, but you don't seem to have one\\.$", function()
+    local j = taPackage.navigate
+    if not (j and j.curePending) then return end
+    j.curePending = nil
+    navEcho("  Nothing left to drink — still poisoned. Break off if that won't survive the walk.")
 end, { type = "regex" })
 
 -- A trap door drops us a floor mid-step. The game prints the room we walked

@@ -10340,6 +10340,73 @@ describe("navigate-to", function()
 
     end)
 
+    -- Poison on the way to the stoneworks comes from the sewer fauna, not from
+    -- a trap at a known step, so the cure hangs off the announcement.
+    describe("getting poisoned on the way", function()
+
+        local function walking(overrides)
+            route(overrides or { onPoison = "drink verbena" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("drinks the cure when the game says we're poisoned", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            assert.are.equal(1, sent("drink verbena"))
+            assert.is_truthy(lastEchoes():find("Poisoned — drink verbena.", 1, true))
+        end)
+
+        it("keeps walking afterwards", function()
+            walking()
+            brief("path")
+            helper.simulateLine("You're poisoned!")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))       -- step 2 still goes out
+        end)
+
+        -- The cure's reply is not a room brief, so it must not be mistaken for
+        -- an arrival — but confirm it out loud, since the drink can fail.
+        it("confirms the drink without advancing the walk", function()
+            walking()
+            brief("path")
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You feel somehow different after drinking the potion.")
+            assert.is_truthy(lastEchoes():find("Drank it.", 1, true))
+            assert.are.equal(0, sent("d"))       -- no step until the pace elapses
+        end)
+
+        it("says so when there is nothing left to drink", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("Sorry, but you don't seem to have one.")
+            assert.is_truthy(lastEchoes():find("Nothing left to drink", 1, true))
+            assert.is_not_nil(taPackage.navigate)   -- and walks on regardless
+        end)
+
+        it("counts the poisonings in the closing trace", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You're poisoned!")
+            helper.simulateAlias("stop-navigating")
+            assert.is_truthy(lastEchoes():find("poisoned 2x", 1, true))
+        end)
+
+        it("leaves a route with no cure declared alone", function()
+            walking({})
+            helper.simulateLine("You're poisoned!")
+            assert.are.equal(0, sent("drink verbena"))
+        end)
+
+        -- "you don't seem to have one" answers plenty of other commands.
+        it("ignores a refusal it didn't cause", function()
+            walking()
+            helper.simulateLine("Sorry, but you don't seem to have one.")
+            assert.is_falsy(lastEchoes():find("Nothing left to drink", 1, true))
+        end)
+
+    end)
+
     -- A trap door prints TWO arrival briefs for one move: the room walked into,
     -- then the pit fallen into. Counting both runs the step list a move ahead
     -- of the character.
