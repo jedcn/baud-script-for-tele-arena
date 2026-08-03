@@ -4595,7 +4595,9 @@ taPackage.navRoutes = NAV_ROUTES
 -- against a 1.13% baseline over the 72,354 hand-typed moves in the archived
 -- logs -- so a 1s cadence really does provoke them (p ~ 0.005). Neither 1200ms
 -- nor 1300ms was enough: 1200 tripped on one of two traced walks, and 1300 kept
--- tripping on the longer sewers errands. So 1500ms. The trips so far have
+-- tripping on the longer sewers errands. 1500ms then carried the hydra errand
+-- -- 23 moves and a sweep, the longest route here -- without a single trip.
+-- Don't shave it back without a reason: the trips so far have
 -- landed on steps 8, 8, 10, 11 and 14, which looks like a flat per-move risk
 -- rather than fatigue setting in after some number of steps -- meaning a longer
 -- route is likelier to trip somewhere simply because it takes more moves, and
