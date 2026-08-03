@@ -10301,26 +10301,51 @@ describe("navigate-to", function()
     -- and says nothing at all.
     describe("interrupted by combat", function()
 
-        it("stops the walk and says how to resume", function()
+        local function blocked()
             route()
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("You cannot leave in the heat of battle!")
-            assert.is_nil(taPackage.navigate)
-            local out = lastEchoes()
-            assert.is_truthy(out:find("has me in combat", 1, true))
-            assert.is_truthy(out:find("navigate-to sewers/town-sewers-18 again", 1, true))
+        end
+
+        -- Stopping would throw away a forty-step walk to any wandering rat, and
+        -- leave the character in the fight regardless.
+        it("keeps the walk alive and retries the blocked step", function()
+            blocked()
+            assert.is_not_nil(taPackage.navigate)
+            assert.are.equal(1, sent("sw"))
+            helper.fireTimers(taPackage.navCombatRetryMs)
+            assert.are.equal(2, sent("sw"))
+            assert.is_truthy(lastEchoes():find("has me in combat", 1, true))
         end)
 
-        it("does not retry the step", function()
-            route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
-            answerProbe(274)
-            assert.are.equal(1, sent("sw"))
-            helper.simulateLine("You cannot leave in the heat of battle!")
-            helper.fireTimers(taPackage.navTripRetryMs)
+        it("retries the same step rather than advancing", function()
+            blocked()
+            helper.fireTimers(taPackage.navCombatRetryMs)
+            assert.are.equal(0, sent("d"))          -- step 2 stays queued
+            assert.are.equal(1, taPackage.navigate.index)
+        end)
+
+        it("walks on normally once the step gets through", function()
+            blocked()
+            helper.fireTimers(taPackage.navCombatRetryMs)
+            brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
-            assert.are.equal(1, sent("sw"))
+            assert.are.equal(1, sent("d"))
+        end)
+
+        -- Once, then every fifth: a walk pinned down by something it can't get
+        -- away from must be visible, without burying the screen.
+        it("reports the first block and then every fifth", function()
+            blocked()
+            for _ = 2, 5 do
+                helper.fireTimers(taPackage.navCombatRetryMs)
+                helper.simulateLine("You cannot leave in the heat of battle!")
+            end
+            local out = lastEchoes()
+            local n = select(2, out:gsub("has me in combat", ""))
+            assert.are.equal(2, n)                  -- attempts 1 and 5
+            assert.is_truthy(out:find("attempt 5", 1, true))
         end)
 
     end)

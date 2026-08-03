@@ -4696,10 +4696,14 @@ taPackage.navRoutes = NAV_ROUTES
 -- there to replace the guessing with measurements.
 local NAV_STEP_DELAY_MS = 1500
 local NAV_TRIP_RETRY_MS = 2000
+-- How long to leave a monster alone before trying the blocked move again. A
+-- combat round lasts seconds, so hammering it only fills the screen.
+local NAV_COMBAT_RETRY_MS = 2000
 -- Exposed so tests fire the walk's timers by name rather than by a literal
 -- interval, which silently stops matching the moment the pacing is retuned.
 taPackage.navStepDelayMs = NAV_STEP_DELAY_MS
 taPackage.navTripRetryMs = NAV_TRIP_RETRY_MS
+taPackage.navCombatRetryMs = NAV_COMBAT_RETRY_MS
 -- How long to wait for the room probe (bare return + `ex`) before giving up.
 -- Without this a swallowed reply leaves navigate-to armed and silent, with
 -- nothing on screen to explain why nothing happened.
@@ -5054,9 +5058,9 @@ createTrigger("^Ok, you got (.+)\\.$", function(matches)
 end, { type = "regex" })
 
 -- Re-send the step we tripped on, after the usual pacing pause.
-local function navScheduleResend()
+local function navScheduleResend(delayMs)
     local gen = taPackage.navGen or 0
-    createTimer(NAV_STEP_DELAY_MS, function()
+    createTimer(delayMs or NAV_STEP_DELAY_MS, function()
         if taPackage.navigate and (taPackage.navGen or 0) == gen then navResendStep() end
     end, { repeating = false })
 end
@@ -5696,19 +5700,32 @@ createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove,
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$",
     navRecoverAfterRefusedMove, { type = "regex" })
 
--- Something engaged us mid-route. The game refuses the move and prints no room
--- line, so without this the walk simply stops dead with nothing on screen to
--- explain it -- and this is the single most common refusal in the logs (11,655
--- of them), which the sewers routes will meet sooner or later. Retrying is
--- futile while a monster is on us, so stop and say what to do about it.
+-- Something engaged us mid-route: the game refuses the move and prints no room
+-- line. This is the commonest refusal in the logs by a wide margin (11,655 of
+-- them), and the stoneworks legs walk through rooms holding kobolds, imps and
+-- rats, so a long route meets it constantly.
+--
+-- Keep trying. Stopping would abandon a forty-step walk to any wandering rat
+-- that picks a fight, and it leaves the character standing in the fight
+-- regardless -- giving up on the move buys nothing. Monsters break off, or
+-- die, and then the step goes through. The arena's walk-outs have retried this
+-- same line on a 2s timer for months, which is where the interval comes from.
+--
+-- Announced on the first block and every fifth after, so a walk pinned down by
+-- something it can't get away from is visible rather than silently stuck.
 createTrigger("^You cannot leave in the heat of battle!$", function()
     local j = taPackage.navigate
     if not j then return end
-    local dest = j.destination
-    stopNavigate()
-    navEcho("Something has me in combat, so I can't walk on to " .. dest .. ".")
-    navEcho("  Deal with it (kill-all, or flee), then run navigate-to " .. dest .. " again"
-        .. " — it re-checks where I am, so it'll pick up wherever I've ended up.")
+    j.combatBlocks = (j.combatBlocks or 0) + 1
+    navDebug("held in combat on step " .. j.index .. " (block " .. j.combatBlocks .. ")")
+    if j.combatBlocks == 1 or j.combatBlocks % 5 == 0 then
+        navEcho("Something has me in combat — can't move yet, still trying (attempt "
+            .. j.combatBlocks .. "). kill-all or flee to break it.")
+    end
+    -- navResendStep clears this again. It's set in case the game reprints the
+    -- room, so that reprint isn't miscounted as an arrival.
+    j.blocked = true
+    navScheduleResend(NAV_COMBAT_RETRY_MS)
 end, { type = "regex" })
 
 -- =========================================================================
