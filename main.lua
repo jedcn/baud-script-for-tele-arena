@@ -5499,20 +5499,46 @@ end, { type = "regex" })
 -- says we've been poisoned.
 --
 -- Reacting to the announcement, rather than putting the drink at a fixed step,
--- is deliberate. In the archived logs poison on this stretch arrives from the
--- sewer fauna -- an alligator, a frog, a giant spider -- and lands after a
--- fight rather than on entering a particular room, so there is no step number
--- to hang a cure on. A fixed step would be right about as often as it was
--- wrong.
+-- is deliberate: the poison does not arrive on a schedule. Its source is the
+-- crossbow trap in the sewers room west of the hydra ("Several crossbow bolts
+-- fire from holes in the walls, striking you!") -- it wounds and poisons, and
+-- in the logs it takes the whole party at once. But it doesn't always land,
+-- and the poison doesn't always declare itself at once: on the 2026-08-03 walk
+-- the bolts struck on step 1 and the poison announced itself fifteen steps
+-- later, out in the desert. A fixed step would have drunk in the wrong room.
 --
--- Safe to trigger on: "You're poisoned!" is an event, printed once per
--- poisoning (one or two in a sewer run), not a status line repeated every
--- round the way "You're thirsty." is -- which is what filled problem.log.
+-- "You're poisoned!" is NOT one line per poisoning. It is a status line that
+-- repeats for as long as the poison is in you, once per tick, arriving two or
+-- three lines apart -- the same shape as the "You're thirsty." spam that fills
+-- problem.log, and in the archived logs it runs alongside "<name> looks a
+-- little under the weather." for every poisoned party member:
+--
+--     Status:       Poisoned
+--     Teekywiki looks a little under the weather.
+--     You're poisoned!
+--     Teekywiki looks a little under the weather.
+--     You're poisoned!
+--
+-- Reacting to every one of those would empty the pack of potions in seconds.
+-- So drink at most once per poisoning: hold off while a drink is unanswered,
+-- and then for a cooldown afterwards, long enough that the tail of one
+-- poisoning's ticks can't be read as a fresh one. A genuine second poisoning
+-- later in a walk still gets treated.
+local NAV_CURE_COOLDOWN_MS = 15000
+
 createTrigger("^You're poisoned!$", function()
     local j = taPackage.navigate
     if not (j and j.onPoison) then return end
+    -- A drink is already on its way; this is the same poisoning still ticking.
+    if j.curePending then return end
+    local now = navNowMs()
+    if j.lastCureAt and (now - j.lastCureAt) < NAV_CURE_COOLDOWN_MS then
+        navDebug("still poisoned on step " .. j.index .. " — already drank, holding off")
+        return
+    end
     j.cures = (j.cures or 0) + 1
     j.curePending = true
+    j.lastCureAt = now
     navDebug("poisoned on step " .. j.index .. " — " .. j.onPoison)
     navEcho("Poisoned — " .. j.onPoison .. ".")
     send(j.onPoison)

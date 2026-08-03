@@ -10384,9 +10384,38 @@ describe("navigate-to", function()
             assert.is_not_nil(taPackage.navigate)   -- and walks on regardless
         end)
 
+        -- The line repeats every tick for as long as the poison lasts, two or
+        -- three lines apart. Answering each one would empty the pack.
+        it("drinks once however often the poison line repeats", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You're poisoned!")
+            assert.are.equal(1, sent("drink verbena"))
+        end)
+
+        it("does not drink again on the tail of ticks after a cure", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You feel somehow different after drinking the potion.")
+            helper.simulateLine("You're poisoned!")   -- a tick still in flight
+            assert.are.equal(1, sent("drink verbena"))
+        end)
+
+        it("treats a fresh poisoning once the cooldown has passed", function()
+            walking()
+            helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You feel somehow different after drinking the potion.")
+            helper.advanceMs(15000)
+            helper.simulateLine("You're poisoned!")
+            assert.are.equal(2, sent("drink verbena"))
+        end)
+
         it("counts the poisonings in the closing trace", function()
             walking()
             helper.simulateLine("You're poisoned!")
+            helper.simulateLine("You feel somehow different after drinking the potion.")
+            helper.advanceMs(15000)
             helper.simulateLine("You're poisoned!")
             helper.simulateAlias("stop-navigating")
             assert.is_truthy(lastEchoes():find("poisoned 2x", 1, true))
