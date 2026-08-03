@@ -9560,7 +9560,10 @@ describe("navigate-to", function()
             setEncumberance(120, 200)
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
             answerProbe(274)
-            assert.is_truthy(lastEchoes():find("pace 1200ms, encumbrance 60%", 1, true))
+            -- Read the pace rather than repeating it: it is still being tuned,
+            -- and a literal here just breaks on the next adjustment.
+            assert.is_truthy(lastEchoes():find(
+                "pace " .. taPackage.navStepDelayMs .. "ms, encumbrance 60%", 1, true))
         end)
 
         it("says so when encumbrance has never been read", function()
@@ -9928,6 +9931,19 @@ describe("navigate-to", function()
             local out = lastEchoes()
             assert.is_truthy(out:find("A locked stone door blocks the way", 1, true))
             assert.is_truthy(out:find("I need to go get the key (the ruby key).", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- Not every locked door is a route's final probe: the platinum errand
+        -- walks through the ruby door on its first step. Naming the step is
+        -- what says which door was shut.
+        it("names the step when a door blocks the middle of a route", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("blocks step 1 of sewers/town-sewers-18", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 

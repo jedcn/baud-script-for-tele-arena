@@ -4535,10 +4535,27 @@ local NAV_ROUTES = {
                   { killAll = true },
                   "nw", "nw", "nw", "sw", "s", "se", "se", "sw", "sw", "s", "sw", "w" },
     },
+    -- Through the ruby door and out to the platinum key's room, then back as
+    -- far as town-sewers-63 -- the junction the platinum and onyx doors open
+    -- off, which is where you want to be standing with the key in hand, not
+    -- back up at the ruby door.
+    --
+    -- Recorded as given. The mapped graph agrees for ten steps and then
+    -- disagrees: it has town-sewers-100 (where step 10 lands) with exits n and
+    -- sw only, no ne, and reaches town-sewers-101 by `n`. Those rooms have four
+    -- or five visits each with reciprocal exits, so the map is fairly sure. If
+    -- step 11 is refused in play, the likely truth is `ne ne ne n` out and
+    -- `s sw sw sw w` back -- one repeat fewer each way.
+    ["town-3/get-platinum-key"] = {
+        from  = "sewers/town-sewers-18",
+        to    = "sewers/town-sewers-63",
+        steps = { "s", "d", "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "ne", "n",
+                  { killAll = true },
+                  "s", "sw", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
+    },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    ["town-3/get-platinum-key"]    = { pending = true },
     ["town-3/get-onyx-key"]        = { pending = true },
     ["town-3/hydra"]               = { pending = true },
     ["town-3/stoneworks-entrance"] = { pending = true },
@@ -4555,12 +4572,13 @@ taPackage.navRoutes = NAV_ROUTES
 -- Pace between steps or the character trips and falls (see the trip trigger
 -- below). Measured across four walks at 1000ms: 4 trips in 60 moves, 6.7%,
 -- against a 1.13% baseline over the 72,354 hand-typed moves in the archived
--- logs -- so a 1s cadence really does provoke them (p ~ 0.005), and 1200ms is
--- the first step away from it. The four trips landed on steps 8, 10, 11 and
--- 14, which looks like a flat per-move risk rather than fatigue setting in
--- after some number of steps; navDebug below is there to replace that guess
--- with measurements.
-local NAV_STEP_DELAY_MS = 1200
+-- logs -- so a 1s cadence really does provoke them (p ~ 0.005). 1200ms was the
+-- first step away from it and wasn't enough: of two traced 16-step walks at
+-- that pace, one tripped (step 8) and one didn't. So 1300ms. The trips so far
+-- have landed on steps 8, 8, 10, 11 and 14, which looks like a flat per-move
+-- risk rather than fatigue setting in after some number of steps; navDebug
+-- below is there to replace that guess with measurements.
+local NAV_STEP_DELAY_MS = 1300
 local NAV_TRIP_RETRY_MS = 2000
 -- Exposed so tests fire the walk's timers by name rather than by a literal
 -- interval, which silently stops matching the moment the pacing is retuned.
@@ -5300,14 +5318,18 @@ createAlias("^stop-navigating$", function()
     end
 end, { type = "regex" })
 
--- A locked door we lack the key for. This is where the sewers route currently
--- ends: getting the key means a detour to a monster room, which isn't built yet.
+-- A locked door we lack the key for. For a route that ends by probing a door
+-- this is the answer it went to find out; for a route that walks THROUGH a door
+-- mid-way (the platinum errand opens with the ruby door) it's a hard stop, and
+-- naming the step is what says which door was shut.
 createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", function(matches)
     local j = taPackage.navigate
     if not j then return end
     local door, dest, want = matches[2], j.destination, j.door and j.door.key
+    local where = (j.phase == "door") and ("the way on from " .. dest)
+        or ("step " .. j.index .. " of " .. dest)
     stopNavigate()
-    navEcho("A locked " .. door .. " door blocks the way on from " .. dest
+    navEcho("A locked " .. door .. " door blocks " .. where
         .. " and I don't have the key — I need to go get the key"
         .. (want and (" (the " .. want .. " key)") or "") .. ".")
 end, { type = "regex" })
