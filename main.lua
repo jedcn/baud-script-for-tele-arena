@@ -4639,7 +4639,10 @@ local NAV_ROUTES = {
                   "se", "se", "e", "n", "n", "ne", "se",
                   { cmd = "push stone" },
                   "nw", "sw", "s", "s", "w", "sw", "sw", "s", "sw", "sw", "s",
-                  "e", "e", "e", "e", "s", "e", "se",
+                  -- `s` then straight to `se`: the walk of 2026-08-03 was
+                  -- refused on an `e` between them, in a room offering only n
+                  -- and se.
+                  "e", "e", "e", "e", "s", "se",
                   { cmd = "push stone" },
                   "e", "e", "e", "d" },
     },
