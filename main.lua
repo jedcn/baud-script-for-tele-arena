@@ -4484,9 +4484,23 @@ end, { type = "regex" })
 -- point: they differ only by exit-set, so a name-only check would happily walk
 -- the sewers route from the wrong town.
 --
+-- A route's KEY IS A LABEL, not a room reference: `town-3/get-ruby-key` names
+-- an errand, and the errand ends where it began. Where a route does end
+-- somewhere nameable, `to` gives the room so arrival can be checked.
+--
+-- A route's steps are not all movement. Getting to third-town means levers to
+-- pull, stones to push, and rooms to clear for a key, so a step is one of:
+--
+--     "se"                  -- a direction; the arrival brief advances the walk
+--     { cmd = "pull lever" } -- any command; the walk advances after a pause
+--     { killAll = true }     -- clear this room; the sweep advances the walk
+--
+-- Each leg is deliberately short and run by hand. Chaining them is a later
+-- decision; for now every one is a thing you ask for and watch.
+--
 -- `door` is an optional final probe: a direction out of the destination that is
 -- known to be gated by a locked door. We walk the route, then try it, and
--- report whether we could pass. Fetching the key is not wired up yet.
+-- report whether we could pass. Fetching the key is a separate errand.
 --
 -- THE MAP IS READ-ONLY HERE. Navigating asks the map where it is and never
 -- tells it anything: no room is discovered, no visit counted, no exit linked,
@@ -4501,18 +4515,39 @@ end, { type = "regex" })
 -- at a key: the game auto-searches each corpse, and a key turns up in one of
 -- them ("While searching the area, you notice a ruby key...").
 local NAV_ROUTES = {
-    ["sewers/town-sewers-18"] = {
+    -- Second town down into the sewers, ending nose-to-nose with the ruby door.
+    -- The door probe reports whether it's locked, which is what tells you
+    -- whether you need the get-ruby-key errand: the door relocks around 3am.
+    ["town-3/ruby-door"] = {
         from  = "second-town/north-plaza",
+        to    = "sewers/town-sewers-18",
         steps = { "sw", "d", "se", "sw", "s", "se", "se", "sw",
                   "se", "se", "ne", "ne", "se", "se", "se", "e" },
         door  = { dir = "s", key = "ruby" },
     },
-    -- Leg 2: on from the stone door to the room the ruby key comes out of.
-    ["sewers/town-sewers-54"] = {
-        from    = "sewers/town-sewers-18",
-        steps   = { "e", "ne", "n", "ne", "ne", "nw", "nw", "n", "ne", "se", "se", "se" },
-        killAll = true,
+    -- Out to the room the ruby key drops in, clear it, and come back to the
+    -- door. The return leg is the forward leg reversed direction by direction,
+    -- checked against the mapped graph -- it lands back on town-sewers-18.
+    ["town-3/get-ruby-key"] = {
+        from  = "sewers/town-sewers-18",
+        to    = "sewers/town-sewers-18",
+        steps = { "e", "ne", "n", "ne", "ne", "nw", "nw", "n", "ne", "se", "se", "se",
+                  { killAll = true },
+                  "nw", "nw", "nw", "sw", "s", "se", "se", "sw", "sw", "s", "sw", "w" },
     },
+    -- Named, but not yet walked. Each needs a starting room and a step list
+    -- taken from a walk that actually worked; `pending` is what makes
+    -- navigate-to say that rather than pretend the name is unknown.
+    ["town-3/get-platinum-key"]    = { pending = true },
+    ["town-3/get-onyx-key"]        = { pending = true },
+    ["town-3/hydra"]               = { pending = true },
+    ["town-3/stoneworks-entrance"] = { pending = true },
+    ["town-3/stone-lvl-2"]         = { pending = true },
+    ["town-3/stone-lvl-3"]         = { pending = true },
+    ["town-3/stone-lvl-4"]         = { pending = true },
+    ["town-3/stone-lvl-5"]         = { pending = true },
+    ["town-3/stone-lvl-6"]         = { pending = true },
+    ["town-3/temple"]              = { pending = true },
 }
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
@@ -4577,6 +4612,13 @@ local function stopNavigate()
     taPackage.navigate = nil
     taPackage.navPickup = nil
     taPackage.navGen = (taPackage.navGen or 0) + 1
+    -- A sweep is part of the walk now, so stopping the walk stops the fighting
+    -- too -- otherwise "stopped" would leave the character still swinging.
+    if taPackage.navSweep then
+        taPackage.navSweep = nil
+        if taPackage.killAllActive then stopKill() end
+        running = true
+    end
     -- Mapping was on when we set off and we turned it off. Leave it off: we may
     -- be many rooms from where the mapper last knew we were (and, if the walk
     -- was cut short, somewhere neither of us can name), so resuming would link
@@ -4629,16 +4671,58 @@ local function navSend(dir)
     send(dir)
 end
 
--- Send the next queued direction. index counts steps already sent, so bumping
--- it first and indexing gives the step we haven't walked yet.
+-- What kind of thing a step is, or nil if the route table is malformed. What
+-- makes the distinction matter is how each one finishes: a move is answered by
+-- an arrival brief, a command by nothing in particular, and a sweep by the room
+-- falling quiet -- so each advances the walk from somewhere different.
+local function navStepKind(step)
+    if type(step) == "string" then return "move" end
+    if type(step) ~= "table" then return nil end
+    if step.killAll then return "killAll" end
+    if type(step.cmd) == "string" then return "cmd" end
+    return nil
+end
+
+-- Reject a malformed route standing still rather than halfway along it.
+local function navBadStep(steps)
+    for i, step in ipairs(steps or {}) do
+        if not navStepKind(step) then return i end
+    end
+    return nil
+end
+
+local function navStepLabel(step)
+    local kind = navStepKind(step)
+    if kind == "move" then return step end
+    if kind == "cmd" then return "'" .. step.cmd .. "'" end
+    return "kill-all"
+end
+
+-- Both are defined below: they need navStep, which needs them.
+local navAdvance, navStartSweep
+
+-- Send the next queued step. index counts steps already started, so bumping it
+-- first and indexing gives the one we haven't done yet.
 local function navStep()
     local j = taPackage.navigate
     if not j then return end
     j.index = j.index + 1
-    local dir = j.steps[j.index]
-    if dir then
-        navDebug("send step " .. j.index .. "/" .. #j.steps .. " " .. dir)
-        navSend(dir)
+    local step = j.steps[j.index]
+    if step == nil then return end
+    local kind = navStepKind(step)
+    -- Remembered because the room-brief handler has to know whether a brief is
+    -- this step's answer or just noise from a command or a sweep.
+    j.stepKind = kind
+    navDebug("send step " .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
+    if kind == "move" then
+        navSend(step)
+    elseif kind == "cmd" then
+        navSend(step.cmd)
+        -- Nothing reliably answers an arbitrary command, so the pause is the
+        -- only signal we have that it has had its chance.
+        navAdvance()
+    else
+        navStartSweep()
     end
 end
 
@@ -4649,8 +4733,10 @@ local function navResendStep()
     local j = taPackage.navigate
     if not j then return end
     j.blocked = nil
+    -- Only a move can be refused this way, and only a move is safe to repeat:
+    -- re-sending a lever pull would work it twice.
     local dir = j.steps[j.index]
-    if dir then
+    if type(dir) == "string" then
         navDebug("re-send step " .. j.index .. " " .. dir)
         navSend(dir)
     end
@@ -4922,39 +5008,76 @@ local function navRecoverAfterRefusedMove()
     end, { repeating = false })
 end
 
--- Hand off to `kill-all` once a route that asked for it has arrived. The walk
--- is already finished by this point, so the sweep owns the room briefs its own
--- scan produces. Paced a beat so the arrival settles first, and re-checked on
--- the way in: navGen moves if the user stopped us in the meantime.
-local function navScheduleSweep(destination)
-    local gen = taPackage.navGen or 0
-    createTimer(NAV_STEP_DELAY_MS, function()
-        if (taPackage.navGen or 0) ~= gen then return end
-        if taPackage.arenaState then
-            navEcho("An arena session is active — not starting kill-all at " .. destination .. ".")
-            return
-        end
-        -- Marks this sweep as a route's, which is what scopes the full-pack
-        -- handling below: a kill-all run by hand is nobody's business but yours.
-        taPackage.navSweep = { destination = destination, uncarried = {} }
-        taPackage.killAllActive = true
-        taPackage.killAllScan()
-    end, { repeating = false })
+-- The end of the route. `room` is the arrival brief's room name when a move
+-- finished the walk, and nil when the last step was a command or a sweep --
+-- neither of which moves us, so neither has a fresh name to check.
+local function navArrive(room)
+    local j = taPackage.navigate
+    if not j then return end
+    -- Confirm we're where the route said we'd be: a name mismatch means a step
+    -- went astray, and the door probe below would then be tried from the wrong
+    -- room.
+    if room and j.arriveName and room ~= j.arriveName then
+        local want = j.arriveName
+        stopNavigate()
+        navEcho("Walked the whole route but ended up in '" .. room .. "', not '"
+            .. want .. "' — stopping rather than guessing. The route may be wrong.")
+        return
+    end
+    if j.door then
+        navEcho("Arrived at " .. j.destination .. ".")
+        navScheduleDoor()
+        return
+    end
+    local dest = j.destination
+    stopNavigate()
+    navEcho("Arrived at " .. dest .. ".")
 end
 
--- The room is clear. Report what it yielded, and stop here if anything had to
--- be left behind -- that is the point at which a run should not carry on.
+-- One step done. Either pace the next one or finish.
+navAdvance = function()
+    local j = taPackage.navigate
+    if not j then return end
+    if j.index >= #j.steps then navArrive() else navScheduleStep() end
+end
+
+-- A `{ killAll = true }` step: clear this room before walking on. Getting a
+-- key is the usual reason -- the game auto-searches each corpse and a key turns
+-- up in one of them ("While searching the area, you notice a ruby key...").
+navStartSweep = function()
+    local j = taPackage.navigate
+    if not j then return end
+    if taPackage.arenaState then
+        local dest = j.destination
+        stopNavigate()
+        navEcho("An arena session is active — stopping " .. dest .. " rather than starting kill-all.")
+        return
+    end
+    navEcho("Clearing the room with kill-all.")
+    -- Marks this sweep as a route's, which is what scopes the full-pack
+    -- handling below: a kill-all run by hand is nobody's business but yours.
+    taPackage.navSweep = { destination = j.destination, uncarried = {} }
+    taPackage.killAllActive = true
+    taPackage.killAllScan()
+end
+
+-- The room is clear, so the sweep step is done. Report what it yielded and walk
+-- on -- unless something had to be left behind, which is the one outcome a run
+-- should not carry on from: whatever we came for may be lying on that floor.
 local function navOnSweepDone()
     local sweep = taPackage.navSweep
     if not sweep then return end
     taPackage.navSweep = nil
-    if #sweep.uncarried == 0 then
-        navEcho("Room cleared at " .. sweep.destination .. ".")
+    if #sweep.uncarried > 0 then
+        local dest = sweep.destination
+        stopNavigate()
+        navEcho("Room cleared, but the pack was full: the "
+            .. table.concat(sweep.uncarried, ", the ") .. " is still on the floor here.")
+        navEcho("  Stopped " .. dest .. ". Drop or stow something, pick it up, then carry on.")
         return
     end
-    navEcho("Room cleared, but the pack was full: the "
-        .. table.concat(sweep.uncarried, ", the ") .. " is still on the floor here.")
-    navEcho("  Stopping. Drop or stow something, pick it up, then carry on.")
+    navEcho("Room cleared.")
+    navAdvance()
 end
 taPackage.navOnSweepDone = navOnSweepDone
 
@@ -4977,9 +5100,8 @@ local function navOnRoomBrief(room)
         return
     end
 
-    navDebug("arrived after step " .. j.index .. " (" .. room .. ")")
-
     if j.phase == "door" then
+        navDebug("through the door (" .. room .. ")")
         local key, dir = j.doorOpenedByKey, j.door.dir
         -- We are through the door, which means we are one room PAST the route's
         -- stated destination. Name where that is from the map -- "town sewers"
@@ -4998,30 +5120,15 @@ local function navOnRoomBrief(room)
         return
     end
 
+    -- Only a movement step is answered by an arrival brief. A command's reply
+    -- and the briefs a kill-all sweep's own scans print are not arrivals, and
+    -- counting them would run the walk ahead of where the character is.
+    if j.stepKind ~= "move" then return end
+
+    navDebug("arrived after step " .. j.index .. " (" .. room .. ")")
+
     if j.index >= #j.steps then
-        -- End of the step list. Confirm we're where the route said we'd be: a
-        -- name mismatch means a step went astray, and the door probe below
-        -- would then be tried from the wrong room.
-        if j.arriveName and room ~= j.arriveName then
-            local want = j.arriveName
-            stopNavigate()
-            navEcho("Walked the whole route but ended up in '" .. room .. "', not '"
-                .. want .. "' — stopping rather than guessing. The route may be wrong.")
-            return
-        end
-        if j.door then
-            navEcho("Arrived at " .. j.destination .. ".")
-            navScheduleDoor()
-        elseif j.killAll then
-            local dest = j.destination
-            stopNavigate()
-            navEcho("Arrived at " .. dest .. " — clearing the room with kill-all.")
-            navScheduleSweep(dest)
-        else
-            local dest = j.destination
-            stopNavigate()
-            navEcho("Arrived at " .. dest .. ".")
-        end
+        navArrive(room)
         return
     end
 
@@ -5048,7 +5155,6 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         steps        = route.steps,
         index        = 0,
         door         = route.door,
-        killAll      = route.killAll,
         arriveName   = arriveName,
         destRoomId   = destRoomId,
         phase        = "walking",
@@ -5094,18 +5200,39 @@ createAlias("^navigate-to (.+)$", function(matches)
                             or " No routes are recorded yet."))
         return
     end
+    -- A name we've agreed on but haven't been given the way to yet. Saying so
+    -- is the whole reason these are in the table: "I don't know that name" and
+    -- "I know that name but not the way" are different problems.
+    if route.pending then
+        navEcho("I know the name " .. destination .. ", but nobody has told me the way there yet.")
+        navEcho("  Walk it by hand, then give me the starting room and the steps"
+            .. " (directions, plus any lever pulls or rooms to clear) and I'll record it.")
+        return
+    end
     if taPackage.navigate then
         navEcho("Already walking to " .. taPackage.navigate.destination
             .. " — run stop-navigating first.")
         return
     end
+    local bad = navBadStep(route.steps)
+    if bad then
+        navEcho("Step " .. bad .. " of the route to " .. destination
+            .. " isn't a direction, a { cmd = ... } or a { killAll = true } — fix the route table.")
+        return
+    end
 
     -- Resolve both ends before sending anything, so a typo in the route table is
-    -- reported standing still rather than halfway down a sewer.
-    local destRoom, destErr = navResolveRef(destination)
-    if not destRoom then
-        navEcho("Route destination " .. destErr)
-        return
+    -- reported standing still rather than halfway down a sewer. A route need not
+    -- name where it ends -- an errand ends back where it started -- but when it
+    -- does, that room is what arrival is checked against.
+    local arriveName, destRoomId
+    if route.to then
+        local destRoom, destErr = navResolveRef(route.to)
+        if not destRoom then
+            navEcho("Route destination " .. destErr)
+            return
+        end
+        arriveName, destRoomId = destRoom.name, destRoom.id
     end
     local fromRoom, fromErr = navResolveRef(route.from)
     if not fromRoom then
@@ -5133,7 +5260,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                navStart(destination, route, destRoom.name, probe.floor, destRoom.id, debug)
+                navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
                 return
             end
             local here

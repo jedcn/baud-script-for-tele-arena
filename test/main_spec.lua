@@ -9446,11 +9446,13 @@ describe("navigate-to", function()
     end
 
     -- A short stand-in for the real 16-step sewers route, so the tests read as
-    -- tests of the engine rather than of one hard-coded direction list.
-    local ROUTE = { from = "second-town/north-plaza", steps = { "sw", "d", "se" } }
+    -- tests of the engine rather than of one hard-coded direction list. The key
+    -- is only a label; `to` is what says where the route ends.
+    local ROUTE = { from = "second-town/north-plaza", to = "sewers/town-sewers-18",
+                    steps = { "sw", "d", "se" } }
 
     local function route(overrides)
-        local r = { from = ROUTE.from, steps = ROUTE.steps }
+        local r = { from = ROUTE.from, to = ROUTE.to, steps = ROUTE.steps }
         for k, v in pairs(overrides or {}) do r[k] = v end
         taPackage.navRoutes["sewers/town-sewers-18"] = r
         return r
@@ -9495,7 +9497,24 @@ describe("navigate-to", function()
         it("refuses an unknown destination and lists what it does know", function()
             helper.simulateAlias("navigate-to nowhere/at-all")
             assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'", 1, true))
-            assert.is_truthy(lastEchoes():find("sewers/town-sewers-18", 1, true))
+            assert.is_truthy(lastEchoes():find("town-3/ruby-door", 1, true))
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- A name we've agreed on but haven't walked yet. Reporting it as
+        -- unknown would be a lie, and reporting nothing would look like a bug.
+        it("says a named-but-unwalked route hasn't been recorded yet", function()
+            helper.simulateAlias("navigate-to town-3/temple")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("I know the name town-3/temple", 1, true))
+            assert.is_truthy(out:find("give me the starting room and the steps", 1, true))
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("refuses a route with a step it can't make sense of", function()
+            route({ steps = { "sw", { shrug = true }, "se" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.is_truthy(lastEchoes():find("Step 2 of the route", 1, true))
             assert.are.equal(0, #helper.sendCalls)
         end)
 
@@ -10037,35 +10056,64 @@ describe("navigate-to", function()
     -- the game auto-searches each corpse and announces what it finds.
     describe("clearing the destination", function()
 
-        local function arriveWithSweep()
-            route({ killAll = true })
+        -- Two moves, a sweep, then one more move: the shape of the ruby-key
+        -- errand, which clears a room and then walks back the way it came.
+        local SWEEP_STEPS = { "sw", "d", { killAll = true }, "se" }
+
+        -- Walk as far as the sweep step and let it start.
+        local function sweeping()
+            route({ steps = SWEEP_STEPS })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            brief("town sewers")           -- 2nd step done; the sweep is next
+            helper.fireTimers(taPackage.navStepDelayMs)
+        end
+
+        it("starts kill-all when it reaches a sweep step", function()
+            sweeping()
+            assert.is_truthy(lastEchoes():find("Clearing the room with kill-all", 1, true))
+            assert.is_true(taPackage.killAllActive)
+        end)
+
+        it("does not start the sweep if the walk was stopped first", function()
+            route({ steps = SWEEP_STEPS })
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
             brief("town sewers")
-            helper.fireTimers(taPackage.navStepDelayMs)
-            brief("town sewers")          -- 3rd and last step: arrived
-        end
-
-        it("hands off to kill-all after arriving", function()
-            arriveWithSweep()
-            assert.is_truthy(lastEchoes():find("clearing the room with kill-all", 1, true))
-            assert.is_falsy(taPackage.killAllActive)   -- paced, not immediate
-            helper.fireTimers(taPackage.navStepDelayMs)
-            assert.is_true(taPackage.killAllActive)
-        end)
-
-        it("does not start the sweep if the walk was stopped first", function()
-            arriveWithSweep()
             helper.simulateAlias("stop-navigating")
             helper.fireTimers(taPackage.navStepDelayMs)
             assert.is_falsy(taPackage.killAllActive)
         end)
 
-        it("announces a key found while searching a corpse", function()
-            arriveWithSweep()
+        -- The sweep's own scans reprint the room. Counting those as arrivals
+        -- would run the step list on while the character stood still fighting.
+        it("ignores the room briefs the sweep itself prints", function()
+            sweeping()
+            local before = sent("se")
+            helper.simulateLine("You're in the town sewers.")
+            helper.simulateLine("You're in the town sewers.")
             helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(before, sent("se"))
+            assert.is_true(taPackage.killAllActive)   -- still sweeping
+        end)
+
+        it("walks on once the room is clear", function()
+            sweeping()
+            helper.simulateLine("There is nobody here.")   -- room clear, sweep ends
+            assert.is_truthy(lastEchoes():find("Room cleared.", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+            brief("town sewers")
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("announces a key found while searching a corpse", function()
+            sweeping()
             helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
             assert.is_truthy(lastEchoes():find("Got the ruby key.", 1, true))
         end)
@@ -10073,15 +10121,13 @@ describe("navigate-to", function()
         -- The line hard-wraps at the terminal width, so "possessions." lands on
         -- the following line and the first form never matches.
         it("announces a key when the line wrapped", function()
-            arriveWithSweep()
-            helper.fireTimers(taPackage.navStepDelayMs)
+            sweeping()
             helper.simulateLine("While searching the area, you notice a ruby key, which you add to your")
             assert.is_truthy(lastEchoes():find("Got the ruby key.", 1, true))
         end)
 
         it("stays quiet about ordinary loot", function()
-            arriveWithSweep()
-            helper.fireTimers(taPackage.navStepDelayMs)
+            sweeping()
             helper.simulateLine("While searching the area, you notice a waterskin, which you add to your possessions.")
             assert.is_falsy(lastEchoes():find("Got the waterskin", 1, true))
         end)
@@ -10090,32 +10136,26 @@ describe("navigate-to", function()
         -- room attacking us — both sewers destinations held four live monsters
         -- on arrival. So the room gets finished first.
         it("keeps fighting when the pack is too full to take what was found", function()
-            arriveWithSweep()
-            helper.fireTimers(taPackage.navStepDelayMs)
+            sweeping()
             assert.is_true(taPackage.killAllActive)
             helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
             assert.is_true(taPackage.killAllActive)   -- still sweeping
             assert.is_truthy(lastEchoes():find("Clearing the room first", 1, true))
         end)
 
+        -- Whatever the errand went for may be the thing on that floor, so
+        -- walking on would carry the character away from it.
         it("stops the run once the room is clear, naming what was left behind", function()
-            arriveWithSweep()
-            helper.fireTimers(taPackage.navStepDelayMs)
+            sweeping()
             helper.simulateLine("While searching the area, you notice a ruby key, but you can't carry it.")
             helper.simulateLine("There is nobody here.")   -- room clear, sweep ends
             local out = lastEchoes()
             assert.is_truthy(out:find("the ruby key is still on the floor here", 1, true))
-            assert.is_truthy(out:find("Stopping.", 1, true))
+            assert.is_truthy(out:find("Stopped sewers/town-sewers-18.", 1, true))
             assert.is_falsy(taPackage.killAllActive)
-        end)
-
-        it("reports a clean sweep when nothing was left behind", function()
-            arriveWithSweep()
+            assert.is_nil(taPackage.navigate)
             helper.fireTimers(taPackage.navStepDelayMs)
-            helper.simulateLine("There is nobody here.")
-            local out = lastEchoes()
-            assert.is_truthy(out:find("Room cleared at sewers/town-sewers-18.", 1, true))
-            assert.is_falsy(out:find("still on the floor", 1, true))
+            assert.are.equal(0, sent("se"))    -- the return leg is not walked
         end)
 
         -- A kill-all or kill run by hand is nobody's business but the user's; a
@@ -10198,6 +10238,82 @@ describe("navigate-to", function()
             startWalking()
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
             assert.is_truthy(lastEchoes():find("Already walking to", 1, true))
+        end)
+
+        -- A sweep is part of the walk, so "stopped" has to mean the character
+        -- stops swinging too — not stands there fighting a room on its own.
+        it("stop-navigating halts a sweep the route started", function()
+            route({ steps = { "sw", { killAll = true } } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.is_true(taPackage.killAllActive)
+            helper.simulateAlias("stop-navigating")
+            assert.is_falsy(taPackage.killAllActive)
+            assert.is_nil(taPackage.navSweep)
+        end)
+
+    end)
+
+    -- Getting to third-town is not all walking: there are levers to pull and
+    -- stones to push. Nothing in the game reliably answers such a command, so
+    -- the pacing pause is what says it has had its chance.
+    describe("commands along the way", function()
+
+        local function walkWithCommand(steps)
+            route({ steps = steps })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("sends the command and walks on after the usual pause", function()
+            walkWithCommand({ "sw", { cmd = "pull lever" }, "se" })
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("pull lever"))
+            assert.are.equal(0, sent("se"))          -- paced, not immediate
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        -- A lever pull may well reprint the room. Treating that as an arrival
+        -- would send the next direction while the character is still standing
+        -- where it was, putting the walk a step ahead of the character.
+        it("does not let a reply to the command advance the walk", function()
+            walkWithCommand({ "sw", { cmd = "pull lever" }, "se", "n" })
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)   -- pull lever
+            brief("path")                                 -- the lever's reply
+            helper.fireTimers(taPackage.navStepDelayMs)
+            -- One step came out of that pause, not two: had the reply been
+            -- counted, "n" would already be on its way while the character was
+            -- still standing where the lever is.
+            assert.are.equal(1, sent("se"))
+            assert.are.equal(0, sent("n"))
+        end)
+
+        it("arrives when the command is the last step", function()
+            walkWithCommand({ "sw", { cmd = "push stone" } })
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("push stone"))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- Repeating a move is harmless; repeating a lever pull works it twice.
+        it("does not re-send a command when a later move trips", function()
+            walkWithCommand({ "sw", { cmd = "pull lever" }, "se" })
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)   -- pull lever
+            helper.fireTimers(taPackage.navStepDelayMs)   -- se
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            helper.simulateLine("There is nothing on the floor.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("pull lever"))
+            assert.are.equal(2, sent("se"))
         end)
 
     end)
