@@ -9610,6 +9610,27 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
         end)
 
+        -- Some rooms have never had an `ex` run in them, so their exit-set
+        -- isn't known. A name-only check is worth more than none, but it is
+        -- weak, and it says so rather than pretending otherwise.
+        it("accepts a start given as a name alone, and warns that it is weak", function()
+            route({ from = { room = "north plaza" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+            local out = lastEchoes()
+            assert.is_truthy(out:find("Going on the room name alone", 1, true))
+            -- ...and reports what it saw, so the check can be tightened.
+            assert.is_truthy(out:find("exits are e,n,s,sw,w", 1, true))
+        end)
+
+        it("still refuses a name-only start in a differently named room", function()
+            route({ from = { room = "grand hall" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(0, sent("sw"))
+        end)
+
         -- A fingerprint start must not quietly skip the other pre-flight check.
         it("still checks the pack for what the route needs", function()
             route({ from = FROM, requires = "coil of rope" })

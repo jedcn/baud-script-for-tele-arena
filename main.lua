@@ -4650,7 +4650,30 @@ local NAV_ROUTES = {
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    ["town-3/stone-lvl-3"]         = { pending = true },
+    -- Level two down to level three, from the chamber stone-lvl-2 drops into.
+    -- The way down is another riddle: `say arok`, three steps from the end.
+    --
+    -- The start is a name with no exit-set, because that chamber has never had
+    -- an `ex` run in it -- the level-2 walk arrived and logged out. It is the
+    -- weakest start check we have (twenty-four rooms answer to "stonework
+    -- chamber"), and navigate-to says so when it uses it. One `ex` down there
+    -- and it can be made exact.
+    --
+    -- Nothing here is checkable against the map, which stops at the riddle
+    -- door two levels up. Six runs of a doubled direction -- s s, sw sw, ne ne,
+    -- n n, ne ne, n n -- and a miscounted repeat is what went wrong three times
+    -- on the level-2 leg, so those are where to look first if a step is refused.
+    ["town-3/stone-lvl-3"] = {
+        from  = { room = "stonework chamber" },
+        steps = { "w", "sw", "w", "sw", "w", "s", "s", "e", "ne", "e", "se",
+                  "sw", "sw", "se", "sw", "w", "nw", "sw", "s",
+                  { cmd = "pull lever" },
+                  "n", "ne", "se", "e", "ne", "nw", "ne", "ne", "nw", "w",
+                  "sw", "w", "n", "n", "e", "ne", "nw", "n", "nw", "ne", "ne",
+                  "e", "ne",
+                  { cmd = "say arok" },
+                  "n", "n", "d" },
+    },
     ["town-3/stone-lvl-4"]         = { pending = true },
     ["town-3/stone-lvl-5"]         = { pending = true },
     ["town-3/stone-lvl-6"]         = { pending = true },
@@ -5425,9 +5448,14 @@ createAlias("^navigate-to (.+)$", function(matches)
     end
     -- A route names its start either as a map reference or, where the map can't
     -- tell one room from another, as a literal fingerprint (see navExitKey).
-    local fromRoom, fromErr, fromExits
+    local fromRoom, fromErr, fromFp
     if type(route.from) == "table" then
-        fromExits = navExitKey(route.from.exits)
+        -- Exits are optional. Naming a room we've only ever stood in once, and
+        -- never run `ex` in, is worth more than nothing -- but say out loud
+        -- that it is a weak check, because "stonework chamber" is twenty-four
+        -- rooms and the walk would set off from any of them.
+        fromFp = { room = route.from.room,
+                   exits = route.from.exits and navExitKey(route.from.exits) or nil }
     else
         fromRoom, fromErr = navResolveRef(route.from)
         if not fromRoom then
@@ -5435,8 +5463,9 @@ createAlias("^navigate-to (.+)$", function(matches)
             return
         end
     end
-    local fromLabel = fromExits
-        and ("a room called '" .. route.from.room .. "' with exits " .. fromExits)
+    local fromLabel = fromFp
+        and ("a room called '" .. fromFp.room .. "'"
+             .. (fromFp.exits and (" with exits " .. fromFp.exits) or ""))
         or route.from
 
     -- Identify where we're standing before we move. A route is only valid from
@@ -5462,8 +5491,15 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             -- A fingerprint start asks the map nothing: the check is that the
             -- room we're standing in looks the way the route says it should.
-            if fromExits then
-                if name == route.from.room and navExitKey(dirs) == fromExits then
+            if fromFp then
+                if name == fromFp.room
+                    and (not fromFp.exits or navExitKey(dirs) == fromFp.exits) then
+                    if not fromFp.exits then
+                        navEcho("Going on the room name alone — I can't tell this"
+                            .. " '" .. name .. "' from any other. Check it's the right one."
+                            .. " (Its exits are " .. navExitKey(dirs)
+                            .. " — tell me and I'll make the check exact.)")
+                    end
                     if route.requires then
                         navCheckInventory(route.requires, gen, go)
                     else
