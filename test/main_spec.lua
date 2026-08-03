@@ -10272,6 +10272,97 @@ describe("navigate-to", function()
 
     end)
 
+    -- The hydra route drops through a trap door into a pit that can't be
+    -- climbed "unaided", so a rope-less character walks in and stays there.
+    -- Better to find that out standing in the sewers.
+    describe("an errand that needs an item", function()
+
+        local function askToWalk()
+            route({ requires = "coil of rope" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+        end
+
+        it("asks what it is carrying before setting off", function()
+            askToWalk()
+            assert.are.equal(1, sent("i"))
+            assert.are.equal(0, sent("sw"))   -- nothing moves until the answer
+        end)
+
+        it("walks once the item is there", function()
+            askToWalk()
+            helper.simulateLine("You are carrying 559 gold crowns, a coil of rope, and a waterskin(3).")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        -- The listing wraps at the terminal width, so an item can straddle the
+        -- break. Read line by line and "coil of rope" is never there to find.
+        it("finds an item split across a wrapped line", function()
+            askToWalk()
+            helper.simulateLine("You are carrying 559 gold crowns, a glowstone, a coil of")
+            assert.are.equal(0, sent("sw"))   -- sentence unfinished; still reading
+            helper.simulateLine("rope, a ration of food, and a waterskin(3).")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        it("refuses and stays put when the item is missing", function()
+            askToWalk()
+            helper.simulateLine("You are carrying 559 gold crowns, and a waterskin(3).")
+            assert.are.equal(0, sent("sw"))
+            assert.is_nil(taPackage.navigate)
+            local out = lastEchoes()
+            assert.is_truthy(out:find("needs a coil of rope and I'm not carrying one", 1, true))
+            -- Say what we did see, so a near miss is obvious rather than baffling.
+            assert.is_truthy(out:find("Carrying: 559 gold crowns, and a waterskin(3).", 1, true))
+        end)
+
+        it("says so when the game never answers", function()
+            askToWalk()
+            helper.fireTimers(5000)
+            assert.are.equal(0, sent("sw"))
+            assert.is_truthy(lastEchoes():find("never listed what I'm carrying", 1, true))
+        end)
+
+        it("ignores lines before the listing", function()
+            askToWalk()
+            helper.simulateLine("Someone shouts something rude.")
+            helper.simulateLine("You are carrying a coil of rope.")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        it("leaves a route with no requirement alone", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(0, sent("i"))
+            assert.are.equal(1, sent("sw"))
+        end)
+
+    end)
+
+    -- A trap door prints TWO arrival briefs for one move: the room walked into,
+    -- then the pit fallen into. Counting both runs the step list a move ahead
+    -- of the character.
+    describe("falling through a trap door", function()
+
+        it("does not count the pit as a step of its own", function()
+            route({ steps = { "sw", "d", "se", "n" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                        -- step 1 landed
+            helper.simulateLine("You just fell through a trap door in the floor!")
+            brief("pit")                                         -- not a step
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))
+            assert.are.equal(0, sent("se"))
+            -- And the climb back out is an ordinary step: its brief advances.
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+    end)
+
     -- Getting to third-town is not all walking: there are levers to pull and
     -- stones to push. Nothing in the game reliably answers such a command, so
     -- the pacing pause is what says it has had its chance.

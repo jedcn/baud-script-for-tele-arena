@@ -4561,10 +4561,24 @@ local NAV_ROUTES = {
                   { killAll = true },
                   "w", "sw", "nw", "w", "n", "nw", "nw", "w" },
     },
+    -- On through the onyx door and a long way north to the hydra's room, which
+    -- gets cleared. One way -- no return leg was given.
+    --
+    -- Step 6 is the odd one: `u` climbs out of a pit. Walking east into
+    -- town-sewers-148 (step 5) drops us through a trap door, and the pit's
+    -- walls can't be climbed unaided, which is what `requires` is guarding.
+    -- Without the rope the errand ends at the bottom of it.
+    ["town-3/hydra"] = {
+        from     = "sewers/town-sewers-63",
+        to       = "sewers/town-sewers-165",
+        requires = "coil of rope",
+        steps    = { "s", "d", "ne", "ne", "e", "u", "se", "se", "e", "ne", "n", "nw",
+                     "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
+                     { killAll = true } },
+    },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    ["town-3/hydra"]               = { pending = true },
     ["town-3/stoneworks-entrance"] = { pending = true },
     ["town-3/stone-lvl-2"]         = { pending = true },
     ["town-3/stone-lvl-3"]         = { pending = true },
@@ -5163,6 +5177,67 @@ local function navOnRoomBrief(room)
 end
 taPackage.navOnRoomBrief = navOnRoomBrief
 
+-- =========================================================================
+-- Setting off only if we're carrying what the errand needs
+-- =========================================================================
+--
+-- Some routes can't be walked without a particular item. The hydra route drops
+-- through a trap door into a pit whose walls "rise some ten feet above your
+-- head... you could [not] climb them unaided" -- so a rope-less character walks
+-- in and stays there. Far better to find that out standing in the sewers than
+-- at the bottom of the pit.
+--
+-- `i` answers with one sentence that wraps at the terminal width, so an item
+-- can straddle two lines:
+--
+--     You are carrying 559 gold crowns, a glowstone, a coil of rope, a
+--     ration of food, and a waterskin(3).
+--
+-- Hence: gather lines until one ends the sentence, join them back into a
+-- single string, and look for the item in that. Matching a wrapped line on its
+-- own would miss a "coil of rope" split across the break.
+local function navInventoryFinish()
+    local inv = taPackage.navInventory
+    if not inv then return end
+    taPackage.navInventory = nil
+    if (taPackage.navGen or 0) ~= inv.gen then return end
+    if inv.text:lower():find(inv.want:lower(), 1, true) then
+        inv.onOk()
+        return
+    end
+    navEcho("This route needs a " .. inv.want .. " and I'm not carrying one — not setting off.")
+    navEcho("  Carrying: " .. inv.text)
+end
+
+createTrigger("^(.+)$", function(matches)
+    local inv = taPackage.navInventory
+    if not inv then return end
+    local line = trimLine(matches[2])
+    if inv.text == nil then
+        -- Everything before the listing (our own echoed `i`, a passing shout)
+        -- is not ours to read.
+        local rest = line:match("^You are carrying (.+)$")
+        if not rest then return end
+        inv.text = rest
+    else
+        inv.text = inv.text .. " " .. line
+    end
+    -- The sentence ends with a full stop; anything else is a wrapped line.
+    if inv.text:sub(-1) == "." then navInventoryFinish() end
+end, { type = "regex" })
+
+local function navCheckInventory(want, gen, onOk)
+    taPackage.navInventory = { want = want, gen = gen, onOk = onOk }
+    send("i")
+    createTimer(NAV_PROBE_TIMEOUT_MS, function()
+        local inv = taPackage.navInventory
+        if not inv or inv.gen ~= gen then return end
+        taPackage.navInventory = nil
+        navEcho("The game never listed what I'm carrying, so I can't tell whether I have a "
+            .. want .. " — nothing sent. Try again.")
+    end, { repeating = false })
+end
+
 -- `startFloor` is what was lying in the starting room, captured by the opening
 -- probe. Without it a trip on the very first step would have nothing to compare
 -- against, and anything already on the floor there would look like ours.
@@ -5287,7 +5362,16 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
+                local function go()
+                    navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
+                end
+                -- We're in the right room; the only remaining question is
+                -- whether we're equipped for what's between here and there.
+                if route.requires then
+                    navCheckInventory(route.requires, gen, go)
+                else
+                    go()
+                end
                 return
             end
             local here
@@ -5365,6 +5449,27 @@ createTrigger("^Sorry, there's no exit in that direction\\.$", function()
     stopNavigate()
     navEcho("No exit that way at " .. where .. " — stopping."
         .. " Either the route is wrong or I wasn't where I thought I was.")
+end, { type = "regex" })
+
+-- A trap door drops us a floor mid-step. The game prints the room we walked
+-- into, THEN the fall, THEN the pit -- two arrival briefs for one move, and
+-- counting both would run the step list a move ahead of the character. Swallow
+-- the pit's brief; the route's own next step is the climb back out.
+--
+--     e
+--     You're in a cave.
+--     There is an ogress here.
+--     There is nothing on the floor.
+--     You just fell through a trap door in the floor!
+--     You're in a pit.
+--
+-- The pit on the way to the hydra is why `town-3/hydra` insists on a rope: its
+-- walls "rise some ten feet above your head" and can't be climbed unaided.
+createTrigger("^You just fell through a trap door in the floor!$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    navDebug("fell through a trap door on step " .. j.index)
+    j.blocked = true
 end, { type = "regex" })
 
 -- Moving too fast trips the character; resting blocks the move outright. Both
