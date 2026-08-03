@@ -10237,6 +10237,62 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        -- The three key errands each ran their sweep for 65-99 seconds, long
+        -- after the key was in hand. A sweep that names what it wants stops
+        -- when it has it.
+        describe("a sweep that stops once it has what it came for", function()
+
+            local WANT = { "sw", "d", { killAll = true, untilFound = "ruby key" }, "se" }
+
+            local function sweepingFor()
+                route({ steps = WANT })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                answerProbe(274)
+                brief("path")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                brief("town sewers")
+                helper.fireTimers(taPackage.navStepDelayMs)
+            end
+
+            it("says what it is fighting for", function()
+                sweepingFor()
+                assert.is_truthy(lastEchoes():find("Clearing the room until I get a ruby key", 1, true))
+            end)
+
+            it("stops fighting and walks on when it drops", function()
+                sweepingFor()
+                assert.is_true(taPackage.killAllActive)
+                helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
+                assert.is_falsy(taPackage.killAllActive)
+                assert.is_nil(taPackage.navSweep)
+                assert.is_truthy(lastEchoes():find("leaving the rest of the room", 1, true))
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(1, sent("se"))
+            end)
+
+            it("keeps fighting for anything else that turns up", function()
+                sweepingFor()
+                helper.simulateLine("While searching the area, you notice a bronze key, which you add to your possessions.")
+                assert.is_true(taPackage.killAllActive)
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(0, sent("se"))
+            end)
+
+            -- Without a stated want, the old behaviour stands: clear the room.
+            it("clears the whole room when nothing is named", function()
+                route({ steps = { "sw", "d", { killAll = true }, "se" } })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                answerProbe(274)
+                brief("path")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                brief("town sewers")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")
+                assert.is_true(taPackage.killAllActive)
+            end)
+
+        end)
+
         it("announces a key found while searching a corpse", function()
             sweeping()
             helper.simulateLine("While searching the area, you notice a ruby key, which you add to your possessions.")

@@ -4532,7 +4532,7 @@ local NAV_ROUTES = {
         from  = "sewers/town-sewers-18",
         to    = "sewers/town-sewers-18",
         steps = { "e", "ne", "n", "ne", "ne", "nw", "nw", "n", "ne", "se", "se", "se",
-                  { killAll = true },
+                  { killAll = true, untilFound = "ruby key" },
                   "nw", "nw", "nw", "sw", "s", "se", "se", "sw", "sw", "s", "sw", "w" },
     },
     -- Through the ruby door and out to the platinum key's room, then back as
@@ -4547,7 +4547,7 @@ local NAV_ROUTES = {
         from  = "sewers/town-sewers-18",
         to    = "sewers/town-sewers-63",
         steps = { "s", "d", "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "n",
-                  { killAll = true },
+                  { killAll = true, untilFound = "platinum key" },
                   "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
     },
     -- Picks up where the platinum errand leaves off, at town-sewers-63, and
@@ -4558,7 +4558,7 @@ local NAV_ROUTES = {
         from  = "sewers/town-sewers-63",
         to    = "sewers/town-sewers-63",
         steps = { "e", "se", "se", "s", "e", "se", "ne", "e",
-                  { killAll = true },
+                  { killAll = true, untilFound = "onyx key" },
                   "w", "sw", "nw", "w", "n", "nw", "nw", "w" },
     },
     -- On through the onyx door and a long way north to the hydra's room, which
@@ -4574,7 +4574,7 @@ local NAV_ROUTES = {
         requires = "coil of rope",
         steps    = { "s", "d", "ne", "ne", "e", "u", "se", "se", "e", "ne", "n", "nw",
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
-                     { killAll = true } },
+                     { killAll = true, untilFound = "pearl key" } },
     },
     -- Out of the sewers and across the desert. Step 2 is the pearl-keyed stone
     -- door, so this wants the pearl key the hydra drops as well as the potion.
@@ -5282,12 +5282,32 @@ navStartSweep = function()
         navEcho("An arena session is active — stopping " .. dest .. " rather than starting kill-all.")
         return
     end
-    navEcho("Clearing the room with kill-all.")
+    -- `untilFound` is what the errand actually came for. With it, the sweep is
+    -- over the moment that thing turns up; without it, the room gets cleared.
+    local want = j.steps[j.index].untilFound
+    navEcho(want and ("Clearing the room until I get a " .. want .. ".")
+                  or "Clearing the room with kill-all.")
     -- Marks this sweep as a route's, which is what scopes the full-pack
     -- handling below: a kill-all run by hand is nobody's business but yours.
-    taPackage.navSweep = { destination = j.destination, uncarried = {} }
+    taPackage.navSweep = { destination = j.destination, uncarried = {}, untilFound = want }
     taPackage.killAllActive = true
     taPackage.killAllScan()
+end
+
+-- We have what the errand came for, so there is no reason to go on killing.
+-- Stop swinging and walk on; if something is still on us, the move is refused
+-- and retried until it breaks off, which is no worse than fighting it out and
+-- usually a great deal quicker.
+local function navSweepGotWhatItCameFor(item)
+    local sweep = taPackage.navSweep
+    taPackage.navSweep = nil
+    if taPackage.stopKill then taPackage.stopKill() end
+    navEcho("Got the " .. item .. " — that's what this was for, leaving the rest of the room.")
+    if sweep and #sweep.uncarried > 0 then
+        navEcho("  Note: the " .. table.concat(sweep.uncarried, ", the ")
+            .. " is still on the floor here.")
+    end
+    navAdvance()
 end
 
 -- The room is clear, so the sweep step is done. Report what it yielded and walk
@@ -5820,6 +5840,12 @@ end, { type = "regex" })
 local function navNoteKeyFound(item)
     if not (taPackage.killAllActive or taPackage.killActive) then return end
     local name = navStripArticle(item)
+    -- A sweep that named what it wanted ends here, whatever it was.
+    local sweep = taPackage.navSweep
+    if sweep and sweep.untilFound and name:find(sweep.untilFound, 1, true) then
+        navSweepGotWhatItCameFor(name)
+        return
+    end
     if not name:find("key", 1, true) then return end
     navEcho("Got the " .. name .. ".")
 end
