@@ -4550,10 +4550,20 @@ local NAV_ROUTES = {
                   { killAll = true },
                   "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
     },
+    -- Picks up where the platinum errand leaves off, at town-sewers-63, and
+    -- opens by going east through the platinum door -- so it wants that key in
+    -- hand. Out to town-sewers-113 and back to the junction; both halves walk
+    -- through the mapped graph.
+    ["town-3/get-onyx-key"] = {
+        from  = "sewers/town-sewers-63",
+        to    = "sewers/town-sewers-63",
+        steps = { "e", "se", "se", "s", "e", "se", "ne", "e",
+                  { killAll = true },
+                  "w", "sw", "nw", "w", "n", "nw", "nw", "w" },
+    },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
     -- navigate-to say that rather than pretend the name is unknown.
-    ["town-3/get-onyx-key"]        = { pending = true },
     ["town-3/hydra"]               = { pending = true },
     ["town-3/stoneworks-entrance"] = { pending = true },
     ["town-3/stone-lvl-2"]         = { pending = true },
