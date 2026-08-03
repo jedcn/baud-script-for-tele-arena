@@ -4584,24 +4584,23 @@ local NAV_ROUTES = {
     -- onPoison above, which drinks if and when the game says we've been
     -- poisoned, and doesn't waste a potion when it hasn't.
     --
-    -- Recorded as given, with two places the map disagrees:
+    -- Three `u` out of the sewers, not four: town-sewers-169 -> town sewer ->
+    -- town sewer-1 -> the desert's crude stone building, which has exits d, e
+    -- and w and no `u` to take. With that dropped the route runs cleanly for
+    -- nineteen steps, out through the building's east door and down the sandy
+    -- passages into the desert.
     --
-    --   * Step 6, the fourth `u`. Three of them chain cleanly
-    --     (town-sewers-169 -> town sewer -> town sewer-1 -> the desert's crude
-    --     stone building) and the building has exits d, e, w -- no `u` at all.
-    --     Drop one `u` and the next `e` walks straight on through the door
-    --     into the sandy passages. High confidence: same "one repeat too many"
-    --     as the platinum errand's fourth `ne`.
-    --   * Step 20, the `e` after the first `se`. With one `u` dropped the
-    --     route runs cleanly to desert-7, which the map gives exits nw and se
-    --     -- no `e`. Lower confidence: these desert rooms carry one or two
-    --     visits each, against four or five in the sewers, so the map is
-    --     thinner here than where it has been right before.
+    -- It then stops agreeing at step 19's `e`, where the map gives desert-7
+    -- exits nw and se only. Left as given: those desert rooms carry one or two
+    -- visits each, against the four or five behind every correction the map
+    -- has earned so far, so it hasn't the standing to overrule a real walk
+    -- here. A refused direction stops cleanly and names the step, which is a
+    -- cheaper way to settle it than guessing.
     ["town-3/stoneworks-entrance"] = {
         from     = "sewers/town-sewers-165",
         requires = "verbena potion",
         onPoison = "drink verbena",
-        steps    = { "w", "w", "u", "u", "u", "u", "e", "e", "s", "s", "s",
+        steps    = { "w", "w", "u", "u", "u", "e", "e", "s", "s", "s",
                      "w", "w", "w", "s", "sw", "sw", "sw", "sw", "se", "e",
                      "se", "e", "s", "se", "sw", "se", "s", "se", "s", "s",
                      "se", "sw", "sw", "se", "se", "s" },
