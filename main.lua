@@ -4728,7 +4728,31 @@ local NAV_ROUTES = {
                   "n", "nw", "ne", "ne", "n", "nw", "ne", "nw", "nw", "n",
                   "n", "d" },
     },
-    ["town-3/temple"]              = { pending = true },
+    -- Level six to the temple, and the end of the chain. No riddle at the door;
+    -- two levers, each at the far end of a dead-end run that is then walked
+    -- back. Those runs balance -- six n out, lever, six s back; eight s out,
+    -- lever, eight n back -- which is the only self-check anything down here
+    -- has, and both halves agree.
+    --
+    -- Much the longest leg, and much the riskiest to transcribe: twenty-three
+    -- runs of a repeated direction, including 8 s, 8 n, 7 w and 6 e twice. A
+    -- repeat counted once too often is what went wrong four times on
+    -- stone-lvl-2, and none of this can be checked against the map.
+    ["town-3/temple"] = {
+        from  = { room = "stonework chamber", exits = "e,u" },
+        steps = { "e", "e", "e", "e", "e", "e", "s", "e", "e", "e",
+                  "s", "s", "s", "s", "w", "w", "s", "s", "s",
+                  "w", "w", "w", "w", "s", "s", "w", "w", "w", "w",
+                  "n", "n", "n", "n", "n", "n",
+                  { cmd = "pull lever" },
+                  "s", "s", "s", "s", "s", "s", "e", "e", "e", "s", "s",
+                  "e", "e", "e", "e", "e", "e", "n", "n", "n", "e", "n", "n",
+                  "e", "e", "e", "s", "s", "s", "s", "s", "s", "s", "s",
+                  { cmd = "pull lever" },
+                  "n", "n", "n", "n", "n", "n", "n", "n", "w", "w", "w",
+                  "s", "s", "w", "s", "s", "s", "s", "s", "s", "w", "s", "s",
+                  "w", "w", "w", "w", "w", "w", "w", "ne", "e" },
+    },
 }
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES

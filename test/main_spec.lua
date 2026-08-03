@@ -9523,10 +9523,13 @@ describe("navigate-to", function()
 
         -- A name we've agreed on but haven't walked yet. Reporting it as
         -- unknown would be a lie, and reporting nothing would look like a bug.
+        -- Registered here rather than borrowed from the live table, which no
+        -- longer has one -- all twelve routes are recorded.
         it("says a named-but-unwalked route hasn't been recorded yet", function()
-            helper.simulateAlias("navigate-to town-3/temple")
+            taPackage.navRoutes["town-3/not-walked-yet"] = { pending = true }
+            helper.simulateAlias("navigate-to town-3/not-walked-yet")
             local out = lastEchoes()
-            assert.is_truthy(out:find("I know the name town-3/temple", 1, true))
+            assert.is_truthy(out:find("I know the name town-3/not-walked-yet", 1, true))
             assert.is_truthy(out:find("give me the starting room and the steps", 1, true))
             assert.are.equal(0, #helper.sendCalls)
         end)
