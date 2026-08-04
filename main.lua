@@ -2568,11 +2568,10 @@ end
 -- makes the character fall down. A "journey" walks such a route one step at a
 -- time: an explicit list of directions plus the room that ends it. We send the
 -- first step, then advance one step per room line we receive, pausing
--- ARENA_STEP_DELAY_MS between steps. This is the shared travel primitive for
--- the second arena's temple/bar trips and for either arena's magic-shop trip.
--- The first arena's adjacent temple/bar still use immediate room-name moves
--- (no journey); both arenas' rooms are named "arena"/"temple", so a journey is
--- driven by its own step list, never by matching a waypoint's name.
+-- ARENA_STEP_DELAY_MS between steps. Every leg in every arena is a journey:
+-- temple, bar, magic shop, guild hall. All three arenas name rooms alike
+-- ("arena", "temple"), so a journey is driven by its own step list and never by
+-- matching a waypoint's name.
 -- 1500ms, the same pace navigate-to settled on, and for the same reason. That
 -- was tuned by measurement rather than guesswork: at 1000ms a paced walk tripped
 -- 4 times in 60 moves (6.7%, against a 1.13% baseline over the 72,354 hand-typed
@@ -2597,17 +2596,44 @@ local ARENA_ROOM = "arena"
 -- with a large HP margin (something-went-wrong.log still had ~200/318 after 20
 -- minutes stuck).
 local ARENA_PARCHED_LIMIT = 20
--- Per-profile navigation for the "paced route" arenas (second, third): their
--- temple/bar/shop/training rooms are distant, reached by fixed direction
--- step-lists walked one paced step at a time — unlike the first arena's
--- adjacent rooms, which are navigated by reacting to room names. arenaNav()
--- returns the active profile's config, or nil for the first arena (absent from
--- this table), which is the test the paced-vs-room-name branches key on.
+-- Per-profile navigation: each arena's temple, bar and (where it has one)
+-- guild hall, reached by a fixed direction step-list walked one paced step at a
+-- time. arenaNav() returns the active profile's config. All three arenas are in
+-- here now, so every leg is paced and every leg has trip recovery.
 --
 -- The second arena has no training hall (checkTrainingNeeded gates on
 -- ARENA_HAS_TRAINING below); the third does, so it also carries a toTraining/
 -- fromTraining route and a trainingRoom name.
 local ARENA_NAV = {
+    -- The first arena used to walk by room name instead: send the next
+    -- direction the instant the arrival line lands. That paced it at the
+    -- round-trip latency, 300-600ms, three to five times faster than the
+    -- 1500ms we know avoids a trip -- and worse, the trip recovery below is
+    -- guarded on `arenaJourney`, so these were the only moves in the script
+    -- with nothing to catch a fall. A trip printed no room line, the state
+    -- machine waited for one forever, and the run wedged.
+    --
+    -- Giving it step lists costs nothing and fixes both at once: the same
+    -- paced walk, the same retry, the same code as the other two arenas. Every
+    -- route here is checked against the mapped first town, room names included.
+    --
+    -- One deliberate behaviour change comes with it. Healing while also hungry
+    -- used to cut the corner from the temple straight to the tavern; now it
+    -- returns to the arena and sets out again, because arrivals are the single
+    -- place errands get dispatched (see arenaArrivedHome). Two rooms longer,
+    -- and the same as the other arenas do it.
+    first = {
+        arenaRoom    = ARENA_ROOM,
+        templeRoom   = "temple",
+        barRoom      = "tavern",
+        trainingRoom = "guild hall",
+        toTemple     = { "w", "w" },
+        fromTemple   = { "e", "e" },
+        toBar        = { "w", "ne" },
+        fromBar      = { "sw", "e" },
+        toTraining   = { "w", "n" },
+        fromTraining = { "s", "e" },
+    },
     second = {
         arenaRoom  = ARENA_ROOM,
         templeRoom = "temple",
@@ -2631,10 +2657,8 @@ local ARENA_NAV = {
     },
 }
 
--- Which profiles have a training hall to bank earned levels. The first arena
--- reaches its hall by room-name nav; the third walks a paced route (both drive
--- the same buy-training flow). The second arena has none, so a level-up there
--- just keeps fighting. Absent = false.
+-- Which profiles have a training hall to bank earned levels. The second arena
+-- has none, so a level-up there just keeps fighting. Absent = false.
 local ARENA_HAS_TRAINING = { first = true, third = true }
 
 local function arenaNav()
@@ -2730,10 +2754,9 @@ end
 
 -- Back in the arena at the end of an errand. Each errand (heal, food, potions)
 -- is its own round trip that starts and ends here, so any still-owed errand is
--- launched now — shop before food — rather than resuming combat. Shared by both
--- the paced-journey return (second arena, and any shop trip) and the first
--- arena's room-name return, so a potion that wore off mid-errand is serviced
--- whichever way we walked home. departForShop/Tavern pick the route per arena.
+-- launched now — shop before food — rather than resuming combat. Every arena
+-- walks home the same way, so a potion that wore off mid-errand is serviced on
+-- arrival whichever errand we were on. departForShop/Tavern pick the route.
 local function arenaArrivedHome()
     -- Skip a restock while a level is owed: we are deliberately draining the stat
     -- potions so the training hall will accept us (checkTrainingNeeded stays true
@@ -2832,12 +2855,10 @@ local function arenaJourneyOnMovement(room)
         local nav = arenaNav()
         arenaJourneyStart(nav.fromBar, nav.arenaRoom, nav.barRoom)
     elseif st == "training" then
-        -- Arrived at the guild hall (paced arenas with a training hall). Send the
-        -- purchase and immediately start walking home — its success/refusal is
-        -- handled by their own triggers, and we don't wait for the reply (mirrors
-        -- the first arena's room-name training, which also walks off right after
-        -- "buy training"). Banking the level, charging the fee, and re-buying
-        -- potions happen in the success trigger.
+        -- Arrived at the guild hall. Send the purchase and start walking home
+        -- at once: its success or refusal is handled by their own triggers, so
+        -- there is nothing to wait for. Banking the level, charging the fee and
+        -- re-buying potions all happen in the success trigger.
         send("buy training")
         taPackage.arenaState = "returning"
         local nav = arenaNav()
@@ -2893,18 +2914,11 @@ local function arenaTryTrain()
     if (taPackage.arenaPotionsActive or 0) > 0 then return false end
     echo("[arena] Leveling up — heading to training hall.")
     taPackage.arenaState = "training"
+    -- Walk the fixed route to the guild hall. Arrival there
+    -- (arenaJourneyOnMovement, st == "training") sends "buy training" and
+    -- starts the walk home.
     local nav = arenaNav()
-    if nav then
-        -- Paced arena: walk the fixed route to the guild hall. Arrival there
-        -- (arenaJourneyOnMovement, st == "training") sends "buy training" and
-        -- starts the walk home.
-        arenaJourneyStart(nav.toTraining, nav.trainingRoom, nav.arenaRoom)
-    else
-        -- First arena: adjacent room-name navigation drives the trip (the
-        -- "You're in the" handler advances phase 1 → 2 → buy → return).
-        taPackage.arenaTrainingPhase = 1
-        arenaSend("w")
-    end
+    arenaJourneyStart(nav.toTraining, nav.trainingRoom, nav.arenaRoom)
     return true
 end
 
@@ -2942,24 +2956,21 @@ function checkFleeArena()
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
         local nav = arenaNav()
-        if nav then
-            arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
-        else
-            arenaSend("w")
+        if not nav then
+            -- No profile means no route to walk. Say so rather than throwing
+            -- from inside a trigger: the state change above has already stopped
+            -- us swinging, which is the half of fleeing that keeps us alive.
+            echo("[arena] Fleeing, but no arena profile is set — walk out by hand.")
+            return true
         end
+        arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
         return true
     end
     return false
 end
 
 function departForTavern()
-    if arenaNav() then
-        departForBar()
-        return
-    end
-    taPackage.arenaState = "tavern"
-    echo("[arena] Heading to tavern.")
-    arenaSend("w")
+    departForBar()
 end
 
 local function scheduleArenaXpCheck()
@@ -3527,66 +3538,14 @@ createTrigger("^You barely dodge the .+'s attack!$", function()
     arenaAttack()
 end, { type = "regex" })
 
+-- Every arena leg is a paced journey now, so a room line means one thing: a
+-- step of the walk in progress. The room-name navigation that used to sit here
+-- -- react to a named waypoint, send the next direction at once -- is gone with
+-- the first arena's step lists, and with it the two faults it carried: no
+-- pacing, and no trip recovery. A room line with no journey running is a no-op.
 createTrigger("^You're in the (.+)\\.$", function(matches)
-    local room = matches[2]
-    -- While a paced journey is active (the second arena's temple/bar trips, or
-    -- either arena's magic-shop trip), the walk handler owns every room line —
-    -- it advances fixed step lists rather than reacting to named waypoints. The
-    -- second arena has no room-name navigation at all, so a stray room line
-    -- there with no journey is a no-op.
-    if taPackage.arenaJourney then
-        arenaJourneyOnMovement(room)
-        return
-    end
-    -- Paced arenas (second, third) drive every leg by step-list, never by room
-    -- name, so a stray room line with no active journey is a no-op for them.
-    if arenaNav() then return end
-    if taPackage.arenaState == "training" then
-        local phase = taPackage.arenaTrainingPhase or 1
-        if phase == 1 and room == "north plaza" then
-            taPackage.arenaTrainingPhase = 2
-            arenaSend("n")
-        elseif phase == 2 then
-            -- Send the purchase and start walking home. Whether it succeeded is
-            -- decided by the guild-hall's reply: the "rigorous ... training
-            -- session" success line (banks the level, charges the fee, re-buys
-            -- potions) or the "...whole and untainted..." refusal, both handled by
-            -- their own triggers below.
-            send("buy training")
-            arenaSend("s")
-            taPackage.arenaState = "returning"
-            taPackage.arenaTrainingPhase = nil
-        end
-    elseif taPackage.arenaState == "fleeing" then
-        if room == "north plaza" then
-            arenaSend("w")
-        elseif room == "temple" then
-            taPackage.arenaState = "healing"
-            arenaSend("buy healing")
-        end
-    elseif taPackage.arenaState == "tavern" then
-        if room == "north plaza" then
-            arenaSend("ne")
-        elseif room == "tavern" then
-            if taPackage.needsDrinks then
-                send("buy drink")
-                taPackage.needsDrinks = nil
-            end
-            if taPackage.needsMeal then
-                send("buy meal")
-                taPackage.needsMeal = nil
-            end
-            taPackage.arenaParchedStreak = 0
-            taPackage.arenaState = "returning"
-            arenaSend("sw")
-        end
-    elseif taPackage.arenaState == "returning" then
-        if room == "north plaza" then
-            arenaSend("e")
-        elseif room == "arena" then
-            arenaArrivedHome()
-        end
-    end
+    if not taPackage.arenaJourney then return end
+    arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
 
 -- Paced routes pass through "You're on a path." rooms, which the "in the"
@@ -3734,22 +3693,13 @@ end, { type = "regex" })
 
 createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(matches)
     if taPackage.arenaState ~= "healing" then return end
-    -- The second arena always walks back to the arena from the temple; if it is
-    -- also hungry/thirsty, the arrival handler sets out for the bar (a separate
-    -- round trip) rather than trying to route temple->bar directly.
+    -- Always walk back to the arena from the temple. If we are also hungry or
+    -- thirsty, the arrival handler sets out for the bar as a separate round
+    -- trip rather than routing temple->bar directly -- arriving home is the one
+    -- place errands get dispatched, so every errand starts from there.
     local nav = arenaNav()
-    if nav then
-        taPackage.arenaState = "returning"
-        arenaJourneyStart(nav.fromTemple, nav.arenaRoom, nav.templeRoom)
-        return
-    end
-    if taPackage.needsDrinks or taPackage.needsMeal then
-        taPackage.arenaState = "tavern"
-        echo("[arena] Heading to tavern.")
-    else
-        taPackage.arenaState = "returning"
-    end
-    arenaSend("e")
+    taPackage.arenaState = "returning"
+    arenaJourneyStart(nav.fromTemple, nav.arenaRoom, nav.templeRoom)
 end, { type = "regex" })
 
 -- =========================================================================
