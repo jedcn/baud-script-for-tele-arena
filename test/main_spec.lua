@@ -9503,6 +9503,9 @@ describe("navigate-to", function()
                    exits = { "e", "n", "s", "sw", "w" } },
         [340]  = { id = 340,  slug = "town-sewers",          name = "town sewers",       area = 8,
                    exits = { "u", "se" } },
+        -- Where the ruined-town route ends, so its `to` reference resolves.
+        [966]  = { id = 966,  slug = "ruined-plaza",         name = "ruined plaza",      area = 1,
+                   exits = { "n", "ne", "e", "s", "w", "nw" } },
         [359]  = { id = 359,  slug = "town-sewers-18",       name = "town sewers",       area = 8,
                    exits = { "e", "n", "s", "w" } },
         -- Slugs are numbered globally but references resolve within one area,
@@ -9679,10 +9682,11 @@ describe("navigate-to", function()
         -- wrong one would march the character into the sewers' walls instead.
         describe("the ruined-town route", function()
 
-            it("is sixty directions from the first town's north plaza", function()
+            it("is sixty-one directions from the first town's north plaza", function()
                 local r = taPackage.navRoutes["ruined-town"]
                 assert.are.equal("first-town/north-plaza", r.from)
-                assert.are.equal(60, #r.steps)
+                assert.are.equal("first-town/ruined-plaza", r.to)
+                assert.are.equal(61, #r.steps)
                 for i, step in ipairs(r.steps) do
                     assert.is_true(type(step) == "string",
                         "step " .. i .. " should be a plain direction")

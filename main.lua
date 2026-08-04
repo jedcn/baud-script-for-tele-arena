@@ -4718,27 +4718,40 @@ local NAV_ROUTES = {
     -- starts from the FIRST town's north plaza, which the map can tell apart
     -- from second-town's by exit-set (six exits against five).
     --
-    -- Sixty steps, and the map can check exactly two of them. The graph carries
-    -- us s to south-plaza and sw into the mountains, and then stops: every
-    -- wilderness room out here (mountains, forest, swamp, path -- ids 894-966)
-    -- carries a single visit and only the one or two exits somebody actually
-    -- walked through, so step 3's `sw` reads as "no such exit" from a room whose
-    -- real exit-set was never recorded. That is the map being empty, not the
-    -- route being wrong. Treat these directions as the walk itself, the way the
-    -- desert leg's are.
+    -- Rather more of this is checkable than it first looks, because the whole
+    -- wilderness was mapped in one walk -- tojolias, 2026-07-13 -- and these
+    -- directions run back over it. Steps 1-24 walk through the mapped graph and
+    -- steps 55-61 do too, coming backwards from the plaza; only the
+    -- twenty-nine in between are unverifiable, and those leave the map at
+    -- step 25, an unwalked `ne` stub out of the clearing at id 915.
     --
-    -- Fifteen runs of a repeated direction, three of them four long: se se se se
-    -- (18-21), ne ne ne ne (41-44) and the n n n n that ends it. A repeat counted
-    -- once too often is the commonest way one of these lists goes wrong, so
-    -- that's where to look first if a step is refused.
+    -- Two things that reading fell out of, both worth knowing about:
+    --
+    -- The map is missing a room at step 3. Between south-plaza and the mountains
+    -- stands "outside the town gates" (exits ne, se, sw, nw), which the mapper
+    -- failed to name on the way past -- "[map] couldn't read the room name" --
+    -- and then anchored past. So the graph carries a south-plaza --sw--> mountains
+    -- edge that skips a room, and a forward trace of this route "fails" at step 3
+    -- for that reason. The route is right and the map is wrong; don't correct the
+    -- route to match it.
+    --
+    -- Step 11 is the second `w`, and it was missing from the walk as first
+    -- written down. Without it step 12's `sw` is being asked of cave-161, whose
+    -- exits are e and w and are known from an actual `ex` -- and with it the next
+    -- thirteen steps walk cleanly through the forest to the clearing. Which is
+    -- the usual failure exactly once inverted: a repeated direction counted one
+    -- time too FEW. Nine other runs of a doubled direction to mistrust if a step
+    -- is refused, the longest being se se se se (19-22), ne ne ne ne (42-45) and
+    -- the n n n n that ends it.
     ["ruined-town"] = {
         from  = "first-town/north-plaza",
+        to    = "first-town/ruined-plaza",
         steps = { "s", "sw", "sw", "s", "sw", "se", "sw", "sw", "nw", "w",
-                  "sw", "s", "s", "sw", "sw", "se", "sw", "se", "se", "se",
-                  "se", "sw", "se", "ne", "e", "e", "e", "ne", "n", "ne",
-                  "e", "e", "se", "s", "sw", "se", "se", "ne", "ne", "n",
-                  "ne", "ne", "ne", "ne", "se", "se", "e", "ne", "ne", "e",
-                  "se", "se", "e", "ne", "ne", "ne", "n", "n", "n", "n" },
+                  "w", "sw", "s", "s", "sw", "sw", "se", "sw", "se", "se",
+                  "se", "se", "sw", "se", "ne", "e", "e", "e", "ne", "n",
+                  "ne", "e", "e", "se", "s", "sw", "se", "se", "ne", "ne",
+                  "n", "ne", "ne", "ne", "ne", "se", "se", "e", "ne", "ne",
+                  "e", "se", "se", "e", "ne", "ne", "ne", "n", "n", "n", "n" },
     },
 }
 -- Exposed so tests can register a route without editing the table above.
