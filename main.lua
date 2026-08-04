@@ -4713,6 +4713,33 @@ local NAV_ROUTES = {
                   "s", "s", "w", "s", "s", "s", "s", "s", "s", "w", "s", "s",
                   "w", "w", "w", "w", "w", "w", "w", "ne", "e" },
     },
+    -- Out of the first town and south-west across the wilderness to the ruined
+    -- town in the swamp. Nothing to do with the town-3 chain above: this one
+    -- starts from the FIRST town's north plaza, which the map can tell apart
+    -- from second-town's by exit-set (six exits against five).
+    --
+    -- Sixty steps, and the map can check exactly two of them. The graph carries
+    -- us s to south-plaza and sw into the mountains, and then stops: every
+    -- wilderness room out here (mountains, forest, swamp, path -- ids 894-966)
+    -- carries a single visit and only the one or two exits somebody actually
+    -- walked through, so step 3's `sw` reads as "no such exit" from a room whose
+    -- real exit-set was never recorded. That is the map being empty, not the
+    -- route being wrong. Treat these directions as the walk itself, the way the
+    -- desert leg's are.
+    --
+    -- Fifteen runs of a repeated direction, three of them four long: se se se se
+    -- (18-21), ne ne ne ne (41-44) and the n n n n that ends it. A repeat counted
+    -- once too often is the commonest way one of these lists goes wrong, so
+    -- that's where to look first if a step is refused.
+    ["ruined-town"] = {
+        from  = "first-town/north-plaza",
+        steps = { "s", "sw", "sw", "s", "sw", "se", "sw", "sw", "nw", "w",
+                  "sw", "s", "s", "sw", "sw", "se", "sw", "se", "se", "se",
+                  "se", "sw", "se", "ne", "e", "e", "e", "ne", "n", "ne",
+                  "e", "e", "se", "s", "sw", "se", "se", "ne", "ne", "n",
+                  "ne", "ne", "ne", "ne", "se", "se", "e", "ne", "ne", "e",
+                  "se", "se", "e", "ne", "ne", "ne", "n", "n", "n", "n" },
+    },
 }
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES

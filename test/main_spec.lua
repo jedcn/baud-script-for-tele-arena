@@ -9673,6 +9673,37 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("sw"))
         end)
 
+        -- The one recorded route that starts outside the town-3 chain, and the
+        -- reason the start check has to fingerprint: both towns have a room
+        -- called "north plaza", and walking sixty wilderness steps from the
+        -- wrong one would march the character into the sewers' walls instead.
+        describe("the ruined-town route", function()
+
+            it("is sixty directions from the first town's north plaza", function()
+                local r = taPackage.navRoutes["ruined-town"]
+                assert.are.equal("first-town/north-plaza", r.from)
+                assert.are.equal(60, #r.steps)
+                for i, step in ipairs(r.steps) do
+                    assert.is_true(type(step) == "string",
+                        "step " .. i .. " should be a plain direction")
+                end
+            end)
+
+            it("sets off south from first-town's north plaza", function()
+                helper.simulateAlias("navigate-to ruined-town")
+                answerProbe(1)
+                assert.are.equal(1, sent("s"))
+            end)
+
+            it("refuses to walk it from second-town's north plaza", function()
+                helper.simulateAlias("navigate-to ruined-town")
+                answerProbe(274)
+                assert.are.equal(0, sent("s"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+            end)
+
+        end)
+
     end)
 
     -- Where the map can't tell one room from another -- the stoneworks has
