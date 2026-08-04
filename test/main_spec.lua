@@ -9684,8 +9684,11 @@ describe("navigate-to", function()
 
             it("is sixty-one directions from the first town's north plaza", function()
                 local r = taPackage.navRoutes["ruined-town"]
-                assert.are.equal("first-town/north-plaza", r.from)
-                assert.are.equal("first-town/ruined-plaza", r.to)
+                -- Stated literally at both ends so the leg runs on a host with
+                -- no map: an empty tele-arena.db makes every <area>/<room>
+                -- reference unresolvable.
+                assert.are.same({ room = "north plaza", exits = "e,n,ne,nw,s,w" }, r.from)
+                assert.are.same({ room = "ruined plaza" }, r.to)
                 assert.are.equal(61, #r.steps)
                 for i, step in ipairs(r.steps) do
                     assert.is_true(type(step) == "string",
@@ -9704,6 +9707,21 @@ describe("navigate-to", function()
                 answerProbe(274)
                 assert.are.equal(0, sent("s"))
                 assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+            end)
+
+            -- The script opens tele-arena.db relative to the working directory,
+            -- and on a host that has never mapped anything that call makes an
+            -- empty database rather than failing. Every <area>/<room> reference
+            -- is then unresolvable -- "there's no area called 'first-town'
+            -- (known areas: )" -- so this leg names both its ends literally and
+            -- asks the map nothing.
+            it("walks on a host whose map is empty", function()
+                helper.mockDbOneRow = function() return nil end
+                helper.mockDbRows = function() return {} end
+                helper.simulateAlias("navigate-to ruined-town")
+                answerProbe(1)
+                assert.are.equal(1, sent("s"))
+                assert.is_falsy(lastEchoes():find("known areas", 1, true))
             end)
 
         end)
@@ -9967,6 +9985,43 @@ describe("navigate-to", function()
             helper.simulateLine("You're in the grand hall.")
             assert.is_truthy(lastEchoes():find("ended up in 'grand hall'", 1, true))
             assert.is_nil(taPackage.navigate)
+        end)
+
+        -- A `to` stated literally checks arrival on the brief's name alone,
+        -- which is all the check ever compared -- so it holds up where the map
+        -- can't answer at all.
+        describe("with the far end named literally", function()
+
+            local function startWalkingTo(roomName)
+                route({ to = { room = roomName } })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                answerProbe(274)
+                helper.fireTimers(taPackage.navStepDelayMs)
+            end
+
+            it("announces arrival when the last brief names that room", function()
+                startWalkingTo("ruined plaza")
+                helper.simulateLine("You're on a path.")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.simulateLine("You're in the town sewers.")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                -- The article is dropped before the name is compared.
+                helper.simulateLine("You're in a ruined plaza.")
+                assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+                assert.is_nil(taPackage.navigate)
+            end)
+
+            it("stops when it names some other room", function()
+                startWalkingTo("ruined plaza")
+                helper.simulateLine("You're on a path.")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.simulateLine("You're in the town sewers.")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.simulateLine("You're in an ancient temple.")
+                assert.is_truthy(lastEchoes():find("ended up in 'ancient temple'", 1, true))
+                assert.is_nil(taPackage.navigate)
+            end)
+
         end)
 
     end)

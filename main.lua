@@ -4743,9 +4743,20 @@ local NAV_ROUTES = {
     -- time too FEW. Nine other runs of a doubled direction to mistrust if a step
     -- is refused, the longest being se se se se (19-22), ne ne ne ne (42-45) and
     -- the n n n n that ends it.
+    --
+    -- Both ends are stated literally rather than as map references, so this leg
+    -- runs on a machine that has no map: the script opens `tele-arena.db`
+    -- relative to the working directory, and on a host that has never mapped
+    -- anything that call quietly makes an EMPTY database rather than failing --
+    -- whereupon every route naming an <area>/<room> reports "there's no area
+    -- called 'first-town' (known areas: )" and refuses to move. The two towns'
+    -- north plazas are still told apart exactly, by the six exits against five
+    -- that the paragraph above turns on. What is given up is only the map's
+    -- corroboration of the two ends, and both were checked when this was
+    -- recorded -- the plaza is id 966 and its `ex` reads n,ne,e,s,w,nw.
     ["ruined-town"] = {
-        from  = "first-town/north-plaza",
-        to    = "first-town/ruined-plaza",
+        from  = { room = "north plaza",  exits = "e,n,ne,nw,s,w" },
+        to    = { room = "ruined plaza" },
         steps = { "s", "sw", "sw", "s", "sw", "se", "sw", "sw", "nw", "w",
                   "w", "sw", "s", "s", "sw", "sw", "se", "sw", "se", "se",
                   "se", "se", "sw", "se", "ne", "e", "e", "e", "ne", "n",
@@ -5557,8 +5568,17 @@ createAlias("^navigate-to (.+)$", function(matches)
     -- reported standing still rather than halfway down a sewer. A route need not
     -- name where it ends -- an errand ends back where it started -- but when it
     -- does, that room is what arrival is checked against.
+    --
+    -- Either end may be stated literally instead of as a map reference, and both
+    -- ends of a route can need it for the same reason the stoneworks legs do:
+    -- the map may not be able to answer. `{ room = "ruined plaza" }` asks it
+    -- nothing and checks the arrival brief's name directly. All that is lost is
+    -- `destRoomId`, which only the door probe wants, so a literal `to` and a
+    -- `door` don't go together.
     local arriveName, destRoomId
-    if route.to then
+    if type(route.to) == "table" then
+        arriveName = route.to.room
+    elseif route.to then
         local destRoom, destErr = navResolveRef(route.to)
         if not destRoom then
             navEcho("Route destination " .. destErr)
