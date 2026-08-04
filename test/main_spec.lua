@@ -10660,6 +10660,34 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("sw"))
         end)
 
+        -- The check is a courtesy, not a lock: the potion may be on the floor a
+        -- room away, or today's hazard survivable without it.
+        it("sets off regardless when told 'anyway'", function()
+            route({ requires = "verbena potion" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+            answerProbe(274)
+            assert.are.equal(0, sent("i"))       -- never asked
+            assert.are.equal(1, sent("sw"))
+            assert.is_truthy(lastEchoes():find("without checking for a verbena potion", 1, true))
+        end)
+
+        it("takes 'anyway' alongside the other flags, in any order", function()
+            route({ requires = "verbena potion" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway quiet")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+            assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))   -- quiet still applied
+        end)
+
+        it("still overrides on a fingerprint start", function()
+            route({ from = { room = "north plaza", exits = "e,n,s,sw,w" },
+                    requires = "verbena potion" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+            answerProbe(274)
+            assert.are.equal(0, sent("i"))
+            assert.are.equal(1, sent("sw"))
+        end)
+
         it("leaves a route with no requirement alone", function()
             route()
             helper.simulateAlias("navigate-to sewers/town-sewers-18")

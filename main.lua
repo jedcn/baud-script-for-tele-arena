@@ -5460,17 +5460,27 @@ end
 
 createAlias("^navigate-to (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
-    -- The timing trace is ON by default while we are still tuning the pace: the
-    -- whole reason it exists is to catch a trip when it happens, and a trip we
-    -- have to reproduce deliberately is one we mostly miss. `quiet` turns it
-    -- off; `debug` is accepted too, so asking for it explicitly still works.
-    local destination, debug = arg, true
-    local quiet = arg:match("^(.-)%s+quiet$")
-    local explicit = arg:match("^(.-)%s+debug$")
-    if quiet then
-        destination, debug = quiet, false
-    elseif explicit then
-        destination = explicit
+    -- Trailing words, peeled off in any order and any number. A destination
+    -- never contains a space, so anything after one is a flag.
+    --
+    --   quiet   the timing trace is ON by default while we are still tuning the
+    --           pace -- the whole reason it exists is to catch a trip when it
+    --           happens, and a trip we have to reproduce deliberately is one we
+    --           mostly miss. This turns it off. `debug` is accepted too, so
+    --           asking for the trace explicitly still works.
+    --   anyway  set off without the pre-flight inventory check.
+    local destination, debug, anyway = arg, true, false
+    while true do
+        local head, word = destination:match("^(.-)%s+(%S+)$")
+        if word == "quiet" then
+            destination, debug = head, false
+        elseif word == "debug" then
+            destination = head
+        elseif word == "anyway" then
+            destination, anyway = head, true
+        else
+            break
+        end
     end
     local route = NAV_ROUTES[destination]
     if not route then
@@ -5559,6 +5569,23 @@ createAlias("^navigate-to (.+)$", function(matches)
             local function go()
                 navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
             end
+            -- We're in the right room by the time this is called; the only
+            -- remaining question is whether we're equipped for what lies
+            -- between here and there. `anyway` skips the asking -- the check is
+            -- a courtesy, and there are good reasons to overrule it: the item
+            -- is on the floor a room away, or today's hazard is survivable
+            -- without it. Say what is being skipped, and get on with it.
+            local function checkThenGo()
+                if not route.requires then
+                    go()
+                elseif anyway then
+                    navEcho("Setting off without checking for a " .. route.requires
+                        .. " — you asked for it anyway.")
+                    go()
+                else
+                    navCheckInventory(route.requires, gen, go)
+                end
+            end
             -- A fingerprint start asks the map nothing: the check is that the
             -- room we're standing in looks the way the route says it should.
             if fromFp then
@@ -5570,11 +5597,7 @@ createAlias("^navigate-to (.+)$", function(matches)
                             .. " (Its exits are " .. navExitKey(dirs)
                             .. " — tell me and I'll make the check exact.)")
                     end
-                    if route.requires then
-                        navCheckInventory(route.requires, gen, go)
-                    else
-                        go()
-                    end
+                    checkThenGo()
                     return
                 end
                 navEcho("I don't know how to get there from here.")
@@ -5584,13 +5607,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
             if #candidates == 1 and candidates[1].id == fromRoom.id then
-                -- We're in the right room; the only remaining question is
-                -- whether we're equipped for what's between here and there.
-                if route.requires then
-                    navCheckInventory(route.requires, gen, go)
-                else
-                    go()
-                end
+                checkThenGo()
                 return
             end
             local here
