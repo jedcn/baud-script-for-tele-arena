@@ -4775,6 +4775,37 @@ local NAV_ROUTES = {
                   "n", "ne", "ne", "ne", "ne", "se", "se", "e", "ne", "ne",
                   "e", "se", "se", "e", "ne", "ne", "ne", "n", "n", "n", "n" },
     },
+    -- The way home: ruined-town reversed, direction by direction. Sixty-one
+    -- steps back to where the other one starts.
+    --
+    -- Derived rather than walked, which is a weaker thing than the leg it
+    -- mirrors and should be read that way -- it assumes every exit out there has
+    -- a reverse, and one that doesn't is a step this list cannot know about.
+    -- What can be checked has been. The map confirms both ends of the mirror:
+    -- steps 1-7 down the path and the swamp to id 959, and steps 38-59 from the
+    -- clearing at 915 back through the forest and the caves to the mountains --
+    -- twenty-nine of the sixty-one, each one a real reverse edge in the graph
+    -- rather than an assumed one. Steps 8-37 are the stretch the map has never
+    -- seen; the walk of 2026-08-05 crossed it forwards, so the rooms are there,
+    -- but nothing has been through them the other way.
+    --
+    -- Step 60 is the one the map actively disagrees with, and the map is wrong.
+    -- Tracing back from the north plaza dies at step 60 because the graph is
+    -- missing "outside the town gates" and carries a south-plaza --sw-->
+    -- mountains edge straight through where it stands. The session log of
+    -- 2026-08-05 walked the pair in both directions and settles it: `sw` from
+    -- the south plaza reaches the gates (exits ne, se, sw, nw) and `ne` returns.
+    -- Two `ne` here, not one.
+    ["town-1/north-plaza"] = {
+        from  = { room = "ruined plaza", exits = "e,n,ne,nw,s,w" },
+        to    = { room = "north plaza" },
+        steps = { "s", "s", "s", "s", "sw", "sw", "sw", "w", "nw", "nw",
+                  "w", "sw", "sw", "w", "nw", "nw", "sw", "sw", "sw", "sw",
+                  "s", "sw", "sw", "nw", "nw", "ne", "n", "nw", "w", "w",
+                  "sw", "s", "sw", "w", "w", "w", "sw", "nw", "ne", "nw",
+                  "nw", "nw", "nw", "ne", "nw", "ne", "ne", "n", "n", "ne",
+                  "e", "e", "se", "ne", "ne", "nw", "ne", "n", "ne", "ne", "n" },
+    },
 }
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES

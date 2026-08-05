@@ -9738,6 +9738,46 @@ describe("navigate-to", function()
 
         end)
 
+        -- The way back is ruined-town inverted rather than a walk of its own, so
+        -- the property worth testing is that it really is the inverse: a typo in
+        -- either list shows up as a step that doesn't mirror.
+        describe("the town-1/north-plaza route back", function()
+
+            local OPP = { n = "s", s = "n", e = "w", w = "e", ne = "sw",
+                          sw = "ne", nw = "se", se = "nw", u = "d", d = "u" }
+
+            it("mirrors ruined-town step for step", function()
+                local out  = taPackage.navRoutes["ruined-town"]
+                local back = taPackage.navRoutes["town-1/north-plaza"]
+                assert.are.equal(#out.steps, #back.steps)
+                for i, step in ipairs(back.steps) do
+                    assert.are.equal(OPP[out.steps[#out.steps - i + 1]], step,
+                        "step " .. i .. " should reverse the other route's")
+                end
+            end)
+
+            it("swaps the two routes' ends", function()
+                local out  = taPackage.navRoutes["ruined-town"]
+                local back = taPackage.navRoutes["town-1/north-plaza"]
+                assert.are.equal(out.to.room, back.from.room)
+                assert.are.equal(out.from.room, back.to.room)
+            end)
+
+            it("sets off south from the ruined plaza", function()
+                helper.simulateAlias("navigate-to town-1/north-plaza")
+                answerProbe(966)
+                assert.are.equal(1, sent("s"))
+            end)
+
+            it("refuses to walk it from the north plaza", function()
+                helper.simulateAlias("navigate-to town-1/north-plaza")
+                answerProbe(1)
+                assert.are.equal(0, sent("s"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+            end)
+
+        end)
+
     end)
 
     -- Where the map can't tell one room from another -- the stoneworks has
