@@ -937,6 +937,7 @@ local function isRoomLine(line)
     return string.match(line, "^You're in ")
         or string.match(line, "^You are in ")
         or string.match(line, "^You are inside ")
+        or string.match(line, "^You are outside ")
 end
 
 -- A look description runs until the paired `ex` reply ("Exits: ...") — the one
@@ -1228,6 +1229,15 @@ createTrigger("^You're in (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're inside (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're on (.+)\\.$", handleRoomEntry, { type = "regex" })
 createTrigger("^You're at (.+)\\.$", handleRoomEntry, { type = "regex" })
+-- "outside" is the fifth preposition, and it went missing for a long time
+-- because exactly one known room uses it -- "You're outside the town gates.",
+-- between the first town's south plaza and the mountains. The cost was paid
+-- twice. The mapper walked through it on 2026-07-13, couldn't read the name,
+-- and left a south-plaza --sw--> mountains edge that swallows the room whole.
+-- And a `navigate-to ruined-town` walk stepped into it on 2026-08-04 and simply
+-- stopped: the arrival never registered, so the walk sat waiting for a brief
+-- that had already gone past.
+createTrigger("^You're outside (.+)\\.$", handleRoomEntry, { type = "regex" })
 
 -- Some rooms print their move brief with "You are ..." instead of the "You're"
 -- contraction (e.g. "You are inside the dungeon entrance.", "You are in a large
@@ -1243,6 +1253,7 @@ createTrigger("^You are in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "re
 createTrigger("^You are inside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 createTrigger("^You are on (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 createTrigger("^You are at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You are outside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 -- A few rooms have a grammatically broken move brief that drops the verb
 -- entirely: "You at the bottom of a stairwell." (no "'re"/"are"). It's a real,

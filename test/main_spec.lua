@@ -2379,6 +2379,18 @@ describe("World map triggers", function()
             assert.are.equal("large cavern", taPackage.currentRoom)
         end)
 
+        -- The fifth preposition, and the last to be noticed: one known room
+        -- uses it, between the first town's south plaza and the mountains.
+        -- Missing it cost the mapper that room entirely and stalled a
+        -- navigate-to walk mid-route.
+        it("recognizes an 'outside' move brief", function()
+            stubDiscover(1)
+            helper.simulateLine("You're outside the town gates.")
+            assert.are.equal("town gates", taPackage.currentRoom)
+            helper.simulateLine("You are outside the town gates.")
+            assert.are.equal("town gates", taPackage.currentRoom)
+        end)
+
         it("ignores a 'You are ...' line while accumulating a look description", function()
             taPackage.currentRoom = "large cavern"
             taPackage.currentRoomId = 5
@@ -9944,6 +9956,18 @@ describe("navigate-to", function()
             helper.simulateLine("You're in the town sewers.")
             helper.fireTimers(taPackage.navStepDelayMs)
             assert.are.equal(1, sent("se"))
+        end)
+
+        -- A walk inherits its arrival phrasings from the room triggers, so an
+        -- unhandled preposition doesn't misread a step -- it drops it, and the
+        -- walk waits forever for a brief that has already gone past. That is
+        -- what "You're outside the town gates." did on 2026-08-04, two steps
+        -- into ruined-town.
+        it("advances on an 'outside' arrival brief", function()
+            startWalking()
+            helper.simulateLine("You're outside the town gates.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))
         end)
 
         -- The map is read-only to navigate-to. Setting pendingDirection is an
