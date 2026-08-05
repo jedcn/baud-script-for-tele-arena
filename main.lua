@@ -99,7 +99,14 @@ function getMana()
 end
 
 function setExperience(value)
-    taPackage.character.experience = tonumber(value)
+    local previous = taPackage.character.experience
+    local current = tonumber(value)
+    taPackage.character.experience = current
+    -- The status bar flashes how far the XP figure just moved, and this is the
+    -- one place that knows a move happened. recordXpChange is defined with the
+    -- status bar, further down the chunk, so it only exists once the script has
+    -- finished loading -- which is always true by the time a trigger calls us.
+    if recordXpChange then recordXpChange(previous, current) end
 end
 
 function getExperience()
@@ -2038,6 +2045,18 @@ createTrigger("^Level:\\s+(\\d+)$", function(matches)
     setLevel(newLevel)
 end, { type = "regex" })
 
+-- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
+-- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
+-- and os.clock measures CPU rather than elapsed time. Fall back to whole
+-- seconds if the script is reloaded into a baud too old to have it -- the
+-- timings go coarse, but nothing breaks.
+-- Defined up here rather than beside the arena timings that consume it because
+-- the status bar (below) reckons the age of its XP marker against it too.
+local function nowMillis()
+    if nowMs then return nowMs() end
+    return os.time() * 1000
+end
+
 -- =========================================================================
 -- Status bar
 -- =========================================================================
@@ -2064,6 +2083,39 @@ local function commafy(value)
     local formatted = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
     formatted = formatted:gsub("^,", "")
     return sign .. formatted
+end
+
+-- How long the XP-change marker stays on the bar after the XP figure moves.
+local XP_CHANGE_VISIBLE_MS = 3000
+-- Orange: warm enough to pull the eye off the cyan XP figure it hangs beside,
+-- and not already spoken for (red means untrained level, yellow means gold).
+local XP_CHANGE_FG = "#ff8700"
+
+-- XP still to go before the next level: the figure the bar shows. nil once
+-- there is no next level to count down to. Global rather than local because the
+-- main chunk is at Lua's 200-local ceiling.
+function xpRemaining(xp, class)
+    local nextLevelXp = xp and getXpForNextLevel(xp, class)
+    if not nextLevelXp then return nil end
+    return nextLevelXp - xp
+end
+
+-- The signed move in that figure, e.g. "-14,000" after gaining 14,000 XP —
+-- nil once the marker has aged out, or when we can't tell (unknown class, at
+-- max level, or a change that leaves the figure where it was). Reported as a
+-- delta of the *displayed* number rather than of raw XP, so it always agrees
+-- with the value it sits next to: training past a threshold pushes the count
+-- back up, and the marker says "+" to match.
+function xpChangeText(xp, class)
+    local change = taPackage.xpChange
+    if not change then return nil end
+    if nowMillis() - change.at >= XP_CHANGE_VISIBLE_MS then return nil end
+    local before = xpRemaining(change.from, class)
+    local after = xpRemaining(xp, class)
+    if not (before and after) then return nil end
+    local delta = after - before
+    if delta == 0 then return nil end
+    return (delta > 0 and "+" or "") .. commafy(delta)
 end
 
 local function status()
@@ -2124,6 +2176,12 @@ local function status()
     if hasUntrainedLevel() then
         table.insert(tail, { text = "^", fg = "red", glue = true })
     end
+    -- A field of its own rather than glued: it is a separate, temporary reading
+    -- ("XP: (471,484) -14,000"), not a mark on the figure like the "^".
+    local changeText = xpChangeText(xp, charClass)
+    if changeText then
+        table.insert(tail, { text = changeText, fg = XP_CHANGE_FG, bold = true })
+    end
     local tailRest = {
         { text = "Status:" },
         { text = charStatus, fg = (charStatus == "Thirsty" or charStatus == "Hungry") and "red" or "white" },
@@ -2136,6 +2194,23 @@ local function status()
 end
 
 setStatus(status)
+
+-- Called from setExperience, the one chokepoint every XP reading flows through.
+-- Only a real move counts: the arena polls `status` constantly, and seeding the
+-- marker on an unchanged reading (or on the first reading of the session, where
+-- there is nothing to compare against) would leave it flickering for no reason.
+function recordXpChange(previous, current)
+    if previous == nil or current == nil or previous == current then return end
+    taPackage.xpChange = { from = previous, at = nowMillis() }
+    -- baud only re-evaluates the status function when the server sends data, so
+    -- three quiet seconds would leave an expired marker stuck on the bar. Handing
+    -- setStatus the same function again forces a fresh evaluation, which is what
+    -- makes the marker ephemeral rather than sticky. Armed a beat past the window
+    -- so the evaluation lands after it has closed, never on the boundary.
+    createTimer(XP_CHANGE_VISIBLE_MS + 100, function()
+        setStatus(status)
+    end, { repeating = false })
+end
 
 -- =========================================================================
 -- Re-roll for good stats
@@ -2172,17 +2247,6 @@ createAlias("^re-roll-stop$", function()
     end, { repeating = false })
 end, { type = "regex" })
 
-
-
--- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
--- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
--- and os.clock measures CPU rather than elapsed time. Fall back to whole
--- seconds if the script is reloaded into a baud too old to have it -- the
--- timings go coarse, but nothing breaks.
-local function nowMillis()
-    if nowMs then return nowMs() end
-    return os.time() * 1000
-end
 
 -- =========================================================================
 -- Ring gong and fight in arena

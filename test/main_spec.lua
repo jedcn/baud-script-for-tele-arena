@@ -819,6 +819,105 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Status:", segments[7].text)
         end)
 
+        describe("XP-change marker", function()
+
+            -- Acolyte, mid-level: 1,622,269 XP leaves 120,531 to level 20
+            -- (1,742,800). Gaining 14,000 leaves 106,531 — no threshold crossed,
+            -- so the marker reads as a straight countdown.
+            local function gain14k()
+                helper.simulateLine("Class:        Acolyte")
+                helper.simulateLine("Experience:   1622269")
+                helper.simulateLine("Experience:   1636269")
+            end
+
+            it("shows nothing on the first XP reading of a session", function()
+                helper.simulateLine("Class:        Acolyte")
+                helper.simulateLine("Experience:   1622269")
+                local segments = capturedFn()
+                assert.are.equal("(120,531)", segments[6].text)
+                assert.are.equal("Status:",   segments[7].text)
+            end)
+
+            it("shows how far the XP figure just moved, in bold orange", function()
+                gain14k()
+                local segments = capturedFn()
+                assert.are.equal("(106,531)", segments[6].text)
+                assert.are.equal("-14,000",   segments[7].text)
+                assert.are.equal("#ff8700",   segments[7].fg)
+                assert.is_true(segments[7].bold)
+                assert.is_nil(segments[7].glue)  -- its own field, not a mark on the XP
+                assert.are.equal("Status:",   segments[8].text)
+            end)
+
+            it("hides the marker once three seconds have passed", function()
+                gain14k()
+                helper.advanceMs(3000)
+                assert.are.equal("Status:", capturedFn()[7].text)
+            end)
+
+            it("still shows the marker just under three seconds", function()
+                gain14k()
+                helper.advanceMs(2999)
+                assert.are.equal("-14,000", capturedFn()[7].text)
+            end)
+
+            it("re-renders the bar itself so the marker hides without server traffic", function()
+                -- baud only re-evaluates the status function when data arrives;
+                -- a quiet three seconds would leave the marker stuck on screen.
+                gain14k()
+                local refresh
+                for _, timer in ipairs(helper.timers) do
+                    if timer.interval == 3100 then refresh = timer end
+                end
+                assert.is_not_nil(refresh)
+                helper.advanceMs(3100)
+                local reRendered
+                _G.setStatus = function(fn) reRendered = fn end
+                refresh.callback()
+                assert.is_not_nil(reRendered)
+                assert.are.equal("Status:", reRendered()[7].text)
+            end)
+
+            it("shows nothing when a status poll repeats the same XP", function()
+                helper.simulateLine("Class:        Acolyte")
+                helper.simulateLine("Experience:   1622269")
+                helper.simulateLine("Experience:   1622269")
+                assert.are.equal("Status:", capturedFn()[7].text)
+            end)
+
+            it("counts up when training past a threshold resets the countdown", function()
+                -- Warrior at 30,000 needs 6,000 more for level 6 (36,000);
+                -- at 44,000 the target becomes level 7 (66,300), 22,300 away.
+                helper.simulateLine("Class:        Warrior")
+                helper.simulateLine("Experience:   30000")
+                helper.simulateLine("Experience:   44000")
+                local segments = capturedFn()
+                assert.are.equal("(22,300)", segments[6].text)
+                assert.are.equal("+16,300", segments[7].text)
+            end)
+
+            it("shows nothing at max level, where there is no figure to move", function()
+                helper.simulateLine("Class:        Warrior")
+                helper.simulateLine("Experience:   11594700")
+                helper.simulateLine("Experience:   11594800")
+                local segments = capturedFn()
+                assert.are.equal("(max)",   segments[6].text)
+                assert.are.equal("Status:", segments[7].text)
+            end)
+
+            it("sits after the untrained-level caret", function()
+                helper.simulateLine("Class:        Hunter")
+                helper.simulateLine("Level:        11")
+                helper.simulateLine("Experience:   630000")
+                helper.simulateLine("Experience:   630707")
+                local segments = capturedFn()
+                assert.are.equal("(184,893)", segments[6].text)
+                assert.are.equal("^",         segments[7].text)
+                assert.are.equal("-707",      segments[8].text)
+                assert.are.equal("Status:",   segments[9].text)
+            end)
+        end)
+
         it("shifts Status/Gold in after the XP tail", function()
             helper.simulateLine("Class:        Acolyte")
             helper.simulateLine("Experience:   1622269")
