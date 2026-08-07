@@ -4787,13 +4787,18 @@ describe("ring-gong-and-fight-in-arena", function()
     describe("auto-training", function()
 
         local stepTimer
+        -- The level-up push's fallback timeout, so the "no sheet came back" case
+        -- can fire exactly that timer (this block drops every other one).
+        local levelUpTimer
 
         before_each(function()
             _G.createTimer = function(interval, cb)
                 if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
+                if interval == 5000 then levelUpTimer = { cb = cb } end
                 return "mock_timer"
             end
             stepTimer = nil
+            levelUpTimer = nil
             -- Depart the way the game does: a kill that crosses the level
             -- threshold sends us to train.
             taPackage.arenaState = "fighting"
@@ -4875,19 +4880,94 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(500, taPackage.character.gold)
         end)
 
-        it("pushes a level-up ntfy on a successful train", function()
+        -- The push is held until the character sheet we ask for comes back with
+        -- the new maxima, so the notification can say what the level was worth.
+        local function trainForNtfy()
             taPackage.arenaState = "returning"
             taPackage.character.name = "Tojolias"
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
             taPackage.character.experience = 1120
             taPackage.character.gold = 500
+            taPackage.character.vitalityMax = 411
+            taPackage.character.manaMax = 17
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+        end
+
+        it("pushes a level-up ntfy once the fresh sheet lands", function()
+            trainForNtfy()
+            -- Nothing pushed yet: we asked for a sheet and are waiting on it.
+            assert.are.equal(0, #helper.httpRequestCalls)
+            local askedForSheet = false
+            for _, s in ipairs(helper.sendCalls) do
+                if s == "st" then askedForSheet = true end
+            end
+            assert.is_true(askedForSheet)
+
+            helper.simulateLine("Mana:         18 / 18")
+            helper.simulateLine("Vitality:     434 / 434")
+
             assert.are.equal(1, #helper.httpRequestCalls)
             local call = helper.httpRequestCalls[1]
             assert.are.equal("https://ntfy.sh/s5bbs-tele-arena-j5", call.url)
             assert.are.equal("Leveled Up!", call.options.headers["X-Title"])
-            assert.is_truthy(call.options.body:find("trained to level 2", 1, true))
+            local body = call.options.body
+            assert.is_truthy(body:find("trained to level 2", 1, true))
+            assert.is_truthy(body:find("- New HP: 434, gain of 23 HP", 1, true))
+            assert.is_truthy(body:find("- New MP: 18, gain of 1 MP", 1, true))
+            -- Stat gains read above the bookkeeping, as in the example wording.
+            assert.is_true(body:find("New HP", 1, true) < body:find("Training cost", 1, true))
+        end)
+
+        -- A warrior's sheet says "0 / 0" every level; the line would be noise.
+        it("omits the MP line for a character with no mana pool", function()
+            taPackage.character.manaMax = 0
+            trainForNtfy()
+            taPackage.character.manaMax = 0
+            helper.simulateLine("Vitality:     434 / 434")
+            local body = helper.httpRequestCalls[1].options.body
+            assert.is_truthy(body:find("- New HP: 434", 1, true))
+            assert.is_nil(body:find("New MP", 1, true))
+        end)
+
+        -- An `st` already in flight when we trained reports the pre-level maximum.
+        -- Flushing on it would claim a gain of 0, so wait for the real one.
+        it("ignores a stale sheet whose maximum has not moved", function()
+            trainForNtfy()
+            helper.simulateLine("Vitality:     380 / 411")
+            assert.are.equal(0, #helper.httpRequestCalls)
+
+            helper.simulateLine("Vitality:     434 / 434")
+            assert.are.equal(1, #helper.httpRequestCalls)
+            assert.is_truthy(helper.httpRequestCalls[1].options.body:find("gain of 23 HP", 1, true))
+        end)
+
+        -- No sheet came back. Better a notification without the stat lines than
+        -- no notification at all.
+        it("pushes without the stat lines when no sheet comes back", function()
+            trainForNtfy()
+            levelUpTimer.cb()
+            assert.are.equal(1, #helper.httpRequestCalls)
+            local body = helper.httpRequestCalls[1].options.body
+            assert.is_truthy(body:find("trained to level 2", 1, true))
+            -- The stale maxima are still what we hold, so both gains read as 0.
+            assert.is_truthy(body:find("- New HP: 411, gain of 0 HP", 1, true))
+            assert.is_truthy(body:find("- Training cost: 10 gold", 1, true))
+        end)
+
+        -- Whichever of the sheet and the timeout arrives second must find nothing
+        -- left to send.
+        it("pushes only once when the timeout fires after the sheet", function()
+            trainForNtfy()
+            helper.simulateLine("Vitality:     434 / 434")
+            levelUpTimer.cb()
+            assert.are.equal(1, #helper.httpRequestCalls)
+        end)
+
+        -- Nothing is pending, so an ordinary status poll must not push anything.
+        it("does not push on a Vitality line outside a level-up", function()
+            helper.simulateLine("Vitality:     434 / 434")
+            assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
         -- Backstop: if we reach the hall while still potion-tainted, it refuses us
@@ -9859,15 +9939,20 @@ describe("train-and-exit-once-potions-wear-off", function()
         assert.is_nil(taPackage.trainWatch)
     end)
 
+    -- The push waits on the character sheet the training trigger asks for. We
+    -- send "st" before the watch's "x", so the game answers the sheet on its way
+    -- out and the notification still carries the stat gains.
     it("banks the level and pushes the existing level-up notification", function()
         arm()
         helper.simulateLine("An odd tingling sensation washes over you briefly!")
         helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
         assert.are.equal(13, getLevel())
         assert.are.equal(435, getGold()) -- 500 - 13 * 5
+        helper.simulateLine("Vitality:     434 / 434")
         assert.are.equal(1, #helper.httpRequestCalls)
         assert.are.equal("Leveled Up!", helper.httpRequestCalls[1].options.headers["X-Title"])
         assert.is_true(helper.httpRequestCalls[1].options.body:find("[Grond] trained to level 13!", 1, true) ~= nil)
+        assert.is_true(helper.httpRequestCalls[1].options.body:find("- New HP: 434", 1, true) ~= nil)
     end)
 
     -- Both stat potions are normally up, so the first tingle can still leave us

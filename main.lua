@@ -577,6 +577,10 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         if lost > 0 then incomingBadge("AOE " .. lost) end
     end
     setVitality(matches[2], matches[3])
+    -- A held level-up notification is waiting on exactly this line for the new
+    -- HP/MP maxima. Defined with the training trigger far below, so it only
+    -- exists once the chunk has loaded (always true by the time a line arrives).
+    if noticeLevelUpStats then noticeLevelUpStats() end
     if not taPackage.reRolling then return end
 
     local stats = {
@@ -3879,6 +3883,59 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
     end
 end, { type = "regex" })
 
+-- How long to wait for the character sheet we ask for after training before
+-- pushing the level-up notification without the HP/MP figures. The sheet comes
+-- straight back; this only has to outlast a hiccup.
+local LEVEL_UP_SHEET_WAIT_MS = 5000
+
+-- Push the held "Leveled Up!" notification, filling in the stat gains if the
+-- character sheet we asked for has landed. Called from the Vitality trigger (the
+-- last of the two lines we're waiting on) and from a timeout, whichever comes
+-- first; whoever gets there clears the pending record so the other is a no-op.
+--
+-- Global rather than local because the Vitality trigger is registered ~3000
+-- lines above this point and can't see a local declared down here. It only ever
+-- runs after the chunk has finished loading, so the name is always bound by then.
+function flushLevelUpNotification()
+    local pending = taPackage.levelUpPush
+    if not pending then return end
+    taPackage.levelUpPush = nil
+
+    -- "434" alone doesn't say how good the level was; "gain of 23" does. We can
+    -- only show it if we knew the old maximum (we may never have polled `st`).
+    local function gain(before, after, unit)
+        if not before then return "" end
+        return ", gain of " .. formatWithCommas(after - before) .. " " .. unit
+    end
+
+    local lines = { pending.headline }
+    local hp = taPackage.character.vitalityMax
+    if hp then
+        lines[#lines + 1] = "- New HP: " .. formatWithCommas(hp) .. gain(pending.hpBefore, hp, "HP")
+    end
+    -- Only spell casters have a mana pool; for everyone else the sheet says
+    -- "0 / 0" every level and the line would be noise.
+    local mp = taPackage.character.manaMax
+    if mp and mp > 0 then
+        lines[#lines + 1] = "- New MP: " .. formatWithCommas(mp) .. gain(pending.mpBefore, mp, "MP")
+    end
+    lines[#lines + 1] = "- Training cost: " .. formatWithCommas(pending.cost) .. " gold"
+    lines[#lines + 1] = "- Gold: " .. (pending.gold and formatWithCommas(pending.gold) or "?")
+    sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
+end
+
+-- A fresh Vitality line arrived while a level-up push is held. Answered by the
+-- Vitality trigger for *every* sheet, so ignore one whose maximum still reads
+-- pre-level: that's an unrelated `st` (e.g. tavern mode's HP heartbeat) that was
+-- already in flight when we trained, and flushing on it would report no gain.
+-- The timeout still pushes if our own sheet somehow never shows up.
+function noticeLevelUpStats()
+    local pending = taPackage.levelUpPush
+    if not pending then return end
+    if pending.hpBefore and taPackage.character.vitalityMax == pending.hpBefore then return end
+    flushLevelUpNotification()
+end
+
 -- Guild-hall confirmation that a training session succeeded (its reply to `buy
 -- training`; the message runs three lines, we key on the first). Do the things
 -- that only make sense once we've actually leveled:
@@ -3906,12 +3963,22 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         -- Off-screen heads-up that the drain-then-train actually completed. This
         -- fires on the confirmed level-up (distinct from checkLevelUpNotification's
         -- "Time to Level Up!", which fires earlier when the XP threshold is crossed).
-        local lines = { "[" .. (taPackage.character.name or "?") .. "] trained to level "
-            .. newLevel .. "!" }
-        lines[#lines + 1] = "- Training cost: " .. formatWithCommas(cost) .. " gold"
-        local gold = getGold()
-        lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
-        sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
+        --
+        -- A level always raises Vitality (and Mana for a caster), but the hall's
+        -- message carries neither figure and our own maxima are whatever the last
+        -- `st` said — i.e. pre-level. So hold the push, ask for a fresh sheet, and
+        -- assemble it when the new Vitality line lands. Mana is printed just above
+        -- Vitality on the sheet, so both are current by the time we flush.
+        taPackage.levelUpPush = {
+            headline = "[" .. (taPackage.character.name or "?") .. "] trained to level "
+                .. newLevel .. "!",
+            cost = cost,
+            gold = getGold(),
+            hpBefore = taPackage.character.vitalityMax,
+            mpBefore = taPackage.character.manaMax,
+        }
+        send("st")
+        createTimer(LEVEL_UP_SHEET_WAIT_MS, flushLevelUpNotification, { repeating = false })
     end
     -- Restocking is an arena-loop concern only: outside a run there is no errand
     -- trip to hang the flag on, and leaving it set would send the next run to the
