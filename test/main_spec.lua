@@ -5557,27 +5557,37 @@ describe("ring-gong-and-fight-in-arena", function()
             -- The backstop that keeps a death or a hand-stopped script from
             -- idling the whole team forever waiting for an all-clear that is
             -- never coming.
+            -- The escapee calls out only once, so the lease is the sole thing
+            -- keeping the hold alive for the whole episode — and the sole
+            -- backstop against a death or hand-stopped script holding it forever.
+            it("holds well past the point a short lease would have lapsed", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 120
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+            end)
+
             it("releases the hold when the lease expires", function()
                 helper.simulateLine("From Pelayo: I need healing")
                 probeFindsEmptyArena()
                 assert.is_false(rangGong())
-                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 181
                 probeFindsEmptyArena()
                 assert.is_true(rangGong())
             end)
 
             it("forgets an expired lease rather than accumulating it", function()
                 helper.simulateLine("From Pelayo: I need healing")
-                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 181
                 probeFindsEmptyArena()
                 assert.is_nil(taPackage.arenaTeamHealing["pelayo"])
             end)
 
-            -- Each blocked attempt re-announces, so a character pinned by the
-            -- rest clock for longer than the lease keeps the hold alive.
-            it("renews the lease on a repeated call", function()
+            -- A team-mate who heals and later gets hurt again places a fresh
+            -- hold; the earlier all-clear must not have made us deaf to them.
+            it("holds again when the same team-mate calls out a second time", function()
                 helper.simulateLine("From Pelayo: I need healing")
-                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                helper.simulateLine("From Pelayo: I am healed")
                 helper.simulateLine("From Pelayo: I need healing")
                 probeFindsEmptyArena()
                 assert.is_false(rangGong())
@@ -5647,17 +5657,54 @@ describe("ring-gong-and-fight-in-arena", function()
                 assert.is_false(said("I need healing"))
             end)
 
-            it("re-announces when the monster blocks the way out", function()
-                taPackage.arenaState = "fleeing"
-                taPackage.arenaLastCmd = "w"
+            -- Once per flee, however long the escape drags on: the call is a
+            -- request to hold the gong, and repeating it adds nothing the lease
+            -- doesn't already carry.
+            it("does not repeat when the monster blocks the way out", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                helper.sendCalls = {}
                 helper.simulateLine("You cannot leave in the heat of battle!")
-                assert.is_true(said("I need healing"))
+                assert.is_false(said("I need healing"))
             end)
 
-            it("re-announces when the rest clock blocks the way out", function()
-                taPackage.arenaState = "fleeing"
+            it("does not repeat when the rest clock blocks the way out", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                helper.sendCalls = {}
                 taPackage.arenaLastCmd = "w"
                 helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                assert.is_false(said("I need healing"))
+            end)
+
+            -- Repeatedly blocked and taking hits the whole time: still one call.
+            it("says it once across a long, repeatedly blocked escape", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                helper.simulateLine("You cannot leave in the heat of battle!")
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.simulateLine("The cave bear attacked you with a claw for 3 damage!")
+                local calls = 0
+                for _, cmd in ipairs(helper.sendCalls) do
+                    if cmd == "I need healing" then calls = calls + 1 end
+                end
+                assert.are.equal(1, calls)
+            end)
+
+            -- The flag is cleared by the all-clear, so a later flee in the same
+            -- session is a fresh episode and calls out again.
+            it("calls out again on a second flee after reporting back", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+                taPackage.arenaState = "returning"
+                taPackage.arenaMonster = nil
+                helper.simulateLine("You're in the arena.")
+                helper.sendCalls = {}
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "cave bear"
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
                 assert.is_true(said("I need healing"))
             end)
 

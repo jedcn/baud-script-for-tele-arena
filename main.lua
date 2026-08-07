@@ -2506,13 +2506,18 @@ local arenaTeamHeal = {
 -- the ring-yield trigger, which re-arms a pump tick rather than trusting that a
 -- summon it stood down for will really arrive.
 --
--- 60s is loose enough to cover a real heal (the third arena's temple is 4 paced
--- steps each way, plus "buy healing" and any rest-clock delays — call it 15s of
--- walking) with room to spare, and tight enough that a character that died on
--- the way out doesn't hold the gong for long. Each flee retry re-announces, so
--- a character genuinely pinned by the rest clock keeps renewing its lease for as
--- long as it keeps trying; one that has stopped trying lets the lease lapse.
-arenaTeamHeal.LEASE_SEC = 60
+-- The lease has to outlast the whole episode on the strength of a single
+-- announcement, because the escapee says this exactly once (see announceNeed).
+-- The long pole is not the walk to the temple — 4 paced steps each way plus
+-- "buy healing", call it 15s — but the wait to get out of the arena at all: the
+-- heat-of-battle guard refuses every step until the monster is dead, so a slow
+-- kill pins the escapee in the room for as long as the fight lasts.
+--
+-- 180s covers that with room to spare. Erring long is deliberate: a lease that
+-- lapses while the character is still standing there hurt re-opens the exact
+-- window this exists to close, whereas one that outlives a character who died
+-- mid-escape only costs the team some idle time.
+arenaTeamHeal.LEASE_SEC = 180
 
 -- Name (lowercased) -> os.time() of the most recent "I need healing" heard.
 function arenaTeamHeal.leases()
@@ -2537,13 +2542,18 @@ function arenaTeamHeal.holder()
     return holder
 end
 
--- Announce that we are escaping. Deliberately NOT sent through arenaSend: that
--- records arenaLastCmd for the blocked-move retries, and stamping the
--- announcement there would make the next retry re-say the message instead of
--- re-walking the step we're trying to escape on. Team mode only — solo, this
--- would just be talking to ourselves.
+-- Announce that we are escaping — once per flee, however long the escape takes.
+-- The announcement flag doubles as the guard: it is set here and cleared only by
+-- the all-clear, so every later call inside the same episode is a no-op, while a
+-- second flee later in the session announces again as it should.
+--
+-- Deliberately NOT sent through arenaSend: that records arenaLastCmd for the
+-- blocked-move retries, and stamping the announcement there would make the next
+-- retry re-say the message instead of re-walking the step we're trying to escape
+-- on. Team mode only — solo, this would just be talking to ourselves.
 function arenaTeamHeal.announceNeed()
     if not taPackage.arenaTeam then return end
+    if taPackage.arenaAnnouncedNeedsHealing then return end
     taPackage.arenaAnnouncedNeedsHealing = true
     send(arenaTeamHeal.NEED_MSG)
 end
@@ -4059,11 +4069,6 @@ createTrigger("^You cannot leave in the heat of battle!$", function()
     if st ~= "fleeing" and st ~= "tavern" and st ~= "potions" then return end
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
-    -- Still stuck in the arena at low HP: renew the gong hold. Re-announcing on
-    -- every blocked attempt is what makes the lease self-limiting — it lives
-    -- exactly as long as we keep trying to get out — and it also gives a
-    -- team-mate who was away when we first called out a chance to hear us.
-    if st == "fleeing" then arenaTeamHeal.announceNeed() end
     local gen = taPackage.arenaRetryGeneration or 0
     -- Retry the exact step that was blocked, not a hardcoded "w": the second
     -- arena's first step out is "s". arenaLastCmd is the blocked command.
@@ -4097,10 +4102,6 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
         -- the full 30s a non-urgent errand walk can afford. Each retry that's
         -- still blocked re-emits this line, so the 2s cadence re-arms naturally.
         local delay = taPackage.arenaState == "fleeing" and 2000 or 30000
-        -- As in the heat-of-battle handler: the rest clock is the other thing
-        -- that pins us in the arena while hurt, so renew the hold each time it
-        -- turns us back.
-        if taPackage.arenaState == "fleeing" then arenaTeamHeal.announceNeed() end
         createTimer(delay, function()
             if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
                 arenaSend(cmd)
