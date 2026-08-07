@@ -5482,6 +5482,290 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- A character that flees is still standing in the arena until a move
+    -- actually lands, and the move can be refused for seconds by the
+    -- heat-of-battle guard or the rest clock. Summoning into that window drops a
+    -- fresh monster on someone who is one hit from death, so the escapee calls
+    -- out and everyone else holds the gong until it is back.
+    describe("holding the gong for a team-mate who needs healing", function()
+
+        local function said(text)
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == text then return true end
+            end
+            return false
+        end
+
+        local function rangGong()
+            return said("ring gong")
+        end
+
+        -- As in the staggered-ring tests: walk the brief the way the game prints
+        -- it, ending on the floor line that drives the ring decision.
+        local function probeFindsEmptyArena()
+            taPackage.arenaTeam = true
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            taPackage.arenaTeamRoster = {}
+            taPackage.arenaRingPending = false
+            helper.simulateLine("There is nothing on the floor.")
+        end
+
+        describe("hearing a team-mate call out", function()
+
+            before_each(function()
+                taPackage.character.name = "Castor"
+                taPackage.arenaTeam = true
+            end)
+
+            it("declines to ring while a team-mate is escaping", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+            end)
+
+            -- Slot 0's fast path rings with no stagger at all, which is exactly
+            -- the path that outruns a 2s flee retry. It has to be held too.
+            it("holds even in slot 0, where the ring is otherwise immediate", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                probeFindsEmptyArena()
+                assert.are.equal(0, taPackage.arenaTeamSlot or 0)
+                assert.is_false(rangGong())
+            end)
+
+            it("rings again once the team-mate reports back", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+                helper.simulateLine("From Pelayo: I am healed")
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
+
+            -- Everyone has to be back, not just the most recent caller.
+            it("keeps holding while a second team-mate is still out", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                helper.simulateLine("From Tojolias: I need healing")
+                helper.simulateLine("From Pelayo: I am healed")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+                helper.simulateLine("From Tojolias: I am healed")
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
+
+            -- The backstop that keeps a death or a hand-stopped script from
+            -- idling the whole team forever waiting for an all-clear that is
+            -- never coming.
+            it("releases the hold when the lease expires", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
+
+            it("forgets an expired lease rather than accumulating it", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                probeFindsEmptyArena()
+                assert.is_nil(taPackage.arenaTeamHealing["pelayo"])
+            end)
+
+            -- Each blocked attempt re-announces, so a character pinned by the
+            -- rest clock for longer than the lease keeps the hold alive.
+            it("renews the lease on a repeated call", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                taPackage.arenaTeamHealing["pelayo"] = os.time() - 61
+                helper.simulateLine("From Pelayo: I need healing")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+            end)
+
+            -- Holding the gong must never mean standing next to something that
+            -- is already hitting us: only the summon is suppressed.
+            it("still engages a monster that is already in the room", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                helper.mockDbOneRow = { description = "A hobgoblin." }
+                taPackage.arenaState = "ringing"
+                taPackage.arenaProbePending = true
+                helper.simulateLine("There is a hobgoblin here.")
+                assert.are.equal("fighting", taPackage.arenaState)
+                assert.are.equal("hobgoblin", taPackage.arenaMonster)
+            end)
+
+            -- The group-chat channel carries remote commands and belongs to its
+            -- own trigger. A loose (.+) for the name would swallow it.
+            it("is not tripped by the group-chat channel", function()
+                helper.simulateLine("From Pelayo (to group): I need healing")
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
+
+            it("ignores the call outside team mode", function()
+                taPackage.arenaTeam = false
+                helper.simulateLine("From Pelayo: I need healing")
+                taPackage.arenaState = "ringing"
+                taPackage.arenaProbePending = true
+                helper.simulateLine("There is nothing on the floor.")
+                assert.is_true(rangGong())
+            end)
+
+        end)
+
+        describe("calling out when we are the one fleeing", function()
+
+            before_each(function()
+                taPackage.arenaProfile = "first"
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "cave bear"
+            end)
+
+            it("announces before taking the first step out", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                assert.are.equal("fleeing", taPackage.arenaState)
+                assert.is_true(said("I need healing"))
+            end)
+
+            -- arenaLastCmd drives the blocked-move retries. If the announcement
+            -- went through arenaSend it would be stamped there and the retry
+            -- would re-say the message instead of re-walking the escape step.
+            it("leaves the escape step as the command a retry will re-send", function()
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                assert.are.equal("w", taPackage.arenaLastCmd)
+            end)
+
+            it("says nothing in a solo run", function()
+                taPackage.arenaTeam = false
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                assert.are.equal("fleeing", taPackage.arenaState)
+                assert.is_false(said("I need healing"))
+            end)
+
+            it("re-announces when the monster blocks the way out", function()
+                taPackage.arenaState = "fleeing"
+                taPackage.arenaLastCmd = "w"
+                helper.simulateLine("You cannot leave in the heat of battle!")
+                assert.is_true(said("I need healing"))
+            end)
+
+            it("re-announces when the rest clock blocks the way out", function()
+                taPackage.arenaState = "fleeing"
+                taPackage.arenaLastCmd = "w"
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                assert.is_true(said("I need healing"))
+            end)
+
+            -- An errand walk-out blocked by the same lines is a full-health
+            -- character running for a drink, not an emergency.
+            it("stays quiet when an errand walk-out is blocked", function()
+                taPackage.arenaState = "tavern"
+                taPackage.arenaLastCmd = "w"
+                helper.simulateLine("You cannot leave in the heat of battle!")
+                assert.is_false(said("I need healing"))
+            end)
+
+        end)
+
+        describe("reporting back", function()
+
+            -- Speech only carries to the room you are standing in, so the
+            -- all-clear has to be said from the arena. Said at the temple — four
+            -- rooms away in the third arena — it would reach nobody and the hold
+            -- would expire on a timeout every single trip.
+            local function arriveHomeFromTemple()
+                taPackage.arenaProfile = "first"
+                taPackage.arenaState = "returning"
+                taPackage.arenaMonster = nil
+                taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+                helper.simulateLine("You're in the arena.")
+            end
+
+            it("says the all-clear on arriving back in the arena", function()
+                taPackage.arenaTeam = true
+                taPackage.arenaAnnouncedNeedsHealing = true
+                arriveHomeFromTemple()
+                assert.is_true(said("I am healed"))
+            end)
+
+            it("does not say it at the temple", function()
+                taPackage.arenaTeam = true
+                taPackage.arenaProfile = "first"
+                taPackage.arenaAnnouncedNeedsHealing = true
+                -- The heal is charged for, and a balance that goes negative
+                -- trips the low-gold bailout and tears the session down.
+                taPackage.character.gold = 5000
+                taPackage.arenaState = "healing"
+                helper.simulateLine("The priests heal all your wounds for 100 crowns.")
+                assert.is_false(said("I am healed"))
+                assert.are.equal("returning", taPackage.arenaState)
+            end)
+
+            -- arenaArrivedHome is shared by the bar, magic shop and guild hall
+            -- returns, which never placed a hold.
+            it("stays quiet on an ordinary errand return", function()
+                taPackage.arenaTeam = true
+                taPackage.arenaAnnouncedNeedsHealing = false
+                arriveHomeFromTemple()
+                assert.is_false(said("I am healed"))
+            end)
+
+            it("only reports back once", function()
+                taPackage.arenaTeam = true
+                taPackage.arenaAnnouncedNeedsHealing = true
+                arriveHomeFromTemple()
+                helper.sendCalls = {}
+                arriveHomeFromTemple()
+                assert.is_false(said("I am healed"))
+            end)
+
+            -- End to end, from the hit that triggers the flee to the all-clear.
+            it("completes the round trip from flee to all-clear", function()
+                taPackage.arenaProfile = "first"
+                taPackage.arenaTeam = true
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "cave bear"
+                taPackage.character.gold = 5000
+                setHP(10, 100)
+                helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+                assert.is_true(said("I need healing"))
+                taPackage.arenaState = "healing"
+                helper.simulateLine("The priests heal all your wounds for 100 crowns.")
+                helper.sendCalls = {}
+                taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+                helper.simulateLine("You're in the arena.")
+                assert.is_true(said("I am healed"))
+            end)
+
+        end)
+
+        -- stop-arena-fight has to clear the hold too: a lease left behind would
+        -- be honoured by the next session and hold its gong for a character that
+        -- finished healing long ago.
+        it("clears the hold when the session stops", function()
+            taPackage.arenaTeam = true
+            helper.simulateLine("From Pelayo: I need healing")
+            helper.simulateAlias("stop-arena-fight")
+            assert.is_nil(taPackage.arenaTeamHealing)
+            assert.is_nil(taPackage.arenaAnnouncedNeedsHealing)
+        end)
+
+        it("starts a new session deaf to a stale hold", function()
+            taPackage.arenaTeam = true
+            helper.simulateLine("From Pelayo: I need healing")
+            setClass("Warrior")
+            helper.simulateAlias("team-fight-in-arena")
+            assert.are.same({}, taPackage.arenaTeamHealing)
+            assert.is_false(taPackage.arenaAnnouncedNeedsHealing)
+        end)
+
+    end)
+
     describe("thirsty and hungry during arena", function()
 
         it("departs for tavern immediately when thirsty while fighting", function()
