@@ -2460,6 +2460,104 @@ end
 -- ring before its own timer fires.
 local ARENA_TEAM_RING_GAP_MS = 2000
 
+-- =========================================================================
+-- Hold the gong while a team-mate is escaping
+-- =========================================================================
+-- Fleeing is decided instantly but takes time to carry out: checkFleeArena
+-- flips us to "fleeing" the moment HP crosses the threshold, yet the character
+-- is still standing in the arena until a move actually lands, and the move can
+-- be refused for several seconds ("You cannot leave in the heat of battle!",
+-- "Sorry, you'll have to rest a while before you can move.").
+--
+-- That opens a lethal window in team mode. Say a character flees at 401 HP after
+-- a flame giant hit; a team-mate lands the killing blow a second later and,
+-- being slot 0 on the first attempt of the cycle, rings immediately — well
+-- inside the 2s retry cadence of the escape. The fresh summon then gets a free
+-- round against someone with 31 HP who is still trying to walk out. Nothing in
+-- the roster machinery prevents this: the fleeing character is still listed in
+-- the brief, so its presence only orders the ring rather than suppressing it.
+--
+-- The fix uses the channel the team already coordinates over — the game itself.
+-- An unrecognised command is broadcast to the room as speech, which everyone
+-- else reads as "From <name>: <text>", so a plain say is a room-scoped broadcast
+-- every client sees. A fleeing character announces arenaTeamHeal.NEED_MSG, and
+-- anyone who hears it holds the gong until that character says
+-- arenaTeamHeal.HEALED_MSG on its way back in.
+--
+-- Room-scoped is the whole point, and also the trap: the all-clear MUST be said
+-- from the arena (arenaArrivedHome), never at the temple, which is four rooms
+-- away and out of earshot of everyone who needs to hear it.
+--
+-- Gathered into one table rather than the half-dozen file-scope locals this
+-- would naturally be: main.lua is a single Lua chunk and Lua caps a chunk at 200
+-- locals, which it was already close enough to that adding them individually
+-- overflowed it ("too many local variables"). One table costs one slot.
+local arenaTeamHeal = {
+    NEED_MSG = "I need healing",
+    HEALED_MSG = "I am healed",
+}
+
+-- Entries are timestamps, not booleans, so the hold is a lease that expires
+-- rather than a flag that can get stuck on. A character that dies mid-escape,
+-- disconnects, or is stopped by hand never says the all-clear, and a plain
+-- boolean would idle the whole team indefinitely waiting for it — a worse
+-- failure than the death we're preventing, and a quieter one, because an idle
+-- arena looks like a team waiting politely. The same reasoning already governs
+-- the ring-yield trigger, which re-arms a pump tick rather than trusting that a
+-- summon it stood down for will really arrive.
+--
+-- 60s is loose enough to cover a real heal (the third arena's temple is 4 paced
+-- steps each way, plus "buy healing" and any rest-clock delays — call it 15s of
+-- walking) with room to spare, and tight enough that a character that died on
+-- the way out doesn't hold the gong for long. Each flee retry re-announces, so
+-- a character genuinely pinned by the rest clock keeps renewing its lease for as
+-- long as it keeps trying; one that has stopped trying lets the lease lapse.
+arenaTeamHeal.LEASE_SEC = 60
+
+-- Name (lowercased) -> os.time() of the most recent "I need healing" heard.
+function arenaTeamHeal.leases()
+    taPackage.arenaTeamHealing = taPackage.arenaTeamHealing or {}
+    return taPackage.arenaTeamHealing
+end
+
+-- Who, if anyone, is currently escaping. Drops expired leases as it goes so the
+-- table can't grow without bound over a long session. Returns the name of a
+-- live lease (for the debug echo), or nil when the gong is free.
+function arenaTeamHeal.holder()
+    local leases = arenaTeamHeal.leases()
+    local now = os.time()
+    local holder = nil
+    for name, at in pairs(leases) do
+        if now - at >= arenaTeamHeal.LEASE_SEC then
+            leases[name] = nil
+        else
+            holder = holder or name
+        end
+    end
+    return holder
+end
+
+-- Announce that we are escaping. Deliberately NOT sent through arenaSend: that
+-- records arenaLastCmd for the blocked-move retries, and stamping the
+-- announcement there would make the next retry re-say the message instead of
+-- re-walking the step we're trying to escape on. Team mode only — solo, this
+-- would just be talking to ourselves.
+function arenaTeamHeal.announceNeed()
+    if not taPackage.arenaTeam then return end
+    taPackage.arenaAnnouncedNeedsHealing = true
+    send(arenaTeamHeal.NEED_MSG)
+end
+
+-- Release the hold, from inside the arena. Guarded on having actually announced
+-- so the ordinary errand returns (bar, magic shop, guild hall) — which share
+-- arenaArrivedHome with the heal return — stay silent.
+function arenaTeamHeal.announceHealed()
+    if not taPackage.arenaAnnouncedNeedsHealing then return end
+    taPackage.arenaAnnouncedNeedsHealing = false
+    if not taPackage.arenaTeam then return end
+    send(arenaTeamHeal.HEALED_MSG)
+end
+
 -- Our place in the ring order: how many of the other characters here sort before
 -- our name. Counting rather than sorting sidesteps the question of whether we
 -- appear in our own roster (we don't — the game omits us from the brief) since
@@ -2494,6 +2592,23 @@ end
 -- genuinely alone (empty roster) keeps the fast path on every attempt: there is
 -- nobody to collide with, and the wait would just be dead time.
 local function arenaTeamRing()
+    -- Someone is escaping at low HP: don't summon a monster on top of them.
+    -- Returning without ringing is all it takes — the scan pump that got us here
+    -- has an outstanding re-scan timer (ARENA_RING_RETRY_MS, ~3s) which is not
+    -- invalidated by declining, so we simply probe again in a moment and
+    -- re-evaluate. Reusing the pump rather than adding a second timer also means
+    -- each retry re-derives the roster, and keeps the ring generation the single
+    -- thing that owns ring liveness.
+    --
+    -- Only the gong is held. A monster already in the room is still engaged
+    -- normally — the probe's occupant trigger reaches arenaEngage without ever
+    -- coming through here — so holding the gong never leaves the team standing
+    -- idle next to something that is already hitting them.
+    local holder = arenaTeamHeal.holder()
+    if holder then
+        arenaDebugEcho("team-ring-held-for-" .. holder)
+        return
+    end
     local slot = arenaTeamRingSlot()
     taPackage.arenaTeamSlot = slot
     arenaDebugEcho("team-ring-slot-" .. slot)
@@ -2833,6 +2948,13 @@ end
 -- walks home the same way, so a potion that wore off mid-errand is serviced on
 -- arrival whichever errand we were on. departForShop/Tavern pick the route.
 local function arenaArrivedHome()
+    -- Back in the arena and back on our feet: release any gong hold we placed.
+    -- This has to happen here rather than at the temple — speech only carries to
+    -- the room you are standing in, and the team is here. It runs before the
+    -- errand dispatch below because the hold is about being one hit from death,
+    -- which is no longer true; if we immediately walk out again for food, that
+    -- is an ordinary full-health errand the roster already handles.
+    arenaTeamHeal.announceHealed()
     -- Skip a restock while a level is owed: we are deliberately draining the stat
     -- potions so the training hall will accept us (checkTrainingNeeded stays true
     -- until we train). needsPotions is left set so the restock happens later, once
@@ -3030,6 +3152,11 @@ function checkFleeArena()
     if hp and hp < fleeThreshold then
         arenaDebugEcho("flee-triggered")
         taPackage.arenaState = "fleeing"
+        -- Tell the team before taking the first step, so the announcement is out
+        -- even if the step is refused — the refusal is exactly the case this
+        -- exists for. Announcing first also leaves arenaLastCmd pointing at the
+        -- escape direction rather than the speech.
+        arenaTeamHeal.announceNeed()
         local nav = arenaNav()
         if not nav then
             -- No profile means no route to walk. Say so rather than throwing
@@ -3145,6 +3272,10 @@ local function beginArenaSession(profile, debug, team)
     taPackage.arenaTeam = team
     taPackage.arenaTeamRoster = {}
     taPackage.arenaTeamSlot = 0
+    -- Start deaf to any hold left over from a previous session: a stale lease
+    -- would keep the gong held for a team-mate who finished healing long ago.
+    taPackage.arenaTeamHealing = {}
+    taPackage.arenaAnnouncedNeedsHealing = false
     taPackage.arenaSessionStartXp = taPackage.character.experience
     taPackage.arenaSessionStartTime = os.time()
     taPackage.arenaLastNtfyTime = nil
@@ -3265,6 +3396,8 @@ local function stopArena()
     taPackage.arenaTeam = nil
     taPackage.arenaTeamRoster = nil
     taPackage.arenaTeamSlot = nil
+    taPackage.arenaTeamHealing = nil
+    taPackage.arenaAnnouncedNeedsHealing = nil
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
@@ -3380,6 +3513,30 @@ createTrigger("^You just rang the great gong!$", function()
     taPackage.arenaParchedStreak = 0
     if taPackage.arenaState ~= "ringing" then return end
     taPackage.arenaOwnSummonPending = true
+end, { type = "regex" })
+
+-- A team-mate is escaping at low HP and wants the gong held (see
+-- arenaTeamHealingHolder). We only ever hear other characters: the game shows
+-- the speaker "-- Message sent --" rather than echoing their own line back, so
+-- these can't be tripped by our own announcements.
+--
+-- (\\S+) rather than (.+) for the name is deliberate. Names are a single word,
+-- and the loose form would also swallow the group-chat channel's
+-- "From <leader> (to group): ..." lines, which carry remote commands and belong
+-- to their own trigger further down.
+createTrigger("^From (\\S+): " .. arenaTeamHeal.NEED_MSG .. "$", function(matches)
+    if not taPackage.arenaTeam then return end
+    arenaTeamHeal.leases()[matches[2]:lower()] = os.time()
+    arenaDebugEcho("team-heal-hold-" .. matches[2])
+end, { type = "regex" })
+
+-- ...and they made it back. Clearing the lease early is the normal path; the
+-- expiry in arenaTeamHealingHolder is only the backstop for an all-clear that
+-- never comes.
+createTrigger("^From (\\S+): " .. arenaTeamHeal.HEALED_MSG .. "$", function(matches)
+    if not taPackage.arenaTeam then return end
+    arenaTeamHeal.leases()[matches[2]:lower()] = nil
+    arenaDebugEcho("team-heal-release-" .. matches[2])
 end, { type = "regex" })
 
 -- Somebody else in the arena rang. Solo, that is none of our business — the
@@ -3902,6 +4059,11 @@ createTrigger("^You cannot leave in the heat of battle!$", function()
     if st ~= "fleeing" and st ~= "tavern" and st ~= "potions" then return end
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
+    -- Still stuck in the arena at low HP: renew the gong hold. Re-announcing on
+    -- every blocked attempt is what makes the lease self-limiting — it lives
+    -- exactly as long as we keep trying to get out — and it also gives a
+    -- team-mate who was away when we first called out a chance to hear us.
+    if st == "fleeing" then arenaTeamHeal.announceNeed() end
     local gen = taPackage.arenaRetryGeneration or 0
     -- Retry the exact step that was blocked, not a hardcoded "w": the second
     -- arena's first step out is "s". arenaLastCmd is the blocked command.
@@ -3935,6 +4097,10 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
         -- the full 30s a non-urgent errand walk can afford. Each retry that's
         -- still blocked re-emits this line, so the 2s cadence re-arms naturally.
         local delay = taPackage.arenaState == "fleeing" and 2000 or 30000
+        -- As in the heat-of-battle handler: the rest clock is the other thing
+        -- that pins us in the arena while hurt, so renew the hold each time it
+        -- turns us back.
+        if taPackage.arenaState == "fleeing" then arenaTeamHeal.announceNeed() end
         createTimer(delay, function()
             if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
                 arenaSend(cmd)
