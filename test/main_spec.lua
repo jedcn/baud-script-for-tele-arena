@@ -11866,6 +11866,96 @@ describe("navigate-to", function()
     -- Getting to third-town is not all walking: there are levers to pull and
     -- stones to push. Nothing in the game reliably answers such a command, so
     -- the pacing pause is what says it has had its chance.
+    -- A route can be built by naming other routes instead of listing steps.
+    -- Naming rather than copying is the point: the legs stay runnable on their
+    -- own, and the directions exist in one place, so there is no second copy to
+    -- drift.
+    describe("a route built from other routes", function()
+
+        local function legs(spec)
+            taPackage.navRoutes["sewers/leg-one"] =
+                { from = "second-town/north-plaza", steps = { "sw", "d" } }
+            taPackage.navRoutes["sewers/leg-two"] =
+                { from = { room = "town sewers", exits = "u,se" }, steps = { "se", "n", "e" } }
+            taPackage.navRoutes["sewers/joined"] =
+                { from = "second-town/north-plaza", to = "sewers/town-sewers-18",
+                  legs = spec or { "sewers/leg-one", "sewers/leg-two" } }
+            return taPackage.navRoutes["sewers/joined"]
+        end
+
+        local function flat(spec)
+            return taPackage.navRouteSteps(legs(spec))
+        end
+
+        it("walks the legs in order", function()
+            local steps = flat()
+            assert.are.equal("sw", steps[1])
+            assert.are.equal("d", steps[2])
+            assert.are.equal("se", steps[4])
+            assert.are.equal("n", steps[5])
+            assert.are.equal("e", steps[6])
+        end)
+
+        -- One seam per join, and none before the first leg: that leg's start is
+        -- the joined route's own, already checked before the walk sets off.
+        it("puts a seam before every leg but the first", function()
+            local steps = flat()
+            assert.are.equal(6, #steps)
+            assert.are.same({ seam = "sewers/leg-two" }, steps[3])
+            for i, step in ipairs(steps) do
+                if i ~= 3 then assert.are_not.equal("table", type(step)) end
+            end
+        end)
+
+        it("drops steps off the end of a leg that asks", function()
+            local steps = flat({ "sewers/leg-one", { route = "sewers/leg-two", drop = 2 } })
+            assert.are.equal(4, #steps)
+            assert.are.equal("se", steps[4])   -- `n` and `e` dropped
+        end)
+
+        -- Flattened fresh each time. The walk owns its list because a locked
+        -- gate splices into it, and a leg's own table must not be touched.
+        it("leaves the legs alone", function()
+            local route = legs()
+            local first = taPackage.navRouteSteps(route)
+            table.insert(first, "n")
+            assert.are.equal(2, #taPackage.navRoutes["sewers/leg-one"].steps)
+            assert.are.equal(6, #taPackage.navRouteSteps(route))
+        end)
+
+        it("refuses a leg that names no known route", function()
+            legs({ "sewers/leg-one", "sewers/nowhere" })
+            helper.simulateAlias("navigate-to sewers/joined")
+            assert.are.equal(0, sent(""))
+            assert.is_truthy(lastEchoes():find(
+                "leg 2 is 'sewers/nowhere', and there's no such route", 1, true))
+        end)
+
+        it("refuses a leg that is itself joined from legs", function()
+            legs()
+            taPackage.navRoutes["sewers/leg-two"] = { from = "second-town/north-plaza",
+                                                      legs = { "sewers/leg-one" } }
+            helper.simulateAlias("navigate-to sewers/joined")
+            assert.is_truthy(lastEchoes():find("and I don't join those", 1, true))
+        end)
+
+        it("walks the whole thing, seam and all", function()
+            legs()
+            helper.simulateAlias("navigate-to sewers/joined")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("6 steps", 1, true))
+            brief("path")                                  -- sw
+            helper.fireTimers(taPackage.navStepDelayMs)
+            brief("town sewers")                           -- d
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the seam
+            answerProbe(340)                               -- town sewers, exits u,se
+            assert.is_truthy(lastEchoes():find("At the sewers/leg-two seam", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+    end)
+
     -- A seam moves nowhere. It is the join between two legs of a joined route,
     -- asking the room we have arrived in whether it is where the next leg
     -- begins -- the check that leg makes for itself when it is run by hand, and

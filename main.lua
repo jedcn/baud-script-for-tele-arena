@@ -5305,6 +5305,48 @@ local NAV_ROUTES = {
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
+-- The steps a route will actually walk, as a fresh array, plus a reason if the
+-- route can't be flattened.
+--
+-- Most routes give their steps directly. One built by joining others gives
+-- `legs` instead -- the route names to walk in order -- and this is where that
+-- becomes a step list: each leg's steps in turn, with a seam check inserted
+-- before every leg but the first (the first leg's start is the joined route's
+-- own, already checked before the walk sets off). `drop` takes that many steps
+-- off the end of a leg, which is how the third-town chain stops in the town
+-- square instead of walking the temple leg's last two steps on past it.
+--
+-- Naming the legs rather than copying their steps is the point: 359 directions
+-- transcribed a second time would be 359 chances for the two copies to disagree,
+-- and each leg stays runnable on its own, which is what you want when a walk
+-- this long dies on floor four.
+--
+-- Always a copy, never NAV_ROUTES' own table: a locked gate splices its key
+-- errand into the walk's list, and splicing into the route would weld it there
+-- for the rest of the session.
+function taPackage.navRouteSteps(route)
+    local steps = {}
+    if not route.legs then
+        for i, step in ipairs(route.steps or {}) do steps[i] = step end
+        return steps
+    end
+    for n, entry in ipairs(route.legs) do
+        local name = (type(entry) == "table") and entry.route or entry
+        local drop = ((type(entry) == "table") and entry.drop) or 0
+        local leg = NAV_ROUTES[name]
+        if not leg then
+            return nil, "leg " .. n .. " is '" .. tostring(name) .. "', and there's no such route"
+        end
+        if not leg.steps then
+            return nil, "leg " .. n .. " (" .. name .. ") is itself built from legs,"
+                .. " and I don't join those"
+        end
+        if n > 1 then steps[#steps + 1] = { seam = name } end
+        for i = 1, #leg.steps - drop do steps[#steps + 1] = leg.steps[i] end
+    end
+    return steps
+end
+
 -- Pace between steps or the character trips and falls (see the trip trigger
 -- below). Measured across four walks at 1000ms: 4 trips in 60 moves, 6.7%,
 -- against a 1.13% baseline over the 72,354 hand-typed moves in the archived
@@ -6232,13 +6274,10 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         taPackage.mapping = false
         navEcho("Mapping was on — suspended it, the map won't be written to.")
     end
-    -- A COPY, not the route's own table: a locked gate splices its key errand
-    -- into this list, and splicing into NAV_ROUTES would leave the errand welded
-    -- into the route for the rest of the session -- walked again on the next run
-    -- whether the door was locked that time or not.
-    local steps, gated = {}, false
-    for i, step in ipairs(route.steps) do
-        steps[i] = step
+    -- Flattened afresh (see navRouteSteps): a copy the walk owns, because a
+    -- locked gate splices its key errand into it.
+    local steps, gated = taPackage.navRouteSteps(route), false
+    for _, step in ipairs(steps) do
         if navStepKind(step) == "gate" then gated = true end
     end
     taPackage.navigate = {
@@ -6319,7 +6358,15 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " — run stop-navigating first.")
         return
     end
-    local bad, why = navBadStep(route.steps)
+    -- Flatten first, so a joined route naming a leg that isn't there is refused
+    -- standing still rather than three hundred steps in.
+    local flat, flatErr = taPackage.navRouteSteps(route)
+    if not flat then
+        navEcho("The route to " .. destination .. " is joined from other routes and "
+            .. flatErr .. " — fix the route table.")
+        return
+    end
+    local bad, why = navBadStep(flat)
     if bad then
         navEcho("Step " .. bad .. " of the route to " .. destination .. " " .. why
             .. " — fix the route table.")
