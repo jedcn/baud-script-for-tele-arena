@@ -10388,6 +10388,35 @@ describe("navigate-to", function()
         -- town-1/north-plaza this is a recorded walk rather than an inversion,
         -- so there is no mirror property to assert -- what can be checked is
         -- that it still meets the outward chain where the two must agree.
+        -- get-platinum-key-from-63 is get-platinum-key with its first two steps
+        -- taken off: `s` through the ruby door and `d` down to the junction.
+        -- They are kept as two transcripts rather than one shared table, so this
+        -- is what stops a correction to either from silently splitting them.
+        describe("the platinum errand from the junction", function()
+
+            it("is the long errand minus its walk down from the ruby door", function()
+                local full  = taPackage.navRoutes["town-3/get-platinum-key"].steps
+                local short = taPackage.navRoutes["town-3/get-platinum-key-from-63"].steps
+                assert.are.equal("s", full[1])
+                assert.are.equal("d", full[2])
+                assert.are.equal(#full - 2, #short)
+                for i = 1, #short do
+                    assert.are.same(full[i + 2], short[i])
+                end
+            end)
+
+            -- The long errand ends at the junction, so the short one both starts
+            -- and ends there -- which is what lets it be run on its own, and
+            -- what lets after-doors splice it in without moving us.
+            it("starts and ends at the junction the doors open off", function()
+                local r = taPackage.navRoutes["town-3/get-platinum-key-from-63"]
+                assert.are.equal("sewers/town-sewers-63", r.from)
+                assert.are.equal("sewers/town-sewers-63", r.to)
+                assert.are.equal(taPackage.navRoutes["town-3/get-platinum-key"].to, r.to)
+            end)
+
+        end)
+
         describe("the town-2 route home", function()
 
             local function askToWalk()

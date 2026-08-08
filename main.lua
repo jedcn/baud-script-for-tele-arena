@@ -4871,6 +4871,25 @@ local NAV_ROUTES = {
                   { killAll = true, untilFound = "platinum key" },
                   "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
     },
+    -- The same errand from the other end. town-sewers-63 is where the three
+    -- doors meet and where the legs on either side of this one begin and end, so
+    -- standing there without the platinum key is the common case -- and walking
+    -- back up to the ruby door to start get-platinum-key would be two steps out
+    -- and two steps back for nothing.
+    --
+    -- These ARE get-platinum-key's steps 3 to 21: its first two, `s` and `d`,
+    -- are the walk from the ruby door down to the junction, and its return leg
+    -- already stops here. Nothing new was walked to record this. The two are
+    -- held in agreement by a test rather than by sharing a table, because they
+    -- are transcripts of a walk before they are code, and a correction to one
+    -- should be made deliberately to the other.
+    ["town-3/get-platinum-key-from-63"] = {
+        from  = "sewers/town-sewers-63",
+        to    = "sewers/town-sewers-63",
+        steps = { "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "n",
+                  { killAll = true, untilFound = "platinum key" },
+                  "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
+    },
     -- Picks up where the platinum errand leaves off, at town-sewers-63, and
     -- opens by going east through the platinum door -- so it wants that key in
     -- hand. Out to town-sewers-113 and back to the junction; both halves walk
