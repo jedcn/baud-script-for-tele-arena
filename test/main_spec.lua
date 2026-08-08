@@ -10126,6 +10126,10 @@ describe("navigate-to", function()
                    exits = { "n", "ne", "e", "s", "w", "nw" } },
         [359]  = { id = 359,  slug = "town-sewers-18",       name = "town sewers",       area = 8,
                    exits = { "e", "n", "s", "w" } },
+        -- The junction the ruby, platinum and onyx doors open off, and where
+        -- after-doors ends. Here so that route's `to` resolves.
+        [426]  = { id = 426,  slug = "town-sewers-63",       name = "town sewers",       area = 8,
+                   exits = { "e", "n", "s", "u", "w" } },
         -- Slugs are numbered globally but references resolve within one area,
         -- so the room holding the bare `underground-plaza` slug can sit in a
         -- different town from its namesakes. That is what leaves third-town
@@ -10388,6 +10392,89 @@ describe("navigate-to", function()
         -- town-1/north-plaza this is a recorded walk rather than an inversion,
         -- so there is no mirror property to assert -- what can be checked is
         -- that it still meets the outward chain where the two must agree.
+        -- after-doors is the first four legs in one, and it is composition
+        -- rather than a new walk: every direction in it is already in one of the
+        -- four, so these tests are about the seams.
+        describe("the after-doors route", function()
+
+            local function AFTER() return taPackage.navRoutes["town-3/after-doors"] end
+
+            it("starts where ruby-door starts and ends where get-onyx-key ends", function()
+                assert.are.equal(taPackage.navRoutes["town-3/ruby-door"].from, AFTER().from)
+                assert.are.equal("second-town/north-plaza", AFTER().from)
+                assert.are.equal(taPackage.navRoutes["town-3/get-onyx-key"].to, AFTER().to)
+                assert.are.equal("sewers/town-sewers-63", AFTER().to)
+            end)
+
+            -- The walk down from the plaza is ruby-door's, step for step. What
+            -- is NOT carried over is its trailing `door` probe: that probe ends
+            -- a walk by design, and here the door is walked through and gone on
+            -- from.
+            it("opens with ruby-door's sixteen steps and no door probe", function()
+                local lead = taPackage.navRoutes["town-3/ruby-door"].steps
+                assert.are.equal(16, #lead)
+                for i = 1, #lead do
+                    assert.are.equal(lead[i], AFTER().steps[i])
+                end
+                assert.is_nil(AFTER().door)
+            end)
+
+            it("gates the three doors in order, each with the errand for its key", function()
+                local gates = {}
+                for _, step in ipairs(AFTER().steps) do
+                    if type(step) == "table" and step.door then gates[#gates + 1] = step end
+                end
+                assert.are.equal(3, #gates)
+                assert.are.same({ door = "s", key = "ruby",
+                                  detour = "town-3/get-ruby-key" }, gates[1])
+                assert.are.same({ door = "e", key = "platinum",
+                                  detour = "town-3/get-platinum-key-from-63" }, gates[2])
+                assert.are.same({ door = "s", key = "onyx",
+                                  detour = "town-3/get-onyx-key" }, gates[3])
+                for _, g in ipairs(gates) do
+                    assert.is_truthy(taPackage.navRoutes[g.detour])
+                end
+            end)
+
+            -- Each errand is a round trip to the room it is called from, which
+            -- is what lets it be spliced in without moving the walk: the gate
+            -- that follows is tried from the same room it was refused in.
+            it("only detours to errands that come back to where they started", function()
+                for _, step in ipairs(AFTER().steps) do
+                    if type(step) == "table" and step.detour then
+                        local errand = taPackage.navRoutes[step.detour]
+                        assert.are.equal(errand.from, errand.to)
+                    end
+                end
+            end)
+
+            -- The shape tests above read the table; this one puts the real route
+            -- through the real pre-flight -- both ends resolved, every step and
+            -- every gate's errand checked -- and watches it set off. A typo in
+            -- any of the three detour names stops it here.
+            it("passes its pre-flight and sets off from the north plaza", function()
+                helper.simulateAlias("navigate-to town-3/after-doors")
+                answerProbe(274)
+                assert.are.equal(1, sent("sw"))
+                local out = lastEchoes()
+                assert.is_falsy(out:find("fix the route table", 1, true))
+                assert.is_falsy(out:find("I don't know how to get there from here.", 1, true))
+                assert.is_truthy(out:find(
+                    "22 steps, plus a key errand for any door that's locked.", 1, true))
+            end)
+
+            -- Both doors off the junction are tried and stepped back from, so
+            -- the leg ends at the junction however many of them were locked.
+            it("steps back from each door it opens off the junction", function()
+                local s = AFTER().steps
+                assert.are.equal("d", s[18])   -- 62 -> 63
+                assert.are.equal("w", s[20])   -- 106 -> 63, reversing the platinum gate
+                assert.are.equal("n", s[22])   -- 117 -> 63, reversing the onyx gate
+                assert.are.equal(22, #s)
+            end)
+
+        end)
+
         -- get-platinum-key-from-63 is get-platinum-key with its first two steps
         -- taken off: `s` through the ruby door and `d` down to the junction.
         -- They are kept as two transcripts rather than one shared table, so this

@@ -4836,6 +4836,47 @@ end, { type = "regex" })
 -- at a key: the game auto-searches each corpse, and a key turns up in one of
 -- them ("While searching the area, you notice a ruby key...").
 local NAV_ROUTES = {
+    -- The first four legs in one, from second town's north plaza to the junction
+    -- the three doors open off. They were always run in this order and always
+    -- for the same reason -- get through the ruby, platinum and onyx doors so
+    -- the hydra leg can be walked -- and three of the four are errands you only
+    -- need SOMETIMES. The doors relock around 3am but a key once fetched is
+    -- kept, so on any given day some of those errands are wasted work and some
+    -- are essential, and nothing tells you which from the north plaza.
+    --
+    -- Hence the gates. Each door is walked at, and the game's answer is the
+    -- decision: through it means the key isn't needed, refused means fetch it
+    -- (see the locked-door trigger, which splices the errand in and tries the
+    -- door again). 22 steps with all three already open; about 78 with none.
+    --
+    -- The doors, as the map records them:
+    --
+    --     town-sewers-18 --s--> 62    ruby      (and 62 --d--> 63)
+    --     town-sewers-63 --e--> 106   platinum
+    --     town-sewers-63 --s--> 117   onyx
+    --
+    -- The platinum and onyx doors both hang off 63, and -- this is the part
+    -- worth knowing -- neither is walked by the errand that fetches its own key.
+    -- get-platinum-key never goes near the platinum door, and get-onyx-key opens
+    -- BY going through it. So each door is tried here and stepped back from,
+    -- rather than left for its errand to discover. Two moves apiece, and it is
+    -- what makes the three checks read the same way.
+    --
+    -- Ends where get-onyx-key ends, at the junction, which is where the hydra
+    -- leg begins.
+    ["town-3/after-doors"] = {
+        from  = "second-town/north-plaza",
+        to    = "sewers/town-sewers-63",
+        steps = { -- town-3/ruby-door's sixteen steps, down to town-sewers-18.
+                  "sw", "d", "se", "sw", "s", "se", "se", "sw",
+                  "se", "se", "ne", "ne", "se", "se", "se", "e",
+                  { door = "s", key = "ruby", detour = "town-3/get-ruby-key" },
+                  "d",   -- 62 down to 63, the junction
+                  { door = "e", key = "platinum", detour = "town-3/get-platinum-key-from-63" },
+                  "w",   -- back from 106 to the junction
+                  { door = "s", key = "onyx", detour = "town-3/get-onyx-key" },
+                  "n" }, -- back from 117 to the junction
+    },
     -- Second town down into the sewers, ending nose-to-nose with the ruby door.
     -- The door probe reports whether it's locked, which is what tells you
     -- whether you need the get-ruby-key errand: the door relocks around 3am.
