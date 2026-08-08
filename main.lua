@@ -576,6 +576,20 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         local lost = aoeBefore - tonumber(matches[2])
         if lost > 0 then incomingBadge("AOE " .. lost) end
     end
+    -- And the mirror image: a party member's area heal landed on us. It names no
+    -- amount, so its handler stashed our HP and fired "st" — the gain is the
+    -- *rise* from the stashed value. A heal that hit us at full HP gains
+    -- nothing, and the non-heal area spells gain nothing either; both stay
+    -- silent rather than badging a zero.
+    local groupHealBefore = taPackage.groupHealHpBefore
+    if groupHealBefore then
+        taPackage.groupHealHpBefore = nil
+        local gained = tonumber(matches[2]) - groupHealBefore
+        if gained > 0 then
+            healingBadge("HEALED BY " .. string.upper(taPackage.groupHealCaster or "?")
+                .. " FOR " .. gained)
+        end
+    end
     setVitality(matches[2], matches[3])
     -- A held level-up notification is waiting on exactly this line for the new
     -- HP/MP maxima. Defined with the training trigger far below, so it only
@@ -4286,6 +4300,22 @@ createTrigger("^You discharged the spell at friendly people in the area, healing
             setVitality(max and math.min(current + amount, max) or (current + amount), max)
         end
     end, { type = "regex" })
+
+-- The receiving end of that same area heal tells us only that something good
+-- happened — "Pelayo just discharged a very dark bluish mist at friendly people
+-- in the area!" — with no amount and no new HP. Same trick as the trap and
+-- hostile-AOE handlers: stash our HP, ask for a fresh "st", and let the Vitality
+-- trigger recover the gain and badge it green. The mist's adjectives track the
+-- spell tier ("bluish" / "dark bluish" / "very dark bluish"), and the non-heal
+-- area spells reuse the sentence with their own mist ("thick greyish"), so match
+-- on the "at friendly people" signature alone and let a zero gain go unbadged.
+-- Don't anchor the end: a long enough caster+spell pair word-wraps the trailing
+-- "in the area!" onto a second physical line.
+createTrigger("^(.+) just discharged .+ at friendly people", function(matches)
+    taPackage.groupHealCaster = matches[2]
+    taPackage.groupHealHpBefore = getVitality()
+    send("st")
+end, { type = "regex" })
 
 -- A party member healing us badges "HEALED BY <healer> FOR N" and adds the
 -- amount back to our vitality. The heal comes in several tiers (minor, normal,

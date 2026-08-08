@@ -9427,6 +9427,58 @@ describe("Attack badges", function()
         end)
     end)
 
+    -- Receiving someone else's area heal names no amount, so we stash HP, ask
+    -- for "st", and recover the gain from the fresh Vitality line.
+    describe("area heal cast on us", function()
+        local CAST = "Pelayo just discharged a very dark bluish mist at friendly people in the area!"
+
+        before_each(function()
+            helper.simulateLine("Vitality:     50 / 200")
+        end)
+
+        it("stashes HP and requests a status check", function()
+            helper.simulateLine(CAST)
+            assert.are.equal(50, taPackage.groupHealHpBefore)
+            assert.are.equal("Pelayo", taPackage.groupHealCaster)
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("badges the HP gained once the status returns", function()
+            helper.simulateLine(CAST)
+            helper.simulateLine("Vitality:     154 / 200")
+            local badge = lastBadge()
+            assert.are.equal(" HEALED BY PELAYO FOR 104 ", badge.text)
+            assert.are.equal("#16a34a", badge.color)
+            assert.are.equal("#e0e0e0", badge.backgroundColor)
+            assert.is_true(badge.bold)
+            assert.is_nil(taPackage.groupHealHpBefore)
+        end)
+
+        it("matches the lesser mist tiers and any caster", function()
+            helper.simulateLine("Tojolias just discharged a bluish mist at friendly people in the area!")
+            assert.are.equal("Tojolias", taPackage.groupHealCaster)
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("matches a wrapped first line", function()
+            helper.simulateLine("Pelayo just discharged a very dark bluish mist at friendly people in the")
+            assert.are.equal(50, taPackage.groupHealHpBefore)
+            assert.are.equal("st", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("does not badge when a non-heal area spell leaves HP unchanged", function()
+            helper.simulateLine("Pelayo just discharged a thick greyish mist at friendly people in the area!")
+            helper.simulateLine("Vitality:     50 / 200")
+            assert.are.equal(0, #helper.cechoBgCalls)
+        end)
+
+        it("does not badge our own cast as an incoming heal", function()
+            helper.simulateLine(
+                "You discharged the spell at friendly people in the area, healing 104 damage!")
+            assert.is_nil(taPackage.groupHealHpBefore)
+        end)
+    end)
+
     -- Traps print no damage number; we stash HP, ask for "st", and recover the
     -- loss from the fresh Vitality line.
     describe("trap badges", function()
