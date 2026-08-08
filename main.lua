@@ -5447,6 +5447,51 @@ local function navResolveRef(ref)
     return matches[1]
 end
 
+-- Does the room we're standing in match a route's `from`? Asked in two places
+-- now -- before a walk sets off, and at each seam of a route built from other
+-- routes -- and they are the same question about the same field, so they share
+-- an answer rather than drifting apart.
+--
+-- Returns ok, here, expect, weak, err:
+--   here    how to name where we are, exits and all
+--   expect  how to name what the route wanted
+--   weak    matched on the room name alone, the `from` having named no exits
+--   err     the `from` is a map reference that doesn't resolve
+--
+-- The two branches word themselves differently on purpose. A fingerprint knows
+-- nothing but the room in front of it; a map reference can say which room the
+-- map thinks this is, which is the more useful sentence when it's the wrong one.
+function taPackage.navFromMatches(from, name, dirs)
+    local sorted = navExitKey(dirs)
+    if type(from) == "table" then
+        local want = from.exits and navExitKey(from.exits) or nil
+        local expect = "a room called '" .. from.room .. "'"
+            .. (want and (" with exits " .. want) or "")
+        local ok = (name == from.room) and (not want or sorted == want)
+        return ok, "'" .. name .. "' with exits " .. sorted, expect, ok and not want
+    end
+    local room, err = navResolveRef(from)
+    if not room then return false, nil, nil, false, err end
+    local here = "'" .. name .. "' with exits " .. table.concat(dirs, ",")
+    local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
+    if #candidates == 1 and candidates[1].id == room.id then
+        return true, here, from, false
+    end
+    local which
+    if #candidates == 1 then
+        which = taPackage.db.roomRef(candidates[1].id) or candidates[1].slug
+    elseif #candidates == 0 then
+        which = "no room I have mapped"
+    else
+        local refs = {}
+        for _, c in ipairs(candidates) do
+            refs[#refs + 1] = taPackage.db.roomRef(c.id) or c.slug
+        end
+        which = "one of " .. table.concat(refs, ", ") .. " — too ambiguous to act on"
+    end
+    return false, here .. ", which is " .. which, from, false
+end
+
 -- Walk one step. Unlike the manual n/s/e/w aliases this deliberately leaves no
 -- trail for the mapper: `pendingDirection` is CLEARED, not set. Setting it would
 -- be an instruction to record an edge, and a stale one left behind at the end of
@@ -6275,46 +6320,24 @@ createAlias("^navigate-to (.+)$", function(matches)
                     navCheckInventory(route.requires, gen, go)
                 end
             end
-            -- A fingerprint start asks the map nothing: the check is that the
-            -- room we're standing in looks the way the route says it should.
-            if fromFp then
-                if name == fromFp.room
-                    and (not fromFp.exits or navExitKey(dirs) == fromFp.exits) then
-                    if not fromFp.exits then
-                        navEcho("Going on the room name alone — I can't tell this"
-                            .. " '" .. name .. "' from any other. Check it's the right one."
-                            .. " (Its exits are " .. navExitKey(dirs)
-                            .. " — tell me and I'll make the check exact.)")
-                    end
-                    checkThenGo()
-                    return
+            local ok, here, _, weak = taPackage.navFromMatches(route.from, name, dirs)
+            if ok then
+                -- A fingerprint that named no exits matched on the room name
+                -- alone, and "stonework chamber" is twenty-four rooms. Walk it,
+                -- but say out loud how little was checked.
+                if weak then
+                    navEcho("Going on the room name alone — I can't tell this"
+                        .. " '" .. name .. "' from any other. Check it's the right one."
+                        .. " (Its exits are " .. navExitKey(dirs)
+                        .. " — tell me and I'll make the check exact.)")
                 end
-                navEcho("I don't know how to get there from here.")
-                navEcho("  I'm in '" .. name .. "' with exits " .. navExitKey(dirs) .. ".")
-                navEcho("  The route to " .. destination .. " starts from " .. fromLabel .. ".")
-                return
-            end
-            local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
-            if #candidates == 1 and candidates[1].id == fromRoom.id then
                 checkThenGo()
                 return
             end
-            local here
-            if #candidates == 1 then
-                here = taPackage.db.roomRef(candidates[1].id) or candidates[1].slug
-            elseif #candidates == 0 then
-                here = "no room I have mapped"
-            else
-                local refs = {}
-                for _, c in ipairs(candidates) do
-                    refs[#refs + 1] = taPackage.db.roomRef(c.id) or c.slug
-                end
-                here = "one of " .. table.concat(refs, ", ") .. " — too ambiguous to act on"
-            end
             navEcho("I don't know how to get there from here.")
-            navEcho("  I'm in '" .. name .. "' with exits " .. table.concat(dirs, ",")
-                .. ", which is " .. here .. ".")
-            navEcho("  The route to " .. destination .. " starts at " .. fromLabel .. ".")
+            navEcho("  I'm in " .. here .. ".")
+            navEcho("  The route to " .. destination
+                .. (fromFp and " starts from " or " starts at ") .. fromLabel .. ".")
         end,
     }
     taPackage.slugProbe = probe
