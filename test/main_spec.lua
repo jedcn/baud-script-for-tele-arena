@@ -11642,6 +11642,63 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("never listed what I'm carrying", 1, true))
         end)
 
+        -- A concatenated route needs everything its legs need, and the two the
+        -- third-town chain needs strand you in different places: the rope in the
+        -- hydra's pit, the potion out in the desert with the poison working.
+        -- Setting off holding one of the two is how you learn about the other
+        -- from the bottom of the pit.
+        describe("more than one item", function()
+
+            local BOTH = { "coil of rope", "verbena potion" }
+
+            local function askToWalkForBoth()
+                route({ requires = BOTH })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                answerProbe(274)
+            end
+
+            it("walks when both are there", function()
+                askToWalkForBoth()
+                helper.simulateLine("You are carrying a coil of rope, a verbena potion, and 12 gold crowns.")
+                assert.are.equal(1, sent("sw"))
+            end)
+
+            -- Naming what is missing rather than what is needed: told "this
+            -- route needs a verbena potion" while holding one, you go looking
+            -- for the wrong problem.
+            it("names only the one that is missing", function()
+                askToWalkForBoth()
+                helper.simulateLine("You are carrying a coil of rope, and 12 gold crowns.")
+                assert.are.equal(0, sent("sw"))
+                local out = lastEchoes()
+                assert.is_truthy(out:find("needs a verbena potion and I'm not carrying one", 1, true))
+                assert.is_falsy(out:find("coil of rope and", 1, true))
+            end)
+
+            it("names both when both are missing", function()
+                askToWalkForBoth()
+                helper.simulateLine("You are carrying 12 gold crowns.")
+                assert.is_truthy(lastEchoes():find(
+                    "needs a coil of rope and a verbena potion and I'm not carrying them", 1, true))
+            end)
+
+            it("names both when told 'anyway'", function()
+                route({ requires = BOTH })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+                answerProbe(274)
+                assert.are.equal(0, sent("i"))
+                assert.is_truthy(lastEchoes():find(
+                    "without checking for a coil of rope and a verbena potion", 1, true))
+            end)
+
+            it("still takes a bare string, as every route but one does", function()
+                askToWalk()
+                helper.simulateLine("You are carrying a coil of rope.")
+                assert.are.equal(1, sent("sw"))
+            end)
+
+        end)
+
         it("ignores lines before the listing", function()
             askToWalk()
             helper.simulateLine("Someone shouts something rude.")

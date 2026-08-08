@@ -6015,16 +6015,42 @@ taPackage.navOnRoomBrief = navOnRoomBrief
 -- Hence: gather lines until one ends the sentence, join them back into a
 -- single string, and look for the item in that. Matching a wrapped line on its
 -- own would miss a "coil of rope" split across the break.
+-- A route may need more than one thing. after-doors-to-town-3 needs the rope for
+-- the hydra's pit AND the verbena potion for the poison out in the desert, and
+-- setting off with one of the two is how you find out about the other from the
+-- bottom of a pit. `requires` therefore takes a string, as it always has, or a
+-- list. On taPackage rather than a local: main.lua is two names short of Lua's
+-- 200-local ceiling on a chunk.
+function taPackage.navWanted(requires)
+    if type(requires) == "table" then return requires end
+    return { requires }
+end
+
+-- "a coil of rope", "a coil of rope and a verbena potion", "a, b and c".
+function taPackage.navItemPhrase(items)
+    local out = {}
+    for _, item in ipairs(items) do out[#out + 1] = "a " .. item end
+    if #out < 2 then return out[1] or "" end
+    return table.concat(out, ", ", 1, #out - 1) .. " and " .. out[#out]
+end
+
 local function navInventoryFinish()
     local inv = taPackage.navInventory
     if not inv then return end
     taPackage.navInventory = nil
     if (taPackage.navGen or 0) ~= inv.gen then return end
-    if inv.text:lower():find(inv.want:lower(), 1, true) then
+    -- Which ones are missing, not just that something is: told "this route needs
+    -- a verbena potion" while holding one, you go looking for the wrong problem.
+    local text, missing = inv.text:lower(), {}
+    for _, item in ipairs(inv.wants) do
+        if not text:find(item:lower(), 1, true) then missing[#missing + 1] = item end
+    end
+    if #missing == 0 then
         inv.onOk()
         return
     end
-    navEcho("This route needs a " .. inv.want .. " and I'm not carrying one — not setting off.")
+    navEcho("This route needs " .. taPackage.navItemPhrase(missing)
+        .. " and I'm not carrying " .. (#missing > 1 and "them" or "one") .. " — not setting off.")
     navEcho("  Carrying: " .. inv.text)
 end
 
@@ -6045,15 +6071,16 @@ createTrigger("^(.+)$", function(matches)
     if inv.text:sub(-1) == "." then navInventoryFinish() end
 end, { type = "regex" })
 
-local function navCheckInventory(want, gen, onOk)
-    taPackage.navInventory = { want = want, gen = gen, onOk = onOk }
+local function navCheckInventory(requires, gen, onOk)
+    local wants = taPackage.navWanted(requires)
+    taPackage.navInventory = { wants = wants, gen = gen, onOk = onOk }
     send("i")
     createTimer(NAV_PROBE_TIMEOUT_MS, function()
         local inv = taPackage.navInventory
         if not inv or inv.gen ~= gen then return end
         taPackage.navInventory = nil
-        navEcho("The game never listed what I'm carrying, so I can't tell whether I have a "
-            .. want .. " — nothing sent. Try again.")
+        navEcho("The game never listed what I'm carrying, so I can't tell whether I have "
+            .. taPackage.navItemPhrase(wants) .. " — nothing sent. Try again.")
     end, { repeating = false })
 end
 
@@ -6240,7 +6267,8 @@ createAlias("^navigate-to (.+)$", function(matches)
                 if not route.requires then
                     go()
                 elseif anyway then
-                    navEcho("Setting off without checking for a " .. route.requires
+                    navEcho("Setting off without checking for "
+                        .. taPackage.navItemPhrase(taPackage.navWanted(route.requires))
                         .. " — you asked for it anyway.")
                     go()
                 else
