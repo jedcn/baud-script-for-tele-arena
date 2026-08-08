@@ -10969,6 +10969,25 @@ describe("navigate-to", function()
                 assert.is_truthy(out:find("attempt 5", 1, true))
             end)
 
+            -- Counted from the step, not from the walk. after-doors clears three
+            -- rooms and comes out of each winded, and its first live run
+            -- announced the third episode as "attempt 20" -- which reads as one
+            -- move refused twenty times rather than the first refusal of a new
+            -- one. The walk total is still what the closing trace reports.
+            it("counts the attempts against the move, not the whole walk", function()
+                startWalking()
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.fireTimers(taPackage.navRestRetryMs)
+                brief("path")                                  -- the move gets through
+                helper.fireTimers(taPackage.navStepDelayMs)    -- on to the next step
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                local out = lastEchoes()
+                assert.are.equal(2, select(2, out:gsub("attempt 1%)", "")))
+                assert.is_falsy(out:find("attempt 2", 1, true))
+                helper.simulateAlias("stop-navigating")
+                assert.is_truthy(lastEchoes():find("winded 2x", 1, true))
+            end)
+
             it("walks on once the move gets through", function()
                 startWalking()
                 helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
@@ -11354,6 +11373,19 @@ describe("navigate-to", function()
             it("says what it is fighting for", function()
                 sweepingFor()
                 assert.is_truthy(lastEchoes():find("Clearing the room until I get a ruby key", 1, true))
+            end)
+
+            -- Of the four keys these errands fetch, one starts with a vowel,
+            -- and "until I get a onyx key" is what the first live run said.
+            it("gets the article right for a key that starts with a vowel", function()
+                route({ steps = { "sw", "d", { killAll = true, untilFound = "onyx key" }, "se" } })
+                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                answerProbe(274)
+                brief("path")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                brief("town sewers")
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.is_truthy(lastEchoes():find("until I get an onyx key", 1, true))
             end)
 
             it("stops fighting and walks on when it drops", function()

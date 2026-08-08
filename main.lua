@@ -5881,7 +5881,8 @@ navStartSweep = function()
     -- `untilFound` is what the errand actually came for. With it, the sweep is
     -- over the moment that thing turns up; without it, the room gets cleared.
     local want = j.steps[j.index].untilFound
-    navEcho(want and ("Clearing the room until I get a " .. want .. ".")
+    navEcho(want and ("Clearing the room until I get "
+                      .. (want:match("^[aeiou]") and "an " or "a ") .. want .. ".")
                   or "Clearing the room with kill-all.")
     -- Marks this sweep as a route's, which is what scopes the full-pack
     -- handling below: a kill-all run by hand is nobody's business but yours.
@@ -6496,9 +6497,18 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
     local j = taPackage.navigate
     if not j then return end
     j.rests = (j.rests or 0) + 1
-    navDebug("winded on step " .. j.index .. " (rest " .. j.rests .. ")")
-    if j.rests == 1 or j.rests % 5 == 0 then
-        navEcho("Winded from the fight — retrying the move (attempt " .. j.rests .. ").")
+    -- "attempt N" is about THIS move, so it counts from the step rather than
+    -- from the walk. after-doors clears three rooms and comes out of each of
+    -- them winded, and on its first live run the walk total made the third
+    -- episode announce itself as "attempt 20" -- which reads as one move
+    -- refused twenty times over rather than the fifth refusal of a fresh one.
+    -- The walk total is still what the closing trace reports.
+    if j.restStep ~= j.index then j.restStep, j.restRun = j.index, 0 end
+    j.restRun = j.restRun + 1
+    navDebug("winded on step " .. j.index .. " (rest " .. j.restRun
+        .. " here, " .. j.rests .. " this walk)")
+    if j.restRun == 1 or j.restRun % 5 == 0 then
+        navEcho("Winded from the fight — retrying the move (attempt " .. j.restRun .. ").")
     end
     -- navResendStep clears this again; set in case the game reprints the room.
     j.blocked = true
