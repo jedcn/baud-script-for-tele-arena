@@ -5513,12 +5513,17 @@ end
 -- IS the question: the game answers a door direction with an arrival brief if it
 -- is open, "your <key> key unlocks..." if we already hold the key, or the locked
 -- refusal if we don't -- and the first two both mean the errand can be skipped.
+-- A `seam` moves nowhere at all. It is the join between two legs of a route
+-- built from other routes, and it asks the room we have arrived in whether it is
+-- where the next leg begins -- the check that leg would have made for itself had
+-- it been run by hand.
 local function navStepKind(step)
     if type(step) == "string" then return "move" end
     if type(step) ~= "table" then return nil end
     if step.killAll then return "killAll" end
     if type(step.cmd) == "string" then return "cmd" end
     if type(step.door) == "string" then return "gate" end
+    if type(step.seam) == "string" then return "seam" end
     return nil
 end
 
@@ -5531,7 +5536,11 @@ local function navBadStep(steps, seen)
     for i, step in ipairs(steps or {}) do
         local kind = navStepKind(step)
         if not kind then
-            return i, "isn't a direction, a { cmd = ... }, a { killAll = true } or a { door = ... }"
+            return i, "isn't a direction, a { cmd = ... }, a { killAll = true },"
+                .. " a { door = ... } or a { seam = ... }"
+        end
+        if kind == "seam" and not NAV_ROUTES[step.seam] then
+            return i, "checks we've reached '" .. step.seam .. "', and there's no such route"
         end
         if kind == "gate" and step.detour then
             local sub = NAV_ROUTES[step.detour]
@@ -5555,11 +5564,12 @@ local function navStepLabel(step)
     if kind == "move" then return step end
     if kind == "cmd" then return "'" .. step.cmd .. "'" end
     if kind == "gate" then return step.door .. " (" .. (step.key or "locked") .. " door)" end
+    if kind == "seam" then return "seam check (" .. step.seam .. ")" end
     return "kill-all"
 end
 
--- Both are defined below: they need navStep, which needs them.
-local navAdvance, navStartSweep
+-- All three are defined below: they need navStep, which needs them.
+local navAdvance, navStartSweep, navStartSeam
 
 -- Send the next queued step. index counts steps already started, so bumping it
 -- first and indexing gives the one we haven't done yet.
@@ -5586,6 +5596,8 @@ local function navStep()
         -- Nothing reliably answers an arbitrary command, so the pause is the
         -- only signal we have that it has had its chance.
         navAdvance()
+    elseif kind == "seam" then
+        navStartSeam(step.seam)
     else
         navStartSweep()
     end
@@ -5911,6 +5923,76 @@ navAdvance = function()
     if j.index >= #j.steps then navArrive() else navScheduleStep() end
 end
 
+-- A `{ seam = "<route>" }` step: the join between two legs of a joined route.
+-- Ask the room where we are and check it against the leg about to start.
+--
+-- Run by hand, each leg checks its own starting room before it moves, and for
+-- the six stoneworks legs that check is the ONLY thing standing between a
+-- miscounted repeat and a character walking into walls a hundred steps from the
+-- cause -- there is no map down there to catch a wrong turn. Joining the legs
+-- would have thrown those checks away, so the seams keep them.
+--
+-- Nothing new is needed to ask: this is the same bare return plus `ex` the start
+-- check uses, answered through the same slugProbe (see the Exits trigger, which
+-- hands the room name and its exits to onResolve).
+navStartSeam = function(legName)
+    local j = taPackage.navigate
+    if not j then return end
+    local leg = NAV_ROUTES[legName]
+    -- navBadStep refuses an unknown leg before the walk sets off, so this can
+    -- only be a route deleted mid-walk. Say so rather than walking on blind.
+    if not leg then
+        stopNavigate()
+        navEcho("The seam check names " .. legName .. ", which I no longer know — stopping.")
+        return
+    end
+    local gen = taPackage.navGen or 0
+    j.phase = "seam"
+    taPackage.slugProbe = {
+        name = nil,
+        nav  = true,
+        onResolve = function(name, dirs)
+            local walk = taPackage.navigate
+            if not walk or (taPackage.navGen or 0) ~= gen then return end
+            walk.phase = "walking"
+            if not name then
+                stopNavigate()
+                navEcho("Couldn't read the room I'm in at the " .. legName .. " seam — stopping.")
+                return
+            end
+            local ok, here, expect, weak, err = taPackage.navFromMatches(leg.from, name, dirs)
+            if err then
+                stopNavigate()
+                navEcho("The " .. legName .. " seam can't be checked: " .. err .. " — stopping.")
+                return
+            end
+            if ok then
+                navEcho("At the " .. legName .. " seam: " .. here .. " — as expected"
+                    .. (weak and ", though only the name was checked." or ", carrying on."))
+                navAdvance()
+                return
+            end
+            stopNavigate()
+            navEcho("At the " .. legName .. " seam I expected " .. tostring(expect)
+                .. " but I'm in " .. here .. " — stopping.")
+            -- The leg is the resume point: it is what you would run by hand from
+            -- wherever this actually is, once you have worked out where that is.
+            navEcho("  Get to where " .. legName .. " starts and run it on its own"
+                .. ", or stop-navigating and walk it by hand.")
+        end,
+    }
+    send("")
+    send("ex")
+    createTimer(NAV_PROBE_TIMEOUT_MS, function()
+        if (taPackage.navGen or 0) ~= gen then return end
+        if not (taPackage.slugProbe and taPackage.slugProbe.nav) then return end
+        taPackage.slugProbe = nil
+        stopNavigate()
+        navEcho("The game never told me what room I'm in at the " .. legName
+            .. " seam — stopping rather than walking on unsure.")
+    end, { repeating = false })
+end
+
 -- A `{ killAll = true }` step: clear this room before walking on. Getting a
 -- key is the usual reason -- the game auto-searches each corpse and a key turns
 -- up in one of them ("While searching the area, you notice a ruby key...").
@@ -5988,6 +6070,13 @@ local function navOnRoomBrief(room)
     -- so this is not an arrival -- it's here to carry the floor line behind it.
     if j.phase == "tripcheck" then
         navDebug("floor check reply")
+        return
+    end
+
+    -- Likewise the bare return a seam check sends to identify the room. It is a
+    -- question about where we already are, not a move.
+    if j.phase == "seam" then
+        navDebug("seam check reply")
         return
     end
 

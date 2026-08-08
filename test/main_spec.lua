@@ -11866,6 +11866,118 @@ describe("navigate-to", function()
     -- Getting to third-town is not all walking: there are levers to pull and
     -- stones to push. Nothing in the game reliably answers such a command, so
     -- the pacing pause is what says it has had its chance.
+    -- A seam moves nowhere. It is the join between two legs of a joined route,
+    -- asking the room we have arrived in whether it is where the next leg
+    -- begins -- the check that leg makes for itself when it is run by hand, and
+    -- for the stoneworks legs the only thing standing between a miscounted
+    -- repeat and a character walking into walls a hundred steps later.
+    describe("checking the room at a seam", function()
+
+        -- Both `from` shapes a leg can have: room 274 is a real mapped room, so
+        -- NEXT_MAPPED exercises the reference branch and NEXT_FP the literal one.
+        local NEXT_FP = { from = { room = "north plaza", exits = "e,n,s,sw,w" },
+                          to = "sewers/town-sewers-18", steps = { "n" } }
+        local NEXT_MAPPED = { from = "second-town/north-plaza",
+                              to = "sewers/town-sewers-18", steps = { "n" } }
+
+        local function walkToSeam(leg)
+            taPackage.navRoutes["sewers/next-leg"] = leg or NEXT_FP
+            route({ steps = { "sw", { seam = "sewers/next-leg" }, "se" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                  -- step 1 lands
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the seam goes out
+        end
+
+        it("asks the room where it is without moving", function()
+            walkToSeam()
+            -- Two: the start check asked once before the walk set off, and this
+            -- is the same question asked again at the join.
+            assert.are.equal(2, sent("ex"))
+            assert.are.equal(0, sent("se"))
+        end)
+
+        -- The bare return the seam sends brings a room brief back with it. Read
+        -- as an arrival it would advance the walk a step past the character.
+        it("does not let its own reply advance the walk", function()
+            walkToSeam()
+            brief("north plaza")
+            assert.are.equal(0, sent("se"))
+        end)
+
+        it("walks on when the room is where the next leg starts", function()
+            walkToSeam()
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("At the sewers/next-leg seam", 1, true))
+            assert.is_truthy(lastEchoes():find("as expected, carrying on", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        it("stops when the room name is wrong", function()
+            walkToSeam()
+            brief("stonework corridor")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("At the sewers/next-leg seam I expected", 1, true))
+            assert.is_truthy(out:find("a room called 'north plaza'", 1, true))
+            assert.is_truthy(out:find("but I'm in 'stonework corridor'", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("stops when the exits are wrong", function()
+            walkToSeam()
+            brief("north plaza")
+            helper.simulateLine("Exits: ne,s.")
+            assert.is_truthy(lastEchoes():find("but I'm in 'north plaza' with exits ne,s", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- The leg is the resume point: it is exactly what you would run by hand
+        -- from wherever the walk actually got to.
+        it("names the leg to resume from", function()
+            walkToSeam()
+            brief("stonework corridor")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            assert.is_truthy(lastEchoes():find(
+                "Get to where sewers/next-leg starts and run it on its own", 1, true))
+        end)
+
+        -- The hydra-to-stoneworks seam is this shape: the leg names a mapped
+        -- room rather than a fingerprint, so the check goes through the map.
+        it("checks a leg whose start is a map reference", function()
+            walkToSeam(NEXT_MAPPED)
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("as expected, carrying on", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        it("stops rather than hanging when the room never answers", function()
+            walkToSeam()
+            helper.fireTimers(5000)
+            assert.are.equal(0, sent("se"))
+            assert.is_truthy(lastEchoes():find("never told me what room I'm in at the", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("leaves no probe armed when stopped mid-seam", function()
+            walkToSeam()
+            helper.simulateAlias("stop-navigating")
+            assert.is_nil(taPackage.slugProbe)
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("refuses a route whose seam names no known route", function()
+            route({ steps = { "sw", { seam = "sewers/nowhere" } } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(0, sent(""))
+            assert.is_truthy(lastEchoes():find(
+                "checks we've reached 'sewers/nowhere', and there's no such route", 1, true))
+        end)
+
+    end)
+
     -- A gate is a door the route expects to find shut some of the time. The move
     -- is the question -- open, opened by a key we hold, or refused -- and only
     -- the refusal costs anything: the errand that fetches the key.
