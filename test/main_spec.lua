@@ -11690,6 +11690,171 @@ describe("navigate-to", function()
     -- Getting to third-town is not all walking: there are levers to pull and
     -- stones to push. Nothing in the game reliably answers such a command, so
     -- the pacing pause is what says it has had its chance.
+    -- A gate is a door the route expects to find shut some of the time. The move
+    -- is the question -- open, opened by a key we hold, or refused -- and only
+    -- the refusal costs anything: the errand that fetches the key.
+    describe("doors on the way", function()
+
+        -- A round trip, as every key errand is. Deliberately shares no direction
+        -- with the gate or the route around it, so counting what was sent says
+        -- which of the three moved.
+        local ERRAND = { from = "sewers/town-sewers-18", to = "sewers/town-sewers-18",
+                         steps = { "n", "s" } }
+
+        local function gated(gate, steps)
+            taPackage.navRoutes["sewers/errand"] = ERRAND
+            route({ steps = steps or { "sw", gate, "se" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                  -- step 1 lands
+            helper.fireTimers(taPackage.navStepDelayMs)     -- the gate goes out
+        end
+
+        local function GATE(overrides)
+            local g = { door = "e", key = "ruby", detour = "sewers/errand" }
+            for k, v in pairs(overrides or {}) do g[k] = v end
+            return g
+        end
+
+        it("walks the door direction like any other step", function()
+            gated(GATE())
+            assert.are.equal(1, sent("e"))
+        end)
+
+        it("walks on when the door is simply open", function()
+            gated(GATE())
+            brief("town sewers")
+            assert.is_truthy(lastEchoes():find("The e door was already open", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        -- The branch that makes the whole thing worth having: a key we fetched
+        -- yesterday opens the door today, and the errand is skipped.
+        it("names the key when one we hold opens the door", function()
+            gated(GATE())
+            helper.simulateLine("Your ruby key unlocks the stone door and allows you to pass through.")
+            brief("town sewers")
+            assert.is_truthy(lastEchoes():find("My ruby key opened the e door", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("se"))
+            assert.are.equal(0, sent("n"))                 -- the errand never ran
+        end)
+
+        it("runs the errand when the door is locked, then tries the door again", function()
+            gated(GATE())
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("The e door is locked and I don't have the ruby key", 1, true))
+            assert.is_truthy(out:find("by way of sewers/errand (2 steps)", 1, true))
+            -- The errand's two steps, then the same door for a second time.
+            assert.are.equal(1, sent("e"))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("n"))
+            brief("town sewers")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("s"))
+            brief("town sewers-18")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("e"))                 -- the gate, retried
+            assert.are.equal(0, sent("se"))                -- and the route not run on
+        end)
+
+        it("finishes the route once the retried door opens", function()
+            gated(GATE())
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            helper.fireTimers(taPackage.navStepDelayMs)    -- errand step 1
+            brief("town sewers")
+            helper.fireTimers(taPackage.navStepDelayMs)    -- errand step 2
+            brief("town sewers-18")
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the gate again
+            helper.simulateLine("Your ruby key unlocks the stone door and allows you to pass through.")
+            brief("town sewers")
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the last step
+            assert.are.equal(1, sent("se"))
+            brief("town sewers")
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- The errand is meant to end holding the key. If the door is still shut
+        -- after it, walking it again would only fetch a key we now have.
+        it("stops rather than running the errand twice", function()
+            gated(GATE())
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            brief("town sewers")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            brief("town sewers-18")
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the gate again
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            assert.is_truthy(lastEchoes():find(
+                "Walked sewers/errand and the e door is still locked", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- Every locked door was a hard stop before gates existed, and one with
+        -- nowhere to go for the key still is.
+        it("still stops at a locked door with no errand to run", function()
+            gated({ door = "e", key = "ruby" })
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("A locked stone door blocks step 2", 1, true))
+            assert.is_truthy(out:find("(the ruby key)", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- A gate is a move, so it can be tripped on, and re-sending it is safe.
+        -- Read from the step's `door` rather than the step itself, which is a
+        -- table -- the walk would otherwise sit waiting on a step it never sent.
+        it("re-sends the door after a trip", function()
+            gated(GATE())
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            helper.simulateLine("There is nothing on the floor.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("e"))
+        end)
+
+        -- Splicing writes into the walk's step list. Were that the route's own
+        -- table, the errand would be welded into the route for the rest of the
+        -- session and walked again whether the door was locked or not.
+        it("does not weld the errand into the route", function()
+            gated(GATE())
+            local before = #taPackage.navRoutes["sewers/town-sewers-18"].steps
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            assert.are.equal(before, #taPackage.navRoutes["sewers/town-sewers-18"].steps)
+            assert.are.equal(before + 2, #taPackage.navigate.steps)
+        end)
+
+        it("says the step count is a floor when a route has a gate", function()
+            gated(GATE())
+            assert.is_truthy(lastEchoes():find(
+                "3 steps, plus a key errand for any door that's locked.", 1, true))
+        end)
+
+        -- The errand is named by string, so a typo in it is invisible until the
+        -- day a door happens to be locked. Check it with the rest of the route,
+        -- standing still, before anything is sent.
+        it("refuses a route whose errand names no known route", function()
+            taPackage.navRoutes["sewers/errand"] = ERRAND
+            route({ steps = { "sw", GATE({ detour = "sewers/nowhere" }) } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(0, sent(""))
+            assert.is_truthy(lastEchoes():find(
+                "Step 2 of the route to sewers/town-sewers-18 sends us to 'sewers/nowhere'", 1, true))
+        end)
+
+        it("refuses a route whose errand is itself malformed", function()
+            taPackage.navRoutes["sewers/errand"] = { from = ERRAND.from, to = ERRAND.to,
+                                                    steps = { "n", 7 } }
+            route({ steps = { "sw", GATE() } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.is_truthy(lastEchoes():find("whose step 2 isn't a direction", 1, true))
+        end)
+
+    end)
+
     describe("commands along the way", function()
 
         local function walkWithCommand(steps)

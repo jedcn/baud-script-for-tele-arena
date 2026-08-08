@@ -5422,18 +5422,44 @@ end
 -- makes the distinction matter is how each one finishes: a move is answered by
 -- an arrival brief, a command by nothing in particular, and a sweep by the room
 -- falling quiet -- so each advances the walk from somewhere different.
+-- A `gate` is a move through a door that may or may not be shut, naming the key
+-- that opens it and the errand that fetches that key. Its point is that the move
+-- IS the question: the game answers a door direction with an arrival brief if it
+-- is open, "your <key> key unlocks..." if we already hold the key, or the locked
+-- refusal if we don't -- and the first two both mean the errand can be skipped.
 local function navStepKind(step)
     if type(step) == "string" then return "move" end
     if type(step) ~= "table" then return nil end
     if step.killAll then return "killAll" end
     if type(step.cmd) == "string" then return "cmd" end
+    if type(step.door) == "string" then return "gate" end
     return nil
 end
 
--- Reject a malformed route standing still rather than halfway along it.
-local function navBadStep(steps)
+-- Reject a malformed route standing still rather than halfway along it. A gate's
+-- detour is another route named by string, so it is checked too: a typo there
+-- would otherwise lie undisturbed until the day a door happened to be locked.
+-- `seen` stops a detour that leads back to its own route from recursing forever.
+local function navBadStep(steps, seen)
+    seen = seen or {}
     for i, step in ipairs(steps or {}) do
-        if not navStepKind(step) then return i end
+        local kind = navStepKind(step)
+        if not kind then
+            return i, "isn't a direction, a { cmd = ... }, a { killAll = true } or a { door = ... }"
+        end
+        if kind == "gate" and step.detour then
+            local sub = NAV_ROUTES[step.detour]
+            if not sub then
+                return i, "sends us to '" .. step.detour .. "' for the key, and there's no such route"
+            end
+            if not seen[step.detour] then
+                seen[step.detour] = true
+                local badSub, why = navBadStep(sub.steps, seen)
+                if badSub then
+                    return i, "sends us to " .. step.detour .. ", whose step " .. badSub .. " " .. why
+                end
+            end
+        end
     end
     return nil
 end
@@ -5442,6 +5468,7 @@ local function navStepLabel(step)
     local kind = navStepKind(step)
     if kind == "move" then return step end
     if kind == "cmd" then return "'" .. step.cmd .. "'" end
+    if kind == "gate" then return step.door .. " (" .. (step.key or "locked") .. " door)" end
     return "kill-all"
 end
 
@@ -5463,6 +5490,11 @@ local function navStep()
     navDebug("send step " .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
     if kind == "move" then
         navSend(step)
+    elseif kind == "gate" then
+        -- Cleared so the key that opened the LAST door can't be reported for
+        -- this one: the line only arrives when a key is actually used.
+        j.doorOpenedByKey = nil
+        navSend(step.door)
     elseif kind == "cmd" then
         navSend(step.cmd)
         -- Nothing reliably answers an arbitrary command, so the pause is the
@@ -5481,9 +5513,14 @@ local function navResendStep()
     if not j then return end
     j.blocked = nil
     -- Only a move can be refused this way, and only a move is safe to repeat:
-    -- re-sending a lever pull would work it twice.
-    local dir = j.steps[j.index]
-    if type(dir) == "string" then
+    -- re-sending a lever pull would work it twice. A gate is a move -- walking
+    -- at a door twice costs nothing -- and has to be named explicitly here or a
+    -- trip on one would leave the walk waiting for a step it never re-sent.
+    local step = j.steps[j.index]
+    local dir = (type(step) == "string" and step)
+        or (navStepKind(step) == "gate" and step.door)
+        or nil
+    if dir then
         navDebug("re-send step " .. j.index .. " " .. dir)
         navSend(dir)
     end
@@ -5887,10 +5924,24 @@ local function navOnRoomBrief(room)
         return
     end
 
+    -- A gate that produced a brief is a door we got through, and which of the
+    -- two ways we got through it is worth saying: "the walk carried on" reads
+    -- identically for both, and only one of them means the key is ours to keep.
+    if j.stepKind == "gate" then
+        local gate = j.steps[j.index]
+        if j.doorOpenedByKey then
+            navEcho("My " .. j.doorOpenedByKey .. " key opened the " .. gate.door
+                .. " door — no errand needed.")
+        else
+            navEcho("The " .. gate.door .. " door was already open — no errand needed.")
+        end
+        j.doorOpenedByKey = nil
     -- Only a movement step is answered by an arrival brief. A command's reply
     -- and the briefs a kill-all sweep's own scans print are not arrivals, and
     -- counting them would run the walk ahead of where the character is.
-    if j.stepKind ~= "move" then return end
+    elseif j.stepKind ~= "move" then
+        return
+    end
 
     navDebug("arrived after step " .. j.index .. " (" .. room .. ")")
 
@@ -5978,9 +6029,18 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         taPackage.mapping = false
         navEcho("Mapping was on — suspended it, the map won't be written to.")
     end
+    -- A COPY, not the route's own table: a locked gate splices its key errand
+    -- into this list, and splicing into NAV_ROUTES would leave the errand welded
+    -- into the route for the rest of the session -- walked again on the next run
+    -- whether the door was locked that time or not.
+    local steps, gated = {}, false
+    for i, step in ipairs(route.steps) do
+        steps[i] = step
+        if navStepKind(step) == "gate" then gated = true end
+    end
     taPackage.navigate = {
         destination  = destination,
-        steps        = route.steps,
+        steps        = steps,
         index        = 0,
         door         = route.door,
         onPoison     = route.onPoison,
@@ -5992,7 +6052,10 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         debug        = debug,
         startedAt    = navNowMs(),
     }
-    navEcho("Walking to " .. destination .. " — " .. #route.steps .. " steps.")
+    -- With a gate in it the count is a floor, not a total: every door that turns
+    -- out to be locked adds its key errand to the walk.
+    navEcho("Walking to " .. destination .. " — " .. #steps .. " steps"
+        .. (gated and ", plus a key errand for any door that's locked." or "."))
     if debug then
         -- Record encumbrance alongside the pace. "In your haste" reads like a
         -- speed check, but a loaded character is the other obvious candidate,
@@ -6053,10 +6116,10 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " — run stop-navigating first.")
         return
     end
-    local bad = navBadStep(route.steps)
+    local bad, why = navBadStep(route.steps)
     if bad then
-        navEcho("Step " .. bad .. " of the route to " .. destination
-            .. " isn't a direction, a { cmd = ... } or a { killAll = true } — fix the route table.")
+        navEcho("Step " .. bad .. " of the route to " .. destination .. " " .. why
+            .. " — fix the route table.")
         return
     end
 
@@ -6210,7 +6273,41 @@ end, { type = "regex" })
 createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", function(matches)
     local j = taPackage.navigate
     if not j then return end
-    local door, dest, want = matches[2], j.destination, j.door and j.door.key
+    -- A gate is a door we expected to find shut about half the time -- the sewer
+    -- doors relock around 3am and a key once fetched is kept -- so it names the
+    -- errand that fetches its key. Run that and try the door again rather than
+    -- ending the walk on the one answer the route was written to handle.
+    local gate = (j.stepKind == "gate") and j.steps[j.index] or nil
+    if gate and gate.detour then
+        j.gateTried = j.gateTried or {}
+        if j.gateTried[gate] then
+            stopNavigate()
+            navEcho("Walked " .. gate.detour .. " and the " .. gate.door
+                .. " door is still locked — stopping rather than fetching the "
+                .. (gate.key or "same") .. " key all over again.")
+            return
+        end
+        j.gateTried[gate] = true
+        local detour = NAV_ROUTES[gate.detour].steps
+        -- Spliced in BEFORE the gate with the index rewound one, so the errand
+        -- runs and then this same door is tried again. Nothing else has to know:
+        -- the step list is simply longer, which is what the arrival check and
+        -- the trip recovery both already work from -- and a gate inside the
+        -- errand splices the same way, so nesting needs no extra thought.
+        for k = #detour, 1, -1 do table.insert(j.steps, j.index, detour[k]) end
+        j.index = j.index - 1
+        -- No brief follows a refusal, but the walk is now between steps; leaving
+        -- this as "gate" would let a stray line be read as getting through.
+        j.stepKind = nil
+        navEcho("The " .. gate.door .. " door is locked and I don't have the "
+            .. (gate.key or "right") .. " key — fetching it first, by way of "
+            .. gate.detour .. " (" .. #detour .. " steps).")
+        navScheduleStep()
+        return
+    end
+    -- Which key, if we know: a gate names one, and so does a final door probe.
+    local door, dest = matches[2], j.destination
+    local want = (gate and gate.key) or (j.door and j.door.key)
     local where = (j.phase == "door") and ("the way on from " .. dest)
         or ("step " .. j.index .. " of " .. dest)
     stopNavigate()
