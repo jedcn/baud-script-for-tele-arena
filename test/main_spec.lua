@@ -9388,6 +9388,45 @@ describe("Attack badges", function()
         assert.is_true(badge.bold)
     end)
 
+    -- The area heals print one line with the amount everyone got. We badge it
+    -- and credit our own vitality without an "st" round trip.
+    describe("area heal we cast", function()
+        before_each(function()
+            helper.simulateLine("Vitality:     50 / 200")
+        end)
+
+        it("echoes a green HEALED GROUP badge with the amount", function()
+            helper.simulateLine(
+                "You discharged the spell at friendly people in the area, healing 104 damage!")
+            local badge = lastBadge()
+            assert.is_not_nil(badge)
+            assert.are.equal(" HEALED GROUP FOR 104 ", badge.text)
+            assert.are.equal("#16a34a", badge.color)
+            assert.are.equal("#e0e0e0", badge.backgroundColor)
+            assert.is_true(badge.bold)
+        end)
+
+        it("adds the healed amount to our vitality", function()
+            helper.simulateLine(
+                "You discharged the spell at friendly people in the area, healing 104 damage!")
+            assert.are.equal(154, taPackage.character.vitalityCurrent)
+            assert.are.equal(200, taPackage.character.vitalityMax)
+        end)
+
+        it("clamps the gain at max vitality", function()
+            helper.simulateLine("Vitality:     180 / 200")
+            helper.simulateLine(
+                "You discharged the spell at friendly people in the area, healing 104 damage!")
+            assert.are.equal(200, taPackage.character.vitalityCurrent)
+        end)
+
+        it("does not fire for a non-heal area spell", function()
+            helper.simulateLine("You discharged the spell at friendly people in the area!")
+            assert.are.equal(0, #helper.cechoBgCalls)
+            assert.are.equal(50, taPackage.character.vitalityCurrent)
+        end)
+    end)
+
     -- Traps print no damage number; we stash HP, ask for "st", and recover the
     -- loss from the fresh Vitality line.
     describe("trap badges", function()

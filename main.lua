@@ -4265,6 +4265,28 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     end
 end, { type = "regex" })
 
+-- The area heals (motumaru, kamotumaru, gimotumaru, kusamotumaru) hit everyone
+-- friendly in the room at once, so instead of a per-target "You intoned the
+-- spell for X" line the server prints one line carrying the amount each person
+-- got — us included. Nothing tells us our own new HP, so add the heal to our
+-- tracked vitality directly (clamped at max) rather than paying for an "st"
+-- round trip. The non-heal area spells (dobudanimaru, cure poison) print the
+-- same sentence *without* the ", healing N damage!" tail, so they don't match.
+createTrigger("^You discharged the spell at friendly people in the area, healing (\\d+) damage!$",
+    function(matches)
+        local amount = tonumber(matches[2])
+        -- An area heal spends the cast round like any other, so free the cast
+        -- loop; leaving castPending set would wedge it waiting on a targeted
+        -- heal that this cast displaced.
+        taPackage.castPending = false
+        healingBadge("HEALED GROUP FOR " .. amount)
+        taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", "group", "hit", amount, "heal")
+        local current, max = getVitality()
+        if current then
+            setVitality(max and math.min(current + amount, max) or (current + amount), max)
+        end
+    end, { type = "regex" })
+
 -- A party member healing us badges "HEALED BY <healer> FOR N" and adds the
 -- amount back to our vitality. The heal comes in several tiers (minor, normal,
 -- "very powerful") that differ only in the adjective, so drive them all from
