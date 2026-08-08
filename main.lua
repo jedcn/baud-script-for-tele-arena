@@ -5022,6 +5022,91 @@ local NAV_ROUTES = {
                   "s", "s", "w", "s", "s", "s", "s", "s", "s", "w", "s", "s",
                   "w", "w", "w", "w", "w", "w", "w", "ne", "e" },
     },
+    -- The way home: third town's town square all the way back to second town's
+    -- north plaza, in one leg. Walked by pelayo on 2026-08-07 and taken from
+    -- that log (session-pelayo-walk-back-2026-08-07T17-38-34.log), which brackets
+    -- the trip with two typed markers -- "LET'S BEGIN THE JOURNEY" at the square
+    -- and "WE DID IT!" at the plaza -- so the whole of it is one recorded walk
+    -- rather than a derivation. That matters here: `town-1/north-plaza` is a
+    -- reversal of `ruined-town` done on paper, and this deliberately is not.
+    --
+    -- 201 steps against the 438 the outward chain takes, and the difference is
+    -- all things you only pay for once. The levers and stones turn traps OFF and
+    -- open secret walls, and they stay that way -- so every lever detour the
+    -- outward legs walk (six n out, pull, six s back, and its like on levels
+    -- three to six) is simply not here. Nor are the key errands: the ruby,
+    -- platinum and onyx doors are already open, so this walks straight through
+    -- where the outward chain went out and back for a key.
+    --
+    -- Both ends are checked and both agree with what we already had. The start
+    -- fingerprint is third town's mapped town square (id 1011, exits e/ne/nw/
+    -- se/sw), and it's stated literally rather than as `third-town/town-square`
+    -- so this leg still runs on a host with no map -- the same reason
+    -- `ruined-town` states both of its ends. The tail is better than a check: the
+    -- last two steps `u`, `ne` are the exact reverse of the first two steps of
+    -- `town-3/ruby-door` (`sw`, `d`), the path between the plaza and the sewers.
+    -- The three `d` into the sewers mirror that route's three `u` out. Between
+    -- those ends nothing is verifiable -- the map stops at the riddle door two
+    -- stoneworks levels down -- so these directions are the walk itself.
+    --
+    -- Two stretches of the log are NOT here, both confirmed by the user as
+    -- getting lost rather than route: a wander out to the magic shop and back
+    -- before the walk proper began, and `w w` into the storage rooms and `e e`
+    -- back out, between the desert and the sewers.
+    --
+    -- `push stone` is a real step and it TELEPORTS -- it doesn't open a wall you
+    -- then walk through. The game glues the arrival onto the push ("You push the
+    -- protruding stone into it's recess...You're in a stonework corridor."), and
+    -- that line doesn't start with "You're in", so no room-brief trigger fires
+    -- for it. A `{ cmd = ... }` step is exactly right: it advances on a pause,
+    -- which is the only thing that can advance it.
+    --
+    -- The rope is not optional. The trap door drops you into the pit going this
+    -- way too (the `w` about two-thirds through the sewers prints the room and
+    -- then the pit, and the `u` after it is the climb out), and the walls can't
+    -- be climbed unaided. Only one item can be required, and this is the one
+    -- that strands you.
+    --
+    -- The keys still matter even though they aren't checked: this comes back out
+    -- through the onyx, platinum and ruby doors. They were open on the walk. The
+    -- ruby door relocks around 3am -- if it has, the walk ends against it and you
+    -- want the ruby key in hand.
+    --
+    -- Poison is handled the same way the outward leg handles it. On the walk an
+    -- acolyte cured the whole group with a spell; a verbena does the same job for
+    -- one character, and onPoison drinks it only if the game says we're poisoned.
+    ["town-2"] = {
+        from     = { room = "town square", exits = "e,ne,nw,se,sw" },
+        to       = { room = "north plaza" },
+        requires = "coil of rope",
+        onPoison = "drink verbena",
+        steps    = { "e", "e", "e", "e", "e", "e", "e", "n", "n", "e",
+                     "n", "n", "n", "w", "w", "w", "w", "w", "w", "n",
+                     "n", "e", "n", "n", "e", "e", "e", "e", "n", "n",
+                     "n", "e", "e", "n", "n", "n", "n", "w", "w", "w",
+                     "n", "w", "w", "w", "w", "w", "w", "u", "s", "s",
+                     "se", "se", "sw", "w", "sw", "nw", "sw", "sw", "w", "sw",
+                     "sw", "u", "n", "nw", "nw", "n", "e", "ne", "ne", "ne",
+                     "nw", "nw", "n", "nw", "u", "s", "se", "se", "s", "e",
+                     "se", "ne", "e", "n", "ne", "e", "u", "s", "s", "sw",
+                     "w", "sw", "sw", "se", "s", "se", "e", "ne", "e", "u",
+                     "w", "w", "w",
+                     { cmd = "push stone" },
+                     "sw", "w", "sw", "s", "w", "w", "w", "w", "n", "ne",
+                     "ne", "n", "nw", "w", "nw", "w", "w", "n", "ne", "nw",
+                     "n", "n", "n", "nw", "ne", "nw", "nw", "nw", "n", "n",
+                     "nw", "ne", "e", "ne", "nw", "n", "ne", "nw", "nw", "nw",
+                     "ne", "ne", "n", "e", "e", "e", "n", "n", "n", "w",
+                     -- Down the three levels into the sewers, and from here on
+                     -- the outward chain's ground, walked backwards.
+                     "w", "d", "d", "d", "e", "e", "s", "se", "se", "se",
+                     "sw", "s", "e", "se", "s", "sw", "sw", "se", "s", "sw",
+                     -- The `w` two along is the trap door; the `u` after the two
+                     -- `sw` is the climb out of the pit.
+                     "w", "nw", "nw", "w", "u", "sw", "sw", "u", "n", "u",
+                     "n", "w", "nw", "nw", "nw", "sw", "sw", "nw", "nw", "ne",
+                     "nw", "nw", "n", "ne", "nw", "u", "ne" },
+    },
     -- Out of the first town and south-west across the wilderness to the ruined
     -- town in the swamp. Nothing to do with the town-3 chain above: this one
     -- starts from the FIRST town's north plaza, which the map can tell apart

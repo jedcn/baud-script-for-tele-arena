@@ -10293,6 +10293,87 @@ describe("navigate-to", function()
 
         end)
 
+        -- The whole of the third-town chain walked backwards in one leg. Unlike
+        -- town-1/north-plaza this is a recorded walk rather than an inversion,
+        -- so there is no mirror property to assert -- what can be checked is
+        -- that it still meets the outward chain where the two must agree.
+        describe("the town-2 route home", function()
+
+            local function askToWalk()
+                helper.simulateAlias("navigate-to town-2")
+                brief("town square")
+                helper.simulateLine("Exits: ne,e,se,sw,nw.")
+            end
+
+            it("is 201 steps from the town square to the north plaza", function()
+                local r = taPackage.navRoutes["town-2"]
+                -- Literal at both ends so the leg runs on a host with no map,
+                -- the same reason ruined-town states both of its ends.
+                assert.are.same({ room = "town square", exits = "e,ne,nw,se,sw" }, r.from)
+                assert.are.same({ room = "north plaza" }, r.to)
+                assert.are.equal(201, #r.steps)
+            end)
+
+            -- The stone teleports rather than opening a wall, and the game glues
+            -- the arrival onto the push message, so no room brief fires for it.
+            -- A cmd step advances on a pause, which is the only thing that can
+            -- advance it -- if this ever became a direction the walk would hang.
+            it("takes one command, and it is the stone", function()
+                local cmds = {}
+                for i, step in ipairs(taPackage.navRoutes["town-2"].steps) do
+                    if type(step) ~= "string" then cmds[#cmds + 1] = { i = i, step = step } end
+                end
+                assert.are.equal(1, #cmds)
+                assert.are.equal("push stone", cmds[1].step.cmd)
+            end)
+
+            -- The one stretch both routes describe: the path between the plaza
+            -- and the sewers. A typo in either end shows up here.
+            it("ends by reversing ruby-door's first two steps", function()
+                local out  = taPackage.navRoutes["town-3/ruby-door"].steps
+                local back = taPackage.navRoutes["town-2"].steps
+                local OPP  = { n = "s", s = "n", e = "w", w = "e", ne = "sw",
+                               sw = "ne", nw = "se", se = "nw", u = "d", d = "u" }
+                assert.are.equal(OPP[out[1]], back[#back])
+                assert.are.equal(OPP[out[2]], back[#back - 1])
+            end)
+
+            -- The trap door drops you into the pit going this way too, and the
+            -- walls can't be climbed unaided, so nothing moves until the rope
+            -- is confirmed.
+            it("asks for the rope before setting off", function()
+                askToWalk()
+                assert.are.equal(1, sent("i"))
+                assert.are.equal(0, sent("e"))
+            end)
+
+            it("sets off east into the stoneworks once the rope is there", function()
+                askToWalk()
+                helper.simulateLine("You are carrying a coil of rope and a glowstone.")
+                assert.are.equal(1, sent("e"))
+            end)
+
+            -- Second town's north plaza is where this route ENDS. Setting off
+            -- from it would walk 201 steps of stoneworks into the sewers' walls.
+            it("refuses to walk it from the north plaza", function()
+                helper.simulateAlias("navigate-to town-2")
+                answerProbe(274)
+                assert.are.equal(0, sent("i"))
+                assert.are.equal(0, sent("e"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+            end)
+
+            it("walks on a host whose map is empty", function()
+                helper.mockDbOneRow = function() return nil end
+                helper.mockDbRows = function() return {} end
+                askToWalk()
+                helper.simulateLine("You are carrying a coil of rope.")
+                assert.are.equal(1, sent("e"))
+                assert.is_falsy(lastEchoes():find("known areas", 1, true))
+            end)
+
+        end)
+
     end)
 
     -- Where the map can't tell one room from another -- the stoneworks has
