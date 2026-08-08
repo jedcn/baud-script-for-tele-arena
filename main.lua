@@ -4836,6 +4836,48 @@ end, { type = "regex" })
 -- at a key: the game auto-searches each corpse, and a key turns up in one of
 -- them ("While searching the area, you notice a ruby key...").
 local NAV_ROUTES = {
+    -- The other eight legs in one, from the junction all the way to third town.
+    -- With after-doors before it the whole journey is two commands.
+    --
+    -- Where after-doors had to decide things, this one only has to walk. Every
+    -- key it needs is fetched by a leg inside the run -- the hydra's sweep drops
+    -- the pearl key that opens both of the entrance leg's pearl doors -- so
+    -- there is nothing here to branch on, and it is a concatenation.
+    --
+    -- Two things it does need in the pack before it sets off, and they strand
+    -- you in different places: the rope in the hydra's pit, the verbena potion
+    -- out in the desert with the poison already working.
+    --
+    -- Its first step is the onyx door (63 --s--> 117), which after-doors leaves
+    -- open behind it. Left as a plain move rather than a gate: run the two back
+    -- to back and it cannot be shut, and if you have paused across the 3am
+    -- relock the refusal already names the onyx key.
+    --
+    -- The seams are the part worth keeping. Run by hand each leg checks its own
+    -- starting room first, and for the six stoneworks legs that is the only
+    -- check there is -- nothing down there is mapped. Joining them would have
+    -- thrown six of those away, so navRouteSteps puts one back at every join.
+    --
+    -- 364 steps: 359 across the eight, less the temple leg's last two, plus the
+    -- seven seams. Half an hour or so with the hydra fight and the sweep.
+    ["town-3/after-doors-to-town-3"] = {
+        from     = "sewers/town-sewers-63",
+        to       = "third-town/town-square",
+        requires = { "coil of rope", "verbena potion" },
+        onPoison = "drink verbena",
+        legs     = { "town-3/hydra",
+                     "town-3/stoneworks-entrance",
+                     "town-3/stone-lvl-2",
+                     "town-3/stone-lvl-3",
+                     "town-3/stone-lvl-4",
+                     "town-3/stone-lvl-5",
+                     "town-3/stone-lvl-6",
+                     -- Stop in the town square. The temple leg's last two steps,
+                     -- `ne` then `e`, carry on past it into the underground
+                     -- plaza and then the temple; the square is where town-2
+                     -- starts, so stopping there closes the round trip.
+                     { route = "town-3/temple", drop = 2 } },
+    },
     -- The first four legs in one, from second town's north plaza to the junction
     -- the three doors open off. They were always run in this order and always
     -- for the same reason -- get through the ruby, platinum and onyx doors so
@@ -4957,8 +4999,11 @@ local NAV_ROUTES = {
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
                      { killAll = true, untilFound = "pearl key" } },
     },
-    -- Out of the sewers and across the desert. Step 2 is the pearl-keyed stone
-    -- door, so this wants the pearl key the hydra drops as well as the potion.
+    -- Out of the sewers and across the desert. TWO of these steps are pearl-keyed
+    -- stone doors, not one: step 2 (town-sewers-168 --w--> 169) and step 6, the
+    -- crude stone building's east door out into the sandy passages. One key opens
+    -- both, and it's the one the hydra drops -- so this wants that as well as the
+    -- potion.
     --
     -- The cure is NOT a step. The walk that produced these directions typed
     -- `drink verbena` after the second `w`, but the poisoning is a maybe -- see

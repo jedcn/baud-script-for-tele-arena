@@ -10134,6 +10134,9 @@ describe("navigate-to", function()
         -- so the room holding the bare `underground-plaza` slug can sit in a
         -- different town from its namesakes. That is what leaves third-town
         -- with two rooms sharing a name and neither answering to it.
+        -- Where the third-town chain ends and the route home begins.
+        [1011] = { id = 1011, slug = "town-square",          name = "town square",       area = 14,
+                   exits = { "e", "ne", "nw", "se", "sw" } },
         [1012] = { id = 1012, slug = "underground-plaza",    name = "underground plaza", area = 1,  exits = {} },
         [1015] = { id = 1015, slug = "underground-plaza-1",  name = "underground plaza", area = 14, exits = {} },
         [1019] = { id = 1019, slug = "underground-plaza-2",  name = "underground plaza", area = 14, exits = {} },
@@ -10471,6 +10474,91 @@ describe("navigate-to", function()
                 assert.are.equal("w", s[20])   -- 106 -> 63, reversing the platinum gate
                 assert.are.equal("n", s[22])   -- 117 -> 63, reversing the onyx gate
                 assert.are.equal(22, #s)
+            end)
+
+        end)
+
+        -- The other eight legs in one. Where after-doors had to decide things,
+        -- this one only walks: every key it needs is fetched by a leg inside the
+        -- run, so it is a concatenation, and these tests are about the joins.
+        describe("the after-doors-to-town-3 route", function()
+
+            local LEGS = { "town-3/hydra", "town-3/stoneworks-entrance",
+                           "town-3/stone-lvl-2", "town-3/stone-lvl-3",
+                           "town-3/stone-lvl-4", "town-3/stone-lvl-5",
+                           "town-3/stone-lvl-6", "town-3/temple" }
+
+            local function CHAIN() return taPackage.navRoutes["town-3/after-doors-to-town-3"] end
+
+            -- The pair is the whole journey, and the seam between them is that
+            -- after-doors stops exactly where this one starts.
+            it("begins where after-doors ends", function()
+                assert.are.equal(taPackage.navRoutes["town-3/after-doors"].to, CHAIN().from)
+                assert.are.equal("sewers/town-sewers-63", CHAIN().from)
+            end)
+
+            it("names the eight legs in order", function()
+                local named = {}
+                for i, entry in ipairs(CHAIN().legs) do
+                    named[i] = (type(entry) == "table") and entry.route or entry
+                end
+                assert.are.same(LEGS, named)
+            end)
+
+            -- The first leg's start is the joined route's own, checked before
+            -- the walk sets off; the other seven get a seam apiece.
+            it("flattens to the legs' steps, less the two dropped, plus seven seams", function()
+                local total = 0
+                for _, name in ipairs(LEGS) do
+                    total = total + #taPackage.navRoutes[name].steps
+                end
+                assert.are.equal(359, total)
+                assert.are.equal(total - 2 + 7, #taPackage.navRouteSteps(CHAIN()))
+            end)
+
+            -- The temple leg walks two rooms past the town square, into the
+            -- underground plaza and then the temple. Dropped here only: run by
+            -- hand, town-3/temple still goes all the way.
+            it("stops in the town square by dropping the temple leg's last two", function()
+                local temple = taPackage.navRoutes["town-3/temple"].steps
+                assert.are.equal(103, #temple)
+                assert.are.equal("ne", temple[102])
+                assert.are.equal("e", temple[103])
+                local last = CHAIN().legs[#CHAIN().legs]
+                assert.are.equal("town-3/temple", last.route)
+                assert.are.equal(2, last.drop)
+                local flat = taPackage.navRouteSteps(CHAIN())
+                assert.are.equal("w", flat[#flat])
+            end)
+
+            -- Where it stops is where the way home starts, so the two compose.
+            it("ends where town-2 begins", function()
+                assert.are.equal("third-town/town-square", CHAIN().to)
+                assert.are.equal("town square", taPackage.navRoutes["town-2"].from.room)
+            end)
+
+            -- The rope and the potion strand you in different places, so both
+            -- are asked for before a step is taken.
+            it("asks for the rope and the potion together", function()
+                assert.are.same({ "coil of rope", "verbena potion" }, CHAIN().requires)
+                assert.are.equal("drink verbena", CHAIN().onPoison)
+                helper.simulateAlias("navigate-to town-3/after-doors-to-town-3")
+                answerProbe(426)
+                assert.are.equal(1, sent("i"))
+                assert.are.equal(0, sent("s"))
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                assert.are.equal(1, sent("s"))    -- the onyx door, hydra's first step
+            end)
+
+            it("passes its pre-flight, seams and all", function()
+                helper.simulateAlias("navigate-to town-3/after-doors-to-town-3")
+                answerProbe(426)
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                local out = lastEchoes()
+                assert.is_falsy(out:find("fix the route table", 1, true))
+                assert.is_falsy(out:find("no such route", 1, true))
+                assert.is_falsy(out:find("I don't know how to get there from here.", 1, true))
+                assert.is_truthy(out:find("364 steps", 1, true))
             end)
 
         end)
