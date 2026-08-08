@@ -6318,7 +6318,10 @@ createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", 
     -- doors relock around 3am and a key once fetched is kept -- so it names the
     -- errand that fetches its key. Run that and try the door again rather than
     -- ending the walk on the one answer the route was written to handle.
-    local gate = (j.stepKind == "gate") and j.steps[j.index] or nil
+    -- Not while probing a final door: that probe is sent after the last step,
+    -- so stepKind still names the step before it -- and if that step were itself
+    -- a gate we'd fetch a key for the wrong door and re-walk the probe.
+    local gate = (j.phase ~= "door" and j.stepKind == "gate") and j.steps[j.index] or nil
     if gate and gate.detour then
         j.gateTried = j.gateTried or {}
         if j.gateTried[gate] then

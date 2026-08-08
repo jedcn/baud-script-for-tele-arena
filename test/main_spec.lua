@@ -11891,6 +11891,26 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        -- A final `door` probe is sent after the last step, so the walk still
+        -- remembers that step's kind. If the last step were a gate, a refusal at
+        -- the probe would otherwise fetch a key for a door one room back and
+        -- then walk the probe again.
+        it("does not treat a final door probe as the gate before it", function()
+            taPackage.navRoutes["sewers/errand"] = ERRAND
+            route({ steps = { "sw", GATE() }, door = { dir = "s", key = "ruby" } })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                  -- step 1 lands
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the gate goes out
+            brief("town sewers")                           -- through it, and arrived
+            helper.fireTimers(taPackage.navStepDelayMs)    -- the door probe goes out
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("A locked stone door blocks the way on", 1, true))
+            assert.are.equal(0, sent("n"))                 -- the errand never ran
+            assert.is_nil(taPackage.navigate)
+        end)
+
         -- A gate is a move, so it can be tripped on, and re-sending it is safe.
         -- Read from the step's `door` rather than the step itself, which is a
         -- table -- the walk would otherwise sit waiting on a step it never sent.
