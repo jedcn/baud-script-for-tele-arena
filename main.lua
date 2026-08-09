@@ -2959,6 +2959,14 @@ local departForTavern
 -- Assigned later via `function checkTrainingNeeded()`.
 local checkTrainingNeeded
 
+-- Forward declaration: "am I too hurt to be in here?" and the walk-out that
+-- answers it. Both are defined down in the flee block (they need the threshold
+-- constants), but the errand-service points below have to ask before they
+-- resume combat. A table rather than three separate `local function`s on
+-- purpose: main.lua is within a couple of names of Lua's 200 top-level local
+-- limit, and this way the whole idea costs one.
+local arenaHeal = {}
+
 -- Head to the magic shop to restock the strength/agility potions. Both arenas
 -- reach the same shop by different routes, chosen by profile. Always a journey,
 -- so even the first arena walks it one paced step at a time.
@@ -2976,6 +2984,21 @@ end
 -- walks home the same way, so a potion that wore off mid-errand is serviced on
 -- arrival whichever errand we were on. departForShop/Tavern pick the route.
 local function arenaArrivedHome()
+    -- Walked home hurt: turn straight around for the temple, before anything
+    -- else and above all before swinging. checkFleeArena only looks at HP while
+    -- arenaState == "fighting", so damage taken during an errand goes unnoticed
+    -- — a flame giantess's 167-damage breath landed while we were walking to the
+    -- magic shop, and we came back at 273/440 with a third-arena floor of 400.
+    -- Without this gate the errand dispatch below resumed combat, the first
+    -- "a flame" put us in the heat of battle, and the flee that finally fired on
+    -- the next combat line could no longer leave the room ("You cannot leave in
+    -- the heat of battle!" x6, one giant's swing from death). Arriving hurt but
+    -- un-engaged is the one moment we can still walk out for free.
+    if arenaHeal.isLow() then
+        arenaDebugEcho("arrived-home-low")
+        arenaHeal.departForTemple()
+        return
+    end
     -- Back in the arena and back on our feet: release any gong hold we placed.
     -- This has to happen here rather than at the temple — speech only carries to
     -- the room you are standing in, and the team is here. It runs before the
@@ -3022,6 +3045,15 @@ end
 -- made even when it was flagged mid-fight. Mirrors arenaArrivedHome, but the
 -- no-errand case rings rather than resuming a (nonexistent) fight.
 local function arenaRingOrErrand()
+    -- Standing in a clear arena, hurt: heal before summoning anything. The room
+    -- being empty is exactly the window in which walking out still works, and
+    -- ringing here would spend it. Same blind spot as arenaArrivedHome — a hit
+    -- taken while arenaState wasn't "fighting" never ran the flee check.
+    if arenaHeal.isLow() then
+        arenaDebugEcho("ring-gap-low")
+        arenaHeal.departForTemple()
+        return
+    end
     -- As in arenaArrivedHome: don't restock potions while a level is owed — we
     -- are draining them on purpose so the training hall will accept us. Ring and
     -- keep fighting (which wears them down); the restock waits until after we train.
@@ -3153,12 +3185,15 @@ end
 -- — so he could cross from "fine" to dead in one round. The floor guarantees
 -- enough headroom to survive the round in which the flee is decided. 25 covers
 -- a cave bear's worst round (23) with a small margin.
-local FLEE_HP_FRACTION = 0.75
-local FLEE_HP_FLOOR = 25
+-- Fields on arenaHeal rather than three more top-level locals: main.lua sits a
+-- name or two under Lua's 200-local ceiling for the main chunk, and it is where
+-- they belong anyway.
+arenaHeal.FRACTION = 0.75
+arenaHeal.FLOOR = 25
 -- Per-profile overrides of the flee floor. The third arena's monsters hit far
 -- harder than a cave bear, so keep a much larger absolute HP reserve there —
 -- flee before dropping below this regardless of the 75% rule. Profiles absent
--- here use FLEE_HP_FLOOR.
+-- here use arenaHeal.FLOOR.
 --
 -- 400, lowered from 500: at 500 a character whose max HP is at or below the
 -- floor can never be above it, so it flees on the first tick and the third
@@ -3168,35 +3203,55 @@ local FLEE_HP_FLOOR = 25
 -- longer guarantees surviving the round in which the flee is decided. It buys
 -- entry to the arena, not safety inside it — the real protection there is
 -- killing fast enough as a team that the round never comes.
-local FLEE_HP_FLOOR_BY_PROFILE = { third = 400 }
+arenaHeal.FLOOR_BY_PROFILE = { third = 400 }
+
+-- The HP we must stay above to be in the arena at all. Split out of
+-- checkFleeArena so the question can be asked from outside a fight — see
+-- arenaHeal.isLow.
+function arenaHeal.threshold()
+    local maxHp = taPackage.character.vitalityMax
+    local floor = arenaHeal.FLOOR_BY_PROFILE[taPackage.arenaProfile] or arenaHeal.FLOOR
+    return maxHp and math.max(math.floor(maxHp * arenaHeal.FRACTION), floor) or floor
+end
+
+-- Are we below the flee threshold right now? Deliberately says no when vitality
+-- is unknown: an unread HP is not evidence of being hurt, and answering yes
+-- would send a fresh character straight to the temple before its first status.
+function arenaHeal.isLow()
+    local hp = taPackage.character.vitalityCurrent
+    return hp ~= nil and hp < arenaHeal.threshold()
+end
+
+-- Set out for the temple. The action half of fleeing, callable on its own so a
+-- character that walks back INTO the arena hurt can turn around without having
+-- to swing first (which is what puts you in the heat of battle you then can't
+-- leave). Assumes we are standing in the arena.
+function arenaHeal.departForTemple()
+    taPackage.arenaState = "fleeing"
+    -- Tell the team before taking the first step, so the announcement is out
+    -- even if the step is refused — the refusal is exactly the case this
+    -- exists for. Announcing first also leaves arenaLastCmd pointing at the
+    -- escape direction rather than the speech.
+    arenaTeamHeal.announceNeed()
+    local nav = arenaNav()
+    if not nav then
+        -- No profile means no route to walk. Say so rather than throwing
+        -- from inside a trigger: the state change above has already stopped
+        -- us swinging, which is the half of fleeing that keeps us alive.
+        echo("[arena] Fleeing, but no arena profile is set — walk out by hand.")
+        return
+    end
+    arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
+end
+
 -- Assigns to the forward-declared local above (no `local` keyword) so the
 -- incoming-damage triggers, defined earlier in the file, can call it.
 function checkFleeArena()
     if taPackage.arenaState ~= "fighting" then return false end
-    local hp = taPackage.character.vitalityCurrent
-    local maxHp = taPackage.character.vitalityMax
-    local floor = FLEE_HP_FLOOR_BY_PROFILE[taPackage.arenaProfile] or FLEE_HP_FLOOR
-    local fleeThreshold = maxHp and math.max(math.floor(maxHp * FLEE_HP_FRACTION), floor) or floor
-    if hp and hp < fleeThreshold then
-        arenaDebugEcho("flee-triggered")
-        taPackage.arenaState = "fleeing"
-        -- Tell the team before taking the first step, so the announcement is out
-        -- even if the step is refused — the refusal is exactly the case this
-        -- exists for. Announcing first also leaves arenaLastCmd pointing at the
-        -- escape direction rather than the speech.
-        arenaTeamHeal.announceNeed()
-        local nav = arenaNav()
-        if not nav then
-            -- No profile means no route to walk. Say so rather than throwing
-            -- from inside a trigger: the state change above has already stopped
-            -- us swinging, which is the half of fleeing that keeps us alive.
-            echo("[arena] Fleeing, but no arena profile is set — walk out by hand.")
-            return true
-        end
-        arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
-        return true
-    end
-    return false
+    if not arenaHeal.isLow() then return false end
+    arenaDebugEcho("flee-triggered")
+    arenaHeal.departForTemple()
+    return true
 end
 
 function departForTavern()

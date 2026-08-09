@@ -5199,6 +5199,134 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- Damage taken during an errand is invisible to checkFleeArena, which only
+    -- looks at HP while arenaState == "fighting". So a character can finish a
+    -- potion or food run and walk back into the arena already under the flee
+    -- floor. Resuming combat there is close to fatal: the first swing puts us in
+    -- the heat of battle, and the flee that fires a moment later can no longer
+    -- leave the room. Arriving un-engaged is the last free exit, so take it.
+    describe("walking back into the arena hurt", function()
+
+        local function said(text)
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == text then return true end
+            end
+            return false
+        end
+
+        -- Land in the arena at the end of an errand leg, at the given health.
+        local function arrivesHome(hp, max, monster)
+            taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = monster
+            setHP(hp, max)
+            helper.sendCalls = {}
+            helper.simulateLine("You're in the arena.")
+        end
+
+        it("sets out for the temple instead of resuming the fight", function()
+            arrivesHome(10, 100, "cave bear")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        -- The whole point: not one attack goes out. An attack is what locks the
+        -- door behind us.
+        it("does not swing on the way in", function()
+            arrivesHome(10, 100, "cave bear")
+            assert.is_false(said("a cave"))
+        end)
+
+        it("heals before an owed potion restock", function()
+            taPackage.needsPotions = true
+            arrivesHome(10, 100, nil)
+            assert.are.equal("fleeing", taPackage.arenaState)
+            -- Still owed — the shop run happens on the next arrival, healthy.
+            assert.is_true(taPackage.needsPotions)
+        end)
+
+        it("heals before an owed food or drink run", function()
+            taPackage.needsDrinks = true
+            arrivesHome(10, 100, nil)
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.is_true(taPackage.needsDrinks)
+        end)
+
+        it("resumes the fight as usual when it comes home healthy", function()
+            arrivesHome(100, 100, "cave bear")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("a cave", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("rings as usual when it comes home healthy to an empty arena", function()
+            arrivesHome(100, 100, nil)
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        -- An unread vitality is not evidence of being hurt. Before the first
+        -- status line there is nothing to compare against, and treating that as
+        -- low would walk a fresh character straight back out of the arena.
+        it("does not turn around when vitality has never been read", function()
+            taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+            taPackage.arenaState = "returning"
+            taPackage.arenaMonster = "cave bear"
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- Reported back only once we are actually well: the hold is a request to
+        -- stop summoning while we are one hit from death, which is still true.
+        it("keeps the team's gong held rather than reporting back", function()
+            taPackage.arenaTeam = true
+            taPackage.arenaAnnouncedNeedsHealing = true
+            arrivesHome(10, 100, "cave bear")
+            assert.is_false(said("I am healed"))
+        end)
+
+        it("reports back once it comes home healthy", function()
+            taPackage.arenaTeam = true
+            taPackage.arenaAnnouncedNeedsHealing = true
+            arrivesHome(100, 100, "cave bear")
+            assert.is_true(said("I am healed"))
+        end)
+
+        -- The live case, from the 2026-08-09 third-arena team fight: a giantess
+        -- breathed for 167 while we were walking to the magic shop, so we came
+        -- back at 273/440 against a floor of 400 — and attacked.
+        it("turns around at the third arena's much higher floor", function()
+            taPackage.arenaProfile = "third"
+            arrivesHome(273, 440, "flame giantess")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+            assert.is_false(said("a flame"))
+        end)
+
+        -- The other decision point taken standing in the arena. A clear room is
+        -- the window in which leaving works; ringing spends it.
+        it("heals instead of ringing at a clear-room ring gap", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            taPackage.arenaRingPending = false
+            setHP(10, 100)
+            helper.sendCalls = {}
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.is_false(said("ring gong"))
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("rings at a clear-room ring gap when healthy", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            taPackage.arenaRingPending = false
+            setHP(100, 100)
+            helper.sendCalls = {}
+            helper.simulateLine("There is nobody here.")
+            assert.is_true(said("ring gong"))
+        end)
+
+    end)
+
     -- Team mode derives its ring order from the arena brief the probe already
     -- prints, so getting the roster out of that brief is the foundation for
     -- everything below it.
@@ -5772,13 +5900,16 @@ describe("ring-gong-and-fight-in-arena", function()
             end)
 
             -- The flag is cleared by the all-clear, so a later flee in the same
-            -- session is a fresh episode and calls out again.
+            -- session is a fresh episode and calls out again. Healed to full
+            -- before walking in: arriving home still under the threshold no
+            -- longer reports back, it turns around for the temple again.
             it("calls out again on a second flee after reporting back", function()
                 setHP(10, 100)
                 helper.simulateLine("Your attack hit the cave bear for 5 damage!")
                 taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
                 taPackage.arenaState = "returning"
                 taPackage.arenaMonster = nil
+                setHP(100, 100)
                 helper.simulateLine("You're in the arena.")
                 helper.sendCalls = {}
                 taPackage.arenaState = "fighting"
