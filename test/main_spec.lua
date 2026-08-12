@@ -12577,6 +12577,30 @@ describe("Auto-login", function()
         assert.are.same({ "n" }, sends())
     end)
 
+    -- "N" means nonstop: having answered once, the BBS prints the second
+    -- prompt without waiting for it. A second "n" fell through to the main
+    -- menu, which rejected it and redisplayed itself.
+    it("answers only the first nonstop prompt", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        assert.are.same({ "n" }, sends())
+    end)
+
+    -- The second 5 outlived the menu: the BBS still held it when the game
+    -- started, and Tele-Arena delivered it as chat ("From Tojolias: 5").
+    it("picks 5 only once even if the menu is redisplayed", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        helper.simulateLine("Main System Menu (TOP)")
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        assert.are.same({ "5" }, sends())
+    end)
+
     it("picks 5 at the main system menu", function()
         loadWith({ TA_CHARACTER = "kerhak" })
         helper.simulateLine("Username: ")
@@ -12585,16 +12609,22 @@ describe("Auto-login", function()
         assert.are.same({ "5" }, sends())
     end)
 
+    -- The real transcript, line for line, from
+    -- logs/session-tojolias-2026-08-11T22-49-54.log.
     it("walks the whole sequence in order", function()
         loadWith({ TA_CHARACTER = "kerhak", TA_PASSWORD = "hunter2" })
         helper.simulateLine("Username: ")
         helper.simulateLine("Password: ")
+        helper.simulateLine("Greetings, Kerhak, glad to see you back again.")
         helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine(" 01  Malak                  OLD    F  482   USER      ---  Othello")
         helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("Main System Menu (TOP)")
         helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        helper.simulateLine("to exit): ")
         -- st/i are the existing on-entry character-sheet pull, not login.
         helper.simulateLine("Entering Tele-Arena...")
-        assert.are.same({ "kerhak", "hunter2", "n", "n", "5", "st", "i" }, sends())
+        assert.are.same({ "kerhak", "hunter2", "n", "5", "st", "i" }, sends())
     end)
 
     -- The whole point of the pending gate: "n" is north once we are in the

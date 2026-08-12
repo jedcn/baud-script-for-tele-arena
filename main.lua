@@ -7270,21 +7270,36 @@ end, { type = "regex" })
 --
 --     Username:                          ->  the character name
 --     Password:                          ->  the password
---     (N)onstop, (Q)uit, or (C)ontinue?  ->  n   (asked twice: banner, who-list)
+--     (N)onstop, (Q)uit, or (C)ontinue?  ->  n   (printed twice, see below)
 --     Make your selection (...):         ->  5   (Tele-Arena)
 --     Entering Tele-Arena...             ->  we are in, stop answering
 --
--- Those answers are actively harmful once we are in the game -- a stray "n"
--- walks the character north -- so each is gated on login.pending, which the
--- "Entering Tele-Arena..." line clears and only a fresh "Username:" prompt
--- (i.e. a reconnect) re-arms. Nothing is sent at all unless TA_CHARACTER is
--- set, so running baud by hand still logs in by hand.
+-- Every answer is sent at most once per login, because a prompt appearing
+-- twice does not mean the BBS is waiting twice. "N" means *nonstop*: it tells
+-- the BBS to stop pausing, so the second (N)onstop prompt -- the one after the
+-- who-list -- prints without blocking for a keystroke. Answering it too sent
+-- an "n" that fell through to the main menu, which rejected it ("The option
+-- you have selected, "N", is not in the above list") and redisplayed itself;
+-- that redisplay drew a second "5" out of us, which the BBS still held in its
+-- buffer when the game started and delivered into Tele-Arena as chat. Both
+-- halves of that were visible in logs/session-tojolias-2026-08-11T22-49-54.log.
+--
+-- The answers are also gated on login.pending, since they are actively harmful
+-- once we are in the game -- a stray "n" walks the character north. Only
+-- "Entering Tele-Arena..." clears that gate, and only a fresh "Username:"
+-- prompt (i.e. a reconnect) re-arms it and clears the sent-once record.
+-- Nothing is sent at all unless TA_CHARACTER is set, so running baud by hand
+-- still logs in by hand.
 if taPackage.login == nil then
     -- Fresh script load. A reloadScript() mid-session keeps taPackage, and so
     -- keeps a cleared `pending`, rather than re-arming these answers under a
     -- character who is standing in the arena.
-    taPackage.login = { pending = true }
+    taPackage.login = { pending = true, sent = {} }
 end
+
+-- A reload of a session that predates the sent-once record still has to find
+-- one here.
+taPackage.login.sent = taPackage.login.sent or {}
 
 -- Re-read on every load so a reload picks up a changed environment. getenv is
 -- guarded because baud only grew it recently: an older build (the VPS copy,
@@ -7294,14 +7309,23 @@ if getenv then
     taPackage.login.password = getenv("TA_PASSWORD")
 end
 
+-- Answer `step` with `text`, unless we already answered it during this login.
+function loginAnswer(step, text)
+    if not (taPackage.login.pending and taPackage.login.character) then return end
+    if taPackage.login.sent[step] then return end
+    taPackage.login.sent[step] = true
+    send(text)
+end
+
 createTrigger("^Username:\\s*$", function()
     taPackage.awaitingUsername = true
     -- A username prompt means we are at the front door again, whatever
-    -- happened before it.
+    -- happened before it, so this is where a login starts over.
     taPackage.login.pending = true
+    taPackage.login.sent = {}
     if not taPackage.login.character then return end
     cecho("cyan", "[login] logging in as " .. taPackage.login.character)
-    send(taPackage.login.character)
+    loginAnswer("username", taPackage.login.character)
 end, { type = "regex" })
 
 createTrigger("^Password:\\s*$", function()
@@ -7310,17 +7334,15 @@ createTrigger("^Password:\\s*$", function()
         cecho("yellow", "[login] TA_PASSWORD is not set - type the password yourself")
         return
     end
-    send(taPackage.login.password)
+    loginAnswer("password", taPackage.login.password)
 end, { type = "regex" })
 
 createTrigger("^\\(N\\)onstop, \\(Q\\)uit, or \\(C\\)ontinue\\?", function()
-    if not (taPackage.login.pending and taPackage.login.character) then return end
-    send("n")
+    loginAnswer("nonstop", "n")
 end, { type = "regex" })
 
 createTrigger("^Make your selection", function()
-    if not (taPackage.login.pending and taPackage.login.character) then return end
-    send("5")
+    loginAnswer("menu", "5")
 end, { type = "regex" })
 
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
