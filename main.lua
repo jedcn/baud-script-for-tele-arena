@@ -21,8 +21,13 @@ local function absoluteScriptDir()
             return path:match("^(.+)/[^/]+$") .. "/"
         end
     end
-    -- Fallback: baud data dir, which is a known writable absolute path
-    return (os.getenv("HOME") or "") .. "/Library/Application Support/baud/"
+    -- Fallback: baud data dir, which is a known writable absolute path.
+    -- os.getenv cannot see it: baud runs Lua as WASM, so os.getenv reads the
+    -- emscripten sandbox environment and HOME comes back nil, which silently
+    -- made this "/Library/Application Support/baud/" -- a path off the root of
+    -- the filesystem. baud's own getenv reads the real environment.
+    local home = (getenv and getenv("HOME")) or os.getenv("HOME") or ""
+    return home .. "/Library/Application Support/baud/"
 end
 
 -- =========================================================================
