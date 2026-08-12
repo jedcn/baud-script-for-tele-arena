@@ -7254,8 +7254,72 @@ createTrigger("^(.+) has just gone upward\\.$", function(matches)
     send("u")
 end, { type = "regex" })
 
+-- =========================================================================
+-- Auto-login
+-- =========================================================================
+--
+-- baud connects to the BBS, not to Tele-Arena: a login and two menus sit
+-- between the two. `just run kerhak` exports TA_CHARACTER=kerhak (and passes
+-- TA_PASSWORD through from the environment), so the script can answer the
+-- whole sequence itself:
+--
+--     Username:                          ->  the character name
+--     Password:                          ->  the password
+--     (N)onstop, (Q)uit, or (C)ontinue?  ->  n   (asked twice: banner, who-list)
+--     Make your selection (...):         ->  5   (Tele-Arena)
+--     Entering Tele-Arena...             ->  we are in, stop answering
+--
+-- Those answers are actively harmful once we are in the game -- a stray "n"
+-- walks the character north -- so each is gated on login.pending, which the
+-- "Entering Tele-Arena..." line clears and only a fresh "Username:" prompt
+-- (i.e. a reconnect) re-arms. Nothing is sent at all unless TA_CHARACTER is
+-- set, so running baud by hand still logs in by hand.
+if taPackage.login == nil then
+    -- Fresh script load. A reloadScript() mid-session keeps taPackage, and so
+    -- keeps a cleared `pending`, rather than re-arming these answers under a
+    -- character who is standing in the arena.
+    taPackage.login = { pending = true }
+end
+
+-- Re-read on every load so a reload picks up a changed environment. getenv is
+-- guarded because baud only grew it recently: an older build (the VPS copy,
+-- say) would otherwise fail to load this script at all.
+if getenv then
+    taPackage.login.character = getenv("TA_CHARACTER")
+    taPackage.login.password = getenv("TA_PASSWORD")
+end
+
 createTrigger("^Username:\\s*$", function()
     taPackage.awaitingUsername = true
+    -- A username prompt means we are at the front door again, whatever
+    -- happened before it.
+    taPackage.login.pending = true
+    if not taPackage.login.character then return end
+    cecho("cyan", "[login] logging in as " .. taPackage.login.character)
+    send(taPackage.login.character)
+end, { type = "regex" })
+
+createTrigger("^Password:\\s*$", function()
+    if not (taPackage.login.pending and taPackage.login.character) then return end
+    if not taPackage.login.password then
+        cecho("yellow", "[login] TA_PASSWORD is not set - type the password yourself")
+        return
+    end
+    send(taPackage.login.password)
+end, { type = "regex" })
+
+createTrigger("^\\(N\\)onstop, \\(Q\\)uit, or \\(C\\)ontinue\\?", function()
+    if not (taPackage.login.pending and taPackage.login.character) then return end
+    send("n")
+end, { type = "regex" })
+
+createTrigger("^Make your selection", function()
+    if not (taPackage.login.pending and taPackage.login.character) then return end
+    send("5")
+end, { type = "regex" })
+
+createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
+    taPackage.login.pending = false
 end, { type = "regex" })
 
 createOutboundTrigger("^(.+)$", function(matches)

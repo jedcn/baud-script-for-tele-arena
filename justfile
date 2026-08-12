@@ -6,9 +6,14 @@ install:
 test:
     busted test/
 
+# Launch baud. The label names both the session log and the character to log in
+# as: main.lua reads TA_CHARACTER and answers the BBS login and menus itself.
+# TA_PASSWORD comes from your own environment (export it in ~/.zshrc or pass it
+# inline: `TA_PASSWORD=... just run kerhak`) so it never lands in this repo.
+# Without either variable baud still starts; you just log in by hand.
 run label:
     mkdir -p ./logs
-    bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log
+    TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log
 
 report:
     bun report.ts && open report.html

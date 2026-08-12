@@ -165,6 +165,15 @@ function M.advanceMs(delta)
     M.currentMs = M.currentMs + delta
 end
 
+-- baud's window onto the host environment. Empty by default, so a test that
+-- doesn't set M.env sees every variable unset -- which is what a hand-launched
+-- baud looks like, and keeps auto-login dormant unless a test asks for it.
+M.env = {}
+
+function getenv(name)
+    return M.env[name]
+end
+
 function setStatus(fn) end
 
 function send(text)
@@ -271,6 +280,7 @@ function M.resetAll()
     M.mockDbRows = {}
     M.mockExecuteReturn = nil
     M.currentMs = 0
+    M.env = {}
     taPackage = nil
 end
 

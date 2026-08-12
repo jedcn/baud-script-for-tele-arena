@@ -12532,3 +12532,124 @@ describe("navigate-to", function()
     end)
 
 end)
+
+-- The BBS login and menu sequence that sits between connecting and being in
+-- the game. Real prompt text taken from logs/session-kerhak-2026-08-07T15-10-53.log.
+describe("Auto-login", function()
+
+    -- main.lua reads the environment as it loads, so a test has to set it
+    -- before dofile rather than after.
+    local function loadWith(env)
+        helper.resetAll()
+        for key, value in pairs(env) do helper.env[key] = value end
+        dofile("main.lua")
+    end
+
+    local function sends()
+        local copy = {}
+        for i, text in ipairs(helper.sendCalls) do copy[i] = text end
+        return copy
+    end
+
+    local function clearSends()
+        for k in pairs(helper.sendCalls) do helper.sendCalls[k] = nil end
+    end
+
+    it("answers the username prompt with TA_CHARACTER", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        assert.are.same({ "kerhak" }, sends())
+    end)
+
+    it("answers the password prompt with TA_PASSWORD", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_PASSWORD = "hunter2" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("Password: ")
+        assert.are.same({ "hunter2" }, sends())
+    end)
+
+    it("answers the nonstop prompt with n", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        assert.are.same({ "n" }, sends())
+    end)
+
+    it("picks 5 at the main system menu", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        assert.are.same({ "5" }, sends())
+    end)
+
+    it("walks the whole sequence in order", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_PASSWORD = "hunter2" })
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Password: ")
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        -- st/i are the existing on-entry character-sheet pull, not login.
+        helper.simulateLine("Entering Tele-Arena...")
+        assert.are.same({ "kerhak", "hunter2", "n", "n", "5", "st", "i" }, sends())
+    end)
+
+    -- The whole point of the pending gate: "n" is north once we are in the
+    -- game, so a menu answer escaping into the arena walks the character.
+    it("stops answering once we are in the arena", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_PASSWORD = "hunter2" })
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Entering Tele-Arena...")
+        clearSends()
+
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        helper.simulateLine("Password: ")
+        assert.are.same({}, sends())
+    end)
+
+    it("re-arms at a fresh username prompt after a reconnect", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_PASSWORD = "hunter2" })
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Entering Tele-Arena...")
+        clearSends()
+
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Password: ")
+        assert.are.same({ "kerhak", "hunter2" }, sends())
+    end)
+
+    -- Running baud by hand, with no environment set, must behave exactly as it
+    -- did before auto-login existed.
+    it("sends nothing at any prompt when TA_CHARACTER is unset", function()
+        loadWith({})
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Password: ")
+        helper.simulateLine("(N)onstop, (Q)uit, or (C)ontinue?")
+        helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+        assert.are.same({}, sends())
+    end)
+
+    it("says so rather than guessing when TA_PASSWORD is unset", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        clearSends()
+        helper.simulateLine("Password: ")
+        assert.are.same({}, sends())
+        assert.is_true(tableContains(helper.echoCalls,
+            "[login] TA_PASSWORD is not set - type the password yourself"))
+    end)
+
+    -- baud runs outbound triggers on script sends too, so the auto-sent
+    -- username feeds the same name capture a typed one does.
+    it("learns the character name from the username it sent", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        helper.simulateLine("Username: ")
+        helper.simulateOutbound("kerhak")
+        assert.are.equal("Kerhak", taPackage.character.name)
+    end)
+
+end)
