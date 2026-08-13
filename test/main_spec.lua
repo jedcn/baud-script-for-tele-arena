@@ -10734,6 +10734,134 @@ describe("navigate-to", function()
 
         end)
 
+        -- A variant is an alternative ENDING asked for as a trailing word. The
+        -- live one, chasm-is-clear, is pending -- so these build their own to
+        -- test the flattening, and use the live one for the plumbing.
+        describe("route variants", function()
+
+            -- Two legs of three steps each, the second of which has another
+            -- ending. Small enough that the expected step lists are readable.
+            local function twoLegRoute()
+                taPackage.navRoutes["t/leg-a"] = { from = "x", steps = { "n", "n", "n" } }
+                taPackage.navRoutes["t/leg-b"] = { from = "y", steps = { "s", "s", "s" } }
+                local r = { from = "x", legs = { "t/leg-a", "t/leg-b" },
+                            variants = { alt = { leg = "t/leg-b", keep = 1,
+                                                 steps = { "e", "w" } } } }
+                taPackage.navRoutes["t/joined"] = r
+                return r
+            end
+
+            it("walks the ordinary ending when no variant is asked for", function()
+                local flat = taPackage.navRouteSteps(twoLegRoute())
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s", "s", "s" }, flat)
+            end)
+
+            -- The shared prefix stays shared: leg-a whole, the seam, then one
+            -- step of leg-b before the variant's own ending takes over.
+            it("keeps the prefix and swaps the ending", function()
+                local flat = taPackage.navRouteSteps(twoLegRoute(), "alt")
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s", "e", "w" }, flat)
+            end)
+
+            -- A variant's steps are final; the leg entry's drop is about where
+            -- the ORDINARY ending stops and has nothing to say about this one.
+            it("ignores the leg's drop when the variant replaces its tail", function()
+                local r = twoLegRoute()
+                r.legs[2] = { route = "t/leg-b", drop = 2 }
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s" },
+                                taPackage.navRouteSteps(r))
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s", "e", "w" },
+                                taPackage.navRouteSteps(r, "alt"))
+            end)
+
+            it("works on a route that gives its steps directly", function()
+                local r = { from = "x", steps = { "n", "n", "n" },
+                            variants = { alt = { keep = 2, steps = { "e" } } } }
+                assert.are.same({ "n", "n", "e" }, taPackage.navRouteSteps(r, "alt"))
+            end)
+
+            it("refuses a variant name the route doesn't have", function()
+                local flat, err = taPackage.navRouteSteps(twoLegRoute(), "nope")
+                assert.is_nil(flat)
+                assert.is_truthy(err:find("no 'nope' variant", 1, true))
+            end)
+
+            -- The one outcome worse than refusing: you ask for the other
+            -- ending, the leg name is a typo, and it walks the ordinary one.
+            it("refuses a variant whose leg this route doesn't walk", function()
+                local r = twoLegRoute()
+                r.variants.alt.leg = "t/leg-typo"
+                local flat, err = taPackage.navRouteSteps(r, "alt")
+                assert.is_nil(flat)
+                assert.is_truthy(err:find("no leg of this route is called that", 1, true))
+            end)
+
+            it("refuses a variant with no steps recorded yet", function()
+                local flat, err = taPackage.navRouteSteps(
+                    taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
+                assert.is_nil(flat)
+                assert.is_truthy(err:find("no steps recorded yet", 1, true))
+            end)
+
+            -- The plumbing, on the live route. chasm-is-clear is pending, so
+            -- this is the message it gives rather than a walk.
+            it("says the chasm variant hasn't been recorded yet", function()
+                helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
+                local out = lastEchoes()
+                assert.is_truthy(out:find("I know the chasm-is-clear variant of town-3/part-2",
+                                          1, true))
+                assert.is_truthy(out:find("tell me where it leaves the usual route", 1, true))
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            -- Recorded under the long name too: part-2 is a second name on the
+            -- same table, so the variant comes with it.
+            it("takes the variant under either name for the route", function()
+                helper.simulateAlias("navigate-to town-3/after-doors-to-town-3 chasm-is-clear")
+                assert.is_truthy(lastEchoes():find(
+                    "I know the chasm-is-clear variant of town-3/after-doors-to-town-3", 1, true))
+            end)
+
+            it("names the variants it knows when given one it doesn't", function()
+                helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clea")
+                local out = lastEchoes()
+                assert.is_truthy(out:find("I don't know a 'chasm-is-clea' variant of town-3/part-2",
+                                          1, true))
+                assert.is_truthy(out:find("I know: chasm-is-clear.", 1, true))
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            -- A destination we don't know is still reported whole. Splitting
+            -- it would report a route we don't know AND a variant we don't
+            -- know, which is two wrong answers to one typo.
+            it("doesn't split an unknown destination into route and variant", function()
+                helper.simulateAlias("navigate-to town-3/part-9 chasm-is-clear")
+                assert.is_truthy(lastEchoes():find(
+                    "I don't know a route to 'town-3/part-9 chasm-is-clear'", 1, true))
+            end)
+
+            -- The flags still peel off around it, in any order.
+            it("takes the variant alongside the trailing flags", function()
+                helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear quiet")
+                assert.is_truthy(lastEchoes():find("I know the chasm-is-clear variant", 1, true))
+            end)
+
+            -- End to end on a variant that does have steps: the walk sets off,
+            -- counts the variant's ending, and says which one it's walking.
+            it("walks a recorded variant and says so", function()
+                local r = taPackage.navRoutes["town-3/part-1"]
+                r.variants = { ["chasm-is-clear"] = { keep = 2, steps = { "n" } } }
+                helper.simulateAlias("navigate-to town-3/part-1 chasm-is-clear")
+                answerProbe(274)
+                local out = lastEchoes()
+                assert.is_truthy(out:find("Walking to town-3/part-1 chasm-is-clear", 1, true))
+                assert.is_truthy(out:find("3 steps", 1, true))
+                assert.are.equal(1, sent("sw"))
+                r.variants = nil
+            end)
+
+        end)
+
         -- get-platinum-key-from-63 is get-platinum-key with its first two steps
         -- taken off: `s` through the ruby door and `d` down to the junction.
         -- They are kept as two transcripts rather than one shared table, so this

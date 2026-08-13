@@ -4937,6 +4937,26 @@ local NAV_ROUTES = {
                      -- plaza and then the temple; the square is where town-2
                      -- starts, so stopping there closes the round trip.
                      { route = "town-3/temple", drop = 2 } },
+        -- An alternative ending for when the chasm is passable.
+        --
+        -- The chasm is in the temple leg's closing westward run: seven `w`,
+        -- steps 95-101 of its 103. It does not always let you through. The
+        -- walk of 2026-08-03 was refused on step 96 --
+        --
+        --     [nav|t] 20:56:07 +1503ms  send step 96/103 w
+        --     The wide chasm prevents your exit in that direction.
+        --
+        -- and the room says so plainly: "A very wide natural chasm blocks the
+        -- passage to the west." Same room, `w` refused and then allowed, so
+        -- the ordinary route simply pushes west and retries.
+        --
+        -- `leg` and `keep` are a guess until the walk is recorded: the leg
+        -- because that is where the chasm is, `keep` not filled in at all. If
+        -- the divergence turns out to start before the temple leg, `leg` is
+        -- the field to change.
+        variants = {
+            ["chasm-is-clear"] = { leg = "town-3/temple", pending = true },
+        },
     },
     -- The first four legs in one, from second town's north plaza to the junction
     -- the three doors open off. They were always run in this order and always
@@ -5437,12 +5457,48 @@ taPackage.navRoutes = NAV_ROUTES
 -- Always a copy, never NAV_ROUTES' own table: a locked gate splices its key
 -- errand into the walk's list, and splicing into the route would weld it there
 -- for the rest of the session.
-function taPackage.navRouteSteps(route)
+--
+-- `variant` names one of the route's `variants`: an alternative ENDING, asked
+-- for as a trailing word (`navigate-to town-3/part-2 chasm-is-clear`). A
+-- variant is not a second copy of the route. It says where to leave the usual
+-- one and what to walk instead:
+--
+--     leg   = "town-3/temple"   -- the leg it diverges inside (omit for a
+--                                  route that gives `steps` directly)
+--     keep  = 94                -- walk that many of the leg's steps first
+--     steps = { "sw", ... }     -- then these, instead of the leg's tail
+--
+-- Keeping the shared prefix shared is the point, and it's the same reason
+-- `legs` names its legs rather than copying their directions: the two endings
+-- of the temple leg differ in a handful of steps and agree on ninety, and
+-- ninety directions transcribed twice are ninety chances to disagree. A
+-- variant's steps are final -- the leg entry's own `drop` doesn't apply to
+-- them, since the variant is already choosing where to stop.
+function taPackage.navRouteSteps(route, variant)
     local steps = {}
+    local v
+    if variant then
+        v = route.variants and route.variants[variant]
+        if not v then
+            return nil, "there's no '" .. tostring(variant) .. "' variant of it"
+        end
+        if v.pending then
+            return nil, "its '" .. variant .. "' variant has no steps recorded yet"
+        end
+    end
     if not route.legs then
-        for i, step in ipairs(route.steps or {}) do steps[i] = step end
+        if v and v.leg then
+            return nil, "its '" .. variant .. "' variant diverges inside leg '"
+                .. v.leg .. "', and this route isn't built from legs"
+        end
+        local base = route.steps or {}
+        for i = 1, (v and math.min(v.keep, #base) or #base) do steps[i] = base[i] end
+        if v then
+            for _, step in ipairs(v.steps) do steps[#steps + 1] = step end
+        end
         return steps
     end
+    local diverged = false
     for n, entry in ipairs(route.legs) do
         local name = (type(entry) == "table") and entry.route or entry
         local drop = ((type(entry) == "table") and entry.drop) or 0
@@ -5455,7 +5511,19 @@ function taPackage.navRouteSteps(route)
                 .. " and I don't join those"
         end
         if n > 1 then steps[#steps + 1] = { seam = name } end
-        for i = 1, #leg.steps - drop do steps[#steps + 1] = leg.steps[i] end
+        local last = #leg.steps - drop
+        if v and v.leg == name then last, diverged = math.min(v.keep, #leg.steps), true end
+        for i = 1, last do steps[#steps + 1] = leg.steps[i] end
+        if v and v.leg == name then
+            for _, step in ipairs(v.steps) do steps[#steps + 1] = step end
+        end
+    end
+    -- A variant naming a leg this route doesn't walk would otherwise flatten to
+    -- the ordinary route and walk it in silence, which is the one outcome worse
+    -- than refusing: you asked for the other ending and got this one anyway.
+    if v and v.leg and not diverged then
+        return nil, "its '" .. variant .. "' variant diverges inside leg '"
+            .. v.leg .. "', and no leg of this route is called that"
     end
     return steps
 end
@@ -6376,7 +6444,7 @@ end
 -- `startFloor` is what was lying in the starting room, captured by the opening
 -- probe. Without it a trip on the very first step would have nothing to compare
 -- against, and anything already on the floor there would look like ours.
-local function navStart(destination, route, arriveName, startFloor, destRoomId, debug)
+local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -6389,7 +6457,7 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
     end
     -- Flattened afresh (see navRouteSteps): a copy the walk owns, because a
     -- locked gate splices its key errand into it.
-    local steps, gated = taPackage.navRouteSteps(route), false
+    local steps, gated = taPackage.navRouteSteps(route, variant), false
     for _, step in ipairs(steps) do
         if navStepKind(step) == "gate" then gated = true end
     end
@@ -6447,6 +6515,28 @@ createAlias("^navigate-to (.+)$", function(matches)
             break
         end
     end
+    -- A variant: a trailing word naming an alternative ending the route itself
+    -- records (`navigate-to town-3/part-2 chasm-is-clear`). Peeled only when
+    -- what's left really is a route and that route really has that variant, so
+    -- a mistyped destination is still reported whole rather than quietly split
+    -- into a route we don't know and a variant we don't know either.
+    local variant
+    if not NAV_ROUTES[destination] then
+        local head, word = destination:match("^(.-)%s+(%S+)$")
+        local base = head and NAV_ROUTES[head]
+        if base and base.variants then
+            if base.variants[word] then
+                destination, variant = head, word
+            else
+                local names = {}
+                for name in pairs(base.variants) do names[#names + 1] = name end
+                table.sort(names)
+                navEcho("I don't know a '" .. word .. "' variant of " .. head
+                    .. ". I know: " .. table.concat(names, ", ") .. ".")
+                return
+            end
+        end
+    end
     local route = NAV_ROUTES[destination]
     if not route then
         local known = {}
@@ -6466,14 +6556,27 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " (directions, plus any lever pulls or rooms to clear) and I'll record it.")
         return
     end
+    -- The same distinction one level down: we've agreed there's another way to
+    -- end this walk, and nobody has walked it for us yet.
+    if variant and route.variants[variant].pending then
+        navEcho("I know the " .. variant .. " variant of " .. destination
+            .. ", but nobody has told me how it differs yet.")
+        navEcho("  Walk it by hand, then tell me where it leaves the usual route"
+            .. " and what to walk instead of the ending, and I'll record it.")
+        return
+    end
     if taPackage.navigate then
         navEcho("Already walking to " .. taPackage.navigate.destination
             .. " — run stop-navigating first.")
         return
     end
+    -- From here on the variant is part of what we're walking to, so it belongs
+    -- in everything we say about it -- including "try X again", which has to
+    -- stay a command you can retype.
+    if variant then destination = destination .. " " .. variant end
     -- Flatten first, so a joined route naming a leg that isn't there is refused
     -- standing still rather than three hundred steps in.
-    local flat, flatErr = taPackage.navRouteSteps(route)
+    local flat, flatErr = taPackage.navRouteSteps(route, variant)
     if not flat then
         navEcho("The route to " .. destination .. " is joined from other routes and "
             .. flatErr .. " — fix the route table.")
@@ -6549,7 +6652,7 @@ createAlias("^navigate-to (.+)$", function(matches)
                 return
             end
             local function go()
-                navStart(destination, route, arriveName, probe.floor, destRoomId, debug)
+                navStart(destination, route, arriveName, probe.floor, destRoomId, debug, variant)
             end
             -- We're in the right room by the time this is called; the only
             -- remaining question is whether we're equipped for what lies
