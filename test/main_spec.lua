@@ -10694,6 +10694,46 @@ describe("navigate-to", function()
 
         end)
 
+        -- part-1 and part-2 are the same two routes under names that say what
+        -- order to run them in. Identity, not equality: they must be the very
+        -- same table, so a correction to one route can't leave the other name
+        -- pointing at a stale copy of it.
+        describe("the part-1/part-2 names", function()
+
+            it("are the same tables as the routes they rename", function()
+                assert.are.equal(taPackage.navRoutes["town-3/after-doors"],
+                                 taPackage.navRoutes["town-3/part-1"])
+                assert.are.equal(taPackage.navRoutes["town-3/after-doors-to-town-3"],
+                                 taPackage.navRoutes["town-3/part-2"])
+            end)
+
+            -- Named in the order they're walked: part-1 ends where part-2 starts.
+            it("run in order", function()
+                assert.are.equal(taPackage.navRoutes["town-3/part-1"].to,
+                                 taPackage.navRoutes["town-3/part-2"].from)
+            end)
+
+            it("walks part-1 from the north plaza", function()
+                helper.simulateAlias("navigate-to town-3/part-1")
+                answerProbe(274)
+                local out = lastEchoes()
+                assert.is_falsy(out:find("I don't know a route", 1, true))
+                assert.is_truthy(out:find("22 steps", 1, true))
+                assert.are.equal(1, sent("sw"))
+            end)
+
+            it("walks part-2 from the junction", function()
+                helper.simulateAlias("navigate-to town-3/part-2")
+                answerProbe(426)
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                local out = lastEchoes()
+                assert.is_falsy(out:find("I don't know a route", 1, true))
+                assert.is_truthy(out:find("364 steps", 1, true))
+                assert.are.equal(1, sent("s"))
+            end)
+
+        end)
+
         -- get-platinum-key-from-63 is get-platinum-key with its first two steps
         -- taken off: `s` through the ruby door and `d` down to the junction.
         -- They are kept as two transcripts rather than one shared table, so this

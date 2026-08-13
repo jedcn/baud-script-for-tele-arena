@@ -5407,6 +5407,14 @@ local NAV_ROUTES = {
                   "e", "e", "se", "ne", "ne", "nw", "ne", "n", "ne", "ne", "n" },
     },
 }
+-- Second names for the two halves of the third-town journey. `after-doors` and
+-- `after-doors-to-town-3` say what each one is, which is what you want when
+-- you're editing them; `part-1` and `part-2` say what order to run them in,
+-- which is what you want at 2am with the rope in your pack. Both names reach
+-- the same table rather than a copy, so a correction to either route is a
+-- correction to both names by construction.
+NAV_ROUTES["town-3/part-1"] = NAV_ROUTES["town-3/after-doors"]
+NAV_ROUTES["town-3/part-2"] = NAV_ROUTES["town-3/after-doors-to-town-3"]
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
