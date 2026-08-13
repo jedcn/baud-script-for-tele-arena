@@ -4939,23 +4939,27 @@ local NAV_ROUTES = {
                      { route = "town-3/temple", drop = 2 } },
         -- An alternative ending for when the chasm is passable.
         --
-        -- The chasm is in the temple leg's closing westward run: seven `w`,
-        -- steps 95-101 of its 103. It does not always let you through. The
-        -- walk of 2026-08-03 was refused on step 96 --
+        -- The chasm is in the temple leg's closing westward run -- seven `w`,
+        -- steps 95-101 of its 103 -- and it does not always let you through.
+        -- The walk of 2026-08-03 was refused on step 96:
         --
         --     [nav|t] 20:56:07 +1503ms  send step 96/103 w
         --     The wide chasm prevents your exit in that direction.
         --
         -- and the room says so plainly: "A very wide natural chasm blocks the
         -- passage to the west." Same room, `w` refused and then allowed, so
-        -- the ordinary route simply pushes west and retries.
+        -- the ordinary route just pushes west and retries.
         --
-        -- `leg` and `keep` are a guess until the walk is recorded: the leg
-        -- because that is where the chasm is, `keep` not filled in at all. If
-        -- the divergence turns out to start before the temple leg, `leg` is
-        -- the field to change.
+        -- The divergence is NOT there, though: it is the stone-lvl-6 seam,
+        -- step 235 of the chain's 364, where level five's closing `d` lands in
+        -- a chamber with exits ne,u. `keep = 0` -- the last two legs are
+        -- replaced whole, and the seam check still runs in front of the new
+        -- steps.
+        --
+        -- The steps themselves are not recorded yet; `pending` is what makes
+        -- navigate-to say so rather than walk the ordinary ending.
         variants = {
-            ["chasm-is-clear"] = { leg = "town-3/temple", pending = true },
+            ["chasm-is-clear"] = { leg = "town-3/stone-lvl-6", keep = 0, pending = true },
         },
     },
     -- The first four legs in one, from second town's north plaza to the junction
@@ -5470,10 +5474,15 @@ taPackage.navRoutes = NAV_ROUTES
 --
 -- Keeping the shared prefix shared is the point, and it's the same reason
 -- `legs` names its legs rather than copying their directions: the two endings
--- of the temple leg differ in a handful of steps and agree on ninety, and
--- ninety directions transcribed twice are ninety chances to disagree. A
--- variant's steps are final -- the leg entry's own `drop` doesn't apply to
--- them, since the variant is already choosing where to stop.
+-- of the chain agree on everything up to the divergence, and directions
+-- transcribed twice are chances for the two copies to disagree.
+--
+-- A variant's steps are the END of the route. The named leg's tail is dropped
+-- and so is every leg after it -- those are how the ORDINARY walk finishes --
+-- and the leg entry's own `drop` doesn't apply either, since the variant is
+-- already choosing where to stop. `keep = 0` diverges at the leg's first step,
+-- which still leaves the leg's seam check in front of it: worth having, since
+-- below the riddle door that fingerprint is the only check there is.
 function taPackage.navRouteSteps(route, variant)
     local steps = {}
     local v
@@ -5514,8 +5523,13 @@ function taPackage.navRouteSteps(route, variant)
         local last = #leg.steps - drop
         if v and v.leg == name then last, diverged = math.min(v.keep, #leg.steps), true end
         for i = 1, last do steps[#steps + 1] = leg.steps[i] end
+        -- An ENDING, so it ends the route: the legs after this one are the way
+        -- the ordinary walk finishes, and the variant is the other way. Walking
+        -- the variant's steps and then carrying on through the rest of the legs
+        -- would be neither.
         if v and v.leg == name then
             for _, step in ipairs(v.steps) do steps[#steps + 1] = step end
+            break
         end
     end
     -- A variant naming a leg this route doesn't walk would otherwise flatten to

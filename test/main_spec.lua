@@ -10774,6 +10774,31 @@ describe("navigate-to", function()
                                 taPackage.navRouteSteps(r, "alt"))
             end)
 
+            -- The variant is how the walk ENDS, so the legs after the one it
+            -- diverges inside are dropped too. Caught late: with the variant
+            -- on the last leg there is nothing after it to wrongly append, and
+            -- the live chasm-is-clear diverges two legs from the end.
+            it("drops the legs after the one it diverges inside", function()
+                local r = twoLegRoute()
+                taPackage.navRoutes["t/leg-c"] = { from = "z", steps = { "e", "e" } }
+                r.legs = { "t/leg-a", "t/leg-b", "t/leg-c" }
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s", "s", "s",
+                                  { seam = "t/leg-c" }, "e", "e" },
+                                taPackage.navRouteSteps(r))
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "s", "e", "w" },
+                                taPackage.navRouteSteps(r, "alt"))
+            end)
+
+            -- How chasm-is-clear is shaped: replace the leg whole, but keep
+            -- the seam check that runs in front of it. Below the riddle door
+            -- that fingerprint is the only check the walk has.
+            it("keeps the seam check when the variant replaces a leg whole", function()
+                local r = twoLegRoute()
+                r.variants.alt.keep = 0
+                assert.are.same({ "n", "n", "n", { seam = "t/leg-b" }, "e", "w" },
+                                taPackage.navRouteSteps(r, "alt"))
+            end)
+
             it("works on a route that gives its steps directly", function()
                 local r = { from = "x", steps = { "n", "n", "n" },
                             variants = { alt = { keep = 2, steps = { "e" } } } }
