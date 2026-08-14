@@ -2824,11 +2824,14 @@ local ARENA_PARCHED_LIMIT = 20
 -- time. arenaNav() returns the active profile's config. All three arenas are in
 -- here now, so every leg is paced and every leg has trip recovery.
 --
--- The second arena has no training hall (checkTrainingNeeded gates on
--- ARENA_HAS_TRAINING below); the third does, so it also carries a toTraining/
--- fromTraining route and a trainingRoom name.
+-- A profile is the arena's number as a string, "1"/"2"/"3" — the same word the
+-- aliases take, so there is one vocabulary for the arenas and not two.
+--
+-- Arena 2 has no training hall (checkTrainingNeeded gates on ARENA_HAS_TRAINING
+-- below); arena 3 does, so it also carries a toTraining/fromTraining route and
+-- a trainingRoom name.
 local ARENA_NAV = {
-    -- The first arena used to walk by room name instead: send the next
+    -- Arena 1 used to walk by room name instead: send the next
     -- direction the instant the arrival line lands. That paced it at the
     -- round-trip latency, 300-600ms, three to five times faster than the
     -- 1500ms we know avoids a trip -- and worse, the trip recovery below is
@@ -2845,7 +2848,7 @@ local ARENA_NAV = {
     -- returns to the arena and sets out again, because arrivals are the single
     -- place errands get dispatched (see arenaArrivedHome). Two rooms longer,
     -- and the same as the other arenas do it.
-    first = {
+    ["1"] = {
         arenaRoom    = ARENA_ROOM,
         templeRoom   = "temple",
         barRoom      = "tavern",
@@ -2857,7 +2860,7 @@ local ARENA_NAV = {
         toTraining   = { "w", "n" },
         fromTraining = { "s", "e" },
     },
-    second = {
+    ["2"] = {
         arenaRoom  = ARENA_ROOM,
         templeRoom = "temple",
         barRoom    = "inn",
@@ -2866,7 +2869,7 @@ local ARENA_NAV = {
         toBar      = { "s", "s", "w", "w", "sw", "sw" },
         fromBar    = { "ne", "ne", "e", "e", "n", "n" },
     },
-    third = {
+    ["3"] = {
         arenaRoom    = ARENA_ROOM,
         templeRoom   = "temple",
         barRoom      = "tavern",
@@ -2880,9 +2883,9 @@ local ARENA_NAV = {
     },
 }
 
--- Which profiles have a training hall to bank earned levels. The second arena
--- has none, so a level-up there just keeps fighting. Absent = false.
-local ARENA_HAS_TRAINING = { first = true, third = true }
+-- Which profiles have a training hall to bank earned levels. Arena 2 has none,
+-- so a level-up there just keeps fighting. Absent = false.
+local ARENA_HAS_TRAINING = { ["1"] = true, ["3"] = true }
 
 local function arenaNav()
     return ARENA_NAV[taPackage.arenaProfile]
@@ -2895,9 +2898,9 @@ end
 -- so we can't tell which lapsed — we always refresh both.
 local SHOP_ROOM = "magic shop"
 local ARENA_SHOP = {
-    first  = { to = { "w", "s", "s" },                from = { "n", "n", "e" } },
-    second = { to = { "s", "s", "w", "w", "n", "n" }, from = { "s", "s", "e", "e", "n", "n" } },
-    third  = { to = { "sw", "se", "se", "se" },       from = { "nw", "nw", "nw", "ne" } },
+    ["1"] = { to = { "w", "s", "s" },                from = { "n", "n", "e" } },
+    ["2"] = { to = { "s", "s", "w", "w", "n", "n" }, from = { "s", "s", "e", "e", "n", "n" } },
+    ["3"] = { to = { "sw", "se", "se", "se" },       from = { "nw", "nw", "nw", "ne" } },
 }
 
 -- Send the next queued direction. index counts steps already sent, so bumping
@@ -3208,7 +3211,7 @@ arenaHeal.FLOOR = 25
 -- longer guarantees surviving the round in which the flee is decided. It buys
 -- entry to the arena, not safety inside it — the real protection there is
 -- killing fast enough as a team that the round never comes.
-arenaHeal.FLOOR_BY_PROFILE = { third = 400 }
+arenaHeal.FLOOR_BY_PROFILE = { ["3"] = 400 }
 
 -- The HP we must stay above to be in the arena at all. Split out of
 -- checkFleeArena so the question can be asked from outside a fight — see
@@ -3338,17 +3341,17 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             local encPct = getEncumberancePercent()
             lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
             lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
-            local titles = { second = "2nd Arena Check-In", third = "3rd Arena Check-In" }
+            local titles = { ["2"] = "2nd Arena Check-In", ["3"] = "3rd Arena Check-In" }
             local title = titles[taPackage.arenaProfile] or "Arena Check-In"
             sendNtfy(title, table.concat(lines, "\n"), true)
         end
     end
 end, { type = "regex" })
 
--- Start an arena session. profile "first" is the original adjacent-rooms arena;
--- profiles "second" and "third" share this combat engine but walk their distant
--- temple/bar/shop one paced step at a time (see ARENA_NAV). The third arena also
--- has a training hall (reached by a paced route); the second does not.
+-- Start an arena session. profile "1" is the original adjacent-rooms arena;
+-- profiles "2" and "3" share this combat engine but walk their distant
+-- temple/bar/shop one paced step at a time (see ARENA_NAV). Arena 3 also has a
+-- training hall (reached by a paced route); arena 2 does not.
 --
 -- `team` turns on cooperative fighting: several characters share the arena and
 -- coordinate so only one monster is ever summoned, and everybody swings at it.
@@ -3393,36 +3396,33 @@ local function beginArenaSession(profile, debug, team)
     arenaScanRoom()
 end
 
--- Which arena a selector word means. Both the spelled-out names and the digits
--- are accepted so the long alias and the two-letter one read naturally
--- ("ring-gong-and-fight-in-arena second", "rg 2").
-local ARENA_PROFILE_BY_ARG = {
-    ["1"] = "first",  first  = "first",
-    ["2"] = "second", second = "second",
-    ["3"] = "third",  third  = "third",
-}
+-- The arenas are named by their number, and only by their number. The
+-- spelled-out forms ("second", "third") used to be accepted alongside the
+-- digits, which meant the same arena had two names in every alias, table key
+-- and log line. One vocabulary is easier to type and easier to read.
+local ARENA_PROFILES = { ["1"] = true, ["2"] = true, ["3"] = true }
 
-local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <first|second|third> [quiet]"
-local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <first|second|third> [quiet]"
+local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <1|2|3> [quiet]"
+local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <1|2|3> [quiet]"
 
 -- Parse the "<arena> [quiet]" tail of the ring-gong aliases. Order doesn't
--- matter and both words are optional; a bare alias means the first arena, which
--- is what it meant before the three per-arena aliases were folded into one.
+-- matter and both words are optional; a bare alias means arena 1, which is what
+-- it meant before the three per-arena aliases were folded into one.
 --
 -- The debug trace is ON by default: every real fight was being started with the
 -- flag anyway, so the flag was pure ceremony. `quiet` turns it off; `debug` is
 -- still accepted (as a no-op) so the old muscle memory keeps working.
 -- Returns profile, debug — or nil plus the offending word.
 local function parseArenaAliasArgs(rest)
-    local profile, debug = "first", true
+    local profile, debug = "1", true
     for word in (rest or ""):gmatch("%S+") do
         local lowered = word:lower()
         if lowered == "debug" then
             debug = true
         elseif lowered == "quiet" then
             debug = false
-        elseif ARENA_PROFILE_BY_ARG[lowered] then
-            profile = ARENA_PROFILE_BY_ARG[lowered]
+        elseif ARENA_PROFILES[lowered] then
+            profile = lowered
         else
             return nil, nil, word
         end
@@ -3451,7 +3451,7 @@ end
 
 createAlias("^ring-gong-and-fight-in-arena(.*)$", handleArenaAlias, { type = "regex" })
 
--- Short form: "rg 2", "rg 3 debug". Same handler, same arguments.
+-- Short form: "rg 2", "rg 3 quiet". Same handler, same arguments.
 createAlias("^rg(.*)$", handleArenaAlias, { type = "regex" })
 
 -- Cooperative version: run this in every session that is fighting the same

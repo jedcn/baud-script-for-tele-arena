@@ -3835,10 +3835,10 @@ describe("ring-gong-and-fight-in-arena", function()
         dofile("main.lua")
         helper.clearDbCalls()
         setClass("Warrior")
-        -- Real sessions always run through beginArenaSession("first"), which sets
+        -- Real sessions always run through beginArenaSession("1"), which sets
         -- the profile; the training gate now keys on it (ARENA_HAS_TRAINING), so
         -- default it here for tests that drive combat without the alias.
-        taPackage.arenaProfile = "first"
+        taPackage.arenaProfile = "1"
     end)
 
     local function setHP(current, max)
@@ -3909,50 +3909,51 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
-    -- One alias now covers all three arenas: the arena is an argument, spelled
-    -- out or as a digit, with an optional "debug". "rg" is the short form.
+    -- One alias now covers all three arenas: the arena is an argument, given as
+    -- its number, with an optional "quiet". "rg" is the short form.
     describe("arena selector argument", function()
 
-        it("defaults to the first arena when no arena is given", function()
+        it("defaults to arena 1 when no arena is given", function()
             helper.simulateAlias("ring-gong-and-fight-in-arena")
-            assert.are.equal("first", taPackage.arenaProfile)
-        end)
-
-        it("accepts spelled-out arena names", function()
-            for word, profile in pairs({ first = "first", second = "second", third = "third" }) do
-                helper.simulateAlias("ring-gong-and-fight-in-arena " .. word)
-                assert.are.equal(profile, taPackage.arenaProfile)
-            end
+            assert.are.equal("1", taPackage.arenaProfile)
         end)
 
         it("accepts arena digits", function()
-            for digit, profile in pairs({ ["1"] = "first", ["2"] = "second", ["3"] = "third" }) do
+            for _, digit in ipairs({ "1", "2", "3" }) do
                 helper.simulateAlias("ring-gong-and-fight-in-arena " .. digit)
-                assert.are.equal(profile, taPackage.arenaProfile)
+                assert.are.equal(digit, taPackage.arenaProfile)
+            end
+        end)
+
+        -- The spelled-out names are gone: one name per arena, everywhere.
+        it("refuses the spelled-out arena names", function()
+            for _, word in ipairs({ "first", "second", "third" }) do
+                helper.simulateAlias("ring-gong-and-fight-in-arena " .. word)
+                assert.is_nil(taPackage.arenaState)
             end
         end)
 
         it("leaves debug on by default", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena second")
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2")
             assert.is_true(taPackage.arenaDebug)
         end)
 
         it("turns debug off with quiet", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena second quiet")
-            assert.are.equal("second", taPackage.arenaProfile)
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2 quiet")
+            assert.are.equal("2", taPackage.arenaProfile)
             assert.is_false(taPackage.arenaDebug)
         end)
 
         it("accepts bare quiet (first arena)", function()
             helper.simulateAlias("ring-gong-and-fight-in-arena quiet")
-            assert.are.equal("first", taPackage.arenaProfile)
+            assert.are.equal("1", taPackage.arenaProfile)
             assert.is_false(taPackage.arenaDebug)
         end)
 
         -- The old flag stays valid so typing it out of habit isn't an error.
         it("still accepts an explicit debug", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena second debug")
-            assert.are.equal("second", taPackage.arenaProfile)
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2 debug")
+            assert.are.equal("2", taPackage.arenaProfile)
             assert.is_true(taPackage.arenaDebug)
         end)
 
@@ -3970,25 +3971,25 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("starts the named arena from the short 'rg' alias", function()
             helper.simulateAlias("rg 2")
-            assert.are.equal("second", taPackage.arenaProfile)
+            assert.are.equal("2", taPackage.arenaProfile)
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
         it("gets debug on the short alias too, without asking", function()
             helper.simulateAlias("rg 3")
-            assert.are.equal("third", taPackage.arenaProfile)
+            assert.are.equal("3", taPackage.arenaProfile)
             assert.is_true(taPackage.arenaDebug)
         end)
 
         it("takes quiet on the short alias too", function()
             helper.simulateAlias("rg 3 quiet")
-            assert.are.equal("third", taPackage.arenaProfile)
+            assert.are.equal("3", taPackage.arenaProfile)
             assert.is_false(taPackage.arenaDebug)
         end)
 
         it("defaults the short alias to the first arena", function()
             helper.simulateAlias("rg")
-            assert.are.equal("first", taPackage.arenaProfile)
+            assert.are.equal("1", taPackage.arenaProfile)
         end)
 
     end)
@@ -4000,26 +4001,26 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("starts a team session in the first arena by default", function()
             helper.simulateAlias("team-fight-in-arena")
-            assert.are.equal("first", taPackage.arenaProfile)
+            assert.are.equal("1", taPackage.arenaProfile)
             assert.are.equal("ringing", taPackage.arenaState)
             assert.is_true(taPackage.arenaTeam)
         end)
 
         it("takes the same arena selector as the solo aliases", function()
-            helper.simulateAlias("team-fight-in-arena third")
-            assert.are.equal("third", taPackage.arenaProfile)
+            helper.simulateAlias("team-fight-in-arena 3")
+            assert.are.equal("3", taPackage.arenaProfile)
             assert.is_true(taPackage.arenaTeam)
         end)
 
         it("runs with debug on without being asked", function()
-            helper.simulateAlias("team-fight-in-arena third")
+            helper.simulateAlias("team-fight-in-arena 3")
             assert.is_true(taPackage.arenaDebug)
             assert.is_true(taPackage.arenaTeam)
         end)
 
         it("takes quiet alongside the arena", function()
-            helper.simulateAlias("team-fight-in-arena second quiet")
-            assert.are.equal("second", taPackage.arenaProfile)
+            helper.simulateAlias("team-fight-in-arena 2 quiet")
+            assert.are.equal("2", taPackage.arenaProfile)
             assert.is_false(taPackage.arenaDebug)
             assert.is_true(taPackage.arenaTeam)
         end)
@@ -4183,7 +4184,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("second-arena XP check fires a Markdown ntfy notification", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.character.name = "Tojolias"
             taPackage.character.class = "Warrior"
             taPackage.character.level = 12
@@ -4214,7 +4215,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("marks an earned-but-untrained level with a caret on the Lvl line", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.character.name = "Tojolias"
             taPackage.character.class = "Warrior"
             -- Still reported as level 11 by the game, but 620,046 XP is past the
@@ -4240,7 +4241,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("first-arena XP check fires an ntfy notification with a first-arena title", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.character.name = "Tojolias"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
@@ -4254,14 +4255,14 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("ntfy notification only fires on the periodic XP check", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaXpCheckPending = false
             helper.simulateLine("Experience:   800")
             assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
         it("ntfy notification is throttled to every 30 minutes", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.character.name = "Tojolias"
             taPackage.character.vitalityCurrent = 313
             taPackage.arenaSessionStartXp = 300
@@ -4762,7 +4763,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("rings for a fresh monster on arriving home after a mid-errand kill", function()
             -- The troll died during the bar trip, so arenaMonster is already nil.
             -- Arriving back in the arena must ring, not attack the dead troll.
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "returning"
             taPackage.arenaMonster = nil
             taPackage.arenaJourney = { steps = { "n" }, index = 6, arriveRoom = "arena" }
@@ -5313,7 +5314,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- breathed for 167 while we were walking to the magic shop, so we came
         -- back at 273/440 against a floor of 400 — and attacked.
         it("turns around at the third arena's much higher floor", function()
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
             arrivesHome(273, 440, "flame giantess")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
@@ -5854,7 +5855,7 @@ describe("ring-gong-and-fight-in-arena", function()
         describe("calling out when we are the one fleeing", function()
 
             before_each(function()
-                taPackage.arenaProfile = "first"
+                taPackage.arenaProfile = "1"
                 taPackage.arenaTeam = true
                 taPackage.arenaState = "fighting"
                 taPackage.arenaMonster = "cave bear"
@@ -5956,7 +5957,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- rooms away in the third arena — it would reach nobody and the hold
             -- would expire on a timeout every single trip.
             local function arriveHomeFromTemple()
-                taPackage.arenaProfile = "first"
+                taPackage.arenaProfile = "1"
                 taPackage.arenaState = "returning"
                 taPackage.arenaMonster = nil
                 taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
@@ -5972,7 +5973,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
             it("does not say it at the temple", function()
                 taPackage.arenaTeam = true
-                taPackage.arenaProfile = "first"
+                taPackage.arenaProfile = "1"
                 taPackage.arenaAnnouncedNeedsHealing = true
                 -- The heal is charged for, and a balance that goes negative
                 -- trips the low-gold bailout and tears the session down.
@@ -6003,7 +6004,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
             -- End to end, from the hit that triggers the flee to the all-clear.
             it("completes the round trip from flee to all-clear", function()
-                taPackage.arenaProfile = "first"
+                taPackage.arenaProfile = "1"
                 taPackage.arenaTeam = true
                 taPackage.arenaState = "fighting"
                 taPackage.arenaMonster = "cave bear"
@@ -6781,9 +6782,9 @@ end)
 -- Shares the combat engine with the first arena; only navigation differs. The
 -- temple and bar are several rooms away and must be walked one paced step at a
 -- time (moving too fast makes the character fall), and both arenas' rooms are
--- named "arena"/"temple", so travel is keyed off arenaProfile == "second".
+-- named "arena"/"temple", so travel is keyed off arenaProfile == "2".
 
-describe("ring-gong-and-fight-in-arena second", function()
+describe("ring-gong-and-fight-in-arena 2", function()
 
     before_each(function()
         helper.resetAll()
@@ -6798,13 +6799,13 @@ describe("ring-gong-and-fight-in-arena second", function()
 
     describe("alias", function()
 
-        it("sets arenaProfile to 'second'", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena second")
-            assert.are.equal("second", taPackage.arenaProfile)
+        it("sets arenaProfile to '2'", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2")
+            assert.are.equal("2", taPackage.arenaProfile)
         end)
 
         it("starts ringing and scans the room like the first arena", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena second")
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("", helper.sendCalls[1])
             assert.is_true(taPackage.arenaProbePending)
@@ -6812,13 +6813,13 @@ describe("ring-gong-and-fight-in-arena second", function()
 
         it("does not start when class is unknown", function()
             setClass(nil)
-            helper.simulateAlias("ring-gong-and-fight-in-arena second")
+            helper.simulateAlias("ring-gong-and-fight-in-arena 2")
             assert.is_nil(taPackage.arenaState)
         end)
 
-        it("the first-arena alias leaves profile 'first' (not 'second')", function()
+        it("the bare alias leaves profile '1' (not '2')", function()
             helper.simulateAlias("ring-gong-and-fight-in-arena")
-            assert.are.equal("first", taPackage.arenaProfile)
+            assert.are.equal("1", taPackage.arenaProfile)
         end)
 
     end)
@@ -6826,7 +6827,7 @@ describe("ring-gong-and-fight-in-arena second", function()
     describe("stop alias", function()
 
         it("clears profile, journey, and state", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaJourney = { steps = { "s" }, index = 0, arriveRoom = "temple" }
             taPackage.arenaState = "fighting"
             helper.simulateAlias("stop-arena-fight")
@@ -6847,7 +6848,7 @@ describe("ring-gong-and-fight-in-arena second", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("flees toward the temple with the first south step", function()
@@ -6910,7 +6911,7 @@ describe("ring-gong-and-fight-in-arena second", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("walks back to the arena, starting with north", function()
@@ -6953,7 +6954,7 @@ describe("ring-gong-and-fight-in-arena second", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("departs for the bar with the first south step when thirsty", function()
@@ -7049,7 +7050,7 @@ describe("ring-gong-and-fight-in-arena second", function()
                 return "mock_timer"
             end
             tripTimer = nil
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("re-sends the current step after tripping mid-walk", function()
@@ -7082,7 +7083,7 @@ describe("ring-gong-and-fight-in-arena second", function()
         end)
 
         it("also recovers on the first-arena profile (its shop trip is a journey too)", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "potions"
             taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 2, arriveRoom = "magic shop" }
             helper.simulateLine("In your haste, you trip and fall!")
@@ -7097,7 +7098,7 @@ describe("ring-gong-and-fight-in-arena second", function()
     describe("monster appears in a puff of smoke", function()
 
         before_each(function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaOwnSummonPending = true
         end)
 
@@ -7130,7 +7131,7 @@ describe("ring-gong-and-fight-in-arena second", function()
     describe("no training in the second arena", function()
 
         before_each(function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("keeps fighting through a level-up instead of leaving to train", function()
@@ -7158,7 +7159,7 @@ describe("ring-gong-and-fight-in-arena second", function()
                 return "mock_timer"
             end
             retryTimer = nil
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
         end)
 
         it("retries the blocked south step, not a hardcoded west", function()
@@ -7176,15 +7177,15 @@ describe("ring-gong-and-fight-in-arena second", function()
 end)
 
 -- =========================================================================
--- ring-gong-and-fight-in-arena third
+-- ring-gong-and-fight-in-arena 3
 --
 -- Same shared combat/XP/potion engine as the other two, but a new combination:
 -- paced-route navigation (like the second arena) AND a training hall (like the
 -- first). Its temple/bar/shop/guild-hall are distant, reached by fixed
--- direction step-lists (ARENA_NAV.third); a banked level walks a paced route to
+-- direction step-lists (ARENA_NAV["3"]); a banked level walks a paced route to
 -- the "guild hall" rather than the first arena's room-name trip.
 -- =========================================================================
-describe("ring-gong-and-fight-in-arena third", function()
+describe("ring-gong-and-fight-in-arena 3", function()
 
     before_each(function()
         helper.resetAll()
@@ -7199,13 +7200,13 @@ describe("ring-gong-and-fight-in-arena third", function()
 
     describe("alias", function()
 
-        it("sets arenaProfile to 'third'", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena third")
-            assert.are.equal("third", taPackage.arenaProfile)
+        it("sets arenaProfile to '3'", function()
+            helper.simulateAlias("ring-gong-and-fight-in-arena 3")
+            assert.are.equal("3", taPackage.arenaProfile)
         end)
 
         it("starts ringing and scans the room like the other arenas", function()
-            helper.simulateAlias("ring-gong-and-fight-in-arena third")
+            helper.simulateAlias("ring-gong-and-fight-in-arena 3")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("", helper.sendCalls[1])
             assert.is_true(taPackage.arenaProbePending)
@@ -7213,7 +7214,7 @@ describe("ring-gong-and-fight-in-arena third", function()
 
         it("does not start when class is unknown", function()
             setClass(nil)
-            helper.simulateAlias("ring-gong-and-fight-in-arena third")
+            helper.simulateAlias("ring-gong-and-fight-in-arena 3")
             assert.is_nil(taPackage.arenaState)
         end)
 
@@ -7222,7 +7223,7 @@ describe("ring-gong-and-fight-in-arena third", function()
     describe("stop alias", function()
 
         it("clears profile, journey, and state", function()
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
             taPackage.arenaJourney = { steps = { "sw" }, index = 0, arriveRoom = "temple" }
             taPackage.arenaState = "fighting"
             helper.simulateAlias("stop-arena-fight")
@@ -7243,7 +7244,7 @@ describe("ring-gong-and-fight-in-arena third", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
         end)
 
         it("flees toward the temple with the first step 'sw'", function()
@@ -7347,7 +7348,7 @@ describe("ring-gong-and-fight-in-arena third", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
         end)
 
         it("departs for the tavern with the first step 'sw' when thirsty", function()
@@ -7385,7 +7386,7 @@ describe("ring-gong-and-fight-in-arena third", function()
                 return "mock_timer"
             end
             stepTimer = nil
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
         end)
 
         -- HP kept well above the third arena's 500 flee floor (75% of 1000 = 750),
@@ -7459,7 +7460,7 @@ describe("magic-shop potion runs", function()
     describe("a potion wears off", function()
 
         it("heads to the shop (second arena, first step 's') when fighting", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "fighting"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("potions", taPackage.arenaState)
@@ -7468,7 +7469,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("heads to the shop (first arena, first step 'w') when fighting", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "fighting"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("potions", taPackage.arenaState)
@@ -7476,7 +7477,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("heads to the shop (third arena, first step 'sw') when fighting", function()
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
             taPackage.arenaState = "fighting"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("potions", taPackage.arenaState)
@@ -7484,14 +7485,14 @@ describe("magic-shop potion runs", function()
         end)
 
         it("departs when the tingle fires while ringing", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "ringing"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("potions", taPackage.arenaState)
         end)
 
         it("just flags when the tingle fires mid-trip (e.g. fleeing)", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "fleeing"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("fleeing", taPackage.arenaState)
@@ -7499,7 +7500,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("does not double-depart on the second potion's tingle line", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "fighting"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             helper.sendCalls = {}
@@ -7516,7 +7517,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("decrements the active-potion count on each wear-off", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "fighting"
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
@@ -7527,7 +7528,7 @@ describe("magic-shop potion runs", function()
         -- refuses a potion-tainted character), so a wear-off must NOT trigger a
         -- restock — we drain and keep fighting instead.
         it("drains instead of restocking when a level is owed", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "fighting"
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
@@ -7546,7 +7547,7 @@ describe("magic-shop potion runs", function()
     describe("arriving at the shop", function()
 
         it("re-buys and re-drinks both potions, then walks back (second arena)", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "potions"
             taPackage.needsPotions = true
             taPackage.arenaJourney = { steps = { "s", "s", "w", "w", "n", "n" }, index = 6, arriveRoom = "magic shop" }
@@ -7561,7 +7562,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("walks back on the first-arena route (starts 'n')", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "potions"
             taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 3, arriveRoom = "magic shop" }
             helper.simulateLine("You're in the magic shop.")
@@ -7570,7 +7571,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("walks back on the third-arena route (starts 'nw')", function()
-            taPackage.arenaProfile = "third"
+            taPackage.arenaProfile = "3"
             taPackage.arenaState = "potions"
             taPackage.arenaJourney = { steps = { "sw", "se", "se", "se" }, index = 4, arriveRoom = "magic shop" }
             helper.simulateLine("You're in the magic shop.")
@@ -7579,7 +7580,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("treats an intermediate room as a step, not the shop", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "potions"
             taPackage.arenaJourney = { steps = { "w", "s", "s" }, index = 1, arriveRoom = "magic shop" }
             helper.simulateLine("You're in the north plaza.")
@@ -7594,7 +7595,7 @@ describe("magic-shop potion runs", function()
     describe("returning to the arena from the shop", function()
 
         it("resumes combat when nothing else is owed", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "returning"
             taPackage.arenaMonster = "troll"
             taPackage.arenaJourney = { steps = { "n" }, index = 1, arriveRoom = "arena" }
@@ -7604,7 +7605,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("makes the shop trip after healing when a potion also wore off", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "returning"
             taPackage.needsPotions = true
             taPackage.arenaJourney = { steps = { "n" }, index = 4, arriveRoom = "arena" }
@@ -7614,7 +7615,7 @@ describe("magic-shop potion runs", function()
         end)
 
         it("does the shop before food when both are owed", function()
-            taPackage.arenaProfile = "second"
+            taPackage.arenaProfile = "2"
             taPackage.arenaState = "returning"
             taPackage.needsPotions = true
             taPackage.needsDrinks = true
@@ -7626,7 +7627,7 @@ describe("magic-shop potion runs", function()
         -- The first arena walks home by journey too now, so a potion that wore
         -- off mid-errand is serviced on arrival exactly as it is for the others.
         it("services a deferred potion run when the first arena walks home", function()
-            taPackage.arenaProfile = "first"
+            taPackage.arenaProfile = "1"
             taPackage.arenaState = "returning"
             taPackage.needsPotions = true
             taPackage.arenaJourney = { steps = { "e", "e" }, index = 2, arriveRoom = "arena" }
@@ -7638,7 +7639,7 @@ describe("magic-shop potion runs", function()
     end)
 
     it("stop clears needsPotions", function()
-        taPackage.arenaProfile = "second"
+        taPackage.arenaProfile = "2"
         taPackage.needsPotions = true
         taPackage.arenaState = "potions"
         helper.simulateAlias("stop-arena-fight")
@@ -7664,7 +7665,7 @@ describe("errand vs. in-flight gong summon", function()
         helper.resetAll()
         dofile("main.lua")
         setClass("Warrior")
-        taPackage.arenaProfile = "second"
+        taPackage.arenaProfile = "2"
     end)
 
     it("defers the shop run while a ring is in flight, then fights the summon", function()
