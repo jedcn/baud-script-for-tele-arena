@@ -4025,6 +4025,27 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_true(taPackage.arenaTeam)
         end)
 
+        -- "tfia" is to team-fight-in-arena what "rg" is to the solo alias.
+        it("starts the named arena from the short 'tfia' alias", function()
+            helper.simulateAlias("tfia 2")
+            assert.are.equal("2", taPackage.arenaProfile)
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
+        it("takes the same flags on the short alias", function()
+            helper.simulateAlias("tfia 3 quiet")
+            assert.are.equal("3", taPackage.arenaProfile)
+            assert.is_false(taPackage.arenaDebug)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
+        it("defaults the short alias to arena 1", function()
+            helper.simulateAlias("tfia")
+            assert.are.equal("1", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaTeam)
+        end)
+
         it("refuses to start on an unknown argument", function()
             helper.simulateAlias("team-fight-in-arena fourth")
             assert.is_nil(taPackage.arenaState)

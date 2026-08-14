@@ -3458,9 +3458,16 @@ createAlias("^rg(.*)$", handleArenaAlias, { type = "regex" })
 -- arena together. The characters coordinate through the game itself — see the
 -- roster/stagger machinery below — so no leader needs designating and no extra
 -- arguments are needed beyond the usual arena selector.
-createAlias("^team-fight-in-arena(.*)$", function(matches)
-    startArenaFromAlias(matches[2], true, ARENA_TEAM_ALIAS_USAGE)
-end, { type = "regex" })
+--
+-- Registered twice, long form and short ("tfia 2"), the way the solo alias has
+-- "rg". A loop rather than a second named handler: the main chunk is within a
+-- couple of names of Lua's 200-local ceiling, and the loop variable is scoped
+-- to the loop instead of adding to it.
+for _, teamAliasPattern in ipairs({ "^team-fight-in-arena(.*)$", "^tfia(.*)$" }) do
+    createAlias(teamAliasPattern, function(matches)
+        startArenaFromAlias(matches[2], true, ARENA_TEAM_ALIAS_USAGE)
+    end, { type = "regex" })
+end
 
 local function stopArena()
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
