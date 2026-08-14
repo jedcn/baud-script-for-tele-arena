@@ -10840,16 +10840,16 @@ describe("navigate-to", function()
                     "s", "s", "s", "s", "w", "w", "s", "s", "s", "w",   -- 11-20
                     "w", "w", "w", "s", "s", "w", "s", "s", "e", "e",   -- 21-30
                     "e", "e", "e", "e", "s", "s", "s", "w", "s", "s",   -- 31-40
-                    "w", "w", "w", "w", "w", "w",                       -- 41-46
+                    "w", "w", "w", "w", "w", "w", "w",                  -- 41-47
                 }
 
                 -- Flattened from the temple leg's start, the variant is the
-                -- walk exactly. 46 steps, none of them a lever.
+                -- walk exactly. 47 steps, none of them a lever.
                 it("is the walk that was given, from the temple leg's start", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/temple"], "chasm-is-clear")
                     assert.are.same(WALK, flat)
-                    assert.are.equal(46, #flat)
+                    assert.are.equal(47, #flat)
                     for _, s in ipairs(flat) do assert.are.equal("string", type(s)) end
                 end)
 
@@ -10881,20 +10881,20 @@ describe("navigate-to", function()
                     local chain = taPackage.navRoutes["town-3/part-2"]
                     assert.are.equal(364, #taPackage.navRouteSteps(chain))
                     local flat = taPackage.navRouteSteps(chain, "chasm-is-clear")
-                    assert.are.equal(309, #flat)
+                    assert.are.equal(310, #flat)
                     -- 263 is the temple seam, so 264.. is the temple leg.
                     assert.are.same({ seam = "town-3/temple" }, flat[263])
-                    for i = 1, 46 do assert.are.equal(WALK[i], flat[263 + i]) end
+                    for i = 1, 47 do assert.are.equal(WALK[i], flat[263 + i]) end
                 end)
 
                 -- The steps live on the temple leg; the chain borrows them by
                 -- naming the leg and nothing else. So a walk that dies late can
                 -- be picked up at the temple seam and finished by hand, and it
-                -- walks the same 46 steps rather than a second transcription.
+                -- walks the same 47 steps rather than a second transcription.
                 it("is recorded on the temple leg and borrowed by the chain", function()
                     local own = taPackage.navRoutes["town-3/temple"].variants["chasm-is-clear"]
                     assert.are.equal(26, own.keep)
-                    assert.are.equal(20, #own.steps)
+                    assert.are.equal(21, #own.steps)
                     local borrowed = taPackage.navRoutes["town-3/part-2"].variants["chasm-is-clear"]
                     assert.are.equal("town-3/temple", borrowed.leg)
                     assert.is_nil(borrowed.steps)
@@ -10911,7 +10911,7 @@ describe("navigate-to", function()
                     helper.simulateLine("Exits: e,u.")
                     local out = lastEchoes()
                     assert.is_truthy(out:find("Walking to town-3/temple chasm-is-clear", 1, true))
-                    assert.is_truthy(out:find("46 steps", 1, true))
+                    assert.is_truthy(out:find("47 steps", 1, true))
                     assert.are.equal(1, sent("e"))
                 end)
 
@@ -10931,7 +10931,7 @@ describe("navigate-to", function()
                     helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                     local out = lastEchoes()
                     assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
-                    assert.is_truthy(out:find("309 steps", 1, true))
+                    assert.is_truthy(out:find("310 steps", 1, true))
                     assert.are.equal(1, sent("s"))
                 end)
 
@@ -10969,7 +10969,7 @@ describe("navigate-to", function()
                 helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                 local out = lastEchoes()
                 assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
-                assert.is_truthy(out:find("309 steps", 1, true))
+                assert.is_truthy(out:find("310 steps", 1, true))
                 assert.is_falsy(out:find("trace on", 1, true))
             end)
 

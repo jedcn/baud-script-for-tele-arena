@@ -4961,8 +4961,8 @@ local NAV_ROUTES = {
         -- The steps live on town-3/temple, whose ending this is; naming the leg
         -- and nothing else borrows them. That way stopping at the temple seam
         -- and running `navigate-to town-3/temple chasm-is-clear` by hand walks
-        -- the same 46 steps as the chain does -- which is what you want when a
-        -- 309-step walk dies on floor four.
+        -- the same 47 steps as the chain does -- which is what you want when a
+        -- 310-step walk dies on floor four.
         variants = {
             ["chasm-is-clear"] = { leg = "town-3/temple" },
         },
@@ -5289,20 +5289,20 @@ local NAV_ROUTES = {
         --
         -- The two endings are the same walk for 26 steps and then part, so only
         -- the difference is recorded. `keep = 26` walks as far as the `w` that
-        -- ends `w w w s s w`, then finishes on these twenty instead of the
+        -- ends `w w w s s w`, then finishes on these twenty-one instead of the
         -- remaining 77. Step 27 is where they separate: `s` here, `w` there.
-        -- 46 steps end to end against 103, and neither lever run is in them.
+        -- 47 steps end to end against 103, and neither lever run is in them.
         --
         -- The tail is the same shape as the ordinary ending's, which is worth
-        -- knowing: six `w` here where the ordinary ending walks seven. This one
-        -- crosses the chasm rather than being turned back at it, so a `w` that
-        -- refuses means the walls are NOT down -- wrong variant, and the
-        -- ordinary ending is the one that works.
+        -- knowing: seven `w` on both. This one crosses the chasm rather than
+        -- being turned back at it, so a `w` that refuses means the walls are
+        -- NOT down -- wrong variant, and the ordinary ending is the one that
+        -- works.
         variants = {
             ["chasm-is-clear"] = {
                 keep  = 26,
                 steps = { "s", "s", "e", "e", "e", "e", "e", "e", "s", "s",
-                          "s", "w", "s", "s", "w", "w", "w", "w", "w", "w" },
+                          "s", "w", "s", "s", "w", "w", "w", "w", "w", "w", "w" },
             },
         },
     },
