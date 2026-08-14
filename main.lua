@@ -3383,7 +3383,8 @@ local function beginArenaSession(profile, debug, team)
     taPackage.arenaPotionsActive = 0
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
-    local debugSuffix = debug and " (debug mode)" or ""
+    -- Debug is the default now, so the echo flags the exception instead.
+    local debugSuffix = debug and "" or " (quiet)"
     local teamSuffix = team and " (team mode)" or ""
     echo("[arena] Session started" .. teamSuffix .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
@@ -3401,19 +3402,25 @@ local ARENA_PROFILE_BY_ARG = {
     ["3"] = "third",  third  = "third",
 }
 
-local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <first|second|third> [debug]"
-local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <first|second|third> [debug]"
+local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <first|second|third> [quiet]"
+local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <first|second|third> [quiet]"
 
--- Parse the "<arena> [debug]" tail of the ring-gong aliases. Order doesn't
+-- Parse the "<arena> [quiet]" tail of the ring-gong aliases. Order doesn't
 -- matter and both words are optional; a bare alias means the first arena, which
 -- is what it meant before the three per-arena aliases were folded into one.
+--
+-- The debug trace is ON by default: every real fight was being started with the
+-- flag anyway, so the flag was pure ceremony. `quiet` turns it off; `debug` is
+-- still accepted (as a no-op) so the old muscle memory keeps working.
 -- Returns profile, debug — or nil plus the offending word.
 local function parseArenaAliasArgs(rest)
-    local profile, debug = "first", false
+    local profile, debug = "first", true
     for word in (rest or ""):gmatch("%S+") do
         local lowered = word:lower()
         if lowered == "debug" then
             debug = true
+        elseif lowered == "quiet" then
+            debug = false
         elseif ARENA_PROFILE_BY_ARG[lowered] then
             profile = ARENA_PROFILE_BY_ARG[lowered]
         else
