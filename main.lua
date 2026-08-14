@@ -4939,27 +4939,45 @@ local NAV_ROUTES = {
                      { route = "town-3/temple", drop = 2 } },
         -- An alternative ending for when the chasm is passable.
         --
-        -- The chasm is in the temple leg's closing westward run -- seven `w`,
-        -- steps 95-101 of its 103 -- and it does not always let you through.
-        -- The walk of 2026-08-03 was refused on step 96:
+        -- The temple leg's two levers drop walls that clear the walk across the
+        -- chasm, and like every lever and stone on the way to third town they
+        -- stay dropped -- the same thing that makes the way home 201 steps
+        -- against the outward chain's 438. So on a later run there is nothing
+        -- to go and pull: the walls are already down, and this takes the short
+        -- way across instead of the long way round to two levers it doesn't
+        -- need.
+        --
+        -- Where the chasm sits in the ordinary ending: the closing run of seven
+        -- `w`, steps 95-101 of the temple leg's 103. With the walls up it
+        -- refuses -- the walk of 2026-08-03 was stopped on step 96,
         --
         --     [nav|t] 20:56:07 +1503ms  send step 96/103 w
         --     The wide chasm prevents your exit in that direction.
         --
-        -- and the room says so plainly: "A very wide natural chasm blocks the
-        -- passage to the west." Same room, `w` refused and then allowed, so
-        -- the ordinary route just pushes west and retries.
+        -- "A very wide natural chasm blocks the passage to the west," said the
+        -- room. That walk got across by retrying, which is what the ordinary
+        -- ending still does.
         --
-        -- The divergence is NOT there, though: it is the stone-lvl-6 seam,
-        -- step 235 of the chain's 364, where level five's closing `d` lands in
-        -- a chamber with exits ne,u. `keep = 0` -- the last two legs are
-        -- replaced whole, and the seam check still runs in front of the new
-        -- steps.
+        -- The two endings are the same walk for 26 steps and then part, so only
+        -- the difference is recorded. `keep = 26` walks the temple leg as far
+        -- as the `w` that ends its `w w w s s w`, then finishes on these twenty
+        -- instead of its remaining 77. Step 27 is where they separate: `s`
+        -- here, `w` there. 46 steps end to end against the temple leg's 103,
+        -- and neither lever run is in them -- six `n` out and six `s` back,
+        -- eight `s` out and eight `n` back, all skipped.
         --
-        -- The steps themselves are not recorded yet; `pending` is what makes
-        -- navigate-to say so rather than walk the ordinary ending.
+        -- The tail is the same shape as the ordinary ending's and that is worth
+        -- knowing: six `w` here where the temple leg walks seven. This one
+        -- crosses the chasm rather than being turned back at it, so a `w` that
+        -- refuses means the walls are NOT down -- the walk was run with the
+        -- wrong variant, and the ordinary ending is the one that works.
         variants = {
-            ["chasm-is-clear"] = { leg = "town-3/stone-lvl-6", keep = 0, pending = true },
+            ["chasm-is-clear"] = {
+                leg   = "town-3/temple",
+                keep  = 26,
+                steps = { "s", "s", "e", "e", "e", "e", "e", "e", "s", "s",
+                          "s", "w", "s", "s", "w", "w", "w", "w", "w", "w" },
+            },
         },
     },
     -- The first four legs in one, from second town's north plaza to the junction
