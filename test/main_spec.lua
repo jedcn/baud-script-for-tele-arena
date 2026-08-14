@@ -10846,11 +10846,8 @@ describe("navigate-to", function()
                 -- Flattened from the temple leg's start, the variant is the
                 -- walk exactly. 46 steps, none of them a lever.
                 it("is the walk that was given, from the temple leg's start", function()
-                    local temple = taPackage.navRoutes["town-3/temple"]
-                    local v = taPackage.navRoutes["town-3/part-2"].variants["chasm-is-clear"]
-                    local flat = {}
-                    for i = 1, v.keep do flat[i] = temple.steps[i] end
-                    for _, s in ipairs(v.steps) do flat[#flat + 1] = s end
+                    local flat = taPackage.navRouteSteps(
+                        taPackage.navRoutes["town-3/temple"], "chasm-is-clear")
                     assert.are.same(WALK, flat)
                     assert.are.equal(46, #flat)
                     for _, s in ipairs(flat) do assert.are.equal("string", type(s)) end
@@ -10888,6 +10885,44 @@ describe("navigate-to", function()
                     -- 263 is the temple seam, so 264.. is the temple leg.
                     assert.are.same({ seam = "town-3/temple" }, flat[263])
                     for i = 1, 46 do assert.are.equal(WALK[i], flat[263 + i]) end
+                end)
+
+                -- The steps live on the temple leg; the chain borrows them by
+                -- naming the leg and nothing else. So a walk that dies late can
+                -- be picked up at the temple seam and finished by hand, and it
+                -- walks the same 46 steps rather than a second transcription.
+                it("is recorded on the temple leg and borrowed by the chain", function()
+                    local own = taPackage.navRoutes["town-3/temple"].variants["chasm-is-clear"]
+                    assert.are.equal(26, own.keep)
+                    assert.are.equal(20, #own.steps)
+                    local borrowed = taPackage.navRoutes["town-3/part-2"].variants["chasm-is-clear"]
+                    assert.are.equal("town-3/temple", borrowed.leg)
+                    assert.is_nil(borrowed.steps)
+                    assert.are.same(
+                        WALK, taPackage.navRouteSteps(taPackage.navRoutes["town-3/temple"],
+                                                      "chasm-is-clear"))
+                end)
+
+                it("runs as the leg on its own from the temple seam", function()
+                    helper.simulateAlias("navigate-to town-3/temple chasm-is-clear")
+                    -- A fingerprint start, so the probe is answered with the
+                    -- brief and exits rather than a room out of the map.
+                    brief("stonework chamber")
+                    helper.simulateLine("Exits: e,u.")
+                    local out = lastEchoes()
+                    assert.is_truthy(out:find("Walking to town-3/temple chasm-is-clear", 1, true))
+                    assert.is_truthy(out:find("46 steps", 1, true))
+                    assert.are.equal(1, sent("e"))
+                end)
+
+                -- A borrowing that names a leg with no such variant would
+                -- otherwise flatten to the ordinary ending in silence.
+                it("refuses a borrowing the named leg can't honour", function()
+                    local r = twoLegRoute()
+                    r.variants.alt = { leg = "t/leg-b" }
+                    local flat, err = taPackage.navRouteSteps(r, "alt")
+                    assert.is_nil(flat)
+                    assert.is_truthy(err:find("no such variant of its own", 1, true))
                 end)
 
                 it("walks it when asked for by name", function()

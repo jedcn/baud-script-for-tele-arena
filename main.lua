@@ -4958,26 +4958,13 @@ local NAV_ROUTES = {
         -- room. That walk got across by retrying, which is what the ordinary
         -- ending still does.
         --
-        -- The two endings are the same walk for 26 steps and then part, so only
-        -- the difference is recorded. `keep = 26` walks the temple leg as far
-        -- as the `w` that ends its `w w w s s w`, then finishes on these twenty
-        -- instead of its remaining 77. Step 27 is where they separate: `s`
-        -- here, `w` there. 46 steps end to end against the temple leg's 103,
-        -- and neither lever run is in them -- six `n` out and six `s` back,
-        -- eight `s` out and eight `n` back, all skipped.
-        --
-        -- The tail is the same shape as the ordinary ending's and that is worth
-        -- knowing: six `w` here where the temple leg walks seven. This one
-        -- crosses the chasm rather than being turned back at it, so a `w` that
-        -- refuses means the walls are NOT down -- the walk was run with the
-        -- wrong variant, and the ordinary ending is the one that works.
+        -- The steps live on town-3/temple, whose ending this is; naming the leg
+        -- and nothing else borrows them. That way stopping at the temple seam
+        -- and running `navigate-to town-3/temple chasm-is-clear` by hand walks
+        -- the same 46 steps as the chain does -- which is what you want when a
+        -- 309-step walk dies on floor four.
         variants = {
-            ["chasm-is-clear"] = {
-                leg   = "town-3/temple",
-                keep  = 26,
-                steps = { "s", "s", "e", "e", "e", "e", "e", "e", "s", "s",
-                          "s", "w", "s", "s", "w", "w", "w", "w", "w", "w" },
-            },
+            ["chasm-is-clear"] = { leg = "town-3/temple" },
         },
     },
     -- The first four legs in one, from second town's north plaza to the junction
@@ -5280,6 +5267,44 @@ local NAV_ROUTES = {
                   "n", "n", "n", "n", "n", "n", "n", "n", "w", "w", "w",
                   "s", "s", "w", "s", "s", "s", "s", "s", "s", "w", "s", "s",
                   "w", "w", "w", "w", "w", "w", "w", "ne", "e" },
+        -- The other way to finish, for when the chasm is passable.
+        --
+        -- The two levers above drop walls that clear the walk across it, and
+        -- like every lever and stone on the way to third town they stay
+        -- dropped -- the same permanence that makes the way home 201 steps
+        -- against the outward chain's 438. So on a later run there is nothing
+        -- to go and pull, and this takes the short way across instead of the
+        -- long way round to two levers it doesn't need.
+        --
+        -- The chasm is in the ordinary ending's closing run of seven `w`,
+        -- steps 95-101. With the walls up it refuses -- the walk of 2026-08-03
+        -- was stopped on step 96,
+        --
+        --     [nav|t] 20:56:07 +1503ms  send step 96/103 w
+        --     The wide chasm prevents your exit in that direction.
+        --
+        -- "A very wide natural chasm blocks the passage to the west," said the
+        -- room. That walk got across by retrying, which is what the ordinary
+        -- ending still does.
+        --
+        -- The two endings are the same walk for 26 steps and then part, so only
+        -- the difference is recorded. `keep = 26` walks as far as the `w` that
+        -- ends `w w w s s w`, then finishes on these twenty instead of the
+        -- remaining 77. Step 27 is where they separate: `s` here, `w` there.
+        -- 46 steps end to end against 103, and neither lever run is in them.
+        --
+        -- The tail is the same shape as the ordinary ending's, which is worth
+        -- knowing: six `w` here where the ordinary ending walks seven. This one
+        -- crosses the chasm rather than being turned back at it, so a `w` that
+        -- refuses means the walls are NOT down -- wrong variant, and the
+        -- ordinary ending is the one that works.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 26,
+                steps = { "s", "s", "e", "e", "e", "e", "e", "e", "s", "s",
+                          "s", "w", "s", "s", "w", "w", "w", "w", "w", "w" },
+            },
+        },
     },
     -- The way home: third town's town square all the way back to second town's
     -- north plaza, in one leg. Walked by pelayo on 2026-08-07 and taken from
@@ -5509,6 +5534,20 @@ function taPackage.navRouteSteps(route, variant)
         if not v then
             return nil, "there's no '" .. tostring(variant) .. "' variant of it"
         end
+        -- A leg named with no steps of its own is a borrowing: the ending is
+        -- recorded on the leg it belongs to, and the joined route just says
+        -- which leg to take it from. One transcription, reachable both ways --
+        -- `navigate-to town-3/temple chasm-is-clear` for the leg alone, and
+        -- the whole chain for the journey.
+        if v.leg and not v.steps and not v.pending then
+            local owner = NAV_ROUTES[v.leg]
+            local sub = owner and owner.variants and owner.variants[variant]
+            if not sub then
+                return nil, "its '" .. variant .. "' variant borrows from leg '"
+                    .. v.leg .. "', which has no such variant of its own"
+            end
+            v = { leg = v.leg, keep = sub.keep, steps = sub.steps, pending = sub.pending }
+        end
         if v.pending then
             return nil, "its '" .. variant .. "' variant has no steps recorded yet"
         end
@@ -5519,7 +5558,7 @@ function taPackage.navRouteSteps(route, variant)
                 .. v.leg .. "', and this route isn't built from legs"
         end
         local base = route.steps or {}
-        for i = 1, (v and math.min(v.keep, #base) or #base) do steps[i] = base[i] end
+        for i = 1, (v and math.min(v.keep or 0, #base) or #base) do steps[i] = base[i] end
         if v then
             for _, step in ipairs(v.steps) do steps[#steps + 1] = step end
         end
@@ -5539,7 +5578,7 @@ function taPackage.navRouteSteps(route, variant)
         end
         if n > 1 then steps[#steps + 1] = { seam = name } end
         local last = #leg.steps - drop
-        if v and v.leg == name then last, diverged = math.min(v.keep, #leg.steps), true end
+        if v and v.leg == name then last, diverged = math.min(v.keep or 0, #leg.steps), true end
         for i = 1, last do steps[#steps + 1] = leg.steps[i] end
         -- An ENDING, so it ends the route: the legs after this one are the way
         -- the ordinary walk finishes, and the variant is the other way. Walking
