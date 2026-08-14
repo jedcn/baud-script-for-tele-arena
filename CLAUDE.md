@@ -8,6 +8,7 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 ## Scripts
 
+- **Lua allows only 200 local variables active at once per function, and a file is a function** — so every top-level `local` in `main.lua` shares one budget. Exceeding it is a *load* failure (`too many local variables ... in main function`), which leaves a reloaded session with no aliases and no triggers at all, so it fails loudly and totally. Check headroom with `luac -p` after appending throwaway `local` lines to a copy. Prefer a field on `taPackage` (`taPackage.foo = foo`, or `function taPackage.foo()`) — a table field costs no slot. When a section gets big, move it to its own file loaded with `dofile(scriptDir .. "x.lua")`: a separate chunk gets its own 200. `ta_nav.lua` (navigation) is the worked example; its header documents the seam. Arena and mapping are the next candidates if `main.lua` gets tight again.
 - When adding a new script/mode with its own stop logic, wire its teardown into the `stop-all-scripts` alias in `main.lua`. `stop-all-scripts` is meant to halt *everything*, so factor the stop logic into a shared function (e.g. `stopTavernMode`) and call it from both the script's own `stop-*` alias and from `stop-all-scripts`. Add a case to the `stop-all-scripts` test asserting the new script is stopped too.
 
 ## Testing
