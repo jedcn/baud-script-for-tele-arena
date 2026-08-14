@@ -5,6 +5,19 @@ install:
 
 test:
     busted test/
+    bun test
+
+# Turn raw session logs into normalized JSONL events — always the first step
+# when analyzing a log (see CLAUDE.md "Session logs"). Writes to stdout, so
+# pipe it to jq. Example:
+#   just normalize logs/session-kerhak-2026-08-09T14-48-21.log | jq -r 'select(.kind=="incoming-hit")'
+normalize +files:
+    bun log.ts normalize {{files}}
+
+# Which kinds of line a set of logs contains, and how many of each. A high
+# `unknown` count means log.ts needs new patterns, not that the logs are odd.
+normalize-stats +files:
+    bun log.ts normalize {{files}} --stats
 
 # Launch baud. The label names both the session log and the character to log in
 # as: main.lua reads TA_CHARACTER and answers the BBS login and menus itself.

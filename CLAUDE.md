@@ -17,8 +17,31 @@ What is more: we have control over baud. This means that if we are bumping into 
 ## Session logs
 
 - Logs live in two places. `logs/` (in this repo) holds the current sessions; older ones are moved out to the sibling repo `../tele-arena-archived-session-logs/`. Code comments citing a log as `logs/session-...` were written when it was still current — if it isn't in `logs/` any more, look for it in the archive under the same filename.
-- Session logs contain raw terminal output with ANSI escape codes and binary bytes, so `grep` treats them as binary and may skip matches.
-- Always search them with `grep -a` (treat as text) — e.g. `grep -a -C 3 "bronze"`. Don't pre-strip escape codes before grepping; a naive strip can eat the first letter of a word that immediately follows a color code and cause you to miss real matches.
+
+### Analyzing a log: run `normalize` first
+
+**Don't hand-roll `tr`/`sed`/`grep` pipelines over a raw log.** `log.ts` turns one into typed JSONL events — one record per line, with a timestamp, a `kind`, and parsed fields — and it already handles the traps that make ad-hoc pipelines quietly wrong. Start here:
+
+```sh
+just normalize logs/session-kerhak-2026-08-09T14-48-21.log | jq -r 'select(.kind=="incoming-hit")'
+just normalize-stats logs/*.log          # what kinds are in here, and how many
+```
+
+Records carry `file`, `char`, `session`, `line`, `time`, `iso`, `timeSource`, `kind`, `text`, plus kind-specific fields (`damage`, `monster`, `player`, `room`, `command`, `origin`, …). Useful patterns:
+
+- **A team fight across characters** — concatenate several logs and sort on `iso`. That is the only way to see one player's death from another's log.
+- **`origin` on `sent` records tells a scripted command from a hand-typed one.** baud echoes typed input with a `> ` prompt; script sends have none. This is what showed that Pelayo's `a giant` was hand-typed while the script only ever sends `a flame` (`arenaTarget` uses the monster's *first* word).
+- **`status` is one record per `st` block**, not eighteen lines — so max HP, encumbrance and class are one `jq` away when you need to know why a flee threshold fired.
+- **`kind: "unknown"` means a game line no pattern matches yet.** The text is preserved. If `normalize-stats` shows a lot of them, add patterns to `RULES` in `log.ts` (mirroring main.lua's triggers, which are the authoritative vocabulary) rather than working around it.
+
+Things it handles that a naive pipeline does not, all of which have produced wrong answers before:
+
+- ANSI escapes **split across a newline** — stripping per line leaves `;37;46m` as text *and* a phantom line break mid-sentence. The strip has to run over the whole buffer.
+- Backspaces. Writing `\b` outside a character class in a JS/Perl regex means *word boundary*, and silently deletes the last letter of every word (`Sorry, you'll` → `Sorr,yolhav`).
+- The BBS **hard-wraps at 78 columns mid-sentence**, so `…glanced off Tojolias's` / `armor!` matches nothing unless the lines are rejoined.
+- Timestamps are sparse: only `[T]`/script echoes and the BBS status bar carry a clock, and it is carried forward between them (`timeSource: "carried"` says so). A logon broadcast states when the event *happened*, not when it was delivered, so it is used for the date only — adopting it as the clock rewinds everything after it.
+
+If you must grep the raw file, use `grep -a` (the logs read as binary), and don't pre-strip escape codes — a naive strip eats the first letter of a word following a color code and you miss real matches.
 
 ## Database cleanup (`tele-arena.db`)
 
