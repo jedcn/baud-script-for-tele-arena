@@ -963,6 +963,11 @@ local function trimLine(line)
     return (line or ""):match("^%s*(.-)%s*$")
 end
 
+-- Published for the navigation chunk, which lives in its own file (see the
+-- dofile of ta_nav.lua) and so cannot see main.lua's locals. A field costs no
+-- local slot, which is the other half of why the split works.
+taPackage.trimLine = trimLine
+
 local function isRoomLine(line)
     return string.match(line, "^You're in ")
         or string.match(line, "^You are in ")
@@ -2079,6 +2084,9 @@ local function nowMillis()
     if nowMs then return nowMs() end
     return os.time() * 1000
 end
+
+-- Published for ta_nav.lua, as trimLine above.
+taPackage.nowMillis = nowMillis
 
 -- =========================================================================
 -- Status bar
@@ -5648,7 +5656,7 @@ local NAV_PROBE_TIMEOUT_MS = 5000
 
 local function navEcho(msg) echo("[nav] " .. msg) end
 
-local navNowMs = nowMillis
+local navNowMs = taPackage.nowMillis
 
 -- Timing trace for the paced walk, off unless `navigate-to <dest> debug` was
 -- used. Every line carries the wall clock and, more usefully, the gap since
@@ -5698,7 +5706,7 @@ local function stopNavigate()
     -- too -- otherwise "stopped" would leave the character still swinging.
     if taPackage.navSweep then
         taPackage.navSweep = nil
-        if taPackage.killAllActive then stopKill() end
+        if taPackage.killAllActive then taPackage.stopKill() end
         running = true
     end
     -- Mapping was on when we set off and we turned it off. Leave it off: we may
@@ -6499,7 +6507,7 @@ end
 createTrigger("^(.+)$", function(matches)
     local inv = taPackage.navInventory
     if not inv then return end
-    local line = trimLine(matches[2])
+    local line = taPackage.trimLine(matches[2])
     if inv.text == nil then
         -- Everything before the listing (our own echoed `i`, a passing shout)
         -- is not ours to read.
@@ -7093,7 +7101,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
-        { name = "navigate",              running = taPackage.navigate ~= nil,        stop = stopNavigate },
+        { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
     }
     for _, s in ipairs(scripts) do
