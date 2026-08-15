@@ -4901,6 +4901,16 @@ end, { type = "regex" })
 -- used to sit, so trigger and alias registration order is unchanged.
 dofile(scriptDir .. "ta_nav.lua")
 
+-- =========================================================================
+-- Create a character
+-- =========================================================================
+--
+-- Also its own chunk, for the same local-budget reason, and it needs nothing
+-- from main.lua besides taPackage. See ta_create.lua's header. Loaded before
+-- stop-all-scripts below, which reaches for the taPackage.stopCreateCharacter
+-- it defines.
+dofile(scriptDir .. "ta_create.lua")
+
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear
 -- state). We check each script's "running" flag first so we can report, per
@@ -4916,6 +4926,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
         { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
+        { name = "gold-farming",          running = taPackage.creating == true,       stop = taPackage.stopCreateCharacter },
     }
     for _, s in ipairs(scripts) do
         if s.running then

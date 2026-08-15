@@ -3602,6 +3602,191 @@ describe("re-roll-half-ogre-warrior-fast-mode", function()
 
 end)
 
+-- The prompt wording throughout is transcribed from a hand-driven creation run,
+-- logs/session-garbageman-2026-08-15T07-30-44.log lines 129-298, trailing
+-- spaces and all.
+describe("start-gold-farming", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function ranCommand(text)
+        for _, cmd in ipairs(helper.runCommandCalls) do
+            if cmd == text then return true end
+        end
+        return false
+    end
+
+    describe("before the alias is run", function()
+
+        -- These lines all show up outside character creation -- "<< hit return
+        -- >>" after a normal `x` out of the game, for one -- and a stray "1" or
+        -- "6" landing in the arena is a real command. Nothing may be answered
+        -- until the alias arms it.
+        it("answers nothing", function()
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("Select an option: ")
+            helper.simulateLine("Select a race: ")
+            helper.simulateLine("Select a class: ")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("answering the creation prompts", function()
+
+        before_each(function()
+            helper.simulateAlias("start-gold-farming")
+        end)
+
+        it("sends nothing until a prompt arrives", function()
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("answers the whole sequence from the log", function()
+            helper.simulateLine("Select an option: ")
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("Select a race: ")
+            helper.simulateLine("Select a complexion: ")
+            helper.simulateLine("Select an eye color: ")
+            helper.simulateLine("Select a hair color: ")
+            helper.simulateLine("Select a hair style: ")
+            helper.simulateLine("Select a hair length: ")
+            helper.simulateLine("Select a class: ")
+            assert.are.same(
+                { "2", "", "", "", "", "6", "1", "1", "1", "1", "1", "1" },
+                helper.sendCalls)
+        end)
+
+        it("answers '6' for Half-Ogre", function()
+            helper.simulateLine("Select a race: ")
+            assert.are.same({ "6" }, helper.sendCalls)
+        end)
+
+        it("answers '1' for Warrior", function()
+            helper.simulateLine("Select a class: ")
+            assert.are.same({ "1" }, helper.sendCalls)
+        end)
+
+        -- "1" on this menu is Resurect Old Character, which would end the run
+        -- with the same character we started with rather than a new one.
+        it("answers '2' at the post-death menu, not '1'", function()
+            helper.simulateLine("Select an option: ")
+            assert.are.same({ "2" }, helper.sendCalls)
+        end)
+
+        it("answers '1' for every cosmetic prompt", function()
+            helper.simulateLine("Select a complexion: ")
+            helper.simulateLine("Select an eye color: ")
+            helper.simulateLine("Select a hair color: ")
+            helper.simulateLine("Select a hair style: ")
+            helper.simulateLine("Select a hair length: ")
+            assert.are.same({ "1", "1", "1", "1", "1" }, helper.sendCalls)
+        end)
+
+        -- An empty string, not a space: baud appends "\r\n" to whatever it is
+        -- given, so "" is a bare carriage return while " " would be a space the
+        -- BBS has to reject.
+        it("pages the intro with a bare carriage return", function()
+            helper.simulateLine("<< hit return >>")
+            assert.are.same({ "" }, helper.sendCalls)
+        end)
+
+        -- One trigger answers the whole "Select a ...:" family. If a second,
+        -- more general one were ever added alongside it, both would fire on the
+        -- same line and the spare digit would sit in the BBS input buffer until
+        -- the game started, then arrive in the arena as chat.
+        it("answers each prompt exactly once", function()
+            helper.simulateLine("Select a race: ")
+            assert.are.equal(1, #helper.sendCalls)
+        end)
+
+        it("stops answering once we are in the game", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            assert.is_false(taPackage.creating)
+            local answersBefore = #helper.sendCalls
+            helper.simulateLine("<< hit return >>")
+            helper.simulateLine("Select a race: ")
+            assert.are.equal(answersBefore, #helper.sendCalls)
+        end)
+
+    end)
+
+    describe("handing off to the re-roll", function()
+
+        before_each(function()
+            helper.simulateAlias("start-gold-farming")
+        end)
+
+        -- The entry `st`/`i` replies are still in flight here, and the `st`
+        -- reply's "Vitality:" line is what the re-roll counts a roll on. Arming
+        -- the matcher now would score the new character's opening stats as roll
+        -- #1 before a matcher had been chosen.
+        it("does not start on 'Entering Tele-Arena...'", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
+            assert.is_falsy(taPackage.reRolling)
+        end)
+
+        it("starts on the inventory reply, once the sheet has landed", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.is_true(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
+            assert.is_true(taPackage.reRolling)
+        end)
+
+        it("starts it only once", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            local runsBefore = #helper.runCommandCalls
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.are.equal(runsBefore, #helper.runCommandCalls)
+        end)
+
+        -- A gold line from any other errand must not start a re-roll.
+        it("does not start on a gold line outside a creation run", function()
+            helper.simulateAlias("stop-gold-farming")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
+        end)
+
+    end)
+
+    describe("stop-gold-farming", function()
+
+        it("disarms the prompt answers", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("stop-gold-farming")
+            helper.simulateLine("Select a race: ")
+            assert.is_false(taPackage.creating)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- A stop between "Entering Tele-Arena..." and the inventory reply means
+        -- we no longer want the re-roll either.
+        it("cancels a re-roll that is armed but not yet started", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateAlias("stop-gold-farming")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
+        end)
+
+        it("is a safe no-op when nothing is running", function()
+            assert.has_no.errors(function()
+                helper.simulateAlias("stop-gold-farming")
+            end)
+        end)
+
+    end)
+
+end)
+
 describe("re-roll-half-ogre-hunter", function()
 
     before_each(function()
@@ -9324,6 +9509,15 @@ describe("ta.follow", function()
             helper.simulateAlias("stop-all-scripts")
             assert.is_nil(taPackage.trainWatch)
             assert.is_true(echoed("[all] Stopped train-and-exit."))
+        end)
+
+        it("stops character creation too", function()
+            taPackage.creating = true
+            taPackage.createRerollPending = true
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_false(taPackage.creating)
+            assert.is_nil(taPackage.createRerollPending)
+            assert.is_true(echoed("[all] Stopped gold-farming."))
         end)
 
     end)
