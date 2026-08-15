@@ -24,6 +24,12 @@ normalize-stats +files:
 # TA_PASSWORD comes from your own environment (export it in ~/.zshrc or pass it
 # inline: `TA_PASSWORD=... just run kerhak`) so it never lands in this repo.
 # Without either variable baud still starts; you just log in by hand.
+#
+# TA_INIT_CMD, also inherited from your environment, is what to run once the
+# character is in the game and its sheet has come back:
+#   TA_INIT_CMD="rg 2" just run kerhak
+# It goes through baud's runCommand, so aliases work, and `&&` chains the way
+# typed input does: TA_INIT_CMD="drink hys && rg 2".
 run label:
     mkdir -p ./logs
     TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log
