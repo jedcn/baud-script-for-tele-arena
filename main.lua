@@ -516,6 +516,15 @@ reRollBuilds.halfOgreWarrior = function(s)
     return accepted, reRollStatSummary(s)
 end
 
+-- Half-Ogre Warrior, fast mode: same build, one point looser on the two
+-- physicals — Phy >= 28 AND Sta >= 28 AND Agi >= 15. Phy/Sta max at 29/30, so
+-- dropping both floors to 28 hits far more often; use it when a playable
+-- character sooner is worth more than a maxed one.
+reRollBuilds.halfOgreWarriorFast = function(s)
+    local accepted = s.physique >= 28 and s.stamina >= 28 and s.agility >= 15
+    return accepted, reRollStatSummary(s)
+end
+
 -- Half-Ogre Hunter: simple hard floors — Phy >= 28 AND Sta >= 29 AND Agi >= 15,
 -- other stats ignored. Max stats are Phy=29 Sta=30 Agi=17, so this accepts up to
 -- one point below max on the two physicals (mirroring the Warrior build) and keeps
@@ -2256,6 +2265,13 @@ end, { type = "regex" })
 
 createAlias("^re-roll-half-ogre-warrior$", function()
     taPackage.reRollMatcher = reRollBuilds.halfOgreWarrior
+    taPackage.reRolling = true
+    reRollResetStats()
+    send("status")
+end, { type = "regex" })
+
+createAlias("^re-roll-half-ogre-warrior-fast-mode$", function()
+    taPackage.reRollMatcher = reRollBuilds.halfOgreWarriorFast
     taPackage.reRolling = true
     reRollResetStats()
     send("status")

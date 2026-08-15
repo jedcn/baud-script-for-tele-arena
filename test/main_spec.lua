@@ -3524,6 +3524,84 @@ describe("re-roll-half-ogre-warrior", function()
 
 end)
 
+describe("re-roll-half-ogre-warrior-fast-mode", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function lastEcho()
+        return helper.echoCalls[#helper.echoCalls]
+    end
+
+    describe("alias", function()
+
+        it("sets reRolling to true", function()
+            helper.simulateAlias("re-roll-half-ogre-warrior-fast-mode")
+            assert.is_true(taPackage.reRolling)
+        end)
+
+        it("sends 'status'", function()
+            helper.simulateAlias("re-roll-half-ogre-warrior-fast-mode")
+            assert.are.equal("status", helper.sendCalls[1])
+        end)
+
+    end)
+
+    describe("matching", function()
+
+        before_each(function()
+            helper.simulateAlias("re-roll-half-ogre-warrior-fast-mode")
+        end)
+
+        it("accepts a roll with Phy >= 28, Sta >= 28 and Agi >= 15", function()
+            helper.simulateLine("Physique:     28")
+            helper.simulateLine("Stamina:      28")
+            helper.simulateLine("Agility:      15")
+            helper.simulateLine("Vitality:     28 / 28")
+            assert.is_truthy(string.find(lastEcho(), "Done after"))
+        end)
+
+        it("ignores Int, Kno and Cha", function()
+            helper.simulateLine("Intellect:    1")
+            helper.simulateLine("Knowledge:    1")
+            helper.simulateLine("Charisma:     1")
+            helper.simulateLine("Physique:     28")
+            helper.simulateLine("Stamina:      28")
+            helper.simulateLine("Agility:      15")
+            helper.simulateLine("Vitality:     28 / 28")
+            assert.is_truthy(string.find(lastEcho(), "Done after"))
+        end)
+
+        it("re-rolls when Physique is below 28", function()
+            helper.simulateLine("Physique:     27")
+            helper.simulateLine("Stamina:      30")
+            helper.simulateLine("Agility:      17")
+            helper.simulateLine("Vitality:     30 / 30")
+            assert.is_truthy(string.find(lastEcho(), "re%-rolling"))
+        end)
+
+        it("re-rolls when Stamina is below 28", function()
+            helper.simulateLine("Physique:     29")
+            helper.simulateLine("Stamina:      27")
+            helper.simulateLine("Agility:      17")
+            helper.simulateLine("Vitality:     27 / 27")
+            assert.is_truthy(string.find(lastEcho(), "re%-rolling"))
+        end)
+
+        it("re-rolls when Agility is below 15", function()
+            helper.simulateLine("Physique:     29")
+            helper.simulateLine("Stamina:      30")
+            helper.simulateLine("Agility:      14")
+            helper.simulateLine("Vitality:     30 / 30")
+            assert.is_truthy(string.find(lastEcho(), "re%-rolling"))
+        end)
+
+    end)
+
+end)
+
 describe("re-roll-half-ogre-hunter", function()
 
     before_each(function()
