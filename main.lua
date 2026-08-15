@@ -554,7 +554,9 @@ local function healingBadge(text) badge(HEAL_FG, text) end
 
 -- On entering the arena, pull our character sheet (st) and inventory (i) so the
 -- script's tracked state is populated right away instead of waiting for the
--- first manual status check.
+-- first manual status check. TA_INIT_CMD rides on the tail of this: the `i`
+-- reply's gold line is what tells runLoginInitCmd the sheet has landed, so
+-- dropping the `i` here would strand it.
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
     send("st")
     send("i")
@@ -702,6 +704,10 @@ end, { type = "regex" })
 
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     setGold(matches[2])
+    -- The last reply of the `st`/`i` pair the entry trigger fires, so this is
+    -- the moment the character sheet is fully parsed and an init command can
+    -- safely run. It is a no-op on every other inventory check.
+    runLoginInitCmd()
 end, { type = "regex" })
 
 -- Buying passage across the great lake charges us, but the ship message doesn't
@@ -5285,6 +5291,10 @@ end, { type = "regex" })
 --     Make your selection (...):         ->  5   (Tele-Arena)
 --     Entering Tele-Arena...             ->  we are in, stop answering
 --
+-- TA_INIT_CMD, if set, is what to run once we are in ("rg 2", say). It goes
+-- through baud's runCommand, not send, so an alias actually executes; and it
+-- waits for the entry character sheet to come back (see runLoginInitCmd).
+--
 -- Every answer is sent at most once per login, because a prompt appearing
 -- twice does not mean the BBS is waiting twice. "N" means *nonstop*: it tells
 -- the BBS to stop pausing, so the second (N)onstop prompt -- the one after the
@@ -5318,6 +5328,34 @@ taPackage.login.sent = taPackage.login.sent or {}
 if getenv then
     taPackage.login.character = getenv("TA_CHARACTER")
     taPackage.login.password = getenv("TA_PASSWORD")
+    -- Optional: what to do once we are in the game. Usually an alias
+    -- (TA_INIT_CMD="rg 2"), which is why it is run through runCommand rather
+    -- than sent. See runLoginInitCmd below for when it fires.
+    taPackage.login.initCmd = getenv("TA_INIT_CMD")
+end
+
+-- Run TA_INIT_CMD, once, now that the entry `st`/`i` replies have been parsed.
+--
+-- Timing is the whole reason this is a separate step rather than two more lines
+-- in the "Entering Tele-Arena..." handler: that handler fires `st` and `i`, and
+-- their replies are still in flight when it returns. Anything depending on the
+-- character sheet would be refused -- "rg 2" checks getClass() and bails with
+-- "Class unknown - run 'st' first". The inventory's gold line is the last reply
+-- of that pair, so by the time it lands the sheet is fully parsed.
+function runLoginInitCmd()
+    if not taPackage.login.initPending then return end
+    taPackage.login.initPending = nil
+    local cmd = taPackage.login.initCmd
+    cecho("cyan", "[login] running TA_INIT_CMD: " .. cmd)
+    if runCommand then
+        runCommand(cmd)
+    else
+        -- Older baud (the VPS copy, say) has no runCommand, and send() cannot
+        -- reach an alias -- it would put the literal text on the wire. A plain
+        -- game command still works; say so rather than failing silently.
+        cecho("yellow", "[login] this baud has no runCommand - sending as a raw command")
+        send(cmd)
+    end
 end
 
 -- Answer `step` with `text`, unless we already answered it during this login.
@@ -5334,6 +5372,10 @@ createTrigger("^Username:\\s*$", function()
     -- happened before it, so this is where a login starts over.
     taPackage.login.pending = true
     taPackage.login.sent = {}
+    -- An init command armed by a previous login but never run (we dropped the
+    -- connection before the sheet came back) belongs to that login, not this
+    -- one. This login arms its own when it gets in.
+    taPackage.login.initPending = nil
     if not taPackage.login.character then return end
     cecho("cyan", "[login] logging in as " .. taPackage.login.character)
     loginAnswer("username", taPackage.login.character)
@@ -5358,6 +5400,9 @@ end, { type = "regex" })
 
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
     taPackage.login.pending = false
+    -- Armed here, fired later by runLoginInitCmd. Not gated on TA_CHARACTER: an
+    -- init command is just as useful when you logged in by hand.
+    if taPackage.login.initCmd then taPackage.login.initPending = true end
 end, { type = "regex" })
 
 createOutboundTrigger("^(.+)$", function(matches)

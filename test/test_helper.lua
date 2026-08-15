@@ -9,6 +9,7 @@ M.triggers = {}
 M.aliases = {}
 M.outboundTriggers = {}
 M.sendCalls = {}
+M.runCommandCalls = {}
 M.echoCalls = {}
 M.cechoBgCalls = {}
 M.httpPostCalls = {}
@@ -180,6 +181,27 @@ function send(text)
     table.insert(M.sendCalls, text)
 end
 
+-- baud's runCommand: the line takes the path typed input takes, so an alias
+-- runs rather than being sent as text. Unlike M.simulateAlias, which fires
+-- every alias whose pattern matches, this stops at the first match and falls
+-- through to send() when nothing matches -- that is what
+-- AliasManager.processInput does.
+local function mockRunCommand(text)
+    table.insert(M.runCommandCalls, text)
+    for _, alias in ipairs(M.aliases) do
+        local luaPattern = regexToLuaPattern(alias.pattern)
+        local matches = {string.match(text, luaPattern)}
+        if #matches > 0 or string.match(text, luaPattern) then
+            if #matches == 0 then matches = {} end
+            table.insert(matches, 1, text)
+            alias.callback(matches)
+            return
+        end
+    end
+    send(text)
+end
+runCommand = mockRunCommand
+
 function echo(text)
     table.insert(M.echoCalls, text)
 end
@@ -263,6 +285,7 @@ function M.resetAll()
     for k in pairs(M.aliases) do M.aliases[k] = nil end
     for k in pairs(M.outboundTriggers) do M.outboundTriggers[k] = nil end
     for k in pairs(M.sendCalls) do M.sendCalls[k] = nil end
+    for k in pairs(M.runCommandCalls) do M.runCommandCalls[k] = nil end
     for k in pairs(M.echoCalls) do M.echoCalls[k] = nil end
     for k in pairs(M.cechoBgCalls) do M.cechoBgCalls[k] = nil end
     for k in pairs(M.httpPostCalls) do M.httpPostCalls[k] = nil end
@@ -276,6 +299,9 @@ function M.resetAll()
     -- the test explains. Restoring it here scopes those stubs to their own block
     -- (they install after resetAll, so they still win where they are used).
     createTimer = recordingCreateTimer
+    -- Same reasoning for runCommand: a test that clears it to stand in for an
+    -- older baud must not leave every later test running without it.
+    runCommand = mockRunCommand
     M.mockDbOneRow = nil
     M.mockDbRows = {}
     M.mockExecuteReturn = nil

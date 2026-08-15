@@ -13087,6 +13087,95 @@ describe("Auto-login", function()
             "[login] TA_PASSWORD is not set - type the password yourself"))
     end)
 
+    -- TA_INIT_CMD: what to run once we are actually in the game. It goes
+    -- through runCommand rather than send because it is usually an alias, and
+    -- it waits for the entry st/i replies because the aliases worth running
+    -- need the character sheet.
+    local function enterTheGame()
+        helper.simulateLine("Username: ")
+        helper.simulateLine("Entering Tele-Arena...")
+    end
+
+    -- The tail of the entry `i`, which is what says the sheet has landed.
+    local function inventoryReply()
+        helper.simulateLine("You are carrying 100 gold crowns, a glowstone.")
+    end
+
+    it("runs TA_INIT_CMD once the entry character sheet has landed", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "rg 2" })
+        enterTheGame()
+        inventoryReply()
+        assert.are.same({ "rg 2" }, helper.runCommandCalls)
+    end)
+
+    -- Firing it in the "Entering Tele-Arena..." handler would beat the st reply
+    -- back, and "rg" refuses to start without a known class.
+    it("does not run TA_INIT_CMD before the sheet has landed", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "rg 2" })
+        enterTheGame()
+        assert.are.same({}, helper.runCommandCalls)
+    end)
+
+    it("runs TA_INIT_CMD only once, not on every later inventory check", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "rg 2" })
+        enterTheGame()
+        inventoryReply()
+        inventoryReply()
+        assert.are.same({ "rg 2" }, helper.runCommandCalls)
+    end)
+
+    it("runs nothing when TA_INIT_CMD is unset", function()
+        loadWith({ TA_CHARACTER = "kerhak" })
+        enterTheGame()
+        inventoryReply()
+        assert.are.same({}, helper.runCommandCalls)
+    end)
+
+    -- An init command belongs to the login that armed it. A connection dropped
+    -- before the sheet came back must not run it against the next login.
+    it("re-arms TA_INIT_CMD on a reconnect rather than carrying it over", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "rg 2" })
+        enterTheGame()
+
+        helper.simulateLine("Username: ")
+        inventoryReply()
+        assert.are.same({}, helper.runCommandCalls)
+
+        helper.simulateLine("Entering Tele-Arena...")
+        inventoryReply()
+        assert.are.same({ "rg 2" }, helper.runCommandCalls)
+    end)
+
+    -- The point of runCommand: "rg 2" is an alias, and send() would put the
+    -- literal text on the wire instead of starting an arena session.
+    it("really executes the alias, arena session and all", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "rg 2" })
+        enterTheGame()
+        helper.simulateLine("Class:        Warrior")
+        inventoryReply()
+
+        assert.are.equal("2", taPackage.arenaProfile)
+        assert.are.equal("ringing", taPackage.arenaState)
+    end)
+
+    -- Older baud (the VPS copy) has no runCommand. A plain game command still
+    -- works that way; an alias does not, so it says so.
+    it("falls back to send, loudly, when baud has no runCommand", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "look" })
+        -- _G, not a bare assignment: main.lua is dofile'd into the real global
+        -- table, so a plain `runCommand = nil` here would land in busted's
+        -- insulated copy and the script would never see it. resetAll puts the
+        -- mock back for the next test.
+        _G.runCommand = nil
+        enterTheGame()
+        clearSends()
+        inventoryReply()
+
+        assert.are.same({ "look" }, sends())
+        assert.is_true(tableContains(helper.echoCalls,
+            "[login] this baud has no runCommand - sending as a raw command"))
+    end)
+
     -- baud runs outbound triggers on script sends too, so the auto-sent
     -- username feeds the same name capture a typed one does.
     it("learns the character name from the username it sent", function()
