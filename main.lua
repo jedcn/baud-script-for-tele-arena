@@ -1163,9 +1163,21 @@ local function handleRoomEntry(matches)
         taPackage.lastKilledMonster = nil
     end
 
-    -- Mapping mode gates the whole room graph: when off, we don't discover,
-    -- visit, link, or track position at all.
-    if not taPackage.mapping then return end
+    -- Mapping mode gates the whole room *graph*: when off, we don't discover,
+    -- visit, link, or track position at all. The room *name* is not part of the
+    -- graph, so it's tracked either way -- plain bookkeeping that non-mapping
+    -- features read: hang-around-in-tavern's "are we standing in a bar?" check,
+    -- and the monster-presence keys above. Gating the name too left currentRoom
+    -- nil for the whole of any ordinary (non-mapping) session.
+    -- It's set here rather than hoisted above this gate because the mapping path
+    -- below calls resolveColdStart, which recognizes "we're still in the room we
+    -- thought we were" by comparing the new name against the *previous*
+    -- currentRoom -- so that value has to survive until then.
+    if not taPackage.mapping then
+        taPackage.prevRoom = taPackage.currentRoom
+        taPackage.currentRoom = name
+        return
+    end
 
     -- The coordinate we expect to arrive at: the room we left plus the move's
     -- grid delta. nil when we have no prior coordinate to walk from (a cold
@@ -4202,7 +4214,11 @@ local function stopTavernMode()
 end
 
 createAlias("^hang-around-in-tavern$", function()
-    send("look")
+    -- Judge the room from the name the last arrival brief left behind. Don't
+    -- send a `look` first: send() is fire-and-forget, so its reply lands long
+    -- after this function has returned, and a look's opening line is
+    -- deliberately not treated as an arrival anyway (see
+    -- handleRoomEntryUnlessLooking) -- it could never set currentRoom.
     local room = taPackage.currentRoom
     if not isTavernRoom(room) then
         echo("[tavern] Not in a tavern/bar (room: " .. (room or "unknown")

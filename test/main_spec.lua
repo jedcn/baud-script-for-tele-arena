@@ -10489,16 +10489,36 @@ describe("hang-around-in-tavern", function()
             assert.is_true(taPackage.tavernMode)
         end)
 
-        it("looks around and primes status on start", function()
+        it("primes status on start", function()
             taPackage.currentRoom = "village tavern"
             helper.simulateAlias("hang-around-in-tavern")
-            local looked, statused = false, false
+            local statused = false
             for _, cmd in ipairs(helper.sendCalls) do
-                if cmd == "look" then looked = true end
                 if cmd == "st" then statused = true end
             end
-            assert.is_true(looked)
             assert.is_true(statused)
+        end)
+
+        -- A `look` here would be pure noise: send() is asynchronous, so its
+        -- reply can't reach the room check that already ran, and a look's
+        -- opening line is deliberately never treated as an arrival.
+        it("does not send a look on start", function()
+            taPackage.currentRoom = "village tavern"
+            helper.simulateAlias("hang-around-in-tavern")
+            for _, cmd in ipairs(helper.sendCalls) do
+                assert.are_not.equal("look", cmd)
+            end
+        end)
+
+        -- The room name has to be tracked outside mapping mode, or an ordinary
+        -- session never knows where it is and the alias always refuses.
+        it("starts after simply walking in, with mapping off", function()
+            taPackage.mapping = false
+            taPackage.currentRoom = nil
+            helper.simulateLine("You're in the tavern.")
+            assert.are.equal("tavern", taPackage.currentRoom)
+            helper.simulateAlias("hang-around-in-tavern")
+            assert.is_true(taPackage.tavernMode)
         end)
 
     end)
