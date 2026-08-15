@@ -210,7 +210,14 @@ function taPackage.createCharacterRunning()
         or taPackage.createWalk ~= nil
 end
 
-createAlias("^start-gold-farming$", function()
+-- Registered under both word orders, like the continue- pair below. "gold
+-- farming" and "farming gold" are equally natural English and the wrong one
+-- silently doing nothing is a genuinely expensive failure here: it looks
+-- exactly like a script that loaded but did not arm, which is a confusing thing
+-- to debug from a log (and TA_LOGIN_CMD's confirmation is a cecho, so it never
+-- reaches the log either).
+for _, startAlias in ipairs({ "^start-gold-farming$", "^start-farming-gold$" }) do
+createAlias(startAlias, function()
     -- Refuse to re-arm in the one window where doing so is provably wrong: a
     -- character has just been created and its re-roll is one line away from
     -- starting. TA_INIT_CMD="start-gold-farming" lands exactly here -- it fires
@@ -232,14 +239,19 @@ createAlias("^start-gold-farming$", function()
     -- one somebody ran by hand -- only the former should end in a walk to the
     -- tavern and a pile of gear on the floor.
     taPackage.goldFarming = true
-    cecho("cyan", "[create] Answering the character-creation prompts — Half-Ogre Warrior,"
+    -- echo, not cecho: cecho never reaches the session log, and "did this arm?"
+    -- is the first question asked of every run that goes wrong.
+    echo("[create] Answering the character-creation prompts — Half-Ogre Warrior,"
         .. " then re-roll-half-ogre-warrior-fast-mode. Type stop-gold-farming to abort.")
 end, { type = "regex" })
+end
 
-createAlias("^stop-gold-farming$", function()
+for _, stopAlias in ipairs({ "^stop-gold-farming$", "^stop-farming-gold$" }) do
+createAlias(stopAlias, function()
     stopCreateCharacter()
     echo("[create] Stopped.")
 end, { type = "regex" })
+end
 
 -- Pick a run back up after a disconnect, from the arena.
 --

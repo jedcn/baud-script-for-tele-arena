@@ -417,6 +417,34 @@ describe("Tele-Arena triggers", function()
     -- Entering Tele-Arena trigger
     -- =========================================================================
 
+    -- Thirty seconds of silence is indistinguishable from a hang, and the only
+    -- line printed nearby is a stale "melee-retry", which reads like "still
+    -- fighting". That pair cost a real training trip in
+    -- logs/session-garbageman-2026-08-15T19-21-55.log.
+    describe("refused move announces its retry", function()
+
+        it("says what it will retry and when", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("refused (still resting)", 1, true)
+                    and text:find("\"w\"", 1, true) then
+                    said = true
+                end
+            end
+            assert.is_true(said)
+        end)
+
+        it("is silent outside an arena run", function()
+            local before = #helper.echoCalls
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.are.equal(before, #helper.echoCalls)
+        end)
+
+    end)
+
     describe("Entering Tele-Arena trigger", function()
 
         it("runs st then i on entering", function()
@@ -4331,6 +4359,19 @@ describe("start-gold-farming", function()
             taPackage.currentRoom = "arena"
             helper.simulateAlias("continue-gold-farming-from-arena")
             assert.is_true(ranCommand("rg 1"))
+        end)
+
+        -- start-/stop- take both word orders for the same reason: the wrong one
+        -- silently doing nothing looks exactly like a script that failed to arm.
+        it("start- and stop- take both word orders too", function()
+            helper.simulateAlias("start-farming-gold")
+            assert.is_true(taPackage.goldFarming)
+            helper.simulateAlias("stop-farming-gold")
+            assert.is_falsy(taPackage.goldFarming)
+            helper.simulateAlias("start-gold-farming")
+            assert.is_true(taPackage.goldFarming)
+            helper.simulateAlias("stop-gold-farming")
+            assert.is_falsy(taPackage.goldFarming)
         end)
 
         -- Resuming is only worth anything if the cash-out still fires at the end.

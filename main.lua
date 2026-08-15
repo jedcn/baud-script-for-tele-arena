@@ -4320,6 +4320,18 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", fun
         -- the full 30s a non-urgent errand walk can afford. Each retry that's
         -- still blocked re-emits this line, so the 2s cadence re-arms naturally.
         local delay = taPackage.arenaState == "fleeing" and 2000 or 30000
+        -- Say so out loud. Thirty seconds of nothing is indistinguishable from a
+        -- hang, and the only line printed anywhere near it is the melee retry's
+        -- "melee-retry in NNNNNms" -- a stale attack left over from the swing
+        -- that just landed, which reads exactly like "still fighting, ignoring
+        -- the walk". That pair cost a real training trip: the first step of the
+        -- walk to the hall was refused here, waited silently, and was stopped by
+        -- hand about 15s in on the entirely reasonable assumption that it had
+        -- wedged (logs/session-garbageman-2026-08-15T19-21-55.log, 1765-1786).
+        -- Not debug-gated: the point is to be visible when nobody thought to
+        -- turn debug on.
+        echo("[arena] Move \"" .. cmd .. "\" refused (still resting) — retrying in "
+            .. math.floor(delay / 1000) .. "s.")
         createTimer(delay, function()
             if taPackage.arenaState and (taPackage.arenaRetryGeneration or 0) == gen then
                 arenaSend(cmd)
