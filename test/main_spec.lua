@@ -4120,6 +4120,83 @@ describe("start-gold-farming", function()
             assert.is_false(taPackage.onArenaArrivedHome())
         end)
 
+        -- Kerhak is the whole point: the gold has to end up somewhere that
+        -- survives this character being replaced. No Kerhak, no run.
+        describe("nobody there to take the gold", function()
+
+            local MISSING = "Sorry, you don't see \"kerhak\" nearby."
+
+            local function giveIntoAnEmptyRoom()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                walkToEnd()
+                helper.simulateLine("You are carrying 799 gold crowns.")
+                helper.simulateLine(MISSING)
+            end
+
+            it("stops the run", function()
+                giveIntoAnEmptyRoom()
+                assert.is_nil(taPackage.createWalk)
+                assert.is_falsy(taPackage.goldFarming)
+                assert.is_false(taPackage.createCharacterRunning())
+            end)
+
+            -- Walking on would drop the gear and leave the takings in the pocket
+            -- of a character we are about to throw away.
+            it("does not drop the gear", function()
+                giveIntoAnEmptyRoom()
+                helper.fireTimers()
+                helper.fireTimers()
+                assert.is_false(ranCommand("drop robes"))
+                assert.is_false(ranCommand("drop warhammer"))
+            end)
+
+            it("says why, in the session log", function()
+                giveIntoAnEmptyRoom()
+                local said = false
+                for _, text in ipairs(helper.echoCalls) do
+                    if text and text:find("STOPPED", 1, true)
+                        and text:find("kerhak", 1, true) then
+                        said = true
+                    end
+                end
+                assert.is_true(said)
+            end)
+
+            -- An unattended loop that stops silently just looks like a loop that
+            -- is still running. sendNtfy goes out over httpRequest, not httpPost.
+            it("pushes a notification", function()
+                giveIntoAnEmptyRoom()
+                assert.is_true(#helper.httpRequestCalls > 0)
+            end)
+
+            -- This line is one of the commonest in the game: it is what a whiffed
+            -- attack prints when the monster is already dead. Ungated, it would
+            -- halt the loop on almost every arena fight.
+            it("ignores it outside a cash-out walk", function()
+                helper.simulateAlias("start-gold-farming")
+                taPackage.arenaState = "fighting"
+                assert.has_no.errors(function()
+                    helper.simulateLine("Sorry, you don't see \"flame\" nearby.")
+                end)
+                assert.is_true(taPackage.goldFarming)
+            end)
+
+            -- Nor during the gear-up walk, which names no targets.
+            it("ignores it during the gear-up walk", function()
+                helper.simulateAlias("start-gold-farming")
+                helper.simulateLine("Entering Tele-Arena...")
+                helper.simulateLine("You are carrying 830 gold crowns.")
+                helper.simulateLine("Physique:     29")
+                helper.simulateLine("Stamina:      30")
+                helper.simulateLine("Agility:      16")
+                helper.simulateLine("Vitality:     30 / 30")
+                helper.simulateLine("Sorry, you don't see \"flame\" nearby.")
+                assert.is_not_nil(taPackage.createWalk)
+            end)
+
+        end)
+
     end)
 
     describe("stop-gold-farming", function()

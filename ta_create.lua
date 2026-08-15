@@ -422,6 +422,39 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })
 
+-- The handover found nobody to hand to. Kerhak is the entire point of the run --
+-- the gold has to end up somewhere that survives this character being replaced --
+-- so this is a full stop, not something to walk on from. Carrying on would drop
+-- the gear and leave the takings in the pocket of a character we are about to
+-- throw away.
+--
+-- Stopping also freezes the character in the tavern still holding the gold and
+-- wearing the gear, which is the state you want to walk into: nothing has been
+-- discarded, so the handover can be finished by hand.
+--
+-- The gate on a running cash-out walk is doing real work. This line is one of
+-- the most common in the whole game -- it is what a whiffed attack prints when
+-- the monster is already dead ("Sorry, you don't see \"flame\" nearby.", 44
+-- times across the logs; "troll" 90, "stone" 106) -- so an ungated trigger would
+-- halt the loop on almost every arena fight. During a cash-out the only command
+-- that names anything is the give.
+createTrigger("^Sorry, you don't see \"(.+)\" nearby\\.$", function(matches)
+    local walk = taPackage.createWalk
+    if not (walk and walk.label == "cash-out") then return end
+    local who = matches[2]
+    -- Clears the walk as well as the loop's flags, so nothing re-arms.
+    stopCreateCharacter()
+    -- echo, not cecho: cecho renders in the terminal but is never written to the
+    -- session log (baud's App.tsx logs from echo only), and a run that stopped
+    -- for a reason has to leave that reason in the log.
+    echo("[cash-out] STOPPED — \"" .. who .. "\" is not here to take the gold."
+        .. " Still carrying it, still wearing the gear; hand it over and restart when"
+        .. " " .. who .. " is in the tavern.")
+    sendNtfy("Gold farming stopped",
+        "No " .. who .. " in the tavern to hand the takings to. The character is"
+        .. " parked there with its gold and gear intact.")
+end, { type = "regex" })
+
 -- A move that did not happen. Both lines mean the same thing for the walk -- the
 -- character is still in the room it was in -- and neither prints a room brief,
 -- so the clock-driven pump above would blithely carry on and run the rest of the
