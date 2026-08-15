@@ -3825,6 +3825,154 @@ describe("start-gold-farming", function()
 
     end)
 
+    describe("gearing up and heading for the arena", function()
+
+        -- Drive a scripted run all the way to an accepted roll. The command
+        -- record is cleared just before the accepting roll lands, so everything
+        -- in it afterwards is a walk step and not the handoff that started the
+        -- re-roll in the first place.
+        local function reachAcceptedRoll()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+            helper.simulateLine("Physique:     29")
+            helper.simulateLine("Stamina:      30")
+            helper.simulateLine("Agility:      16")
+            helper.simulateLine("Vitality:     30 / 30")
+        end
+
+        -- Run the paced walk to completion. Each pump arms the next timer, so
+        -- fireTimers advances exactly one step per call.
+        local function walkToEnd()
+            for _ = 1, 40 do
+                if not taPackage.createWalk then break end
+                helper.fireTimers(taPackage.arenaStepDelayMs)
+            end
+        end
+
+        it("runs the sequence, in order, once the roll is accepted", function()
+            reachAcceptedRoll()
+            walkToEnd()
+            assert.are.same({
+                "re-roll-stop",
+                "s", "sw",
+                "get robes", "equip robes",
+                "get warhammer", "equip warhammer",
+                "ne", "n", "e",
+                "rg 1",
+            }, helper.runCommandCalls)
+        end)
+
+        -- The user's explicit ask, and load-bearing: accepting a roll leaves
+        -- taPackage.reRolling true, so every later status block -- including the
+        -- ones rg 1 pulls -- would be fed back through the matcher.
+        it("stops the re-roll first, before it walks anywhere", function()
+            reachAcceptedRoll()
+            assert.are.equal("re-roll-stop", helper.runCommandCalls[1])
+            assert.is_false(taPackage.reRolling)
+        end)
+
+        it("paces the steps instead of sending them in one burst", function()
+            reachAcceptedRoll()
+            assert.are.equal(1, #helper.runCommandCalls)
+            helper.fireTimers(taPackage.arenaStepDelayMs)
+            assert.are.equal(2, #helper.runCommandCalls)
+        end)
+
+        it("ends the walk after the last step", function()
+            reachAcceptedRoll()
+            walkToEnd()
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+        -- A hand-run re-roll is someone watching numbers go by. Marching the
+        -- character off to ring a gong would be a nasty surprise.
+        it("does not fire for a hand-run re-roll", function()
+            helper.simulateAlias("re-roll-half-ogre-warrior-fast-mode")
+            helper.simulateLine("Physique:     29")
+            helper.simulateLine("Stamina:      30")
+            helper.simulateLine("Agility:      16")
+            helper.simulateLine("Vitality:     30 / 30")
+            assert.is_nil(taPackage.createWalk)
+            assert.is_false(ranCommand("rg 1"))
+            -- and it is still running, waiting for a hand-typed re-roll-stop
+            assert.is_true(taPackage.reRolling)
+        end)
+
+        it("does not fire on a roll that was rejected", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            helper.simulateLine("Physique:     10")
+            helper.simulateLine("Stamina:      10")
+            helper.simulateLine("Agility:      10")
+            helper.simulateLine("Vitality:     20 / 20")
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+        describe("a move the game refused", function()
+
+            -- No room brief follows either line, so a clock-driven walk would
+            -- carry on and run the rest of the list one room too far back.
+            for _, refusal in ipairs({
+                "In your haste, you trip and fall!",
+                "Sorry, you'll have to rest a while before you can move.",
+            }) do
+                it("retries the step after: " .. refusal, function()
+                    reachAcceptedRoll()
+                    helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+                    assert.are.equal("s", helper.runCommandCalls[#helper.runCommandCalls])
+                    helper.simulateLine(refusal)
+                    helper.fireTimers(2000)
+                    assert.are.equal("s", helper.runCommandCalls[#helper.runCommandCalls])
+                    -- and the walk carries on from there, not from further along
+                    helper.fireTimers(taPackage.arenaStepDelayMs)
+                    assert.are.equal("sw", helper.runCommandCalls[#helper.runCommandCalls])
+                end)
+            end
+
+            -- The retry bumps the generation; the pacing timer already in flight
+            -- must land as a no-op rather than sending the step a second time.
+            it("does not double-send when the paced timer also fires", function()
+                reachAcceptedRoll()
+                helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+                helper.simulateLine("In your haste, you trip and fall!")
+                helper.fireTimers() -- both the stale pacing timer and the retry
+                local sCount = 0
+                for _, c in ipairs(helper.runCommandCalls) do
+                    if c == "s" then sCount = sCount + 1 end
+                end
+                assert.are.equal(2, sCount) -- the original and one retry
+            end)
+
+            it("is inert when no walk is running", function()
+                assert.has_no.errors(function()
+                    helper.simulateLine("In your haste, you trip and fall!")
+                end)
+            end)
+
+        end)
+
+        it("stop-gold-farming halts a walk in progress", function()
+            reachAcceptedRoll()
+            helper.fireTimers(taPackage.arenaStepDelayMs)
+            helper.simulateAlias("stop-gold-farming")
+            assert.is_nil(taPackage.createWalk)
+            local runsBefore = #helper.runCommandCalls
+            helper.fireTimers()
+            assert.are.equal(runsBefore, #helper.runCommandCalls)
+        end)
+
+        it("stop-all-scripts halts a walk in progress", function()
+            reachAcceptedRoll()
+            helper.fireTimers(taPackage.arenaStepDelayMs)
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+    end)
+
     describe("stop-gold-farming", function()
 
         it("disarms the prompt answers", function()

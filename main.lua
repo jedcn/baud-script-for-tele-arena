@@ -633,6 +633,12 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         taPackage.reRollTimerPending = false
         echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
         sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
+        -- A scripted run (start-gold-farming) takes it from here: it stops the
+        -- re-roll itself and walks the new character to the arena. Defined in
+        -- ta_create.lua, and a no-op unless that script is the one that started
+        -- this re-roll -- a hand-run re-roll still just stops and waits for you,
+        -- which is why the message above still says to stop it yourself.
+        if taPackage.onRerollAccepted then taPackage.onRerollAccepted() end
     else
         local time = os.date("%H:%M:%S")
         echo("[re-roll] #" .. n .. " at " .. time .. " — " .. summary .. " — re-rolling...")
@@ -4926,7 +4932,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
         { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
-        { name = "gold-farming",          running = taPackage.creating == true,       stop = taPackage.stopCreateCharacter },
+        { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
     }
     for _, s in ipairs(scripts) do
         if s.running then
