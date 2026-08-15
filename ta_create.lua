@@ -113,6 +113,17 @@ local CREATE_STEPS = {
 -- walk's outbound leg, which is a useful cross-check: "w"/"ne" is exactly
 -- ARENA_NAV["1"].toBar, and "sw"/"s"/"sw" is the tavern back to the north
 -- plaza, then the creation walk's "s"/"sw" to the gate.
+-- The last two steps close the loop. Once the gear is on the floor and the gold
+-- is in Kerhak's pocket this character has nothing left worth keeping, so it
+-- gets thrown away and the whole run starts over on a fresh one.
+--
+-- The second `i` is a gate, not a formality. Everything of value has to be out
+-- of our hands BEFORE the suicide, because a suicide takes whatever is still
+-- being carried with it. Reading a hard zero back from the game is the only
+-- proof we have that the handover actually happened -- the give could have been
+-- refused, or partly landed -- and if the number is anything else we stop rather
+-- than throw the difference away. That is the same call as the missing-Kerhak
+-- stop below: never destroy something we cannot get back.
 local CASH_OUT_STEPS = {
     "w",
     "ne",
@@ -124,6 +135,8 @@ local CASH_OUT_STEPS = {
     "drop robes",
     "unequip warhammer",
     "drop warhammer",
+    { cmd = "i", await = "zero-gold" },
+    "suicide",
 }
 
 -- How long to wait for the inventory reply before giving up on the handover and
@@ -174,6 +187,7 @@ local function stopCreateCharacter()
     taPackage.createRerollPending = nil
     taPackage.createRerollArmed = nil
     taPackage.createCashOutArmed = nil
+    taPackage.createRestarting = nil
     createWalkStop()
 end
 taPackage.stopCreateCharacter = stopCreateCharacter
@@ -401,7 +415,8 @@ function taPackage.onArenaArrivedHome()
     -- We are done with the arena: stop it before walking, or its own errand
     -- dispatch and ring pump would keep issuing commands underneath us.
     if taPackage.stopArena then taPackage.stopArena() end
-    createWalkStart(CASH_OUT_STEPS, "cash-out", "Gear dropped — the round trip is done.")
+    createWalkStart(CASH_OUT_STEPS, "cash-out",
+        "Gear dropped and the suicide sent — waiting for the BBS to start the next one.")
     return true
 end
 
@@ -411,13 +426,35 @@ end
 -- fresh as the last line that happened to mention gold.
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     local walk = taPackage.createWalk
-    if not (walk and walk.awaiting == "gold") then return end
+    if not walk then return end
+    local awaiting = walk.awaiting
+    if not awaiting then return end
     walk.awaiting = nil
     local amount = tonumber(matches[2]) or 0
+
+    if awaiting == "gold" then
+        if amount > 0 then
+            runCommand("give kerhak " .. amount .. " gold")
+        else
+            cecho("yellow", "[cash-out] Carrying no gold — nothing to hand over.")
+        end
+        createWalkSchedule(CREATE_STEP_DELAY_MS)
+        return
+    end
+
+    -- The gate in front of the suicide. A suicide takes whatever is still being
+    -- carried with it, so anything other than a hard zero here means the
+    -- handover did not fully land and going on would destroy the difference.
+    -- Stop instead, leaving the character standing there still holding it.
     if amount > 0 then
-        runCommand("give kerhak " .. amount .. " gold")
-    else
-        cecho("yellow", "[cash-out] Carrying no gold — nothing to hand over.")
+        stopCreateCharacter()
+        echo("[cash-out] STOPPED — still carrying " .. amount .. " gold after the"
+            .. " handover, so not going through with the suicide. Hand it to Kerhak"
+            .. " yourself, then restart.")
+        sendNtfy("Gold farming stopped",
+            "Still carrying " .. amount .. " gold after handing over to Kerhak."
+            .. " Stopped before the suicide so nothing is lost.")
+        return
     end
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })
@@ -438,6 +475,58 @@ end, { type = "regex" })
 -- times across the logs; "troll" 90, "stone" 106) -- so an ungated trigger would
 -- halt the loop on almost every arena fight. During a cash-out the only command
 -- that names anything is the give.
+-- =========================================================================
+-- Round and round: the suicide, and starting over
+-- =========================================================================
+--
+-- The suicide worked and we are back at the BBS. From here the run repeats
+-- itself, and almost all of it is already handled: arming `creating` again puts
+-- the prompt-answering triggers at the top of this file back in charge, and they
+-- take it from the resurrect menu all the way to a new character in the game.
+--
+-- Exactly one gap sits between here and there, and it is the reason this pair of
+-- triggers exists rather than a couple more steps on the walk. The BBS prints
+-- three things back to back -- the death lines, a full-screen menu redraw, then
+-- its command prompt -- and how long that takes is the BBS's business, not ours.
+-- Blind-timing a "5" into the middle of a screen redraw is exactly the kind of
+-- buffered-keystroke bug main.lua's auto-login comment describes at length, so
+-- both halves wait to be asked instead.
+--
+-- "You awaken" rather than "you take your own life": both print, but the second
+-- one is the game confirming we are actually out and back at the BBS.
+createTrigger("^You awaken after an unknown amount of time\\.\\.\\.$", function()
+    if not taPackage.goldFarming then return end
+    createWalkStop()
+    -- Puts the creation triggers back in charge for the next character.
+    taPackage.creating = true
+    -- ...and this arms the one answer they do not cover, below.
+    taPackage.createRestarting = true
+    echo("[create] Character retired — starting the next one.")
+end, { type = "regex" })
+
+-- The BBS main-menu prompt, which is where "5" re-enters Tele-Arena. Matched
+-- loosely and not anchored, because after a death the menu is redrawn as a
+-- full-screen box and the prompt arrives as its status bar: triggers see the
+-- ANSI-stripped text, which is
+--
+--     ■ 07:30:00 ■ 15-AUG-26 ■ Command ■ :
+--
+-- (checked against the real bytes in the archived
+-- session-garbageman-2026-08-15T07-30-44.log, line 151). Keying off "Command"
+-- and the trailing colon skips the clock and date, which change every time, and
+-- the box-drawing characters, which are the part most likely to differ between
+-- terminal profiles.
+--
+-- Gated on createRestarting, which the trigger above sets and this one clears,
+-- so it answers once per death and is inert the rest of the time -- including
+-- during the ordinary login, where main.lua's own menu answer already handles
+-- this and must not be doubled up on.
+createTrigger("Command .+ :\\s*$", function()
+    if not taPackage.createRestarting then return end
+    taPackage.createRestarting = nil
+    send("5")
+end, { type = "regex" })
+
 createTrigger("^Sorry, you don't see \"(.+)\" nearby\\.$", function(matches)
     local walk = taPackage.createWalk
     if not (walk and walk.label == "cash-out") then return end

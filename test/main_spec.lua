@@ -4061,13 +4061,49 @@ describe("start-gold-farming", function()
             walkToEnd()
             helper.simulateLine("You are carrying 1372 gold crowns.")
             walkToEnd()
+            -- parked on the second `i`, the gate in front of the suicide
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            walkToEnd()
             assert.are.same({
                 "w", "ne", "i", "give kerhak 1372 gold",
                 "sw", "s", "sw",
                 "unequip robes", "drop robes",
                 "unequip warhammer", "drop warhammer",
+                "i", "suicide",
             }, helper.runCommandCalls)
-            assert.is_nil(taPackage.createWalk)
+        end)
+
+        -- A suicide takes whatever is still being carried with it, so a hard
+        -- zero read back from the game is the only proof the handover landed.
+        describe("the gate in front of the suicide", function()
+
+            local function reachTheGate()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                walkToEnd()
+                helper.simulateLine("You are carrying 1372 gold crowns.")
+                walkToEnd()
+                assert.are.equal("zero-gold", taPackage.createWalk.awaiting)
+            end
+
+            it("goes through with the suicide on zero", function()
+                reachTheGate()
+                helper.simulateLine("You are carrying 0 gold crowns.")
+                walkToEnd()
+                assert.is_true(ranCommand("suicide"))
+            end)
+
+            it("stops instead of destroying gold still in hand", function()
+                reachTheGate()
+                helper.simulateLine("You are carrying 617 gold crowns.")
+                helper.fireTimers()
+                helper.fireTimers()
+                assert.is_false(ranCommand("suicide"))
+                assert.is_nil(taPackage.createWalk)
+                assert.is_false(taPackage.createCharacterRunning())
+                assert.is_true(#helper.httpRequestCalls > 0)
+            end)
+
         end)
 
         it("skips the handover when carrying nothing, and walks on", function()
@@ -4195,6 +4231,79 @@ describe("start-gold-farming", function()
                 assert.is_not_nil(taPackage.createWalk)
             end)
 
+        end)
+
+    end)
+
+    -- Round trip complete: throw the character away and start over. Almost all
+    -- of the restart is the creation triggers at the top of the file doing their
+    -- original job again; only the BBS menu "5" needed anything new.
+    describe("starting the next character", function()
+
+        local AWAKEN = "You awaken after an unknown amount of time..."
+        -- After a death the BBS redraws its menu as a full-screen box, so the
+        -- prompt arrives as that box's status bar rather than as the "Make your
+        -- selection" line an ordinary login sees. These are the real bytes with
+        -- ANSI stripped (what triggers are handed), from the archived
+        -- session-garbageman-2026-08-15T07-30-44.log line 151.
+        local COMMAND_PROMPT = "■ 07:30:00 ■ 15-AUG-26 ■ Command ■ : "
+
+        it("re-arms the creation prompts once the death is confirmed", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(AWAKEN)
+            assert.is_true(taPackage.creating)
+        end)
+
+        it("answers the BBS command prompt with 5", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(AWAKEN)
+            helper.simulateLine(COMMAND_PROMPT)
+            assert.are.equal("5", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("then answers the resurrect menu, closing the loop", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(AWAKEN)
+            helper.simulateLine(COMMAND_PROMPT)
+            helper.simulateLine("Select an option: ")
+            helper.simulateLine("Select a race: ")
+            helper.simulateLine("Select a class: ")
+            assert.are.same({ "5", "2", "6", "1" }, helper.sendCalls)
+        end)
+
+        -- Only once per death. The BBS redraws that prompt whenever it likes,
+        -- and a spare "5" would sit in its input buffer until the game started
+        -- and then arrive in the arena as chat.
+        it("answers the command prompt only once", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(AWAKEN)
+            helper.simulateLine(COMMAND_PROMPT)
+            local sent = #helper.sendCalls
+            helper.simulateLine(COMMAND_PROMPT)
+            assert.are.equal(sent, #helper.sendCalls)
+        end)
+
+        -- main.lua's own login answer covers the menu during an ordinary login;
+        -- this must not double up on it.
+        it("is inert during an ordinary login", function()
+            helper.simulateLine(COMMAND_PROMPT)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not restart a death outside a gold-farming run", function()
+            helper.simulateLine(AWAKEN)
+            assert.is_falsy(taPackage.creating)
+            helper.simulateLine(COMMAND_PROMPT)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("stop-gold-farming ends the loop instead of restarting", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("stop-gold-farming")
+            helper.simulateLine(AWAKEN)
+            assert.is_false(taPackage.creating)
+            helper.simulateLine(COMMAND_PROMPT)
+            assert.are.equal(0, #helper.sendCalls)
         end)
 
     end)
