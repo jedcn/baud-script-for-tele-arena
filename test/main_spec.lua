@@ -3707,6 +3707,7 @@ describe("start-gold-farming", function()
         end)
 
         it("stops answering once we are in the game", function()
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             assert.is_false(taPackage.creating)
             local answersBefore = #helper.sendCalls
@@ -3728,12 +3729,14 @@ describe("start-gold-farming", function()
         -- the matcher now would score the new character's opening stats as roll
         -- #1 before a matcher had been chosen.
         it("does not start on 'Entering Tele-Arena...'", function()
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
             assert.is_falsy(taPackage.reRolling)
         end)
 
         it("starts on the inventory reply, once the sheet has landed", function()
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateLine("You are carrying 830 gold crowns.")
             assert.is_true(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
@@ -3741,6 +3744,7 @@ describe("start-gold-farming", function()
         end)
 
         it("starts it only once", function()
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateLine("You are carrying 830 gold crowns.")
             local runsBefore = #helper.runCommandCalls
@@ -3817,6 +3821,7 @@ describe("start-gold-farming", function()
                        TA_INIT_CMD = "start-gold-farming" })
             helper.simulateLine("Username:")
             helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateLine("You are carrying 830 gold crowns.")
             assert.is_false(taPackage.creating)
@@ -3833,6 +3838,7 @@ describe("start-gold-farming", function()
         -- re-roll in the first place.
         local function reachAcceptedRoll()
             helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateLine("You are carrying 830 gold crowns.")
             for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
@@ -3902,6 +3908,7 @@ describe("start-gold-farming", function()
 
         it("does not fire on a roll that was rejected", function()
             helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateLine("You are carrying 830 gold crowns.")
             helper.simulateLine("Physique:     10")
@@ -4221,6 +4228,7 @@ describe("start-gold-farming", function()
             -- Nor during the gear-up walk, which names no targets.
             it("ignores it during the gear-up walk", function()
                 helper.simulateAlias("start-gold-farming")
+                helper.simulateLine("Select a class: ")
                 helper.simulateLine("Entering Tele-Arena...")
                 helper.simulateLine("You are carrying 830 gold crowns.")
                 helper.simulateLine("Physique:     29")
@@ -4308,6 +4316,98 @@ describe("start-gold-farming", function()
 
     end)
 
+    -- The arena is where a run spends nearly all its time, so it is where a
+    -- dropped connection lands, and the expensive phase to lose.
+    describe("continue-farming-gold-from-arena", function()
+
+        it("arms the loop and starts the arena", function()
+            taPackage.currentRoom = "arena"
+            helper.simulateAlias("continue-farming-gold-from-arena")
+            assert.is_true(taPackage.goldFarming)
+            assert.is_true(ranCommand("rg 1"))
+        end)
+
+        it("is reachable under the other word order too", function()
+            taPackage.currentRoom = "arena"
+            helper.simulateAlias("continue-gold-farming-from-arena")
+            assert.is_true(ranCommand("rg 1"))
+        end)
+
+        -- Resuming is only worth anything if the cash-out still fires at the end.
+        it("still cashes out when the level lands", function()
+            taPackage.currentRoom = "arena"
+            helper.simulateAlias("continue-farming-gold-from-arena")
+            taPackage.arenaState = "training"
+            setLevel(1)
+            setGold(1372)
+            helper.simulateLine(
+                "After a rigorous mental and physical training session, you managed to blend")
+            assert.is_true(taPackage.createCashOutArmed)
+        end)
+
+        it("refuses when standing somewhere else", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("continue-farming-gold-from-arena")
+            assert.is_false(ranCommand("rg 1"))
+            assert.is_falsy(taPackage.goldFarming)
+        end)
+
+        -- No brief seen since connecting is not an error, just unverifiable.
+        it("proceeds when the room is not known yet", function()
+            helper.simulateAlias("continue-farming-gold-from-arena")
+            assert.is_true(ranCommand("rg 1"))
+        end)
+
+        -- A reload keeps taPackage, so a half-finished walk or an armed cash-out
+        -- from before the drop must not survive into the resumed run.
+        it("clears stale state from the interrupted run", function()
+            taPackage.currentRoom = "arena"
+            taPackage.createWalk = { steps = { "x" }, index = 1, label = "cash-out" }
+            taPackage.createCashOutArmed = true
+            taPackage.createRestarting = true
+            helper.simulateAlias("continue-farming-gold-from-arena")
+            assert.is_nil(taPackage.createWalk)
+            assert.is_nil(taPackage.createCashOutArmed)
+            assert.is_nil(taPackage.createRestarting)
+            assert.is_true(taPackage.goldFarming)
+        end)
+
+    end)
+
+    -- Entering the game and creating a character are not the same event. A live
+    -- character goes from the main menu straight to "Entering Tele-Arena...",
+    -- with no resurrect menu and none of the creation questions -- which is
+    -- exactly what a reconnect looks like.
+    describe("reconnecting with a live character", function()
+
+        it("does not re-roll a character it did not create", function()
+            helper.resetAll()
+            helper.env = { TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
+                           TA_LOGIN_CMD = "start-gold-farming" }
+            dofile("main.lua")
+            helper.simulateLine("Username:")
+            -- straight in: no "Select an option:", no race, no class
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 1500 gold crowns.")
+            assert.is_falsy(taPackage.reRolling)
+            local rolled = false
+            for _, c in ipairs(helper.runCommandCalls) do
+                if c == "re-roll-half-ogre-warrior-fast-mode" then rolled = true end
+            end
+            assert.is_false(rolled)
+        end)
+
+        -- ...but a real creation, which answers the class question last, still does.
+        it("still re-rolls a character it did create", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Select a class: ")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.is_true(taPackage.reRolling)
+        end)
+
+    end)
+
     describe("stop-gold-farming", function()
 
         it("disarms the prompt answers", function()
@@ -4322,6 +4422,7 @@ describe("start-gold-farming", function()
         -- we no longer want the re-roll either.
         it("cancels a re-roll that is armed but not yet started", function()
             helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
             helper.simulateAlias("stop-gold-farming")
             helper.simulateLine("You are carrying 830 gold crowns.")

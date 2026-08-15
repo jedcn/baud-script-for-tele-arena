@@ -188,6 +188,7 @@ local function stopCreateCharacter()
     taPackage.createRerollArmed = nil
     taPackage.createCashOutArmed = nil
     taPackage.createRestarting = nil
+    taPackage.createAnsweredClass = nil
     createWalkStop()
 end
 taPackage.stopCreateCharacter = stopCreateCharacter
@@ -240,6 +241,56 @@ createAlias("^stop-gold-farming$", function()
     echo("[create] Stopped.")
 end, { type = "regex" })
 
+-- Pick a run back up after a disconnect, from the arena.
+--
+-- The arena is where a run spends nearly all of its time, so it is overwhelmingly
+-- the phase a dropped connection lands in -- and the expensive one to lose, since
+-- everything before it is a couple of minutes and the XP since is not. Log back
+-- in, walk to the arena, run this.
+--
+-- There is very little to restore, which is the point: the loop is driven by
+-- triggers reading taPackage flags, not by a position in a script. The only
+-- thing the arena phase needs is `goldFarming`, which is what tells the training
+-- confirmation to arm the cash-out. Everything else is cleared, because a
+-- reload (rather than a reconnect) keeps taPackage and could otherwise leave a
+-- half-finished walk or an armed cash-out from before the drop.
+--
+-- Earlier phases deliberately have no resume: they are minutes of work, and
+-- re-running start-gold-farming from the top is both simpler and safer than
+-- trying to rejoin a half-created character.
+local function continueGoldFarmingFromArena()
+    -- The room brief is how we know where we are standing; if one has been seen
+    -- and it is not the arena, this would ring a gong at nothing. An unknown
+    -- room (no brief since connecting) is not an error -- just say so and go.
+    local room = taPackage.currentRoom
+    if room and room ~= "arena" then
+        echo("[create] Not resuming — you are in \"" .. room .. "\", not the arena."
+            .. " Walk there first, then run this again.")
+        return
+    end
+    if not runCommand then
+        echo("[create] this baud has no runCommand — start the arena with `rg 1` yourself.")
+        return
+    end
+    -- Anything left over from before the drop belongs to the interrupted run.
+    stopCreateCharacter()
+    taPackage.goldFarming = true
+    if not room then
+        echo("[create] No room brief seen yet — taking your word that this is the arena.")
+    end
+    echo("[create] Resuming the gold-farming loop from the arena: fighting until"
+        .. " there is a level to train, then cashing out as usual.")
+    runCommand("rg 1")
+end
+
+-- Registered under both word orders. The start/stop pair reads
+-- "gold-farming", the name you reach for reads "farming-gold", and having the
+-- wrong one silently do nothing is a poor trade for three lines.
+createAlias("^continue-farming-gold-from-arena$", continueGoldFarmingFromArena,
+    { type = "regex" })
+createAlias("^continue-gold-farming-from-arena$", continueGoldFarmingFromArena,
+    { type = "regex" })
+
 -- The intro text pages on this prompt; a bare carriage return turns the page.
 -- send("") is exactly that: baud's TelnetConnection.send writes `data .. "\r\n"`,
 -- so an empty string puts a lone newline on the wire.
@@ -262,13 +313,33 @@ createTrigger("^Select an? (.+):\\s*$", function(matches)
     if not taPackage.creating then return end
     local prompt = matches[2]
     send(CREATE_ANSWERS[prompt] or "1")
+    -- Class is the last question the game asks, so answering it is the point
+    -- past which a NEW character definitely exists. The entry handler below
+    -- refuses to re-roll without it.
+    if prompt == "class" then taPackage.createAnsweredClass = true end
 end, { type = "regex" })
 
--- We are in the game, so stop answering prompts. The re-roll is only *armed*
--- here, not run -- see runCreateReroll for why it has to wait.
+-- We are in the game, so stop answering prompts.
+--
+-- Whether a re-roll is armed turns on whether we actually created anything.
+-- Entering the game and creating a character are NOT the same event: a live
+-- character goes from the main menu straight to this line, with no resurrect
+-- menu and none of the questions above. That is what a reconnect looks like,
+-- and if TA_LOGIN_CMD is still set (it is a launch variable, so it fires again
+-- on every reconnect) an unguarded arm would start a re-roll on a character
+-- that is already several levels in -- spraying `reroll` at a character we
+-- meant to keep. Answering the class question is the proof that this entry
+-- followed a creation, so that is what gates it.
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
     if not taPackage.creating then return end
     taPackage.creating = false
+    if not taPackage.createAnsweredClass then
+        echo("[create] Entered the game without creating anything (a live"
+            .. " character), so not re-rolling. Use continue-farming-gold-from-arena"
+            .. " to pick a run back up.")
+        return
+    end
+    taPackage.createAnsweredClass = nil
     taPackage.createRerollPending = true
 end, { type = "regex" })
 
