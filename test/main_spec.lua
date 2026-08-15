@@ -3757,6 +3757,74 @@ describe("start-gold-farming", function()
 
     end)
 
+    -- TA_INIT_CMD cannot reach a dead character: entering the game is what
+    -- arms it, and a dead character never enters. TA_LOGIN_CMD fires at the
+    -- username prompt instead, which happens on both paths.
+    describe("arming from the environment", function()
+
+        local function loadWith(env)
+            helper.resetAll()
+            helper.env = env
+            dofile("main.lua")
+        end
+
+        it("TA_LOGIN_CMD arms creation at the username prompt", function()
+            loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
+                       TA_LOGIN_CMD = "start-gold-farming" })
+            helper.simulateLine("Username:")
+            assert.is_true(taPackage.creating)
+        end)
+
+        -- The whole point: this is the path a dead character takes. It never
+        -- prints "Entering Tele-Arena...", so nothing downstream of that line
+        -- can be relied on to arm anything.
+        it("answers the resurrect menu on the dead-character path", function()
+            loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
+                       TA_LOGIN_CMD = "start-gold-farming" })
+            helper.simulateLine("Username:")
+            helper.simulateLine("Password:")
+            helper.simulateLine("Make your selection (1,2,3,...):")
+            helper.simulateLine("1) Resurect Old Character for 0 Credits.")
+            helper.simulateLine("2) Create New Character")
+            helper.simulateLine("3) Exit")
+            helper.simulateLine("Select an option: ")
+            -- username, password, the menu's "5", then "2" for Create New
+            assert.are.same({ "garbageman", "x", "5", "2" }, helper.sendCalls)
+        end)
+
+        it("runs TA_LOGIN_CMD only once per login prompt", function()
+            loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
+                       TA_LOGIN_CMD = "start-gold-farming" })
+            helper.simulateLine("Username:")
+            local runs = #helper.runCommandCalls
+            helper.simulateLine("Username:")
+            assert.are.equal(runs + 1, #helper.runCommandCalls)
+        end)
+
+        it("does nothing when TA_LOGIN_CMD is unset", function()
+            loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x" })
+            helper.simulateLine("Username:")
+            assert.is_falsy(taPackage.creating)
+        end)
+
+        -- Regression: TA_INIT_CMD fires off the inventory reply, and main.lua's
+        -- gold trigger is registered before ta_create.lua's. Left unguarded,
+        -- re-arming there both stranded prompt-answering in-game and cleared
+        -- the handoff flag the next trigger was about to read, costing the
+        -- re-roll entirely.
+        it("TA_INIT_CMD cannot re-arm creation on top of the re-roll handoff", function()
+            loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
+                       TA_INIT_CMD = "start-gold-farming" })
+            helper.simulateLine("Username:")
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You are carrying 830 gold crowns.")
+            assert.is_false(taPackage.creating)
+            assert.is_true(taPackage.reRolling)
+        end)
+
+    end)
+
     describe("stop-gold-farming", function()
 
         it("disarms the prompt answers", function()

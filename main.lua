@@ -5306,6 +5306,29 @@ end, { type = "regex" })
 -- through baud's runCommand, not send, so an alias actually executes; and it
 -- waits for the entry character sheet to come back (see runLoginInitCmd).
 --
+-- TA_LOGIN_CMD is its earlier sibling, and the two are not interchangeable.
+-- TA_INIT_CMD promises "you are in the game and your sheet is parsed"; the only
+-- thing that can deliver that promise is the entry `st`/`i` reply, which only
+-- exists on the path that prints "Entering Tele-Arena...". A DEAD character
+-- never takes that path: picking 5 at the main menu drops it straight onto
+--
+--     1) Resurect Old Character for 0 Credits.
+--     2) Create New Character
+--     3) Exit
+--     Select an option:
+--
+-- and stops there. No entry line, no `st`, no `i`, no gold reply -- so
+-- TA_INIT_CMD can never fire, by construction. Both paths are visible in
+-- logs/session-garbageman-2026-08-15T07-30-44.log: the first "5" (line 69)
+-- enters the game, the second (line 153), after a suicide, hits this menu.
+--
+-- TA_LOGIN_CMD runs at the front door instead, right after the username goes
+-- out, so it happens on both paths. That makes it the one that can arm
+-- something which has to be LISTENING before the game exists --
+-- TA_LOGIN_CMD="start-gold-farming" is the case it was added for. It is for
+-- arming a script, not for sending text: at the username prompt there is no
+-- game to send a command to.
+--
 -- Every answer is sent at most once per login, because a prompt appearing
 -- twice does not mean the BBS is waiting twice. "N" means *nonstop*: it tells
 -- the BBS to stop pausing, so the second (N)onstop prompt -- the one after the
@@ -5343,6 +5366,9 @@ if getenv then
     -- (TA_INIT_CMD="rg 2"), which is why it is run through runCommand rather
     -- than sent. See runLoginInitCmd below for when it fires.
     taPackage.login.initCmd = getenv("TA_INIT_CMD")
+    -- Optional: what to run at the login prompt, before any of the menus. The
+    -- only one of the two that reaches a dead character (see above).
+    taPackage.login.loginCmd = getenv("TA_LOGIN_CMD")
 end
 
 -- Run TA_INIT_CMD, once, now that the entry `st`/`i` replies have been parsed.
@@ -5353,11 +5379,9 @@ end
 -- character sheet would be refused -- "rg 2" checks getClass() and bails with
 -- "Class unknown - run 'st' first". The inventory's gold line is the last reply
 -- of that pair, so by the time it lands the sheet is fully parsed.
-function runLoginInitCmd()
-    if not taPackage.login.initPending then return end
-    taPackage.login.initPending = nil
-    local cmd = taPackage.login.initCmd
-    cecho("cyan", "[login] running TA_INIT_CMD: " .. cmd)
+-- Run one of the two login commands, naming it so the echo says which fired.
+function loginRunCommand(varName, cmd)
+    cecho("cyan", "[login] running " .. varName .. ": " .. cmd)
     if runCommand then
         runCommand(cmd)
     else
@@ -5367,6 +5391,12 @@ function runLoginInitCmd()
         cecho("yellow", "[login] this baud has no runCommand - sending as a raw command")
         send(cmd)
     end
+end
+
+function runLoginInitCmd()
+    if not taPackage.login.initPending then return end
+    taPackage.login.initPending = nil
+    loginRunCommand("TA_INIT_CMD", taPackage.login.initCmd)
 end
 
 -- Answer `step` with `text`, unless we already answered it during this login.
@@ -5390,6 +5420,23 @@ createTrigger("^Username:\\s*$", function()
     if not taPackage.login.character then return end
     cecho("cyan", "[login] logging in as " .. taPackage.login.character)
     loginAnswer("username", taPackage.login.character)
+end, { type = "regex" })
+
+-- TA_LOGIN_CMD, on the same prompt but as a SECOND trigger so it runs after the
+-- one above: the username has already gone out by then, which matters because
+-- the outbound trigger at the bottom of this file reads the next thing we send
+-- as the character's name. Registered here rather than folded into the handler
+-- above so that ordering is a visible property of the file, not a comment.
+--
+-- Not gated on TA_CHARACTER -- arming a script is just as useful when you typed
+-- the username yourself -- but it IS gated on login.pending and recorded in
+-- login.sent, so a re-displayed prompt cannot run it twice.
+createTrigger("^Username:\\s*$", function()
+    local cmd = taPackage.login.loginCmd
+    if not cmd then return end
+    if taPackage.login.sent["logincmd"] then return end
+    taPackage.login.sent["logincmd"] = true
+    loginRunCommand("TA_LOGIN_CMD", cmd)
 end, { type = "regex" })
 
 createTrigger("^Password:\\s*$", function()

@@ -30,6 +30,15 @@ normalize-stats +files:
 #   TA_INIT_CMD="rg 2" just run kerhak
 # It goes through baud's runCommand, so aliases work, and `&&` chains the way
 # typed input does: TA_INIT_CMD="drink hys && rg 2".
+#
+# TA_LOGIN_CMD runs much earlier -- at the username prompt, before any of the
+# BBS menus -- and is the one to reach for when the character is DEAD. A dead
+# character never enters the game, so it never gets a sheet and TA_INIT_CMD can
+# never fire; picking 5 at the main menu lands it on the resurrect/create menu
+# instead. Making a fresh farming character is the case it exists for:
+#   TA_LOGIN_CMD="start-gold-farming" just run garbageman
+# Use it to arm a script, not to send text: at the username prompt there is no
+# game to send a command to.
 run label:
     mkdir -p ./logs
     TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log

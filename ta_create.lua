@@ -71,8 +71,22 @@ end
 taPackage.stopCreateCharacter = stopCreateCharacter
 
 createAlias("^start-gold-farming$", function()
+    -- Refuse to re-arm in the one window where doing so is provably wrong: a
+    -- character has just been created and its re-roll is one line away from
+    -- starting. TA_INIT_CMD="start-gold-farming" lands exactly here -- it fires
+    -- off the inventory reply, and main.lua's gold trigger is registered before
+    -- this file's, so an unguarded arm would (a) leave prompt-answering live
+    -- in-game, where a bare "1" or "6" is a real command, and (b) clear the
+    -- handoff flag the very next trigger was about to read, silently costing us
+    -- the re-roll. TA_LOGIN_CMD is the variable that actually reaches a dead
+    -- character; say so rather than just declining.
+    if taPackage.createRerollPending then
+        cecho("yellow", "[create] A character was just created and the re-roll is about to"
+            .. " start — not re-arming. (Use TA_LOGIN_CMD, not TA_INIT_CMD, to run this"
+            .. " on login: TA_INIT_CMD cannot fire for a dead character.)")
+        return
+    end
     taPackage.creating = true
-    taPackage.createRerollPending = nil
     cecho("cyan", "[create] Answering the character-creation prompts — Half-Ogre Warrior,"
         .. " then re-roll-half-ogre-warrior-fast-mode. Type stop-gold-farming to abort.")
 end, { type = "regex" })
