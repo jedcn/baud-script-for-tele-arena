@@ -93,6 +93,47 @@ local CREATE_STEPS = {
     "rg 1",
 }
 
+-- The other end of the run. `rg 1` fights until the character has earned a
+-- level and banks it at the guild hall -- that whole trip is the arena script's
+-- own (checkTrainingNeeded, arenaTryTrain, toTraining = { "w", "n" }, "buy
+-- training"), and we deliberately don't reimplement a step of it. We only take
+-- over afterwards, back in the arena, where the arena script would otherwise
+-- ring the gong and fight on forever.
+--
+-- From the arena: "w" to the north plaza, "ne" to the tavern where Kerhak is
+-- waiting, hand over the takings, then back out through the plazas to the gate
+-- where the gear was staged and drop it for the next character.
+--
+-- The `i` is a step with a reply we have to read: the amount to hand over is
+-- whatever the inventory says we are carrying, so the pump parks there and the
+-- gold line resumes it (see the awaiting-gold trigger below). Giving is the one
+-- thing here that cannot be a fixed string.
+--
+-- These directions retrace the arena's own routes in reverse and the creation
+-- walk's outbound leg, which is a useful cross-check: "w"/"ne" is exactly
+-- ARENA_NAV["1"].toBar, and "sw"/"s"/"sw" is the tavern back to the north
+-- plaza, then the creation walk's "s"/"sw" to the gate.
+local CASH_OUT_STEPS = {
+    "w",
+    "ne",
+    { cmd = "i", await = "gold" },
+    "sw",
+    "s",
+    "sw",
+    "unequip robes",
+    "drop robes",
+    "unequip warhammer",
+    "drop warhammer",
+}
+
+-- How long to wait for the inventory reply before giving up on the handover and
+-- walking on. Without this an `i` that draws no gold line -- the one step here
+-- whose continuation depends on the server saying something -- would park the
+-- walk in the tavern indefinitely. Generous, because the only cost of waiting is
+-- a few seconds and the cost of walking on early is that the takings stay in the
+-- wrong character's pocket.
+local CASH_OUT_GOLD_WAIT_MS = 10000
+
 -- Reuse the arena's pace rather than picking a new number. It was tuned by
 -- measurement (see ARENA_STEP_DELAY_MS in main.lua): 1000/1200/1300ms all
 -- tripped a paced walk, 1500 has carried 250-odd scripted moves without one.
@@ -129,8 +170,10 @@ end
 -- a walk in progress, so one stop covers the whole gold-farming flow.
 local function stopCreateCharacter()
     taPackage.creating = false
+    taPackage.goldFarming = nil
     taPackage.createRerollPending = nil
     taPackage.createRerollArmed = nil
+    taPackage.createCashOutArmed = nil
     createWalkStop()
 end
 taPackage.stopCreateCharacter = stopCreateCharacter
@@ -146,6 +189,7 @@ taPackage.stopCreateCharacter = stopCreateCharacter
 --   createWalk          gearing up and walking to the arena
 function taPackage.createCharacterRunning()
     return taPackage.creating == true
+        or taPackage.goldFarming == true
         or taPackage.createRerollPending == true
         or taPackage.createRerollArmed == true
         or taPackage.createWalk ~= nil
@@ -168,6 +212,11 @@ createAlias("^start-gold-farming$", function()
         return
     end
     taPackage.creating = true
+    -- Marks the whole round trip as ours, not just the prompt-answering phase.
+    -- The cash-out reads it much later to tell a `rg 1` this loop started from
+    -- one somebody ran by hand -- only the former should end in a walk to the
+    -- tavern and a pile of gear on the floor.
+    taPackage.goldFarming = true
     cecho("cyan", "[create] Answering the character-creation prompts — Half-Ogre Warrior,"
         .. " then re-roll-half-ogre-warrior-fast-mode. Type stop-gold-farming to abort.")
 end, { type = "regex" })
@@ -242,30 +291,71 @@ createTrigger("^You are carrying (\\d+) gold crowns", function()
     end
 end, { type = "regex" })
 
+-- Schedule the next step of the running walk, honouring the generation guard so
+-- a walk that has been stopped (or restarted) leaves no live timer behind.
+local function createWalkSchedule(delay)
+    local gen = taPackage.createWalkGen
+    createTimer(delay, function()
+        if taPackage.createWalkGen ~= gen then return end
+        taPackage.createWalkPump()
+    end, { repeating = false })
+end
+
 -- One step, then pace the next. Driven by the clock rather than by arrival
--- briefs: the list is half non-movement (a `get` prints no room line), so there
--- is no single event that means "that one landed" for every step in it. The
--- trip/refusal triggers below are what cover the case the clock cannot see.
-local function createWalkPump()
+-- briefs: these lists are half non-movement (a `get` prints no room line), so
+-- there is no single event that means "that one landed" for every step in them.
+-- The trip/refusal triggers below cover the case the clock cannot see.
+--
+-- A step is either a plain command string, or `{ cmd = ..., await = "gold" }`
+-- for the one step whose follow-up depends on what the server says back. An
+-- awaiting step does NOT schedule the next one -- whatever it is waiting for
+-- does that, or the timeout does.
+--
+-- A taPackage field rather than a local: createWalkSchedule above is defined
+-- first and has to call it, and a forward-declared local would cost a slot in a
+-- file that exists to avoid spending them.
+function taPackage.createWalkPump()
     local walk = taPackage.createWalk
     if not walk then return end
 
-    local step = CREATE_STEPS[walk.index]
+    local step = walk.steps[walk.index]
     if not step then
-        cecho("cyan", "[create] Kitted out and in the arena — rg 1 has the wheel.")
+        cecho("cyan", "[create] " .. walk.doneMsg)
         createWalkStop()
         return
     end
     walk.index = walk.index + 1
 
-    echo("[create] step " .. (walk.index - 1) .. "/" .. #CREATE_STEPS .. ": " .. step)
-    runCommand(step)
+    local cmd = type(step) == "table" and step.cmd or step
+    echo("[" .. walk.label .. "] step " .. (walk.index - 1) .. "/" .. #walk.steps
+        .. ": " .. cmd)
+    runCommand(cmd)
 
-    local gen = taPackage.createWalkGen
-    createTimer(CREATE_STEP_DELAY_MS, function()
-        if taPackage.createWalkGen ~= gen then return end
-        createWalkPump()
-    end, { repeating = false })
+    if type(step) == "table" and step.await then
+        walk.awaiting = step.await
+        -- Nothing may hang forever on a reply that never comes.
+        local gen = taPackage.createWalkGen
+        createTimer(CASH_OUT_GOLD_WAIT_MS, function()
+            if taPackage.createWalkGen ~= gen then return end
+            local w = taPackage.createWalk
+            if not (w and w.awaiting) then return end
+            w.awaiting = nil
+            cecho("yellow", "[" .. w.label .. "] no reply to `" .. cmd
+                .. "` — carrying on without it.")
+            taPackage.createWalkPump()
+        end, { repeating = false })
+        return
+    end
+
+    createWalkSchedule(CREATE_STEP_DELAY_MS)
+end
+
+-- Start a walk. Replaces whatever was running; the generation bump makes the
+-- old one's in-flight timer inert.
+local function createWalkStart(steps, label, doneMsg)
+    taPackage.createWalk = { steps = steps, index = 1, label = label, doneMsg = doneMsg }
+    taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
+    taPackage.createWalkPump()
 end
 
 -- The re-roll has accepted a set of stats. main.lua calls this from the
@@ -280,10 +370,57 @@ function taPackage.onRerollAccepted()
     end
     cecho("cyan", "[create] Stats accepted — stopping the re-roll, gearing up,"
         .. " and heading for the arena.")
-    taPackage.createWalk = { index = 1 }
-    taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
-    createWalkPump()
+    createWalkStart(CREATE_STEPS, "create", "Kitted out and in the arena — rg 1 has the wheel.")
 end
+
+-- Training succeeded. The arena script is already walking us home from the guild
+-- hall; let it finish that (it confirms arrival by room brief and handles its own
+-- trips) and take over at the door, in onArenaArrivedHome below. Arming a flag
+-- here rather than acting now is what keeps us out of a race with a journey that
+-- is mid-stride.
+--
+-- Registered as our own trigger on the same line main.lua keys the level-banking
+-- off, rather than folded into that handler: this concern is the gold-farming
+-- loop's, not the arena's, and it must not fire for an ordinary `rg 1` that
+-- somebody started by hand.
+createTrigger("^After a rigorous mental and physical training session, you managed to blend$",
+    function()
+        if not taPackage.goldFarming then return end
+        if not taPackage.arenaState then return end
+        taPackage.createCashOutArmed = true
+        cecho("cyan", "[create] Trained — cashing out as soon as we are back in the arena.")
+    end, { type = "regex" })
+
+-- Back in the arena after the training trip. main.lua's arenaArrivedHome calls
+-- this before it does anything else; returning true means "we have taken over,
+-- stop here" and suppresses the ring that would otherwise start another fight.
+function taPackage.onArenaArrivedHome()
+    if not taPackage.createCashOutArmed then return false end
+    taPackage.createCashOutArmed = nil
+    cecho("cyan", "[create] Handing the takings to Kerhak and dropping the gear.")
+    -- We are done with the arena: stop it before walking, or its own errand
+    -- dispatch and ring pump would keep issuing commands underneath us.
+    if taPackage.stopArena then taPackage.stopArena() end
+    createWalkStart(CASH_OUT_STEPS, "cash-out", "Gear dropped — the round trip is done.")
+    return true
+end
+
+-- The inventory reply the cash-out parks on. Reading the amount from the reply
+-- rather than from our own tracked gold is deliberate: the arena spends on
+-- healing, food and training as it goes, so the tracked figure is only ever as
+-- fresh as the last line that happened to mention gold.
+createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
+    local walk = taPackage.createWalk
+    if not (walk and walk.awaiting == "gold") then return end
+    walk.awaiting = nil
+    local amount = tonumber(matches[2]) or 0
+    if amount > 0 then
+        runCommand("give kerhak " .. amount .. " gold")
+    else
+        cecho("yellow", "[cash-out] Carrying no gold — nothing to hand over.")
+    end
+    createWalkSchedule(CREATE_STEP_DELAY_MS)
+end, { type = "regex" })
 
 -- A move that did not happen. Both lines mean the same thing for the walk -- the
 -- character is still in the room it was in -- and neither prints a room brief,
@@ -298,14 +435,17 @@ end
 local function createWalkRetryStep(why, delay)
     local walk = taPackage.createWalk
     if not walk then return end
+    -- Parked on a reply, so the step in flight is not a move and this refusal
+    -- belongs to something else. Rewinding here would re-run the step before it
+    -- and lose the reply we are waiting on.
+    if walk.awaiting then return end
     walk.index = walk.index - 1
+    -- Cancels the normal pacing timer already in flight, so the retry below is
+    -- the only one left standing.
     taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
-    local gen = taPackage.createWalkGen
-    echo("[create] " .. why .. " — retrying step " .. walk.index .. " in " .. delay .. "ms")
-    createTimer(delay, function()
-        if taPackage.createWalkGen ~= gen then return end
-        createWalkPump()
-    end, { repeating = false })
+    echo("[" .. walk.label .. "] " .. why .. " — retrying step " .. walk.index
+        .. " in " .. delay .. "ms")
+    createWalkSchedule(delay)
 end
 
 createTrigger("^In your haste, you trip and fall!$", function()

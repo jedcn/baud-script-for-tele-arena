@@ -3992,6 +3992,136 @@ describe("start-gold-farming", function()
 
     end)
 
+    -- rg 1 does the fighting and the whole training trip itself (checkTrainingNeeded,
+    -- toTraining = { "w", "n" }, "buy training"). This loop only takes the wheel
+    -- afterwards, back in the arena, where rg 1 would otherwise ring and fight on.
+    describe("cashing out after training", function()
+
+        local TRAINED = "After a rigorous mental and physical training session, you managed to blend"
+
+        local function walkToEnd()
+            for _ = 1, 40 do
+                if not taPackage.createWalk then break end
+                if taPackage.createWalk.awaiting then break end
+                helper.fireTimers(taPackage.arenaStepDelayMs)
+            end
+        end
+
+        -- A gold-farming run that has reached the arena and just banked a level.
+        --
+        -- The gold matters: main.lua's own handler for this line charges the
+        -- training fee, and setGold runs the arena's gold floor, which
+        -- emergency-exits the run (clearing arenaState) if the balance lands
+        -- under 100. A character with nothing in its pockets therefore never
+        -- reaches our handler at all.
+        local function trainDuringGoldFarming()
+            helper.simulateAlias("start-gold-farming")
+            taPackage.arenaState = "training"
+            setLevel(1)
+            setGold(1372)
+            helper.simulateLine(TRAINED)
+        end
+
+        it("arms the cash-out on the training confirmation", function()
+            trainDuringGoldFarming()
+            assert.is_true(taPackage.createCashOutArmed)
+            -- but does not move yet: the arena is still walking us home
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+        it("takes over when the arena gets back home, and stops the arena", function()
+            trainDuringGoldFarming()
+            assert.is_true(taPackage.onArenaArrivedHome())
+            assert.is_nil(taPackage.arenaState)
+            assert.is_not_nil(taPackage.createWalk)
+        end)
+
+        it("walks to the tavern and asks what it is carrying", function()
+            trainDuringGoldFarming()
+            for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            assert.are.same({ "w", "ne", "i" }, helper.runCommandCalls)
+        end)
+
+        -- The amount is whatever the reply says, not our own tracked figure: the
+        -- arena spends on healing, food and training as it goes.
+        it("hands over the amount the inventory reports", function()
+            trainDuringGoldFarming()
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            helper.simulateLine("You are carrying 1372 gold crowns.")
+            assert.is_true(ranCommand("give kerhak 1372 gold"))
+        end)
+
+        it("runs the whole sequence in order", function()
+            trainDuringGoldFarming()
+            for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            helper.simulateLine("You are carrying 1372 gold crowns.")
+            walkToEnd()
+            assert.are.same({
+                "w", "ne", "i", "give kerhak 1372 gold",
+                "sw", "s", "sw",
+                "unequip robes", "drop robes",
+                "unequip warhammer", "drop warhammer",
+            }, helper.runCommandCalls)
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+        it("skips the handover when carrying nothing, and walks on", function()
+            trainDuringGoldFarming()
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            assert.is_false(ranCommand("give kerhak 0 gold"))
+            walkToEnd()
+            assert.is_true(ranCommand("drop warhammer"))
+        end)
+
+        -- An `i` that draws no reply must not park the walk in the tavern forever.
+        it("carries on if the inventory reply never arrives", function()
+            trainDuringGoldFarming()
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            assert.are.equal("gold", taPackage.createWalk.awaiting)
+            helper.fireTimers(10000)
+            assert.is_nil(taPackage.createWalk.awaiting)
+            walkToEnd()
+            assert.is_true(ranCommand("drop warhammer"))
+        end)
+
+        -- A refusal while parked on a reply belongs to something else; rewinding
+        -- would re-run the step before it and lose the reply.
+        it("ignores a move refusal while waiting on the inventory", function()
+            trainDuringGoldFarming()
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            local before = #helper.runCommandCalls
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(2000)
+            assert.are.equal(before, #helper.runCommandCalls)
+            assert.are.equal("gold", taPackage.createWalk.awaiting)
+        end)
+
+        -- A hand-started rg 1 must never end with the character in the tavern
+        -- and its gear on the floor.
+        it("does not fire for an arena run this loop did not start", function()
+            taPackage.arenaState = "training"
+            setLevel(1)
+            helper.simulateLine(TRAINED)
+            assert.is_nil(taPackage.createCashOutArmed)
+            assert.is_false(taPackage.onArenaArrivedHome())
+        end)
+
+        it("leaves an ordinary arrival home alone", function()
+            helper.simulateAlias("start-gold-farming")
+            assert.is_false(taPackage.onArenaArrivedHome())
+        end)
+
+    end)
+
     describe("stop-gold-farming", function()
 
         it("disarms the prompt answers", function()

@@ -3028,6 +3028,17 @@ end
 -- walks home the same way, so a potion that wore off mid-errand is serviced on
 -- arrival whichever errand we were on. departForShop/Tavern pick the route.
 local function arenaArrivedHome()
+    -- The gold-farming loop's exit door. Once it has banked its level it is done
+    -- with the arena and wants to cash out rather than ring again, and this is
+    -- the moment to hand over: a confirmed arrival in a known room, with no
+    -- journey in flight to race. Returning true means it has taken over.
+    --
+    -- Deliberately ahead of the hurt check below. Being low on HP is only
+    -- dangerous while we intend to keep fighting; the walk this hands off to
+    -- goes through town, where nothing attacks, and a temple detour would spend
+    -- the gold we are about to hand over. Defined in ta_create.lua, and nil for
+    -- an ordinary run, which leaves everything below exactly as it was.
+    if taPackage.onArenaArrivedHome and taPackage.onArenaArrivedHome() then return end
     -- Walked home hurt: turn straight around for the temple, before anything
     -- else and above all before swinging. checkFleeArena only looks at HP while
     -- arenaState == "fighting", so damage taken during an errand goes unnoticed
