@@ -3915,22 +3915,41 @@ describe("start-gold-farming", function()
 
             -- No room brief follows either line, so a clock-driven walk would
             -- carry on and run the rest of the list one room too far back.
-            for _, refusal in ipairs({
-                "In your haste, you trip and fall!",
-                "Sorry, you'll have to rest a while before you can move.",
+            --
+            -- The two refusals get different waits on purpose. A trip clears in
+            -- a couple of seconds; being told to rest means the physical
+            -- cooldown is running, which is tens of seconds. That one bites
+            -- every run -- the walk starts right after ~76 rerolls -- and at the
+            -- trip's 2s it spent 13 commands grinding through it live, in
+            -- logs/session-garbageman-2026-08-15T14-17-19.log.
+            for _, case in ipairs({
+                { line = "In your haste, you trip and fall!", delay = 2000 },
+                { line = "Sorry, you'll have to rest a while before you can move.",
+                  delay = 30000 },
             }) do
-                it("retries the step after: " .. refusal, function()
+                it("retries after '" .. case.line .. "' in " .. case.delay .. "ms", function()
                     reachAcceptedRoll()
                     helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
                     assert.are.equal("s", helper.runCommandCalls[#helper.runCommandCalls])
-                    helper.simulateLine(refusal)
-                    helper.fireTimers(2000)
+                    helper.simulateLine(case.line)
+                    helper.fireTimers(case.delay)
                     assert.are.equal("s", helper.runCommandCalls[#helper.runCommandCalls])
                     -- and the walk carries on from there, not from further along
                     helper.fireTimers(taPackage.arenaStepDelayMs)
                     assert.are.equal("sw", helper.runCommandCalls[#helper.runCommandCalls])
                 end)
             end
+
+            -- The distinction is the whole point of the fix, so pin it: the rest
+            -- refusal must NOT retry on the trip's short cadence.
+            it("does not retry a rest refusal on the trip's 2s cadence", function()
+                reachAcceptedRoll()
+                helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+                local runsBefore = #helper.runCommandCalls
+                helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+                helper.fireTimers(2000)
+                assert.are.equal(runsBefore, #helper.runCommandCalls)
+            end)
 
             -- The retry bumps the generation; the pacing timer already in flight
             -- must land as a no-op rather than sending the step a second time.

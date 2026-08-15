@@ -100,9 +100,20 @@ local CREATE_STEPS = {
 -- non-movement steps do not need pacing at all, but pacing them uniformly costs
 -- six seconds once per character and keeps this a plain list.
 local CREATE_STEP_DELAY_MS = taPackage.arenaStepDelayMs or 1500
--- A refused move gets a longer pause before the retry, to back off as well as
--- recover -- the same treatment, and the same number, the arena walk uses.
+-- A move can be refused for two quite different reasons, and they want quite
+-- different waits. Tripping means we moved too soon after the last move: a
+-- couple of seconds clears it, which is what the arena's own trip retry uses.
 local CREATE_TRIP_RETRY_MS = 2000
+-- Being told to rest means the physical cooldown is running, and that is tens of
+-- seconds, not two. It bites here every single time: the walk starts the instant
+-- the re-roll stops, and by then the character has just sent ~76 rerolls
+-- back to back, which leaves the clock fully charged. Retrying at the trip's 2s
+-- spent 13 commands and ~26s grinding through it in
+-- logs/session-garbageman-2026-08-15T14-17-19.log (lines 1845-1919). 30s is what
+-- main.lua already waits on this same line for a non-urgent errand walk, and
+-- this is one; the 2s cadence there is reserved for fleeing, where we are taking
+-- hits every round and cannot afford to wait.
+local CREATE_REST_RETRY_MS = 30000
 
 -- Bumped on every stop and every retry, so an in-flight pacing timer belonging
 -- to a walk we have moved on from lands as a no-op. The script has no timer
@@ -274,26 +285,33 @@ function taPackage.onRerollAccepted()
     createWalkPump()
 end
 
--- A move that did not happen. Both lines mean the same thing for us -- the
+-- A move that did not happen. Both lines mean the same thing for the walk -- the
 -- character is still in the room it was in -- and neither prints a room brief,
--- so the clock-driven pump above would blithely carry on and walk the rest of
--- the list from one room too far back. Rewind a step and retry after a longer
--- pause. Bumping the generation cancels the normal pacing timer already in
--- flight, so the retry cannot double up with it.
-local function createWalkRetryStep()
+-- so the clock-driven pump above would blithely carry on and run the rest of the
+-- list from one room too far back. Rewind a step and retry. Bumping the
+-- generation cancels the normal pacing timer already in flight, so the retry
+-- cannot double up with it.
+--
+-- `why` and `delay` differ per refusal (see the constants above); a retry that
+-- is itself refused re-emits the same line, so each cadence re-arms naturally
+-- for as long as it needs to.
+local function createWalkRetryStep(why, delay)
     local walk = taPackage.createWalk
     if not walk then return end
     walk.index = walk.index - 1
     taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
     local gen = taPackage.createWalkGen
-    echo("[create] tripped — retrying step " .. walk.index .. " in "
-        .. CREATE_TRIP_RETRY_MS .. "ms")
-    createTimer(CREATE_TRIP_RETRY_MS, function()
+    echo("[create] " .. why .. " — retrying step " .. walk.index .. " in " .. delay .. "ms")
+    createTimer(delay, function()
         if taPackage.createWalkGen ~= gen then return end
         createWalkPump()
     end, { repeating = false })
 end
 
-createTrigger("^In your haste, you trip and fall!$", createWalkRetryStep, { type = "regex" })
-createTrigger("^Sorry, you'll have to rest a while before you can move\\.$",
-    createWalkRetryStep, { type = "regex" })
+createTrigger("^In your haste, you trip and fall!$", function()
+    createWalkRetryStep("tripped", CREATE_TRIP_RETRY_MS)
+end, { type = "regex" })
+
+createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function()
+    createWalkRetryStep("still resting", CREATE_REST_RETRY_MS)
+end, { type = "regex" })
