@@ -445,6 +445,83 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    -- A general facility, not an arena or gold-farming one: any script can read
+    -- taPackage.died. Wording from
+    -- logs/session-kerhak-2026-08-09T14-48-21.log lines 3243-3246.
+    describe("death detection", function()
+
+        local KILLED = "As the final blow strikes your body you fall unconscious."
+
+        it("records the death", function()
+            helper.simulateLine(KILLED)
+            assert.is_true(taPackage.died)
+            assert.is_not_nil(taPackage.diedAt)
+        end)
+
+        -- The problem it exists to solve: a death is nearly invisible to a
+        -- running script, which carries on issuing commands into a world that
+        -- has moved on.
+        it("stops every long-running script", function()
+            taPackage.arenaState = "fighting"
+            taPackage.killActive = true
+            taPackage.healLoopActive = true
+            helper.simulateLine(KILLED)
+            assert.is_nil(taPackage.arenaState)
+            assert.is_falsy(taPackage.killActive)
+            assert.is_false(taPackage.healLoopActive)
+        end)
+
+        it("says so in the session log and pushes a notification", function()
+            helper.simulateLine(KILLED)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("KILLED", 1, true) then said = true end
+            end
+            assert.is_true(said)
+            assert.is_true(#helper.httpRequestCalls > 0)
+        end)
+
+        -- Cleared in one place, so the episode ends for every reader at once.
+        it("clears on the next entry into the game", function()
+            helper.simulateLine(KILLED)
+            helper.simulateLine("Entering Tele-Arena...")
+            assert.is_nil(taPackage.died)
+            assert.is_nil(taPackage.diedAt)
+        end)
+
+        it("is not set by an ordinary revive", function()
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_falsy(taPackage.died)
+        end)
+
+        -- The revive line cannot carry this on its own: a suicide prints it too,
+        -- and the gold-farming loop hangs its restart off it.
+        it("stops the farming loop restarting after a death", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(KILLED)
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_falsy(taPackage.creating)
+            assert.is_nil(taPackage.createRestarting)
+        end)
+
+        it("still restarts the farming loop after our own suicide", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("After intense mental preparation, you take your own life!")
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_true(taPackage.creating)
+            assert.is_true(taPackage.createRestarting)
+        end)
+
+        -- Read, not consumed: a second reader must still see it.
+        it("stays readable for other scripts until re-entry", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(KILLED)
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_true(taPackage.died)
+        end)
+
+    end)
+
     describe("Entering Tele-Arena trigger", function()
 
         it("runs st then i on entering", function()

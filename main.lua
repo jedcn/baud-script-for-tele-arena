@@ -558,6 +558,11 @@ local function healingBadge(text) badge(HEAL_FG, text) end
 -- reply's gold line is what tells runLoginInitCmd the sheet has landed, so
 -- dropping the `i` here would strand it.
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
+    -- A character is in the game again, so whatever death preceded this is over
+    -- as far as every reader of taPackage.died is concerned. Cleared here, in
+    -- one place, rather than by whichever script happened to look first.
+    taPackage.died = nil
+    taPackage.diedAt = nil
     send("st")
     send("i")
 end, { type = "regex" })
@@ -3659,6 +3664,71 @@ end
 -- damage. Clear the pending flag so exitGameWithRetry's retry loop stops.
 createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     taPackage.exitGamePending = false
+end, { type = "regex" })
+
+-- =========================================================================
+-- Death
+-- =========================================================================
+--
+-- A general facility, not an arena or gold-farming one. Any script can ask
+-- whether the character has just been killed:
+--
+--   taPackage.died     true from the killing blow until the next entry into
+--                      the game. READ it; do not clear it -- clearing hides the
+--                      death from every other reader.
+--   taPackage.diedAt   millisecond clock reading of the killing blow, for
+--                      anything that wants to reason about how long ago.
+--
+-- Every long-running script is stopped automatically when it fires (through the
+-- stop-all-scripts alias, so a script added later is covered the moment it is
+-- registered there). A script that needs to do something of its own about a
+-- death -- refuse to restart a loop, say -- reads the flag at whatever point it
+-- notices, rather than racing to hook the line itself.
+--
+-- The flag is cleared on "Entering Tele-Arena...", i.e. once a character is in
+-- the game again, which ends the episode for every reader at the same moment.
+
+-- This is the one line the game prints that means it, and it arrives just before
+-- the revive:
+--
+--     The flame giant exhaled a blast of flame at you for 394 damage!
+--     As the final blow strikes your body you fall unconscious.
+--     You awaken after an unknown amount of time...
+--     You're in the temple.
+--
+-- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3243-3246.)
+--
+-- Detecting it matters because a death is nearly invisible to a running script.
+-- Carrying a soulstone you wake at the temple, alive and four rooms from where
+-- every state machine believes you are standing; without one you land on the BBS
+-- menu. Either way the script keeps issuing arena commands into a world that has
+-- moved on, which is exactly what happened during several deaths last week --
+-- the scripts "just kept running even though the character was dead".
+--
+-- The revive line alone cannot carry this: a suicide prints it too, and the
+-- gold-farming loop deliberately hangs its restart off it. Only this line
+-- separates the two, so it is what sets the flag that tells them apart.
+--
+-- Stopping everything is the right response even though the character may be
+-- alive: whatever it was doing is void, its gear and gold are gone, and quietly
+-- carrying on turns one bad round into an unattended hour of nonsense.
+createTrigger("^As the final blow strikes your body you fall unconscious\\.$", function()
+    taPackage.died = true
+    taPackage.diedAt = nowMillis()
+    -- echo, not cecho: a death has to be in the session log, since the whole
+    -- problem is noticing it after the fact.
+    echo("[death] KILLED — stopping every script. Gear and gold are gone; you"
+        .. " wake at the temple with a soulstone, or at the BBS menu without one.")
+    sendNtfy("Character killed",
+        (taPackage.character.name or "The character") .. " was killed. All scripts"
+        .. " stopped. Equipment and carried gold are lost.")
+    -- Reuse the alias rather than reimplementing its teardown, so a script added
+    -- later is covered here the moment it is added there.
+    if runCommand then
+        runCommand("stop-all-scripts")
+    else
+        cecho("yellow", "[death] this baud has no runCommand — type stop-all-scripts yourself")
+    end
 end, { type = "regex" })
 
 -- The arena loop only stays alive while it can pay the temple for healing and

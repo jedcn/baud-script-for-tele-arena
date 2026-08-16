@@ -578,6 +578,21 @@ end, { type = "regex" })
 -- "You awaken" rather than "you take your own life": both print, but the second
 -- one is the game confirming we are actually out and back at the BBS.
 createTrigger("^You awaken after an unknown amount of time\\.\\.\\.$", function()
+    -- A death prints this line too, and must not be mistaken for our own
+    -- suicide. Restarting after one would send a fresh character to a gate with
+    -- no gear on it (equipment is lost on death and costs ~150 gold to replace),
+    -- and the harvest it was carrying never reached Kerhak -- so the loop would
+    -- keep turning, quietly producing less each time.
+    --
+    -- taPackage.died is main.lua's, not ours: it is set by the death trigger
+    -- there and cleared on the next entry into the game, so any script can read
+    -- it during this window. Read, never cleared here -- clearing it would hide
+    -- the death from anything else that asks.
+    if taPackage.died then
+        echo("[create] That was a death, not a retirement — not starting another"
+            .. " character. Re-stage the robes and warhammer at the gate first.")
+        return
+    end
     if not taPackage.goldFarming then return end
     createWalkStop()
     -- Puts the creation triggers back in charge for the next character.
