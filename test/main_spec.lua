@@ -5190,6 +5190,65 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(300000, timerCreated.interval)
         end)
 
+        -- XP is only knowable from a status block -- a kill prints the gold it
+        -- dropped and nothing about experience -- so a level earned between two
+        -- polls is invisible until the next one. On a flat five-minute cadence
+        -- that is up to five minutes spent fighting for XP that buys nothing,
+        -- roughly a tenth of a 21-minute cycle. So the poll tightens as the
+        -- threshold approaches. A Warrior needs 1125 for level 2.
+        describe("tightens as the level approaches", function()
+
+            local intervals
+
+            before_each(function()
+                intervals = {}
+                _G.createTimer = function(interval, cb, opts)
+                    table.insert(intervals, interval)
+                    return "mock_timer"
+                end
+            end)
+
+            local function delayAfterXp(xp)
+                setClass("Warrior")
+                setLevel(1)
+                setExperience(xp)
+                intervals = {}
+                helper.simulateAlias("ring-gong-and-fight-in-arena")
+                for _, i in ipairs(intervals) do
+                    -- the scan pump also arms a short timer; the XP check is the
+                    -- only one armed at one of these three cadences
+                    if i == 300000 or i == 60000 or i == 30000 then return i end
+                end
+                return nil
+            end
+
+            it("stays at 5 minutes while far away", function()
+                assert.are.equal(300000, delayAfterXp(0))
+            end)
+
+            -- Inside one kill's worth: a cave bear went for 520 XP in
+            -- logs/session-garbageman-2026-08-15T19-45-33.log, so the very next
+            -- kill can finish the job.
+            it("drops to a minute within 600 of the threshold", function()
+                assert.are.equal(60000, delayAfterXp(600))   -- 525 remaining
+            end)
+
+            it("drops to 30s within 200 of the threshold", function()
+                assert.are.equal(30000, delayAfterXp(1000))  -- 125 remaining
+            end)
+
+            it("falls back to 5 minutes when XP is not known yet", function()
+                intervals = {}
+                helper.simulateAlias("ring-gong-and-fight-in-arena")
+                local found
+                for _, i in ipairs(intervals) do
+                    if i == 300000 or i == 60000 or i == 30000 then found = i end
+                end
+                assert.are.equal(300000, found)
+            end)
+
+        end)
+
         it("timer callback sends status", function()
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             timerCreated.cb()

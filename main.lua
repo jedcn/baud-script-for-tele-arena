@@ -3378,9 +3378,44 @@ function departForTavern()
     departForBar()
 end
 
+-- How long to wait before asking for XP again.
+--
+-- XP is only knowable from a status block: a kill prints the gold it dropped and
+-- nothing about experience. So a level earned between two polls is invisible
+-- until the next one, and on a flat five-minute cadence that is up to five
+-- minutes of fighting for XP that buys nothing -- the level is already earned,
+-- and everything after it is waste. Averaged over a cycle that is ~2.5 minutes
+-- lost against a 21-minute cycle, i.e. more than a tenth of the run, which is
+-- larger than most of the things worth tuning here.
+--
+-- So poll on distance rather than on the clock. Far from the threshold a level
+-- cannot possibly land in the next few minutes and asking is pure noise; close
+-- to it, a single kill may cross the line. The bands are picked against what one
+-- kill is actually worth in the first arena, where a cave bear went for 520 XP
+-- in logs/session-garbageman-2026-08-15T19-45-33.log -- inside that, the very
+-- next kill can finish the job, so ask often.
+--
+-- Costs about a dozen extra `status` sends per cycle, all of them in the half of
+-- the run where the answer can change the plan.
+local ARENA_XP_CHECK_FAR_MS = 300000
+local ARENA_XP_CHECK_NEAR_MS = 60000
+local ARENA_XP_CHECK_CLOSE_MS = 30000
+local function arenaXpCheckDelay()
+    local xp = getExperience()
+    local cls = getClass()
+    if not (xp and cls) then return ARENA_XP_CHECK_FAR_MS end
+    local nextAt = getXpForNextLevel(xp, cls)
+    -- Level 25, or a class with no table: nothing to count down to.
+    if not nextAt then return ARENA_XP_CHECK_FAR_MS end
+    local remaining = nextAt - xp
+    if remaining <= 200 then return ARENA_XP_CHECK_CLOSE_MS end
+    if remaining <= 600 then return ARENA_XP_CHECK_NEAR_MS end
+    return ARENA_XP_CHECK_FAR_MS
+end
+
 local function scheduleArenaXpCheck()
     local gen = taPackage.arenaXpTimerGen or 0
-    createTimer(300000, function()
+    createTimer(arenaXpCheckDelay(), function()
         if (taPackage.arenaXpTimerGen or 0) ~= gen then return end
         taPackage.arenaXpCheckPending = true
         send("status")
