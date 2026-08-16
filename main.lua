@@ -3022,6 +3022,10 @@ local checkTrainingNeeded
 -- purpose: main.lua is within a couple of names of Lua's 200 top-level local
 -- limit, and this way the whole idea costs one.
 local arenaHeal = {}
+-- Also hung off taPackage so the flee thresholds are readable from outside this
+-- chunk. Tests assert against arenaHeal.FLOOR rather than a literal, so retuning
+-- the number does not silently invalidate what they are checking.
+taPackage.arenaHeal = arenaHeal
 
 -- Head to the magic shop to restock the strength/agility potions. Both arenas
 -- reach the same shop by different routes, chosen by profile. Always a journey,
@@ -3275,14 +3279,32 @@ taPackage.arenaTryTrain = arenaTryTrain
 -- Flee at 75% of max HP, but never below an absolute floor. The percentage
 -- alone is unsafe for low-HP characters: a level-2 Sorceror (31 max HP) at 60%
 -- fled at 18, and a cave bear's worst observed round is 23 damage (two claws)
--- — so he could cross from "fine" to dead in one round. The floor guarantees
--- enough headroom to survive the round in which the flee is decided. 25 covers
--- a cave bear's worst round (23) with a small margin.
+-- — so he could cross from "fine" to dead in one round.
+--
+-- 20, lowered from 25 by request, and the change is a deliberate trade rather
+-- than a refinement. 25 was chosen to cover that 23-damage bear round with a
+-- small margin, so the floor guaranteed surviving the round in which the flee
+-- was decided. 20 no longer does: a bear's worst round kills from here, and the
+-- flee is not instant either — it is refused while the physical cooldown runs,
+-- and has been seen taking 5-7 retries at 2s with the monster still swinging
+-- (logs/session-garbageman-2026-08-15T20-17-58.log, around 20:42-20:47).
+--
+-- What it buys is time, and quite a lot of it. A fresh half-ogre warrior has
+-- ~34 max HP, so the 75% rule gives 25.5 and the old floor bound at 25: it fled
+-- after 9 damage, i.e. after nearly every fight, and the gold-farming loop spent
+-- 8 temple round trips in a single ~28-minute cycle walking w,w / e,e for a
+-- 2-crown heal. At 20 the band between full and fleeing widens from 9 HP to 14,
+-- which should cut those trips substantially.
+--
+-- The bet is that a level-1 character in the first arena meets a cave bear
+-- rarely enough that the trips saved outweigh the deaths risked. If deaths start
+-- showing up in the logs, this is the first number to put back.
+--
 -- Fields on arenaHeal rather than three more top-level locals: main.lua sits a
 -- name or two under Lua's 200-local ceiling for the main chunk, and it is where
 -- they belong anyway.
 arenaHeal.FRACTION = 0.75
-arenaHeal.FLOOR = 25
+arenaHeal.FLOOR = 20
 -- Per-profile overrides of the flee floor. The third arena's monsters hit far
 -- harder than a cave bear, so keep a much larger absolute HP reserve there —
 -- flee before dropping below this regardless of the 75% rule. Profiles absent

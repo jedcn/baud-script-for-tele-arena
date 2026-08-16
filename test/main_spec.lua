@@ -5569,16 +5569,49 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("a lizard", helper.sendCalls[1])
         end)
 
-        -- For a low-HP character the 25 floor kicks in: 75% of 31 is 23, but the
-        -- floor raises the threshold to 25 so a cave bear's worst round (23) can't
-        -- kill from above-threshold. This is the Johnsonite case (31 max HP).
-        it("uses the absolute floor of 25 for a low-HP character", function()
+        -- For a low-HP character the absolute floor kicks in where the 75% rule
+        -- would not: 75% of 31 is 23, and the floor raises the threshold above
+        -- that. This is the Johnsonite case (31 max HP).
+        --
+        -- The floor is 20, lowered from 25 to cut the gold-farming loop's temple
+        -- trips (a 34 HP character fled after 9 damage, 8 round trips in one
+        -- ~28-minute cycle). That trade is deliberate and it is a real one: 25
+        -- was chosen so a cave bear's worst observed round (23) could not kill
+        -- from above the threshold, and 20 no longer guarantees that. Asserted
+        -- against arenaHeal.FLOOR rather than a literal so the intent — "the
+        -- absolute floor overrides the percentage for low-HP characters" —
+        -- survives the number being retuned again.
+        it("uses the absolute floor for a low-HP character", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(24, 31)  -- below floor 25, above 75% (23)
+            -- one below the floor, and above 75% of 31 (23), so only the floor
+            -- can be what triggers the flee
+            setHP(taPackage.arenaHeal.FLOOR - 1, 31)
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        -- Which of the two rules binds depends on max HP, and it is easy to get
+        -- backwards. At 34 max the percentage gives 25 and the floor 20, so the
+        -- percentage wins and lowering the FLOOR alone changes nothing at all
+        -- for such a character. The floor only takes over once maxHp * FRACTION
+        -- falls beneath it. These two pin the 34 HP case, which is what a fresh
+        -- half-ogre warrior in the gold-farming loop actually has.
+        it("uses the percentage when it is higher than the floor", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(24, 34)  -- below the percentage threshold of 25, above the floor
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+        end)
+
+        it("stays in the fight just above the binding threshold", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(26, 34)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
         end)
 
         it("sends next attack after a miss (HP fine)", function()
