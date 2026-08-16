@@ -448,6 +448,44 @@ describe("Tele-Arena triggers", function()
     -- A general facility, not an arena or gold-farming one: any script can read
     -- taPackage.died. Wording from
     -- logs/session-kerhak-2026-08-09T14-48-21.log lines 3243-3246.
+    -- One round of potions, at the start, never refreshed. The farming run is a
+    -- sprint to a single level, not an open-ended grind, so a second round can
+    -- only push the finish line out: re-drinking at t+10 re-imposes a 10-minute
+    -- training taint, and a level earned at t+11 could not be banked until t+20.
+    describe("potion restock during a gold-farming run", function()
+
+        local LAPSED = "An odd tingling sensation washes over you briefly!"
+
+        it("does not head back to the shop", function()
+            helper.simulateAlias("start-gold-farming")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine(LAPSED)
+            assert.is_falsy(taPackage.needsPotions)
+            assert.are_not.equal("potions", taPackage.arenaState)
+        end)
+
+        it("still counts the potion down so training can proceed", function()
+            helper.simulateAlias("start-gold-farming")
+            taPackage.arenaState = "fighting"
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine(LAPSED)
+            assert.are.equal(1, taPackage.arenaPotionsActive)
+            helper.simulateLine(LAPSED)
+            assert.are.equal(0, taPackage.arenaPotionsActive)
+        end)
+
+        -- An ordinary arena run is an open-ended grind and still restocks.
+        it("leaves an ordinary arena run restocking as before", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaPotionsActive = 2
+            setClass("Warrior")
+            helper.simulateLine(LAPSED)
+            assert.is_true(taPackage.needsPotions)
+        end)
+
+    end)
+
     describe("death detection", function()
 
         local KILLED = "As the final blow strikes your body you fall unconscious."
@@ -3970,9 +4008,36 @@ describe("start-gold-farming", function()
                 "s", "sw",
                 "get robes", "equip robes",
                 "get warhammer", "equip warhammer",
-                "ne", "n", "e",
+                -- two moves off the route for a round of stat potions: the shop
+                -- is one "s" below the same plaza the gear is one "sw" below
+                "ne", "s",
+                "buy rowan", "buy hyssop", "drink rowan", "drink hyssop",
+                "n", "n", "e",
                 "rg 1",
             }, helper.runCommandCalls)
+        end)
+
+        -- beginArenaSession zeroes the potion count, so telling the arena about
+        -- the round any earlier would be overwritten -- and it would then walk to
+        -- the guild hall still tainted, be refused, and waste the trip.
+        it("tells the arena about the potions only after rg 1 has started", function()
+            reachAcceptedRoll()
+            -- walk up to, but not through, the rg 1 step
+            for _ = 1, 40 do
+                local w = taPackage.createWalk
+                if not w then break end
+                local nextStep = w.steps[w.index]
+                local cmd = type(nextStep) == "table" and nextStep.cmd or nextStep
+                if cmd == "rg 1" then break end
+                helper.fireTimers(taPackage.arenaStepDelayMs)
+            end
+            -- both potions are already drunk by here...
+            assert.is_true(ranCommand("drink rowan"))
+            assert.is_true(ranCommand("drink hyssop"))
+            -- ...but the arena has not been told, because rg 1 would zero it
+            assert.is_nil(taPackage.arenaPotionsActive)
+            helper.fireTimers(taPackage.arenaStepDelayMs)
+            assert.are.equal(2, taPackage.arenaPotionsActive)
         end)
 
         -- The user's explicit ask, and load-bearing: accepting a roll leaves

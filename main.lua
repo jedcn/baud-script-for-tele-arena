@@ -4194,6 +4194,17 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
             .. " still active) — draining before training.")
         return
     end
+    -- The gold-farming loop drinks exactly one round, at the start, and never
+    -- refreshes. Its arena run is not an open-ended grind but a sprint to a
+    -- single level, so a second round can only ever push the finish line out:
+    -- re-drinking at t+10 re-imposes a 10-minute training taint, and a level
+    -- earned at t+11 could then not be banked until t+20. Restocking would also
+    -- pay for the magic-shop round trip twice.
+    if taPackage.goldFarming then
+        echo("[arena] Potion lapsed (" .. active
+            .. " still active) — gold-farming run, not restocking.")
+        return
+    end
     taPackage.needsPotions = true
     if arenaCanDepartNow() then
         departForShop()
