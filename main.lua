@@ -3702,6 +3702,54 @@ local function exitGameWithRetry()
 end
 taPackage.exitGameWithRetry = exitGameWithRetry
 
+-- =========================================================================
+-- The nightly shutdown
+-- =========================================================================
+--
+-- The BBS goes down every night for an "auto-cleanup", and warns first:
+--
+--     ***
+--     Sorry to interrupt here, but the BBS will be shutting
+--     down in 5 minutes for the nightly "auto-cleanup"
+--     process.  Please finish up and log off... thank you!
+--
+-- repeated at 5, 4, 3, 2 and 1 minutes.
+--
+-- Being cut off mid-game is not free: carried gold does not survive it. On the
+-- night of 2026-08-15 Kerhak was handed 10,617 gold across 13 handovers and
+-- banked 5,500 of it, leaving ~5,100 on his person when the connection dropped
+-- at the last warning -- and it was not there in the morning
+-- (logs/session-kerhak-2026-08-15T23-39-59.log ends at line 1679, mid-warning,
+-- with no exit). Leaving with "x" saves the character properly.
+--
+-- We answer the FIRST warning, five minutes out, because "x" is treated like a
+-- move and gets refused while the physical cooldown runs -- exitGameWithRetry
+-- re-sends every 2s until the game confirms, and five minutes is a comfortable
+-- budget for that. Waiting for the 1-minute warning would not be.
+--
+-- Only the first line is matched: the second carries the countdown ("5 minutes"
+-- / "1 minute") and so changes, while this one is identical every time. Fired
+-- once per session -- the warning repeats five times and the retry loop is
+-- already doing the work.
+--
+-- Not gated on any script being active. A clean exit is right whatever the
+-- character was doing, including nothing.
+createTrigger("^Sorry to interrupt here, but the BBS will be shutting$", function()
+    if taPackage.shutdownExitSent then return end
+    taPackage.shutdownExitSent = true
+    echo("[shutdown] BBS closing for nightly maintenance — stopping everything"
+        .. " and leaving the game (x) so the character is saved.")
+    sendNtfy("Nightly shutdown",
+        "The BBS is closing. Scripts stopped and " ..
+        (taPackage.character.name or "the character") .. " is leaving the game"
+        .. " so nothing carried is lost.")
+    -- Stop first: a walk or a fight still issuing commands fights the exit, and
+    -- whatever it was doing is about to be interrupted anyway. Through the alias
+    -- so a script added later is covered without touching this.
+    if runCommand then runCommand("stop-all-scripts") end
+    exitGameWithRetry()
+end, { type = "regex" })
+
 -- Arena mode's last-resort escape hatch. A wedged navigation walk or an
 -- unserviceable thirst/hunger loop would otherwise grind the character to death
 -- (see something-went-wrong.log). Leaving the game with "x" preserves the

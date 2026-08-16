@@ -493,6 +493,64 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    -- Carried gold does not survive being cut off. On 2026-08-15 Kerhak was
+    -- handed 10,617 gold, banked 5,500, and the ~5,100 still on him when the
+    -- connection dropped at the last warning was gone in the morning.
+    describe("nightly BBS shutdown", function()
+
+        -- First line of the warning block. The second carries the countdown and
+        -- so changes; this one is identical at 5, 4, 3, 2 and 1 minutes.
+        local WARNING = "Sorry to interrupt here, but the BBS will be shutting"
+
+        it("leaves the game", function()
+            helper.simulateLine(WARNING)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("stops every running script first", function()
+            taPackage.arenaState = "fighting"
+            taPackage.killActive = true
+            helper.simulateLine(WARNING)
+            assert.is_nil(taPackage.arenaState)
+            assert.is_falsy(taPackage.killActive)
+        end)
+
+        it("says so in the log and notifies", function()
+            helper.simulateLine(WARNING)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("[shutdown]", 1, true) then said = true end
+            end
+            assert.is_true(said)
+            assert.is_true(#helper.httpRequestCalls > 0)
+        end)
+
+        -- The warning repeats five times; the retry loop is already working.
+        it("acts once per session", function()
+            helper.simulateLine(WARNING)
+            local sent = #helper.sendCalls
+            helper.simulateLine(WARNING)
+            helper.simulateLine(WARNING)
+            assert.are.equal(sent, #helper.sendCalls)
+        end)
+
+        -- "x" is treated like a move and is refused while the physical cooldown
+        -- runs, which is why we answer the 5-minute warning rather than the last
+        -- one: exitGameWithRetry needs room to re-send.
+        it("keeps retrying until the game confirms", function()
+            helper.simulateLine(WARNING)
+            local before = #helper.sendCalls
+            helper.fireTimers(2000)
+            assert.is_true(#helper.sendCalls > before)
+            helper.simulateLine("Exiting Tele-Arena...")
+            local after = #helper.sendCalls
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.are.equal(after, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("death detection", function()
 
         local KILLED = "As the final blow strikes your body you fall unconscious."
