@@ -79,29 +79,39 @@ local CREATE_ANSWERS = {
 -- are aliases and would otherwise go out as literal text, and the bare
 -- directions hit main.lua's movement aliases, which set pendingDirection so the
 -- mapper dead-reckons the walk the same way it would a hand-typed one.
--- The magic-shop detour is two moves off the route we already walk. The gear is
--- staged outside the town gates, one "sw" below the south plaza, and the shop is
--- one "s" below the same plaza -- which follows from ARENA_SHOP["1"].to being
--- { "w", "s", "s" } out of the arena (arena -> north plaza -> south plaza ->
--- magic shop) and the gear walk's own briefs confirming south plaza --sw--> gate.
+-- NO STAT POTIONS HERE, AND THAT IS A MEASURED DECISION -- please read this
+-- before adding them back.
 --
--- The four shop commands are copied from what the arena's own restock sends on
--- arriving there (main.lua, arenaJourneyOnMovement, st == "potions"), so they
--- are known to work in that room.
+-- Rowan and hyssop were tried on 2026-08-15
+-- (logs/session-garbageman-2026-08-15T21-52-26.log). They work, spectacularly,
+-- on the thing they claim to affect: +6 physique and +12 agility took the hit
+-- rate from 37.0% to 63.8%, and the character reached the 1125 XP it needed in
+-- about 7 minutes instead of 21-27.
 --
--- Why potions are worth a detour at all: they add +5 to +20 to physique and
--- agility, which is damage and hit rate -- and hit rate is the binding
--- constraint, at 37% overall and 22.7% against a cave bear in
--- logs/session-garbageman-2026-08-15T19-45-33.log. A round costs ~24 gold
--- against an ~800 gold harvest, about 3%, so it only has to save ~45 seconds of
--- a ~25 minute cycle to pay for itself. The one thing that could cost real time
--- is the 10-minute training taint, and at a 25-minute baseline that floor is
--- nowhere near binding.
+-- And the cycle did not get shorter. It came in at ~26 minutes against a 25-31
+-- minute baseline, and delivered 785 gold against 793-833 without them.
 --
--- `rg 1` carries an `after` hook rather than being followed by another step,
--- because beginArenaSession sets arenaPotionsActive = 0: telling the arena about
--- the potions any earlier would be overwritten, and it would then walk to the
--- guild hall while still tainted, be refused, and waste the trip.
+-- The reason is that the training hall refuses a potion-tainted character, and
+-- the taint lasts far longer than anyone assumed: measured at 22m 24s from a
+-- known drink time (21:54:02 -> tingles at 22:16:26, both potions lapsing in the
+-- same second, so a joint drink is one shared window and halving the dose would
+-- not shorten it). The fight was over at minute 7 and the next 15 minutes were
+-- spent waiting to be allowed to bank the level -- 1071 XP of surplus that dies
+-- with the character.
+--
+-- So the speedup landed on a phase that was not the bottleneck. Gold barely
+-- moved either, because the harvest is the character's STARTING purse; corpses
+-- drop 2-4 gold, so fighting faster cannot earn more, only finish sooner, which
+-- the taint forbids.
+--
+-- Worth revisiting only if the training taint stops being the binding
+-- constraint -- a richer arena a level-1 character could survive, say, where a
+-- 64% hit rate would convert into something. The two-move detour was
+-- "ne" then "s" from the gate to the magic shop, and the commands were
+-- `buy rowan`, `buy hyssop`, `drink rowan`, `drink hyssop`, copied from the
+-- arena's own restock. Note that beginArenaSession zeroes arenaPotionsActive,
+-- so anything drunk before `rg 1` has to be reported to the arena after it
+-- starts, or the first training trip walks to a hall that turns it away.
 local CREATE_STEPS = {
     "re-roll-stop",
     "s",
@@ -110,24 +120,10 @@ local CREATE_STEPS = {
     "equip robes",
     "get warhammer",
     "equip warhammer",
-    "ne",              -- south plaza
-    "s",               -- magic shop
-    "buy rowan",
-    "buy hyssop",
-    "drink rowan",
-    "drink hyssop",
-    "n",               -- south plaza
-    "n",               -- north plaza
-    "e",               -- arena
-    {
-        cmd = "rg 1",
-        after = function()
-            -- Both potions are up. The arena counts them down on the wear-off
-            -- line and refuses to train until the count reaches 0, which is what
-            -- keeps us from walking to a hall that would turn us away.
-            taPackage.arenaPotionsActive = 2
-        end,
-    },
+    "ne",
+    "n",
+    "e",
+    "rg 1",
 }
 
 -- The other end of the run. `rg 1` fights until the character has earned a
@@ -464,11 +460,6 @@ function taPackage.createWalkPump()
     echo("[" .. walk.label .. "] step " .. (walk.index - 1) .. "/" .. #walk.steps
         .. ": " .. cmd)
     runCommand(cmd)
-
-    -- A step may carry work that has to happen right after its command goes out
-    -- and not a moment earlier (see `rg 1` above, which zeroes the potion count
-    -- as it starts).
-    if type(step) == "table" and step.after then step.after() end
 
     if type(step) == "table" and step.await then
         walk.awaiting = step.await

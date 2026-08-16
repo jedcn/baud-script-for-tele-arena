@@ -4194,12 +4194,16 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
             .. " still active) — draining before training.")
         return
     end
-    -- The gold-farming loop drinks exactly one round, at the start, and never
-    -- refreshes. Its arena run is not an open-ended grind but a sprint to a
-    -- single level, so a second round can only ever push the finish line out:
-    -- re-drinking at t+10 re-imposes a 10-minute training taint, and a level
-    -- earned at t+11 could then not be banked until t+20. Restocking would also
-    -- pay for the magic-shop round trip twice.
+    -- A gold-farming run never restocks, whatever put a potion in the character.
+    -- Its arena session is a sprint to one level, not an open-ended grind, so a
+    -- fresh potion can only push the finish line out: the training hall refuses
+    -- a tainted character, and the taint measured 22m 24s
+    -- (logs/session-garbageman-2026-08-15T21-52-26.log) -- comfortably longer
+    -- than the whole fight it would be extending.
+    --
+    -- The loop no longer buys potions at all (see ta_create.lua for why), so
+    -- this now guards the leftovers: a potion drunk by hand, or a session that
+    -- was still carrying a round when the change landed.
     if taPackage.goldFarming then
         echo("[arena] Potion lapsed (" .. active
             .. " still active) — gold-farming run, not restocking.")

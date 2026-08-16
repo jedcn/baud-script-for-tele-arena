@@ -4008,36 +4008,22 @@ describe("start-gold-farming", function()
                 "s", "sw",
                 "get robes", "equip robes",
                 "get warhammer", "equip warhammer",
-                -- two moves off the route for a round of stat potions: the shop
-                -- is one "s" below the same plaza the gear is one "sw" below
-                "ne", "s",
-                "buy rowan", "buy hyssop", "drink rowan", "drink hyssop",
-                "n", "n", "e",
+                "ne", "n", "e",
                 "rg 1",
             }, helper.runCommandCalls)
         end)
 
-        -- beginArenaSession zeroes the potion count, so telling the arena about
-        -- the round any earlier would be overwritten -- and it would then walk to
-        -- the guild hall still tainted, be refused, and waste the trip.
-        it("tells the arena about the potions only after rg 1 has started", function()
+        -- Stat potions were tried and dropped: they took the hit rate from 37%
+        -- to 64% and the fight from ~25 minutes to ~7, and the cycle did not get
+        -- shorter, because the training hall refuses a tainted character for
+        -- 22m 24s. See the note above CREATE_STEPS in ta_create.lua before
+        -- adding them back.
+        it("makes no detour to the magic shop", function()
             reachAcceptedRoll()
-            -- walk up to, but not through, the rg 1 step
-            for _ = 1, 40 do
-                local w = taPackage.createWalk
-                if not w then break end
-                local nextStep = w.steps[w.index]
-                local cmd = type(nextStep) == "table" and nextStep.cmd or nextStep
-                if cmd == "rg 1" then break end
-                helper.fireTimers(taPackage.arenaStepDelayMs)
-            end
-            -- both potions are already drunk by here...
-            assert.is_true(ranCommand("drink rowan"))
-            assert.is_true(ranCommand("drink hyssop"))
-            -- ...but the arena has not been told, because rg 1 would zero it
-            assert.is_nil(taPackage.arenaPotionsActive)
-            helper.fireTimers(taPackage.arenaStepDelayMs)
-            assert.are.equal(2, taPackage.arenaPotionsActive)
+            walkToEnd()
+            assert.is_false(ranCommand("buy rowan"))
+            assert.is_false(ranCommand("buy hyssop"))
+            assert.is_false(ranCommand("drink rowan"))
         end)
 
         -- The user's explicit ask, and load-bearing: accepting a roll leaves
