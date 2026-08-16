@@ -3423,6 +3423,25 @@ local function scheduleArenaXpCheck()
     end, { repeating = false })
 end
 
+-- Re-arm on load if a session is already running.
+--
+-- reloadScript() clears every pending timer (App.tsx calls
+-- timerManager.clearTimers() before re-reading the scripts) while taPackage --
+-- and so arenaState -- survives. This chain only ever re-arms from its own
+-- callback, so a reload mid-session destroys the one pending timer and nothing
+-- ever schedules another: XP polling stops for good, silently, in a session that
+-- otherwise looks healthy. That is exactly what happened after the reload at
+-- line 12186 of logs/session-garbageman-2026-08-15T20-17-58.log -- every later
+-- `st` in that log was typed by hand.
+--
+-- Load-time rather than trigger-driven because there is no line to hang it on:
+-- the symptom is the absence of traffic, not the presence of any. Any
+-- self-rescheduling timer added here later needs the same treatment.
+if taPackage.arenaState then
+    echo("[arena] Script reloaded mid-session — re-arming the XP check.")
+    scheduleArenaXpCheck()
+end
+
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     setExperience(matches[2])
     checkLevelUpNotification(tonumber(matches[2]))
