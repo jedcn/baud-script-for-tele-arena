@@ -3315,6 +3315,9 @@ arenaHeal.FLOOR = 20
 -- flee before dropping below this regardless of the 75% rule. Profiles absent
 -- here use arenaHeal.FLOOR.
 --
+-- The third arena's entry here now only applies when max vitality is unknown:
+-- with a max to band on, the step function below takes over entirely.
+--
 -- 400, lowered from 500: at 500 a character whose max HP is at or below the
 -- floor can never be above it, so it flees on the first tick and the third
 -- arena never gets started at all. 400 is what the current roster can actually
@@ -3325,11 +3328,42 @@ arenaHeal.FLOOR = 20
 -- killing fast enough as a team that the round never comes.
 arenaHeal.FLOOR_BY_PROFILE = { ["3"] = 400 }
 
+-- The third arena no longer uses the percentage-plus-floor rule at all. Its
+-- threshold is a step function of MAX vitality, by request:
+--
+--   under 500 max  -> threshold is max itself, i.e. flee the moment anything
+--                     lands, even for 1 damage. Such a character has no margin
+--                     here: a flame giant's worst observed hit is 380, so two
+--                     rounds kill from full, and the only safe amount of damage
+--                     to absorb is none.
+--   500..600 max   -> flee below 500.
+--   over 600 max   -> flee below 600.
+--
+-- Both upper bands keep a reserve larger than that 380 hit, which the old 400
+-- floor did not. The cost is temple trips, and for the smallest characters it is
+-- a trip per fight — that is the intended trade: they are here to be carried by
+-- a team, not to trade rounds with giants.
+--
+-- Note 600 max falls in the middle band (flee below 500), matching "between 500
+-- and 600" reading inclusively at its top.
+arenaHeal.THIRD_ARENA_LOW_MAX = 500
+arenaHeal.THIRD_ARENA_HIGH_MAX = 600
+function arenaHeal.thirdArenaThreshold(maxHp)
+    if maxHp < arenaHeal.THIRD_ARENA_LOW_MAX then return maxHp end
+    if maxHp <= arenaHeal.THIRD_ARENA_HIGH_MAX then return arenaHeal.THIRD_ARENA_LOW_MAX end
+    return arenaHeal.THIRD_ARENA_HIGH_MAX
+end
+
 -- The HP we must stay above to be in the arena at all. Split out of
 -- checkFleeArena so the question can be asked from outside a fight — see
 -- arenaHeal.isLow.
 function arenaHeal.threshold()
     local maxHp = taPackage.character.vitalityMax
+    -- Max vitality unknown falls through to the floor below, as before: the
+    -- bands are a function of it and have nothing to say without it.
+    if maxHp and taPackage.arenaProfile == "3" then
+        return arenaHeal.thirdArenaThreshold(maxHp)
+    end
     local floor = arenaHeal.FLOOR_BY_PROFILE[taPackage.arenaProfile] or arenaHeal.FLOOR
     return maxHp and math.max(math.floor(maxHp * arenaHeal.FRACTION), floor) or floor
 end

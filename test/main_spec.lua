@@ -6718,7 +6718,9 @@ describe("ring-gong-and-fight-in-arena", function()
 
         -- The live case, from the 2026-08-09 third-arena team fight: a giantess
         -- breathed for 167 while we were walking to the magic shop, so we came
-        -- back at 273/440 against a floor of 400 — and attacked.
+        -- back at 273/440 — and attacked. Under the max-vitality bands a 440 max
+        -- character must be at full health to fight at all, so this is now the
+        -- clearest possible turn-around.
         it("turns around at the third arena's much higher floor", function()
             taPackage.arenaProfile = "3"
             arrivesHome(273, 440, "flame giantess")
@@ -8662,33 +8664,88 @@ describe("ring-gong-and-fight-in-arena 3", function()
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        -- The third arena uses a 400 HP flee floor (its monsters hit far harder).
-        -- At 500 max HP the 75% rule alone would only flee below 375, so these two
-        -- cases isolate the floor: it makes us flee at 390 and stay at 410.
-        it("flees below the 400 HP floor even when above 75% of max", function()
+        -- The third arena's threshold is banded on MAX vitality, not a
+        -- percentage: under 500 max flee on any damage at all; 500-600 max flee
+        -- below 500; over 600 max flee below 600. The percentage rule (75%) and
+        -- the 400 floor are both dead here — every case below picks HP where
+        -- those two would answer differently, so a regression to them fails.
+
+        -- Smallest band: 450 max, so the threshold is 450 and a single point of
+        -- damage puts us under it. 449 is way above both 75% (337) and 400.
+        it("flees on a single point of damage under 500 max HP", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(390, 500)  -- above 75% (375) but under the 400 floor
+            setHP(449, 450)
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fleeing", taPackage.arenaState)
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("does not flee just above the 400 floor", function()
+        it("keeps fighting at full health under 500 max HP", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(410, 500)  -- above both the 400 floor and 75% (375), so no flee
+            setHP(450, 450)
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
         end)
 
-        -- The point of the lowering: at 500 a character whose max HP sits at or
-        -- below the floor could never be above it, so it fled immediately and the
-        -- third arena was unenterable.
-        it("lets a 450 max HP character fight rather than flee on sight", function()
+        -- Middle band: 550 max flees below 500. 499 is above 75% (412) and above
+        -- the old 400 floor, so only the band can trigger this.
+        it("flees below 500 for a 500-600 max HP character", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
-            setHP(450, 450)  -- full health, under the old 500 floor
+            setHP(499, 550)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("keeps fighting at exactly 500 for a 500-600 max HP character", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(500, 550)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- 600 max sits in the middle band, not the high one: it flees below 500,
+        -- so 550 keeps fighting. This is the boundary that is easy to get
+        -- backwards.
+        it("treats exactly 600 max HP as the 500 band", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(550, 600)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- Top band: over 600 max flees below 600. At 800 max the percentage rule
+        -- would have said 600 too, so use 700 max, where 75% is 525 — fleeing at
+        -- 599 can only be the band.
+        it("flees below 600 for a character over 600 max HP", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(599, 700)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("keeps fighting at exactly 600 for a character over 600 max HP", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(600, 700)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- The bands are third-arena only: the first arena still uses 75% and the
+        -- absolute floor, so a 450 max character there fights on at 400.
+        it("leaves the first arena on the percentage rule", function()
+            taPackage.arenaProfile = "1"
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(400, 450)  -- above 75% of 450 (337), so no flee
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
         end)
