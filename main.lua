@@ -3073,6 +3073,28 @@ local function arenaArrivedHome()
     -- which is no longer true; if we immediately walk out again for food, that
     -- is an ordinary full-health errand the roster already handles.
     arenaTeamHeal.announceHealed()
+    -- A level is owed: bank it before starting another fight.
+    --
+    -- Without this, the only place training is ever considered after a kill is
+    -- the post-kill decision point, and that one asks checkFleeArena() FIRST --
+    -- so any kill that left us low enough to flee skips the training check
+    -- entirely. Arriving home from the temple then went straight back to
+    -- combat, and the cycle kill -> flee -> heal -> resume -> ring closed with
+    -- the XP already earned and nothing ever spending it.
+    --
+    -- Rare for a high-level character, which seldom flees. Near-permanent for a
+    -- fresh one: 34 max HP against a flee floor of 25 means fleeing after 9
+    -- damage, i.e. after almost every fight, so the escape hatch (a kill costing
+    -- under 9 HP) essentially never comes up. Watched live at 1194 XP against a
+    -- 1125 threshold, still level 1 and still fighting, in
+    -- logs/session-garbageman-2026-08-15T20-17-58.log.
+    --
+    -- Placed after the hurt check above so we heal first and train on the next
+    -- arrival, and before the errand dispatch so a level outranks a restock or a
+    -- meal. arenaTryTrain itself still refuses while stat potions are active.
+    -- Reached through taPackage because arenaTryTrain is a local defined further
+    -- down the chunk; a field costs no local slot (see CLAUDE.md).
+    if taPackage.arenaTryTrain and taPackage.arenaTryTrain() then return end
     -- Skip a restock while a level is owed: we are deliberately draining the stat
     -- potions so the training hall will accept us (checkTrainingNeeded stays true
     -- until we train). needsPotions is left set so the restock happens later, once
@@ -3245,6 +3267,10 @@ local function arenaTryTrain()
     arenaJourneyStart(nav.toTraining, nav.trainingRoom, nav.arenaRoom)
     return true
 end
+-- Exposed so arenaArrivedHome, defined earlier in this chunk, can call it: a
+-- level owed has to be banked on arriving home too, not only at the post-kill
+-- decision point (see the comment there).
+taPackage.arenaTryTrain = arenaTryTrain
 
 -- Flee at 75% of max HP, but never below an absolute floor. The percentage
 -- alone is unsafe for low-HP characters: a level-2 Sorceror (31 max HP) at 60%
