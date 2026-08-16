@@ -2237,3 +2237,82 @@ createTrigger("^While searching the area, you notice (.+), but you can't carry i
     sweep.uncarried[#sweep.uncarried + 1] = item
     navEcho("Couldn't carry the " .. item .. " — pack is full. Clearing the room first.")
 end, { type = "regex" })
+
+-- =========================================================================
+-- Monsters that walk out of a sweep
+-- =========================================================================
+--
+-- A monster that thinks it is losing runs, and the key we came for runs with
+-- it. On 2026-08-16 the platinum errand cleared its room, found nothing, and
+-- walked all the way back to a still-locked door; the ogre mage holding the key
+-- had left to the northeast forty lines earlier (logs/session-pelayo-2026-08-
+-- 16T09-21-04.log, lines 815-882). The room brief can't show that -- by the
+-- time it says "There is nobody here." the monster is a room away -- so the
+-- only record of where the key went is the departure line as it goes past.
+--
+-- Note that a departure is not necessarily a flight: monsters wander. Either
+-- way the reasoning is the same, so we don't try to tell them apart.
+--
+-- The long word the game prints, mapped to the move that follows it and the
+-- move that comes back. main.lua's REVERSE_DIR and dirShort would each do half
+-- of this, but they are locals in another chunk and invisible here. Vertical
+-- departures read "has just gone upward.", never "to the up", which is why
+-- those two words sit in the same table as the compass ones.
+local NAV_CHASE_DIR = {
+    north     = { "n",  "s"  }, south     = { "s",  "n"  },
+    east      = { "e",  "w"  }, west      = { "w",  "e"  },
+    northeast = { "ne", "sw" }, southwest = { "sw", "ne" },
+    northwest = { "nw", "se" }, southeast = { "se", "nw" },
+    upward    = { "u",  "d"  }, downward  = { "d",  "u"  },
+}
+
+-- Remember which way something left, but only during an errand's own sweep --
+-- one that named what it came for. A kill-all you ran by hand is nobody's
+-- business but yours, the same rule the full-pack handler above works to, and
+-- a sweep with nothing to find has nothing to chase. The list lives on
+-- navSweep, which navStartSweep rebuilds per step, so it can never go stale.
+--
+-- Players trip the same wording ("Tojolias has just gone to the north."), and
+-- "^The " does not rule them out on its own -- a player may be called "The
+-- Ripper". Monster names are lowercase and player names are not, so one
+-- uppercase letter anywhere in the name settles it.
+local function navNoteDeparture(name, word)
+    local sweep = taPackage.navSweep
+    if not (sweep and sweep.untilFound) then return end
+    if name:match("%u") then return end
+    local dir = NAV_CHASE_DIR[word]
+    if not dir then return end
+    sweep.gone = sweep.gone or {}
+    sweep.gone[#sweep.gone + 1] = { monster = name, out = dir[1], back = dir[2] }
+end
+
+-- It came back, so it is in the room again and the sweep will get to it. Drop
+-- every departure under that name: the ogre mage in the log left to the south,
+-- returned, and was still there to be killed, and chasing south afterwards
+-- would have walked away from the room the key was actually in.
+local function navNoteArrival(name)
+    local sweep = taPackage.navSweep
+    if not (sweep and sweep.gone) then return end
+    for i = #sweep.gone, 1, -1 do
+        if sweep.gone[i].monster == name then table.remove(sweep.gone, i) end
+    end
+end
+
+-- One trigger per wording rather than an alternation: the test harness turns
+-- these regexes into Lua patterns, which have no `|`, so an alternation would
+-- match nothing in the tests while working in play.
+createTrigger("^The (.+) has just gone to the (.+)\\.$",
+    function(matches) navNoteDeparture(matches[2], matches[3]) end, { type = "regex" })
+createTrigger("^The (.+) has just gone upward\\.$",
+    function(matches) navNoteDeparture(matches[2], "upward") end, { type = "regex" })
+createTrigger("^The (.+) has just gone downward\\.$",
+    function(matches) navNoteDeparture(matches[2], "downward") end, { type = "regex" })
+
+-- Arrivals name the monster with its article ("An ogre mage has just arrived"),
+-- and the vertical pair drops the "the": "from above", "from below".
+createTrigger("^An? (.+) has just arrived from the (.+)\\.$",
+    function(matches) navNoteArrival(matches[2]) end, { type = "regex" })
+createTrigger("^An? (.+) has just arrived from above\\.$",
+    function(matches) navNoteArrival(matches[2]) end, { type = "regex" })
+createTrigger("^An? (.+) has just arrived from below\\.$",
+    function(matches) navNoteArrival(matches[2]) end, { type = "regex" })

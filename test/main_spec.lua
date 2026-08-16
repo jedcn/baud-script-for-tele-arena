@@ -13389,6 +13389,82 @@ describe("navigate-to", function()
                 assert.is_true(taPackage.killAllActive)
             end)
 
+            -- A monster that runs takes the key with it, and the room brief
+            -- can't show that: by the time it says "nobody here" the monster is
+            -- a room away. The departure line as it goes past is the only
+            -- record of where the key went, so the sweep keeps a list.
+            describe("noting a monster that walks out", function()
+
+                local function gone()
+                    return taPackage.navSweep and taPackage.navSweep.gone
+                end
+
+                it("records which way it went, and the way back", function()
+                    sweepingFor()
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    assert.are.equal(1, #gone())
+                    assert.are.equal("ogre mage", gone()[1].monster)
+                    assert.are.equal("ne", gone()[1].out)
+                    assert.are.equal("sw", gone()[1].back)
+                end)
+
+                -- "has just gone upward.", never "to the up".
+                it("handles the vertical wording", function()
+                    sweepingFor()
+                    helper.simulateLine("The ogre mage has just gone downward.")
+                    assert.are.equal("d", gone()[1].out)
+                    assert.are.equal("u", gone()[1].back)
+                end)
+
+                -- The ogre mage in the live log left south, came back, and was
+                -- still there to be killed. Chasing south afterwards would have
+                -- walked away from the room the key was actually in.
+                it("forgets a departure once that monster comes back", function()
+                    sweepingFor()
+                    helper.simulateLine("The ogre mage has just gone to the south.")
+                    helper.simulateLine("An ogre mage has just arrived from the south.")
+                    assert.are.equal(0, #gone())
+                end)
+
+                it("forgets it however it comes back", function()
+                    sweepingFor()
+                    helper.simulateLine("The ogre mage has just gone downward.")
+                    helper.simulateLine("An ogre mage has just arrived from above.")
+                    assert.are.equal(0, #gone())
+                end)
+
+                -- Players trip the same wording, and "^The " alone doesn't rule
+                -- them out — a player may be called "The Ripper". Monster names
+                -- are lowercase; player names are not.
+                it("ignores a player walking out", function()
+                    sweepingFor()
+                    helper.simulateLine("Tojolias has just gone to the north.")
+                    helper.simulateLine("The Ripper has just gone to the north.")
+                    assert.is_falsy(gone())
+                end)
+
+                -- A sweep with nothing to find has nothing to chase.
+                it("records nothing for a sweep that named no want", function()
+                    route({ steps = { "sw", "d", { killAll = true }, "se" } })
+                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    answerProbe(274)
+                    brief("path")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    assert.is_falsy(gone())
+                end)
+
+                -- A kill-all run by hand is nobody's business but the user's.
+                it("leaves a hand-run sweep alone", function()
+                    taPackage.killAllActive = true            -- as `kill-all` would
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    assert.is_nil(taPackage.navSweep)
+                end)
+
+            end)
+
         end)
 
         it("announces a key found while searching a corpse", function()
