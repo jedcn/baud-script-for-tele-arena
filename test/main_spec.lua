@@ -4282,7 +4282,11 @@ describe("start-gold-farming", function()
         -- selection" line an ordinary login sees. These are the real bytes with
         -- ANSI stripped (what triggers are handed), from the archived
         -- session-garbageman-2026-08-15T07-30-44.log line 151.
-        local COMMAND_PROMPT = "■ 07:30:00 ■ 15-AUG-26 ■ Command ■ : "
+        -- Exactly what a trigger is handed, trailing escape and all. baud strips
+        -- SGR colour codes only (ANSIParser.ts:312), so the BBS's closing
+        -- cursor-left survives -- which is what made the first live run of the
+        -- loop sit at the BBS forever with an end-of-line anchor.
+        local COMMAND_PROMPT = "■ 20:11:28 ■ 15-AUG-26 ■ Command ■ : \27[1D"
 
         it("re-arms the creation prompts once the death is confirmed", function()
             helper.simulateAlias("start-gold-farming")

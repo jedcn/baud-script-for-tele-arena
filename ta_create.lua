@@ -594,17 +594,33 @@ end, { type = "regex" })
 --
 --     ■ 07:30:00 ■ 15-AUG-26 ■ Command ■ :
 --
--- (checked against the real bytes in the archived
--- session-garbageman-2026-08-15T07-30-44.log, line 151). Keying off "Command"
--- and the trailing colon skips the clock and date, which change every time, and
--- the box-drawing characters, which are the part most likely to differ between
--- terminal profiles.
+-- Keying off "Command" and the colon skips the clock and date, which change
+-- every time, and the box-drawing characters, which are the part most likely to
+-- differ between terminal profiles.
+--
+-- NOT anchored at end of line, and that is the whole point. baud's ANSI strip
+-- removes SGR colour codes ONLY:
+--
+--     text.replace(/\x1B\[[0-9;]*m/g, '')     -- ANSIParser.ts:312
+--
+-- The BBS ends this prompt with a cursor-left, "\x1B[1D", which is a CSI
+-- sequence but not an SGR one, so it survives into the text triggers are handed:
+--
+--     "█ 20:11:28 █ 15-AUG-26 █ Command █ : \x1B[1D"
+--
+-- A "\\s*$" anchor therefore never matches, and the first live run of the loop
+-- sat at the BBS forever with the character already dead
+-- (logs/session-garbageman-2026-08-15T19-45-33.log, line 4084). The earlier
+-- "checked against the real bytes" was checked against a hand-rolled strip that
+-- removed every CSI sequence, which is not what baud does -- so verify against
+-- an SGR-only strip, or the log line itself, never a tidied copy.
 --
 -- Gated on createRestarting, which the trigger above sets and this one clears,
 -- so it answers once per death and is inert the rest of the time -- including
 -- during the ordinary login, where main.lua's own menu answer already handles
--- this and must not be doubled up on.
-createTrigger("Command .+ :\\s*$", function()
+-- this and must not be doubled up on. That gate is also what makes the loose,
+-- unanchored pattern safe.
+createTrigger("Command .+ :", function()
     if not taPackage.createRestarting then return end
     taPackage.createRestarting = nil
     send("5")
