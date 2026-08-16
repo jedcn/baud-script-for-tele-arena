@@ -12,6 +12,13 @@ local function tableContains(list, value)
     return false
 end
 
+-- Was `text` run through runCommand or sent? Handy where a command may take
+-- either path (send for a plain game command, runCommand for an alias).
+local function ranCommandGlobal(text)
+    return tableContains(helper.runCommandCalls, text)
+        or tableContains(helper.sendCalls, text)
+end
+
 describe("Warrior XP table", function()
 
     before_each(function()
@@ -4319,6 +4326,54 @@ describe("start-gold-farming", function()
             assert.is_false(taPackage.onArenaArrivedHome())
         end)
 
+        -- Gold has weight, so a character that only ever receives it fills up.
+        -- Seen live: 13 handovers, 1323/1450 encumbrance, then a refusal.
+        describe("the recipient is too full to accept", function()
+
+            local FULL = "Sorry, Kerhak can't carry that much more gold."
+
+            local function handoverRefused()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                walkToEnd()
+                helper.simulateLine("You are carrying 822 gold crowns.")
+                helper.simulateLine(FULL)
+            end
+
+            it("stops at the refusal", function()
+                handoverRefused()
+                assert.is_nil(taPackage.createWalk)
+                assert.is_false(taPackage.createCharacterRunning())
+            end)
+
+            -- Last time this happened the walk carried on and the gear was on
+            -- the floor before anything noticed, six steps later.
+            it("keeps the gear on rather than dropping it", function()
+                handoverRefused()
+                helper.fireTimers()
+                helper.fireTimers()
+                assert.is_false(ranCommand("drop robes"))
+                assert.is_false(ranCommand("drop warhammer"))
+                assert.is_false(ranCommand("suicide"))
+            end)
+
+            it("names who is full, and notifies", function()
+                handoverRefused()
+                local said = false
+                for _, text in ipairs(helper.echoCalls) do
+                    if text and text:find("STOPPED", 1, true)
+                        and text:find("Kerhak", 1, true) then said = true end
+                end
+                assert.is_true(said)
+                assert.is_true(#helper.httpRequestCalls > 0)
+            end)
+
+            it("is inert outside a cash-out walk", function()
+                assert.has_no.errors(function() helper.simulateLine(FULL) end)
+            end)
+
+        end)
+
         -- Kerhak is the whole point: the gold has to end up somewhere that
         -- survives this character being replaced. No Kerhak, no run.
         describe("nobody there to take the gold", function()
@@ -4608,6 +4663,98 @@ describe("start-gold-farming", function()
             end)
         end)
 
+    end)
+
+end)
+
+-- Gold has weight. Overnight on 2026-08-16 the receiving character took 13
+-- gifts totalling 10,617 gold, hit 1323/1450 encumbrance, and the next handover
+-- was refused with "Sorry, Kerhak can't carry that much more gold." -- stopping
+-- the farm with 822 gold stranded.
+describe("start-banking", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local RECEIVED = "Garbageman just gave you 817 gold coins."
+
+    local function walkToEnd()
+        for _ = 1, 20 do
+            if not taPackage.createWalk then break end
+            if taPackage.createWalk.awaiting then break end
+            helper.fireTimers(taPackage.arenaStepDelayMs)
+        end
+    end
+
+    it("does nothing until it is armed", function()
+        helper.simulateLine(RECEIVED)
+        assert.is_nil(taPackage.createWalk)
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("walks to the vaults when gold arrives", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        assert.are.same({ "sw", "n", "d", "i" }, helper.runCommandCalls)
+    end)
+
+    -- Deposit everything carried, not just what arrived: the point is to shed
+    -- weight, and gold already in hand weighs the same as the new gold.
+    it("deposits everything it is carrying, then returns", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 10617 gold crowns.")
+        local deposited = false
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "deposit 10617" then deposited = true end
+        end
+        assert.is_true(deposited)
+        walkToEnd()
+        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+    end)
+
+    it("skips the deposit when carrying nothing, and still walks back", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 0 gold crowns.")
+        walkToEnd()
+        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+    end)
+
+    -- A second handover mid-trip must not restart the walk from step 1, which
+    -- would then be walked from the wrong room.
+    it("ignores a second handover while already out", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        helper.fireTimers(taPackage.arenaStepDelayMs)
+        local before = #helper.runCommandCalls
+        helper.simulateLine("Garbageman just gave you 200 gold coins.")
+        assert.are.equal(before, #helper.runCommandCalls)
+    end)
+
+    -- The two chunks share one paced walker, so each must answer only its own
+    -- await token or they steal each other's inventory reply.
+    it("does not consume the farming loop's inventory reply", function()
+        helper.simulateAlias("start-banking")
+        taPackage.createWalk = { steps = { "x" }, index = 1, label = "cash-out",
+                                 awaiting = "gold" }
+        helper.simulateLine("You are carrying 500 gold crowns.")
+        -- the cash-out's own handler took it, not banking's
+        assert.is_false(ranCommandGlobal("deposit 500"))
+    end)
+
+    it("stop-banking and stop-all-scripts both halt it", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateAlias("stop-banking")
+        assert.is_false(taPackage.bankingRunning())
+        helper.simulateAlias("start-banking")
+        helper.simulateAlias("stop-all-scripts")
+        assert.is_false(taPackage.bankingRunning())
     end)
 
 end)

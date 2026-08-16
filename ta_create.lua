@@ -209,6 +209,7 @@ local function createWalkStop()
     taPackage.createWalk = nil
     taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
 end
+taPackage.stopPacedWalk = createWalkStop
 
 -- Shared teardown, so `stop-gold-farming` and `stop-all-scripts` disarm the
 -- same state. Also clears the pending re-roll handoff (a stop between "Entering
@@ -431,6 +432,12 @@ local function createWalkSchedule(delay)
     end, { repeating = false })
 end
 
+-- For a chunk that parked a walk on its own `await` token and has dealt with the
+-- reply: carry on at the normal pace.
+function taPackage.resumePacedWalk()
+    createWalkSchedule(CREATE_STEP_DELAY_MS)
+end
+
 -- One step, then pace the next. Driven by the clock rather than by arrival
 -- briefs: these lists are half non-movement (a `get` prints no room line), so
 -- there is no single event that means "that one landed" for every step in them.
@@ -482,11 +489,18 @@ end
 
 -- Start a walk. Replaces whatever was running; the generation bump makes the
 -- old one's in-flight timer inert.
+-- Exposed for other chunks: a paced step list with trip/refusal recovery and an
+-- optional park-on-a-reply step is general machinery, not a creation detail.
+-- ta_bank.lua walks Kerhak to the vaults with it. Only one walk runs at a time
+-- (a character is in one place), so a single taPackage.createWalk is enough --
+-- but a step that parks must use its own `await` token, since each file only
+-- answers its own (see the inventory trigger below).
 local function createWalkStart(steps, label, doneMsg)
     taPackage.createWalk = { steps = steps, index = 1, label = label, doneMsg = doneMsg }
     taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
     taPackage.createWalkPump()
 end
+taPackage.startPacedWalk = createWalkStart
 
 -- The re-roll has accepted a set of stats. main.lua calls this from the
 -- Vitality trigger's accepted branch if it is defined; nothing else does.
@@ -544,7 +558,10 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     local walk = taPackage.createWalk
     if not walk then return end
     local awaiting = walk.awaiting
-    if not awaiting then return end
+    -- Only the two tokens this file's own steps use. Another script sharing the
+    -- paced walker parks on its own token and handles its own reply, so being
+    -- strict here is what keeps them from stealing each other's inventory line.
+    if not (awaiting == "gold" or awaiting == "zero-gold") then return end
     walk.awaiting = nil
     local amount = tonumber(matches[2]) or 0
 
@@ -672,6 +689,32 @@ createTrigger("Command .+ :", function()
     if not taPackage.createRestarting then return end
     taPackage.createRestarting = nil
     send("5")
+end, { type = "regex" })
+
+-- The recipient is full. Gold has weight, and a character that only ever
+-- receives it runs out of room: overnight on 2026-08-16 Kerhak reached 1323/1450
+-- encumbrance after 13 handovers and refused the fourteenth
+-- (logs/session-garbageman-2026-08-16T02-29-07.log line 32560).
+--
+-- Stop here rather than walking on. The zero-gold gate before the suicide caught
+-- this last time and saved the 822 gold, but only at the end of the walk -- by
+-- which point the gear was already on the floor and the failure was six steps
+-- old. Stopping at the refusal itself keeps the character dressed and standing
+-- where the problem is, and says plainly what to fix.
+--
+-- ta_bank.lua is the actual answer to this (the receiver deposits at the vaults
+-- so it never fills up); this remains the backstop for when that is not running.
+createTrigger("^Sorry, (\\S+) can't carry that much more gold\\.$", function(matches)
+    local walk = taPackage.createWalk
+    if not (walk and walk.label == "cash-out") then return end
+    local who = matches[2]
+    stopCreateCharacter()
+    echo("[cash-out] STOPPED — " .. who .. " cannot carry any more gold. Still"
+        .. " carrying the takings and still wearing the gear. Have " .. who
+        .. " bank what they hold (start-banking), then restart.")
+    sendNtfy("Gold farming stopped",
+        who .. " is too encumbered to accept the handover. Nothing was lost --"
+        .. " the character is parked with its gold and gear.")
 end, { type = "regex" })
 
 createTrigger("^Sorry, you don't see \"(.+)\" nearby\\.$", function(matches)

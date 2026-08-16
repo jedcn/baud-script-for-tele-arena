@@ -5143,6 +5143,15 @@ dofile(scriptDir .. "ta_nav.lua")
 -- it defines.
 dofile(scriptDir .. "ta_create.lua")
 
+-- =========================================================================
+-- Banking
+-- =========================================================================
+--
+-- The other end of the farm: the character receiving the gold has to put it
+-- somewhere, or it eventually cannot receive any more. Loaded after
+-- ta_create.lua because it borrows that chunk's paced walker.
+dofile(scriptDir .. "ta_bank.lua")
+
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear
 -- state). We check each script's "running" flag first so we can report, per
@@ -5159,6 +5168,7 @@ createAlias("^stop-all-scripts$", function()
         { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
         { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
+        { name = "banking",               running = taPackage.bankingRunning(),       stop = taPackage.stopBanking },
     }
     for _, s in ipairs(scripts) do
         if s.running then
