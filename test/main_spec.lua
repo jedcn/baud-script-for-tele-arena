@@ -13465,6 +13465,145 @@ describe("navigate-to", function()
 
             end)
 
+            -- Cleared the room, no key, and something walked out mid-fight: it
+            -- has the key. Follow it, clear that room, come home. The chase is
+            -- three ordinary steps spliced in after the sweep step, so the
+            -- errand's own next step still follows once we're back.
+            --
+            -- Directions here are all distinct from the route's own so `sent`
+            -- can tell a chase leg from a step of the errand.
+            describe("chasing a monster that walked off with the key", function()
+
+                local CHASE = { "w", "d", { killAll = true, untilFound = "platinum key" }, "e" }
+
+                local function chasing()
+                    route({ steps = CHASE })
+                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    answerProbe(274)
+                    brief("path")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                end
+
+                -- Walk the chase leg and let the chased room's sweep start.
+                local function intoTheChaseRoom()
+                    chasing()
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    helper.simulateLine("There is nobody here.")   -- clear, and no key
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- the chase leg
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- the chased room's sweep
+                end
+
+                -- The live sequence: fled south, came back, fled northeast and
+                -- stayed gone. Northeast is the one worth walking.
+                it("follows the departure nobody saw come back", function()
+                    chasing()
+                    helper.simulateLine("The ogre mage has just gone to the south.")
+                    helper.simulateLine("An ogre mage has just arrived from the south.")
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    helper.simulateLine("There is nobody here.")
+                    assert.is_truthy(lastEchoes():find("the ogre mage left ne before it died", 1, true))
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("ne"))
+                    assert.are.equal(0, sent("s"))    -- not the one it came back from
+                    assert.are.equal(0, sent("e"))    -- the errand's own next step waits
+                end)
+
+                it("clears the chased room for the same thing", function()
+                    intoTheChaseRoom()
+                    assert.is_truthy(lastEchoes():find("Clearing the room until I get a platinum key", 1, true))
+                    assert.is_true(taPackage.killAllActive)
+                end)
+
+                it("stops the chased room the moment the key turns up", function()
+                    intoTheChaseRoom()
+                    helper.simulateLine("While searching the area, you notice a platinum key, which you add to your possessions.")
+                    assert.is_truthy(lastEchoes():find("leaving the rest of the room", 1, true))
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("sw"))   -- straight back the way we came
+                end)
+
+                -- A chase that finds nothing is not a new way for a run to
+                -- stop: it walks home and lets the errand finish, and the door
+                -- probe reports the locked door as it always did.
+                it("walks back and carries on when the chase finds nothing", function()
+                    intoTheChaseRoom()
+                    helper.simulateLine("There is nobody here.")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("sw"))
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("e"))    -- the errand's own next step, at last
+                    brief("town sewers")
+                    assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+                end)
+
+                it("does not chase a monster that came back", function()
+                    chasing()
+                    helper.simulateLine("The ogre mage has just gone to the south.")
+                    helper.simulateLine("An ogre mage has just arrived from the south.")
+                    helper.simulateLine("There is nobody here.")
+                    assert.is_truthy(lastEchoes():find("Room cleared.", 1, true))
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("e"))
+                    assert.are.equal(0, sent("s"))
+                end)
+
+                it("does not chase when nothing walked out", function()
+                    chasing()
+                    helper.simulateLine("There is nobody here.")
+                    assert.is_truthy(lastEchoes():find("Room cleared.", 1, true))
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("e"))
+                end)
+
+                -- Two chases is two rooms off the route, which is as far as one
+                -- runaway gets to drag us. The return legs unwind on their own:
+                -- a nested chase splices ahead of the outer one's way home.
+                it("follows a second flight, then lets the third go", function()
+                    intoTheChaseRoom()
+                    helper.simulateLine("The ogre mage has just gone to the north.")
+                    helper.simulateLine("There is nobody here.")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(1, sent("n"))                 -- chased again
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    helper.simulateLine("The ogre mage has just gone to the northwest.")
+                    helper.simulateLine("There is nobody here.")
+                    assert.is_truthy(lastEchoes():find("2 rooms off the route already", 1, true))
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                    assert.are.equal(0, sent("nw"))                -- not a third time
+                    assert.are.equal(1, sent("s"))                 -- heads home instead
+                end)
+
+                -- The cap is per errand sweep, not per walk: a route that
+                -- clears two rooms gets two chases for each of them.
+                it("gives each errand sweep its own budget", function()
+                    route({ steps = { "w", { killAll = true, untilFound = "platinum key" }, "d",
+                                      { killAll = true, untilFound = "platinum key" }, "e" } })
+                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    answerProbe(274)
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- first sweep
+                    helper.simulateLine("The ogre mage has just gone to the northeast.")
+                    helper.simulateLine("There is nobody here.")
+                    assert.are.equal(1, taPackage.navigate.chases)
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- the chase leg
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- the chased room's sweep
+                    helper.simulateLine("There is nobody here.")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- home
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- "d"
+                    brief("town sewers")
+                    helper.fireTimers(taPackage.navStepDelayMs)    -- second sweep
+                    assert.are.equal(0, taPackage.navigate.chases)
+                end)
+
+            end)
+
         end)
 
         it("announces a key found while searching a corpse", function()

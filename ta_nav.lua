@@ -1473,7 +1473,12 @@ navStartSweep = function()
     end
     -- `untilFound` is what the errand actually came for. With it, the sweep is
     -- over the moment that thing turns up; without it, the room gets cleared.
-    local want = j.steps[j.index].untilFound
+    local step = j.steps[j.index]
+    local want = step.untilFound
+    -- Each errand sweep gets its own chase budget. A sweep spliced in BY a
+    -- chase carries the budget on instead, which is what caps how far one
+    -- runaway can drag us (see navChaseAfterSweep).
+    if not step.chase then j.chases = 0 end
     navEcho(want and ("Clearing the room until I get "
                       .. (want:match("^[aeiou]") and "an " or "a ") .. want .. ".")
                   or "Clearing the room with kill-all.")
@@ -1500,6 +1505,58 @@ local function navSweepGotWhatItCameFor(item)
     navAdvance()
 end
 
+-- How many rooms a runaway may drag us off the route. A second chase can only
+-- ever be a nested one -- the room we started from has finished its sweep by
+-- the time the first chase walks back, so nothing there can start another --
+-- which is why counting chases per errand is the same thing as capping the
+-- depth, and needs no index arithmetic to unwind.
+local NAV_CHASE_MAX = 2
+
+-- The room is clear and the errand's item never turned up, but something walked
+-- out mid-fight and never came back: it is carrying what we came for. Follow
+-- it, clear that room for the same thing, and come home.
+--
+-- The chase is three ORDINARY steps spliced in after this one, exactly as a
+-- locked gate splices its key errand (see the locked-door trigger below):
+--
+--     "ne", { killAll = true, untilFound = "platinum key", chase = true }, "sw"
+--
+-- so nothing new has to understand arrival briefs, winded retries, trips,
+-- combat blocks or a full pack -- every handler already services these shapes,
+-- and they all read #j.steps afresh. Splicing after rather than before is what
+-- leaves the errand's own next step to follow once we are back.
+--
+-- Two things it deliberately does not do. It doesn't second-guess an exit the
+-- monster used and we can't: the no-exit handler ends the walk with a clear
+-- message, which is the right answer. And a chase that finds nothing just
+-- walks home and lets the errand finish, so the door probe reports the locked
+-- door as it always did -- no new way for a run to stop.
+local function navChaseAfterSweep(sweep)
+    local j = taPackage.navigate
+    if not j then return false end
+    -- The most recent departure nobody has seen come back. In the live log that
+    -- is the northeast one, not the south one the mage returned from.
+    local hunt = sweep.gone and sweep.gone[#sweep.gone]
+    if not hunt then return false end
+    local n = (j.chases or 0) + 1
+    if n > NAV_CHASE_MAX then
+        navEcho("The " .. hunt.monster .. " went " .. hunt.out .. " with the "
+            .. sweep.untilFound .. ", but that's " .. NAV_CHASE_MAX
+            .. " rooms off the route already — letting it go.")
+        return false
+    end
+    j.chases = n
+    local chase = { hunt.out,
+                    { killAll = true, untilFound = sweep.untilFound, chase = true },
+                    hunt.back }
+    for k = #chase, 1, -1 do table.insert(j.steps, j.index + 1, chase[k]) end
+    navEcho("Room cleared, but no " .. sweep.untilFound .. " — the " .. hunt.monster
+        .. " left " .. hunt.out .. " before it died, so it has what we came for."
+        .. " Following it and coming back " .. hunt.back .. ".")
+    navAdvance()
+    return true
+end
+
 -- The room is clear, so the sweep step is done. Report what it yielded and walk
 -- on -- unless something had to be left behind, which is the one outcome a run
 -- should not carry on from: whatever we came for may be lying on that floor.
@@ -1515,6 +1572,9 @@ local function navOnSweepDone()
         navEcho("  Stopped " .. dest .. ". Drop or stow something, pick it up, then carry on.")
         return
     end
+    -- Cleared without what we came for is not the end of the errand if the
+    -- thing walked out on legs.
+    if sweep.untilFound and navChaseAfterSweep(sweep) then return end
     navEcho("Room cleared.")
     navAdvance()
 end
