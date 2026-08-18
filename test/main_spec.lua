@@ -12948,6 +12948,139 @@ describe("navigate-to", function()
 
     end)
 
+    -- The BBS hangs up 56 steps into a 310-step walk. The trace says which step
+    -- that was, and re-walking the first 55 by hand to get back to it is half an
+    -- hour. `from-step N` picks the walk up there instead.
+    describe("resuming a walk in the middle", function()
+
+        local LONG = { "sw", "d", "se", "e", "n" }
+
+        local function resumeAt(n, from)
+            route({ steps = LONG })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step " .. n)
+            answerProbe(from or 274)
+        end
+
+        it("sends the step it was told to, not the first one", function()
+            resumeAt(3)
+            assert.are.equal(0, sent("sw"))   -- steps 1 and 2 are behind us
+            assert.are.equal(0, sent("d"))
+            assert.are.equal(1, sent("se"))
+        end)
+
+        it("carries on from there to the end", function()
+            resumeAt(3)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("e"))
+            helper.simulateLine("You're in a wide sewer tunnel.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("n"))
+        end)
+
+        it("counts what is left, not the whole route", function()
+            resumeAt(3)
+            assert.is_truthy(lastEchoes():find("from step 3 — 3 of its 5 steps left", 1, true))
+        end)
+
+        -- The start check is the one thing a resume cannot have: we are in the
+        -- middle of the route, so the room it would check for is the room we are
+        -- guaranteed NOT to be in.
+        it("walks from a room that isn't the route's start", function()
+            resumeAt(3, 1)   -- first-town's north plaza; the route starts in second-town's
+            assert.are.equal(1, sent("se"))
+            local out = lastEchoes()
+            assert.is_falsy(out:find("I don't know how to get there from here.", 1, true))
+            assert.is_truthy(out:find("taking your word", 1, true))
+            assert.is_truthy(out:find("north plaza", 1, true))   -- says where we actually are
+        end)
+
+        -- Still probes, though: a resume that never gets an answer is a resume
+        -- that doesn't know whether the connection is back.
+        it("still waits for the room probe before moving", function()
+            route({ steps = LONG })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3")
+            assert.are.equal(1, sent("ex"))
+            assert.are.equal(0, sent("se"))
+        end)
+
+        it("still checks what we're carrying", function()
+            route({ steps = LONG, requires = "coil of rope" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3")
+            answerProbe(274)
+            assert.are.equal(1, sent("i"))
+            assert.are.equal(0, sent("se"))
+            helper.simulateLine("You are carrying a coil of rope.")
+            assert.are.equal(1, sent("se"))
+        end)
+
+        it("refuses a step number the route doesn't have", function()
+            resumeAt(9)
+            assert.are.equal(0, sent("se"))
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("is 5 steps, so there's no step 9", 1, true))
+        end)
+
+        it("refuses step zero", function()
+            resumeAt(0)
+            assert.is_truthy(lastEchoes():find("no step 0", 1, true))
+        end)
+
+        -- Two words where every other flag is one, and it can be given in any
+        -- order alongside them.
+        it("takes from-step alongside the other flags", function()
+            route({ steps = LONG })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3 quiet")
+            answerProbe(274)
+            assert.are.equal(1, sent("se"))
+            assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))
+        end)
+
+        it("takes it before the other flags too", function()
+            route({ steps = LONG })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 quiet from-step 3")
+            answerProbe(274)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        it("still knows the destination when from-step is given", function()
+            resumeAt(3)
+            assert.is_falsy(lastEchoes():find("I don't know a route", 1, true))
+        end)
+
+        -- A locked door splices its key errand into the walk, which renumbers
+        -- every step after it -- so on a gated route the trace's number is only
+        -- an index into THIS list if no errand had gone in yet.
+        it("warns that a gated route's numbering can have shifted", function()
+            helper.simulateAlias("navigate-to town-3/part-1 from-step 20")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("renumbers every step after them", 1, true))
+            assert.is_truthy(lastEchoes():find("'/22'", 1, true))
+        end)
+
+        it("says nothing about renumbering on a route with no doors", function()
+            resumeAt(3)
+            assert.is_falsy(lastEchoes():find("renumbers", 1, true))
+        end)
+
+        -- The real case, end to end: the 310-step chasm-is-clear walk cut off at
+        -- step 56, picked up from the room it stopped in.
+        it("resumes the third-town chain at the step the trace named", function()
+            helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear from-step 56")
+            answerProbe(426)
+            helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear from step 56"
+                .. " — 255 of its 310 steps left", 1, true))
+            local flat = taPackage.navRouteSteps(
+                taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
+            assert.are.equal(1, sent(flat[56]))
+            -- index counts steps started, and step 56 has now been sent.
+            assert.are.equal(56, taPackage.navigate.index)
+        end)
+
+    end)
+
     describe("walking", function()
 
         local function startWalking()

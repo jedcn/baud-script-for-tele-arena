@@ -1770,7 +1770,18 @@ end
 -- `startFloor` is what was lying in the starting room, captured by the opening
 -- probe. Without it a trip on the very first step would have nothing to compare
 -- against, and anything already on the floor there would look like ours.
-local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant)
+--
+-- `resumeAt` picks the walk up in the middle: the first step sent is step N of
+-- the flattened list rather than step 1. N is read off the trace,
+--
+--     [nav|t] 18:36:24 +1504ms  send step 56/310 se
+--
+-- and it means the step that WAS SENT -- the trace line is printed as it goes
+-- out, not when the game answers it. So after a hangup: resume at 56 if that
+-- `se` never landed (no arrival brief for it in the log, which is the usual
+-- case -- the connection is why the walk stopped), and at 57 if it did.
+local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant,
+                        resumeAt)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -1790,7 +1801,9 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
     taPackage.navigate = {
         destination  = destination,
         steps        = steps,
-        index        = 0,
+        -- index counts steps already started, so the step sent next is
+        -- index + 1: one less than where we're resuming.
+        index        = resumeAt and (resumeAt - 1) or 0,
         door         = route.door,
         onPoison     = route.onPoison,
         arriveName   = arriveName,
@@ -1803,7 +1816,10 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
     }
     -- With a gate in it the count is a floor, not a total: every door that turns
     -- out to be locked adds its key errand to the walk.
-    navEcho("Walking to " .. destination .. " — " .. #steps .. " steps"
+    navEcho((resumeAt
+            and ("Walking to " .. destination .. " from step " .. resumeAt .. " — "
+                 .. (#steps - resumeAt + 1) .. " of its " .. #steps .. " steps left")
+            or ("Walking to " .. destination .. " — " .. #steps .. " steps"))
         .. (gated and ", plus a key errand for any door that's locked." or "."))
     if debug then
         -- Record encumbrance alongside the pace. "In your haste" reads like a
@@ -1828,17 +1844,29 @@ createAlias("^navigate-to (.+)$", function(matches)
     --           mostly miss. This turns it off. `debug` is accepted too, so
     --           asking for the trace explicitly still works.
     --   anyway  set off without the pre-flight inventory check.
-    local destination, debug, anyway = arg, true, false
+    --   from-step N   pick a walk up in the middle: don't check the starting
+    --           room, and send step N first. This is the BBS hanging up on a
+    --           310-step walk, which is otherwise 56 steps to be re-walked by
+    --           hand. See navStart for what N means.
+    local destination, debug, anyway, resumeAt = arg, true, false, nil
     while true do
-        local head, word = destination:match("^(.-)%s+(%S+)$")
-        if word == "quiet" then
-            destination, debug = head, false
-        elseif word == "debug" then
-            destination = head
-        elseif word == "anyway" then
-            destination, anyway = head, true
+        -- Two words where the others are one, so it is peeled first: `56` on
+        -- its own is not a flag, and the loop would stop on it and leave
+        -- "town-3/part-2 from-step" as the destination.
+        local rest, n = destination:match("^(.-)%s+from%-step%s+(%d+)$")
+        if rest then
+            destination, resumeAt = rest, tonumber(n)
         else
-            break
+            local head, word = destination:match("^(.-)%s+(%S+)$")
+            if word == "quiet" then
+                destination, debug = head, false
+            elseif word == "debug" then
+                destination = head
+            elseif word == "anyway" then
+                destination, anyway = head, true
+            else
+                break
+            end
         end
     end
     -- A variant: a trailing word naming an alternative ending the route itself
@@ -1914,6 +1942,28 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " — fix the route table.")
         return
     end
+    if resumeAt then
+        if resumeAt < 1 or resumeAt > #flat then
+            navEcho("The route to " .. destination .. " is " .. #flat
+                .. " steps, so there's no step " .. resumeAt .. " to resume at.")
+            return
+        end
+        -- The numbers in the trace are indices into the list the walk was
+        -- holding, and a gate that turned out to be locked splices its key
+        -- errand into that list -- so past the first locked door the trace's
+        -- numbering and this one no longer agree. The denominator is the tell:
+        -- the trace says `step N/T`, and if T isn't this many steps then a key
+        -- errand had already gone in and N means nothing here.
+        for _, step in ipairs(flat) do
+            if navStepKind(step) == "gate" then
+                navEcho("Careful: this route has doors that splice a key errand into the walk"
+                    .. " when they're locked, and that renumbers every step after them."
+                    .. " Step " .. resumeAt .. " means what you think it means only if the"
+                    .. " trace said '/" .. #flat .. "'.")
+                break
+            end
+        end
+    end
 
     -- Resolve both ends before sending anything, so a typo in the route table is
     -- reported standing still rather than halfway down a sewer. A route need not
@@ -1978,7 +2028,8 @@ createAlias("^navigate-to (.+)$", function(matches)
                 return
             end
             local function go()
-                navStart(destination, route, arriveName, probe.floor, destRoomId, debug, variant)
+                navStart(destination, route, arriveName, probe.floor, destRoomId, debug,
+                    variant, resumeAt)
             end
             -- We're in the right room by the time this is called; the only
             -- remaining question is whether we're equipped for what lies
@@ -1997,6 +2048,20 @@ createAlias("^navigate-to (.+)$", function(matches)
                 else
                     navCheckInventory(route.requires, gen, go, route.requiresFor)
                 end
+            end
+            -- Resuming starts in the middle, so the route's starting room is the
+            -- one thing we know we are NOT in, and there is nothing here to
+            -- check against: the step list says which directions to walk, not
+            -- which rooms they pass through. Say where we are and whose word we
+            -- are taking for it. What does get checked is the next seam -- a
+            -- resume that was a leg or two out is stopped there rather than at
+            -- the far end of the walk.
+            if resumeAt then
+                navEcho("Resuming " .. destination .. " at step " .. resumeAt
+                    .. " — I'm in " .. name .. ", and I'm taking your word that that's where"
+                    .. " step " .. resumeAt .. " starts. The next seam check will tell us.")
+                checkThenGo()
+                return
             end
             local ok, here, _, weak = taPackage.navFromMatches(route.from, name, dirs)
             if ok then
