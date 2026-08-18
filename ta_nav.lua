@@ -654,6 +654,25 @@ local NAV_ROUTES = {
 -- correction to both names by construction.
 NAV_ROUTES["town-3/part-1"] = NAV_ROUTES["town-3/after-doors"]
 NAV_ROUTES["town-3/part-2"] = NAV_ROUTES["town-3/after-doors-to-town-3"]
+-- part-1 needs neither the rope nor the potion -- twenty-two steps of sewer and
+-- three doors -- but it is nearly always the first half of the journey, and it
+-- ends at the junction where part-2 begins. Checked only at part-2 the answer
+-- comes too late to be any use: you are already down at town-sewers-63, and
+-- fetching what you're missing means walking the sewers back up to the plaza
+-- and down again. So part-1 asks for part-2's items before it sets off, when
+-- you are still standing where they can be bought.
+--
+-- Assigned from part-2's own list rather than transcribed, so the two can't
+-- drift: change what part-2 needs and part-1 checks for the new thing. The
+-- refusal says whose requirement it is (requiresFor) -- "this route needs a
+-- coil of rope" of a route that doesn't would send you looking for a pit that
+-- isn't on it.
+--
+-- Overridable as everything here is: `navigate-to town-3/part-1 anyway` walks
+-- it regardless, which is what you want when part-1 really is all you're
+-- walking today.
+NAV_ROUTES["town-3/part-1"].requires = NAV_ROUTES["town-3/part-2"].requires
+NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from where this ends,"
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
@@ -1709,7 +1728,7 @@ local function navInventoryFinish()
         inv.onOk()
         return
     end
-    navEcho("This route needs " .. taPackage.navItemPhrase(missing)
+    navEcho((inv.subject or "This route") .. " needs " .. taPackage.navItemPhrase(missing)
         .. " and I'm not carrying " .. (#missing > 1 and "them" or "one") .. " — not setting off.")
     navEcho("  Carrying: " .. inv.text)
 end
@@ -1731,9 +1750,13 @@ createTrigger("^(.+)$", function(matches)
     if inv.text:sub(-1) == "." then navInventoryFinish() end
 end, { type = "regex" })
 
-local function navCheckInventory(requires, gen, onOk)
+-- `subject` names who wants the items, for a route that checks on another's
+-- behalf: part-1 carries part-2's list because the junction it ends at is the
+-- wrong side of the sewers to discover the potion is missing from. Defaults to
+-- "This route", which is the truth for every route that needs its own.
+local function navCheckInventory(requires, gen, onOk, subject)
     local wants = taPackage.navWanted(requires)
-    taPackage.navInventory = { wants = wants, gen = gen, onOk = onOk }
+    taPackage.navInventory = { wants = wants, gen = gen, onOk = onOk, subject = subject }
     send("i")
     createTimer(NAV_PROBE_TIMEOUT_MS, function()
         local inv = taPackage.navInventory
@@ -1972,7 +1995,7 @@ createAlias("^navigate-to (.+)$", function(matches)
                         .. " — you asked for it anyway.")
                     go()
                 else
-                    navCheckInventory(route.requires, gen, go)
+                    navCheckInventory(route.requires, gen, go, route.requiresFor)
                 end
             end
             local ok, here, _, weak = taPackage.navFromMatches(route.from, name, dirs)

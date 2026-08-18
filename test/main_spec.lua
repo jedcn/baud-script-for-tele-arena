@@ -12193,12 +12193,61 @@ describe("navigate-to", function()
             it("passes its pre-flight and sets off from the north plaza", function()
                 helper.simulateAlias("navigate-to town-3/after-doors")
                 answerProbe(274)
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                 assert.are.equal(1, sent("sw"))
                 local out = lastEchoes()
                 assert.is_falsy(out:find("fix the route table", 1, true))
                 assert.is_falsy(out:find("I don't know how to get there from here.", 1, true))
                 assert.is_truthy(out:find(
                     "22 steps, plus a key errand for any door that's locked.", 1, true))
+            end)
+
+            -- Nothing on these twenty-two steps needs a rope or a potion. They
+            -- are asked for because part-2 starts where this ends, and the
+            -- junction is the wrong side of the sewers to find out you're
+            -- missing one: you'd walk back up to the plaza and down again.
+            describe("checking for part-2's items before setting off", function()
+
+                -- Assigned from part-2's list, not transcribed, so a change to
+                -- what part-2 needs is a change to what this checks for.
+                it("asks for exactly what part-2 requires", function()
+                    assert.are.equal(taPackage.navRoutes["town-3/part-2"].requires,
+                                     AFTER().requires)
+                    assert.are.same({ "coil of rope", "verbena potion" }, AFTER().requires)
+                end)
+
+                it("asks what it is carrying before the first step", function()
+                    helper.simulateAlias("navigate-to town-3/after-doors")
+                    answerProbe(274)
+                    assert.are.equal(1, sent("i"))
+                    assert.are.equal(0, sent("sw"))
+                end)
+
+                -- Whose requirement it is, said out loud: "this route needs a
+                -- coil of rope" of a route with no pit on it sends you looking
+                -- for a problem that isn't there.
+                it("refuses in part-2's name, not its own", function()
+                    helper.simulateAlias("navigate-to town-3/after-doors")
+                    answerProbe(274)
+                    helper.simulateLine("You are carrying 559 gold crowns, and a waterskin(3).")
+                    assert.are.equal(0, sent("sw"))
+                    assert.is_nil(taPackage.navigate)
+                    local out = lastEchoes()
+                    assert.is_truthy(out:find(
+                        "town-3/part-2, which carries on from where this ends, needs"
+                        .. " a coil of rope and a verbena potion", 1, true))
+                    assert.is_falsy(out:find("This route needs", 1, true))
+                end)
+
+                -- Part-1 on its own is a legitimate thing to walk, so the check
+                -- is a courtesy like every other: overridable.
+                it("walks it anyway when told to", function()
+                    helper.simulateAlias("navigate-to town-3/after-doors anyway")
+                    answerProbe(274)
+                    assert.are.equal(0, sent("i"))
+                    assert.are.equal(1, sent("sw"))
+                end)
+
             end)
 
             -- Both doors off the junction are tried and stepped back from, so
@@ -12320,6 +12369,7 @@ describe("navigate-to", function()
             it("walks part-1 from the north plaza", function()
                 helper.simulateAlias("navigate-to town-3/part-1")
                 answerProbe(274)
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                 local out = lastEchoes()
                 assert.is_falsy(out:find("I don't know a route", 1, true))
                 assert.is_truthy(out:find("22 steps", 1, true))
@@ -12584,6 +12634,7 @@ describe("navigate-to", function()
                 r.variants = { ["chasm-is-clear"] = { keep = 2, steps = { "n" } } }
                 helper.simulateAlias("navigate-to town-3/part-1 chasm-is-clear")
                 answerProbe(274)
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                 local out = lastEchoes()
                 assert.is_truthy(out:find("Walking to town-3/part-1 chasm-is-clear", 1, true))
                 assert.is_truthy(out:find("3 steps", 1, true))
