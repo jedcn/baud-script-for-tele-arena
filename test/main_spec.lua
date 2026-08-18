@@ -10658,7 +10658,7 @@ describe("ta.follow", function()
             assert.is_true(echoed("[all] Stopped arena."))
             assert.is_true(echoed("[all] Stopped heal loop."))
             assert.is_true(echoed("[all] Stopped kill."))
-            assert.is_true(echoed("[all] Stopped hang-around-in-tavern."))
+            assert.is_true(echoed("[all] Stopped hang-around-in-tavern-and-deposit-gold."))
         end)
 
         it("stops mapping too", function()
@@ -10673,7 +10673,7 @@ describe("ta.follow", function()
             assert.is_true(echoed("[all] arena not running."))
             assert.is_true(echoed("[all] heal loop not running."))
             assert.is_true(echoed("[all] kill not running."))
-            assert.is_true(echoed("[all] hang-around-in-tavern not running."))
+            assert.is_true(echoed("[all] hang-around-in-tavern-and-deposit-gold not running."))
         end)
 
         it("reports a mix of stopped and not-running scripts", function()
@@ -11192,10 +11192,10 @@ describe("Attack badges", function()
 end)
 
 -- =========================================================================
--- hang-around-in-tavern
+-- hang-around-in-tavern-and-deposit-gold
 -- =========================================================================
 
-describe("hang-around-in-tavern", function()
+describe("hang-around-in-tavern-and-deposit-gold", function()
 
     before_each(function()
         helper.resetAll()
@@ -11210,25 +11210,25 @@ describe("hang-around-in-tavern", function()
 
         it("refuses when not in a tavern/bar", function()
             taPackage.currentRoom = "north plaza"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             assert.is_falsy(taPackage.tavernMode)
         end)
 
         it("enters tavern mode when the room is a tavern", function()
             taPackage.currentRoom = "tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             assert.is_true(taPackage.tavernMode)
         end)
 
         it("also accepts a bar room", function()
             taPackage.currentRoom = "village bar"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             assert.is_true(taPackage.tavernMode)
         end)
 
         it("primes status on start", function()
             taPackage.currentRoom = "village tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             local statused = false
             for _, cmd in ipairs(helper.sendCalls) do
                 if cmd == "st" then statused = true end
@@ -11241,7 +11241,7 @@ describe("hang-around-in-tavern", function()
         -- opening line is deliberately never treated as an arrival.
         it("does not send a look on start", function()
             taPackage.currentRoom = "village tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             for _, cmd in ipairs(helper.sendCalls) do
                 assert.are_not.equal("look", cmd)
             end
@@ -11254,8 +11254,56 @@ describe("hang-around-in-tavern", function()
             taPackage.currentRoom = nil
             helper.simulateLine("You're in the tavern.")
             assert.are.equal("tavern", taPackage.currentRoom)
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             assert.is_true(taPackage.tavernMode)
+        end)
+
+    end)
+
+    -- The second half of the name. Idling in the tavern is the situation gold
+    -- arrives in, so the two are armed and disarmed together.
+    describe("banking", function()
+
+        it("arms banking on start", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            assert.is_true(taPackage.bankingRunning())
+        end)
+
+        it("does not arm banking when the room is refused", function()
+            taPackage.currentRoom = "north plaza"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            assert.is_false(taPackage.bankingRunning())
+        end)
+
+        it("deposits gold that arrives while hanging around", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            helper.sendCalls = {}
+            helper.simulateLine("Garbageman just gave you 822 gold coins.")
+            assert.are.equal("sw", helper.sendCalls[1])
+        end)
+
+        it("disarms banking on stop", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            helper.simulateAlias("stop-hang-around-in-tavern-and-deposit-gold")
+            assert.is_false(taPackage.bankingRunning())
+        end)
+
+        -- Logged out, so nothing should still be walking to the vaults.
+        it("disarms banking when it exits the game", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            helper.simulateLine("Vitality:     29 / 60")
+            assert.is_false(taPackage.bankingRunning())
+        end)
+
+        it("disarms banking via stop-all-scripts", function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_false(taPackage.bankingRunning())
         end)
 
     end)
@@ -11264,9 +11312,9 @@ describe("hang-around-in-tavern", function()
 
         it("leaves tavern mode without exiting the game", function()
             taPackage.currentRoom = "tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             helper.sendCalls = {}
-            helper.simulateAlias("stop-hang-around-in-tavern")
+            helper.simulateAlias("stop-hang-around-in-tavern-and-deposit-gold")
             assert.is_false(taPackage.tavernMode)
             for _, cmd in ipairs(helper.sendCalls) do
                 assert.are_not.equal("x", cmd)
@@ -11279,7 +11327,7 @@ describe("hang-around-in-tavern", function()
 
         before_each(function()
             taPackage.currentRoom = "tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             helper.sendCalls = {}
         end)
 
@@ -11310,7 +11358,7 @@ describe("hang-around-in-tavern", function()
 
         before_each(function()
             taPackage.currentRoom = "tavern"
-            helper.simulateAlias("hang-around-in-tavern")
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
             helper.sendCalls = {}
         end)
 
@@ -11341,7 +11389,7 @@ describe("hang-around-in-tavern", function()
         end)
 
         it("ignores low HP when not hanging around", function()
-            helper.simulateAlias("stop-hang-around-in-tavern")
+            helper.simulateAlias("stop-hang-around-in-tavern-and-deposit-gold")
             helper.sendCalls = {}
             helper.simulateLine("Vitality:     5 / 60")
             for _, cmd in ipairs(helper.sendCalls) do

@@ -1171,7 +1171,7 @@ local function handleRoomEntry(matches)
     -- Mapping mode gates the whole room *graph*: when off, we don't discover,
     -- visit, link, or track position at all. The room *name* is not part of the
     -- graph, so it's tracked either way -- plain bookkeeping that non-mapping
-    -- features read: hang-around-in-tavern's "are we standing in a bar?" check,
+    -- features read: the tavern mode's "are we standing in a bar?" check,
     -- and the monster-presence keys above. Gating the name too left currentRoom
     -- nil for the whole of any ordinary (non-mapping) session.
     -- It's set here rather than hoisted above this gate because the mapping path
@@ -4428,7 +4428,7 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
 end, { type = "regex" })
 
 -- =========================================================================
--- hang-around-in-tavern
+-- hang-around-in-tavern-and-deposit-gold
 --
 -- A standalone "idle in a tavern" mode, independent of the arena scripts. It
 -- parks the character in a bar and keeps it fed and watered: buy a meal when
@@ -4436,6 +4436,13 @@ end, { type = "regex" })
 -- with "x": HP falling below half (something is hurting us faster than we can
 -- recover — e.g. we ran out of money and hunger/thirst is grinding us down),
 -- or a purchase failing for lack of money (the direct signal for the same).
+--
+-- It also arms banking (ta_bank.lua), which is where the name's second half
+-- comes from. The character sitting in the tavern is the one the gold farm
+-- hands its takings to, so "idling here" and "deposit what arrives" are the
+-- same job; keeping them as two switches meant banking was never once armed in
+-- a real session. Stopping the mode disarms banking again, so the pair goes
+-- down together.
 -- =========================================================================
 
 local TAVERN_HP_FRACTION = 0.5        -- exit if current HP drops below this share of max
@@ -4453,6 +4460,10 @@ local function tavernExitGame(reason)
     echo("[tavern] " .. reason .. " — leaving the game.")
     taPackage.tavernMode = false
     taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    -- Disarm banking on the way out. We're about to be logged out, and a
+    -- deposit trip that fires after that would walk a character who isn't
+    -- there — or worse, resume mid-route on the next login.
+    taPackage.stopBanking()
     send("x")
 end
 
@@ -4474,15 +4485,22 @@ end
 
 -- Stop tavern idle mode without leaving the game. Returns true if it was
 -- running. Bumping the generation invalidates any poll timer in flight so it
--- can't re-arm. Shared by stop-hang-around-in-tavern and stop-all-scripts.
+-- can't re-arm. Shared by stop-hang-around-in-tavern-and-deposit-gold and
+-- stop-all-scripts.
+--
+-- Banking goes down with it, including a deposit trip already in flight —
+-- stopping the mode should leave nothing walking. Someone who armed banking on
+-- its own with start-banking and then idled in a tavern loses it here too;
+-- that's the cost of one switch for both, and start-banking re-arms it.
 local function stopTavernMode()
     if not taPackage.tavernMode then return false end
     taPackage.tavernMode = false
     taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    taPackage.stopBanking()
     return true
 end
 
-createAlias("^hang-around-in-tavern$", function()
+createAlias("^hang-around-in-tavern-and-deposit-gold$", function()
     -- Judge the room from the name the last arrival brief left behind. Don't
     -- send a `look` first: send() is fire-and-forget, so its reply lands long
     -- after this function has returned, and a look's opening line is
@@ -4491,20 +4509,26 @@ createAlias("^hang-around-in-tavern$", function()
     local room = taPackage.currentRoom
     if not isTavernRoom(room) then
         echo("[tavern] Not in a tavern/bar (room: " .. (room or "unknown")
-            .. "). Walk into one first, then run hang-around-in-tavern.")
+            .. "). Walk into one first, then run"
+            .. " hang-around-in-tavern-and-deposit-gold.")
         return
     end
     taPackage.tavernMode = true
     taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
     echo("[tavern] Hanging around in the " .. room
         .. ". Buying meals/drinks as needed; will leave (x) if HP drops below 50% or money runs out.")
+    -- Arm banking too. ta_bank.lua's route home ends "ne" into the first town's
+    -- tavern, so a deposit trip started from any other bar walks back to the
+    -- wrong room -- but that is ta_bank's route to fix, and arming it here is
+    -- what the alias name promises.
+    taPackage.startBanking()
     send("st") -- prime HP tracking so the first poll isn't the first reading
     scheduleTavernPoll()
 end, { type = "regex" })
 
-createAlias("^stop-hang-around-in-tavern$", function()
+createAlias("^stop-hang-around-in-tavern-and-deposit-gold$", function()
     if stopTavernMode() then
-        echo("[tavern] Stopped hanging around (still in the game).")
+        echo("[tavern] Stopped hanging around, banking disarmed (still in the game).")
     else
         echo("[tavern] Not currently hanging around.")
     end
@@ -5245,7 +5269,10 @@ createAlias("^stop-all-scripts$", function()
         { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = stopArena },
         { name = "heal loop",             running = taPackage.healLoopActive == true, stop = stopHealLoop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
-        { name = "hang-around-in-tavern", running = taPackage.tavernMode == true,     stop = stopTavernMode },
+        -- Every `running` flag is read when this table is built, before any
+        -- stop runs -- which is what keeps the report honest now that stopping
+        -- the tavern also disarms banking two rows below.
+        { name = "hang-around-in-tavern-and-deposit-gold", running = taPackage.tavernMode == true, stop = stopTavernMode },
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
         { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },

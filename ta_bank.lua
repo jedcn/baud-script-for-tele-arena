@@ -57,13 +57,20 @@ function taPackage.bankingRunning()
     return taPackage.banking == true
 end
 
-createAlias("^start-banking$", function()
+-- Arm it. A function rather than only an alias body because
+-- hang-around-in-tavern-and-deposit-gold arms banking as part of starting:
+-- idling in the tavern is exactly the situation gold arrives in, and the two
+-- being separate switches is why this went eight months unused.
+local function startBanking()
     taPackage.banking = true
     -- echo, not cecho: cecho never reaches the session log, and "was banking
     -- even armed?" is the first question asked of a run that filled up anyway.
     echo("[bank] Banking armed — will deposit at the vaults whenever gold arrives."
         .. " Type stop-banking to halt.")
-end, { type = "regex" })
+end
+taPackage.startBanking = startBanking
+
+createAlias("^start-banking$", startBanking, { type = "regex" })
 
 createAlias("^stop-banking$", function()
     stopBanking()
