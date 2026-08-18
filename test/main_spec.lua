@@ -4759,20 +4759,79 @@ describe("start-banking", function()
         assert.are.same({ "sw", "n", "d", "i" }, helper.runCommandCalls)
     end)
 
-    -- Deposit everything carried, not just what arrived: the point is to shed
-    -- weight, and gold already in hand weighs the same as the new gold.
-    it("deposits everything it is carrying, then returns", function()
+    local function sentDeposit(amount)
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "deposit " .. amount then return true end
+        end
+        return false
+    end
+
+    -- Deposit only what was handed over, not the whole purse. The receiver is
+    -- idling in a tavern buying its own meals and drinks, and a purchase it
+    -- can't afford makes it leave the game -- so banking its own money would
+    -- end the idle this exists to sustain.
+    it("deposits what was handed over, not everything carried", function()
         helper.simulateAlias("start-banking")
         helper.simulateLine(RECEIVED)
         walkToEnd()
         helper.simulateLine("You are carrying 10617 gold crowns.")
-        local deposited = false
-        for _, cmd in ipairs(helper.sendCalls) do
-            if cmd == "deposit 10617" then deposited = true end
-        end
-        assert.is_true(deposited)
+        assert.is_true(sentDeposit(817))
+        assert.is_false(sentDeposit(10617))
         walkToEnd()
         assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+    end)
+
+    -- Meals and drinks come out of the same pocket the gifts land in, so the
+    -- tally can outrun what is actually carried. `deposit` more than we hold
+    -- would fail, so deposit what's there.
+    it("caps the deposit at what is actually carried", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 500 gold crowns.")
+        assert.is_true(sentDeposit(500))
+        walkToEnd()
+        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+    end)
+
+    -- A gift that arrives mid-trip doesn't start a second walk, but it is still
+    -- owed, so it goes in on the trip the next gift starts.
+    it("carries an un-deposited handover over to the next trip", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        helper.fireTimers(taPackage.arenaStepDelayMs)
+        helper.simulateLine("Garbageman just gave you 200 gold coins.")
+        walkToEnd()
+        helper.simulateLine("You are carrying 10000 gold crowns.")
+        assert.is_true(sentDeposit(1017))
+    end)
+
+    -- The tally comes down on the confirmation line, not when the command is
+    -- sent, so gold that never landed is still owed.
+    it("only clears the tally for gold the game confirms", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 10000 gold crowns.")
+        walkToEnd()
+        -- no "You deposited ..." came back; the next trip owes the same 817
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 10000 gold crowns.")
+        assert.is_true(sentDeposit(1634))
+    end)
+
+    it("clears the tally once the deposit is confirmed", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 10000 gold crowns.")
+        helper.simulateLine("You deposited 817 gold in your account.")
+        walkToEnd()
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 10000 gold crowns.")
+        assert.is_false(sentDeposit(1634))
     end)
 
     it("skips the deposit when carrying nothing, and still walks back", function()

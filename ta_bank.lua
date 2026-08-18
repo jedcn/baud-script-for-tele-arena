@@ -24,17 +24,25 @@
 -- line 32560). Seven cycles had run cleanly before that; the eighth failed for
 -- want of somewhere to put the money.
 --
--- So: on receiving gold, walk to the vaults, deposit everything carried, walk
--- back. The round trip is six moves and takes well under a minute, against a
--- ~25 minute farming cycle, so the receiver is back in the tavern long before
--- the next handover is due. That margin is the whole design -- if depositing
--- were slow, being away when the farmer arrives would trade one failure mode
--- for another.
+-- So: on receiving gold, walk to the vaults, deposit it, walk back. The round
+-- trip is six moves and takes well under a minute, against a ~25 minute farming
+-- cycle, so the receiver is back in the tavern long before the next handover is
+-- due. That margin is the whole design -- if depositing were slow, being away
+-- when the farmer arrives would trade one failure mode for another.
 --
--- Deposit everything rather than just what arrived: the point is to shed weight,
--- and whatever was already in hand weighs the same as the new gold. The amount
--- has to be read back from the game (`deposit` wants a number), which is why
--- there is an `i` step that parks for the reply.
+-- Deposit only what was handed over, not the whole purse. The receiver is also
+-- running tavern mode, which buys its own meals and drinks -- and a purchase it
+-- can't afford makes it leave the game (see the "You can't afford" trigger in
+-- main.lua). Banking everything carried empties the character that has to keep
+-- paying to sit there, so the shedding of weight would end the idle it exists
+-- to sustain. Whatever the character had before the farm started giving is its
+-- own money and stays in its pocket.
+--
+-- So we tally handovers in bankPending and deposit that. The `i` step stays,
+-- because the tally can exceed what is actually carried -- meals and drinks are
+-- bought out of the same pocket the gifts land in -- and `deposit` more than we
+-- hold would fail. Deposit the lesser of the two; the confirmation line is what
+-- draws the tally down, so an amount that didn't land is retried next trip.
 local BANK_STEPS = {
     "sw",              -- north plaza
     "n",               -- guild hall
@@ -47,6 +55,7 @@ local BANK_STEPS = {
 
 local function stopBanking()
     taPackage.banking = false
+    taPackage.bankPending = 0
     if taPackage.createWalk and taPackage.createWalk.label == "bank" then
         taPackage.stopPacedWalk()
     end
@@ -63,6 +72,7 @@ end
 -- being separate switches is why this went eight months unused.
 local function startBanking()
     taPackage.banking = true
+    taPackage.bankPending = 0
     -- echo, not cecho: cecho never reaches the session log, and "was banking
     -- even armed?" is the first question asked of a run that filled up anyway.
     echo("[bank] Banking armed — will deposit at the vaults whenever gold arrives."
@@ -85,6 +95,7 @@ end, { type = "regex" })
 -- the vaults, and the second trip would begin from the wrong room.
 createTrigger("^(\\S+) just gave you (\\d+) gold coins\\.$", function(matches)
     if not taPackage.banking then return end
+    taPackage.bankPending = (taPackage.bankPending or 0) + (tonumber(matches[3]) or 0)
     if taPackage.createWalk then
         echo("[bank] Received " .. matches[3] .. " gold from " .. matches[2]
             .. " while already out — it will go in on the next trip.")
@@ -102,9 +113,17 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     local walk = taPackage.createWalk
     if not (walk and walk.awaiting == "bank-gold") then return end
     walk.awaiting = nil
-    local amount = tonumber(matches[2]) or 0
+    local carried = tonumber(matches[2]) or 0
+    local pending = taPackage.bankPending or 0
+    local amount = math.min(pending, carried)
     if amount > 0 then
+        if carried < pending then
+            echo("[bank] Handovers total " .. pending .. " gold but only "
+                .. carried .. " is carried — depositing what's there.")
+        end
         send("deposit " .. amount)
+    elseif pending > 0 then
+        echo("[bank] Carrying nothing to deposit.")
     else
         echo("[bank] Nothing to deposit.")
     end
@@ -116,5 +135,9 @@ end, { type = "regex" })
 -- only shows up much later as a refused handover.
 createTrigger("^You deposited (\\d+) gold in your account\\.$", function(matches)
     if not taPackage.banking then return end
+    local amount = tonumber(matches[2]) or 0
+    -- Draw the tally down on the confirmation, not when the command is sent:
+    -- gold that never landed stays owed and goes in on the next trip.
+    taPackage.bankPending = math.max((taPackage.bankPending or 0) - amount, 0)
     echo("[bank] Deposited " .. matches[2] .. " gold.")
 end, { type = "regex" })
