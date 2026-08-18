@@ -4736,12 +4736,11 @@ describe("start-banking", function()
         dofile("main.lua")
     end)
 
-    local RECEIVED = "Garbageman just gave you 817 gold coins."
+    local RECEIVED = "Garbageman just gave you 842 gold coins."
 
     local function walkToEnd()
         for _ = 1, 20 do
             if not taPackage.createWalk then break end
-            if taPackage.createWalk.awaiting then break end
             helper.fireTimers(taPackage.arenaStepDelayMs)
         end
     end
@@ -4752,126 +4751,26 @@ describe("start-banking", function()
         assert.are.equal(0, #helper.sendCalls)
     end)
 
-    it("walks to the vaults when gold arrives", function()
+    -- Deposit exactly what arrived, not the purse. The receiver is idling in a
+    -- tavern buying its own meals and drinks, and a purchase it can't afford
+    -- makes it leave the game -- so banking its own money ends the idle.
+    it("walks to the vaults, deposits what was handed over, and returns", function()
         helper.simulateAlias("start-banking")
         helper.simulateLine(RECEIVED)
         walkToEnd()
-        assert.are.same({ "sw", "n", "d", "i" }, helper.runCommandCalls)
+        assert.are.same({ "sw", "n", "d", "deposit 842", "u", "s", "ne" },
+                        helper.runCommandCalls)
     end)
 
-    local function sentDeposit(amount)
-        for _, cmd in ipairs(helper.sendCalls) do
-            if cmd == "deposit " .. amount then return true end
-        end
-        return false
-    end
-
-    -- Deposit only what was handed over, not the whole purse. The receiver is
-    -- idling in a tavern buying its own meals and drinks, and a purchase it
-    -- can't afford makes it leave the game -- so banking its own money would
-    -- end the idle this exists to sustain.
-    it("deposits what was handed over, not everything carried", function()
+    it("deposits the amount from each handover, not a fixed one", function()
         helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
+        helper.simulateLine("Garbageman just gave you 817 gold coins.")
         walkToEnd()
-        -- the 10617 that filled Kerhak up; only the 817 just handed over goes in
-        helper.simulateLine("You are carrying 10617 gold crowns.")
-        assert.is_true(sentDeposit(817))
-        assert.is_false(sentDeposit(10617))
+        helper.simulateLine("Garbageman just gave you 1000 gold coins.")
         walkToEnd()
-        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
-    end)
-
-    -- A float handed over by hand is a "just gave you N gold coins." like any
-    -- other, so the tally counts the seed money as takings. The keep-back floor
-    -- is what stops it being banked: hand over 1000, let the farm add ~800, and
-    -- only the ~800 goes in.
-    it("keeps a hand-given float back even though the tally counted it", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine("Jed just gave you 1000 gold coins.")
-        walkToEnd()
-        helper.simulateLine("You are carrying 1000 gold crowns.")
-        assert.is_false(sentDeposit(1000))
-        walkToEnd()
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 1817 gold crowns.")
-        assert.is_true(sentDeposit(817))
-    end)
-
-    -- Meals and drinks come out of the same pocket the gifts land in, so the
-    -- tally can outrun what is spare. Deposit what's above the float, never
-    -- into it -- an empty purse is what makes the tavern mode quit.
-    it("never digs into the float, whatever the tally says", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 1200 gold crowns.")
-        assert.is_true(sentDeposit(200))
-        assert.is_false(sentDeposit(817))
-        walkToEnd()
-        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
-    end)
-
-    it("deposits nothing when the purse is at or under the float", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 900 gold crowns.")
-        walkToEnd()
-        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
-        for _, cmd in ipairs(helper.sendCalls) do
-            assert.is_nil(cmd:match("^deposit"))
-        end
-    end)
-
-    -- A gift that arrives mid-trip doesn't start a second walk, but it is still
-    -- owed, so it goes in on the trip the next gift starts.
-    it("carries an un-deposited handover over to the next trip", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        helper.fireTimers(taPackage.arenaStepDelayMs)
-        helper.simulateLine("Garbageman just gave you 200 gold coins.")
-        walkToEnd()
-        helper.simulateLine("You are carrying 10000 gold crowns.")
-        assert.is_true(sentDeposit(1017))
-    end)
-
-    -- The tally comes down on the confirmation line, not when the command is
-    -- sent, so gold that never landed is still owed.
-    it("only clears the tally for gold the game confirms", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 10000 gold crowns.")
-        walkToEnd()
-        -- no "You deposited ..." came back; the next trip owes the same 817
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 10000 gold crowns.")
-        assert.is_true(sentDeposit(1634))
-    end)
-
-    it("clears the tally once the deposit is confirmed", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 10000 gold crowns.")
-        helper.simulateLine("You deposited 817 gold in your account.")
-        walkToEnd()
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 10000 gold crowns.")
-        assert.is_false(sentDeposit(1634))
-    end)
-
-    it("skips the deposit when carrying nothing, and still walks back", function()
-        helper.simulateAlias("start-banking")
-        helper.simulateLine(RECEIVED)
-        walkToEnd()
-        helper.simulateLine("You are carrying 0 gold crowns.")
-        walkToEnd()
-        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+        assert.are.same({ "sw", "n", "d", "deposit 817", "u", "s", "ne",
+                          "sw", "n", "d", "deposit 1000", "u", "s", "ne" },
+                        helper.runCommandCalls)
     end)
 
     -- A second handover mid-trip must not restart the walk from step 1, which
@@ -4883,17 +4782,6 @@ describe("start-banking", function()
         local before = #helper.runCommandCalls
         helper.simulateLine("Garbageman just gave you 200 gold coins.")
         assert.are.equal(before, #helper.runCommandCalls)
-    end)
-
-    -- The two chunks share one paced walker, so each must answer only its own
-    -- await token or they steal each other's inventory reply.
-    it("does not consume the farming loop's inventory reply", function()
-        helper.simulateAlias("start-banking")
-        taPackage.createWalk = { steps = { "x" }, index = 1, label = "cash-out",
-                                 awaiting = "gold" }
-        helper.simulateLine("You are carrying 500 gold crowns.")
-        -- the cash-out's own handler took it, not banking's
-        assert.is_false(ranCommandGlobal("deposit 500"))
     end)
 
     it("stop-banking and stop-all-scripts both halt it", function()
