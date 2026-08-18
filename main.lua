@@ -637,7 +637,15 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
         taPackage.reRollTimerPending = false
         echo("[re-roll] Done after " .. n .. " rolls! " .. summary .. " — type re-roll-stop when finished")
-        sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
+        -- Notify only for a re-roll somebody is watching for. A gold-farming run
+        -- creates a throwaway character every cycle, so its stats are ephemeral
+        -- and worth nothing on a phone -- and the run neither needs nor waits
+        -- for a human, since ta_create.lua takes it from here on its own.
+        -- createRerollArmed is that run's "this result is mine" flag; it is
+        -- still set here because onRerollAccepted below is what clears it.
+        if not taPackage.createRerollArmed then
+            sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
+        end
         -- A scripted run (start-gold-farming) takes it from here: it stops the
         -- re-roll itself and walks the new character to the arena. Defined in
         -- ta_create.lua, and a no-op unless that script is the one that started

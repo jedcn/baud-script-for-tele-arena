@@ -3806,6 +3806,18 @@ describe("re-roll-half-ogre-warrior-fast-mode", function()
             assert.is_truthy(string.find(lastEcho(), "re%-rolling"))
         end)
 
+        -- The counterpart to the gold-farming case below: a re-roll somebody
+        -- started by hand is one they are waiting on, so it still pings.
+        it("pushes an ntfy notification for a hand-run re-roll", function()
+            helper.simulateLine("Physique:     28")
+            helper.simulateLine("Stamina:      28")
+            helper.simulateLine("Agility:      15")
+            helper.simulateLine("Vitality:     28 / 28")
+            assert.are.equal(1, #helper.httpRequestCalls)
+            assert.are.equal("Re-roll complete",
+                helper.httpRequestCalls[1].options.headers["X-Title"])
+        end)
+
     end)
 
 end)
@@ -4098,6 +4110,14 @@ describe("start-gold-farming", function()
             reachAcceptedRoll()
             assert.are.equal("re-roll-stop", helper.runCommandCalls[1])
             assert.is_false(taPackage.reRolling)
+        end)
+
+        -- A gold-farming cycle throws its character away, so its stats are not
+        -- news; the phone would buzz once per cycle for a number nobody acts on.
+        -- The hand-run re-roll still notifies (see the fast-mode suite above).
+        it("sends no ntfy notification for a scripted run", function()
+            reachAcceptedRoll()
+            assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
         it("paces the steps instead of sending them in one burst", function()
