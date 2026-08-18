@@ -172,6 +172,10 @@ local CASH_OUT_STEPS = {
     "suicide",
 }
 
+-- Who the takings go to. Named once because two things say it now: the give
+-- itself, and the notification that reports how much changed hands.
+local CASH_OUT_RECIPIENT = "kerhak"
+
 -- How long to wait for the inventory reply before giving up on the handover and
 -- walking on. Without this an `i` that draws no gold line -- the one step here
 -- whose continuation depends on the server saying something -- would park the
@@ -567,7 +571,13 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
 
     if awaiting == "gold" then
         if amount > 0 then
-            runCommand("give kerhak " .. amount .. " gold")
+            runCommand("give " .. CASH_OUT_RECIPIENT .. " " .. amount .. " gold")
+            -- Remembered rather than announced here. The give is a command we
+            -- sent, not a handover the game has confirmed -- it can be refused
+            -- (see the two stops below) or land only partly. The zero-gold gate
+            -- six steps later is the proof, so that is where the notification
+            -- goes out, using this figure.
+            walk.handedOver = amount
         else
             cecho("yellow", "[cash-out] Carrying no gold — nothing to hand over.")
         end
@@ -584,10 +594,23 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
         echo("[cash-out] STOPPED — still carrying " .. amount .. " gold after the"
             .. " handover, so not going through with the suicide. Hand it to Kerhak"
             .. " yourself, then restart.")
-        sendNtfy("Gold farming stopped",
-            "Still carrying " .. amount .. " gold after handing over to Kerhak."
-            .. " Stopped before the suicide so nothing is lost.")
+        sendNtfy("Farming", "Encountered a problem. Exited game.")
+        -- Leave the game rather than stand here. The gear is already on the
+        -- floor, so this character has nothing to do but starve: hunger and
+        -- thirst tick 1 HP each and there is no errand loop left running to feed
+        -- it, so waiting to be noticed costs the gold this stop just saved.
+        -- Exiting parks it at the BBS holding the takings, still alive, until
+        -- the handover can be finished by hand. Same reasoning (and the same
+        -- retrying "x") as arenaEmergencyExit in main.lua.
+        taPackage.exitGameWithRetry()
         return
+    end
+    -- A hard zero: the handover landed in full, which is the only proof we get.
+    -- Report the harvest for the cycle now, not when the give was sent.
+    if walk.handedOver then
+        sendNtfy("Farming", "Gave " .. walk.handedOver .. " gold to "
+            .. CASH_OUT_RECIPIENT)
+        walk.handedOver = nil
     end
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })

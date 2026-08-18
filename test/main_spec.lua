@@ -4334,11 +4334,28 @@ describe("start-gold-farming", function()
                 assert.are.equal("zero-gold", taPackage.createWalk.awaiting)
             end
 
+            -- The most recent push, not the only one: the training confirmation
+            -- that starts this cycle pings on its own account.
+            local function lastNtfy()
+                local call = helper.httpRequestCalls[#helper.httpRequestCalls]
+                return call.options.headers["X-Title"], call.options.body
+            end
+
             it("goes through with the suicide on zero", function()
                 reachTheGate()
                 helper.simulateLine("You are carrying 0 gold crowns.")
                 walkToEnd()
                 assert.is_true(ranCommand("suicide"))
+            end)
+
+            -- The harvest for the cycle, reported once the game has confirmed
+            -- the gold actually left our hands -- the give alone proves nothing.
+            it("reports the handover once the zero comes back", function()
+                reachTheGate()
+                helper.simulateLine("You are carrying 0 gold crowns.")
+                local title, body = lastNtfy()
+                assert.are.equal("Farming", title)
+                assert.are.equal("Gave 1372 gold to kerhak", body)
             end)
 
             it("stops instead of destroying gold still in hand", function()
@@ -4352,6 +4369,22 @@ describe("start-gold-farming", function()
                 assert.is_true(#helper.httpRequestCalls > 0)
             end)
 
+            it("notifies the failure rather than the handover", function()
+                reachTheGate()
+                helper.simulateLine("You are carrying 617 gold crowns.")
+                local title, body = lastNtfy()
+                assert.are.equal("Farming", title)
+                assert.are.equal("Encountered a problem. Exited game.", body)
+            end)
+
+            -- Standing there with the gear already dropped only starves the
+            -- character, so it leaves with the takings instead.
+            it("exits the game", function()
+                reachTheGate()
+                helper.simulateLine("You are carrying 617 gold crowns.")
+                assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            end)
+
         end)
 
         it("skips the handover when carrying nothing, and walks on", function()
@@ -4362,6 +4395,19 @@ describe("start-gold-farming", function()
             assert.is_false(ranCommand("give kerhak 0 gold"))
             walkToEnd()
             assert.is_true(ranCommand("drop warhammer"))
+        end)
+
+        -- Nothing changed hands, so the zero at the gate is not a handover to
+        -- report -- a "Gave 0 gold" push would be noise once per empty cycle.
+        it("reports no handover when there was nothing to hand over", function()
+            trainDuringGoldFarming()
+            taPackage.onArenaArrivedHome()
+            walkToEnd()
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            walkToEnd()
+            local pushes = #helper.httpRequestCalls
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            assert.are.equal(pushes, #helper.httpRequestCalls)
         end)
 
         -- An `i` that draws no reply must not park the walk in the tavern forever.
