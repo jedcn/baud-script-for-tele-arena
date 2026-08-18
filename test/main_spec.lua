@@ -4774,6 +4774,7 @@ describe("start-banking", function()
         helper.simulateAlias("start-banking")
         helper.simulateLine(RECEIVED)
         walkToEnd()
+        -- the 10617 that filled Kerhak up; only the 817 just handed over goes in
         helper.simulateLine("You are carrying 10617 gold crowns.")
         assert.is_true(sentDeposit(817))
         assert.is_false(sentDeposit(10617))
@@ -4781,17 +4782,47 @@ describe("start-banking", function()
         assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
     end)
 
+    -- A float handed over by hand is a "just gave you N gold coins." like any
+    -- other, so the tally counts the seed money as takings. The keep-back floor
+    -- is what stops it being banked: hand over 1000, let the farm add ~800, and
+    -- only the ~800 goes in.
+    it("keeps a hand-given float back even though the tally counted it", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine("Jed just gave you 1000 gold coins.")
+        walkToEnd()
+        helper.simulateLine("You are carrying 1000 gold crowns.")
+        assert.is_false(sentDeposit(1000))
+        walkToEnd()
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 1817 gold crowns.")
+        assert.is_true(sentDeposit(817))
+    end)
+
     -- Meals and drinks come out of the same pocket the gifts land in, so the
-    -- tally can outrun what is actually carried. `deposit` more than we hold
-    -- would fail, so deposit what's there.
-    it("caps the deposit at what is actually carried", function()
+    -- tally can outrun what is spare. Deposit what's above the float, never
+    -- into it -- an empty purse is what makes the tavern mode quit.
+    it("never digs into the float, whatever the tally says", function()
         helper.simulateAlias("start-banking")
         helper.simulateLine(RECEIVED)
         walkToEnd()
-        helper.simulateLine("You are carrying 500 gold crowns.")
-        assert.is_true(sentDeposit(500))
+        helper.simulateLine("You are carrying 1200 gold crowns.")
+        assert.is_true(sentDeposit(200))
+        assert.is_false(sentDeposit(817))
         walkToEnd()
         assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+    end)
+
+    it("deposits nothing when the purse is at or under the float", function()
+        helper.simulateAlias("start-banking")
+        helper.simulateLine(RECEIVED)
+        walkToEnd()
+        helper.simulateLine("You are carrying 900 gold crowns.")
+        walkToEnd()
+        assert.are.same({ "sw", "n", "d", "i", "u", "s", "ne" }, helper.runCommandCalls)
+        for _, cmd in ipairs(helper.sendCalls) do
+            assert.is_nil(cmd:match("^deposit"))
+        end
     end)
 
     -- A gift that arrives mid-trip doesn't start a second walk, but it is still

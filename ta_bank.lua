@@ -30,19 +30,37 @@
 -- due. That margin is the whole design -- if depositing were slow, being away
 -- when the farmer arrives would trade one failure mode for another.
 --
--- Deposit only what was handed over, not the whole purse. The receiver is also
--- running tavern mode, which buys its own meals and drinks -- and a purchase it
--- can't afford makes it leave the game (see the "You can't afford" trigger in
--- main.lua). Banking everything carried empties the character that has to keep
--- paying to sit there, so the shedding of weight would end the idle it exists
--- to sustain. Whatever the character had before the farm started giving is its
--- own money and stays in its pocket.
+-- Deposit only what was handed over, and never the whole purse. The receiver is
+-- also running tavern mode, which buys its own meals and drinks -- and a
+-- purchase it can't afford makes it leave the game at once (the "You can't
+-- afford" trigger in main.lua). Depositing everything carried is what emptied
+-- the character that has to keep paying to sit there: the next "You're
+-- thirsty." bought nothing, and the mode quit. Shedding the farm's weight was
+-- ending the idle it exists to sustain.
 --
--- So we tally handovers in bankPending and deposit that. The `i` step stays,
--- because the tally can exceed what is actually carried -- meals and drinks are
--- bought out of the same pocket the gifts land in -- and `deposit` more than we
--- hold would fail. Deposit the lesser of the two; the confirmation line is what
+-- Two guards, because they answer different questions.
+--
+-- What we owe the vaults: handovers are tallied in bankPending, and that is the
+-- most we will ever deposit. Money the character had before the farm started
+-- giving is its own and stays in its pocket. The confirmation line is what
 -- draws the tally down, so an amount that didn't land is retried next trip.
+--
+-- What we must keep: BANK_KEEP stays in hand no matter what the tally says. It
+-- covers the case the tally can't see -- a float handed over by hand is a
+-- "just gave you N gold coins." like any other, so the tally counts the seed
+-- money as takings and would bank it. The floor is what actually makes the
+-- promise "it can eat all night"; the tally only stops it banking more than the
+-- farm gave.
+--
+-- Sizing: a drink is 1 crown and a meal 2 (1809 drinks and 280 meals across the
+-- logs, no other price ever seen), so 1000 kept is thousands of servings --
+-- vastly more than an overnight run needs, and still a rounding error against
+-- the ~825 that arrives every ~25 minutes.
+local BANK_KEEP = 1000
+
+-- `deposit` wants a number and the tally can outrun the purse (meals and drinks
+-- are bought out of the same pocket the gifts land in), so the amount has to be
+-- read back from the game -- which is what the `i` step parks for.
 local BANK_STEPS = {
     "sw",              -- north plaza
     "n",               -- guild hall
@@ -115,15 +133,17 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     walk.awaiting = nil
     local carried = tonumber(matches[2]) or 0
     local pending = taPackage.bankPending or 0
-    local amount = math.min(pending, carried)
+    local amount = math.min(pending, math.max(carried - BANK_KEEP, 0))
     if amount > 0 then
-        if carried < pending then
-            echo("[bank] Handovers total " .. pending .. " gold but only "
-                .. carried .. " is carried — depositing what's there.")
+        if amount < pending then
+            echo("[bank] Handovers total " .. pending .. " gold, carrying "
+                .. carried .. " — depositing " .. amount .. " and keeping "
+                .. (carried - amount) .. " for meals and drinks.")
         end
         send("deposit " .. amount)
     elseif pending > 0 then
-        echo("[bank] Carrying nothing to deposit.")
+        echo("[bank] Carrying " .. carried .. " gold, at or under the "
+            .. BANK_KEEP .. " kept for meals and drinks — nothing to deposit.")
     else
         echo("[bank] Nothing to deposit.")
     end
