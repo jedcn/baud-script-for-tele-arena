@@ -12948,6 +12948,190 @@ describe("navigate-to", function()
 
     end)
 
+    -- The user also plays from a VPS with no tele-arena.db, and dbOpen makes an
+    -- empty one silently rather than failing -- so on that machine every map
+    -- reference in every route fails to resolve, and navigate-to refused before
+    -- sending a thing. But the map contributes no DIRECTIONS: a route's steps
+    -- are literals, and the map is only ever asked to check where we are. So
+    -- walk, and say what couldn't be checked.
+    describe("on a machine with no map", function()
+
+        -- An empty tele-arena.db: no areas, no rooms, no error.
+        local function noMap()
+            helper.mockDbOneRow = nil
+            helper.mockDbRows = {}
+        end
+
+        it("walks a route whose ends it can't resolve", function()
+            route()
+            noMap()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(1, sent("ex"))
+            helper.simulateLine("You're in the north plaza.")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        -- Said once, before anything is sent. A walk that quietly checked
+        -- nothing would be the worst of both.
+        it("says up front which checks it can't make", function()
+            route()
+            noMap()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("No map on this machine", 1, true))
+            assert.is_truthy(out:find("can't check where this route starts or where it ends",
+                1, true))
+            assert.is_truthy(out:find("walking on the recorded directions alone", 1, true))
+        end)
+
+        -- A route can name one end as a map reference and the other as a
+        -- fingerprint, and the fingerprint end is checked here as well as
+        -- anywhere -- so it must not be listed among the losses.
+        it("doesn't claim to have lost a check it can still make", function()
+            route({ from = { room = "north plaza", exits = "e,n,s,sw,w" } })
+            noMap()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("can't check where it ends", 1, true))
+            assert.is_falsy(out:find("where this route starts", 1, true))
+            -- ...and the start really is still checked, from the fingerprint.
+            helper.simulateLine("You're in the north plaza.")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            assert.are.equal(1, sent("sw"))
+        end)
+
+        it("still refuses a fingerprint start that doesn't match, map or no map", function()
+            route({ from = { room = "north plaza", exits = "e,n,s,sw,w" } })
+            noMap()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateLine("You're in the mysterious grotto.")
+            helper.simulateLine("Exits: n,s.")
+            assert.are.equal(0, sent("sw"))
+            assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
+        end)
+
+        -- And says where we actually are, which is all the user has to go on.
+        it("names the room it found instead of the one it expected", function()
+            route()
+            noMap()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateLine("You're in the north plaza.")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("can't check I'm at second-town/north-plaza", 1, true))
+            assert.is_truthy(out:find("I'm in 'north plaza' with exits e,n,s,sw,w", 1, true))
+            assert.is_falsy(out:find("I don't know how to get there from here.", 1, true))
+        end)
+
+        -- The distinction the whole thing turns on: no areas at all is a machine
+        -- without a map, and one unknown area among others is a broken route.
+        -- The second still refuses, exactly as before.
+        it("still refuses a bad reference when there IS a map", function()
+            route({ from = "nowhere/at-all" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(0, #helper.sendCalls)
+            local out = lastEchoes()
+            assert.is_truthy(out:find("there's no area called 'nowhere'", 1, true))
+            assert.is_falsy(out:find("No map on this machine", 1, true))
+        end)
+
+        it("still refuses a room that doesn't exist in an area that does", function()
+            route({ to = "second-town/no-such-room" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_truthy(lastEchoes():find("there's no room 'no-such-room'", 1, true))
+        end)
+
+        -- Seams are the checks that survive, and which ones survive depends on
+        -- how the leg names its starting room.
+        describe("seams", function()
+
+            local function joined(legTwoFrom)
+                taPackage.navRoutes["sewers/leg-one"] =
+                    { from = "second-town/north-plaza", steps = { "sw", "d" } }
+                taPackage.navRoutes["sewers/leg-two"] =
+                    { from = legTwoFrom, steps = { "se" } }
+                taPackage.navRoutes["sewers/joined"] =
+                    { from = "second-town/north-plaza",
+                      legs = { "sewers/leg-one", "sewers/leg-two" } }
+            end
+
+            local function walkToTheSeam(legTwoFrom)
+                joined(legTwoFrom)
+                noMap()
+                helper.simulateAlias("navigate-to sewers/joined")
+                helper.simulateLine("You're in the north plaza.")
+                helper.simulateLine("Exits: e,n,s,sw,w.")
+                helper.simulateLine("You're on a path.")          -- sw
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.simulateLine("You're in the town sewers.") -- d
+                helper.fireTimers(taPackage.navStepDelayMs)       -- the seam probe
+            end
+
+            -- A seam naming a mapped room: nothing here can identify it, so the
+            -- walk is no worse off than it is between any two ordinary steps.
+            it("carries on past a seam that names a map reference", function()
+                walkToTheSeam("sewers/town-sewers-18")
+                helper.simulateLine("You're in the town sewers.")
+                helper.simulateLine("Exits: u,se.")
+                local out = lastEchoes()
+                assert.is_truthy(out:find(
+                    "No map here, so the sewers/leg-two seam can't be checked", 1, true))
+                assert.is_truthy(out:find("I'm in 'town sewers' with exits se,u", 1, true))
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(1, sent("se"))
+            end)
+
+            -- A seam that fingerprints its room needs no map and keeps working.
+            -- This is the one that matters: below the riddle door nothing is
+            -- mapped, so six of the third-town chain's seven seams are these.
+            it("still checks a seam that names the room outright", function()
+                walkToTheSeam({ room = "town sewers", exits = "u,se" })
+                helper.simulateLine("You're in the town sewers.")
+                helper.simulateLine("Exits: u,se.")
+                assert.is_truthy(lastEchoes():find("At the sewers/leg-two seam", 1, true))
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(1, sent("se"))
+            end)
+
+            -- And still STOPS on one, which is the whole reason they're worth
+            -- keeping: an unmapped walk that drifts is caught at the next seam.
+            it("still stops at a fingerprint seam that doesn't match", function()
+                walkToTheSeam({ room = "town sewers", exits = "u,se" })
+                helper.simulateLine("You're in the mysterious grotto.")
+                helper.simulateLine("Exits: n,s.")
+                assert.is_truthy(lastEchoes():find("seam I expected", 1, true))
+                assert.is_nil(taPackage.navigate)
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(0, sent("se"))
+            end)
+
+        end)
+
+        -- The route this was built for. Six of its seven seams are fingerprints
+        -- and survive; the seventh names sewers/town-sewers-165 and doesn't.
+        it("counts what survives on the third-town chain", function()
+            noMap()
+            helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("or 1 of its 7 seams", 1, true))
+            assert.is_truthy(out:find("6 seams name the room outright", 1, true))
+            assert.is_truthy(out:find("those are still checked", 1, true))
+        end)
+
+        it("walks the third-town chain rather than refusing", function()
+            noMap()
+            helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
+            helper.simulateLine("You're in the town sewers.")
+            helper.simulateLine("Exits: e,n,s,u.")
+            helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+            assert.is_truthy(lastEchoes():find("310 steps", 1, true))
+            assert.are.equal(1, sent("s"))
+        end)
+
+    end)
+
     -- The BBS hangs up 56 steps into a 310-step walk. The trace says which step
     -- that was, and re-walking the first 55 by hand to get back to it is half an
     -- hour. `from-step N` picks the walk up there instead.

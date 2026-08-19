@@ -909,6 +909,17 @@ end
 -- unknown room, or an ambiguous one. Every failure is reported rather than
 -- guessed past: picking one of three rooms named "underground plaza" and
 -- walking off would be worse than refusing.
+--
+-- A third return says the failure was "there is no map here" rather than "this
+-- reference is wrong", and the difference decides what the caller does. The
+-- user also plays from a VPS with no tele-arena.db, and dbOpen makes an empty
+-- one silently rather than failing -- so on that machine EVERY reference fails,
+-- and refusing to walk is refusing over a check we were never going to be able
+-- to make. A reference that fails against a map that DOES exist is a broken
+-- route table and still gets refused.
+--
+-- Told apart by the areas table: no areas at all is an empty database, and one
+-- unknown area among others is a typo. Nothing else can be both.
 local function navResolveRef(ref)
     local areaSlug, roomRef = ref:match("^([^/]+)/(.+)$")
     if not areaSlug then
@@ -918,6 +929,9 @@ local function navResolveRef(ref)
     if matches == nil then
         local names = {}
         for _, a in ipairs(taPackage.db.listAreas()) do names[#names + 1] = a.slug end
+        if #names == 0 then
+            return nil, "there's no map on this machine — tele-arena.db has no areas in it", true
+        end
         return nil, "there's no area called '" .. areaSlug .. "' (known areas: "
             .. table.concat(names, ", ") .. ")"
     end
@@ -937,11 +951,13 @@ end
 -- routes -- and they are the same question about the same field, so they share
 -- an answer rather than drifting apart.
 --
--- Returns ok, here, expect, weak, err:
---   here    how to name where we are, exits and all
---   expect  how to name what the route wanted
---   weak    matched on the room name alone, the `from` having named no exits
---   err     the `from` is a map reference that doesn't resolve
+-- Returns ok, here, expect, weak, err, unmapped:
+--   here      how to name where we are, exits and all
+--   expect    how to name what the route wanted
+--   weak      matched on the room name alone, the `from` having named no exits
+--   err       the `from` is a map reference that doesn't resolve
+--   unmapped  ...and it doesn't resolve because there is no map here at all,
+--             which is a check we can't make rather than one we've failed
 --
 -- The two branches word themselves differently on purpose. A fingerprint knows
 -- nothing but the room in front of it; a map reference can say which room the
@@ -955,8 +971,13 @@ function taPackage.navFromMatches(from, name, dirs)
         local ok = (name == from.room) and (not want or sorted == want)
         return ok, "'" .. name .. "' with exits " .. sorted, expect, ok and not want
     end
-    local room, err = navResolveRef(from)
-    if not room then return false, nil, nil, false, err end
+    local room, err, unmapped = navResolveRef(from)
+    if not room then
+        -- With no map there is still something worth saying: where we are. It
+        -- is all the caller has to go on once it decides to walk anyway.
+        return false, "'" .. name .. "' with exits " .. navExitKey(dirs), from, false,
+            err, unmapped
+    end
     local here = "'" .. name .. "' with exits " .. table.concat(dirs, ",")
     local candidates = taPackage.db.roomsMatchingFingerprint(name, dirs)
     if #candidates == 1 and candidates[1].id == room.id then
@@ -1445,7 +1466,18 @@ navStartSeam = function(legName)
                 navEcho("Couldn't read the room I'm in at the " .. legName .. " seam — stopping.")
                 return
             end
-            local ok, here, expect, weak, err = taPackage.navFromMatches(leg.from, name, dirs)
+            local ok, here, expect, weak, err, unmapped =
+                taPackage.navFromMatches(leg.from, name, dirs)
+            -- No map, so this seam names a room nothing here can identify. The
+            -- walk is no worse off than it is between any two steps -- and the
+            -- seams that fingerprint their room still check, which on the way to
+            -- third town is six of the seven.
+            if unmapped then
+                navEcho("No map here, so the " .. legName .. " seam can't be checked — I'm in "
+                    .. here .. ", carrying on.")
+                navAdvance()
+                return
+            end
             if err then
                 stopNavigate()
                 navEcho("The " .. legName .. " seam can't be checked: " .. err .. " — stopping.")
@@ -1976,16 +2008,21 @@ createAlias("^navigate-to (.+)$", function(matches)
     -- nothing and checks the arrival brief's name directly. All that is lost is
     -- `destRoomId`, which only the door probe wants, so a literal `to` and a
     -- `door` don't go together.
-    local arriveName, destRoomId
+    --
+    -- On a machine with no map neither end resolves, and neither refuses: see
+    -- navResolveRef. What is lost is named out loud below rather than left for
+    -- the user to notice from a walk that checked nothing.
+    local arriveName, destRoomId, noMap
     if type(route.to) == "table" then
         arriveName = route.to.room
     elseif route.to then
-        local destRoom, destErr = navResolveRef(route.to)
-        if not destRoom then
+        local destRoom, destErr, destUnmapped = navResolveRef(route.to)
+        if not destRoom and not destUnmapped then
             navEcho("Route destination " .. destErr)
             return
         end
-        arriveName, destRoomId = destRoom.name, destRoom.id
+        noMap = noMap or destUnmapped
+        if destRoom then arriveName, destRoomId = destRoom.name, destRoom.id end
     end
     -- A route names its start either as a map reference or, where the map can't
     -- tell one room from another, as a literal fingerprint (see navExitKey).
@@ -1998,10 +2035,45 @@ createAlias("^navigate-to (.+)$", function(matches)
         fromFp = { room = route.from.room,
                    exits = route.from.exits and navExitKey(route.from.exits) or nil }
     else
-        fromRoom, fromErr = navResolveRef(route.from)
-        if not fromRoom then
+        local fromUnmapped
+        fromRoom, fromErr, fromUnmapped = navResolveRef(route.from)
+        if not fromRoom and not fromUnmapped then
             navEcho("Route start " .. fromErr)
             return
+        end
+        noMap = noMap or fromUnmapped
+    end
+    -- Say once, before anything is sent, which of this route's checks won't be
+    -- made -- and which still will. The fingerprint seams are the point: below
+    -- the riddle door nothing is mapped, so those legs already identify their
+    -- own starting room without asking the map, and on the way to third town
+    -- that is six of the seven seams.
+    if noMap then
+        local mapped, literal = 0, 0
+        for _, step in ipairs(flat) do
+            if navStepKind(step) == "seam" then
+                local leg = NAV_ROUTES[step.seam]
+                if leg and type(leg.from) == "table" then literal = literal + 1
+                else mapped = mapped + 1 end
+            end
+        end
+        -- Only what is really unchecked. A route can name one end as a map
+        -- reference and the other as a fingerprint, and the fingerprint end is
+        -- checked here as well as anywhere.
+        local lost = {}
+        if not fromFp then lost[#lost + 1] = "where this route starts" end
+        if route.to and not arriveName then lost[#lost + 1] = "where it ends" end
+        if mapped > 0 then
+            lost[#lost + 1] = mapped .. " of its " .. (mapped + literal) .. " seams"
+        end
+        navEcho("No map on this machine, so I can't check "
+            .. (#lost > 1 and (table.concat(lost, ", ", 1, #lost - 1) .. " or " .. lost[#lost])
+                           or lost[1])
+            .. " — walking on the recorded directions alone.")
+        if literal > 0 then
+            navEcho("  " .. literal .. " seam" .. (literal > 1 and "s" or "")
+                .. " name the room outright rather than by map reference, so"
+                .. (literal > 1 and " those are" or " that one is") .. " still checked.")
         end
     end
     local fromLabel = fromFp
@@ -2060,6 +2132,16 @@ createAlias("^navigate-to (.+)$", function(matches)
                 navEcho("Resuming " .. destination .. " at step " .. resumeAt
                     .. " — I'm in " .. name .. ", and I'm taking your word that that's where"
                     .. " step " .. resumeAt .. " starts. The next seam check will tell us.")
+                checkThenGo()
+                return
+            end
+            -- A map reference we couldn't resolve because there is no map. The
+            -- probe still ran and still had to answer -- that part is about the
+            -- connection being alive, not about the map -- so all that's missing
+            -- is the comparison. Say where we are and let the user judge it.
+            if noMap and not fromFp then
+                navEcho("No map here, so I can't check I'm at " .. tostring(route.from)
+                    .. " — I'm in '" .. name .. "' with exits " .. navExitKey(dirs) .. ".")
                 checkThenGo()
                 return
             end
