@@ -135,8 +135,18 @@ local NAV_ROUTES = {
         -- and running `navigate-to town-3/temple chasm-is-clear` by hand walks
         -- the same 47 steps as the chain does -- which is what you want when a
         -- 310-step walk dies on floor four.
+        -- No longer just an ending. It began as one -- the temple's two levers
+        -- and the chasm they clear -- but the same permanence holds all the way
+        -- down: every lever and stone on the way to third town stays thrown, so
+        -- on a later run each level has a shorter way through it, and this is
+        -- the name for "they are all already thrown".
+        --
+        -- `fromLegs` therefore, rather than a leg and an ending: each leg that
+        -- has a chasm-is-clear of its own uses it, and the ones that don't are
+        -- walked as usual. The temple's is unchanged by the switch -- it is the
+        -- last leg, so replacing it and carrying on IS ending there.
         variants = {
-            ["chasm-is-clear"] = { leg = "town-3/temple" },
+            ["chasm-is-clear"] = { fromLegs = true },
         },
     },
     -- The first four legs in one, from second town's north plaza to the junction
@@ -333,6 +343,31 @@ local NAV_ROUTES = {
                   "e", "e", "e", "e", "s", "se", "e", "se",
                   { cmd = "push stone" },
                   "e", "e", "e", "d" },
+        -- The short way through this level, for a run where the lever and the
+        -- first stone are already thrown. Like every lever and stone on the way
+        -- to third town they stay thrown, so on a later run the two detours
+        -- that go and work them are 22 steps spent on nothing.
+        --
+        -- 29 steps against 43. It keeps the first eight -- the riddle, the door,
+        -- and the six that follow -- then takes eight of its own where the
+        -- ordinary route takes twenty-two, and REJOINS it exactly: these eight
+        -- land where step 30 lands, and everything from there (`e e e e s se e
+        -- se`, the second stone, `e e e d`) is the ordinary route's steps 31-43
+        -- direction for direction. Worth saying because it is the check on the
+        -- transcription: two walks agreeing on their last thirteen steps is not
+        -- a coincidence.
+        --
+        -- The second stone is NOT skipped. It is in the shared tail, in the
+        -- dead-end corridor that has no `e` until it is pushed.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 8,
+                steps = { "sw", "se", "e", "se", "s", "sw", "sw", "s",
+                          "e", "e", "e", "e", "s", "se", "e", "se",
+                          { cmd = "push stone" },
+                          "e", "e", "e", "d" },
+            },
+        },
     },
     -- Named, but not yet walked. Each needs a starting room and a step list
     -- taken from a walk that actually worked; `pending` is what makes
@@ -717,6 +752,23 @@ taPackage.navRoutes = NAV_ROUTES
 -- already choosing where to stop. `keep = 0` diverges at the leg's first step,
 -- which still leaves the leg's seam check in front of it: worth having, since
 -- below the riddle door that fingerprint is the only check there is.
+--
+-- That covers a variant that ends a route. A variant can also be a shorter way
+-- through the MIDDLE of one, and then it is not an ending at all: the leg is
+-- replaced and the walk carries on through the legs after it.
+--
+--     fromLegs = true
+--
+-- says so. It takes no steps of its own; it means "every leg that has a variant
+-- of this name uses it, and the rest are walked as usual". The steps then live
+-- on the legs, one transcription each, which is the same reason `legs` names
+-- its legs rather than copying their directions -- and it is what makes
+-- `navigate-to town-3/stone-lvl-2 chasm-is-clear` walk that one segment's short
+-- way on its own, which is how you check a new one without the 300 steps in
+-- front of it.
+--
+-- The ending falls out of this rather than being a special case: a per-leg
+-- variant on the LAST leg has nothing after it to carry on to.
 function taPackage.navRouteSteps(route, variant)
     local steps = {}
     local v
@@ -730,7 +782,12 @@ function taPackage.navRouteSteps(route, variant)
         -- which leg to take it from. One transcription, reachable both ways --
         -- `navigate-to town-3/temple chasm-is-clear` for the leg alone, and
         -- the whole chain for the journey.
-        if v.leg and not v.steps and not v.pending then
+        if v.fromLegs then
+            if not route.legs then
+                return nil, "its '" .. variant .. "' variant is taken from the legs' own"
+                    .. " variants, and this route isn't built from legs"
+            end
+        elseif v.leg and not v.steps and not v.pending then
             local owner = NAV_ROUTES[v.leg]
             local sub = owner and owner.variants and owner.variants[variant]
             if not sub then
@@ -769,8 +826,26 @@ function taPackage.navRouteSteps(route, variant)
         end
         if n > 1 then steps[#steps + 1] = { seam = name } end
         local last = #leg.steps - drop
+        -- The leg's own variant of this name, where the joined route asked for
+        -- the legs' variants rather than an ending of its own. It replaces the
+        -- leg's tail exactly as an ending does -- and `drop` goes with the tail,
+        -- since the variant is already saying where the leg finishes.
+        local legTail
+        if v and v.fromLegs then
+            local lv = leg.variants and leg.variants[variant]
+            if lv then
+                if not lv.steps then
+                    return nil, "its '" .. variant .. "' variant takes leg " .. n .. " ("
+                        .. name .. ") from that leg's own variant, which has no steps recorded yet"
+                end
+                last, legTail, diverged = math.min(lv.keep or 0, #leg.steps), lv.steps, true
+            end
+        end
         if v and v.leg == name then last, diverged = math.min(v.keep or 0, #leg.steps), true end
         for i = 1, last do steps[#steps + 1] = leg.steps[i] end
+        if legTail then
+            for _, step in ipairs(legTail) do steps[#steps + 1] = step end
+        end
         -- An ENDING, so it ends the route: the legs after this one are the way
         -- the ordinary walk finishes, and the variant is the other way. Walking
         -- the variant's steps and then carrying on through the rest of the legs
@@ -786,6 +861,13 @@ function taPackage.navRouteSteps(route, variant)
     if v and v.leg and not diverged then
         return nil, "its '" .. variant .. "' variant diverges inside leg '"
             .. v.leg .. "', and no leg of this route is called that"
+    end
+    -- The same trap one level up: a variant taken from the legs, where no leg
+    -- has one. Silence there would walk the ordinary 364 steps having been asked
+    -- for the short way.
+    if v and v.fromLegs and not diverged then
+        return nil, "its '" .. variant .. "' variant is taken from the legs' own variants,"
+            .. " and no leg of this route has one called '" .. variant .. "'"
     end
     return steps
 end
