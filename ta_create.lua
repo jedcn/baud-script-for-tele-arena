@@ -133,33 +133,38 @@ local CREATE_STEPS = {
 -- over afterwards, back in the arena, where the arena script would otherwise
 -- ring the gong and fight on forever.
 --
--- From the arena: "w" to the north plaza, "ne" to the tavern where Kerhak is
--- waiting, hand over the takings, then back out through the plazas to the gate
--- where the gear was staged and drop it for the next character.
+-- From the arena: "w" to the north plaza, "ne" to the tavern where the receiving
+-- character is waiting, hand over the takings, then back out through the plazas
+-- to the gate where the gear was staged and drop it for the next character.
 --
--- The `i` is a step with a reply we have to read: the amount to hand over is
--- whatever the inventory says we are carrying, so the pump parks there and the
--- gold line resumes it (see the awaiting-gold trigger below). Giving is the one
--- thing here that cannot be a fixed string.
+-- Two steps here have a reply we have to read, so the pump parks on each and the
+-- reply resumes it. Neither the recipient nor the amount can be a fixed string:
+--
+--   "ne"  the arrival prints the tavern's room brief, and the occupant line in
+--         it ("Kerhak is here.") is who the gold goes to. Read rather than
+--         configured, so any character can do the receiving -- see the
+--         awaiting-recipient triggers below.
+--   "i"   the amount to hand over is whatever the inventory says we are
+--         carrying (see the awaiting-gold trigger below).
 --
 -- These directions retrace the arena's own routes in reverse and the creation
 -- walk's outbound leg, which is a useful cross-check: "w"/"ne" is exactly
 -- ARENA_NAV["1"].toBar, and "sw"/"s"/"sw" is the tavern back to the north
 -- plaza, then the creation walk's "s"/"sw" to the gate.
 -- The last two steps close the loop. Once the gear is on the floor and the gold
--- is in Kerhak's pocket this character has nothing left worth keeping, so it
--- gets thrown away and the whole run starts over on a fresh one.
+-- is in the receiver's pocket this character has nothing left worth keeping, so
+-- it gets thrown away and the whole run starts over on a fresh one.
 --
 -- The second `i` is a gate, not a formality. Everything of value has to be out
 -- of our hands BEFORE the suicide, because a suicide takes whatever is still
 -- being carried with it. Reading a hard zero back from the game is the only
 -- proof we have that the handover actually happened -- the give could have been
 -- refused, or partly landed -- and if the number is anything else we stop rather
--- than throw the difference away. That is the same call as the missing-Kerhak
+-- than throw the difference away. That is the same call as the no-recipient
 -- stop below: never destroy something we cannot get back.
 local CASH_OUT_STEPS = {
     "w",
-    "ne",
+    { cmd = "ne", await = "recipient" },
     { cmd = "i", await = "gold" },
     "sw",
     "s",
@@ -172,17 +177,15 @@ local CASH_OUT_STEPS = {
     "suicide",
 }
 
--- Who the takings go to. Named once because two things say it now: the give
--- itself, and the notification that reports how much changed hands.
-local CASH_OUT_RECIPIENT = "kerhak"
-
--- How long to wait for the inventory reply before giving up on the handover and
--- walking on. Without this an `i` that draws no gold line -- the one step here
--- whose continuation depends on the server saying something -- would park the
--- walk in the tavern indefinitely. Generous, because the only cost of waiting is
--- a few seconds and the cost of walking on early is that the takings stay in the
--- wrong character's pocket.
-local CASH_OUT_GOLD_WAIT_MS = 10000
+-- How long to wait for a reply a parked step depends on -- the tavern's room
+-- brief, or the inventory's gold line -- before giving up and walking on.
+-- Without this a step whose continuation depends on the server saying something
+-- would park the walk in the tavern indefinitely. Generous, because the only
+-- cost of waiting is a few seconds and the cost of walking on early is that the
+-- takings stay in the wrong character's pocket. (Walking on from a missed brief
+-- does not hand the gold to a guess: the give below stops instead when it never
+-- learned who is here.)
+local CASH_OUT_REPLY_WAIT_MS = 10000
 
 -- Reuse the arena's pace rather than picking a new number. It was tuned by
 -- measurement (see ARENA_STEP_DELAY_MS in main.lua): 1000/1200/1300ms all
@@ -476,7 +479,7 @@ function taPackage.createWalkPump()
         walk.awaiting = step.await
         -- Nothing may hang forever on a reply that never comes.
         local gen = taPackage.createWalkGen
-        createTimer(CASH_OUT_GOLD_WAIT_MS, function()
+        createTimer(CASH_OUT_REPLY_WAIT_MS, function()
             if taPackage.createWalkGen ~= gen then return end
             local w = taPackage.createWalk
             if not (w and w.awaiting) then return end
@@ -545,7 +548,8 @@ createTrigger("^After a rigorous mental and physical training session, you manag
 function taPackage.onArenaArrivedHome()
     if not taPackage.createCashOutArmed then return false end
     taPackage.createCashOutArmed = nil
-    cecho("cyan", "[create] Handing the takings to Kerhak and dropping the gear.")
+    cecho("cyan", "[create] Handing the takings to whoever is in the tavern, then"
+        .. " dropping the gear.")
     -- We are done with the arena: stop it before walking, or its own errand
     -- dispatch and ring pump would keep issuing commands underneath us.
     if taPackage.stopArena then taPackage.stopArena() end
@@ -553,6 +557,89 @@ function taPackage.onArenaArrivedHome()
         "Gear dropped and the suicide sent — waiting for the BBS to start the next one.")
     return true
 end
+
+-- Who is standing in the tavern, off the brief that walking in prints. This is
+-- what makes the receiving character interchangeable: the run hands its takings
+-- to whoever is waiting there, rather than to a name compiled into this file.
+--
+-- The brief is three lines and only the middle one is about players:
+--
+--     There is a barkeep, and a barmaid here.   <- the room's NPCs
+--     Kerhak is here.                           <- this line; we are never in it
+--     There is nothing on the floor.            <- terminator, always printed
+--
+-- Anchoring on " is here." / " are here." is what keeps the other two out: the
+-- NPC line ends in "barmaid here." and an empty room's "There is nobody here."
+-- in "nobody here.", so neither can match. Two triggers rather than one with an
+-- alternation because the test harness translates these patterns to Lua ones,
+-- which have no alternation. (Same lines, same reasoning, as the arena's team
+-- roster in main.lua -- but read on our own await token, so the two are
+-- independent.)
+local function cashOutNoteOccupants(matches)
+    local walk = taPackage.createWalk
+    if not (walk and walk.awaiting == "recipient") then return end
+    -- "A", "A and B", "A, B, and C" -> a plain list. Flattening " and " to a
+    -- comma leaves an empty field behind on the Oxford comma, which the
+    -- emptiness check drops.
+    local names = {}
+    for name in (matches[2]:gsub(" and ", ", ") .. ","):gmatch("%s*(.-)%s*,") do
+        if name ~= "" then names[#names + 1] = name end
+    end
+    walk.occupants = names
+end
+
+createTrigger("^(.+) is here\\.$", cashOutNoteOccupants, { type = "regex" })
+createTrigger("^(.+) are here\\.$", cashOutNoteOccupants, { type = "regex" })
+
+-- The floor line ends every room brief, whoever is in the room, so it is the
+-- only safe terminator: the occupant line above is omitted entirely when the
+-- tavern is empty of players, and waiting on a line that never comes would park
+-- the walk there until the timeout (main.lua documents the same trap for the
+-- arena probe).
+--
+-- One occupant is the whole design and anything else stops the run. Nobody there
+-- is the old missing-recipient failure: the gold has to end up somewhere that
+-- survives this character being replaced, so there is nothing to walk on to.
+-- More than one is worse, because a guess would be a live command sending a few
+-- hundred gold to whoever happened to be sitting in a public bar. Both stops
+-- leave the character dressed, holding the takings, standing where the problem
+-- is.
+createTrigger("^There .+ on the floor\\.$", function()
+    local walk = taPackage.createWalk
+    if not (walk and walk.awaiting == "recipient") then return end
+    walk.awaiting = nil
+    local here = walk.occupants or {}
+    walk.occupants = nil
+
+    if #here == 0 then
+        stopCreateCharacter()
+        -- echo, not cecho: cecho never reaches the session log, and a run that
+        -- stopped for a reason has to leave that reason in the log.
+        echo("[cash-out] STOPPED — nobody is in the tavern to take the gold. Still"
+            .. " carrying it, still wearing the gear; restart once somebody is"
+            .. " waiting there.")
+        sendNtfy("Gold farming stopped",
+            "Nobody in the tavern to hand the takings to. The character is parked"
+            .. " there with its gold and gear intact.")
+        return
+    end
+
+    if #here > 1 then
+        local who = table.concat(here, ", ")
+        stopCreateCharacter()
+        echo("[cash-out] STOPPED — more than one character is in the tavern (" .. who
+            .. "), so there is no telling which one the gold is for. Still carrying"
+            .. " it, still wearing the gear.")
+        sendNtfy("Gold farming stopped",
+            "More than one character in the tavern (" .. who .. ") — nothing was"
+            .. " handed over.")
+        return
+    end
+
+    walk.recipient = here[1]
+    echo("[cash-out] " .. here[1] .. " is in the tavern — handing the takings over.")
+    createWalkSchedule(CREATE_STEP_DELAY_MS)
+end, { type = "regex" })
 
 -- The inventory reply the cash-out parks on. Reading the amount from the reply
 -- rather than from our own tracked gold is deliberate: the arena spends on
@@ -571,13 +658,28 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
 
     if awaiting == "gold" then
         if amount > 0 then
-            runCommand("give " .. CASH_OUT_RECIPIENT .. " " .. amount .. " gold")
+            -- No recipient means the tavern brief never arrived and the step
+            -- above walked on from its timeout. Naming a guess here would be a
+            -- live give of the whole harvest, so stop exactly as the empty-room
+            -- case does.
+            if not walk.recipient then
+                stopCreateCharacter()
+                echo("[cash-out] STOPPED — no room brief came back in the tavern, so"
+                    .. " there is no knowing who to give the " .. amount .. " gold to."
+                    .. " Still carrying it, still wearing the gear.")
+                sendNtfy("Gold farming stopped",
+                    "No room brief in the tavern, so the recipient is unknown."
+                    .. " Nothing was handed over.")
+                return
+            end
+            runCommand("give " .. walk.recipient .. " " .. amount .. " gold")
             -- Remembered rather than announced here. The give is a command we
             -- sent, not a handover the game has confirmed -- it can be refused
             -- (see the two stops below) or land only partly. The zero-gold gate
             -- six steps later is the proof, so that is where the notification
             -- goes out, using this figure.
             walk.handedOver = amount
+            walk.handedTo = walk.recipient
         else
             cecho("yellow", "[cash-out] Carrying no gold — nothing to hand over.")
         end
@@ -592,8 +694,9 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     if amount > 0 then
         stopCreateCharacter()
         echo("[cash-out] STOPPED — still carrying " .. amount .. " gold after the"
-            .. " handover, so not going through with the suicide. Hand it to Kerhak"
-            .. " yourself, then restart.")
+            .. " handover to " .. (walk.handedTo or "the tavern")
+            .. ", so not going through with the suicide. Hand it over yourself,"
+            .. " then restart.")
         sendNtfy("Farming", "Encountered a problem. Exited game.")
         -- Leave the game rather than stand here. The gear is already on the
         -- floor, so this character has nothing to do but starve: hunger and
@@ -609,17 +712,21 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     -- Report the harvest for the cycle now, not when the give was sent.
     if walk.handedOver then
         sendNtfy("Farming", "Gave " .. walk.handedOver .. " gold to "
-            .. CASH_OUT_RECIPIENT)
+            .. (walk.handedTo or "the tavern"))
         walk.handedOver = nil
     end
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })
 
--- The handover found nobody to hand to. Kerhak is the entire point of the run --
--- the gold has to end up somewhere that survives this character being replaced --
--- so this is a full stop, not something to walk on from. Carrying on would drop
--- the gear and leave the takings in the pocket of a character we are about to
--- throw away.
+-- The handover found nobody to hand to. The receiver is the entire point of the
+-- run -- the gold has to end up somewhere that survives this character being
+-- replaced -- so this is a full stop, not something to walk on from. Carrying on
+-- would drop the gear and leave the takings in the pocket of a character we are
+-- about to throw away.
+--
+-- Still worth keeping now that the recipient is read from the room brief a step
+-- earlier: the brief is a snapshot, and the receiver can walk out of the tavern
+-- (ta_bank.lua takes them to the vaults) between it and the give.
 --
 -- Stopping also freezes the character in the tavern still holding the gold and
 -- wearing the gear, which is the state you want to walk into: nothing has been
@@ -773,7 +880,17 @@ local function createWalkRetryStep(why, delay)
     -- Parked on a reply, so the step in flight is not a move and this refusal
     -- belongs to something else. Rewinding here would re-run the step before it
     -- and lose the reply we are waiting on.
-    if walk.awaiting then return end
+    --
+    -- The recipient await is the exception, because what it waits for is a MOVE's
+    -- own room brief: a refused "ne" never arrives in the tavern, so no brief is
+    -- coming and the refusal is unmistakably ours. Left to the timeout the walk
+    -- would `i` in the plaza and reach the give with nobody to give to, which
+    -- stops a run that only needed the step retried.
+    if walk.awaiting then
+        if walk.awaiting ~= "recipient" then return end
+        walk.awaiting = nil
+        walk.occupants = nil
+    end
     walk.index = walk.index - 1
     -- Cancels the normal pacing timer already in flight, so the retry below is
     -- the only one left standing.

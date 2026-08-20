@@ -4255,6 +4255,24 @@ describe("start-gold-farming", function()
             end
         end
 
+        -- Walk out of the arena and into the tavern, where the arrival prints the
+        -- room brief the handover reads its recipient off. Transcribed from
+        -- logs/session-garbageman-2026-08-16T02-29-07.log (line 1885): NPC line,
+        -- occupant line, floor line. `occupants` is the middle line, or nil for a
+        -- tavern with no players in it, where the game prints "There is nobody
+        -- here." in its place. Leaves the walk parked on the inventory reply.
+        local function arriveInTavern(occupants)
+            walkToEnd()
+            helper.simulateLine("There is a barkeep, and a barmaid here.")
+            helper.simulateLine(occupants or "There is nobody here.")
+            helper.simulateLine("There is nothing on the floor.")
+            walkToEnd()
+        end
+
+        local function arriveInTavernWithKerhak()
+            arriveInTavern("Kerhak is here.")
+        end
+
         -- A gold-farming run that has reached the arena and just banked a level.
         --
         -- The gold matters: main.lua's own handler for this line charges the
@@ -4288,37 +4306,144 @@ describe("start-gold-farming", function()
             trainDuringGoldFarming()
             for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             assert.are.same({ "w", "ne", "i" }, helper.runCommandCalls)
         end)
 
         -- The amount is whatever the reply says, not our own tracked figure: the
-        -- arena spends on healing, food and training as it goes.
+        -- arena spends on healing, food and training as it goes. The name is
+        -- spelled the way the brief spelled it, so the give names exactly who the
+        -- game said was standing there.
         it("hands over the amount the inventory reports", function()
             trainDuringGoldFarming()
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             helper.simulateLine("You are carrying 1372 gold crowns.")
-            assert.is_true(ranCommand("give kerhak 1372 gold"))
+            assert.is_true(ranCommand("give Kerhak 1372 gold"))
         end)
 
         it("runs the whole sequence in order", function()
             trainDuringGoldFarming()
             for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             helper.simulateLine("You are carrying 1372 gold crowns.")
             walkToEnd()
             -- parked on the second `i`, the gate in front of the suicide
             helper.simulateLine("You are carrying 0 gold crowns.")
             walkToEnd()
             assert.are.same({
-                "w", "ne", "i", "give kerhak 1372 gold",
+                "w", "ne", "i", "give Kerhak 1372 gold",
                 "sw", "s", "sw",
                 "unequip robes", "drop robes",
                 "unequip warhammer", "drop warhammer",
                 "i", "suicide",
             }, helper.runCommandCalls)
+        end)
+
+        -- The receiving character is whoever the tavern's own room brief names,
+        -- not a name compiled into the script: the farm should keep working when
+        -- the gold is being collected by somebody other than Kerhak.
+        describe("who the gold goes to", function()
+
+            local function stopped(word)
+                for _, text in ipairs(helper.echoCalls) do
+                    if text and text:find("STOPPED", 1, true)
+                        and text:find(word, 1, true) then return true end
+                end
+                return false
+            end
+
+            it("gives to whoever the brief names", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                arriveInTavern("Pollux is here.")
+                helper.simulateLine("You are carrying 900 gold crowns.")
+                assert.is_true(ranCommand("give Pollux 900 gold"))
+            end)
+
+            it("reports the handover against that name", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                arriveInTavern("Pollux is here.")
+                helper.simulateLine("You are carrying 900 gold crowns.")
+                walkToEnd()
+                helper.simulateLine("You are carrying 0 gold crowns.")
+                local call = helper.httpRequestCalls[#helper.httpRequestCalls]
+                assert.are.equal("Gave 900 gold to Pollux", call.options.body)
+            end)
+
+            -- An empty tavern prints "There is nobody here." in the occupant
+            -- slot, so the only thing that ends the brief is the floor line.
+            -- Walking on from it would drop the gear and take the takings into
+            -- the suicide.
+            it("stops when the tavern is empty", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                arriveInTavern(nil)
+                assert.is_nil(taPackage.createWalk)
+                assert.is_false(taPackage.createCharacterRunning())
+                assert.is_true(stopped("nobody"))
+                assert.is_true(#helper.httpRequestCalls > 0)
+            end)
+
+            it("does not ask what it is carrying when nobody is there", function()
+                trainDuringGoldFarming()
+                for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+                taPackage.onArenaArrivedHome()
+                arriveInTavern(nil)
+                helper.fireTimers()
+                assert.are.same({ "w", "ne" }, helper.runCommandCalls)
+            end)
+
+            -- A guess would be a live command sending the whole harvest to
+            -- whoever happened to be sitting in a public bar.
+            it("stops when more than one character is there", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                arriveInTavern("Kerhak and Pollux are here.")
+                assert.is_nil(taPackage.createWalk)
+                assert.is_false(taPackage.createCharacterRunning())
+                assert.is_true(stopped("Kerhak, Pollux"))
+                assert.is_true(#helper.httpRequestCalls > 0)
+            end)
+
+            it("does not hand anything over when the brief never comes", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                walkToEnd() -- parked on the brief after "ne"
+                helper.fireTimers(10000) -- the reply timeout walks on to `i`
+                walkToEnd()
+                helper.simulateLine("You are carrying 900 gold crowns.")
+                assert.is_false(ranCommand("give Kerhak 900 gold"))
+                assert.is_nil(taPackage.createWalk)
+                assert.is_true(stopped("no room brief"))
+            end)
+
+            -- A refused "ne" never reaches the tavern, so no brief is coming and
+            -- the refusal is ours: retry the move rather than sitting out the
+            -- timeout and arriving at the give with nobody to give to.
+            it("retries the move into the tavern when it trips", function()
+                trainDuringGoldFarming()
+                for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+                taPackage.onArenaArrivedHome()
+                walkToEnd()
+                helper.simulateLine("In your haste, you trip and fall!")
+                helper.fireTimers(2000)
+                assert.are.same({ "w", "ne", "ne" }, helper.runCommandCalls)
+                assert.are.equal("recipient", taPackage.createWalk.awaiting)
+            end)
+
+            -- The brief's other two lines must stay out of the roster: an NPC
+            -- line would otherwise hand the takings to the barkeep.
+            it("does not mistake the NPCs for the recipient", function()
+                trainDuringGoldFarming()
+                taPackage.onArenaArrivedHome()
+                arriveInTavern(nil)
+                assert.is_false(ranCommand("give a barkeep 900 gold"))
+                assert.is_true(stopped("nobody"))
+            end)
+
         end)
 
         -- A suicide takes whatever is still being carried with it, so a hard
@@ -4328,7 +4453,7 @@ describe("start-gold-farming", function()
             local function reachTheGate()
                 trainDuringGoldFarming()
                 taPackage.onArenaArrivedHome()
-                walkToEnd()
+                arriveInTavernWithKerhak()
                 helper.simulateLine("You are carrying 1372 gold crowns.")
                 walkToEnd()
                 assert.are.equal("zero-gold", taPackage.createWalk.awaiting)
@@ -4355,7 +4480,7 @@ describe("start-gold-farming", function()
                 helper.simulateLine("You are carrying 0 gold crowns.")
                 local title, body = lastNtfy()
                 assert.are.equal("Farming", title)
-                assert.are.equal("Gave 1372 gold to kerhak", body)
+                assert.are.equal("Gave 1372 gold to Kerhak", body)
             end)
 
             it("stops instead of destroying gold still in hand", function()
@@ -4390,7 +4515,7 @@ describe("start-gold-farming", function()
         it("skips the handover when carrying nothing, and walks on", function()
             trainDuringGoldFarming()
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             helper.simulateLine("You are carrying 0 gold crowns.")
             assert.is_false(ranCommand("give kerhak 0 gold"))
             walkToEnd()
@@ -4402,7 +4527,7 @@ describe("start-gold-farming", function()
         it("reports no handover when there was nothing to hand over", function()
             trainDuringGoldFarming()
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             helper.simulateLine("You are carrying 0 gold crowns.")
             walkToEnd()
             local pushes = #helper.httpRequestCalls
@@ -4414,7 +4539,7 @@ describe("start-gold-farming", function()
         it("carries on if the inventory reply never arrives", function()
             trainDuringGoldFarming()
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             assert.are.equal("gold", taPackage.createWalk.awaiting)
             helper.fireTimers(10000)
             assert.is_nil(taPackage.createWalk.awaiting)
@@ -4427,7 +4552,7 @@ describe("start-gold-farming", function()
         it("ignores a move refusal while waiting on the inventory", function()
             trainDuringGoldFarming()
             taPackage.onArenaArrivedHome()
-            walkToEnd()
+            arriveInTavernWithKerhak()
             local before = #helper.runCommandCalls
             helper.simulateLine("In your haste, you trip and fall!")
             helper.fireTimers(2000)
@@ -4459,7 +4584,7 @@ describe("start-gold-farming", function()
             local function handoverRefused()
                 trainDuringGoldFarming()
                 taPackage.onArenaArrivedHome()
-                walkToEnd()
+                arriveInTavernWithKerhak()
                 helper.simulateLine("You are carrying 822 gold crowns.")
                 helper.simulateLine(FULL)
             end
@@ -4507,7 +4632,7 @@ describe("start-gold-farming", function()
             local function giveIntoAnEmptyRoom()
                 trainDuringGoldFarming()
                 taPackage.onArenaArrivedHome()
-                walkToEnd()
+                arriveInTavernWithKerhak()
                 helper.simulateLine("You are carrying 799 gold crowns.")
                 helper.simulateLine(MISSING)
             end
