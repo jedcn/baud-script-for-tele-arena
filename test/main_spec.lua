@@ -615,6 +615,47 @@ describe("Tele-Arena triggers", function()
             assert.is_true(taPackage.createRestarting)
         end)
 
+        -- The soulstone case, which is what made the guard fire on the wrong
+        -- awakenings. A death survived with a soulstone revives at the temple
+        -- and never re-enters the game, so nothing ever clears the flag: read as
+        -- a bare boolean it still said "died" hours later, and the suicide that
+        -- ends the next farming round was refused as a death.
+        it("does not read a stale death as this awakening", function()
+            helper.simulateLine(KILLED)
+            -- The death stopped every script; the run is picked back up by hand.
+            helper.simulateAlias("start-gold-farming")
+            helper.advanceMs(60 * 60 * 1000)
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_true(taPackage.creating)
+            assert.is_true(taPackage.createRestarting)
+            -- ...and the flag itself is still there for everyone else.
+            assert.is_true(taPackage.died)
+        end)
+
+        -- The line the death's own revive arrives on is a second behind it, so
+        -- the window has to be generous enough to cover a slow BBS.
+        it("still catches the death's own revive a few seconds later", function()
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine(KILLED)
+            helper.advanceMs(3000)
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_falsy(taPackage.creating)
+            assert.is_nil(taPackage.createRestarting)
+        end)
+
+        -- Outside a farming run there is no gear staged at any gate and no loop
+        -- to refuse to restart, and main.lua has already said the character
+        -- died -- so the create script has nothing to add.
+        it("says nothing about staging gear when not farming", function()
+            helper.simulateLine(KILLED)
+            local before = #helper.echoCalls
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            for i = before + 1, #helper.echoCalls do
+                local text = helper.echoCalls[i]
+                assert.is_nil(text and text:find("[create]", 1, true))
+            end
+        end)
+
         -- Read, not consumed: a second reader must still see it.
         it("stays readable for other scripts until re-entry", function()
             helper.simulateAlias("start-gold-farming")

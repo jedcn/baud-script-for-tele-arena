@@ -757,7 +757,25 @@ end, { type = "regex" })
 --
 -- "You awaken" rather than "you take your own life": both print, but the second
 -- one is the game confirming we are actually out and back at the BBS.
+
+-- How recently the killing blow has to have landed for THIS awakening to be the
+-- one it caused. The two lines arrive back to back --
+--
+--     As the final blow strikes your body you fall unconscious.
+--     You awaken after an unknown amount of time...
+--
+-- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3244-3245) -- so anything
+-- further back than a few seconds is a different event that happens to find the
+-- flag still set. Why it can still be set is the long comment below.
+local DEATH_REVIVE_WINDOW_MS = 5000
+
 createTrigger("^You awaken after an unknown amount of time\\.\\.\\.$", function()
+    -- Nothing below concerns a character that was not being farmed, and this
+    -- gate comes first so an ordinary arena death stays quiet: main.lua's death
+    -- trigger has already announced it, and telling someone who never staged
+    -- any gear to re-stage it is noise.
+    if not taPackage.goldFarming then return end
+
     -- A death prints this line too, and must not be mistaken for our own
     -- suicide. Restarting after one would send a fresh character to a gate with
     -- no gear on it (equipment is lost on death and costs ~150 gold to replace),
@@ -768,12 +786,30 @@ createTrigger("^You awaken after an unknown amount of time\\.\\.\\.$", function(
     -- there and cleared on the next entry into the game, so any script can read
     -- it during this window. Read, never cleared here -- clearing it would hide
     -- the death from anything else that asks.
-    if taPackage.died then
+    --
+    -- Which is exactly why the bare flag cannot be the test. It is cleared in
+    -- one place only -- "Entering Tele-Arena..." -- and a death survived with a
+    -- soulstone never re-enters the game. It revives mid-session at the temple:
+    --
+    --     As the final blow strikes your body you fall unconscious.
+    --     You awaken after an unknown amount of time...
+    --     You're in the temple.
+    --
+    -- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3244-3246; the next
+    -- "Entering Tele-Arena..." is 238 lines later, at a manual re-login.) So the
+    -- flag stays true for the rest of that session, and read as "has there been
+    -- a death" every later awakening came back true -- including the deliberate
+    -- suicide that ends a farming round. One soulstone death early on quietly
+    -- stopped the loop from ever starting another character.
+    --
+    -- taPackage.diedAt is what answers the question actually being asked: was
+    -- THIS awakening the death's own.
+    local diedAt = taPackage.died and taPackage.diedAt
+    if diedAt and taPackage.nowMillis() - diedAt < DEATH_REVIVE_WINDOW_MS then
         echo("[create] That was a death, not a retirement — not starting another"
             .. " character. Re-stage the robes and warhammer at the gate first.")
         return
     end
-    if not taPackage.goldFarming then return end
     createWalkStop()
     -- Puts the creation triggers back in charge for the next character.
     taPackage.creating = true
