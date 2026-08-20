@@ -450,6 +450,14 @@ function checkLevelUpNotification(xp)
     end
     if newEarned > prev then
         taPackage.character.earnedLevel = newEarned
+        -- Silent during a gold-farming run. That character exists to be levelled
+        -- and then thrown away, so its levels are not news -- a single round
+        -- crosses several thresholds and trains at each one, which is two pushes
+        -- a level for something nobody is waiting to hear. The push worth waking
+        -- up for in that loop is the handover ("Gave N gold to ...", ta_create),
+        -- and it still fires. The bank above runs either way, so the crossing is
+        -- not re-announced when farming stops.
+        if taPackage.goldFarming then return end
         local threshold = xpThresholds[class][newEarned]
         -- thresholds[N] is the XP required to reach level N (verified against the
         -- game's own `help Exp1` table and a real training event), so crossing it
@@ -4324,6 +4332,12 @@ function flushLevelUpNotification()
     local pending = taPackage.levelUpPush
     if not pending then return end
     taPackage.levelUpPush = nil
+
+    -- The other half of the level-up silence during a gold-farming run; see
+    -- checkLevelUpNotification for why. Held here rather than at the point the
+    -- push is armed, so the fresh `st` that fills in the new HP/MP is still
+    -- asked for and the tracked maxima stay current.
+    if taPackage.goldFarming then return end
 
     -- "434" alone doesn't say how good the level was; "gain of 23" does. We can
     -- only show it if we knew the old maximum (we may never have polled `st`).

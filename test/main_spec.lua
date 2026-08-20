@@ -825,6 +825,30 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(1, #helper.httpRequestCalls)
         end)
 
+        -- A farming character is levelled and thrown away by design, so its
+        -- levels are not worth a push. The handover to the banker still is.
+        it("stays silent during a gold-farming run", function()
+            taPackage.character.class = "Warrior"
+            taPackage.character.name = "Garbageman"
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Experience:   792683")  -- seeds earned level 12
+            helper.simulateLine("Experience:   815600")  -- crosses to level 13
+            assert.are.equal(0, #helper.httpRequestCalls)
+        end)
+
+        -- The bank runs whether or not the push does, so a crossing that
+        -- happened while farming is not announced late once farming stops.
+        it("does not announce a crossing that happened while farming", function()
+            taPackage.character.class = "Warrior"
+            taPackage.character.name = "Garbageman"
+            helper.simulateAlias("start-gold-farming")
+            helper.simulateLine("Experience:   792683")
+            helper.simulateLine("Experience:   815600")
+            helper.simulateAlias("stop-gold-farming")
+            helper.simulateLine("Experience:   815600")
+            assert.are.equal(0, #helper.httpRequestCalls)
+        end)
+
         it("does nothing when the class is unknown", function()
             taPackage.character.name = "Tojolias"
             helper.simulateLine("Experience:   792683")
@@ -6553,6 +6577,31 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_truthy(body:find("- New MP: 18, gain of 1 MP", 1, true))
             -- Stat gains read above the bookkeeping, as in the example wording.
             assert.is_true(body:find("New HP", 1, true) < body:find("Training cost", 1, true))
+        end)
+
+        -- Same silence as the threshold crossing: a farming round trains
+        -- repeatedly and nobody is waiting to hear about any of it.
+        it("pushes nothing for a level trained during a gold-farming run", function()
+            helper.simulateAlias("start-gold-farming")
+            local before = #helper.httpRequestCalls
+            trainForNtfy()
+            helper.simulateLine("Mana:         18 / 18")
+            helper.simulateLine("Vitality:     434 / 434")
+            assert.are.equal(before, #helper.httpRequestCalls)
+        end)
+
+        -- Held at the push, not at the point it is armed, so the fresh sheet is
+        -- still asked for and the tracked maxima follow the level up.
+        it("still refreshes the sheet for a level trained while farming", function()
+            helper.simulateAlias("start-gold-farming")
+            trainForNtfy()
+            local askedForSheet = false
+            for _, s in ipairs(helper.sendCalls) do
+                if s == "st" then askedForSheet = true end
+            end
+            assert.is_true(askedForSheet)
+            helper.simulateLine("Vitality:     434 / 434")
+            assert.are.equal(434, taPackage.character.vitalityMax)
         end)
 
         -- A warrior's sheet says "0 / 0" every level; the line would be noise.
