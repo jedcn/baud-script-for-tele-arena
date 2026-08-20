@@ -5861,6 +5861,60 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("true", call.options.headers["X-Markdown"])
         end)
 
+        -- A farming character is levelled and thrown away by design, so a
+        -- check-in on its XP and gold every half hour is a push nobody is
+        -- waiting for. The handover to the banker still is.
+        it("stays silent during a gold-farming run", function()
+            taPackage.arenaProfile = "2"
+            taPackage.character.name = "Garbageman"
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            helper.simulateAlias("start-gold-farming")
+            local before = #helper.httpRequestCalls
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620046")
+            assert.are.equal(before, #helper.httpRequestCalls)
+        end)
+
+        -- The on-screen echo is not a push and stays: the run has to be
+        -- readable by whoever is looking at the session.
+        it("still echoes arena progress during a gold-farming run", function()
+            taPackage.arenaProfile = "2"
+            taPackage.character.name = "Garbageman"
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            helper.simulateAlias("start-gold-farming")
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   800")
+            local found = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "+500", 1, true) then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        -- Nothing about the silence is sticky: the next check-in after the
+        -- round ends pings as usual.
+        it("resumes check-ins once farming stops", function()
+            taPackage.arenaProfile = "2"
+            taPackage.character.name = "Garbageman"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 12
+            taPackage.arenaSessionStartXp = 300
+            taPackage.arenaSessionStartTime = os.time()
+            helper.simulateAlias("start-gold-farming")
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620046")
+            helper.simulateAlias("stop-gold-farming")
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620100")
+            -- The one push that got through is the second check, not a
+            -- suppressed first one arriving late: 815,600 - 620,100 = 195,500.
+            assert.are.equal(1, #helper.httpRequestCalls)
+            assert.is_truthy(helper.httpRequestCalls[1].options.body:find(
+                "XP Until Level Up: 195,500", 1, true))
+        end)
+
         it("ntfy notification only fires on the periodic XP check", function()
             taPackage.arenaProfile = "2"
             taPackage.arenaXpCheckPending = false
