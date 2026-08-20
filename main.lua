@@ -667,7 +667,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     end
 end, { type = "regex" })
 
-createTrigger("^Class:\\s+(\\S+)$", function(matches)
+createTrigger("^Class:\\s+(.+)$", function(matches)
     setClass(matches[2])
 end, { type = "regex" })
 

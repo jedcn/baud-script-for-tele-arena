@@ -744,6 +744,11 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Warrior", getClass())
         end)
 
+        it("captures a promoted class whose name has a space", function()
+            helper.simulateLine("Class:        Beast Master")
+            assert.are.equal("Beast Master", getClass())
+        end)
+
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Race:         Half-ogre")
             assert.is_nil(getClass())
