@@ -400,19 +400,33 @@ local xpThresholds     = {
 xpThresholds.Necrolyte = xpThresholds.Acolyte
 xpThresholds.Druid     = xpThresholds.Sorceror
 
+-- The other half of the ladder: `buy promotion` at level 25 renames the class
+-- (Warrior -> Knight) and restarts it at level 1 on a 105-level table. Those
+-- eight tables live in their own chunk; they land in this same table, keyed by
+-- the promoted class name, so nothing below needs to know about promotion.
+taPackage.xpThresholds = xpThresholds
+dofile(scriptDir .. "ta_xp.lua")
+
+-- The level `xp` has earned, or nil for a class we have no table for -- an
+-- unknown class gets no answer rather than a wrong one from someone else's
+-- ladder. Walks up from 1 rather than down from a fixed top, because the two
+-- ladders end at different levels (25 pre-promotion, 105 after).
 function getLevelForXp(xp, class)
     local thresholds = xpThresholds[class or "Warrior"]
-    for lvl = 25, 2, -1 do
-        if xp >= thresholds[lvl] then return lvl end
+    if not thresholds then return nil end
+    local lvl = 1
+    while thresholds[lvl + 1] and xp >= thresholds[lvl + 1] do
+        lvl = lvl + 1
     end
-    return 1
+    return lvl
 end
 
+-- XP needed for the next level; nil at the top of the ladder, and nil for a
+-- class we have no table for.
 function getXpForNextLevel(xp, class)
     local currentLevel = getLevelForXp(xp, class)
-    if currentLevel >= 25 then return nil end
-    local thresholds = xpThresholds[class or "Warrior"]
-    return thresholds[currentLevel + 1]
+    if not currentLevel then return nil end
+    return xpThresholds[class or "Warrior"][currentLevel + 1]
 end
 
 -- True when we have banked enough XP for a level we haven't trained for yet:
@@ -424,8 +438,8 @@ end
 -- arena script is about to act on it.
 function hasUntrainedLevel()
     local xp, class, level = getExperience(), getClass(), getLevel()
-    -- Any unknown, or a class we have no XP table for, means we can't tell —
-    -- and getLevelForXp would silently fall back to the Warrior table.
+    -- Any unknown, or a class we have no XP table for, means we can't tell.
+    -- The xpThresholds check keeps the comparison below off a nil level.
     if not (xp and class and level and xpThresholds[class]) then return false end
     return getLevelForXp(xp, class) > level
 end
@@ -437,8 +451,8 @@ end
 -- per level. Fires regardless of arena profile; runs on every status poll.
 function checkLevelUpNotification(xp)
     local class = getClass()
-    -- Only act on classes we have a real XP table for; getLevelForXp silently
-    -- falls back to Warrior otherwise, which would give a wrong threshold.
+    -- Only act on classes we have a real XP table for; without one there is no
+    -- threshold to announce (getLevelForXp returns nil).
     if not (xp and class and xpThresholds[class]) then return end
     local newEarned = getLevelForXp(xp, class)
     local prev = taPackage.character.earnedLevel
@@ -3455,7 +3469,8 @@ local function arenaXpCheckDelay()
     local cls = getClass()
     if not (xp and cls) then return ARENA_XP_CHECK_FAR_MS end
     local nextAt = getXpForNextLevel(xp, cls)
-    -- Level 25, or a class with no table: nothing to count down to.
+    -- Top of the ladder (25, or 105 once promoted), or a class with no table:
+    -- nothing to count down to.
     if not nextAt then return ARENA_XP_CHECK_FAR_MS end
     local remaining = nextAt - xp
     if remaining <= 200 then return ARENA_XP_CHECK_CLOSE_MS end

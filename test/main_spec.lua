@@ -93,6 +93,65 @@ describe("Warrior XP table", function()
 
     end)
 
+    -- `buy promotion` at level 25 renames the class and restarts the character
+    -- at level 1 / 0 XP on a 105-level ladder (docs/shrine/PROMOTED_EXP_CHART.md).
+    describe("promoted classes", function()
+
+        it("a freshly promoted Knight is level 1 with a next threshold", function()
+            assert.are.equal(1, getLevelForXp(0, "Knight"))
+            assert.are.equal(71136, getXpForNextLevel(0, "Knight"))
+        end)
+
+        it("Knight level 2 threshold is 71136", function()
+            assert.are.equal(2, getLevelForXp(71136, "Knight"))
+            assert.are.equal(1, getLevelForXp(71135, "Knight"))
+        end)
+
+        it("Knight, Master Archer and Beast Master share the same ladder", function()
+            assert.are.equal(getXpForNextLevel(0, "Knight"), getXpForNextLevel(0, "Master Archer"))
+            assert.are.equal(getXpForNextLevel(0, "Knight"), getXpForNextLevel(0, "Beast Master"))
+        end)
+
+        it("High Priest and Necromancer share the same ladder", function()
+            assert.are.equal(79976, getXpForNextLevel(0, "High Priest"))
+            assert.are.equal(getXpForNextLevel(0, "High Priest"), getXpForNextLevel(0, "Necromancer"))
+        end)
+
+        it("Arch Druid and Arch Magus share the same ladder", function()
+            assert.are.equal(91520, getXpForNextLevel(0, "Arch Druid"))
+            assert.are.equal(getXpForNextLevel(0, "Arch Druid"), getXpForNextLevel(0, "Arch Magus"))
+        end)
+
+        it("Blackguard has a ladder of its own", function()
+            assert.are.equal(69680, getXpForNextLevel(0, "Blackguard"))
+        end)
+
+        it("the ladder runs to level 105, not 25", function()
+            assert.are.equal(26, getLevelForXp(39866400, "Knight"))
+            assert.are.equal(105, getLevelForXp(5158539075, "Knight"))
+            assert.is_nil(getXpForNextLevel(5158539075, "Knight"))
+        end)
+
+    end)
+
+    -- The crash that motivated the tables: a promoted class the script had no
+    -- table for indexed a nil `thresholds`, which took the status bar down.
+    describe("an unknown class", function()
+
+        it("returns nil rather than erroring or borrowing the Warrior ladder", function()
+            assert.is_nil(getLevelForXp(354, "Squire"))
+            assert.is_nil(getXpForNextLevel(354, "Squire"))
+        end)
+
+        it("leaves hasUntrainedLevel false", function()
+            helper.simulateLine("Class:        Squire")
+            helper.simulateLine("Level:        1")
+            helper.simulateLine("Experience:   354")
+            assert.is_false(hasUntrainedLevel())
+        end)
+
+    end)
+
 end)
 
 describe("Tele-Arena triggers", function()
