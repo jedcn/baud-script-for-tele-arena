@@ -5657,6 +5657,55 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_false(taPackage.arenaTeam)
         end)
 
+        -- `exit-if-solo` is the flag that lets a character too weak to fight
+        -- the arena alone bail out when its team disappears.
+        it("arms exit-if-solo when asked", function()
+            helper.simulateAlias("tfia 3 exit-if-solo")
+            assert.are.equal("3", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaTeam)
+            assert.is_true(taPackage.arenaExitIfSolo)
+        end)
+
+        it("leaves exit-if-solo off by default", function()
+            helper.simulateAlias("tfia 3")
+            assert.is_false(taPackage.arenaExitIfSolo)
+        end)
+
+        -- Word order is not significant for any of the other flags and must not
+        -- become significant for this one.
+        it("takes exit-if-solo alongside the other flags in any order", function()
+            helper.simulateAlias("team-fight-in-arena exit-if-solo quiet 2")
+            assert.are.equal("2", taPackage.arenaProfile)
+            assert.is_false(taPackage.arenaDebug)
+            assert.is_true(taPackage.arenaExitIfSolo)
+        end)
+
+        -- A solo run is alone by definition, so honouring the flag there would
+        -- exit one threshold after starting. Say so rather than accepting the
+        -- word and silently doing nothing, which looks like it worked.
+        it("refuses exit-if-solo on the solo aliases, and says so", function()
+            helper.simulateAlias("rg 2 exit-if-solo")
+            assert.are.equal("2", taPackage.arenaProfile)
+            assert.is_false(taPackage.arenaTeam)
+            assert.is_false(taPackage.arenaExitIfSolo)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "exit-if-solo", 1, true)
+                    and string.find(msg, "team mode", 1, true) then
+                    warned = true
+                end
+            end
+            assert.is_true(warned)
+        end)
+
+        -- The threshold cannot ride along as a bare number -- a digit is the
+        -- arena selector -- so it must still be rejected rather than quietly
+        -- restarting the run in a different arena.
+        it("still rejects an unknown word after exit-if-solo", function()
+            helper.simulateAlias("tfia 3 exit-if-solo 5m")
+            assert.is_nil(taPackage.arenaState)
+        end)
+
     end)
 
     describe("stop alias", function()
@@ -7489,6 +7538,302 @@ describe("ring-gong-and-fight-in-arena", function()
                 taPackage.arenaMonster = "cave bear"
                 helper.simulateLine("A hobgoblin enters the arena through the dungeon gate!")
                 assert.are.equal("cave bear", taPackage.arenaMonster)
+            end)
+
+        end)
+
+    end)
+
+    -- A team can be built out of characters that could not each survive the
+    -- arena alone. `exit-if-solo` is what stops the weakest one grinding itself
+    -- to death after the others drop, get lost or die: alone for EXIT_MS, leave
+    -- the game.
+    describe("leaving the arena when alone (exit-if-solo)", function()
+
+        local EXIT_MS, POLL_MS
+
+        before_each(function()
+            EXIT_MS = taPackage.arenaSolo.EXIT_MS
+            POLL_MS = taPackage.arenaSolo.POLL_MS
+            taPackage.arenaTeam = true
+            taPackage.arenaExitIfSolo = true
+            taPackage.arenaState = "ringing"
+            taPackage.arenaTeamRoster = {}
+            -- beginArenaSession does this; these tests drive the clock without
+            -- going through the alias, so arm the heartbeat by hand.
+            taPackage.arenaSolo.arm()
+        end)
+
+        -- The poll re-arms from its own callback, so each fireTimers advances
+        -- exactly one tick -- which is also how the script's other pumps are
+        -- driven in these tests.
+        local function tick()
+            helper.fireTimers(POLL_MS)
+        end
+
+        local function leftTheGame()
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "x" then return true end
+            end
+            return false
+        end
+
+        -- Wait out the threshold in whole polls, the way the real clock does:
+        -- the stamp is only read on a tick, so time passing on its own is not
+        -- enough to trigger anything.
+        local function waitAlone(ms)
+            helper.advanceMs(ms)
+            tick()
+        end
+
+        describe("between fights", function()
+
+            it("does not start the clock while a team-mate is present", function()
+                taPackage.arenaTeamRoster = { "Kerhak" }
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            it("starts the clock on an empty arena", function()
+                tick()
+                assert.are.equal(helper.currentMs, taPackage.arenaSoloSince)
+                assert.is_false(leftTheGame())
+            end)
+
+            it("holds on just under the threshold", function()
+                tick()
+                waitAlone(EXIT_MS - 1)
+                assert.is_false(leftTheGame())
+                assert.is_not_nil(taPackage.arenaSoloSince)
+            end)
+
+            it("leaves the game once the threshold passes", function()
+                tick()
+                waitAlone(EXIT_MS)
+                assert.is_true(leftTheGame())
+                -- arenaEmergencyExit tears the session down, so no stale combat
+                -- timer can re-arm behind the exit.
+                assert.is_nil(taPackage.arenaState)
+            end)
+
+            it("resets the clock when company comes back", function()
+                tick()
+                waitAlone(EXIT_MS - 1)
+                taPackage.arenaTeamRoster = { "Kerhak" }
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+                -- And the next stretch alone starts from scratch rather than
+                -- inheriting the time already served.
+                taPackage.arenaTeamRoster = {}
+                tick()
+                waitAlone(EXIT_MS - 1)
+                assert.is_false(leftTheGame())
+            end)
+
+            -- arenaScanRoom empties the roster as it sends its probe, so a tick
+            -- landing in that gap would read a blank that means "not answered
+            -- yet", not "nobody here".
+            it("skips a tick that lands mid-probe", function()
+                taPackage.arenaProbePending = true
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+        end)
+
+        describe("during a fight", function()
+
+            before_each(function()
+                taPackage.arenaState = "fighting"
+                taPackage.arenaMonster = "stone giant"
+            end)
+
+            -- The scan pump stops the moment we engage, so nothing refreshes the
+            -- roster -- and this is exactly the state in which being left alone
+            -- is fatal. The poll has to ask for the brief itself.
+            it("asks for the brief itself", function()
+                tick()
+                assert.is_true(taPackage.arenaSoloProbePending)
+                assert.are.equal("", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            it("resets the clock when the brief names a team-mate", function()
+                taPackage.arenaSoloSince = helper.currentMs
+                tick()
+                helper.simulateLine("Kerhak and Pollux are here.")
+                helper.simulateLine("There is nothing on the floor.")
+                assert.is_nil(taPackage.arenaSoloSince)
+                assert.is_false(taPackage.arenaSoloProbePending)
+            end)
+
+            -- No roster line is printed at all when nobody else is there, so the
+            -- floor line is the only place "we are alone" becomes knowable.
+            it("starts the clock when the brief names nobody", function()
+                tick()
+                helper.simulateLine("There is nothing on the floor.")
+                assert.are.equal(helper.currentMs, taPackage.arenaSoloSince)
+            end)
+
+            it("leaves the game mid-fight once the threshold passes", function()
+                tick()
+                helper.simulateLine("There is nothing on the floor.")
+                helper.advanceMs(EXIT_MS)
+                tick()
+                helper.simulateLine("There is nothing on the floor.")
+                assert.is_true(leftTheGame())
+                assert.is_nil(taPackage.arenaState)
+            end)
+
+            -- Our probe carries its own pending flag precisely so the ring
+            -- machinery, which gates on arenaProbePending, stays dormant: a
+            -- monster in the brief must not be engaged and the floor line must
+            -- not drive a ring decision while we are already fighting.
+            it("does not engage or ring off the back of its own brief", function()
+                tick()
+                helper.simulateLine("There is a hobgoblin here.")
+                helper.simulateLine("There is nothing on the floor.")
+                assert.are.equal("stone giant", taPackage.arenaMonster)
+                assert.are.equal("fighting", taPackage.arenaState)
+                for _, cmd in ipairs(helper.sendCalls) do
+                    assert.are_not.equal("ring gong", cmd)
+                end
+            end)
+
+        end)
+
+        -- We cannot see the arena from the magic shop, and must not bank
+        -- solitude while we are the ones who are absent.
+        describe("while away on an errand", function()
+
+            it("pauses the clock", function()
+                tick()
+                assert.is_not_nil(taPackage.arenaSoloSince)
+                taPackage.arenaState = "potions"
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            it("cannot leave the game", function()
+                tick()
+                taPackage.arenaState = "potions"
+                helper.advanceMs(EXIT_MS * 2)
+                tick()
+                assert.is_false(leftTheGame())
+            end)
+
+            -- The walk home runs as "returning", and its last steps are still
+            -- nowhere near the arena.
+            it("pauses on a journey even in an arena state", function()
+                tick()
+                taPackage.arenaJourney = { steps = { "n" }, index = 1 }
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            -- An errand must not end the timer chain: the rest of the run would
+            -- be unprotected in a session that otherwise looks healthy.
+            it("keeps polling, so it recovers when we get back", function()
+                taPackage.arenaState = "potions"
+                tick()
+                taPackage.arenaState = "ringing"
+                tick()
+                assert.is_not_nil(taPackage.arenaSoloSince)
+            end)
+
+        end)
+
+        -- Only the poll may conclude "alone"; everything else may only reset the
+        -- clock. A missed signal then costs a slower detection, never a wrong
+        -- one.
+        describe("signals that prove we have company", function()
+
+            it("takes another player's gong ring", function()
+                tick()
+                assert.is_not_nil(taPackage.arenaSoloSince)
+                helper.simulateLine("Castor just rang the great gong!")
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            -- Mid-fight that trigger has nothing else to do and returns early,
+            -- which is precisely when the clock is running unattended.
+            it("takes a gong ring heard mid-fight", function()
+                taPackage.arenaState = "fighting"
+                taPackage.arenaSoloSince = helper.currentMs
+                helper.simulateLine("Castor just rang the great gong!")
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            -- Our own ring proves nothing about anyone else.
+            it("ignores our own gong ring", function()
+                taPackage.arenaSoloSince = helper.currentMs
+                helper.simulateLine("You just rang the great gong!")
+                assert.is_not_nil(taPackage.arenaSoloSince)
+            end)
+
+            -- A team-mate announcing a heal run is alive and talking -- and is
+            -- about to be legitimately absent, which is the case most likely to
+            -- trip a false exit.
+            it("takes a team-mate's heal announcement", function()
+                tick()
+                helper.simulateLine("From Kerhak: I need healing")
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+            it("takes a team-mate's all-clear", function()
+                tick()
+                helper.simulateLine("From Kerhak: I am healed")
+                assert.is_nil(taPackage.arenaSoloSince)
+            end)
+
+        end)
+
+        describe("when the flag is off", function()
+
+            before_each(function()
+                taPackage.arenaExitIfSolo = false
+                taPackage.arenaSoloSince = nil
+                -- Re-arm with the flag off, which is the no-op path a real
+                -- session without exit-if-solo takes.
+                taPackage.arenaSolo.arm()
+            end)
+
+            it("never starts a clock or leaves the game", function()
+                tick()
+                helper.advanceMs(EXIT_MS * 2)
+                tick()
+                assert.is_nil(taPackage.arenaSoloSince)
+                assert.is_false(leftTheGame())
+            end)
+
+        end)
+
+        describe("teardown", function()
+
+            it("is cleared by stopping the arena", function()
+                tick()
+                taPackage.stopArena()
+                assert.is_nil(taPackage.arenaExitIfSolo)
+                assert.is_nil(taPackage.arenaSoloSince)
+                assert.is_nil(taPackage.arenaSoloProbePending)
+            end)
+
+            -- There is no timer-cancellation API, so a tick armed before the
+            -- stop will still fire. The generation guard is what makes it a
+            -- no-op instead of an exit from a session that is already over.
+            it("survives a tick armed before the stop", function()
+                tick()
+                helper.advanceMs(EXIT_MS)
+                taPackage.stopArena()
+                helper.sendCalls = {}
+                tick()
+                assert.is_false(leftTheGame())
+            end)
+
+            it("is cleared by stop-all-scripts", function()
+                tick()
+                helper.simulateAlias("stop-all-scripts")
+                assert.is_nil(taPackage.arenaExitIfSolo)
+                assert.is_nil(taPackage.arenaSoloSince)
             end)
 
         end)
