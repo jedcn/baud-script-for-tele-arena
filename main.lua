@@ -2674,6 +2674,159 @@ function arenaTeamHeal.announceHealed()
     send(arenaTeamHeal.HEALED_MSG)
 end
 
+-- =========================================================================
+-- Leaving when the team is gone (`tfia <n> exit-if-solo`)
+-- =========================================================================
+--
+-- A team can be built out of characters that could not each survive the arena
+-- alone: two who can solo a stone giant carry a third who cannot. That is the
+-- point of team mode, and it is also its failure mode — if the two strong
+-- characters drop their connections, wander off on a potion errand and get
+-- lost, or die, the weak one keeps swinging at something that will kill it, and
+-- nothing in the engine notices.
+--
+-- `exit-if-solo` is the answer: having been alone in the arena for EXIT_MS,
+-- leave the game with "x". Being wrong is nearly free — the character is saved
+-- and safe, it has only stopped earning — while being right saves it outright,
+-- so this leans deliberately towards leaving.
+--
+-- Everything lives on one table rather than as file-scope locals: main.lua's
+-- main chunk is close to Lua's 200-local ceiling (see CLAUDE.md), and a table
+-- field costs no slot. Same shape as arenaTeamHeal above.
+local arenaSolo = {}
+
+-- Alone this long and we leave. One minute, as asked for. Be aware that an
+-- arena-3 errand is a paced walk of ~10 rooms each way (ARENA_STEP_DELAY_MS)
+-- plus the purchase, so a team-mate buying potions is legitimately out of the
+-- arena for something close to this and will occasionally trip it. Raise it
+-- here if the false exits become more annoying than the risk they cover.
+arenaSolo.EXIT_MS = 60000
+
+-- How often we look. Deliberately slow: between fights the scan pump is already
+-- refreshing the roster every ~3s and this only reads it, and during a fight
+-- each tick costs one bare return. At 20s the worst case is one poll of
+-- lateness on a 60s threshold.
+arenaSolo.POLL_MS = 20000
+
+-- Published so the tests drive the timer and the threshold by name rather than
+-- by literal, the way arenaStepDelayMs already is.
+taPackage.arenaSolo = arenaSolo
+
+function arenaSolo.minutesLabel()
+    local minutes = arenaSolo.EXIT_MS / 60000
+    -- "1 minute" reads better than "1.0 minutes", and a threshold under a
+    -- minute should not claim to be "0 minutes".
+    if minutes == math.floor(minutes) then
+        minutes = math.floor(minutes)
+        return minutes .. (minutes == 1 and " minute" or " minutes")
+    end
+    return string.format("%.1f minutes", minutes)
+end
+
+-- Somebody else is demonstrably here. Any signal at all may call this; only
+-- arenaSolo.poll below is ever allowed to conclude the opposite. Keeping the
+-- evidence one-directional per source is what makes this safe to feed from
+-- several unrelated triggers: a missed signal costs a slower detection, never a
+-- wrong one.
+function arenaSolo.sawCompany()
+    if not taPackage.arenaExitIfSolo then return end
+    if not taPackage.arenaSoloSince then return end
+    arenaDebugEcho("solo-clock-reset")
+    taPackage.arenaSoloSince = nil
+end
+
+-- One settled observation of the arena's population. `count` is how many other
+-- players the brief listed.
+function arenaSolo.observe(count)
+    if not taPackage.arenaExitIfSolo then return end
+    if count > 0 then
+        arenaSolo.sawCompany()
+        return
+    end
+    if not taPackage.arenaSoloSince then
+        taPackage.arenaSoloSince = nowMillis()
+        arenaDebugEcho("solo-clock-started")
+        return
+    end
+    local alone = nowMillis() - taPackage.arenaSoloSince
+    if alone < arenaSolo.EXIT_MS then
+        arenaDebugEcho("solo-alone-" .. alone .. "ms")
+        return
+    end
+    local reason = "Alone in the arena for " .. arenaSolo.minutesLabel()
+        .. " — too weak to fight solo"
+    sendNtfy("Left the arena alone",
+        (taPackage.character.name or "The character") .. " was alone in arena "
+        .. (taPackage.arenaProfile or "?") .. " for " .. arenaSolo.minutesLabel()
+        .. " and has left the game.")
+    -- Looked up on taPackage rather than closed over: arenaEmergencyExit is
+    -- defined further down the file, past beginArenaSession, which has to be
+    -- able to see this table.
+    taPackage.arenaEmergencyExit(reason)
+end
+
+-- The heartbeat. There is no repeating timer and no cancel API in this script —
+-- recurrence is re-arming from the callback, cancellation is a generation bump
+-- (see arenaScanRoom and scheduleArenaXpCheck) — so this follows suit.
+--
+-- Re-arming happens first and unconditionally, before any of the state gates
+-- below. An errand or a lull must not be able to end the chain: the whole run
+-- would then be silently unprotected for the rest of its life, in a session
+-- that otherwise looks healthy.
+function arenaSolo.poll()
+    local gen = taPackage.arenaSoloGen or 0
+    createTimer(arenaSolo.POLL_MS, function()
+        if (taPackage.arenaSoloGen or 0) ~= gen then return end
+        if not taPackage.arenaExitIfSolo then return end
+        arenaSolo.poll()
+        arenaSolo.tick()
+    end, { repeating = false })
+end
+
+function arenaSolo.tick()
+    local st = taPackage.arenaState
+    -- Out on our own errand: we cannot see the arena from the magic shop, and
+    -- must not bank solitude while we are the ones who are absent. A journey is
+    -- checked as well as the state because the walk home runs as "returning"
+    -- and the last steps of it are still nowhere near the arena.
+    if (st ~= "fighting" and st ~= "ringing") or taPackage.arenaJourney then
+        if taPackage.arenaSoloSince then
+            arenaDebugEcho("solo-clock-paused-away")
+            taPackage.arenaSoloSince = nil
+        end
+        return
+    end
+    if st == "ringing" then
+        -- The scan pump probes every ~3s in this state, so the roster is fresh
+        -- and asking again would only add traffic. But skip a tick that lands
+        -- while a probe is in flight: arenaScanRoom empties the roster as it
+        -- sends, so we would be reading a blank that means "not answered yet",
+        -- not "nobody here".
+        if taPackage.arenaProbePending then
+            arenaDebugEcho("solo-tick-skipped-mid-probe")
+            return
+        end
+        arenaSolo.observe(#(taPackage.arenaTeamRoster or {}))
+        return
+    end
+    -- Fighting. The scan pump stopped the moment we engaged, so nothing is
+    -- refreshing the roster — and this is exactly the state in which being left
+    -- alone is fatal. Ask for the brief ourselves. Our own pending flag, not
+    -- arenaProbePending, so the ring machinery (which gates on that one) stays
+    -- dormant and cannot engage a monster or ring a gong off the back of it.
+    taPackage.arenaSoloProbePending = true
+    taPackage.arenaTeamRoster = {}
+    arenaDebugEcho("solo-probe-sent")
+    send("")
+end
+
+-- Start (or restart) the heartbeat, invalidating any earlier one.
+function arenaSolo.arm()
+    taPackage.arenaSoloGen = (taPackage.arenaSoloGen or 0) + 1
+    if not taPackage.arenaExitIfSolo then return end
+    arenaSolo.poll()
+end
+
 -- Our place in the ring order: how many of the other characters here sort before
 -- our name. Counting rather than sorting sidesteps the question of whether we
 -- appear in our own roster (we don't — the game omits us from the brief) since
@@ -3517,6 +3670,11 @@ end
 if taPackage.arenaState then
     echo("[arena] Script reloaded mid-session — re-arming the XP check.")
     scheduleArenaXpCheck()
+    -- Same trap, same treatment: the solo heartbeat only ever re-arms from its
+    -- own callback, so a reload would leave an exit-if-solo run believing it
+    -- was protected while nothing was watching. arm() is a no-op when the flag
+    -- is off, so this is safe to call for every reloaded session.
+    arenaSolo.arm()
 end
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
@@ -3609,12 +3767,18 @@ end, { type = "regex" })
 -- coordinate so only one monster is ever summoned, and everybody swings at it.
 -- It is a flag on the same session, not a second loop — every errand (thirst,
 -- potions, flee-and-heal, training) stays per-character and untouched.
-local function beginArenaSession(profile, debug, team)
+local function beginArenaSession(profile, debug, team, exitIfSolo)
     taPackage.arenaProfile = profile
     taPackage.arenaDebug = debug
     taPackage.arenaTeam = team
     taPackage.arenaTeamRoster = {}
     taPackage.arenaTeamSlot = 0
+    -- Solitude is unknown until the first observation, not "none so far": a
+    -- stamp of now would start the clock against a team that is standing right
+    -- here, and the first poll would be reading a roster nobody has filled in.
+    taPackage.arenaExitIfSolo = exitIfSolo or false
+    taPackage.arenaSoloSince = nil
+    taPackage.arenaSoloProbePending = false
     -- Start deaf to any hold left over from a previous session: a stale lease
     -- would keep the gong held for a team-mate who finished healing long ago.
     taPackage.arenaTeamHealing = {}
@@ -3641,8 +3805,12 @@ local function beginArenaSession(profile, debug, team)
     -- Debug is the default now, so the echo flags the exception instead.
     local debugSuffix = debug and "" or " (quiet)"
     local teamSuffix = team and " (team mode)" or ""
-    echo("[arena] Session started" .. teamSuffix .. debugSuffix .. ". XP: " .. startXpStr)
+    local soloSuffix = exitIfSolo
+        and (" (exit after " .. arenaSolo.minutesLabel() .. " alone)") or ""
+    echo("[arena] Session started" .. teamSuffix .. soloSuffix .. debugSuffix
+        .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
+    arenaSolo.arm()
     -- Scan the room before the first ring: another player may already have a
     -- monster in here, and we should clear it before summoning our own.
     arenaScanRoom()
@@ -3655,37 +3823,48 @@ end
 local ARENA_PROFILES = { ["1"] = true, ["2"] = true, ["3"] = true }
 
 local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <1|2|3> [quiet]"
-local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <1|2|3> [quiet]"
+local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <1|2|3> [quiet] [exit-if-solo]"
 
--- Parse the "<arena> [quiet]" tail of the ring-gong aliases. Order doesn't
--- matter and both words are optional; a bare alias means arena 1, which is what
--- it meant before the three per-arena aliases were folded into one.
+-- Parse the "<arena> [quiet] [exit-if-solo]" tail of the ring-gong aliases.
+-- Order doesn't matter and every word is optional; a bare alias means arena 1,
+-- which is what it meant before the three per-arena aliases were folded into
+-- one.
 --
 -- The debug trace is ON by default: every real fight was being started with the
 -- flag anyway, so the flag was pure ceremony. `quiet` turns it off; `debug` is
 -- still accepted (as a no-op) so the old muscle memory keeps working.
--- Returns profile, debug — or nil plus the offending word.
+--
+-- Returns an options table — or nil plus the offending word. A table rather
+-- than the positional (profile, debug) it used to return: the failure case was
+-- already spending a third slot on the bad word, so every new option pushed the
+-- callers further into counting nils.
+--
+-- `exit-if-solo` carries no number even though the threshold it arms is one
+-- (arenaSolo.EXIT_MS). It can't: a bare digit here is the arena selector, so
+-- "tfia 3 exit-if-solo 2" would quietly start arena 2.
 local function parseArenaAliasArgs(rest)
-    local profile, debug = "1", true
+    local opts = { profile = "1", debug = true, exitIfSolo = false }
     for word in (rest or ""):gmatch("%S+") do
         local lowered = word:lower()
         if lowered == "debug" then
-            debug = true
+            opts.debug = true
         elseif lowered == "quiet" then
-            debug = false
+            opts.debug = false
+        elseif lowered == "exit-if-solo" then
+            opts.exitIfSolo = true
         elseif ARENA_PROFILES[lowered] then
-            profile = lowered
+            opts.profile = lowered
         else
-            return nil, nil, word
+            return nil, word
         end
     end
-    return profile, debug
+    return opts
 end
 
 -- Shared body of the solo and team aliases: same arguments, same class check,
 -- same session — only the team flag differs.
 local function startArenaFromAlias(rest, team, usage)
-    local profile, debug, badWord = parseArenaAliasArgs(rest)
+    local opts, badWord = parseArenaAliasArgs(rest)
     if badWord then
         echo("[arena] Unknown argument '" .. badWord .. "' — " .. usage)
         return
@@ -3694,7 +3873,15 @@ local function startArenaFromAlias(rest, team, usage)
         echo("[arena] Class unknown — run 'st' first so casters cast.")
         return
     end
-    beginArenaSession(profile, debug, team)
+    -- `exit-if-solo` means "leave if my team disappears", so it is meaningless
+    -- on the solo aliases — a solo run is alone by definition and would exit
+    -- one threshold after starting. Say so rather than accepting the word and
+    -- doing nothing with it, which would look like it had worked.
+    if opts.exitIfSolo and not team then
+        echo("[arena] exit-if-solo only applies to team mode (tfia) — ignoring it.")
+        opts.exitIfSolo = false
+    end
+    beginArenaSession(opts.profile, opts.debug, team, opts.exitIfSolo)
 end
 
 local function handleArenaAlias(matches)
@@ -3752,6 +3939,13 @@ local function stopArena()
     taPackage.arenaTeamSlot = nil
     taPackage.arenaTeamHealing = nil
     taPackage.arenaAnnouncedNeedsHealing = nil
+    -- Bump the generation before clearing the flag: the pending tick reads the
+    -- flag too, but the generation is what makes an already-queued callback a
+    -- no-op even if a new session arms a fresh one in the same breath.
+    taPackage.arenaSoloGen = (taPackage.arenaSoloGen or 0) + 1
+    taPackage.arenaExitIfSolo = nil
+    taPackage.arenaSoloSince = nil
+    taPackage.arenaSoloProbePending = nil
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
@@ -3846,6 +4040,9 @@ local function arenaEmergencyExit(reason)
     stopArena()
     exitGameWithRetry()
 end
+-- Published for arenaSolo, which is defined further up the file (it has to be
+-- visible to beginArenaSession) and so cannot close over this.
+taPackage.arenaEmergencyExit = arenaEmergencyExit
 
 -- The game acknowledges a successful "x" with this line before dropping to the
 -- BBS "<< hit return >>" prompt — the character is out of the game and safe from
@@ -3993,6 +4190,10 @@ end, { type = "regex" })
 -- to their own trigger further down.
 createTrigger("^From (\\S+): " .. arenaTeamHeal.NEED_MSG .. "$", function(matches)
     if not taPackage.arenaTeam then return end
+    -- A team-mate is alive and talking, so we are demonstrably not the last one
+    -- left. They are on their way OUT of the arena, which is exactly the errand
+    -- absence the solo clock must not punish us for.
+    arenaSolo.sawCompany()
     arenaTeamHeal.leases()[matches[2]:lower()] = os.time()
     arenaDebugEcho("team-heal-hold-" .. matches[2])
 end, { type = "regex" })
@@ -4002,6 +4203,7 @@ end, { type = "regex" })
 -- never comes.
 createTrigger("^From (\\S+): " .. arenaTeamHeal.HEALED_MSG .. "$", function(matches)
     if not taPackage.arenaTeam then return end
+    arenaSolo.sawCompany()
     arenaTeamHeal.leases()[matches[2]:lower()] = nil
     arenaDebugEcho("team-heal-release-" .. matches[2])
 end, { type = "regex" })
@@ -4022,6 +4224,11 @@ createTrigger("^(.+) just rang the great gong!$", function(matches)
     -- above; this pattern matches it too, so let that one keep it.
     if matches[2] == "You" then return end
     if not taPackage.arenaTeam then return end
+    -- Somebody is standing at the gong, so we have company. Noted before the
+    -- state gate below: mid-fight this trigger has nothing else to do and
+    -- returns, and mid-fight is precisely when the solo clock is running with
+    -- no scan pump to correct it.
+    arenaSolo.sawCompany()
     if taPackage.arenaState ~= "ringing" then return end
     arenaDebugEcho("team-ring-yielded-to-" .. matches[2])
     local gen = (taPackage.arenaRingGen or 0) + 1
@@ -4105,7 +4312,11 @@ local function arenaCaptureRoster(blob)
     -- Only while a probe is outstanding: this is the arena brief we asked for,
     -- not a room we happen to be walking through.
     if not taPackage.arenaTeam then return end
-    if not taPackage.arenaProbePending then return end
+    -- Either probe will do. The solo heartbeat asks for the same brief mid-fight
+    -- (arenaSolo.tick), and a fight-time roster is strictly fresher than the one
+    -- the last ring gap left behind. arenaScanRoom still owns clearing this on
+    -- its way out, so the ring slot cannot go stale off the back of it.
+    if not (taPackage.arenaProbePending or taPackage.arenaSoloProbePending) then return end
     -- "A", "A and B", "A, B, and C" — flatten the conjunction to a plain
     -- comma-separated list, then split. The Oxford comma leaves an empty field
     -- behind ("B, and C" -> "B, , C"), which the emptiness check drops.
@@ -4133,6 +4344,15 @@ end, { type = "regex" })
 -- definitive terminator: if the probe is still pending when it arrives, no
 -- monster was listed and the room is clear of monsters, so ring.
 createTrigger("^There .+ on the floor\\.$", function()
+    -- The solo heartbeat's mid-fight brief ends here too, and this is the only
+    -- line that always does: when nobody else is in the arena no roster line is
+    -- printed at all, so "no names seen" is only knowable once the brief is
+    -- over. Handled before the ring probe below and independently of it — the
+    -- two can legitimately be outstanding at the same time.
+    if taPackage.arenaSoloProbePending then
+        taPackage.arenaSoloProbePending = false
+        arenaSolo.observe(#(taPackage.arenaTeamRoster or {}))
+    end
     if not taPackage.arenaProbePending then return end
     taPackage.arenaProbePending = false
     if taPackage.arenaState ~= "ringing" then return end
