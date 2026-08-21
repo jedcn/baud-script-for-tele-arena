@@ -9043,9 +9043,10 @@ describe("ring-gong-and-fight-in-arena 3", function()
 
         -- The third arena's threshold is banded on MAX vitality, not a
         -- percentage: under 500 max flee on any damage at all; 500-600 max flee
-        -- below 500; over 600 max flee below 600. The percentage rule (75%) and
-        -- the 400 floor are both dead here — every case below picks HP where
-        -- those two would answer differently, so a regression to them fails.
+        -- below 500; 600-800 max flee below 600; over 800 max the percentage
+        -- rule (75%) takes back over. The 400 floor is dead here, and the
+        -- percentage is dead in every band but the top one — the cases below
+        -- pick HP where the rules answer differently, so a regression fails.
 
         -- Smallest band: 450 max, so the threshold is 450 and a single point of
         -- damage puts us under it. 449 is way above both 75% (337) and 400.
@@ -9096,7 +9097,7 @@ describe("ring-gong-and-fight-in-arena 3", function()
             assert.are.equal("fighting", taPackage.arenaState)
         end)
 
-        -- Top band: over 600 max flees below 600. At 800 max the percentage rule
+        -- Flat band: 600-800 max flees below 600. At 800 max the percentage rule
         -- would have said 600 too, so use 700 max, where 75% is 525 — fleeing at
         -- 599 can only be the band.
         it("flees below 600 for a character over 600 max HP", function()
@@ -9112,6 +9113,36 @@ describe("ring-gong-and-fight-in-arena 3", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             setHP(600, 700)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- 800 max is the seam: 75% of 800 is 600, which is what the flat band
+        -- says too, so both rules agree and 600 still keeps fighting.
+        it("treats exactly 800 max HP as the 600 band", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(600, 800)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fighting", taPackage.arenaState)
+        end)
+
+        -- Top band: over 800 max goes back to 75%. The live case is a 998-max
+        -- Knight, where 75% is 748 — well above the flat 600 the band used to
+        -- give, so fleeing at 747 can only be the percentage.
+        it("flees at 75% of max for a character over 800 max HP", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(747, 998)
+            helper.simulateLine("Your attack hit the cave bear for 5 damage!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("keeps fighting at 75% of max for a character over 800 max HP", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(748, 998)  -- floor(998 * 0.75) = 748, and the test is strict <
             helper.simulateLine("Your attack hit the cave bear for 5 damage!")
             assert.are.equal("fighting", taPackage.arenaState)
         end)

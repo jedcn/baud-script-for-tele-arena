@@ -3367,21 +3367,33 @@ arenaHeal.FLOOR_BY_PROFILE = { ["3"] = 400 }
 --                     rounds kill from full, and the only safe amount of damage
 --                     to absorb is none.
 --   500..600 max   -> flee below 500.
---   over 600 max   -> flee below 600.
+--   600..800 max   -> flee below 600.
+--   over 800 max   -> flee below 75% of max, i.e. the ordinary percentage rule.
 --
--- Both upper bands keep a reserve larger than that 380 hit, which the old 400
+-- The upper bands keep a reserve larger than that 380 hit, which the old 400
 -- floor did not. The cost is temple trips, and for the smallest characters it is
 -- a trip per fight — that is the intended trade: they are here to be carried by
 -- a team, not to trade rounds with giants.
 --
 -- Note 600 max falls in the middle band (flee below 500), matching "between 500
 -- and 600" reading inclusively at its top.
+--
+-- The percentage takes back over above 800 because a flat 600 stops scaling
+-- there: 800 is exactly where 75% equals 600, so below it the flat band is the
+-- more cautious of the two and above it the flat band is the more reckless. A
+-- 998-max Knight held to 600 rides 148 HP further down than the same character
+-- would anywhere else in the game. The bands exist to protect characters too
+-- small to have a percentage worth taking, not to make large ones fight longer,
+-- so hand them back to the percentage the moment it is the stricter answer. The
+-- two agree exactly at 800, so the seam is continuous.
 arenaHeal.THIRD_ARENA_LOW_MAX = 500
 arenaHeal.THIRD_ARENA_HIGH_MAX = 600
+arenaHeal.THIRD_ARENA_PCT_MAX = 800
 function arenaHeal.thirdArenaThreshold(maxHp)
     if maxHp < arenaHeal.THIRD_ARENA_LOW_MAX then return maxHp end
     if maxHp <= arenaHeal.THIRD_ARENA_HIGH_MAX then return arenaHeal.THIRD_ARENA_LOW_MAX end
-    return arenaHeal.THIRD_ARENA_HIGH_MAX
+    if maxHp <= arenaHeal.THIRD_ARENA_PCT_MAX then return arenaHeal.THIRD_ARENA_HIGH_MAX end
+    return math.floor(maxHp * arenaHeal.FRACTION)
 end
 
 -- The HP we must stay above to be in the arena at all. Split out of
