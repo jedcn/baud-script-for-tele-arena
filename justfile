@@ -39,9 +39,17 @@ normalize-stats +files:
 #   TA_LOGIN_CMD="start-gold-farming" just run garbageman
 # Use it to arm a script, not to send text: at the username prompt there is no
 # game to send a command to.
+#
+# The log name is timestamped at launch, so an hour later you no longer know
+# which file this session wrote. The EXIT trap prints the path on the way out --
+# on a clean quit, a crash, or a Ctrl-C -- so it's the last thing on screen.
 run label:
+    #!/usr/bin/env bash
+    set -uo pipefail
     mkdir -p ./logs
-    TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text ./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log
+    log="./logs/session-{{label}}-$(date +%Y-%m-%dT%H-%M-%S).log"
+    trap 'echo "session log: $log"' EXIT
+    TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text "$log"
 
 report:
     bun report.ts && open report.html
