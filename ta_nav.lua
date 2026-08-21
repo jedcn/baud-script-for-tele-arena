@@ -145,6 +145,14 @@ local NAV_ROUTES = {
         -- has a chasm-is-clear of its own uses it, and the ones that don't are
         -- walked as usual. The temple's is unchanged by the switch -- it is the
         -- last leg, so replacing it and carrying on IS ending there.
+        --
+        -- Read it as a claim about the LEVERS, not about the chasm. Pulling
+        -- them disarms the traps along each level as well as dropping the
+        -- walls, and both stay done -- so asking for `chasm-is-clear` says
+        -- "every lever on the way has been pulled at some point". On a
+        -- character who has never made the outward walk it takes the short way
+        -- past traps that are still armed. The chasm is just the obstacle you
+        -- can see from the ordinary route; the traps are the ones you can't.
         variants = {
             ["chasm-is-clear"] = { fromLegs = true },
         },
@@ -394,6 +402,32 @@ local NAV_ROUTES = {
                   "e", "ne",
                   { cmd = "say arok" },
                   "n", "n", "d" },
+        -- The short way through this level, for a run where its lever is
+        -- already pulled. 14 steps against 47, and not a step of it is new:
+        -- it is the ordinary route's first three, then its last eleven. The
+        -- thirty-three it drops (steps 4-36) are one long loop out to the
+        -- lever and back, and the room the third `w` lands in is the room step
+        -- 36 lands in -- which is why the join needs nothing of its own.
+        --
+        -- What that lever does is the reason the variant is named for a
+        -- condition rather than for the walls: pulling these levers DISARMS
+        -- THE TRAPS along the level, and the traps stay disarmed the same way
+        -- the walls stay down. So `chasm-is-clear` means "every lever on the
+        -- way has been pulled at some point", not merely "the chasm is
+        -- passable" -- and walking this list on a level whose lever has never
+        -- been pulled walks it into live traps, not just a shut wall.
+        --
+        -- `say arok` stays. It is the riddle that opens the way down to level
+        -- four, and a riddle door does not stay open the way a lever stays
+        -- pulled -- the same reason the level-two variant still says komi.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 3,
+                steps = { "nw", "n", "nw", "ne", "ne", "e", "ne",
+                          { cmd = "say arok" },
+                          "n", "n", "d" },
+            },
+        },
     },
     -- Level three down to level four. No riddle on this one, just a lever
     -- two-thirds of the way along, and an unguarded `d` at the end.
