@@ -526,6 +526,33 @@ local NAV_ROUTES = {
                   { cmd = "pull lever" },
                   "n", "nw", "ne", "ne", "n", "nw", "ne", "nw", "nw", "n",
                   "n", "d" },
+        -- The short way through this level, for a run where its lever is
+        -- already pulled. 14 steps against 27.
+        --
+        -- It leaves at step 6 and rejoins at step 22 -- its last six (`ne nw
+        -- nw n n d`) are the leg's steps 22-27 direction for direction -- so
+        -- what it drops is the sixteen steps out to the lever and back, and it
+        -- comes back in where the retrace would have come back in anyway.
+        --
+        -- The three steps it takes in between are `ne se e`, against the
+        -- ordinary route's `se ne e` at 6-8: THE SAME THREE, THE FIRST TWO
+        -- SWAPPED. Recorded as the user walked it. It looks like a
+        -- transposition and it is not one to quietly straighten out -- nothing
+        -- down here is mapped, so there is no grid on which ne-then-se and
+        -- se-then-ne have to land in the same chamber, and if they did the
+        -- variant could have been written `keep = 8` with six steps instead of
+        -- five and nine. If a walk of this ever refuses at step 6 or 7, that
+        -- swap is the first thing to try.
+        --
+        -- No command in it -- no riddle on this level -- and the same caution
+        -- as the rest: the lever disarms this level's traps as well as
+        -- dropping its walls, so this is only walkable once it has been pulled.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 5,
+                steps = { "ne", "se", "e", "ne", "nw", "nw", "n", "n", "d" },
+            },
+        },
     },
     -- Level six to the temple, and the end of the chain. No riddle at the door;
     -- two levers, each at the far end of a dead-end run that is then walked
