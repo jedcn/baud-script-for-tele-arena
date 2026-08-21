@@ -452,6 +452,27 @@ local NAV_ROUTES = {
                   { cmd = "pull lever" },
                   "n", "n", "e", "ne", "nw", "w", "nw", "sw", "nw", "nw", "ne",
                   "ne", "nw", "n", "n", "nw", "nw", "n", "d" },
+        -- The short way through this level, for a run where its lever is
+        -- already pulled. 14 steps against 42, and like level three's it is
+        -- made entirely of the ordinary route's own steps: its first eight,
+        -- then its last six. The twenty-eight it drops (steps 9-36) are one
+        -- long loop out to the lever and back, and step 37 is where the
+        -- retrace lands -- so the join needs nothing of its own.
+        --
+        -- Nothing but directions in it, which makes it the one variant here
+        -- with no command at all: this level has no riddle, and the `d` at the
+        -- end is unguarded.
+        --
+        -- Same caution as level three, and it bites harder here because the
+        -- dropped run is longer: the lever disarms this level's traps as well
+        -- as dropping its walls, so this is only walkable once it has been
+        -- pulled. See the chain's variants block for what the name claims.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 8,
+                steps = { "n", "n", "nw", "nw", "n", "d" },
+            },
+        },
     },
     -- Level four down to level five. One lever, no riddle, and the descent at
     -- the end is unguarded.
