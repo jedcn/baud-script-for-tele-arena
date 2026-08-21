@@ -489,6 +489,28 @@ local NAV_ROUTES = {
                   { cmd = "pull lever" },
                   "s", "sw", "se", "sw", "s", "sw", "sw", "nw", "sw", "sw",
                   "nw", "n", "nw", "sw", "w", "s", "se", "se", "s", "d" },
+        -- The short way through this level, for a run where its lever is
+        -- already pulled. 13 steps against 36.
+        --
+        -- Unlike levels three and four this one is not simply the ordinary
+        -- route with the lever's out-and-back lifted out. It leaves at step 5
+        -- -- where the long way goes `e`, this goes `sw` -- and takes three
+        -- steps of its own before rejoining at step 30, so it cuts the corner
+        -- the retrace would have gone round as well as the detour itself. Its
+        -- last seven (`sw w s se se s d`) are the ordinary route's steps 30-36
+        -- direction for direction, which is the check on the transcription:
+        -- two walks agreeing on seven consecutive steps is not a coincidence.
+        --
+        -- No command in it, like level four's: no riddle on this level and the
+        -- `d` is unguarded. And the same caution -- the lever disarms this
+        -- level's traps as well as dropping its walls, so this is only
+        -- walkable once it has been pulled.
+        variants = {
+            ["chasm-is-clear"] = {
+                keep  = 4,
+                steps = { "sw", "sw", "sw", "w", "s", "se", "se", "s", "d" },
+            },
+        },
     },
     -- Level five down to level six. One lever, no riddle, unguarded descent --
     -- the same shape as the two floors above it, and the shortest of them.
