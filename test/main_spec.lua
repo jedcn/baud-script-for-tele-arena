@@ -4407,7 +4407,7 @@ describe("start-gold-farming", function()
         -- The gold matters: main.lua's own handler for this line charges the
         -- training fee, and setGold runs the arena's gold floor, which
         -- emergency-exits the run (clearing arenaState) if the balance lands
-        -- under 100. A character with nothing in its pockets therefore never
+        -- under 50. A character with nothing in its pockets therefore never
         -- reaches our handler at all.
         local function trainDuringGoldFarming()
             helper.simulateAlias("start-gold-farming")
@@ -8456,21 +8456,21 @@ describe("ring-gong-and-fight-in-arena", function()
             end
         end)
 
-        it("exits and stops when gold falls below the 100 floor", function()
+        it("exits and stops when gold falls below the 50 floor", function()
             taPackage.arenaState = "fighting"
             taPackage.character.gold = 500
             helper.simulateLine("You found 3 gold crowns while searching the orc's corpse.")
             assert.is_not_nil(taPackage.arenaState)  -- 503 is fine
             helper.sendCalls = {}
-            taPackage.character.gold = 130
-            helper.simulateLine("The priests heal all your wounds for 40 crowns.")  -- -> 90
+            taPackage.character.gold = 80
+            helper.simulateLine("The priests heal all your wounds for 40 crowns.")  -- -> 40
             assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
             assert.is_nil(taPackage.arenaState)
         end)
 
-        it("stays in the game at exactly the 100 floor", function()
+        it("stays in the game at exactly the 50 floor", function()
             taPackage.arenaState = "fighting"
-            helper.simulateLine("You are carrying 100 gold crowns.")
+            helper.simulateLine("You are carrying 50 gold crowns.")
             for _, cmd in ipairs(helper.sendCalls) do
                 assert.are_not.equal("x", cmd)
             end

@@ -4123,7 +4123,7 @@ end, { type = "regex" })
 -- positive. Assigns to the local forward-declared up by setGold so every gold
 -- change is checked; a nil balance (not yet read) is left alone. Returns true
 -- when it triggered the exit.
-local ARENA_MIN_GOLD = 100
+local ARENA_MIN_GOLD = 50
 function checkArenaGoldFloor()
     if not taPackage.arenaState then return false end
     local gold = getGold()
