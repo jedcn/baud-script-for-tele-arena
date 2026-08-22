@@ -15989,6 +15989,18 @@ describe("navigate-to", function()
                 "Get to where sewers/next-leg starts and run it on its own", 1, true))
         end)
 
+        -- The other resume point: the seam is step 2 of the joined walk, so
+        -- from-step 1 redoes the last move and from-step 2 takes it as landed.
+        it("names both from-step numbers for the joined walk", function()
+            walkToSeam()
+            brief("stonework corridor")
+            helper.simulateLine("Exits: e,n,s,sw,w.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find(
+                "run navigate-to sewers/town-sewers-18 from-step 1 "
+                .. "or run navigate-to sewers/town-sewers-18 from-step 2", 1, true))
+        end)
+
         -- The hydra-to-stoneworks seam is this shape: the leg names a mapped
         -- room rather than a fingerprint, so the check goes through the map.
         it("checks a leg whose start is a map reference", function()

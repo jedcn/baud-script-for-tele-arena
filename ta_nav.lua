@@ -1675,6 +1675,9 @@ navStartSeam = function(legName)
                 navAdvance()
                 return
             end
+            -- Read before stopNavigate clears the walk: the seam is itself a
+            -- step, so its index is the resume point for the joined route.
+            local dest, seamAt = walk.destination, walk.index
             stopNavigate()
             navEcho("At the " .. legName .. " seam I expected " .. tostring(expect)
                 .. " but I'm in " .. here .. " — stopping.")
@@ -1682,6 +1685,14 @@ navStartSeam = function(legName)
             -- wherever this actually is, once you have worked out where that is.
             navEcho("  Get to where " .. legName .. " starts and run it on its own"
                 .. ", or stop-navigating and walk it by hand.")
+            -- The other way back in, once you have worked out where you went
+            -- off course: pick the joined walk up at the seam rather than
+            -- re-running the leg. Two numbers for the reason navStart
+            -- documents -- the step before the seam is the last move that was
+            -- sent, and whether to redo it depends on whether it landed.
+            local resume = "navigate-to " .. dest .. " from-step "
+            navEcho("  Or if you know where you went off course, run "
+                .. resume .. (seamAt - 1) .. " or run " .. resume .. seamAt)
         end,
     }
     send("")
