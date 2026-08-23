@@ -67,8 +67,37 @@ archive-logs:
         exit 0
     fi
     mkdir -p "$dest"
-    mv -n "${logs[@]}" "$dest"/
-    echo "archive-logs: moved ${#logs[@]} file(s) to $dest"
+    moved=0
+    already=0
+    conflicts=""
+    nconflicts=0
+    for f in "${logs[@]}"; do
+        b=$(basename "$f")
+        if [ ! -e "$dest/$b" ]; then
+            mv "$f" "$dest/$b"
+            moved=$((moved + 1))
+        elif cmp -s "$f" "$dest/$b"; then
+            # Already in the archive byte-for-byte: the move is a no-op, so
+            # finish it by dropping the local copy.
+            rm "$f"
+            already=$((already + 1))
+        else
+            # Same name, different bytes -- usually a log that was archived
+            # while the session was still writing to it. Never clobber, and
+            # never claim to have moved it.
+            conflicts="$conflicts  $b"$'\n'
+            nconflicts=$((nconflicts + 1))
+        fi
+    done
+    echo "archive-logs: moved $moved file(s) to $dest"
+    if [ "$already" -gt 0 ]; then
+        echo "archive-logs: removed $already local file(s) already archived byte-for-byte"
+    fi
+    if [ "$nconflicts" -gt 0 ]; then
+        echo "archive-logs: left $nconflicts file(s) in ./logs -- same name in $dest, different contents:"
+        printf '%s' "$conflicts"
+        exit 1
+    fi
 
 # Snapshot the live DB into the sibling tele-arena-db repo (as a SQL dump) and
 # commit it. Run before a risky hand-edit instead of making a .db.bak copy.
