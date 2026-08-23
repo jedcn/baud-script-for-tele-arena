@@ -453,11 +453,15 @@ local NAV_ROUTES = {
                   "n", "n", "e", "ne", "nw", "w", "nw", "sw", "nw", "nw", "ne",
                   "ne", "nw", "n", "n", "nw", "nw", "n", "d" },
         -- The short way through this level, for a run where its lever is
-        -- already pulled. 14 steps against 42, and like level three's it is
+        -- already pulled. 13 steps against 42, and like level three's it is
         -- made entirely of the ordinary route's own steps: its first eight,
-        -- then its last six. The twenty-eight it drops (steps 9-36) are one
-        -- long loop out to the lever and back, and step 37 is where the
-        -- retrace lands -- so the join needs nothing of its own.
+        -- then its last five. The twenty-nine it drops (steps 9-37) are one
+        -- long loop out to the lever and back -- and unlike level three's, the
+        -- retrace does not come back to where the eighth step left us: it
+        -- lands one room short, and step 37's `n` is what closes that gap. So
+        -- the join takes the ordinary route's last FIVE, not its last six.
+        -- Walked as `n n nw nw n d` this leg's second `n` is a room too far
+        -- (found live, 2026-08-23, mid-walk at step 118 of the chain).
         --
         -- Nothing but directions in it, which makes it the one variant here
         -- with no command at all: this level has no riddle, and the `d` at the
@@ -470,7 +474,7 @@ local NAV_ROUTES = {
         variants = {
             ["chasm-is-clear"] = {
                 keep  = 8,
-                steps = { "n", "n", "nw", "nw", "n", "d" },
+                steps = { "n", "nw", "nw", "n", "d" },
             },
         },
     },
