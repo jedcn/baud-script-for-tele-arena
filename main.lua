@@ -3822,6 +3822,22 @@ local function beginArenaSession(profile, debug, team, exitIfSolo)
         .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
     arenaSolo.arm()
+    -- Starting hurt: walk out before doing anything else, exactly as
+    -- arenaArrivedHome does. A session usually starts from a standing start in
+    -- an empty arena, but not always -- the case this exists for is a character
+    -- the BBS dropped mid-flee, reconnecting with TA_INIT_CMD="tfia 3". The
+    -- entry `st` has already landed by then (that is what runLoginInitCmd waits
+    -- for), so the HP is known; it was simply never consulted. Without this the
+    -- scan below finds whatever monster is still standing in the arena, engages
+    -- it, and the first swing is what puts us in the heat of battle -- so the
+    -- flee that checkFleeArena fires one line later cannot leave the room. In
+    -- the third arena that is a 400-damage round spent for nothing.
+    if arenaHeal.isLow() then
+        arenaDebugEcho("session-start-low")
+        echo("[arena] Starting hurt — heading to the temple before fighting.")
+        arenaHeal.departForTemple()
+        return
+    end
     -- Scan the room before the first ring: another player may already have a
     -- monster in here, and we should clear it before summoning our own.
     arenaScanRoom()

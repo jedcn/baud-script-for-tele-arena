@@ -5706,6 +5706,56 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(taPackage.arenaState)
         end)
 
+        -- Reconnecting mid-flee. The BBS drops a character while it is running
+        -- for the temple; TA_INIT_CMD="tfia 3" brings it back in and starts a
+        -- session on the spot. The entry `st` has already landed by then, so
+        -- the HP is known -- but the session used to scan the room, find
+        -- whatever monster is still standing there, and swing at it. That swing
+        -- is what puts us in the heat of battle, so the flee that fires one
+        -- combat line later cannot leave the room. In the third arena that is a
+        -- 400-damage round spent for nothing.
+        it("walks out instead of engaging when the session starts hurt", function()
+            setHP(273, 440)
+            helper.simulateAlias("tfia 3")
+            assert.are.equal("fleeing", taPackage.arenaState)
+        end)
+
+        it("does not probe the room when the session starts hurt", function()
+            setHP(273, 440)
+            helper.simulateAlias("tfia 3")
+            for _, sent in ipairs(helper.sendCalls) do
+                assert.are_not.equal("", sent)
+            end
+        end)
+
+        it("says why it is leaving when the session starts hurt", function()
+            setHP(273, 440)
+            helper.simulateAlias("tfia 3")
+            local said = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "Starting hurt", 1, true) then said = true end
+            end
+            assert.is_true(said)
+        end)
+
+        -- The gate must not fire on a healthy character: the ordinary start is
+        -- a scan of the room, and turning that into a temple trip would make
+        -- every session begin by walking away from the arena.
+        it("scans the room as usual when the session starts healthy", function()
+            setHP(440, 440)
+            helper.simulateAlias("tfia 3")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.is_true(taPackage.arenaProbePending)
+        end)
+
+        -- Vitality unknown is not evidence of being hurt (arenaHeal.isLow says
+        -- so), and a fresh character that has never read a status must not be
+        -- sent to the temple before its first fight.
+        it("scans the room as usual when vitality is unknown", function()
+            helper.simulateAlias("tfia 3")
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
     end)
 
     describe("stop alias", function()
