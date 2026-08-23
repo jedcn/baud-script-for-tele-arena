@@ -1792,6 +1792,17 @@ createAlias("^message-me-and-exit-when-you-see (.+)$", function(matches)
     armPhraseWatcher("message-me-and-exit-when-you-see", matches[2], true)
 end, { type = "regex" })
 
+-- buy-potions — the manual version of the arena's potion round trip: buy and
+-- drink both stat potions (rowan for strength, hyssop for agility) while you're
+-- standing in the magic shop. Each is drunk right after it's bought so a
+-- refusal (no gold, out of stock) is easy to pair with the potion it belongs to.
+createAlias("^buy-potions$", function()
+    send("buy rowan")
+    send("drink rowan")
+    send("buy hyssop")
+    send("drink hyssop")
+end, { type = "regex" })
+
 -- wait-for-potions-to-wear-off-and-exit — the one phrase we wait on often
 -- enough to deserve its own name: the line the game prints when a potion runs
 -- out. Same behaviour as message-me-and-exit-when-you-see with that phrase,
