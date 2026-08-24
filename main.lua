@@ -4753,6 +4753,31 @@ end, { type = "regex" })
 local TAVERN_HP_FRACTION = 0.5        -- exit if current HP drops below this share of max
 local TAVERN_STATUS_POLL_MS = 600000 -- low-frequency HP heartbeat (10 min); see scheduleTavernPoll
 
+-- Session accounting. The whole point of parking a character here is the gold
+-- the farm hands it, and until now a run said nothing about how that was going:
+-- the only evidence was counting "[bank] Deposited ..." lines in the log after
+-- the fact. So keep two numbers from the moment the mode is armed — when it
+-- started, and how much gold has arrived since — and report them as a rate,
+-- which is the figure that actually answers "is this round worth leaving up?".
+--
+-- Both live on taPackage rather than in locals so they survive reloadScript()
+-- mid-run; a reload that reset the clock would silently inflate the rate.
+local function tavernSummary()
+    local elapsed = os.time() - (taPackage.tavernStartTime or os.time())
+    if elapsed < 0 then elapsed = 0 end
+    local hours = math.floor(elapsed / 3600)
+    local minutes = math.floor((elapsed % 3600) / 60)
+    local uptime = hours > 0 and (hours .. "h " .. minutes .. "m") or (minutes .. "m")
+    local gold = taPackage.tavernGoldReceived or 0
+    -- Under a minute there is no meaningful rate — dividing by a fraction of a
+    -- minute turns the first handover into a fantasy figure ("49,320 gold/min").
+    local rate = elapsed >= 60
+        and string.format("%.1f", gold / (elapsed / 60)) .. " gold/min"
+        or "rate n/a yet"
+    return "up " .. uptime .. ", " .. formatWithCommas(gold) .. " gold received ("
+        .. rate .. ")"
+end
+
 local function isTavernRoom(room)
     if not room then return false end
     local r = room:lower()
@@ -4762,7 +4787,7 @@ end
 -- Leave the game and stop the mode. Bumping the generation invalidates any
 -- poll timer still in flight so it can't re-arm after we've quit.
 local function tavernExitGame(reason)
-    echo("[tavern] " .. reason .. " — leaving the game.")
+    echo("[tavern] " .. reason .. " — leaving the game. Session: " .. tavernSummary() .. ".")
     taPackage.tavernMode = false
     taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
     -- Disarm banking on the way out. We're about to be logged out, and a
@@ -4783,6 +4808,9 @@ local function scheduleTavernPoll()
     local gen = taPackage.tavernModeGen
     createTimer(TAVERN_STATUS_POLL_MS, function()
         if not taPackage.tavernMode or taPackage.tavernModeGen ~= gen then return end
+        -- Ride the heartbeat for the check-in too, so an idle run says where it
+        -- is every 10 minutes instead of only when gold happens to land.
+        echo("[tavern] " .. os.date("%H:%M:%S") .. " — " .. tavernSummary() .. ".")
         send("st")
         scheduleTavernPoll()
     end, { repeating = false })
@@ -4820,6 +4848,8 @@ createAlias("^hang-around-in-tavern-and-deposit-gold$", function()
     end
     taPackage.tavernMode = true
     taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    taPackage.tavernStartTime = os.time()
+    taPackage.tavernGoldReceived = 0
     echo("[tavern] Hanging around in the " .. room
         .. ". Buying meals/drinks as needed; will leave (x) if HP drops below 50% or money runs out.")
     -- Arm banking too. ta_bank.lua's route home ends "ne" into the first town's
@@ -4832,8 +4862,13 @@ createAlias("^hang-around-in-tavern-and-deposit-gold$", function()
 end, { type = "regex" })
 
 createAlias("^stop-hang-around-in-tavern-and-deposit-gold$", function()
+    -- Read the summary before stopping: stopTavernMode leaves the numbers
+    -- alone, but the reading belongs to the run that just ended, so take it
+    -- first and say it in the same breath as "stopped".
+    local summary = tavernSummary()
     if stopTavernMode() then
-        echo("[tavern] Stopped hanging around, banking disarmed (still in the game).")
+        echo("[tavern] Stopped hanging around, banking disarmed (still in the game). Session: "
+            .. summary .. ".")
     else
         echo("[tavern] Not currently hanging around.")
     end
@@ -4847,6 +4882,19 @@ end, { type = "regex" })
 createTrigger("^You're thirsty\\.$", function()
     if not taPackage.tavernMode then return end
     send("buy drink")
+end, { type = "regex" })
+
+-- Gold landed. ta_bank.lua has its own trigger on this line (it starts the
+-- deposit trip); this one only keeps score, so it stays here with the rest of
+-- the tavern session and counts every handover — including one that arrives
+-- while we're already walking to the vaults, which ta_bank declines to bank but
+-- which is money we were nonetheless given.
+createTrigger("^(\\S+) just gave you (\\d+) gold coins\\.$", function(matches)
+    if not taPackage.tavernMode then return end
+    taPackage.tavernGoldReceived = (taPackage.tavernGoldReceived or 0)
+        + (tonumber(matches[3]) or 0)
+    echo("[tavern] +" .. matches[3] .. " gold from " .. matches[2] .. " — "
+        .. tavernSummary() .. ".")
 end, { type = "regex" })
 
 -- A purchase we asked for was refused for lack of funds. In tavern mode the only

@@ -12208,6 +12208,90 @@ describe("hang-around-in-tavern-and-deposit-gold", function()
 
     end)
 
+    -- How long it has been up, how much gold has arrived, and the rate. The
+    -- rate is the figure the run exists to produce, so every place that reports
+    -- has a test: gold arriving, the 10-minute heartbeat, stopping, and quitting.
+    describe("session accounting", function()
+
+        local function echoed(needle)
+            for _, text in ipairs(helper.echoCalls) do
+                if text:find(needle, 1, true) then return true end
+            end
+            return false
+        end
+
+        before_each(function()
+            taPackage.currentRoom = "tavern"
+            helper.simulateAlias("hang-around-in-tavern-and-deposit-gold")
+            helper.echoCalls = {}
+        end)
+
+        -- Backdate the start so the elapsed time is a known quantity. os.time()
+        -- is the real clock here, and a test that ran in zero seconds could
+        -- never exercise the rate at all.
+        local function ageBy(seconds)
+            taPackage.tavernStartTime = os.time() - seconds
+        end
+
+        it("starts the clock and the total at zero", function()
+            assert.are.equal(0, taPackage.tavernGoldReceived)
+            assert.is_truthy(taPackage.tavernStartTime)
+        end)
+
+        it("totals the gold that arrives", function()
+            helper.simulateLine("Garbageman just gave you 822 gold coins.")
+            helper.simulateLine("Garbageman just gave you 178 gold coins.")
+            assert.are.equal(1000, taPackage.tavernGoldReceived)
+        end)
+
+        it("reports uptime, running total and rate when gold arrives", function()
+            ageBy(3600)
+            helper.simulateLine("Garbageman just gave you 1200 gold coins.")
+            assert.is_true(echoed("+1200 gold from Garbageman"))
+            assert.is_true(echoed("up 1h 0m"))
+            assert.is_true(echoed("1,200 gold received"))
+            assert.is_true(echoed("20.0 gold/min"))
+        end)
+
+        -- Under a minute there is no honest rate to quote: the first handover
+        -- divided by a few seconds reads as tens of thousands per minute.
+        it("withholds the rate in the first minute", function()
+            helper.simulateLine("Garbageman just gave you 822 gold coins.")
+            assert.is_true(echoed("rate n/a yet"))
+        end)
+
+        it("checks in on the status heartbeat", function()
+            ageBy(1800)
+            helper.simulateLine("Garbageman just gave you 900 gold coins.")
+            helper.echoCalls = {}
+            helper.fireTimers(600000)
+            assert.is_true(echoed("up 30m, 900 gold received (30.0 gold/min)"))
+        end)
+
+        it("reports the session when stopped", function()
+            ageBy(600)
+            helper.simulateLine("Garbageman just gave you 300 gold coins.")
+            helper.echoCalls = {}
+            helper.simulateAlias("stop-hang-around-in-tavern-and-deposit-gold")
+            assert.is_true(echoed("Session: up 10m, 300 gold received (30.0 gold/min)"))
+        end)
+
+        it("reports the session when it leaves the game", function()
+            ageBy(600)
+            helper.simulateLine("Garbageman just gave you 300 gold coins.")
+            helper.echoCalls = {}
+            helper.simulateLine("Vitality:     29 / 60")
+            assert.is_true(echoed("Session: up 10m, 300 gold received (30.0 gold/min)"))
+        end)
+
+        it("does not count gold when not hanging around", function()
+            helper.simulateAlias("stop-hang-around-in-tavern-and-deposit-gold")
+            helper.simulateLine("Garbageman just gave you 822 gold coins.")
+            assert.are.equal(0, taPackage.tavernGoldReceived)
+        end)
+
+    end)
+
 end)
 
 describe("message-me-when-you-see", function()
