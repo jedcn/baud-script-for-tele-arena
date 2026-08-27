@@ -5706,6 +5706,47 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_nil(taPackage.arenaState)
         end)
 
+        -- `support-only` is the flag for the team shape where two characters
+        -- stand in the arena purely as extra bodies for the monster to split its
+        -- attacks across, so all the XP goes to the third.
+        it("arms support-only when asked", function()
+            helper.simulateAlias("tfia 3 support-only")
+            assert.are.equal("3", taPackage.arenaProfile)
+            assert.is_true(taPackage.arenaTeam)
+            assert.is_true(taPackage.arenaSupportOnly)
+        end)
+
+        it("leaves support-only off by default", function()
+            helper.simulateAlias("tfia 3")
+            assert.is_false(taPackage.arenaSupportOnly)
+        end)
+
+        it("takes support-only alongside the other flags in any order", function()
+            helper.simulateAlias("team-fight-in-arena support-only quiet exit-if-solo 3")
+            assert.are.equal("3", taPackage.arenaProfile)
+            assert.is_false(taPackage.arenaDebug)
+            assert.is_true(taPackage.arenaExitIfSolo)
+            assert.is_true(taPackage.arenaSupportOnly)
+        end)
+
+        -- There is nobody to support alone, so accepting the word would leave a
+        -- character standing in the arena that never swings at anything. Say so,
+        -- exactly as exit-if-solo does.
+        it("refuses support-only on the solo aliases, and says so", function()
+            helper.simulateAlias("rg 2 support-only")
+            assert.are.equal("2", taPackage.arenaProfile)
+            assert.is_false(taPackage.arenaTeam)
+            assert.is_false(taPackage.arenaSupportOnly)
+            local warned = false
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, "support-only", 1, true)
+                    and string.find(msg, "team mode", 1, true) then
+                    warned = true
+                end
+            end
+            assert.is_true(warned)
+        end)
+
         -- Reconnecting mid-flee. The BBS drops a character while it is running
         -- for the temple; TA_INIT_CMD="tfia 3" brings it back in and starts a
         -- session on the spot. The entry `st` has already landed by then, so
@@ -8226,6 +8267,167 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateAlias("team-fight-in-arena")
             assert.are.same({}, taPackage.arenaTeamHealing)
             assert.is_false(taPackage.arenaAnnouncedNeedsHealing)
+        end)
+
+    end)
+
+    -- Support-only mode. Two characters stand in the arena purely as extra
+    -- bodies for the monster to split its attacks across, so all the XP goes to
+    -- the third -- XP here is awarded by damage share, so the only way to give
+    -- it away is to not swing. The exception is the emergency the gong hold
+    -- above exists for: a team-mate below its flee threshold is pinned in the
+    -- room by the heat-of-battle guard until the monster is dead, so the same
+    -- announcement that holds the gong also opens the supports' swords.
+    describe("support-only", function()
+
+        local function said(text)
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == text then return true end
+            end
+            return false
+        end
+
+        local function attacked()
+            return said("a flame")
+        end
+
+        -- Standing in the arena, locked onto a monster, not assisting anyone.
+        local function supportingInAFight()
+            taPackage.arenaTeam = true
+            taPackage.arenaSupportOnly = true
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "flame giant"
+            taPackage.arenaAttackPending = false
+            taPackage.arenaCastPending = false
+            helper.sendCalls = {}
+        end
+
+        local function monsterHitsUs()
+            helper.simulateLine("The flame giant attacked you with a club for 12 damage!")
+        end
+
+        it("does not swing when the monster attacks it", function()
+            supportingInAFight()
+            monsterHitsUs()
+            assert.is_false(attacked())
+        end)
+
+        -- The case the kick in the need-healing trigger exists for. A support
+        -- never swings, so arenaSwingAccepted never fires and the only other
+        -- re-drives are the incoming-attack triggers -- which fire only when the
+        -- monster picks US. If it is beating on the character that just called
+        -- for help, nothing would ever start the burst.
+        it("attacks the moment a team-mate calls for healing, unprompted", function()
+            supportingInAFight()
+            helper.simulateLine("From Pelayo: I need healing")
+            assert.is_true(attacked())
+        end)
+
+        it("keeps swinging while the team-mate is away", function()
+            supportingInAFight()
+            helper.simulateLine("From Pelayo: I need healing")
+            helper.sendCalls = {}
+            taPackage.arenaAttackPending = false
+            monsterHitsUs()
+            assert.is_true(attacked())
+        end)
+
+        -- Standing down immediately, rather than finishing the monster: every
+        -- swing after the emergency is XP taken from the character we are here
+        -- to feed.
+        it("stands down again when the team-mate reports back", function()
+            supportingInAFight()
+            helper.simulateLine("From Pelayo: I need healing")
+            helper.simulateLine("From Pelayo: I am healed")
+            helper.sendCalls = {}
+            taPackage.arenaAttackPending = false
+            monsterHitsUs()
+            assert.is_false(attacked())
+        end)
+
+        -- The assist rides the gong hold's lease, so it inherits its expiry: a
+        -- support that never hears the all-clear (the announcer died, or dropped
+        -- its connection) must not swing for the rest of the session.
+        it("stands down when the lease lapses without an all-clear", function()
+            supportingInAFight()
+            helper.simulateLine("From Pelayo: I need healing")
+            taPackage.arenaTeamHealing["pelayo"] = os.time() - 181
+            helper.sendCalls = {}
+            taPackage.arenaAttackPending = false
+            monsterHitsUs()
+            assert.is_false(attacked())
+        end)
+
+        -- The second half of the ask: supports cover each other too. A pinned
+        -- support needs the monster dead for exactly the same reason.
+        it("assists a fellow support who calls for healing", function()
+            supportingInAFight()
+            helper.simulateLine("From Kerhak: I need healing")
+            assert.is_true(attacked())
+        end)
+
+        -- The flag must not leak into ordinary team mode: the character being
+        -- levelled hears the same announcement and must simply keep fighting.
+        it("leaves a plain team member swinging throughout", function()
+            supportingInAFight()
+            taPackage.arenaSupportOnly = false
+            monsterHitsUs()
+            assert.is_true(attacked())
+        end)
+
+        -- Casting is attacking: a Sorceror gives away XP with toduza just as
+        -- surely as with its sword.
+        it("holds a Sorceror's toduza too, and casts once assisting", function()
+            setClass("Sorceror")
+            supportingInAFight()
+            monsterHitsUs()
+            assert.is_false(said("cast toduza flame"))
+            taPackage.arenaCastPending = false
+            helper.simulateLine("From Pelayo: I need healing")
+            assert.is_true(said("cast toduza flame"))
+        end)
+
+        -- Supports keep their place in the ring order. The character being
+        -- levelled cannot know its team-mates are supports, so the stagger has
+        -- to keep working unmodified -- and a character that is not swinging has
+        -- a permanently fresh physical clock, so it clears the gong's floor
+        -- immediately after a kill instead of waiting out ARENA_RING_FLOOR_MS.
+        it("still rings the gong", function()
+            taPackage.character.name = "Castor"
+            taPackage.arenaTeam = true
+            taPackage.arenaSupportOnly = true
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            taPackage.arenaTeamRoster = {}
+            taPackage.arenaRingPending = false
+            helper.sendCalls = {}
+            helper.simulateLine("There is nothing on the floor.")
+            assert.is_true(said("ring gong"))
+        end)
+
+        -- Fleeing is untouched: a hurt support walks out, and announces on the
+        -- way so nobody summons on top of it -- which is also what opens the
+        -- other support's swords.
+        it("still flees and calls for healing when hurt", function()
+            taPackage.arenaTeam = true
+            taPackage.arenaSupportOnly = true
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "flame giant"
+            setHP(10, 100)
+            helper.sendCalls = {}
+            -- A support never swings, so the flee check rides an incoming hit
+            -- rather than the resolution of one of our own attacks.
+            monsterHitsUs()
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.is_true(said("I need healing"))
+        end)
+
+        it("is cleared by stop-all-scripts", function()
+            setClass("Warrior")
+            helper.simulateAlias("tfia 3 support-only")
+            assert.is_true(taPackage.arenaSupportOnly)
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.arenaSupportOnly)
         end)
 
     end)

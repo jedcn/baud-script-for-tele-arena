@@ -2401,6 +2401,14 @@ end
 -- logs/session-2026-06-21T11-51-45.log, where post-flee swings stalled the run.)
 local function arenaAttack()
     if taPackage.arenaState ~= "fighting" then return end
+    -- A support-only character is here to be hit, not to hit: see
+    -- arenaTeamHeal.holdingBack. Gated here rather than at the call sites
+    -- because there are a dozen of them (every re-drive trigger, the engage
+    -- path, the exhaustion re-arm) and they must all fall silent together.
+    if taPackage.arenaTeamHeal.holdingBack() then
+        arenaDebugEcho("support-hold")
+        return
+    end
     local name = taPackage.arenaMonster
     if name then
         if taPackage.arenaAttackPending then return end
@@ -2417,6 +2425,9 @@ local function arenaCast()
     -- Like arenaAttack, casting is a combat action that resets the move clock;
     -- once we're fleeing it must cease until we're fighting again.
     if taPackage.arenaState ~= "fighting" then return end
+    -- Casting is attacking: a Sorceror support gives away XP with toduza just
+    -- as surely as with its sword, so it holds on the same rule.
+    if taPackage.arenaTeamHeal.holdingBack() then return end
     if getClass() ~= "Sorceror" then return end
     local name = taPackage.arenaMonster
     if not name then return end
@@ -2614,6 +2625,13 @@ local arenaTeamHeal = {
     HEALED_MSG = "I am healed",
 }
 
+-- Published so arenaAttack and arenaCast can reach it. They are defined further
+-- UP the file than this table, so the local above is not in scope for them and
+-- the bare name would compile to a nil global. Going through taPackage is the
+-- same forward-reference dodge taPackage.arenaTryTrain and
+-- taPackage.arenaEmergencyExit already use, and it costs no local slot.
+taPackage.arenaTeamHeal = arenaTeamHeal
+
 -- Entries are timestamps, not booleans, so the hold is a lease that expires
 -- rather than a flag that can get stuck on. A character that dies mid-escape,
 -- disconnects, or is stopped by hand never says the all-clear, and a plain
@@ -2657,6 +2675,27 @@ function arenaTeamHeal.holder()
         end
     end
     return holder
+end
+
+-- Should a support-only character keep its sword down right now?
+--
+-- `support-only` (see parseArenaAliasArgs) is for the team shape where two
+-- characters stand in the arena purely as extra bodies for the monster to split
+-- its attacks across, so all the XP goes to the third. XP here is awarded by
+-- damage share, so the only way to give it away is to not swing.
+--
+-- The exception is the emergency this whole section exists for. The heat-of-
+-- battle guard refuses every movement command until the monster is dead, so a
+-- team-mate below its flee threshold is pinned in the room taking full rounds
+-- until someone kills the thing. That is worth every point of XP it costs, and
+-- the announcement that opens the hold is exactly the signal that says so — so
+-- the assist rides the same lease the gong hold does, and inherits its expiry
+-- for free. A support that never hears the all-clear (the announcer died, or
+-- dropped its connection) stands back down after LEASE_SEC rather than swinging
+-- for the rest of the session.
+function arenaTeamHeal.holdingBack()
+    if not taPackage.arenaSupportOnly then return false end
+    return arenaTeamHeal.holder() == nil
 end
 
 -- Announce that we are escaping — once per flee, however long the escape takes.
@@ -3778,7 +3817,7 @@ end, { type = "regex" })
 -- coordinate so only one monster is ever summoned, and everybody swings at it.
 -- It is a flag on the same session, not a second loop — every errand (thirst,
 -- potions, flee-and-heal, training) stays per-character and untouched.
-local function beginArenaSession(profile, debug, team, exitIfSolo)
+local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
     taPackage.arenaProfile = profile
     taPackage.arenaDebug = debug
     taPackage.arenaTeam = team
@@ -3788,6 +3827,8 @@ local function beginArenaSession(profile, debug, team, exitIfSolo)
     -- stamp of now would start the clock against a team that is standing right
     -- here, and the first poll would be reading a roster nobody has filled in.
     taPackage.arenaExitIfSolo = exitIfSolo or false
+    -- Hold our swings for the character we are here to feed (arenaAttack).
+    taPackage.arenaSupportOnly = supportOnly or false
     taPackage.arenaSoloSince = nil
     taPackage.arenaSoloProbePending = false
     -- Start deaf to any hold left over from a previous session: a stale lease
@@ -3818,8 +3859,9 @@ local function beginArenaSession(profile, debug, team, exitIfSolo)
     local teamSuffix = team and " (team mode)" or ""
     local soloSuffix = exitIfSolo
         and (" (exit after " .. arenaSolo.minutesLabel() .. " alone)") or ""
-    echo("[arena] Session started" .. teamSuffix .. soloSuffix .. debugSuffix
-        .. ". XP: " .. startXpStr)
+    local supportSuffix = supportOnly and " (support only)" or ""
+    echo("[arena] Session started" .. teamSuffix .. supportSuffix .. soloSuffix
+        .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
     arenaSolo.arm()
     -- Starting hurt: walk out before doing anything else, exactly as
@@ -3850,7 +3892,8 @@ end
 local ARENA_PROFILES = { ["1"] = true, ["2"] = true, ["3"] = true }
 
 local ARENA_ALIAS_USAGE = "usage: ring-gong-and-fight-in-arena <1|2|3> [quiet]"
-local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <1|2|3> [quiet] [exit-if-solo]"
+local ARENA_TEAM_ALIAS_USAGE =
+    "usage: team-fight-in-arena <1|2|3> [quiet] [exit-if-solo] [support-only]"
 
 -- Parse the "<arena> [quiet] [exit-if-solo]" tail of the ring-gong aliases.
 -- Order doesn't matter and every word is optional; a bare alias means arena 1,
@@ -3870,7 +3913,7 @@ local ARENA_TEAM_ALIAS_USAGE = "usage: team-fight-in-arena <1|2|3> [quiet] [exit
 -- (arenaSolo.EXIT_MS). It can't: a bare digit here is the arena selector, so
 -- "tfia 3 exit-if-solo 2" would quietly start arena 2.
 local function parseArenaAliasArgs(rest)
-    local opts = { profile = "1", debug = true, exitIfSolo = false }
+    local opts = { profile = "1", debug = true, exitIfSolo = false, supportOnly = false }
     for word in (rest or ""):gmatch("%S+") do
         local lowered = word:lower()
         if lowered == "debug" then
@@ -3879,6 +3922,8 @@ local function parseArenaAliasArgs(rest)
             opts.debug = false
         elseif lowered == "exit-if-solo" then
             opts.exitIfSolo = true
+        elseif lowered == "support-only" then
+            opts.supportOnly = true
         elseif ARENA_PROFILES[lowered] then
             opts.profile = lowered
         else
@@ -3908,7 +3953,13 @@ local function startArenaFromAlias(rest, team, usage)
         echo("[arena] exit-if-solo only applies to team mode (tfia) — ignoring it.")
         opts.exitIfSolo = false
     end
-    beginArenaSession(opts.profile, opts.debug, team, opts.exitIfSolo)
+    -- Same reasoning for support-only: there is nobody to support alone, so the
+    -- character would stand in the arena and never swing at anything.
+    if opts.supportOnly and not team then
+        echo("[arena] support-only only applies to team mode (tfia) — ignoring it.")
+        opts.supportOnly = false
+    end
+    beginArenaSession(opts.profile, opts.debug, team, opts.exitIfSolo, opts.supportOnly)
 end
 
 local function handleArenaAlias(matches)
@@ -3966,6 +4017,7 @@ local function stopArena()
     taPackage.arenaTeamSlot = nil
     taPackage.arenaTeamHealing = nil
     taPackage.arenaAnnouncedNeedsHealing = nil
+    taPackage.arenaSupportOnly = nil
     -- Bump the generation before clearing the flag: the pending tick reads the
     -- flag too, but the generation is what makes an already-queued callback a
     -- no-op even if a new session arms a fresh one in the same breath.
@@ -4223,6 +4275,19 @@ createTrigger("^From (\\S+): " .. arenaTeamHeal.NEED_MSG .. "$", function(matche
     arenaSolo.sawCompany()
     arenaTeamHeal.leases()[matches[2]:lower()] = os.time()
     arenaDebugEcho("team-heal-hold-" .. matches[2])
+    -- A support-only character has been standing here not swinging, so nothing
+    -- is driving its combat loop: arenaSwingAccepted only fires off our OWN
+    -- hits, and the only other re-drives are the incoming-attack triggers, which
+    -- fire when the monster picks US. If it happens to be beating on the
+    -- character that just called for help, no swing would ever start. So open
+    -- the burst from here rather than waiting to be hit — the whole point is to
+    -- kill the monster before a pinned team-mate takes another round. Once the
+    -- first swing lands the ordinary loop takes over again.
+    if taPackage.arenaSupportOnly and taPackage.arenaState == "fighting" then
+        arenaDebugEcho("support-assist")
+        arenaAttack()
+        arenaCast()
+    end
 end, { type = "regex" })
 
 -- ...and they made it back. Clearing the lease early is the normal path; the
