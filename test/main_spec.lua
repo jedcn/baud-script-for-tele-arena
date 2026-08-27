@@ -12731,6 +12731,11 @@ describe("navigate-to", function()
         -- after-doors ends. Here so that route's `to` resolves.
         [426]  = { id = 426,  slug = "town-sewers-63",       name = "town sewers",       area = 8,
                    exits = { "e", "n", "s", "u", "w" } },
+        -- The hydra's room: where the hydra leg ends and the stoneworks leg
+        -- begins. Here so the hydra route's `to` resolves and it can be walked
+        -- on its own.
+        [543]  = { id = 543,  slug = "town-sewers-165",      name = "town sewers",       area = 8,
+                   exits = { "n", "w" } },
         -- Slugs are numbered globally but references resolve within one area,
         -- so the room holding the bare `underground-plaza` slug can sit in a
         -- different town from its namesakes. That is what leaves third-town
@@ -13432,6 +13437,114 @@ describe("navigate-to", function()
                 assert.is_truthy(err:find("no steps recorded yet", 1, true))
             end)
 
+            -- The first leg's chasm-is-clear: the same twenty-three steps, and
+            -- no sweep on the end. The hydra is walked past rather than killed,
+            -- because the pearl key its corpse drops is already in the pack.
+            describe("the chasm-is-clear way through the hydra's room", function()
+
+                local function LEG() return taPackage.navRoutes["town-3/hydra"] end
+
+                it("is the leg's steps without the sweep", function()
+                    local steps, flat = LEG().steps, taPackage.navRouteSteps(LEG(), "chasm-is-clear")
+                    assert.are.equal(24, #steps)
+                    assert.are.equal(23, #flat)
+                    for i = 1, 23 do assert.are.same(steps[i], flat[i]) end
+                end)
+
+                -- What the last step is, and so what keep = 23 is dropping. A
+                -- correction to the leg that moves the sweep makes it wrong.
+                it("drops the sweep that fetches the pearl key, and nothing else", function()
+                    assert.are.same({ killAll = true, untilFound = "pearl key" },
+                                    LEG().steps[24])
+                    for _, s in ipairs(taPackage.navRouteSteps(LEG(), "chasm-is-clear")) do
+                        assert.is_falsy(type(s) == "table" and s.killAll)
+                    end
+                end)
+
+                -- Same room at the end either way: the way out of the sewers
+                -- runs through it, so we walk in and straight back out.
+                it("still ends in the hydra's room", function()
+                    local flat = taPackage.navRouteSteps(LEG(), "chasm-is-clear")
+                    assert.are.equal("sewers/town-sewers-165", LEG().to)
+                    assert.are.equal("n", flat[#flat])
+                end)
+
+                -- Runnable on its own, and on its own it wants only the rope:
+                -- the pearl doors are on the leg after this one.
+                it("runs as the leg on its own", function()
+                    helper.simulateAlias("navigate-to town-3/hydra chasm-is-clear")
+                    answerProbe(426)
+                    helper.simulateLine("You are carrying a coil of rope.")
+                    local out = lastEchoes()
+                    assert.is_truthy(out:find("Walking to town-3/hydra chasm-is-clear", 1, true))
+                    assert.is_truthy(out:find("23 steps", 1, true))
+                    assert.are.equal(1, sent("s"))
+                end)
+
+                -- And in the chain: one step shorter, the seam after it intact,
+                -- and no sweep left anywhere in the walk.
+                it("shortens the chain by 1 and carries on into the stoneworks", function()
+                    local chain = taPackage.navRoutes["town-3/part-2"]
+                    local flat = taPackage.navRouteSteps(chain, "chasm-is-clear")
+                    for i = 1, 23 do assert.are.same(LEG().steps[i], flat[i]) end
+                    assert.are.same({ seam = "town-3/stoneworks-entrance" }, flat[24])
+                    local sweeps = 0
+                    for _, s in ipairs(taPackage.navRouteSteps(chain)) do
+                        if type(s) == "table" and s.killAll then sweeps = sweeps + 1 end
+                    end
+                    assert.are.equal(1, sweeps)
+                    for _, s in ipairs(flat) do
+                        assert.is_falsy(type(s) == "table" and s.killAll)
+                    end
+                end)
+
+                -- The pearl key isn't fetched any more, so it has to be carried
+                -- in -- and that is asked about at the junction, before the
+                -- walk sets off, rather than found out at a locked stone door
+                -- twenty-five steps later.
+                it("refuses the chain without the pearl key, and says which way wants it", function()
+                    helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
+                    answerProbe(426)
+                    helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                    local out = lastEchoes()
+                    assert.is_truthy(out:find("needs a pearl key", 1, true))
+                    assert.is_truthy(out:find("The chasm-is-clear way", 1, true))
+                    assert.is_truthy(out:find("not setting off", 1, true))
+                    assert.are.equal(0, sent("s"))
+                end)
+
+                -- The ordinary walk fetches it on the way, so it asks for the
+                -- rope and the potion and nothing else.
+                it("doesn't ask the ordinary chain for a pearl key", function()
+                    helper.simulateAlias("navigate-to town-3/part-2")
+                    answerProbe(426)
+                    helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                    local out = lastEchoes()
+                    assert.is_falsy(out:find("pearl key", 1, true))
+                    assert.are.equal(1, sent("s"))
+                end)
+
+                -- `anyway` overrules this check as it does every other, and
+                -- names what it's skipping.
+                it("takes anyway, and names the pearl key it isn't checking for", function()
+                    helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear anyway")
+                    answerProbe(426)
+                    local out = lastEchoes()
+                    assert.is_truthy(out:find("without checking for", 1, true))
+                    assert.is_truthy(out:find("a pearl key", 1, true))
+                    assert.are.equal(1, sent("s"))
+                end)
+
+                -- part-1 carries part-2's ordinary list, not this one: a pearl
+                -- key can't be bought at the plaza, so there is nothing to be
+                -- gained by asking two hundred steps earlier.
+                it("leaves part-1 asking for the rope and the potion only", function()
+                    local p1 = taPackage.navRoutes["town-3/part-1"]
+                    assert.are.same({ "coil of rope", "verbena potion" }, p1.requires)
+                end)
+
+            end)
+
             -- chasm-is-clear is stored as the DIFFERENCE from the temple leg:
             -- The short way through level two, for a run where its lever and
             -- its first stone are already thrown. Written out whole, as the
@@ -13520,10 +13633,10 @@ describe("navigate-to", function()
                 it("shortens the chain by 14 and carries on past level two", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
-                    assert.are.same({ seam = "town-3/stone-lvl-2" }, flat[63])
-                    for i = 1, 29 do assert.are.same(WALK[i], flat[63 + i]) end
-                    assert.are.same({ seam = "town-3/stone-lvl-3" }, flat[93])
-                    assert.are.equal(198, #flat)
+                    assert.are.same({ seam = "town-3/stone-lvl-2" }, flat[62])
+                    for i = 1, 29 do assert.are.same(WALK[i], flat[62 + i]) end
+                    assert.are.same({ seam = "town-3/stone-lvl-3" }, flat[92])
+                    assert.are.equal(197, #flat)
                 end)
 
             end)
@@ -13612,9 +13725,9 @@ describe("navigate-to", function()
                 it("shortens the chain by 33 and carries on past level three", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
-                    assert.are.same({ seam = "town-3/stone-lvl-3" }, flat[93])
-                    for i = 1, 14 do assert.are.same(WALK[i], flat[93 + i]) end
-                    assert.are.same({ seam = "town-3/stone-lvl-4" }, flat[108])
+                    assert.are.same({ seam = "town-3/stone-lvl-3" }, flat[92])
+                    for i = 1, 14 do assert.are.same(WALK[i], flat[92 + i]) end
+                    assert.are.same({ seam = "town-3/stone-lvl-4" }, flat[107])
                 end)
 
             end)
@@ -13699,9 +13812,9 @@ describe("navigate-to", function()
                 it("shortens the chain by 29 and carries on past level four", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
-                    assert.are.same({ seam = "town-3/stone-lvl-4" }, flat[108])
-                    for i = 1, 13 do assert.are.same(WALK[i], flat[108 + i]) end
-                    assert.are.same({ seam = "town-3/stone-lvl-5" }, flat[122])
+                    assert.are.same({ seam = "town-3/stone-lvl-4" }, flat[107])
+                    for i = 1, 13 do assert.are.same(WALK[i], flat[107 + i]) end
+                    assert.are.same({ seam = "town-3/stone-lvl-5" }, flat[121])
                 end)
 
             end)
@@ -13786,9 +13899,9 @@ describe("navigate-to", function()
                 it("shortens the chain by 23 and carries on past level five", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
-                    assert.are.same({ seam = "town-3/stone-lvl-5" }, flat[122])
-                    for i = 1, 13 do assert.are.same(WALK[i], flat[122 + i]) end
-                    assert.are.same({ seam = "town-3/stone-lvl-6" }, flat[136])
+                    assert.are.same({ seam = "town-3/stone-lvl-5" }, flat[121])
+                    for i = 1, 13 do assert.are.same(WALK[i], flat[121 + i]) end
+                    assert.are.same({ seam = "town-3/stone-lvl-6" }, flat[135])
                 end)
 
             end)
@@ -13879,9 +13992,9 @@ describe("navigate-to", function()
                 it("shortens the chain by 13 and carries on to the temple leg", function()
                     local flat = taPackage.navRouteSteps(
                         taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
-                    assert.are.same({ seam = "town-3/stone-lvl-6" }, flat[136])
-                    for i = 1, 14 do assert.are.same(WALK[i], flat[136 + i]) end
-                    assert.are.same({ seam = "town-3/temple" }, flat[151])
+                    assert.are.same({ seam = "town-3/stone-lvl-6" }, flat[135])
+                    for i = 1, 14 do assert.are.same(WALK[i], flat[135 + i]) end
+                    assert.are.same({ seam = "town-3/temple" }, flat[150])
                 end)
 
             end)
@@ -13945,14 +14058,14 @@ describe("navigate-to", function()
 
                 -- End to end on the live chain: the seams and the shared prefix
                 -- still there, the ordinary ending gone.
-                it("shortens the whole chain from 364 steps to 198", function()
+                it("shortens the whole chain from 364 steps to 197", function()
                     local chain = taPackage.navRoutes["town-3/part-2"]
                     assert.are.equal(364, #taPackage.navRouteSteps(chain))
                     local flat = taPackage.navRouteSteps(chain, "chasm-is-clear")
-                    assert.are.equal(198, #flat)
-                    -- 151 is the temple seam, so 152.. is the temple leg.
-                    assert.are.same({ seam = "town-3/temple" }, flat[151])
-                    for i = 1, 47 do assert.are.equal(WALK[i], flat[151 + i]) end
+                    assert.are.equal(197, #flat)
+                    -- 150 is the temple seam, so 151.. is the temple leg.
+                    assert.are.same({ seam = "town-3/temple" }, flat[150])
+                    for i = 1, 47 do assert.are.equal(WALK[i], flat[150 + i]) end
                 end)
 
                 -- The steps live on the temple leg, and the chain asks the legs
@@ -13997,10 +14110,11 @@ describe("navigate-to", function()
                 it("walks it when asked for by name", function()
                     helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
                     answerProbe(426)
-                    helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                    helper.simulateLine(
+                        "You are carrying a coil of rope, a verbena potion, and a pearl key.")
                     local out = lastEchoes()
                     assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
-                    assert.is_truthy(out:find("198 steps", 1, true))
+                    assert.is_truthy(out:find("197 steps", 1, true))
                     assert.are.equal(1, sent("s"))
                 end)
 
@@ -14035,10 +14149,11 @@ describe("navigate-to", function()
             it("takes the variant alongside the trailing flags", function()
                 helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear quiet")
                 answerProbe(426)
-                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                helper.simulateLine(
+                    "You are carrying a coil of rope, a verbena potion, and a pearl key.")
                 local out = lastEchoes()
                 assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
-                assert.is_truthy(out:find("198 steps", 1, true))
+                assert.is_truthy(out:find("197 steps", 1, true))
                 assert.is_falsy(out:find("trace on", 1, true))
             end)
 
@@ -14540,14 +14655,15 @@ describe("navigate-to", function()
             helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
             helper.simulateLine("You're in the town sewers.")
             helper.simulateLine("Exits: e,n,s,u.")
-            helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
-            assert.is_truthy(lastEchoes():find("198 steps", 1, true))
+            helper.simulateLine(
+                "You are carrying a coil of rope, a verbena potion, and a pearl key.")
+            assert.is_truthy(lastEchoes():find("197 steps", 1, true))
             assert.are.equal(1, sent("s"))
         end)
 
     end)
 
-    -- The BBS hangs up 56 steps into a 198-step walk. The trace says which step
+    -- The BBS hangs up 56 steps into a 197-step walk. The trace says which step
     -- that was, and re-walking the first 55 by hand to get back to it is half an
     -- hour. `from-step N` picks the walk up there instead.
     describe("resuming a walk in the middle", function()
@@ -14662,15 +14778,16 @@ describe("navigate-to", function()
             assert.is_falsy(lastEchoes():find("renumbers", 1, true))
         end)
 
-        -- The real case, end to end: the 198-step chasm-is-clear walk cut off at
+        -- The real case, end to end: the 197-step chasm-is-clear walk cut off at
         -- step 56, picked up from the room it stopped in.
         it("resumes the third-town chain at the step the trace named", function()
             helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear from-step 56")
             answerProbe(426)
-            helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+            helper.simulateLine(
+                "You are carrying a coil of rope, a verbena potion, and a pearl key.")
             local out = lastEchoes()
             assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear from step 56"
-                .. " — 143 of its 198 steps left", 1, true))
+                .. " — 142 of its 197 steps left", 1, true))
             local flat = taPackage.navRouteSteps(
                 taPackage.navRoutes["town-3/part-2"], "chasm-is-clear")
             assert.are.equal(1, sent(flat[56]))

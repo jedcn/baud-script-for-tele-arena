@@ -153,6 +153,13 @@ local NAV_ROUTES = {
         -- character who has never made the outward walk it takes the short way
         -- past traps that are still armed. The chasm is just the obstacle you
         -- can see from the ordinary route; the traps are the ones you can't.
+        --
+        -- The hydra leg has one for the same reason, which widens the claim by
+        -- one more permanent thing: a character who has thrown every lever on
+        -- the way down also came by the pearl key, and kept it. So the sweep
+        -- that fetches it is skipped and the hydra is walked past. That is the
+        -- one part of this the pack can be asked about, and `requires` below
+        -- asks -- see the assignment under part-2's name.
         variants = {
             ["chasm-is-clear"] = { fromLegs = true },
         },
@@ -277,6 +284,26 @@ local NAV_ROUTES = {
         steps    = { "s", "d", "ne", "ne", "e", "u", "se", "se", "e", "ne", "n", "nw",
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
                      { killAll = true, untilFound = "pearl key" } },
+        -- The same twenty-three steps without the sweep on the end, for a run
+        -- where the pearl key is already in the pack.
+        --
+        -- The key is what the fight is FOR. It opens the two stone doors on the
+        -- leg after this one and nothing else here wants it, and like the ruby,
+        -- platinum and onyx keys it is kept once fetched -- the doors relock,
+        -- the key doesn't go anywhere -- so on a later run killing the hydra
+        -- buys something we are already carrying.
+        --
+        -- The room is on the way regardless: town-sewers-165 is where this leg
+        -- ends and where the stoneworks leg begins, so we walk in and straight
+        -- back out rather than going round it.
+        --
+        -- Walking past it is not the same as it leaving us alone. If it engages,
+        -- the next move is refused -- "You cannot leave in the heat of battle!"
+        -- -- and the walk retries on the combat timer until it breaks off; if it
+        -- won't, `flee` or `kill-all` by hand is the way out.
+        variants = {
+            ["chasm-is-clear"] = { keep = 23, steps = {} },
+        },
     },
     -- Out of the sewers and across the desert. TWO of these steps are pearl-keyed
     -- stone doors, not one: step 2 (town-sewers-168 --w--> 169) and step 6, the
@@ -816,6 +843,31 @@ NAV_ROUTES["town-3/part-2"] = NAV_ROUTES["town-3/after-doors-to-town-3"]
 -- walking today.
 NAV_ROUTES["town-3/part-1"].requires = NAV_ROUTES["town-3/part-2"].requires
 NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from where this ends,"
+-- What the chasm-is-clear way needs on top: the pearl key. It takes the hydra
+-- leg's variant, which walks past the hydra rather than killing it for that key,
+-- and the leg after opens two stone doors with it -- so a character without it
+-- walks the hydra's twenty-three steps and stops at the first of those doors,
+-- two rooms the other side of a hydra it declined to fight.
+--
+-- Everything the ordinary walk needs plus that one thing, built from part-2's
+-- own list rather than transcribed, so a change to what the journey needs is a
+-- change to both.
+--
+-- part-1 does NOT carry this the way it carries part-2's ordinary list. That
+-- one is carried because the junction is the wrong side of the sewers to
+-- discover a missing potion: you would have to walk back up to the plaza to buy
+-- one. A pearl key can't be bought anywhere -- the only one is on the hydra,
+-- whose room part-2 walks through -- so being told at the junction is being told
+-- in time. The answer there is to walk part-2 without the variant.
+do
+    local chasm = NAV_ROUTES["town-3/part-2"].variants["chasm-is-clear"]
+    local wants = {}
+    for _, item in ipairs(NAV_ROUTES["town-3/part-2"].requires) do wants[#wants + 1] = item end
+    wants[#wants + 1] = "pearl key"
+    chasm.requires = wants
+    chasm.requiresFor =
+        "The chasm-is-clear way, which walks past the hydra rather than killing it for the key,"
+end
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
@@ -2157,6 +2209,14 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " — run stop-navigating first.")
         return
     end
+    -- What has to be in the pack before we set off. A variant can want something
+    -- else, because it can walk past the errand that fetches it: chasm-is-clear
+    -- skips the hydra's sweep, so the pearl key that sweep drops has to be
+    -- carried in instead. Its own `requiresFor` if it gave one, so the refusal
+    -- says which way of walking this wants it.
+    local vt = variant and route.variants[variant]
+    local requires = (vt and vt.requires) or route.requires
+    local requiresFor = (vt and vt.requires and vt.requiresFor) or route.requiresFor
     -- From here on the variant is part of what we're walking to, so it belongs
     -- in everything we say about it -- including "try X again", which has to
     -- stay a command you can retype.
@@ -2311,15 +2371,15 @@ createAlias("^navigate-to (.+)$", function(matches)
             -- is on the floor a room away, or today's hazard is survivable
             -- without it. Say what is being skipped, and get on with it.
             local function checkThenGo()
-                if not route.requires then
+                if not requires then
                     go()
                 elseif anyway then
                     navEcho("Setting off without checking for "
-                        .. taPackage.navItemPhrase(taPackage.navWanted(route.requires))
+                        .. taPackage.navItemPhrase(taPackage.navWanted(requires))
                         .. " — you asked for it anyway.")
                     go()
                 else
-                    navCheckInventory(route.requires, gen, go, route.requiresFor)
+                    navCheckInventory(requires, gen, go, requiresFor)
                 end
             end
             -- Resuming starts in the middle, so the route's starting room is the
