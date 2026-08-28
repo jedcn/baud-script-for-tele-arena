@@ -8003,10 +8003,41 @@ describe("ring-gong-and-fight-in-arena", function()
                 probeFindsEmptyArena()
                 assert.is_false(rangGong())
                 helper.simulateLine("From Pelayo: I am healed")
+                helper.advanceMs(4000)
                 probeFindsEmptyArena()
                 assert.is_true(rangGong())
             end)
 
+            -- Every held client comes off the hold on this one line, so they all
+            -- reach a ring decision in the same instant. That is the collision
+            -- that killed Teekywiki: Kerhak rang off the very tick that released
+            -- it. The character that just healed gets first refusal instead.
+            it("stands off the gong for a beat after the all-clear", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                helper.simulateLine("From Pelayo: I am healed")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+            end)
+
+            -- ...but only for a beat: if the returning character never rings —
+            -- it died on the way back, or was stopped by hand — the ordinary
+            -- order has to take over rather than idling the arena.
+            it("rings once the grace lapses and nobody else has", function()
+                helper.simulateLine("From Pelayo: I need healing")
+                helper.simulateLine("From Pelayo: I am healed")
+                probeFindsEmptyArena()
+                assert.is_false(rangGong())
+                helper.advanceMs(4000)
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
+
+            -- The grace is not a second hold: it must not gate a team that never
+            -- heard an all-clear at all.
+            it("does not stand off when no all-clear has been heard", function()
+                probeFindsEmptyArena()
+                assert.is_true(rangGong())
+            end)
 
             -- Everyone has to be back, not just the most recent caller.
             it("keeps holding while a second team-mate is still out", function()
@@ -8016,6 +8047,7 @@ describe("ring-gong-and-fight-in-arena", function()
                 probeFindsEmptyArena()
                 assert.is_false(rangGong())
                 helper.simulateLine("From Tojolias: I am healed")
+                helper.advanceMs(4000)
                 probeFindsEmptyArena()
                 assert.is_true(rangGong())
             end)

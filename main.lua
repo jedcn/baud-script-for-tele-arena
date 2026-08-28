@@ -2697,6 +2697,41 @@ function arenaTeamHeal.holdingBack()
     return arenaTeamHeal.holder() == nil
 end
 
+-- How long everyone else keeps off the gong after hearing an all-clear.
+--
+-- The all-clear un-freezes every held client at once, which makes it the one
+-- instant in a cycle where all of them are guaranteed to reach a ring decision
+-- together — and the ring order separates them by ARENA_TEAM_RING_GAP_MS, which
+-- is about what a gong broadcast takes to come back round. That is how close the
+-- 17:32:38 double-summon ran: Teekywiki said "I am healed" at 17:32:35, its own
+-- ring landed at 17:32:37, and Kerhak's came at 17:32:38 off the very tick that
+-- released the hold.
+--
+-- The character that just announced is standing in the arena at full HP and is
+-- the one the next summon is for, so give it the first ring outright instead of
+-- racing it for one. It never hears its own announcement — the game echoes our
+-- own speech as "-- Message sent --", not "From <us>: ..." — so it is exempt for
+-- free, and needs no special case here.
+--
+-- Reckoned in milliseconds off nowMillis rather than os.time, whose one-second
+-- resolution would make a "4 second" grace anywhere from 3.0 to 4.0 — no way to
+-- size a window whose whole job is to cover a sub-second race.
+--
+-- Declining is safe for the same reason the gong hold is: the pump that got us
+-- here has an outstanding re-scan, so we just re-decide in a moment. If the
+-- returning character never rings after all — it died on the way back, or was
+-- stopped by hand — the grace lapses and the ordinary order takes over.
+arenaTeamHeal.GRACE_MS = 4000
+
+function arenaTeamHeal.beginGrace()
+    taPackage.arenaRingGrace = nowMillis() + arenaTeamHeal.GRACE_MS
+end
+
+function arenaTeamHeal.inGrace()
+    local expiry = taPackage.arenaRingGrace
+    return expiry ~= nil and nowMillis() < expiry
+end
+
 -- Announce that we are escaping — once per flee, however long the escape takes.
 -- The announcement flag doubles as the guard: it is set here and cleared only by
 -- the all-clear, so every later call inside the same episode is a no-op, while a
@@ -2938,6 +2973,12 @@ local function arenaTeamRing()
     local holder = arenaTeamHeal.holder()
     if holder then
         arenaDebugEcho("team-ring-held-for-" .. holder)
+        return
+    end
+    -- Somebody has just called the all-clear on a heal trip and has first claim
+    -- on the gong: see arenaTeamHeal.beginGrace.
+    if arenaTeamHeal.inGrace() then
+        arenaDebugEcho("team-ring-grace")
         return
     end
     local slot = arenaTeamRingSlot()
@@ -4302,6 +4343,10 @@ createTrigger("^From (\\S+): " .. arenaTeamHeal.HEALED_MSG .. "$", function(matc
     if not taPackage.arenaTeam then return end
     arenaSolo.sawCompany()
     arenaTeamHeal.leases()[matches[2]:lower()] = nil
+    -- Everyone who was holding comes off the hold on this same line, so stand
+    -- off the gong for a beat and let the character that just got healed take
+    -- the summon it came back for.
+    arenaTeamHeal.beginGrace()
     arenaDebugEcho("team-heal-release-" .. matches[2])
 end, { type = "regex" })
 
