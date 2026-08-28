@@ -7373,11 +7373,17 @@ describe("ring-gong-and-fight-in-arena", function()
             return false
         end
 
-        it("rings straight away when first in the order", function()
+        -- Slot 0 used to ring with no stagger at all on the first attempt of a
+        -- cycle, and that is the path that double-summoned onto Teekywiki (see
+        -- arenaTeamRing). A ring already sent has nothing left to cancel when
+        -- the team-mate's ring arrives a moment later; only a pending timer has.
+        it("waits its gap even when first in the order", function()
             taPackage.character.name = "Castor"
             probeFindsEmptyArenaWith("Pelayo and Tojolias are here.")
-            assert.is_true(rangGong())
+            assert.is_false(rangGong())
             assert.are.equal(0, taPackage.arenaTeamSlot)
+            helper.fireTimers(1 * 2000)
+            assert.is_true(rangGong())
         end)
 
         it("holds off when someone sorts ahead of us", function()
@@ -7412,30 +7418,36 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.name = "Pelayo"
             probeFindsEmptyArenaWith("Castor is here.")
             assert.is_false(rangGong())
+            helper.fireTimers(2 * 2000)
+            assert.is_true(rangGong())
+        end)
+
+        -- max(slot, 1) put slots 0 and 1 on the SAME 2s schedule, so two clients
+        -- that ticked together rang together — exactly the pairing (Kerhak at 0,
+        -- Teekywiki at 1) that double-summoned. Every slot gets its own instant.
+        it("does not put slot 0 and slot 1 on the same instant", function()
+            taPackage.character.name = "Castor"
+            probeFindsEmptyArenaWith("Pelayo is here.")
+            helper.fireTimers(2 * 2000)   -- slot 1's instant passes first
+            assert.is_false(rangGong())
             helper.fireTimers(1 * 2000)
             assert.is_true(rangGong())
         end)
 
-        -- The double-summon from the first live team run. Slot 0's fast path has
-        -- no pending timer, so a ring that keeps bouncing off "physically
-        -- exhausted" gets re-sent blind every pump tick with nothing for an
-        -- incoming ring to cancel — and lands on top of the team-mate who rang
-        -- while we were blocked. Retries take the timer path so the gen guard
-        -- can call them off.
-        describe("slot 0 retrying after an exhausted ring", function()
+        -- A ring that bounces off "physically exhausted" used to be a special
+        -- case, because slot 0's first attempt of a cycle had no pending timer
+        -- for an incoming ring to cancel and so got re-sent blind on every pump
+        -- tick. In company there is no fast path left to fall off, so first
+        -- attempt and retry are the same path. What must still hold is that the
+        -- gen guard calls those timers off, and that a character alone never
+        -- pays the wait.
+        describe("slot 0 in company", function()
 
-            it("rings straight away on the first attempt", function()
+            it("takes the timer path on the first attempt and on the retry", function()
                 taPackage.character.name = "Castor"
                 probeFindsEmptyArenaWith("Pelayo is here.")
-                assert.is_true(rangGong())
-            end)
-
-            it("waits a gap on the retry instead of ringing blind", function()
-                taPackage.character.name = "Castor"
-                probeFindsEmptyArenaWith("Pelayo is here.")
-                assert.is_true(rangGong())
+                assert.is_false(rangGong())
                 -- The ring bounced; the pump re-probes and we come round again.
-                helper.sendCalls = {}
                 probeFindsEmptyArenaWith("Pelayo is here.")
                 assert.are.equal(0, taPackage.arenaTeamSlot)
                 assert.is_false(rangGong())
@@ -7455,8 +7467,8 @@ describe("ring-gong-and-fight-in-arena", function()
             end)
 
             -- Alone there is nobody to collide with, so the wait would be dead
-            -- time on every retry of a solo run.
-            it("keeps the fast path on retries when alone", function()
+            -- time on every cycle of a solo run.
+            it("keeps the fast path when alone", function()
                 taPackage.character.name = "Castor"
                 probeFindsEmptyArenaWith(nil)
                 helper.sendCalls = {}
@@ -7464,16 +7476,14 @@ describe("ring-gong-and-fight-in-arena", function()
                 assert.is_true(rangGong())
             end)
 
-            it("restores the fast path once a monster is engaged", function()
+            -- Company arriving mid-session takes the stagger away from us, and
+            -- company leaving gives the fast path back: the roster is re-derived
+            -- on every probe, so neither needs its own bookkeeping.
+            it("follows the roster when company comes and goes", function()
                 taPackage.character.name = "Castor"
                 probeFindsEmptyArenaWith("Pelayo is here.")
-                probeFindsEmptyArenaWith("Pelayo is here.")   -- a retry
-                helper.mockDbOneRow = { description = "A hobgoblin." }
-                helper.simulateLine("A hobgoblin appears in a puff of green smoke!")
-                assert.are.equal("fighting", taPackage.arenaState)
-                helper.simulateLine("The hobgoblin falls to the ground lifeless!")
-                helper.sendCalls = {}
-                probeFindsEmptyArenaWith("Pelayo is here.")
+                assert.is_false(rangGong())
+                probeFindsEmptyArenaWith(nil)
                 assert.is_true(rangGong())
             end)
 
@@ -7996,6 +8006,7 @@ describe("ring-gong-and-fight-in-arena", function()
                 probeFindsEmptyArena()
                 assert.is_true(rangGong())
             end)
+
 
             -- Everyone has to be back, not just the most recent caller.
             it("keeps holding while a second team-mate is still out", function()

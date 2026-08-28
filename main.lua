@@ -2544,10 +2544,9 @@ local function arenaRing()
     -- of the floor, because arenaLastSwingAt only moves when a swing is accepted
     -- and we are not swinging while we ring.
     --
-    -- In team mode a held tick has already counted itself in arenaRingAttempts,
-    -- so the tick that finally rings takes the staggered path rather than the
-    -- fast one. That is a sub-second delay on a ~18s wait, and the stagger is
-    -- what stops two characters double-summoning, so it is the safe direction.
+    -- In team mode there is no fast path for a held tick to lose: every ring in
+    -- company goes through the stagger (see arenaTeamRing), so holding here
+    -- costs nothing beyond the hold itself.
     local sinceSwing = arenaSince(taPackage.arenaLastSwingAt)
     if sinceSwing and sinceSwing < ARENA_RING_FLOOR_MS then
         arenaDebugEcho("ring-held  since-swing " .. sinceSwing .. "ms")
@@ -2895,21 +2894,34 @@ end
 
 -- Ring, but only after letting everyone ahead of us go first.
 --
--- Slot 0 rings immediately, but only on its FIRST attempt of a summon cycle.
--- That fast path is what makes the common case cost nothing, and while our ring
--- lands it is also harmless. It stops being harmless once the ring is bouncing
--- off "still physically exhausted": we then re-ring blind every pump tick, with
--- no pending timer for an incoming ring to cancel, so the moment our physical
--- clock happens to recover we summon on top of whoever rang while we were
--- blocked. That double-summoned an ogress mage AND a stone giant onto the party
--- at 19:01:18 (logs/session-kerhak-team-fight-2026-07-25T18-58-34.log:462) —
--- Kerhak was correctly slot 0, but had been blocked for 12s, so Teekywiki's
--- turn came around and both rings landed a heartbeat apart.
+-- In company EVERY character takes the timer path, slot 0 included. Slot 0 used
+-- to ring immediately on the first attempt of a summon cycle, and that fast path
+-- is what killed Teekywiki at 17:32:38 in
+-- logs/session-teekywiki-2026-08-28T16-10-31.log:11175. Kerhak had been holding
+-- the gong for 19s while Teekywiki healed; the hold returned before the attempt
+-- counter was touched, so the tick that followed the all-clear still looked like
+-- the first of the cycle and rang with no stagger at all. It landed one second
+-- behind Teekywiki's own staggered ring — inside the round trip of the gong
+-- broadcast, so the yield arrived after the send was already on the wire. Two
+-- monsters, 516 damage in one exchange against a 476 HP pool, and the 376k XP
+-- the session had earned went with the corpse.
 --
--- On a retry the reason to hurry is gone, so take the same timer path as
--- everyone else and let the arenaRingGen guard call it off. A character that is
--- genuinely alone (empty roster) keeps the fast path on every attempt: there is
+-- Counting the held ticks more honestly would not have saved it. What the fast
+-- path loses to is a network race, not a bookkeeping error: a ring already sent
+-- has nothing left to cancel, and only a pending timer does — which is exactly
+-- what arenaRingGen calls off when someone else's ring is heard. So in company
+-- we always arm one. It costs whoever is first in the order one gap (~2s) per
+-- summon cycle, against ~90s cycles.
+--
+-- A character genuinely alone (empty roster) still rings immediately: there is
 -- nobody to collide with, and the wait would just be dead time.
+--
+-- The stagger is (slot + 1) gaps, not max(slot, 1), which put slots 0 and 1 on
+-- the SAME 2s schedule — the exact pairing (Kerhak 0, Teekywiki 1) that
+-- collided, and useless as a tie-break the moment both tick together. Each slot
+-- now gets its own instant, and every one of them still lands a full gap inside
+-- that slot's own pump re-scan (ARENA_RING_RETRY_MS + slot gaps, arenaScanRoom),
+-- so the re-scan can never outrun our turn.
 local function arenaTeamRing()
     -- Someone is escaping at low HP: don't summon a monster on top of them.
     -- Returning without ringing is all it takes — the scan pump that got us here
@@ -2931,19 +2943,14 @@ local function arenaTeamRing()
     local slot = arenaTeamRingSlot()
     taPackage.arenaTeamSlot = slot
     arenaDebugEcho("team-ring-slot-" .. slot)
-    local attempts = taPackage.arenaRingAttempts or 0
-    taPackage.arenaRingAttempts = attempts + 1
-    local alone = #(taPackage.arenaTeamRoster or {}) == 0
-    if slot == 0 and (attempts == 0 or alone) then
+    if #(taPackage.arenaTeamRoster or {}) == 0 then
         arenaRing()
         return
     end
     -- Guarded on the ring generation, which is what the observed-ring triggers
-    -- bump to call this off when someone ahead of us rings first. Slot 0 has no
-    -- stagger of its own, so give it one gap — still inside the pump's window
-    -- (ARENA_RING_RETRY_MS) so the re-scan can't outrun our own turn.
+    -- bump to call this off when someone ahead of us rings first.
     local gen = taPackage.arenaRingGen or 0
-    createTimer(math.max(slot, 1) * ARENA_TEAM_RING_GAP_MS, function()
+    createTimer((slot + 1) * ARENA_TEAM_RING_GAP_MS, function()
         if taPackage.arenaState ~= "ringing" then return end
         if (taPackage.arenaRingGen or 0) ~= gen then return end
         arenaDebugEcho("team-ring-turn")
@@ -3040,8 +3047,6 @@ local function arenaEngage(name)
     taPackage.arenaAttackPending = false
     taPackage.arenaCastPending = false
     taPackage.arenaRingPending = false
-    -- This summon cycle is over, so the next one starts fresh on the fast path.
-    taPackage.arenaRingAttempts = 0
     -- First sighting of this monster: grab its description for the bestiary. The
     -- name we store comes from the game's own reply ("The female troll seems to
     -- be in good physical health."), not from what we typed, so addressing it by
