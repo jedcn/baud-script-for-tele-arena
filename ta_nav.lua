@@ -154,12 +154,16 @@ local NAV_ROUTES = {
         -- past traps that are still armed. The chasm is just the obstacle you
         -- can see from the ordinary route; the traps are the ones you can't.
         --
-        -- The hydra leg has one for the same reason, which widens the claim by
-        -- one more permanent thing: a character who has thrown every lever on
-        -- the way down also came by the pearl key, and kept it. So the sweep
-        -- that fetches it is skipped and the hydra is walked past. That is the
-        -- one part of this the pack can be asked about, and `requires` below
-        -- asks -- see the assignment under part-2's name.
+        -- The hydra leg has one for the same reason, and it is the same claim
+        -- again rather than a new one: the two pearl doors on the leg after it
+        -- were unlocked by whoever first came down here with the key, and an
+        -- unlocked stone door stays unlocked, exactly like a thrown lever.
+        -- Nothing on this route relocks -- the ruby, platinum and onyx doors up
+        -- in the sewers do, which is what the gates on `after-doors` are for,
+        -- and they are the exception. So `chasm-is-clear` skips the sweep and
+        -- walks past the hydra, and the walker needs no pearl key of their own:
+        -- the doors the key opens are already open. Nothing extra is asked of
+        -- the pack -- see `requires` at the top of this route.
         variants = {
             ["chasm-is-clear"] = { fromLegs = true },
         },
@@ -285,13 +289,15 @@ local NAV_ROUTES = {
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
                      { killAll = true, untilFound = "pearl key" } },
         -- The same twenty-three steps without the sweep on the end, for a run
-        -- where the pearl key is already in the pack.
+        -- where the two doors the sweep's key opens are already open.
         --
         -- The key is what the fight is FOR. It opens the two stone doors on the
-        -- leg after this one and nothing else here wants it, and like the ruby,
-        -- platinum and onyx keys it is kept once fetched -- the doors relock,
-        -- the key doesn't go anywhere -- so on a later run killing the hydra
-        -- buys something we are already carrying.
+        -- leg after this one and nothing else here wants it -- and unlike the
+        -- ruby, platinum and onyx doors up in the sewers, those two do not
+        -- relock. Once anyone has opened them they are open, so on a later run
+        -- killing the hydra buys a key to doors that no longer need one. Hence
+        -- no `requires` here: the variant asks for nothing the ordinary leg
+        -- doesn't.
         --
         -- The room is on the way regardless: town-sewers-165 is where this leg
         -- ends and where the stoneworks leg begins, so we walk in and straight
@@ -308,8 +314,9 @@ local NAV_ROUTES = {
     -- Out of the sewers and across the desert. TWO of these steps are pearl-keyed
     -- stone doors, not one: step 2 (town-sewers-168 --w--> 169) and step 6, the
     -- crude stone building's east door out into the sandy passages. One key opens
-    -- both, and it's the one the hydra drops -- so this wants that as well as the
-    -- potion.
+    -- both, and it's the one the hydra drops -- but only the first time. Neither
+    -- door relocks, so a walk that finds them already open needs no key, which is
+    -- what makes the hydra's chasm-is-clear variant safe to take.
     --
     -- The cure is NOT a step. The walk that produced these directions typed
     -- `drink verbena` after the second `w`, but the poisoning is a maybe -- see
@@ -843,31 +850,24 @@ NAV_ROUTES["town-3/part-2"] = NAV_ROUTES["town-3/after-doors-to-town-3"]
 -- walking today.
 NAV_ROUTES["town-3/part-1"].requires = NAV_ROUTES["town-3/part-2"].requires
 NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from where this ends,"
--- What the chasm-is-clear way needs on top: the pearl key. It takes the hydra
--- leg's variant, which walks past the hydra rather than killing it for that key,
--- and the leg after opens two stone doors with it -- so a character without it
--- walks the hydra's twenty-three steps and stops at the first of those doors,
--- two rooms the other side of a hydra it declined to fight.
+-- The chasm-is-clear way needs nothing on top of that: the same rope and the
+-- same potion, and no pearl key.
 --
--- Everything the ordinary walk needs plus that one thing, built from part-2's
--- own list rather than transcribed, so a change to what the journey needs is a
--- change to both.
+-- It used to ask for one, and refused the walk without it. That was wrong, and
+-- wrong in the way that matters -- it turned the fast way through into
+-- something most characters were told they couldn't take. The reasoning was
+-- that the variant skips the hydra's sweep, so the key that sweep drops has to
+-- come from the pack instead. But the key is not what the two stone doors want.
+-- They want to be UNLOCKED, and they were, by whoever first fought the hydra and
+-- carried the key down -- and they stay that way, like every lever and stone on
+-- this route. Asking for the chasm-is-clear way is precisely the claim that all
+-- of that has already been done; a character who has to be told the doors are
+-- shut is a character who should be walking the ordinary route.
 --
--- part-1 does NOT carry this the way it carries part-2's ordinary list. That
--- one is carried because the junction is the wrong side of the sewers to
--- discover a missing potion: you would have to walk back up to the plaza to buy
--- one. A pearl key can't be bought anywhere -- the only one is on the hydra,
--- whose room part-2 walks through -- so being told at the junction is being told
--- in time. The answer there is to walk part-2 without the variant.
-do
-    local chasm = NAV_ROUTES["town-3/part-2"].variants["chasm-is-clear"]
-    local wants = {}
-    for _, item in ipairs(NAV_ROUTES["town-3/part-2"].requires) do wants[#wants + 1] = item end
-    wants[#wants + 1] = "pearl key"
-    chasm.requires = wants
-    chasm.requiresFor =
-        "The chasm-is-clear way, which walks past the hydra rather than killing it for the key,"
-end
+-- The doors that DO relock are the ruby, platinum and onyx ones up in the
+-- sewers, around 3am. They are handled where they are -- as gates on
+-- `after-doors`, which walks at each one and lets the game's answer decide
+-- whether to fetch its key. Nothing past the junction behaves that way.
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
@@ -2209,14 +2209,11 @@ createAlias("^navigate-to (.+)$", function(matches)
             .. " — run stop-navigating first.")
         return
     end
-    -- What has to be in the pack before we set off. A variant can want something
-    -- else, because it can walk past the errand that fetches it: chasm-is-clear
-    -- skips the hydra's sweep, so the pearl key that sweep drops has to be
-    -- carried in instead. Its own `requiresFor` if it gave one, so the refusal
-    -- says which way of walking this wants it.
-    local vt = variant and route.variants[variant]
-    local requires = (vt and vt.requires) or route.requires
-    local requiresFor = (vt and vt.requires and vt.requiresFor) or route.requiresFor
+    -- What has to be in the pack before we set off. The variant doesn't change
+    -- it: a variant is a shorter way through ground whose levers, stones and
+    -- doors are already worked, and worked ground asks for less, never more.
+    local requires = route.requires
+    local requiresFor = route.requiresFor
     -- From here on the variant is part of what we're walking to, so it belongs
     -- in everything we say about it -- including "try X again", which has to
     -- stay a command you can retype.

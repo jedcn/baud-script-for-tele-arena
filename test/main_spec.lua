@@ -13743,19 +13743,19 @@ describe("navigate-to", function()
                     end
                 end)
 
-                -- The pearl key isn't fetched any more, so it has to be carried
-                -- in -- and that is asked about at the junction, before the
-                -- walk sets off, rather than found out at a locked stone door
-                -- twenty-five steps later.
-                it("refuses the chain without the pearl key, and says which way wants it", function()
+                -- The pearl key is NOT wanted. The two stone doors it opens are
+                -- on the leg after this one and they don't relock, so a run
+                -- that can ask for chasm-is-clear is a run that finds them
+                -- already open. Asking for the key refused the fast way to
+                -- every character that hadn't personally killed the hydra.
+                it("walks the chain without a pearl key", function()
                     helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
                     answerProbe(426)
                     helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
                     local out = lastEchoes()
-                    assert.is_truthy(out:find("needs a pearl key", 1, true))
-                    assert.is_truthy(out:find("The chasm-is-clear way", 1, true))
-                    assert.is_truthy(out:find("not setting off", 1, true))
-                    assert.are.equal(0, sent("s"))
+                    assert.is_falsy(out:find("pearl key", 1, true))
+                    assert.is_falsy(out:find("not setting off", 1, true))
+                    assert.are.equal(1, sent("s"))
                 end)
 
                 -- The ordinary walk fetches it on the way, so it asks for the
@@ -13769,23 +13769,24 @@ describe("navigate-to", function()
                     assert.are.equal(1, sent("s"))
                 end)
 
-                -- `anyway` overrules this check as it does every other, and
-                -- names what it's skipping.
-                it("takes anyway, and names the pearl key it isn't checking for", function()
+                -- Both ways of walking it want exactly the same two things, so
+                -- `anyway` names the same two either way.
+                it("names the same pack for anyway as the ordinary chain", function()
                     helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear anyway")
                     answerProbe(426)
                     local out = lastEchoes()
                     assert.is_truthy(out:find("without checking for", 1, true))
-                    assert.is_truthy(out:find("a pearl key", 1, true))
+                    assert.is_falsy(out:find("pearl key", 1, true))
                     assert.are.equal(1, sent("s"))
                 end)
 
-                -- part-1 carries part-2's ordinary list, not this one: a pearl
-                -- key can't be bought at the plaza, so there is nothing to be
-                -- gained by asking two hundred steps earlier.
+                -- And the variant declares no list of its own for part-1 to
+                -- disagree with: one list, on the route, for both ways.
                 it("leaves part-1 asking for the rope and the potion only", function()
                     local p1 = taPackage.navRoutes["town-3/part-1"]
+                    local v = taPackage.navRoutes["town-3/part-2"].variants["chasm-is-clear"]
                     assert.are.same({ "coil of rope", "verbena potion" }, p1.requires)
+                    assert.is_nil(v.requires)
                 end)
 
             end)
@@ -14356,7 +14357,7 @@ describe("navigate-to", function()
                     helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
                     answerProbe(426)
                     helper.simulateLine(
-                        "You are carrying a coil of rope, a verbena potion, and a pearl key.")
+                        "You are carrying a coil of rope, and a verbena potion.")
                     local out = lastEchoes()
                     assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
                     assert.is_truthy(out:find("197 steps", 1, true))
@@ -14395,7 +14396,7 @@ describe("navigate-to", function()
                 helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear quiet")
                 answerProbe(426)
                 helper.simulateLine(
-                    "You are carrying a coil of rope, a verbena potion, and a pearl key.")
+                    "You are carrying a coil of rope, and a verbena potion.")
                 local out = lastEchoes()
                 assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear", 1, true))
                 assert.is_truthy(out:find("197 steps", 1, true))
@@ -14901,7 +14902,7 @@ describe("navigate-to", function()
             helper.simulateLine("You're in the town sewers.")
             helper.simulateLine("Exits: e,n,s,u.")
             helper.simulateLine(
-                "You are carrying a coil of rope, a verbena potion, and a pearl key.")
+                "You are carrying a coil of rope, and a verbena potion.")
             assert.is_truthy(lastEchoes():find("197 steps", 1, true))
             assert.are.equal(1, sent("s"))
         end)
@@ -15029,7 +15030,7 @@ describe("navigate-to", function()
             helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear from-step 56")
             answerProbe(426)
             helper.simulateLine(
-                "You are carrying a coil of rope, a verbena potion, and a pearl key.")
+                "You are carrying a coil of rope, and a verbena potion.")
             local out = lastEchoes()
             assert.is_truthy(out:find("Walking to town-3/part-2 chasm-is-clear from step 56"
                 .. " — 142 of its 197 steps left", 1, true))
