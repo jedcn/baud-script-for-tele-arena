@@ -4214,22 +4214,51 @@ describe("start-gold-farming", function()
                 "s", "sw",
                 "get robes", "equip robes",
                 "get warhammer", "equip warhammer",
-                "ne", "n", "e",
+                "ne", "s",
+                "buy-potions",
+                "n", "n", "e",
                 "rg 1",
+                "arena-potions-drunk",
             }, helper.runCommandCalls)
         end)
 
-        -- Stat potions were tried and dropped: they took the hit rate from 37%
-        -- to 64% and the fight from ~25 minutes to ~7, and the cycle did not get
-        -- shorter, because the training hall refuses a tainted character for
-        -- 22m 24s. See the note above CREATE_STEPS in ta_create.lua before
-        -- adding them back.
-        it("makes no detour to the magic shop", function()
+        -- Stat potions were tried, dropped, and are now back: they take the hit
+        -- rate from 37% to 64%, and the 22m 24s training taint that made them a
+        -- wash the first time is now bought off at the temple for 25 crowns
+        -- (see the note above CREATE_STEPS in ta_create.lua).
+        it("detours to the magic shop for both stat potions", function()
             reachAcceptedRoll()
             walkToEnd()
-            assert.is_false(ranCommand("buy rowan"))
-            assert.is_false(ranCommand("buy hyssop"))
-            assert.is_false(ranCommand("drink rowan"))
+            assert.is_true(ranCommand("buy-potions"))
+        end)
+
+        -- The report has to land AFTER rg 1, because starting a session zeroes
+        -- arenaPotionsActive. Reversed, the arena would think the character is
+        -- clean and bounce off the guild hall on its first level.
+        it("tells the arena about the potions after starting it, not before", function()
+            reachAcceptedRoll()
+            walkToEnd()
+            local rg, report
+            for i, cmd in ipairs(helper.runCommandCalls) do
+                if cmd == "rg 1" then rg = i end
+                if cmd == "arena-potions-drunk" then report = i end
+            end
+            assert.is_not_nil(rg)
+            assert.is_not_nil(report)
+            assert.is_true(report > rg)
+        end)
+
+        -- The detour rejoins the original walk rather than replacing it: the
+        -- character still has to end up in the arena, two rooms north and one east
+        -- of the magic shop.
+        it("still ends the walk in the arena", function()
+            reachAcceptedRoll()
+            walkToEnd()
+            local last = {}
+            for i = #helper.runCommandCalls - 4, #helper.runCommandCalls do
+                last[#last + 1] = helper.runCommandCalls[i]
+            end
+            assert.are.same({ "n", "n", "e", "rg 1", "arena-potions-drunk" }, last)
         end)
 
         -- The user's explicit ask, and load-bearing: accepting a roll leaves

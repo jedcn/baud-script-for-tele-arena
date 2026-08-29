@@ -79,39 +79,58 @@ local CREATE_ANSWERS = {
 -- are aliases and would otherwise go out as literal text, and the bare
 -- directions hit main.lua's movement aliases, which set pendingDirection so the
 -- mapper dead-reckons the walk the same way it would a hand-typed one.
--- NO STAT POTIONS HERE, AND THAT IS A MEASURED DECISION -- please read this
--- before adding them back.
+-- STAT POTIONS ARE BACK, AND THAT TOO IS A MEASURED DECISION -- please read
+-- this before taking them out again.
 --
--- Rowan and hyssop were tried on 2026-08-15
--- (logs/session-garbageman-2026-08-15T21-52-26.log). They work, spectacularly,
--- on the thing they claim to affect: +6 physique and +12 agility took the hit
--- rate from 37.0% to 63.8%, and the character reached the 1125 XP it needed in
--- about 7 minutes instead of 21-27.
+-- Rowan and hyssop were first tried on 2026-08-15
+-- (logs/session-garbageman-2026-08-15T21-52-26.log) and then removed. They work,
+-- spectacularly, on the thing they claim to affect: +6 physique and +12 agility
+-- took the hit rate from 37.0% to 63.8%, and the character reached the 1125 XP it
+-- needed in about 7 minutes instead of 21-27.
 --
 -- And the cycle did not get shorter. It came in at ~26 minutes against a 25-31
--- minute baseline, and delivered 785 gold against 793-833 without them.
+-- minute baseline, and delivered 785 gold against 793-833 without them, because
+-- the training hall refuses a potion-tainted character and the taint measured
+-- 22m 24s from a known drink time (21:54:02 -> tingles at 22:16:26, both potions
+-- lapsing in the same second, so a joint drink is one shared window and halving
+-- the dose would not shorten it). The fight was over at minute 7 and the next 15
+-- minutes were spent waiting to be allowed to bank the level. So the speedup
+-- landed on a phase that was not the bottleneck, and out they came -- with a note
+-- saying "worth revisiting only if the training taint stops being the binding
+-- constraint".
 --
--- The reason is that the training hall refuses a potion-tainted character, and
--- the taint lasts far longer than anyone assumed: measured at 22m 24s from a
--- known drink time (21:54:02 -> tingles at 22:16:26, both potions lapsing in the
--- same second, so a joint drink is one shared window and halving the dose would
--- not shorten it). The fight was over at minute 7 and the next 15 minutes were
--- spent waiting to be allowed to bank the level -- 1071 XP of surplus that dies
--- with the character.
+-- It has. Not because the arena changed, but because the taint turned out to be
+-- purchasable. The temple's `buy restoring` clamps every stat back to base, which
+-- strips rowan and hyssop along with anything a monster drained: 25 crowns took
+-- Phy 35 -> 30 and Agi 27 -> 15, exactly the rolled numbers, and the hall trained
+-- the character on the next breath
+-- (logs/session-garbageman-2026-08-29T08-16-38.log, driven by hand). A 22-minute
+-- wait became a 25-crown errand to a room the arena already walks to, so the
+-- 15 dead minutes come off the cycle and the 7-minute fight is left standing.
 --
--- So the speedup landed on a phase that was not the bottleneck. Gold barely
--- moved either, because the harvest is the character's STARTING purse; corpses
--- drop 2-4 gold, so fighting faster cannot earn more, only finish sooner, which
--- the taint forbids.
+-- The 7 minutes is the part to hold loosely. That same 2026-08-29 run had both
+-- potions up and still took 14 minutes to earn its level -- the hit rate was right
+-- where the potions promise (28 hits / 44 swings, 63.6%), but it drew four
+-- hobgoblins and needed 314 damage. Monster draw swings the fight time by 2x on
+-- its own, so treat the next few cycles as the measurement, not as confirmation.
 --
--- Worth revisiting only if the training taint stops being the binding
--- constraint -- a richer arena a level-1 character could survive, say, where a
--- 64% hit rate would convert into something. The two-move detour was
--- "ne" then "s" from the gate to the magic shop, and the commands were
--- `buy rowan`, `buy hyssop`, `drink rowan`, `drink hyssop`, copied from the
--- arena's own restock. Note that beginArenaSession zeroes arenaPotionsActive,
--- so anything drunk before `rg 1` has to be reported to the arena after it
--- starts, or the first training trip walks to a hall that turns it away.
+-- The bill: 16 + 15 crowns of potions and 25 for the restoring, 56 against a
+-- harvest that is mostly the character's STARTING purse (~800). ~7%. Corpses drop
+-- 2-4 gold, so fighting faster cannot earn more per cycle -- only finish sooner,
+-- which is now allowed. If the measured cycle does not come in well under 25
+-- minutes, this is not paying for itself and should come out again.
+--
+-- Two details in the step list below are load-bearing:
+--
+--   the magic-shop detour is "ne" then "s" from the gate, and "n"/"n" back to the
+--   north plaza, rejoining the original walk at its last step. Same rooms the
+--   arena's own ARENA_SHOP["1"] route uses from the other direction.
+--
+--   "arena-potions-drunk" AFTER "rg 1", not before. Starting a session zeroes
+--   arenaPotionsActive (see beginArenaSession), so anything drunk beforehand is
+--   invisible to the training gate and the first level owed would walk to the
+--   hall, be refused, and only self-correct from there. Reporting it costs one
+--   command and skips that bounce.
 local CREATE_STEPS = {
     "re-roll-stop",
     "s",
@@ -121,9 +140,13 @@ local CREATE_STEPS = {
     "get warhammer",
     "equip warhammer",
     "ne",
+    "s",
+    "buy-potions",
+    "n",
     "n",
     "e",
     "rg 1",
+    "arena-potions-drunk",
 }
 
 -- The other end of the run. `rg 1` fights until the character has earned a
