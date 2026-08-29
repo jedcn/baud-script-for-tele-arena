@@ -309,6 +309,10 @@ const RULES: Rule[] = [
   { kind: "heal-bought", re: /^The priests heal all your wounds for (\d+) crowns\.$/,
     fields: m => ({ cost: +m[1] }) },
   { kind: "cant-afford", re: /^You can't afford (.+)\.$/, fields: m => ({ item: m[1] }) },
+  // `buy restoring` — the temple dispelling a stat potion (or restoring a stat a
+  // monster drained; the same command does both). "it's" is the game's own typo.
+  { kind: "restore-bought", re: /^The priests restore your body and mind to it's former state for (\d+) crowns\.$/,
+    fields: m => ({ cost: +m[1] }) },
   { kind: "bought", re: /^Ok, you bought (?:an? )?(.+) for (\d+) crowns\.$/,
     fields: m => ({ item: m[1], cost: +m[2] }) },
   { kind: "drink", re: /^You feel somehow different after drinking the potion\.$/ },
