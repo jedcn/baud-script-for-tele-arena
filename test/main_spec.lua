@@ -6617,10 +6617,10 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ring gong", helper.sendCalls[2])
         end)
 
-        -- The training hall refuses anyone under a stat potion, so on earning a
-        -- level we keep fighting (draining the potions) rather than walking to the
-        -- hall while any is still active.
-        it("keeps ringing (not training) while stat potions are still active", function()
+        -- The training hall refuses anyone under a stat potion. Rather than wait
+        -- the 22-minute taint out, walk to the temple and have it dispelled --
+        -- toTemple for the first arena is { "w", "w" }.
+        it("goes to the temple to buy restoring while stat potions are active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
@@ -6629,9 +6629,54 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.level = 1
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("restoring", taPackage.arenaState)
+            assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal("w", helper.sendCalls[1])
+        end)
+
+        -- Arriving at the temple spends the 25 crowns and walks straight home;
+        -- the confirmation line is what actually clears the taint, so the count is
+        -- deliberately NOT zeroed here.
+        it("buys restoring on arrival at the temple, then walks home", function()
+            taPackage.arenaState = "restoring"
+            taPackage.arenaPotionsActive = 2
+            taPackage.arenaJourney = { steps = { "w", "w" }, index = 2, arriveRoom = "temple" }
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("buy restoring", helper.sendCalls[1])
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal(2, taPackage.arenaPotionsActive)
+        end)
+
+        -- The confirmation clears the taint outright. Restoring does not care how
+        -- many potions were up, so this zeroes rather than decrements.
+        it("zeroes the potion count on the restoring confirmation", function()
+            taPackage.arenaState = "returning"
+            -- Enough to pay for it: the same line is also charged against our
+            -- gold, and dropping under ARENA_MIN_GOLD emergency-exits the session
+            -- (which would nil the count rather than zero it).
+            setGold(800)
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
+            assert.are.equal(0, taPackage.arenaPotionsActive)
+        end)
+
+        -- If the buy never lands (an empty purse) the count stays up, so without a
+        -- one-shot guard we would walk to the temple, fail, come home and set out
+        -- again forever. One attempt, then fall back to fighting the taint off.
+        it("does not return to the temple after a restore that did not land", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.experience = 1120
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.arenaPotionsActive = 2
+            taPackage.arenaRestoreTried = true  -- already spent our one attempt
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.is_nil(taPackage.arenaJourney)
-            assert.are.equal("", helper.sendCalls[1])  -- scanned, did not walk to train
+            assert.are.equal("", helper.sendCalls[1])  -- scanned, did not walk anywhere
         end)
 
         it("trains once the stat potions have drained to zero", function()
@@ -9922,7 +9967,9 @@ describe("ring-gong-and-fight-in-arena 3", function()
             assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
         end)
 
-        it("keeps fighting (no train) while a stat potion is still active", function()
+        -- Third arena's temple detour uses its own route, not the first arena's:
+        -- toTemple = { "sw", "se", "ne", "e" }.
+        it("walks the paced route to the temple while a stat potion is still active", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             setHP(900, 1000)
@@ -9931,7 +9978,9 @@ describe("ring-gong-and-fight-in-arena 3", function()
             taPackage.character.level = 1
             taPackage.arenaPotionsActive = 1  -- tainted; hall would refuse
             helper.simulateLine("The cave bear falls to the ground lifeless!")
-            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("restoring", taPackage.arenaState)
+            assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
         it("buys training on arriving at the guild hall, then walks home 's'", function()

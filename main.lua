@@ -847,6 +847,16 @@ createTrigger("^The priests heal all your wounds for (\\d+) crowns\\.$", functio
     taPackage.db.recordService("healing", "temple", cost)
 end, { type = "regex" })
 
+-- `buy restoring` at the temple. Sold as a cure for stats a monster drained, but
+-- it is symmetric — it clamps every stat back to base, so it also strips a rowan
+-- or hyssop potion, which is what we buy it for (see arenaTryTrain). "it's" is
+-- the game's own typo; the line is matched as printed.
+createTrigger("^The priests restore your body and mind to it's former state for (\\d+) crowns\\.$", function(matches)
+    local cost = tonumber(matches[2])
+    setGold((getGold() or 0) - cost)
+    taPackage.db.recordService("restoring", "temple", cost)
+end, { type = "regex" })
+
 -- =========================================================================
 -- Monster database
 -- =========================================================================
@@ -3383,10 +3393,11 @@ local function arenaArrivedHome()
     -- Reached through taPackage because arenaTryTrain is a local defined further
     -- down the chunk; a field costs no local slot (see CLAUDE.md).
     if taPackage.arenaTryTrain and taPackage.arenaTryTrain() then return end
-    -- Skip a restock while a level is owed: we are deliberately draining the stat
-    -- potions so the training hall will accept us (checkTrainingNeeded stays true
-    -- until we train). needsPotions is left set so the restock happens later, once
-    -- we've trained and it flips false. Food/drink still get serviced.
+    -- Skip a restock while a level is owed: we are about to have the stat potions
+    -- dispelled at the temple so the training hall will accept us, and buying a
+    -- fresh pair first would only put the taint straight back (checkTrainingNeeded
+    -- stays true until we train). needsPotions is left set so the restock happens
+    -- later, once we've trained and it flips false. Food/drink still get serviced.
     if taPackage.needsPotions and not checkTrainingNeeded() then
         departForShop()
     elseif taPackage.needsDrinks or taPackage.needsMeal then
@@ -3431,9 +3442,10 @@ local function arenaRingOrErrand()
         arenaHeal.departForTemple()
         return
     end
-    -- As in arenaArrivedHome: don't restock potions while a level is owed — we
-    -- are draining them on purpose so the training hall will accept us. Ring and
-    -- keep fighting (which wears them down); the restock waits until after we train.
+    -- As in arenaArrivedHome: don't restock potions while a level is owed — the
+    -- pair we already have is about to be dispelled at the temple so the hall will
+    -- accept us, and a fresh pair would just re-taint us. The restock waits until
+    -- after we train.
     if taPackage.needsPotions and not checkTrainingNeeded() then
         departForShop()
     elseif taPackage.needsDrinks or taPackage.needsMeal then
@@ -3497,6 +3509,17 @@ local function arenaJourneyOnMovement(room)
         taPackage.arenaState = "returning"
         local nav = arenaNav()
         arenaJourneyStart(nav.fromTraining, nav.arenaRoom, nav.trainingRoom)
+    elseif st == "restoring" then
+        -- Arrived at the temple to have the potion taint dispelled. Send the
+        -- purchase and start walking home at once, like "buy training": the
+        -- success line has its own trigger (it zeroes arenaPotionsActive), and
+        -- if the buy fails the count stays up and arenaRestoreTried stops us
+        -- coming back. Arriving home re-runs arenaTryTrain, which now finds a
+        -- clean character and walks to the hall.
+        arenaSend("buy restoring")
+        taPackage.arenaState = "returning"
+        local nav = arenaNav()
+        arenaJourneyStart(nav.fromTemple, nav.arenaRoom, nav.templeRoom)
     elseif st == "potions" then
         -- Arrived at the magic shop. Re-buy and re-drink both potions — the
         -- wear-off line is identical for each, so we refresh both — then walk
@@ -3509,6 +3532,9 @@ local function arenaJourneyOnMovement(room)
         -- owed we know how many wear-off lines to wait for before it is safe to
         -- train (see arenaTryTrain / the wear-off trigger).
         taPackage.arenaPotionsActive = 2
+        -- A fresh pair of potions earns a fresh restore attempt: whatever made
+        -- the last one fail (an empty purse, most likely) may not hold now.
+        taPackage.arenaRestoreTried = nil
         taPackage.needsPotions = nil
         taPackage.arenaState = "returning"
         arenaJourneyStart(ARENA_SHOP[taPackage.arenaProfile].from, ARENA_ROOM, SHOP_ROOM)
@@ -3537,15 +3563,43 @@ end
 
 -- Head to the training hall to bank an earned level — but only when it is safe.
 -- The hall refuses anyone under a strength/agility potion ("Your mind and body
--- must be whole and untainted before you may train."), so once we have earned a
--- level we stop refreshing potions (see departForShop and the wear-off trigger)
--- and keep fighting until they lapse. arenaPotionsActive counts how many are
--- still up; only when it reaches 0 do we walk to the hall. Call at a safe
--- decision point (a clear ring gap or just after a kill); returns true once we
--- have set out to train, so the caller skips its normal ring.
+-- must be whole and untainted before you may train."), and arenaPotionsActive
+-- counts how many are still up.
+--
+-- The taint can be BOUGHT OFF rather than waited out. The temple's `buy
+-- restoring` -- advertised for stats a monster drained -- is symmetric: it
+-- clamps every stat back to its base value, in both directions. 25 crowns took
+-- Phy 35 -> 30 and Agi 27 -> 15, exactly the rolled numbers, and the hall
+-- accepted the character on the next breath
+-- (logs/session-garbageman-2026-08-29T08-16-38.log, done by hand). That matters
+-- because the taint measured 22m 24s and was the binding constraint on the
+-- whole gold-farming cycle; see ta_create.lua.
+--
+-- So on a level owed while tainted we detour to the temple first. The walk home
+-- from there is the ordinary fromTemple leg, and arriving home re-enters this
+-- function with the count at 0 -- no temple->guild-hall route to add for three
+-- arenas, and arrivals stay the single place errands are dispatched.
+--
+-- arenaRestoreTried is the loop-stopper. If the buy fails (no gold, and the
+-- refusal wording is unknown to us) the count is never zeroed, so without it we
+-- would walk to the temple, fail, come home, and set out again forever. One
+-- attempt per set of potions; after that we fall back to the old behaviour of
+-- fighting on until they lapse on their own.
+--
+-- Call at a safe decision point (a clear ring gap or just after a kill); returns
+-- true once we have set out -- to the temple or the hall -- so the caller skips
+-- its normal ring.
 local function arenaTryTrain()
     if not checkTrainingNeeded() then return false end
-    if (taPackage.arenaPotionsActive or 0) > 0 then return false end
+    if (taPackage.arenaPotionsActive or 0) > 0 then
+        if taPackage.arenaRestoreTried then return false end
+        taPackage.arenaRestoreTried = true
+        echo("[arena] Level owed but potion-tainted — buying restoring at the temple.")
+        taPackage.arenaState = "restoring"
+        local nav = arenaNav()
+        arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
+        return true
+    end
     echo("[arena] Leveling up — heading to training hall.")
     taPackage.arenaState = "training"
     -- Walk the fixed route to the guild hall. Arrival there
@@ -3898,6 +3952,7 @@ local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
     -- Unknown how many stat potions are up at session start; 0 self-corrects on
     -- the first wear-off/restock. Only matters for the train-when-clean gate.
     taPackage.arenaPotionsActive = 0
+    taPackage.arenaRestoreTried = nil
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     -- Debug is the default now, so the echo flags the exception instead.
@@ -4017,6 +4072,24 @@ createAlias("^ring-gong-and-fight-in-arena(.*)$", handleArenaAlias, { type = "re
 -- Short form: "rg 2", "rg 3 quiet". Same handler, same arguments.
 createAlias("^rg(.*)$", handleArenaAlias, { type = "regex" })
 
+-- arena-potions-drunk — tell a running arena session that two stat potions are
+-- up that it didn't buy. Starting a session zeroes arenaPotionsActive (we can't
+-- know what the character walked in carrying), so potions drunk before `rg` are
+-- invisible to the training gate: the first level owed walks to the hall, gets
+-- refused, and only then self-corrects. The gold-farming create script drinks
+-- exactly here — buy and drink at the shop, then `rg 1` — so it calls this
+-- straight after, and the first training trip goes to the temple instead of
+-- bouncing off the guild hall (see ta_create.lua's CREATE_STEPS).
+createAlias("^arena-potions-drunk$", function()
+    if not taPackage.arenaState then
+        echo("[arena] Not running — nothing to tell about the potions.")
+        return
+    end
+    taPackage.arenaPotionsActive = 2
+    taPackage.arenaRestoreTried = nil
+    echo("[arena] Noted 2 stat potions active — will buy restoring before training.")
+end, { type = "regex" })
+
 -- Cooperative version: run this in every session that is fighting the same
 -- arena together. The characters coordinate through the game itself — see the
 -- roster/stagger machinery below — so no leader needs designating and no extra
@@ -4074,6 +4147,7 @@ local function stopArena()
     taPackage.arenaParchedStreak = 0
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
+    taPackage.arenaRestoreTried = nil
     -- Cancel any in-flight exit retry loop (a manual stop or stop-all-scripts
     -- means halt everything). arenaEmergencyExit calls stopArena first and
     -- re-arms this afterward, so its own loop survives.
@@ -4824,12 +4898,28 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     end
 end, { type = "regex" })
 
+-- The taint is gone: every stat is back at base, so the hall will take us. Zero
+-- the count outright rather than decrementing it — restoring does not care how
+-- many potions were up, and this is the one line that proves the buy landed. The
+-- gold and the service record are handled by this line's other trigger, way up
+-- with the character-sheet accounting.
+createTrigger("^The priests restore your body and mind to it's former state for \\d+ crowns\\.$", function()
+    if not taPackage.arenaState then return end
+    taPackage.arenaPotionsActive = 0
+    echo("[arena] Potion taint bought off — training hall will accept us now.")
+end, { type = "regex" })
+
 -- Backstop for a mistimed training trip. We normally reach the hall only once
 -- arenaPotionsActive has drained to 0, but if that count was off (e.g. a potion
 -- we didn't drink was still active) the hall refuses us with this line. We did
 -- NOT level and were not charged (the success trigger above never fired), so just
 -- force the drain count positive: the ring loop keeps fighting until the next
 -- wear-off and then retries training.
+--
+-- That count going positive is also what routes us to the temple on the next
+-- decision point (arenaTryTrain), so a character whose potions we never knew
+-- about — one that drank before `rg` started, say — self-corrects into a
+-- restore trip rather than fighting out a 22-minute taint.
 createTrigger("^Your mind and body must be whole and untainted before you may train\\.$", function()
     if not taPackage.arenaState then return end
     taPackage.arenaPotionsActive = math.max(taPackage.arenaPotionsActive or 0, 1)
