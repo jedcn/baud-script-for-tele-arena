@@ -16243,6 +16243,190 @@ describe("navigate-to", function()
 
     end)
 
+    -- `navigate-to <route> and-exit` is for a walk nobody is watching. Every
+    -- way it can end -- arriving, ending up somewhere else, never setting off,
+    -- or being pinned in one room -- ends with the character out of the game,
+    -- because all of them otherwise leave it standing still somewhere it can be
+    -- killed, starved or dried out.
+    describe("and-exit", function()
+
+        local function startWalking(flags)
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18" .. (flags or ""))
+            answerProbe(274)
+        end
+
+        local function walkToTheEnd()
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("You're in the town sewers.")   -- 3rd and last step
+        end
+
+        it("says up front that it will leave the game", function()
+            startWalking(" and-exit")
+            assert.is_truthy(lastEchoes():find("Leaving the game (x) when this ends", 1, true))
+        end)
+
+        it("leaves the game on arrival", function()
+            startWalking(" and-exit")
+            walkToTheEnd()
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            -- Not before the beat that collects the reason for the push.
+            assert.are.equal(0, sent("x"))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, sent("x"))
+        end)
+
+        -- The push is the whole point of the delay: "stopped", read on a phone
+        -- an hour later, tells you nothing you can act on.
+        it("pushes the lines that explain how the walk ended", function()
+            startWalking(" and-exit")
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, #helper.httpRequestCalls)
+            local push = helper.httpRequestCalls[1]
+            assert.are.equal("navigate-to sewers/town-sewers-18",
+                push.options.headers["X-Title"])
+            assert.is_truthy(push.options.body:find("No exit that way at step 2", 1, true))
+        end)
+
+        it("leaves the game when a step goes astray mid-route", function()
+            startWalking(" and-exit")
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.is_nil(taPackage.navigate)
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, sent("x"))
+        end)
+
+        it("leaves the game when the walk ends in the wrong room", function()
+            startWalking(" and-exit")
+            helper.simulateLine("You're on a path.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("You're in the town sewers.")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("You're in the grand hall.")
+            assert.is_truthy(lastEchoes():find("ended up in 'grand hall'", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, sent("x"))
+        end)
+
+        -- Never setting off is the same trouble as stopping halfway: whoever
+        -- asked for this isn't there to walk it by hand.
+        it("leaves the game when it can't set off from this room", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            answerProbe(1)                      -- the other north plaza
+            assert.is_truthy(lastEchoes():find("I don't know how to get there from here", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, sent("x"))
+        end)
+
+        it("leaves the game when the pack is missing what the route needs", function()
+            route({ requires = "coil of rope" })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            answerProbe(274)
+            helper.simulateLine("You are carrying 559 gold crowns and a glowstone.")
+            assert.is_truthy(lastEchoes():find("needs a coil of rope", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(1, sent("x"))
+        end)
+
+        -- A broken route table is a typing mistake, not an abandoned character:
+        -- nothing has been sent, nothing has moved, and logging out over it
+        -- would be absurd.
+        it("does not leave the game over a route it doesn't know", function()
+            helper.simulateAlias("navigate-to nowhere/at-all and-exit")
+            assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(0, sent("x"))
+        end)
+
+        it("stays in the game when the flag wasn't given", function()
+            startWalking()
+            walkToTheEnd()
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(0, sent("x"))
+        end)
+
+        -- Taking the controls back is not the walk ending on its own.
+        it("is disarmed by stop-navigating", function()
+            startWalking(" and-exit")
+            helper.simulateAlias("stop-navigating")
+            assert.is_truthy(lastEchoes():find("Stopped walking.", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(0, sent("x"))
+        end)
+
+        it("is disarmed by stop-all-scripts", function()
+            startWalking(" and-exit")
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_truthy(lastEchoes():find("[all] Stopped navigate.", 1, true))
+            helper.fireTimers(taPackage.navExitDelayMs)
+            assert.are.equal(0, sent("x"))
+        end)
+
+        -- The window between arming and the walk starting is short, but it is
+        -- the one where a stop that didn't disarm would log the character out
+        -- afterwards anyway.
+        it("is disarmed by stop-all-scripts before the walk has started", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            assert.is_nil(taPackage.navigate)           -- still waiting on the probe
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_truthy(lastEchoes():find("[all] Stopped navigate.", 1, true))
+            helper.fireTimers()                          -- the probe timeout
+            assert.are.equal(0, sent("x"))
+        end)
+
+        -- Nothing ends a walk that is being refused over and over: the retry
+        -- loops are right to keep trying, and would keep trying while the
+        -- character was beaten to death. This is the only ending the walk
+        -- cannot work out for itself.
+        describe("the stuck watchdog", function()
+
+            it("leaves the game when a step goes nowhere for the whole budget", function()
+                startWalking(" and-exit")
+                helper.fireTimers(taPackage.navStuckCheckMs)      -- marks where we are
+                helper.simulateLine("You cannot leave in the heat of battle!")
+                helper.advanceMs(taPackage.navStuckTimeoutMs)
+                helper.fireTimers(taPackage.navStuckCheckMs)
+                assert.is_nil(taPackage.navigate)
+                assert.is_truthy(lastEchoes():find("the walk is stuck", 1, true))
+                helper.fireTimers(taPackage.navExitDelayMs)
+                assert.are.equal(1, sent("x"))
+            end)
+
+            it("counts a step that lands as progress", function()
+                startWalking(" and-exit")
+                helper.fireTimers(taPackage.navStuckCheckMs)
+                helper.simulateLine("You're on a path.")          -- step 1 landed
+                helper.fireTimers(taPackage.navStepDelayMs)
+                helper.advanceMs(taPackage.navStuckTimeoutMs)
+                helper.fireTimers(taPackage.navStuckCheckMs)
+                assert.is_not_nil(taPackage.navigate)
+                assert.are.equal(0, sent("x"))
+            end)
+
+            -- It only ever leaves the game, so it has no business running for a
+            -- walk somebody is sitting and watching.
+            it("is not armed without the flag", function()
+                startWalking()
+                helper.fireTimers(taPackage.navStuckCheckMs)
+                helper.advanceMs(taPackage.navStuckTimeoutMs)
+                helper.fireTimers(taPackage.navStuckCheckMs)
+                assert.is_not_nil(taPackage.navigate)
+                assert.are.equal(0, sent("x"))
+            end)
+
+        end)
+
+    end)
+
     -- The hydra route drops through a trap door into a pit that can't be
     -- climbed "unaided", so a rope-less character walks in and stays there.
     -- Better to find that out standing in the sewers.

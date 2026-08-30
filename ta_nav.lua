@@ -12,9 +12,11 @@
 -- not visible across chunks:
 --
 --   in    taPackage.nowMillis, taPackage.trimLine, taPackage.stopKill,
---         taPackage.killAllScan  (all defined in main.lua)
---   out   taPackage.stopNavigate, taPackage.navOnSweepDone,
---         taPackage.navOnRoomBrief, taPackage.navWanted, taPackage.navItemPhrase
+--         taPackage.killAllScan, taPackage.exitGameWithRetry  (all defined in
+--         main.lua)
+--   out   taPackage.stopNavigate, taPackage.stopNavigateManual,
+--         taPackage.navOnSweepDone, taPackage.navOnRoomBrief,
+--         taPackage.navWanted, taPackage.navItemPhrase
 --
 -- Add to that list rather than reaching for a main.lua local: it won't be
 -- there. A field costs no local slot, unlike a declaration.
@@ -1065,7 +1067,41 @@ taPackage.navRestRetryMs = NAV_REST_RETRY_MS
 -- nothing on screen to explain why nothing happened.
 local NAV_PROBE_TIMEOUT_MS = 5000
 
-local function navEcho(msg) echo("[nav] " .. msg) end
+-- `and-exit`: how long to wait, after a walk has ended, before sending "x".
+-- The reason a walk ended is printed AFTER stopNavigate returns -- every
+-- failure site reads the walk, clears it, then explains itself -- so the exit
+-- hangs back a beat to collect those lines for the push. See navExitAfterWalk.
+local NAV_EXIT_DELAY_MS = 1000
+
+-- `and-exit`: how long a walk may make no progress before we call it stuck, and
+-- how often that is checked.
+--
+-- Only the retry loops can get here. A move refused because something has us in
+-- combat, or because we're winded, is re-sent for as long as the game keeps
+-- refusing it -- which is right when someone is watching (monsters break off,
+-- and the walk carries on) and fatal when nobody is: the character stands there
+-- being hit until thirst or a kobold finishes it. Nothing ends the walk in that
+-- state, so nothing else would reach the exit below.
+--
+-- Ten minutes is far longer than any single step has ever legitimately taken --
+-- the longest is a kill-all sweep of one room -- and far short of dying of
+-- thirst.
+local NAV_STUCK_TIMEOUT_MS = 600000
+local NAV_STUCK_CHECK_MS = 60000
+-- Exposed for the tests, as the pacing intervals above are.
+taPackage.navExitDelayMs = NAV_EXIT_DELAY_MS
+taPackage.navStuckTimeoutMs = NAV_STUCK_TIMEOUT_MS
+taPackage.navStuckCheckMs = NAV_STUCK_CHECK_MS
+
+local function navEcho(msg)
+    echo("[nav] " .. msg)
+    -- While an `and-exit` walk is on its way out of the game, the lines that
+    -- explain how it ended are collected for the push notification: "stopped"
+    -- on its own, read on a phone an hour later, tells you nothing you can act
+    -- on. See navExitAfterWalk.
+    local pending = taPackage.navExiting
+    if pending then pending.lines[#pending.lines + 1] = msg end
+end
 
 local navNowMs = taPackage.nowMillis
 
@@ -1080,6 +1116,55 @@ local function navDebug(label)
     local since = j.debugLast and (now - j.debugLast) or 0
     j.debugLast = now
     echo(string.format("[nav|t] %s +%dms  %s", os.date("%H:%M:%S"), since, label))
+end
+
+-- =========================================================================
+-- `and-exit`: leaving the game when the walk is over
+-- =========================================================================
+--
+-- `navigate-to town-3/part-2 and-exit` walks the route and then leaves the game
+-- with "x" -- on arrival, and equally on any ending that isn't one. The two
+-- cases are the same case: the flag is for a walk nobody is watching, and a
+-- character left standing at the bottom of the sewers because a seam didn't
+-- match is in exactly the trouble the flag exists to avoid. Out of the game it
+-- is saved, and safe from thirst, hunger and whatever wanders in.
+--
+-- Three kinds of ending reach it:
+--
+--   * every ending that funnels through stopNavigate -- arrival, a locked door
+--     with no key, a seam mismatch, a direction the game rejects;
+--   * a walk that never set off (wrong starting room, no answer to the probe,
+--     an item missing from the pack) -- see navExitBeforeWalk;
+--   * a walk pinned in one room for ten minutes with nothing ending it -- see
+--     navWatchStuck, which is the only one of the three the walk cannot already
+--     detect on its own.
+--
+-- A stop the user asked for is NOT one of them: see stopNavigateManual.
+local function navExitAfterWalk(outcome)
+    local armed = taPackage.navExitWhenDone
+    if not armed then return end
+    taPackage.navExitWhenDone = nil
+    navEcho("Leaving the game (x) — " .. outcome .. ". (and-exit)")
+    -- Set after that line, not before: the push wants the caller's explanation
+    -- of how the walk ended, not our own announcement of the exit.
+    local pending = { lines = {} }
+    taPackage.navExiting = pending
+    createTimer(NAV_EXIT_DELAY_MS, function()
+        -- A second walk started inside the delay owns the exit now, not us.
+        if taPackage.navExiting ~= pending then return end
+        taPackage.navExiting = nil
+        sendNtfy("navigate-to " .. armed.destination,
+            (taPackage.character.name or "The character") .. " " .. outcome
+            .. " and is leaving the game.\n" .. table.concat(pending.lines, "\n"))
+        taPackage.exitGameWithRetry()
+    end, { repeating = false })
+end
+
+-- An `and-exit` walk that never got moving. Called BEFORE the line explaining
+-- why, for the same reason stopNavigate is: the explanation is what the push
+-- carries, and it is only collected once the exit is pending.
+local function navExitBeforeWalk()
+    navExitAfterWalk("never set off")
 end
 
 -- End a walk, however it ended -- arrival, locked door, error, or a manual
@@ -1128,9 +1213,33 @@ local function stopNavigate()
         navEcho("Mapping is still off — the walk moved us well past the mapper's"
             .. " anchor. Re-anchor with map-here <slug> before mapping again.")
     end
+    -- Armed by `and-exit` only. Read from the walk we have just cleared, so the
+    -- lines the caller is about to print about how it ended land in the push.
+    if taPackage.navExitWhenDone then
+        navExitAfterWalk((j and j.arrived) and "arrived" or "stopped short")
+    end
     return running
 end
 taPackage.stopNavigate = stopNavigate
+
+-- A stop the user asked for, by hand or through stop-all-scripts. Leaving the
+-- game is something a walk does when it ends on its own; a walk somebody has
+-- just taken the controls back from has not ended on its own, and logging the
+-- character out from under them would be the opposite of what they asked for.
+-- So disarm first, then stop exactly as any other ending does.
+local function stopNavigateManual()
+    -- Armed, or armed and already counting down the beat before "x" goes out:
+    -- both are the walk still holding something, so both are disarmed here and
+    -- both count as "was running" in the report. Once "x" has actually been
+    -- sent it is a command in flight with the game, not a script, and this
+    -- leaves it alone.
+    local armed = taPackage.navExitWhenDone ~= nil or taPackage.navExiting ~= nil
+    taPackage.navExitWhenDone = nil
+    taPackage.navExiting = nil
+    local running = stopNavigate()
+    return running or armed
+end
+taPackage.stopNavigateManual = stopNavigateManual
 
 -- A set of exits reduced to one comparable string, from either a list (as the
 -- `ex` reply gives us) or a comma-separated spec (as a route writes one).
@@ -1660,6 +1769,9 @@ local function navArrive(room)
         return
     end
     local dest = j.destination
+    -- Read by stopNavigate, which is where `and-exit` decides whether this walk
+    -- arrived or gave up.
+    j.arrived = true
     stopNavigate()
     navEcho("Arrived at " .. dest .. ".")
 end
@@ -1919,6 +2031,8 @@ local function navOnRoomBrief(room)
         -- have been left standing.
         local beyond = j.destRoomId and taPackage.db.exitDestination(j.destRoomId, dir)
         local where = (type(beyond) == "number" and taPackage.db.roomRef(beyond)) or room
+        -- Through the door the route was written to end at: an arrival.
+        j.arrived = true
         stopNavigate()
         if key then
             navEcho("My " .. key .. " key opened the door — it's already ours, so this leg"
@@ -2013,6 +2127,7 @@ local function navInventoryFinish()
         inv.onOk()
         return
     end
+    navExitBeforeWalk()
     navEcho((inv.subject or "This route") .. " needs " .. taPackage.navItemPhrase(missing)
         .. " and I'm not carrying " .. (#missing > 1 and "them" or "one") .. " — not setting off.")
     navEcho("  Carrying: " .. inv.text)
@@ -2047,6 +2162,7 @@ local function navCheckInventory(requires, gen, onOk, subject)
         local inv = taPackage.navInventory
         if not inv or inv.gen ~= gen then return end
         taPackage.navInventory = nil
+        navExitBeforeWalk()
         navEcho("The game never listed what I'm carrying, so I can't tell whether I have "
             .. taPackage.navItemPhrase(wants) .. " — nothing sent. Try again.")
     end, { repeating = false })
@@ -2065,6 +2181,40 @@ end
 -- out, not when the game answers it. So after a hangup: resume at 56 if that
 -- `se` never landed (no arrival brief for it in the log, which is the usual
 -- case -- the connection is why the walk stopped), and at 57 if it did.
+-- `and-exit`'s stuck watchdog. Armed only for an `and-exit` walk, because all
+-- it can do about a wedged walk is leave the game, and that is a rude thing to
+-- do to somebody who is sitting there watching it.
+--
+-- What counts as progress is the step index, deliberately -- not traffic. A
+-- walk held in combat re-sends its move every two seconds and would look busy
+-- for as long as the thing biting it lives. The index also stands still through
+-- a kill-all sweep, which is why the budget is ten minutes rather than one.
+--
+-- Re-arms itself rather than repeating, so a walk that ends takes the timer
+-- with it: the generation guard makes the next tick a no-op.
+local navWatchStuck
+navWatchStuck = function()
+    local gen = taPackage.navGen or 0
+    createTimer(NAV_STUCK_CHECK_MS, function()
+        local j = taPackage.navigate
+        if not j or (taPackage.navGen or 0) ~= gen then return end
+        if not taPackage.navExitWhenDone then return end
+        local mark = j.index .. "/" .. #j.steps
+        if mark ~= j.stuckMark then
+            j.stuckMark, j.stuckSince = mark, navNowMs()
+        elseif navNowMs() - (j.stuckSince or navNowMs()) >= NAV_STUCK_TIMEOUT_MS then
+            local dest, at = j.destination, j.index
+            stopNavigate()
+            navEcho("Step " .. at .. " of " .. dest .. " hasn't moved for "
+                .. math.floor(NAV_STUCK_TIMEOUT_MS / 60000) .. " minutes — the walk is stuck"
+                .. " (held in combat, or refused over and over), and nothing is going to"
+                .. " end it on its own.")
+            return
+        end
+        navWatchStuck()
+    end, { repeating = false })
+end
+
 local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant,
                         resumeAt)
     taPackage.navGen = (taPackage.navGen or 0) + 1
@@ -2115,6 +2265,7 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         echo(string.format("[nav|t] trace on: pace %dms, encumbrance %s",
             NAV_STEP_DELAY_MS, load and (load .. "%") or "unknown (run st)"))
     end
+    if taPackage.navExitWhenDone then navWatchStuck() end
     navStep()
 end
 
@@ -2129,11 +2280,15 @@ createAlias("^navigate-to (.+)$", function(matches)
     --           mostly miss. This turns it off. `debug` is accepted too, so
     --           asking for the trace explicitly still works.
     --   anyway  set off without the pre-flight inventory check.
+    --   and-exit  leave the game with "x" when the walk is over, however it
+    --           ends -- arrived, lost, or stuck. For a walk nobody is watching:
+    --           see the `and-exit` section above stopNavigate.
     --   from-step N   pick a walk up in the middle: don't check the starting
     --           room, and send step N first. This is the BBS hanging up on a
     --           310-step walk, which is otherwise 56 steps to be re-walked by
     --           hand. See navStart for what N means.
     local destination, debug, anyway, resumeAt = arg, true, false, nil
+    local andExit = false
     while true do
         -- Two words where the others are one, so it is peeled first: `56` on
         -- its own is not a flag, and the loop would stop on it and leave
@@ -2149,6 +2304,8 @@ createAlias("^navigate-to (.+)$", function(matches)
                 destination = head
             elseif word == "anyway" then
                 destination, anyway = head, true
+            elseif word == "and-exit" then
+                destination, andExit = head, true
             else
                 break
             end
@@ -2354,6 +2511,7 @@ createAlias("^navigate-to (.+)$", function(matches)
         onResolve = function(name, dirs)
             if (taPackage.navGen or 0) ~= gen then return end
             if not name then
+                navExitBeforeWalk()
                 navEcho("Couldn't read the room I'm in — try navigate-to " .. destination .. " again.")
                 return
             end
@@ -2417,12 +2575,24 @@ createAlias("^navigate-to (.+)$", function(matches)
                 checkThenGo()
                 return
             end
+            navExitBeforeWalk()
             navEcho("I don't know how to get there from here.")
             navEcho("  I'm in " .. here .. ".")
             navEcho("  The route to " .. destination
                 .. (fromFp and " starts from " or " starts at ") .. fromLabel .. ".")
         end,
     }
+    -- Armed here, past every "fix the route table" refusal above and just
+    -- before the first thing is sent: a typo or a broken route leaves the
+    -- character exactly where you left it, and logging it out over one would be
+    -- absurd. From this point on, every way this can end is an ending the flag
+    -- is for. Assigned unconditionally so a plain walk clears an arm left over
+    -- from one that resolved neither way.
+    taPackage.navExitWhenDone = andExit and { destination = destination } or nil
+    if andExit then
+        navEcho("Leaving the game (x) when this ends, whether that's arriving,"
+            .. " getting lost or getting stuck.")
+    end
     taPackage.slugProbe = probe
     send("")
     send("ex")
@@ -2430,12 +2600,13 @@ createAlias("^navigate-to (.+)$", function(matches)
         if (taPackage.navGen or 0) ~= gen then return end
         if not (taPackage.slugProbe and taPackage.slugProbe.nav) then return end
         taPackage.slugProbe = nil
+        navExitBeforeWalk()
         navEcho("The game never told me what room I'm in — nothing sent. Try again.")
     end, { repeating = false })
 end, { type = "regex" })
 
 createAlias("^stop-navigating$", function()
-    if stopNavigate() then
+    if stopNavigateManual() then
         navEcho("Stopped walking.")
     else
         navEcho("Not currently walking anywhere.")

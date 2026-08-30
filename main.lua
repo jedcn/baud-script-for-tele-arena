@@ -5832,7 +5832,15 @@ createAlias("^stop-all-scripts$", function()
         -- the tavern also disarms banking two rows below.
         { name = "hang-around-in-tavern-and-deposit-gold", running = taPackage.tavernMode == true, stop = stopTavernMode },
         { name = "mapping",               running = taPackage.mapping == true,        stop = stopMapping },
-        { name = "navigate",              running = taPackage.navigate ~= nil,        stop = taPackage.stopNavigate },
+        -- The manual door: stopping everything by hand disarms `and-exit` too,
+        -- so a walk that was going to leave the game doesn't do it anyway. That
+        -- flag outlives the walk by a beat at either end (armed while the start
+        -- probe is out, still set while the exit counts down), which is why it
+        -- is part of "running" here -- otherwise stop-all-scripts would skip the
+        -- stop in exactly the window where disarming matters.
+        { name = "navigate",              running = taPackage.navigate ~= nil
+                                                    or taPackage.navExitWhenDone ~= nil
+                                                    or taPackage.navExiting ~= nil,   stop = taPackage.stopNavigateManual },
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
         { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
         { name = "banking",               running = taPackage.bankingRunning(),       stop = taPackage.stopBanking },
