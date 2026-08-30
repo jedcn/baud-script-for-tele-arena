@@ -6690,6 +6690,55 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, taPackage.arenaPotionsActive)
         end)
 
+        -- The whole point of the detour: the temple trip has to end at the guild
+        -- hall. Nothing routes temple -> hall directly; the restore walks home and
+        -- arriving home re-enters arenaTryTrain, now clean. This is the seam the
+        -- design leans on, so walk the whole loop rather than either half.
+        it("walks to the training hall after arriving home from the restore", function()
+            setGold(800)
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            setHP(90, 100)                         -- not low, so no heal detour
+            taPackage.arenaPotionsActive = 2
+
+            -- Arrive at the temple and buy the restoring.
+            taPackage.arenaState = "restoring"
+            taPackage.arenaJourney = { steps = { "w", "w" }, index = 2, arriveRoom = "temple" }
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("buy restoring", helper.sendCalls[1])
+
+            -- The priests confirm: taint gone.
+            helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
+            assert.are.equal(0, taPackage.arenaPotionsActive)
+
+            -- Walk home. Arriving re-enters arenaTryTrain, which now finds a clean
+            -- character and sets out for the hall.
+            taPackage.arenaJourney = { steps = { "e", "e" }, index = 2, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("training", taPackage.arenaState)
+            assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
+        end)
+
+        -- Arriving home from the restore must NOT look like arriving home from
+        -- training: the gold-farming cash-out arms on the training success line
+        -- only, and firing it here would hand over the takings and suicide the
+        -- character with the level still unbanked.
+        it("does not cash out a gold-farming run on the way back from the temple", function()
+            setGold(800)
+            taPackage.goldFarming = true
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120
+            setHP(90, 100)
+            taPackage.arenaPotionsActive = 0  -- restore already confirmed
+            taPackage.arenaState = "returning"
+            taPackage.arenaJourney = { steps = { "e", "e" }, index = 2, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("training", taPackage.arenaState)
+            assert.is_nil(taPackage.createWalk)  -- cash-out did not take over
+        end)
+
         -- If the buy never lands (an empty purse) the count stays up, so without a
         -- one-shot guard we would walk to the temple, fail, come home and set out
         -- again forever. One attempt, then fall back to fighting the taint off.
@@ -9652,6 +9701,24 @@ describe("ring-gong-and-fight-in-arena 2", function()
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
+        -- The temple-restore detour exists to get a tainted character accepted by
+        -- a training hall. This arena has none, so there is nothing to be accepted
+        -- by and no reason to spend 25 crowns: checkTrainingNeeded gates on
+        -- ARENA_HAS_TRAINING before arenaTryTrain ever looks at the potion count.
+        it("does not detour to the temple for restoring while potions are active", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "cave bear"
+            setHP(80, 100)
+            taPackage.character.experience = 1120  -- past a level threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.arenaPotionsActive = 2      -- tainted, but irrelevant here
+            helper.simulateLine("The cave bear falls to the ground lifeless!")
+            assert.are_not.equal("restoring", taPackage.arenaState)
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.is_nil(taPackage.arenaRestoreTried)
+        end)
+
     end)
 
     describe("blocked first step out of the arena", function()
@@ -10009,6 +10076,34 @@ describe("ring-gong-and-fight-in-arena 3", function()
             helper.simulateLine("The cave bear falls to the ground lifeless!")
             assert.are.equal("restoring", taPackage.arenaState)
             assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        -- Same seam as the first arena, on the third arena's own routes:
+        -- toTemple = { "sw", "se", "ne", "e" } out, fromTemple back, then the
+        -- clean re-entry into arenaTryTrain sets out for the guild hall.
+        it("walks to the training hall after arriving home from the restore", function()
+            setGold(800)
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120
+            setHP(900, 1000)  -- above the third arena's 500 flee floor
+            taPackage.arenaPotionsActive = 1
+
+            taPackage.arenaState = "restoring"
+            taPackage.arenaJourney = { steps = { "sw", "se", "ne", "e" }, index = 4, arriveRoom = "temple" }
+            helper.simulateLine("You're in the temple.")
+            assert.are.equal("buy restoring", helper.sendCalls[1])
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
+
+            helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
+            assert.are.equal(0, taPackage.arenaPotionsActive)
+
+            taPackage.arenaJourney = { steps = { "w", "sw", "nw", "ne" }, index = 4, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("training", taPackage.arenaState)
+            assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
             assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
         end)
 
