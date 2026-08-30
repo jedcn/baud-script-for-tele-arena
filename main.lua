@@ -1962,9 +1962,13 @@ end, { type = "regex" })
 -- Combat triggers
 -- =========================================================================
 
-createTrigger("^Your attack hit the (.+) for (\\d+) damage!$", function(matches)
-    local monster = matches[2]
-    local damage = tonumber(matches[3])
+-- Rogues land a "skillful attack" alongside the ordinary one, so the verb phrase
+-- is captured rather than spelled out: "Your attack hit …" and "Your skillful
+-- attack hit …" are the only two forms in the logs, and both are our melee. The
+-- arena and kill-loop triggers below already use the same wildcard shape.
+createTrigger("^Your (.+) hit the (.+) for (\\d+) damage!$", function(matches)
+    local monster = matches[3]
+    local damage = tonumber(matches[4])
     taPackage.lastAttackTarget = monster
     outgoingBadge("HIT " .. damage)
     taPackage.db.recordPlayerAttack(

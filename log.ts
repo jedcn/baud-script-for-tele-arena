@@ -218,7 +218,8 @@ const HIT_VERBS = [
 
 const RULES: Rule[] = [
   // — our combat —
-  { kind: "our-hit", re: /^Your attack hit the (.+) for (\d+) damage!$/,
+  // "Your skillful attack hit …" is the rogue variant of the ordinary swing.
+  { kind: "our-hit", re: /^Your (?:skillful )?attack hit the (.+) for (\d+) damage!$/,
     fields: m => ({ monster: m[1], damage: +m[2] }) },
   { kind: "our-miss", re: /^Your attack missed!$/ },
   { kind: "monster-dodge", re: /^The (.+) dodged your attack!$/,

@@ -66,6 +66,12 @@ test("reads damage off an incoming special-verb hit", () => {
   expect(e.fields).toEqual({ monster: "flame giant", damage: 395 });
 });
 
+test("counts a rogue's skillful attack as one of our hits", () => {
+  const e = classify("Your skillful attack hit the apollyon dragon for 58 damage!");
+  expect(e.kind).toBe("our-hit");
+  expect(e.fields).toEqual({ monster: "apollyon dragon", damage: 58 });
+});
+
 test("separates a special aimed at someone else, which carries no number", () => {
   const e = classify("The flame giant exhaled a blast of flame at Pelayo!");
   expect(e.kind).toBe("monster-vs-other");

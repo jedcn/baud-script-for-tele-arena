@@ -5262,6 +5262,15 @@ describe("Combat triggers", function()
             assert.are.equal(10, call.params[4])
         end)
 
+        it("records a rogue's skillful attack as a hit", function()
+            helper.simulateLine("Your skillful attack hit the apollyon dragon for 58 damage!")
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_not_nil(call)
+            assert.are.equal("apollyon dragon", call.params[2])
+            assert.are.equal("hit", call.params[3])
+            assert.are.equal(58, call.params[4])
+        end)
+
         it("records a miss using lastAttackTarget", function()
             taPackage.lastAttackTarget = "huge rat"
             helper.simulateLine("Your attack missed!")
@@ -12113,6 +12122,16 @@ describe("Attack badges", function()
         assert.are.equal("#2563eb", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
         assert.is_true(badge.bold)
+    end)
+
+    -- A rogue's swing prints "Your skillful attack hit …"; it is still our melee,
+    -- so it badges exactly like the ordinary one.
+    it("badges a rogue's skillful attack", function()
+        helper.simulateLine("Your skillful attack hit the apollyon dragon for 58 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HIT 58 ", badge.text)
+        assert.are.equal("#2563eb", badge.color)
     end)
 
     it("does not badge a miss", function()
