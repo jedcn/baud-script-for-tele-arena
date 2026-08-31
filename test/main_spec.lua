@@ -628,6 +628,113 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    -- A character nobody is driving prints nothing but thirst ticks. Three in a
+    -- row with no other traffic means it has been abandoned logged in, and is
+    -- being ground down 1 HP at a time for nothing.
+    describe("abandonment (thirst ticks with nothing in between)", function()
+
+        local THIRSTY = "You're thirsty."
+
+        it("leaves the game after three ticks in a row", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+            assert.is_true(taPackage.exitGamePending)
+        end)
+
+        it("does nothing on two", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+        end)
+
+        -- The whole point: any other game line means something is happening.
+        it("starts over when anything else happens in between", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine("There is a kobold here.")
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+            helper.simulateLine(THIRSTY)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+        end)
+
+        -- The ticks arrive separated by blank lines, and the bare prompt is not
+        -- traffic either -- neither may break the run.
+        it("is not reset by the bare prompt", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine("> ")
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+        end)
+
+        -- Hunger is the same evidence of an empty chair, so it neither counts
+        -- nor clears.
+        it("is not reset by a hunger tick", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine("You're hungry.")
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("does not count hunger ticks on their own", function()
+            helper.simulateLine("You're hungry.")
+            helper.simulateLine("You're hungry.")
+            helper.simulateLine("You're hungry.")
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("stops every running script first", function()
+            taPackage.killActive = true
+            taPackage.tavernMode = true
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.is_falsy(taPackage.killActive)
+            assert.is_falsy(taPackage.tavernMode)
+        end)
+
+        it("says so in the log and notifies", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("[abandoned]", 1, true) then said = true end
+            end
+            assert.is_true(said)
+            assert.is_true(#helper.httpRequestCalls > 0)
+        end)
+
+        -- exitGameWithRetry owns the re-sending; the streak starts from zero so
+        -- a refusal plus one more tick can't fire the whole thing again.
+        it("clears the streak once it has fired", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            assert.are.equal(0, taPackage.abandonedThirstStreak)
+        end)
+
+        it("keeps retrying until the game confirms", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(THIRSTY)
+            local before = #helper.sendCalls
+            helper.fireTimers(2000)
+            assert.is_true(#helper.sendCalls > before)
+            helper.simulateLine("Exiting Tele-Arena...")
+            local after = #helper.sendCalls
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.are.equal(after, #helper.sendCalls)
+        end)
+
+    end)
+
     describe("death detection", function()
 
         local KILLED = "As the final blow strikes your body you fall unconscious."
@@ -8810,16 +8917,29 @@ describe("ring-gong-and-fight-in-arena", function()
             return false
         end
 
+        -- The arena's streak counts ticks a running errand loop failed to
+        -- relieve, and takes other traffic between them for granted -- a run
+        -- that is fighting, walking or being talked to. The abandonment watch
+        -- leaves the game after three thirst ticks with *nothing* in between,
+        -- and would otherwise pre-empt every test here at the third line. So
+        -- each tick is followed by an ordinary game line, which is both what a
+        -- live arena run looks like and what keeps these tests about the arena
+        -- counter.
+        local function parch(line)
+            helper.simulateLine(line)
+            helper.simulateLine("A torch gutters on the wall.")
+        end
+
         it("leaves the game after 20 unrelieved thirst ticks", function()
             taPackage.arenaState = "tavern"  -- stuck en route, never drinking
-            for _ = 1, 20 do helper.simulateLine("You're thirsty.") end
+            for _ = 1, 20 do parch("You're thirsty.") end
             assert.is_true(sawSend("x"))
             assert.is_nil(taPackage.arenaState)
         end)
 
         it("does not leave the game at 19 thirst ticks", function()
             taPackage.arenaState = "tavern"
-            for _ = 1, 19 do helper.simulateLine("You're thirsty.") end
+            for _ = 1, 19 do parch("You're thirsty.") end
             assert.is_false(sawSend("x"))
             assert.are.equal("tavern", taPackage.arenaState)
             assert.are.equal(19, taPackage.arenaParchedStreak)
@@ -8827,24 +8947,24 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("leaves the game after 20 unrelieved hunger ticks", function()
             taPackage.arenaState = "tavern"
-            for _ = 1, 20 do helper.simulateLine("You're hungry.") end
+            for _ = 1, 20 do parch("You're hungry.") end
             assert.is_true(sawSend("x"))
             assert.is_nil(taPackage.arenaState)
         end)
 
         it("counts thirst and hunger toward the same streak", function()
             taPackage.arenaState = "tavern"
-            for _ = 1, 10 do helper.simulateLine("You're thirsty.") end
-            for _ = 1, 10 do helper.simulateLine("You're hungry.") end
+            for _ = 1, 10 do parch("You're thirsty.") end
+            for _ = 1, 10 do parch("You're hungry.") end
             assert.is_true(sawSend("x"))
         end)
 
         it("resets the streak when the gong is rung", function()
             taPackage.arenaState = "tavern"
-            for _ = 1, 15 do helper.simulateLine("You're thirsty.") end
+            for _ = 1, 15 do parch("You're thirsty.") end
             helper.simulateLine("You just rang the great gong!")
             assert.are.equal(0, taPackage.arenaParchedStreak)
-            for _ = 1, 15 do helper.simulateLine("You're thirsty.") end
+            for _ = 1, 15 do parch("You're thirsty.") end
             assert.is_false(sawSend("x"))
         end)
 

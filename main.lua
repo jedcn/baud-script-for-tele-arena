@@ -4254,6 +4254,66 @@ createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     taPackage.exitGamePending = false
 end, { type = "regex" })
 
+
+-- =========================================================================
+-- Abandonment
+-- =========================================================================
+--
+-- A thirst tick is the only thing the game prints for a character nobody is
+-- driving: one line, roughly a minute apart, 1 HP each, forever. Three of them
+-- in a row with *nothing else* on the wire means no script is walking, no
+-- monster is swinging and nobody is typing -- the character has been left
+-- logged in and is being ground down for no reason. Leave the game instead:
+-- "x" saves the character properly, including whatever gold it is carrying,
+-- which a dropped connection does not.
+--
+-- "Nothing else in between" is the whole of it, and is what separates this from
+-- arena mode's own parched streak (ARENA_PARCHED_LIMIT, 20). That one counts
+-- thirst ticks a running errand loop failed to relieve, and expects other
+-- traffic between them; this one counts silence. Any other game line at all --
+-- a room brief, a hit, a shout, the echo of a command we or the user sent --
+-- means something is happening, and the count starts over. Blank lines and the
+-- bare "> " prompt are not traffic and leave the count alone (the ticks arrive
+-- separated by blank lines, see the run of seven in
+-- session-2026-06-14T16-00-59.log:2084).
+--
+-- Hunger ticks are neutral: neither counted nor cleared. They are the same
+-- "nobody is home" evidence as thirst, so letting one reset the streak would
+-- keep a character alive-and-abandoned indefinitely. Thirst outnumbers hunger
+-- about 50:1 in the logs, but interleaving does happen.
+local ABANDONED_THIRST_LIMIT = 3
+
+createTrigger("^(.+)$", function(matches)
+    local line = trimLine(matches[2])
+    if line == "" or line == ">" then return end
+    if line == "You're hungry." then return end
+    if line ~= "You're thirsty." then
+        taPackage.abandonedThirstStreak = 0
+        return
+    end
+
+    local streak = (taPackage.abandonedThirstStreak or 0) + 1
+    taPackage.abandonedThirstStreak = streak
+    if streak < ABANDONED_THIRST_LIMIT then return end
+
+    -- Clear before leaving. exitGameWithRetry re-sends "x" every 2s until the
+    -- game confirms, so the exit is already covered; without this reset a
+    -- refusal ("Sorry, you'll have to rest a while...") followed by one more
+    -- tick would fire the whole thing again from a streak of one.
+    taPackage.abandonedThirstStreak = 0
+    echo("[abandoned] " .. streak .. " thirst ticks with nothing in between"
+        .. " — leaving the game (x).")
+    sendNtfy("Abandoned", (taPackage.character.name or "The character")
+        .. " saw " .. streak .. " thirst ticks with no other activity"
+        .. " and left the game with x.")
+    -- Same order as the nightly shutdown: stop everything first so a wedged
+    -- walk or fight isn't still issuing commands into the exit, and do it
+    -- through the alias so a script added later is covered without touching
+    -- this.
+    if runCommand then runCommand("stop-all-scripts") end
+    exitGameWithRetry()
+end, { type = "regex" })
+
 -- =========================================================================
 -- Death
 -- =========================================================================
