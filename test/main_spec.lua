@@ -383,6 +383,24 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(200, max)
         end)
 
+        it("increases vitality for a heal fit for a God", function()
+            helper.simulateLine("Vitality:    20 / 400")
+            helper.simulateLine("Pelayo just intoned a healing spell fit for a God for you which healed 349")
+            helper.simulateLine("damage!")
+            local current, max = getVitality()
+            assert.are.equal(369, current)
+            assert.are.equal(400, max)
+        end)
+
+        -- Not addressed to us: the heal landed on someone else and carries no
+        -- amount, so it must not badge or move our vitality.
+        it("ignores a heal cast on another player", function()
+            helper.simulateLine("Vitality:     8 / 26")
+            helper.simulateLine("Pelayo just intoned a healing spell for Teekywiki!")
+            local current, _ = getVitality()
+            assert.are.equal(8, current)
+        end)
+
     end)
 
     -- =========================================================================
@@ -12255,6 +12273,35 @@ describe("Attack badges", function()
         assert.are.equal("#16a34a", badge.color)
         assert.are.equal("#e0e0e0", badge.backgroundColor)
         assert.is_true(badge.bold)
+    end)
+
+    -- The tiers above the plain heal keep arriving: "greater", and now "a
+    -- healing spell fit for a God". The trigger matches the frame rather than
+    -- the description so a new tier badges the day the priest learns it.
+    it("echoes a green HEALED BY badge for a greater heal", function()
+        helper.simulateLine("Pelayo just intoned a greater healing spell for you which healed 38 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY PELAYO FOR 38 ", badge.text)
+        assert.are.equal("#16a34a", badge.color)
+    end)
+
+    it("echoes a green HEALED BY badge for a heal fit for a God", function()
+        helper.simulateLine("Pelayo just intoned a healing spell fit for a God for you which healed 349")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY PELAYO FOR 349 ", badge.text)
+        assert.are.equal("#16a34a", badge.color)
+    end)
+
+    -- Whether " damage!" survives on the same physical line is a function of the
+    -- caster's name length and the digit count, not of the tier: a two-letter
+    -- caster keeps a very-powerful heal under the 78-column wrap.
+    it("echoes a green HEALED BY badge for an unwrapped very-powerful heal", function()
+        helper.simulateLine("Ax just intoned a very powerful healing spell for you which healed 99 damage!")
+        local badge = lastBadge()
+        assert.is_not_nil(badge)
+        assert.are.equal(" HEALED BY AX FOR 99 ", badge.text)
     end)
 
     -- The area heals print one line with the amount everyone got. We badge it
