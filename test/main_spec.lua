@@ -15551,14 +15551,53 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
         end)
 
-        -- Named so the command exists, with the way there still being walked.
+        -- Level 3 carries on from where level 2 stops, and is reported lit --
+        -- so it is an ordinary route, and it is here for the start check.
         describe("end-of-labrynth-level-3", function()
 
-            it("says the way there hasn't been recorded yet", function()
+            local function ROUTE() return taPackage.navRoutes["end-of-labrynth-level-3"] end
+
+            it("is forty-seven steps with the lever at 31, and isn't dark", function()
+                local r = ROUTE()
+                assert.are.equal(47, #r.steps)
+                assert.are.same({ cmd = "pull lever" }, r.steps[31])
+                assert.is_nil(r.dark)
+                assert.is_nil(r.pending)
+            end)
+
+            -- The reason the exit-set is recorded at all. Both ends of level 2
+            -- are called "labyrinth"; only d,s against n,u tells them apart, and
+            -- without it this route walks level 3's directions through level 2's
+            -- maze from the entrance with nothing able to notice.
+            it("starts from the labyrinth room with exits d,s", function()
+                assert.are.same({ room = "labyrinth", exits = "d,s" }, ROUTE().from)
+            end)
+
+            it("sets off down from the room level 2 ends in", function()
                 helper.simulateAlias("navigate-to end-of-labrynth-level-3")
-                assert.is_truthy(lastEchoes():find("I know the name end-of-labrynth-level-3",
+                brief("a labyrinth")
+                helper.simulateLine("Exits: s,d.")
+                assert.are.equal(1, sent("d"))
+            end)
+
+            it("refuses to set off from where level 2 begins", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-3")
+                brief("a labyrinth")
+                helper.simulateLine("Exits: n,u.")
+                assert.are.equal(0, sent("d"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.",
                     1, true))
-                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            -- And the converse, which is the failure that would actually happen:
+            -- level 2's route typed while standing at level 2's far end.
+            it("won't walk level 2's route from level 2's far end", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                brief("a labyrinth")
+                helper.simulateLine("Exits: s,d.")
+                assert.are.equal(0, sent("n"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.",
+                    1, true))
             end)
 
         end)

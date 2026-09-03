@@ -929,7 +929,32 @@ local NAV_ROUTES = {
     -- distinguishes it. Record `exits` here with the room, and the check is
     -- exact rather than a coin flip.
     ["end-of-labrynth-level-3"] = {
-        pending = true,
+        -- Where level 2 ends, and the exit-set is the whole point of writing it
+        -- down: this room and the room level 2 STARTS from are both called
+        -- "labyrinth", and only `s,d` against `n,u` tells them apart. Without
+        -- that, this route typed at the entrance would set off walking level 3's
+        -- directions through level 2's maze with nothing able to notice.
+        from    = { room = "labyrinth", exits = "d,s" },
+        -- Forty-seven steps, and unlike level 2 they are reported to be LIT --
+        -- so no `dark`, and every move is answered by an ordinary room brief.
+        -- Untested: this is the first scripted walk of it.
+        --
+        -- `pull lever` at step 31 is the one step that isn't a direction. Levers
+        -- on the way to third town are permanent once worked, and if this one is
+        -- too then a later run pulls an already-pulled lever, which is harmless.
+        -- That is an assumption, not a finding.
+        --
+        -- No `to` yet: nobody has said what the room at the bottom of the last
+        -- two `d` steps is called. The first walk's log will say, and then an
+        -- arrival can be checked. Until then the walk simply ends when step 47
+        -- lands.
+        steps = {
+                  "d", "w", "n", "n", "n", "w", "w", "w", "w", "w",
+                  "s", "s", "s", "s", "s", "s", "e", "e", "e", "e",
+                  "e", "e", "n", "n", "e", "e", "n", "n", "w", "s",
+                  { cmd = "pull lever" },
+                  "n", "e", "e", "n", "n", "w", "s", "w", "n", "n",
+                  "w", "w", "n", "e", "d", "d" },
     },
 }
 -- Second names for the two halves of the third-town journey. `after-doors` and
