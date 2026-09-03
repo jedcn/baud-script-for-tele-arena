@@ -278,6 +278,17 @@ const RULES: Rule[] = [
   { kind: "trip", re: /^In your haste, you trip and fall!$/ },
 
   // — movement / room —
+  // An unlit room prints this INSTEAD of a brief, and `ex` answers with it too.
+  // It is the whole vocabulary of the labyrinth's second level: the walk of
+  // 2026-09-03 logged 98 of these and exactly one room line, at the far end.
+  // A move that produced one is a move that WORKED -- which is what makes it a
+  // navigate-to arrival signal (see "Walking in the dark" in ta_nav.lua) -- so
+  // counting these is counting rooms crossed blind.
+  { kind: "dark", re: /^It's too dark to see\.$/ },
+  // The stone that teleports. In the light the game glues the arrival onto it
+  // ("...You're in a stonework corridor."); in the dark it prints this and
+  // nothing whatever follows, which is why that step advances on a pause.
+  { kind: "push-stone", re: /^You push the protruding stone into it's recess\.\.\.$/ },
   { kind: "room", re: /^You're (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "move" }) },
   { kind: "room", re: /^You are (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,

@@ -15536,9 +15536,9 @@ describe("navigate-to", function()
                 local r = ROUTE()
                 assert.is_true(r.dark)
                 assert.are.same({ room = "labyrinth", exits = "n,u" }, r.from)
-                -- Nothing along the way is lit and the far end is unknown, so
-                -- there is no room name an arrival could be checked against.
-                assert.is_nil(r.to)
+                -- The far end is lit -- step 100 of the live walk answered
+                -- with a brief -- so an arrival can be checked by name.
+                assert.are.same({ room = "labyrinth" }, r.to)
                 assert.is_nil(r.pending)
             end)
 
@@ -15563,6 +15563,28 @@ describe("navigate-to", function()
                 answerLabyrinthProbe()
                 assert.are.equal(1, sent("n"))
                 assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
+            end)
+
+            -- Ninety-nine blind moves and then one room that actually prints.
+            -- If that room isn't the labyrinth, the walk went wrong somewhere
+            -- nothing could report at the time, and the last step is the only
+            -- chance to say so.
+            it("stops rather than claiming arrival in the wrong room", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                answerLabyrinthProbe()
+                for _ = 1, 44 do          -- steps 1-44, the moves before the stone
+                    helper.simulateLine(DARK)
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                end
+                helper.fireTimers(taPackage.navStepDelayMs)   -- the stone's pause
+                for _ = 1, 54 do          -- steps 46-100, blind to the last one
+                    helper.simulateLine(DARK)
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                end
+                assert.are.equal(100, taPackage.navigate.index)
+                brief("a cave")
+                assert.is_nil(taPackage.navigate)
+                assert.is_truthy(lastEchoes():find("ended up in 'cave'", 1, true))
             end)
 
             it("refuses to set off from anywhere else", function()

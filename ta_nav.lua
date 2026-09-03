@@ -837,18 +837,33 @@ local NAV_ROUTES = {
         -- map reference because nothing down here is mapped -- and cannot be,
         -- since mapping reads the exits the dark won't show.
         from    = { room = "labyrinth", exits = "n,u" },
-        -- No `to`, and not an oversight: nothing between here and there is lit,
-        -- and whether the far end is lit is not known either. So there is no
-        -- room name to check an arrival against, and the walk ends when the last
-        -- step is acknowledged. Add one if the destination turns out to print a
-        -- brief.
+        -- The far end IS lit, which was not known when this was written and is
+        -- worth the check: step 100 answered with an ordinary brief, "You're in
+        -- a labyrinth." (with a chimera standing in it). Only the name, since
+        -- nobody has run `ex` out there -- and the name is shared with the room
+        -- this route starts from, so what it really catches is ending up
+        -- somewhere that isn't the labyrinth at all. That is still the failure
+        -- worth catching after ninety-nine blind moves.
+        to      = { room = "labyrinth" },
         dark    = true,
-        -- A hundred steps, ninety-nine of them blind. `push stone` at step 45 is
-        -- the one that isn't a direction, and it TELEPORTS rather than opening a
-        -- wall to walk through -- same as the stone on the way to third town. It
-        -- is the one step here the dark changes nothing about: a { cmd = ... }
-        -- already advances on a pause, because a pause is the only thing that
-        -- can advance it.
+        -- A hundred steps, ninety-eight of them answered by nothing but "It's
+        -- too dark to see." Walked live on 2026-09-03 (kerhak): 100/100 steps,
+        -- ZERO trips, 184.5s at the 1500ms pace, the game answering each move in
+        -- 143-589ms.
+        --
+        -- `push stone` at step 45 is the one step that isn't a direction, and it
+        -- TELEPORTS rather than opening a wall to walk through -- same as the
+        -- stone on the way to third town. Here it prints "You push the
+        -- protruding stone into it's recess..." and then NOTHING AT ALL: no
+        -- room, not even a too-dark line, because what it drops you into is
+        -- dark. So the pause a { cmd = ... } advances on isn't merely the right
+        -- way to handle it, it is the only thing that could ever advance it.
+        --
+        -- Monsters live along the way and they get their hits in -- a minotaur
+        -- chieftain, an ogress mage, a troll, a chimera, 7 damage across the
+        -- walk, none of it enough to hold the character in place. A weaker
+        -- character than kerhak could be stopped or killed out here, blind, with
+        -- no route home recorded.
         steps = {
                   "n", "n", "e", "s", "s", "s", "w", "w", "n", "w",
                   "w", "n", "e", "e", "n", "n", "e", "e", "n", "w",
