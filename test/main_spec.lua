@@ -15878,6 +15878,61 @@ describe("navigate-to", function()
             assert.are.equal(0, sent("d"))
         end)
 
+        -- The desert reprints the room TWICE for one refused move. Swallowing
+        -- only the first counted the second as an arrival, which armed a second
+        -- pacing chain: the walk sent step 142 from the room it had never left,
+        -- and the trip recovery was still pending when that step's "no exit"
+        -- ended the walk (2026-09-03, step 141 of town-2).
+        it("swallows every room reprint after a trip, not just the first", function()
+            startWalking()
+            helper.simulateLine("In your haste, you trip and fall!")
+            brief("north plaza")                -- reprint
+            brief("north plaza")                -- and again
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("d"))      -- did not advance
+            helper.fireTimers(taPackage.navTripRetryMs)
+            brief("north plaza")                -- the reply to our floor check
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("sw"))     -- same step, re-sent
+            assert.are.equal(0, sent("d"))
+        end)
+
+        it("swallows every room reprint while winded, not just the first", function()
+            startWalking()
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            brief("north plaza")
+            brief("north plaza")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("d"))
+            helper.fireTimers(taPackage.navRestRetryMs)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+        it("swallows every room reprint while held in combat", function()
+            startWalking()
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            brief("north plaza")
+            brief("north plaza")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("d"))
+            helper.fireTimers(taPackage.navCombatRetryMs)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+        -- Once the move is actually re-sent, a brief is an arrival again.
+        it("counts the arrival after the re-sent step", function()
+            startWalking()
+            helper.simulateLine("In your haste, you trip and fall!")
+            brief("north plaza")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            brief("north plaza")                -- floor check reply
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("sw"))
+            brief("path")                       -- the re-sent step landed
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))
+        end)
+
         -- Being winded is the fight catching up, not the pace. Every one of the
         -- twelve seen in play landed on the first move after a kill-all.
         describe("winded after a fight", function()

@@ -1731,7 +1731,8 @@ local function navRecoverAfterRefusedMove()
     createTimer(NAV_TRIP_RETRY_MS, function()
         local walk = taPackage.navigate
         if not walk or (taPackage.navGen or 0) ~= gen then return end
-        walk.blocked = nil
+        -- `blocked` deliberately stays set: it is navResendStep that clears it,
+        -- so the reprints and our own floor-check brief are all swallowed.
         if walk.floor == nil then
             -- We never saw this room's floor, so we can't tell our dropped item
             -- from what was already lying here. Taking a guess risks pocketing
@@ -2002,9 +2003,21 @@ local function navOnRoomBrief(room)
     local j = taPackage.navigate
     if not j then return end
 
-    -- The reprint after a refused move is not an arrival; swallow exactly one.
-    if j.blocked then
-        j.blocked = nil
+    -- The reprint after a refused move is not an arrival. Swallow every brief
+    -- until the move is actually re-sent, not just the first: the desert
+    -- reprints the room TWICE for one refusal (2026-09-03, step 141 of
+    -- town-2), and swallowing only the first counted the second as an arrival.
+    -- That armed a second pacing chain -- so the walk ran on to step 142 from
+    -- the room it had never left, and the trip recovery's floor check and
+    -- re-send were still pending when the next step's "no exit" ended the walk.
+    -- navResendStep clears the flag, which is exactly when a brief means
+    -- something again.
+    if j.blocked then return end
+
+    -- The pit a trap door dropped us into: a second brief for a move that did
+    -- happen, so exactly one is swallowed and the flag is spent.
+    if j.swallowOne then
+        j.swallowOne = nil
         return
     end
 
@@ -2778,7 +2791,9 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
     local j = taPackage.navigate
     if not j then return end
     navDebug("fell through a trap door on step " .. j.index)
-    j.blocked = true
+    -- Its own flag, not `blocked`: this really is "swallow exactly one" -- the
+    -- move succeeded and nothing is going to be re-sent to clear a sticky flag.
+    j.swallowOne = true
 end, { type = "regex" })
 
 createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove, { type = "regex" })
