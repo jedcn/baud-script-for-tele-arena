@@ -285,9 +285,12 @@ const RULES: Rule[] = [
   // navigate-to arrival signal (see "Walking in the dark" in ta_nav.lua) -- so
   // counting these is counting rooms crossed blind.
   { kind: "dark", re: /^It's too dark to see\.$/ },
-  // The stone that teleports. In the light the game glues the arrival onto it
-  // ("...You're in a stonework corridor."); in the dark it prints this and
-  // nothing whatever follows, which is why that step advances on a pause.
+  // The stone at step 45 of the labyrinth route. The third-town stone with the
+  // same wording teleports, and glues the arrival onto the push
+  // ("...You're in a stonework corridor."). This one glues NOTHING -- which is
+  // what an opening wall looks like, and not what a teleport into a dark room
+  // would look like, since the glue would have carried the too-dark line. Either
+  // way nothing follows it, which is why that step advances on a pause.
   { kind: "push-stone", re: /^You push the protruding stone into it's recess\.\.\.$/ },
   { kind: "room", re: /^You're (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "move" }) },

@@ -851,13 +851,33 @@ local NAV_ROUTES = {
         -- ZERO trips, 184.5s at the 1500ms pace, the game answering each move in
         -- 143-589ms.
         --
-        -- `push stone` at step 45 is the one step that isn't a direction, and it
-        -- TELEPORTS rather than opening a wall to walk through -- same as the
-        -- stone on the way to third town. Here it prints "You push the
-        -- protruding stone into it's recess..." and then NOTHING AT ALL: no
-        -- room, not even a too-dark line, because what it drops you into is
-        -- dark. So the pause a { cmd = ... } advances on isn't merely the right
-        -- way to handle it, it is the only thing that could ever advance it.
+        -- `push stone` at step 45 is the one step that isn't a direction. It
+        -- prints "You push the protruding stone into it's recess..." and then
+        -- NOTHING AT ALL -- no room, not even a too-dark line -- so a
+        -- { cmd = ... }, which advances on a pause, is the only thing that could
+        -- ever carry the walk past it.
+        --
+        -- What the stone DOES is not settled, and the difference matters. The
+        -- third-town stone teleports, and this was first written down as another
+        -- of those on no better grounds than that. The evidence points the other
+        -- way: that stone glues the arrival onto the push ("...You're in a
+        -- stonework corridor."), and this one glued nothing -- which is what you
+        -- would see if the push opened a wall and left you standing where you
+        -- were, and NOT what you would see from a teleport, since the glue would
+        -- then have printed the too-dark line.
+        --
+        -- So: it probably opens a wall, and step 46's `w` probably walks through
+        -- the gap. Two things follow that nobody has tested yet.
+        --
+        -- First, whether a second push CLOSES it again. If the stone is a toggle
+        -- then walking this route twice shuts the wall on the second run and
+        -- step 46 walks into it. Recovery is `push stone` by hand and then
+        -- `navigate-to end-of-labrynth-level-2 from-step 46`.
+        --
+        -- Second, the way home. A wall that opens and stays open makes the
+        -- return trip the mirrored directions and nothing else; a teleport makes
+        -- the mirror useless, because the reverse of a teleport is not a
+        -- direction you can walk. Settle the stone before writing that route.
         --
         -- Monsters live along the way and they get their hits in -- a minotaur
         -- chieftain, an ogress mage, a troll, a chimera, 7 damage across the
