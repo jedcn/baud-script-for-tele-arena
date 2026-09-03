@@ -15519,6 +15519,18 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
         end)
 
+        -- Named so the command exists, with the way there still being walked.
+        describe("end-of-labrynth-level-3", function()
+
+            it("says the way there hasn't been recorded yet", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-3")
+                assert.is_truthy(lastEchoes():find("I know the name end-of-labrynth-level-3",
+                    1, true))
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+        end)
+
         -- The real route: a hundred steps through an area with nothing lit in
         -- it, walked by hand on 2026-09-03 and transcribed from that walk.
         describe("end-of-labrynth-level-2", function()

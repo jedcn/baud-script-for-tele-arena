@@ -913,6 +913,24 @@ local NAV_ROUTES = {
                   "w", "w", "n", "n", "w", "s", "s", "w", "n", "n",
                   "n", "w", "s", "w", "n" },
     },
+    -- The next level down. Named so the command exists; the directions are being
+    -- walked by hand.
+    --
+    -- The `from` is the open question, and it is not a formality. If this starts
+    -- where level 2 ends, the starting room is called "labyrinth" -- and so is
+    -- the room level 2 STARTS from. A fingerprint on the name alone cannot tell
+    -- the two apart, so `navigate-to end-of-labrynth-level-3` typed at the
+    -- entrance would happily set off walking level 3's directions through level
+    -- 2's maze, in the dark, with nothing able to notice. That is the exact
+    -- mistake the two "north plaza" rooms are in the file to warn about.
+    --
+    -- The fix is cheap: the room level 2 ends in is LIT (it prints a brief and a
+    -- chimera stands in it), so `ex` works there and gives an exit-set that
+    -- distinguishes it. Record `exits` here with the room, and the check is
+    -- exact rather than a coin flip.
+    ["end-of-labrynth-level-3"] = {
+        pending = true,
+    },
 }
 -- Second names for the two halves of the third-town journey. `after-doors` and
 -- `after-doors-to-town-3` say what each one is, which is what you want when
