@@ -344,6 +344,16 @@ const RULES: Rule[] = [
   // — needs / condition —
   { kind: "hungry", re: /^You're hungry\.$/ },
   { kind: "thirsty", re: /^You're thirsty\.$/ },
+  { kind: "drink", re: /^The water quenches your thirst\.$/ },
+  // Levers are route steps -- step 31 of the labyrinth's third level is one --
+  // and this is the whole of the game's answer to pulling one. Worth a kind of
+  // its own so a walk that pulled a lever can be told from one that didn't.
+  { kind: "lever", re: /^You pulled the lever\.$/ },
+  // Both of these already have triggers in ta_nav.lua, where they explain a
+  // pick-up that didn't happen after a trip.
+  { kind: "carry-full", re: /^You can't carry anything else\.$/ },
+  { kind: "carry-full", re: /^Sorry, you can't carry that much more weight!$/ },
+  { kind: "havent-got-one", re: /^Sorry, but you don't seem to have one\.$/ },
   { kind: "poisoned", re: /^You're poisoned!$/ },
 
   // — team speech —
