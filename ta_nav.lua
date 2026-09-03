@@ -842,8 +842,26 @@ local NAV_ROUTES = {
         -- room name to check an arrival against, and the walk ends when the last
         -- step is acknowledged. Add one if the destination turns out to print a
         -- brief.
-        pending = true,
         dark    = true,
+        -- A hundred steps, ninety-nine of them blind. `push stone` at step 45 is
+        -- the one that isn't a direction, and it TELEPORTS rather than opening a
+        -- wall to walk through -- same as the stone on the way to third town. It
+        -- is the one step here the dark changes nothing about: a { cmd = ... }
+        -- already advances on a pause, because a pause is the only thing that
+        -- can advance it.
+        steps = {
+                  "n", "n", "e", "s", "s", "s", "w", "w", "n", "w",
+                  "w", "n", "e", "e", "n", "n", "e", "e", "n", "w",
+                  "w", "w", "s", "s", "w", "n", "n", "w", "s", "w",
+                  "n", "w", "s", "w", "n", "w", "s", "s", "e", "e",
+                  "e", "e", "s", "s",
+                  { cmd = "push stone" },
+                  "w", "n", "w", "w", "w", "s", "s", "s", "s", "e",
+                  "s", "w", "s", "e", "e", "e", "e", "n", "w", "w",
+                  "n", "n", "w", "n", "n", "e", "s", "e", "e", "e",
+                  "e", "s", "e", "e", "e", "s", "w", "s", "e", "s",
+                  "w", "w", "n", "n", "w", "s", "s", "w", "n", "n",
+                  "n", "w", "s", "w", "n" },
     },
 }
 -- Second names for the two halves of the third-town journey. `after-doors` and

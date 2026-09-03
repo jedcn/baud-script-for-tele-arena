@@ -15519,21 +15519,90 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
         end)
 
-        -- Named, and known to be dark and to start in the lit room with exits
-        -- n,u -- but nobody has walked it for us yet.
+        -- The real route: a hundred steps through an area with nothing lit in
+        -- it, walked by hand on 2026-09-03 and transcribed from that walk.
         describe("end-of-labrynth-level-2", function()
 
-            it("is registered as a dark route starting from the lit labyrinth room", function()
-                local r = taPackage.navRoutes["end-of-labrynth-level-2"]
+            local function ROUTE() return taPackage.navRoutes["end-of-labrynth-level-2"] end
+
+            -- The starting room is the one lit room involved, so it gets the
+            -- same fingerprint check every other route's start does.
+            local function answerLabyrinthProbe()
+                brief("a labyrinth")
+                helper.simulateLine("Exits: n,u.")
+            end
+
+            it("is dark, starts in the lit labyrinth room, and checks no arrival", function()
+                local r = ROUTE()
                 assert.is_true(r.dark)
                 assert.are.same({ room = "labyrinth", exits = "n,u" }, r.from)
+                -- Nothing along the way is lit and the far end is unknown, so
+                -- there is no room name an arrival could be checked against.
+                assert.is_nil(r.to)
+                assert.is_nil(r.pending)
             end)
 
-            it("says the way there hasn't been recorded yet", function()
+            -- A hundred steps typed out once is a hundred chances to drop one,
+            -- so the shape is asserted rather than the individual directions:
+            -- everything is a plain compass direction bar the stone at 45.
+            it("is a hundred steps, all compass directions bar the stone at 45", function()
+                local steps = ROUTE().steps
+                assert.are.equal(100, #steps)
+                assert.are.same({ cmd = "push stone" }, steps[45])
+                local compass = { n = true, s = true, e = true, w = true }
+                for i, step in ipairs(steps) do
+                    if i ~= 45 then
+                        assert.is_true(type(step) == "string" and compass[step] == true,
+                            "step " .. i .. " should be a compass direction")
+                    end
+                end
+            end)
+
+            it("sets off north once the labyrinth room answers", function()
                 helper.simulateAlias("navigate-to end-of-labrynth-level-2")
-                assert.is_truthy(lastEchoes():find("I know the name end-of-labrynth-level-2",
+                answerLabyrinthProbe()
+                assert.are.equal(1, sent("n"))
+                assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
+            end)
+
+            it("refuses to set off from anywhere else", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                answerProbe(274)
+                assert.are.equal(0, sent("n"))
+                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.",
                     1, true))
-                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+            -- The first two steps blind, to show the recorded list really is
+            -- what goes out when the only answer is the too-dark line.
+            it("walks it on the too-dark line alone", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                answerLabyrinthProbe()
+                helper.simulateLine(DARK)
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(2, sent("n"))
+                helper.simulateLine(DARK)
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.are.equal(1, sent("e"))
+            end)
+
+            -- The stone teleports rather than opening a wall, and the game glues
+            -- the arrival onto the push -- so nothing a dark walk listens for
+            -- comes back from it. It advances on the pause, as it does in the
+            -- light, and the walk carries on into step 46.
+            it("advances past the stone on a pause, with nothing coming back", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                answerLabyrinthProbe()
+                for _ = 1, 44 do
+                    helper.simulateLine(DARK)
+                    helper.fireTimers(taPackage.navStepDelayMs)
+                end
+                assert.are.equal(1, sent("push stone"))
+                -- The pause after the push is what carries the walk into step
+                -- 46: nothing is coming back to do it.
+                helper.fireTimers(taPackage.navStepDelayMs)
+                assert.is_not_nil(taPackage.navigate)
+                assert.are.equal(46, taPackage.navigate.index)
             end)
 
         end)
