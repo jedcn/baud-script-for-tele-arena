@@ -847,9 +847,12 @@ local NAV_ROUTES = {
         to      = { room = "labyrinth" },
         dark    = true,
         -- A hundred steps, ninety-eight of them answered by nothing but "It's
-        -- too dark to see." Walked live on 2026-09-03 (kerhak): 100/100 steps,
-        -- ZERO trips, 184.5s at the 1500ms pace, the game answering each move in
-        -- 143-589ms.
+        -- too dark to see." Walked live twice on 2026-09-03, by two different
+        -- characters an hour apart (kerhak, then tojolias), and the two runs
+        -- agree down to the second: 100/100 steps, ZERO trips, 184.5s at the
+        -- 1500ms pace both times -- 99 gaps of 1500ms plus a reply latency that
+        -- averaged around 360ms. The pace has headroom and does not need tuning
+        -- for this route.
         --
         -- `push stone` at step 45 is the one step that isn't a direction. It
         -- prints "You push the protruding stone into it's recess..." and then
@@ -867,23 +870,35 @@ local NAV_ROUTES = {
         -- then have printed the too-dark line.
         --
         -- So: it probably opens a wall, and step 46's `w` probably walks through
-        -- the gap. Two things follow that nobody has tested yet.
+        -- the gap.
         --
-        -- First, whether a second push CLOSES it again. If the stone is a toggle
-        -- then walking this route twice shuts the wall on the second run and
-        -- step 46 walks into it. Recovery is `push stone` by hand and then
+        -- The obvious fear was that a second push would CLOSE it again -- a
+        -- toggle would shut the wall on the second run and walk step 46 into it.
+        -- Tested, and it does not: tojolias walked the whole route an hour after
+        -- kerhak, pushed the same stone, and step 46 went through. The push
+        -- printed the identical single line both times. Whatever the stone is,
+        -- the route is repeatable, which is the part that matters. Should it
+        -- ever fail there, recovery is `push stone` by hand and then
         -- `navigate-to end-of-labrynth-level-2 from-step 46`.
         --
-        -- Second, the way home. A wall that opens and stays open makes the
-        -- return trip the mirrored directions and nothing else; a teleport makes
-        -- the mirror useless, because the reverse of a teleport is not a
-        -- direction you can walk. Settle the stone before writing that route.
+        -- Still open, and neither costs anything to leave open: whether the push
+        -- is needed at all on a run after the first (the wall may simply have
+        -- stayed open, making tojolias's push a no-op), and hence the way home. A
+        -- wall that opens and stays open makes the return trip the mirrored
+        -- directions and nothing else; a teleport makes the mirror useless,
+        -- because the reverse of a teleport is not a direction you can walk.
+        -- Settle the stone before writing that route.
         --
         -- Monsters live along the way and they get their hits in -- a minotaur
-        -- chieftain, an ogress mage, a troll, a chimera, 7 damage across the
-        -- walk, none of it enough to hold the character in place. A weaker
-        -- character than kerhak could be stopped or killed out here, blind, with
-        -- no route home recorded.
+        -- chieftain, an ogress mage, a troll, a stone giantess, an ogre mage, a
+        -- chimera -- though across both walks none of it was enough to hold a
+        -- character in place. A weaker character could be stopped or killed out
+        -- here, blind, with no route home recorded.
+        --
+        -- The chimera at the far end is the sharp one, and it is there on
+        -- arrival both times: it breathed flames at tojolias for 35 damage in
+        -- the first seconds of standing there. Arrive ready to fight it or to
+        -- leave.
         steps = {
                   "n", "n", "e", "s", "s", "s", "w", "w", "n", "w",
                   "w", "n", "e", "e", "n", "n", "e", "e", "n", "w",
