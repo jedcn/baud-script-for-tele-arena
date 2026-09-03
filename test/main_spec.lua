@@ -15469,6 +15469,49 @@ describe("navigate-to", function()
             assert.are.equal(2, sent("sw"))
         end)
 
+        -- In the light a step is always answered by something -- a brief, a
+        -- refusal, a reprint -- so a step that goes silent is not a state the
+        -- walk has to handle. In the dark the whole walk rides on one line, and
+        -- a hang leaves the character standing in a maze saying nothing.
+        it("stops when a dark step goes completely unanswered", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.fireTimers(taPackage.navDarkAckMs)
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("Nothing at all came back from step 1 (sw)",
+                1, true))
+            assert.is_truthy(lastEchoes():find("from-step 1", 1, true))
+        end)
+
+        it("leaves a lit route's steps unwatched", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.fireTimers(taPackage.navDarkAckMs)
+            assert.is_not_nil(taPackage.navigate)
+        end)
+
+        -- The watchdog has to survive a step being sent twice, or a trip -- and
+        -- a combat hold, which re-sends every two seconds -- would look exactly
+        -- like a step nobody answered. Here step 1 is tripped, re-sent, and
+        -- lands; the only step actually owed an answer by the time the timers
+        -- run is step 2, and it must be the one named.
+        it("doesn't report a re-sent step as the one that went quiet", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            helper.fireTimers(taPackage.navStepDelayMs)   -- "sw" goes out again
+            assert.are.equal(2, sent("sw"))
+            helper.simulateLine(DARK)                     -- and this time it lands
+            helper.fireTimers(taPackage.navStepDelayMs)   -- step 2 goes out
+            helper.fireTimers(taPackage.navDarkAckMs)
+            assert.is_truthy(lastEchoes():find("step 2 (d)", 1, true))
+            assert.is_falsy(lastEchoes():find("step 1 (sw)", 1, true))
+        end)
+
         it("says what walking blind gives up before it sets off", function()
             route({ dark = true })
             helper.simulateAlias("navigate-to sewers/town-sewers-18")

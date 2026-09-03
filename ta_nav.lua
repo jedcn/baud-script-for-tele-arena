@@ -837,6 +837,11 @@ local NAV_ROUTES = {
         -- map reference because nothing down here is mapped -- and cannot be,
         -- since mapping reads the exits the dark won't show.
         from    = { room = "labyrinth", exits = "n,u" },
+        -- No `to`, and not an oversight: nothing between here and there is lit,
+        -- and whether the far end is lit is not known either. So there is no
+        -- room name to check an arrival against, and the walk ends when the last
+        -- step is acknowledged. Add one if the destination turns out to print a
+        -- brief.
         pending = true,
         dark    = true,
     },
@@ -1078,6 +1083,17 @@ taPackage.navStepDelayMs = NAV_STEP_DELAY_MS
 taPackage.navTripRetryMs = NAV_TRIP_RETRY_MS
 taPackage.navCombatRetryMs = NAV_COMBAT_RETRY_MS
 taPackage.navRestRetryMs = NAV_REST_RETRY_MS
+-- How long a step on a dark route may go completely unanswered before we call
+-- it. In the light this could not happen: something always prints -- an arrival
+-- brief, a refusal, a reprint -- so a step that goes quiet is not a state the
+-- walk has to reason about. In the dark the entire walk rides on one line, and
+-- anything we haven't seen the game do yet (a wall that prints nothing, a line
+-- we don't recognise arriving instead) leaves the character standing in a maze
+-- with nothing on screen to say why. Eight seconds is far longer than the
+-- 1500ms pace plus any plausible lag, and short enough to be useful.
+local NAV_DARK_ACK_MS = 8000
+taPackage.navDarkAckMs = NAV_DARK_ACK_MS
+
 -- How long to wait for the room probe (bare return + `ex`) before giving up.
 -- Without this a swallowed reply leaves navigate-to armed and silent, with
 -- nothing on screen to explain why nothing happened.
@@ -1371,10 +1387,44 @@ end
 -- a walk would dead-reckon the user's next manual move from a room sixteen steps
 -- away. Clearing `suppressRoomEntry` is unrelated bookkeeping -- it stops a
 -- leftover `look <dir>` flag from swallowing our first arrival brief.
+-- Watch for a dark step that is never answered at all (see NAV_DARK_ACK_MS).
+--
+-- Armed by every send on a dark walk and self-re-arming by construction: the
+-- check is "same step, same send", so a re-send -- a trip retry, a combat hold,
+-- being winded -- fails that test and the timer it armed for itself is the one
+-- that matters. Nothing has to cancel anything, which is as well: there is no
+-- timer-cancellation API here.
+local function navWatchDarkAck()
+    local j = taPackage.navigate
+    if not j or not j.dark then return end
+    local gen, step, sentAt = taPackage.navGen or 0, j.index, j.sentAt
+    createTimer(NAV_DARK_ACK_MS, function()
+        local w = taPackage.navigate
+        if not w or (taPackage.navGen or 0) ~= gen then return end
+        -- Moved on, or re-sent since: either way this timer is stale and the
+        -- send that replaced it is being watched instead.
+        if w.index ~= step or w.sentAt ~= sentAt then return end
+        -- A sweep, a seam check or the door probe finishes on its own terms and
+        -- is not owed an arrival line.
+        if w.phase ~= "walking" or w.blocked then return end
+        local dir = tostring(w.steps[w.index])
+        stopNavigate()
+        navEcho("Nothing at all came back from step " .. step .. " (" .. dir .. ") in "
+            .. math.floor(NAV_DARK_ACK_MS / 1000) .. "s — not a room, not a refusal."
+            .. " Stopping rather than walking on blind.")
+        navEcho("  Look around by hand and, if the step was good, pick the walk up with"
+            .. " `navigate-to <dest> from-step " .. step .. "`.")
+    end, { repeating = false })
+end
+
 local function navSend(dir)
     taPackage.suppressRoomEntry = nil
     taPackage.pendingDirection = nil
+    -- When this went out, which is what the dark watchdog compares against.
+    local j = taPackage.navigate
+    if j then j.sentAt = navNowMs() end
     send(dir)
+    navWatchDarkAck()
 end
 
 -- What kind of thing a step is, or nil if the route table is malformed. What
