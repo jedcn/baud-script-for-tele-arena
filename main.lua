@@ -3437,6 +3437,12 @@ end
 -- made even when it was flagged mid-fight. Mirrors arenaArrivedHome, but the
 -- no-errand case rings rather than resuming a (nonexistent) fight.
 local function arenaRingOrErrand()
+    -- The boundary `stop-after-next` waits for when the flag was armed anywhere
+    -- other than mid-fight: an errand trip that has walked home, a support-only
+    -- character that never held an arenaMonster to see die, or the scan pump
+    -- coming round again. Ahead of the heal and errand dispatch below on purpose
+    -- -- a stop the user asked for outranks a restock or a meal.
+    if taPackage.arenaStopIfArmed("back at a clear ring gap") then return end
     -- Standing in a clear arena, hurt: heal before summoning anything. The room
     -- being empty is exactly the window in which walking out still works, and
     -- ringing here would spend it. Same blind spot as arenaArrivedHome — a hit
@@ -3974,6 +3980,11 @@ local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
     -- the first wear-off/restock. Only matters for the train-when-clean gate.
     taPackage.arenaPotionsActive = 0
     taPackage.arenaRestoreTried = nil
+    -- A fresh session is never already winding down. stopArena clears this too,
+    -- but a session can be started without one in between (a reload, or an `rg`
+    -- typed over a run that was armed), and inheriting it would stop the new run
+    -- after its first monster for no reason the user could see.
+    taPackage.arenaStopAfterNext = nil
     taPackage.arenaState = "ringing"
     local startXpStr = taPackage.arenaSessionStartXp and tostring(taPackage.arenaSessionStartXp) or "unknown"
     -- Debug is the default now, so the echo flags the exception instead.
@@ -4176,9 +4187,45 @@ local function stopArena()
     -- Bump the ring and journey generations so any in-flight pump tick no-ops.
     taPackage.arenaRingGen = (taPackage.arenaRingGen or 0) + 1
     taPackage.arenaJourneyGen = (taPackage.arenaJourneyGen or 0) + 1
+    -- A pending "stop after this monster" is moot once we have stopped outright,
+    -- and leaving it set would arm the NEXT session against its will. Clearing it
+    -- here is also what disarms it from stop-arena-fight, stop-all-scripts, the
+    -- death handler and arenaEmergencyExit -- every one of them routes through
+    -- this teardown, so none needs to know the flag exists.
+    taPackage.arenaStopAfterNext = nil
     echo("[arena] Stopped.")
 end
 taPackage.stopArena = stopArena
+
+-- The deferred stop `stop-after-next` arms. Called at the two boundaries where
+-- the loop decides what to do next -- the kill, and the clear-room ring gap --
+-- and returns true when it has stopped, so the caller can return. Same contract
+-- as taPackage.onArenaArrivedHome: true means "taken over, do nothing further".
+--
+-- A taPackage field rather than a local for the same reason arenaTryTrain is
+-- one: arenaRingOrErrand is defined ~700 lines above this point and cannot see a
+-- local declared here. A field also costs no slot against the 200-local ceiling.
+function taPackage.arenaStopIfArmed(reason)
+    if not taPackage.arenaStopAfterNext then return false end
+    -- Cleared before stopArena rather than by it, so the echo below reads as this
+    -- function's doing and a re-entrant call cannot double-report.
+    taPackage.arenaStopAfterNext = nil
+    echo("[arena] stop-after-next: " .. reason .. " -- stopping.")
+    -- A gold-farming run rides on this same arena session, and stopping at the
+    -- kill rather than at the ring is the whole point of it: the run must not
+    -- walk off to train and cash out after we were asked to stop. stopArena
+    -- alone would leave goldFarming set and half the loop live -- the training
+    -- confirmation would still arm the cash-out -- so bring its flags down too.
+    -- The character is left standing in the arena with its gold and an untrained
+    -- level; continue-farming-gold-from-arena picks the run back up.
+    if taPackage.goldFarming and taPackage.stopCreateCharacter then
+        taPackage.stopCreateCharacter()
+        echo("[create] Gold-farming run disarmed -- resume with"
+            .. " continue-farming-gold-from-arena.")
+    end
+    stopArena()
+    return true
+end
 
 -- Leave the game with "x", and keep re-sending it until the game confirms.
 --
@@ -4435,6 +4482,43 @@ end
 -- of the session, so there was never anything per-arena about stopping.
 createAlias("^stop-arena-fight$", function()
     stopArena()
+end, { type = "regex" })
+
+-- The graceful counterpart to stop-arena-fight: finish what is in front of us,
+-- then stop. Arms a flag that taPackage.arenaStopIfArmed honors at the next
+-- decision point, rather than tearing the session down mid-swing and leaving the
+-- character standing next to a live monster with nothing driving it.
+--
+-- One alias covers every repeating script that rings the gong, because they are
+-- all the same loop: `rg` and `tfia` are this engine directly, and both
+-- gold-farming entry points (start-farming-gold's walk script, and
+-- continue-farming-gold-from-arena) end by running `rg 1`.
+--
+-- There is no cancel by design. stop-arena-fight and stop-all-scripts remain the
+-- escape hatch -- they stop now rather than resuming -- which is said in the
+-- echo so nobody has to go looking.
+createAlias("^stop-after-next$", function()
+    if not taPackage.arenaState then
+        echo("[arena] Not running -- nothing to stop after.")
+        return
+    end
+    taPackage.arenaStopAfterNext = true
+    -- Nothing in flight means nothing to finish, so honor the flag right away
+    -- rather than ringing one more gong purely to have something to stop after.
+    -- The in-flight test mirrors arenaCanDepartNow: a gong already rung, with its
+    -- summon still on the way, IS a monster -- it just has not arrived yet, and
+    -- stopping in that gap would orphan it in the room with us.
+    if taPackage.arenaState == "ringing"
+        and not taPackage.arenaMonster
+        and not taPackage.arenaRingPending
+        and not taPackage.arenaOwnSummonPending then
+        taPackage.arenaStopIfArmed("nothing in progress")
+        return
+    end
+    -- echo, not cecho: a cecho never reaches the session log, and "did this arm?"
+    -- is the first question asked of a run that went wrong.
+    echo("[arena] Armed -- finishing this monster, then stopping. There is no"
+        .. " cancel; stop-arena-fight or stop-all-scripts to stop right now.")
 end, { type = "regex" })
 
 -- Our own gong ring is confirmed by this line; the monster we summoned arrives
@@ -4700,16 +4784,31 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     -- Follow-up actions (ring for a fresh monster / go train) only make sense
     -- while actively fighting. If the monster died during an errand trip, we
     -- just clear it here; arenaResumeInCombat will ring on arrival home.
-    if taPackage.arenaState == "fighting" and not checkFleeArena() then
-        -- Train if a level is owed and our potions have lapsed; otherwise ring
-        -- for the next monster. While a level is owed but potions are still
-        -- active, arenaTryTrain returns false, so we keep fighting — which both
-        -- banks more XP and wears the potions down toward the safe-to-train point.
-        if not arenaTryTrain() then
-            taPackage.arenaState = "ringing"
-            taPackage.arenaRingPending = false
-            arenaScanRoom()
-        end
+    if taPackage.arenaState ~= "fighting" then return end
+    -- `stop-after-next` armed: this death is the thing it was waiting for, so
+    -- stop before any of the follow-ups below.
+    --
+    -- Deliberately ahead of checkFleeArena, and that is a real trade: finishing a
+    -- fight at low HP now parks the character in a shared arena hurt and
+    -- unscripted, rather than walking it to the temple first. It is what "stop
+    -- after this monster" literally asks for, the room is clear at this instant,
+    -- and the user typed the alias, so they are at the keyboard. Ahead of
+    -- arenaTryTrain for the same reason -- a gold-farming run that walked off to
+    -- train would go on to cash out and start a whole new character.
+    --
+    -- This is also the team-mode case: the death line is a room-wide broadcast,
+    -- so a monster a team-mate killed prints exactly this and reaches here
+    -- through the same name match. There is no "who landed the blow" to test.
+    if taPackage.arenaStopIfArmed("the monster is down") then return end
+    if checkFleeArena() then return end
+    -- Train if a level is owed and our potions have lapsed; otherwise ring
+    -- for the next monster. While a level is owed but potions are still
+    -- active, arenaTryTrain returns false, so we keep fighting — which both
+    -- banks more XP and wears the potions down toward the safe-to-train point.
+    if not arenaTryTrain() then
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = false
+        arenaScanRoom()
     end
 end, { type = "regex" })
 

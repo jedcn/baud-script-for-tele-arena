@@ -6022,6 +6022,154 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- The graceful stop: finish the monster in front of us, then tear the session
+    -- down instead of ringing again. One alias covers `rg`, `tfia` and both
+    -- gold-farming entry points, because all four drive this same arena loop.
+    describe("stop-after-next", function()
+
+        local function echoed(needle)
+            for _, msg in ipairs(helper.echoCalls) do
+                if string.find(msg, needle, 1, true) then return true end
+            end
+            return false
+        end
+
+        it("arms mid-fight without acting on it yet", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            helper.simulateAlias("stop-after-next")
+            assert.is_true(taPackage.arenaStopAfterNext)
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("stops on the next monster death instead of ringing", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateAlias("stop-after-next")
+            helper.sendCalls = {}
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.arenaStopAfterNext)
+            -- Not even the bare-return probe: the stop is taken before the scan.
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not walk off to train when a level is owed", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            helper.simulateAlias("stop-after-next")
+            helper.sendCalls = {}
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.arenaJourney)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- The deliberate trade: the stop is taken ahead of checkFleeArena, so a
+        -- fight finished at low HP parks the character hurt rather than walking
+        -- it to the temple. Asserted so the precedence cannot drift back.
+        it("does not flee at low HP -- the stop wins", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(15, 100)
+            helper.simulateAlias("stop-after-next")
+            helper.sendCalls = {}
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- Guards the restructured death trigger: unarmed, the same kill must
+        -- still scan and ring exactly as it did before.
+        it("leaves an unarmed death ringing exactly as before", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+            assert.are.equal("", helper.sendCalls[1])
+            helper.simulateLine("There is nobody here.")
+            assert.are.equal("ring gong", helper.sendCalls[2])
+        end)
+
+        it("stops right away when nothing is in progress", function()
+            taPackage.arenaState = "ringing"
+            helper.simulateAlias("stop-after-next")
+            assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.arenaStopAfterNext)
+            assert.is_true(echoed("nothing in progress"))
+        end)
+
+        -- A gong already rung, with its summon still on the way, IS a monster --
+        -- stopping in that gap would orphan it in the room with us.
+        it("waits for a summon that is already on its way", function()
+            taPackage.arenaState = "ringing"
+            taPackage.arenaOwnSummonPending = true
+            helper.simulateAlias("stop-after-next")
+            assert.is_true(taPackage.arenaStopAfterNext)
+            assert.are.equal("ringing", taPackage.arenaState)
+            helper.simulateLine("A troll enters the arena through the dungeon gate!")
+            assert.are.equal("fighting", taPackage.arenaState)
+            assert.are.equal("troll", taPackage.arenaMonster)
+            setHP(80, 100)
+            helper.simulateLine("The troll falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaState)
+        end)
+
+        -- Armed away from a fight, the ring gap is the boundary that honors it.
+        it("fires at the ring gap when it was armed during an errand", function()
+            setHP(80, 100)
+            taPackage.arenaState = "tavern"
+            helper.simulateAlias("stop-after-next")
+            assert.is_true(taPackage.arenaStopAfterNext)
+            assert.are.equal("tavern", taPackage.arenaState)
+            -- The trip home lands the loop back at a clear ring decision.
+            taPackage.arenaState = "ringing"
+            taPackage.arenaProbePending = true
+            helper.sendCalls = {}
+            helper.simulateLine("There is nothing on the floor.")
+            assert.is_nil(taPackage.arenaState)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- Stopping at the kill rather than at the ring is the whole point for a
+        -- gold-farming run: left armed, the training confirmation would arm the
+        -- cash-out and the loop would go on to start a whole new character.
+        it("disarms a gold-farming run so it cannot train and cash out", function()
+            taPackage.goldFarming = true
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            helper.simulateAlias("stop-after-next")
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.goldFarming)
+            assert.is_nil(taPackage.createCashOutArmed)
+            assert.is_false(taPackage.createCharacterRunning())
+        end)
+
+        it("refuses when the arena is not running", function()
+            taPackage.arenaState = nil
+            helper.simulateAlias("stop-after-next")
+            assert.is_nil(taPackage.arenaStopAfterNext)
+            assert.is_true(echoed("Not running"))
+        end)
+
+        it("is cleared by a fresh session so the next run is not armed", function()
+            taPackage.arenaStopAfterNext = true
+            helper.simulateAlias("rg 1")
+            assert.is_nil(taPackage.arenaStopAfterNext)
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+    end)
+
     describe("XP check timer", function()
 
         local timerCreated
@@ -12169,6 +12317,16 @@ describe("ta.follow", function()
             assert.is_nil(taPackage.arenaTeam)
             assert.is_nil(taPackage.arenaTeamRoster)
             assert.is_nil(taPackage.arenaTeamSlot)
+        end)
+
+        -- stop-all-scripts stops the arena through stopArena, which is what
+        -- disarms a pending stop-after-next -- so stopping everything by hand can
+        -- never leave the flag behind to catch the next session out.
+        it("disarms a pending stop-after-next", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaStopAfterNext = true
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_nil(taPackage.arenaStopAfterNext)
         end)
 
         it("is a safe no-op when nothing is running", function()
