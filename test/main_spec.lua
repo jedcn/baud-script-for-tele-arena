@@ -15919,6 +15919,21 @@ describe("navigate-to", function()
             assert.are.equal(2, sent("sw"))
         end)
 
+        -- A room that prints its brief twice for one successful move would
+        -- otherwise arm two pacing chains, and from there the walk sends steps
+        -- at roughly half the interval it measured as safe -- which is what the
+        -- 2026-09-03 town-2 trace shows in the gaps before it tripped.
+        it("arms one pacing timer per step, however many briefs arrive", function()
+            startWalking()
+            assert.are.equal(1, sent("sw"))
+            brief("path")                       -- step 1 landed
+            brief("path")                       -- and the game says so again
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))
+            assert.are.equal(0, sent("se"))     -- the walk did not run ahead
+            assert.are.equal(2, taPackage.navigate.index)
+        end)
+
         -- Once the move is actually re-sent, a brief is an arrival again.
         it("counts the arrival after the re-sent step", function()
             startWalking()

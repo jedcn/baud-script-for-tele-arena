@@ -1433,6 +1433,9 @@ local navAdvance, navStartSweep, navStartSeam
 local function navStep()
     local j = taPackage.navigate
     if not j then return end
+    -- This is the pacing timer navScheduleStep armed, now spent (see the guard
+    -- there). Cleared before the bump so the next step can arm its own.
+    j.paced = nil
     j.index = j.index + 1
     local step = j.steps[j.index]
     if step == nil then return end
@@ -1481,7 +1484,18 @@ local function navResendStep()
     end
 end
 
+-- One pacing chain, never two. Some rooms print their brief twice for a single
+-- move -- the desert does it -- and each brief reaching here would arm its own
+-- timer. Two chains then interleave: the walk sends steps at roughly half the
+-- interval it measured as safe, which is how a walk that paced fine for a
+-- hundred rooms starts tripping, and the trace shows gaps well under the stated
+-- pace. `paced` records which step a timer is already in flight for; navStep
+-- clears it as it fires.
 local function navScheduleStep()
+    local j = taPackage.navigate
+    if not j then return end
+    if j.paced == j.index then return end
+    j.paced = j.index
     local gen = taPackage.navGen or 0
     createTimer(NAV_STEP_DELAY_MS, function()
         if taPackage.navigate and (taPackage.navGen or 0) == gen then navStep() end
