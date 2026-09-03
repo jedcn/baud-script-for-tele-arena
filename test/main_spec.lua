@@ -15727,6 +15727,98 @@ describe("navigate-to", function()
 
     end)
 
+    -- The lever on labyrinth level 3 toggles a door: the first character
+    -- through opens it, and the next one pulling it shuts it again. So every
+    -- walk after the first has to take the same steps without the pull.
+    describe("no-pull-lever", function()
+
+        local LEVER = { from = ROUTE.from, to = ROUTE.to,
+                        steps = { "sw", { cmd = "pull lever" }, "se" } }
+
+        local function leverRoute(overrides)
+            local r = {}
+            for k, v in pairs(LEVER) do r[k] = v end
+            for k, v in pairs(overrides or {}) do r[k] = v end
+            taPackage.navRoutes["sewers/town-sewers-18"] = r
+            return r
+        end
+
+        it("pulls the lever by default", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("pull lever"))
+        end)
+
+        it("walks the route without pulling it when asked", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("pull lever"))
+            assert.is_truthy(lastEchoes():find("Leaving this route's 1 lever pull alone",
+                1, true))
+        end)
+
+        -- Skipped at send time rather than filtered out of the list, so a step
+        -- keeps its number in both modes: the trace, and `from-step N` read off
+        -- it, mean the same thing whichever way the route was asked for.
+        it("keeps the step numbering identical either way", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)   -- step 2, skipped
+            helper.fireTimers(taPackage.navStepDelayMs)   -- step 3 goes out
+            assert.are.equal(3, taPackage.navigate.index)
+            assert.are.equal(1, sent("se"))
+        end)
+
+        -- A flag that did nothing looks exactly like a flag that worked, and
+        -- this is the shape a typo takes: the right word on the wrong route.
+        it("says so when the route has no lever to leave alone", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("Nothing on this route pulls a lever", 1, true))
+            assert.are.equal(1, sent("sw"))   -- and it still walks
+        end)
+
+        -- The other way round: a route whose lever is known to toggle warns
+        -- when it is about to pull one.
+        it("warns before pulling a lever that toggles", function()
+            leverRoute({ leverToggles = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
+            assert.is_truthy(lastEchoes():find("no-pull-lever", 1, true))
+        end)
+
+        it("doesn't warn when the pull is being skipped anyway", function()
+            leverRoute({ leverToggles = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            answerProbe(274)
+            assert.is_falsy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
+        end)
+
+        it("combines with the other trailing flags", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever quiet")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("pull lever"))
+        end)
+
+        it("marks level 3's lever as one that toggles", function()
+            assert.is_true(taPackage.navRoutes["end-of-labrynth-level-3"].leverToggles)
+        end)
+
+    end)
+
     describe("the start check", function()
 
         it("probes the room before moving", function()

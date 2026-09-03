@@ -940,10 +940,19 @@ local NAV_ROUTES = {
         -- so no `dark`, and every move is answered by an ordinary room brief.
         -- Untested: this is the first scripted walk of it.
         --
-        -- `pull lever` at step 31 is the one step that isn't a direction. Levers
-        -- on the way to third town are permanent once worked, and if this one is
-        -- too then a later run pulls an already-pulled lever, which is harmless.
-        -- That is an assumption, not a finding.
+        -- `pull lever` at step 31 is the one step that isn't a direction, and it
+        -- TOGGLES. It was first written down here as probably permanent, on the
+        -- grounds that the levers on the way to third town are -- and that was
+        -- wrong, the same way calling the level-2 stone a teleport was wrong:
+        -- reasoning from a different lever rather than from this one. The first
+        -- character through pulls it and a door opens; the next character to
+        -- walk this route pulls it again and the door SHUTS.
+        --
+        -- So only the first walk pulls it. Everyone after that walks the same
+        -- forty-six steps with `navigate-to end-of-labrynth-level-3
+        -- no-pull-lever`, and the flag is announced at the start of the walk so
+        -- there is no doubt which mode ran.
+        leverToggles = true,
         --
         -- Forty-six steps, not the forty-seven first written down: the list
         -- ended with two `d` steps and there is only one to walk. The first
@@ -1640,6 +1649,15 @@ local function navStep()
         j.doorOpenedByKey = nil
         navSend(step.door)
     elseif kind == "cmd" then
+        -- `no-pull-lever`: walk the route without working its levers. Skipped
+        -- here rather than filtered out of the step list so that a step keeps
+        -- the same number in both modes -- the trace, and `from-step N` read off
+        -- it, then mean the same thing whichever way the route was asked for.
+        if j.noPullLever and step.cmd:match("^pull%s") then
+            navEcho("Step " .. j.index .. " would " .. step.cmd .. " — skipping it, as asked.")
+            navAdvance()
+            return
+        end
         navSend(step.cmd)
         -- Nothing reliably answers an arbitrary command, so the pause is the
         -- only signal we have that it has had its chance.
@@ -2444,7 +2462,7 @@ navWatchStuck = function()
 end
 
 local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant,
-                        resumeAt)
+                        resumeAt, noPullLever)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -2475,6 +2493,8 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- Read by the too-dark trigger, which is the only thing that advances
         -- this walk once it is past the last lit room.
         dark         = route.dark,
+        -- Read by navStep, which is where a `pull ...` step gets skipped.
+        noPullLever  = noPullLever,
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
         debug        = debug,
@@ -2487,6 +2507,24 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
                  .. (#steps - resumeAt + 1) .. " of its " .. #steps .. " steps left")
             or ("Walking to " .. destination .. " — " .. #steps .. " steps"))
         .. (gated and ", plus a key errand for any door that's locked." or "."))
+    local levers = 0
+    for _, step in ipairs(steps) do
+        if navStepKind(step) == "cmd" and step.cmd:match("^pull%s") then levers = levers + 1 end
+    end
+    if noPullLever then
+        -- Saying so when there is nothing to skip matters as much as saying so
+        -- when there is: `no-pull-lever` on a route with no lever in it is a
+        -- flag that did nothing, and silence there reads exactly like a flag
+        -- that worked.
+        navEcho(levers > 0
+            and ("Leaving this route's " .. levers .. " lever pull"
+                 .. (levers > 1 and "s" or "") .. " alone, as asked.")
+            or "Nothing on this route pulls a lever, so `no-pull-lever` changes nothing here.")
+    elseif levers > 0 and route.leverToggles then
+        navEcho("Careful: this route pulls a lever that TOGGLES. If someone has already"
+            .. " walked it and left the door open, pulling again shuts it —"
+            .. " use `navigate-to " .. destination .. " no-pull-lever` instead.")
+    end
     if route.dark then
         navEcho("This route runs dark: I walk on \"It's too dark to see.\" instead of a room"
             .. " brief. A wrong turn still stops the walk, but a trip that drops something"
@@ -2524,7 +2562,7 @@ createAlias("^navigate-to (.+)$", function(matches)
     --           310-step walk, which is otherwise 56 steps to be re-walked by
     --           hand. See navStart for what N means.
     local destination, debug, anyway, resumeAt = arg, true, false, nil
-    local andExit = false
+    local andExit, noPullLever = false, false
     while true do
         -- Two words where the others are one, so it is peeled first: `56` on
         -- its own is not a flag, and the loop would stop on it and leave
@@ -2542,6 +2580,12 @@ createAlias("^navigate-to (.+)$", function(matches)
                 destination, anyway = head, true
             elseif word == "and-exit" then
                 destination, andExit = head, true
+            --   no-pull-lever  walk every step but the lever pulls. The lever on
+            --           labyrinth level 3 TOGGLES a door: the first character
+            --           through opens it, and a second one pulling it shuts it
+            --           again. So everyone after the first walks with this.
+            elseif word == "no-pull-lever" then
+                destination, noPullLever = head, true
             else
                 break
             end
@@ -2753,7 +2797,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local function go()
                 navStart(destination, route, arriveName, probe.floor, destRoomId, debug,
-                    variant, resumeAt)
+                    variant, resumeAt, noPullLever)
             end
             -- We're in the right room by the time this is called; the only
             -- remaining question is whether we're equipped for what lies
