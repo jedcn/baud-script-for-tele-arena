@@ -15399,6 +15399,104 @@ describe("navigate-to", function()
 
     end)
 
+    -- An unlit area prints no room at all, so the walk has to advance on the
+    -- one line it does print. See "Walking in the dark" in ta_nav.lua.
+    describe("a dark route", function()
+
+        local DARK = "It's too dark to see."
+
+        it("advances on the too-dark line as it would on a brief", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+            helper.simulateLine(DARK)
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("d"))
+        end)
+
+        -- The flag is what turns this on. Everywhere else the line is noise --
+        -- an `ex` in an unlit corner of a lit route -- and advancing on it would
+        -- run the walk a room ahead of the character.
+        it("ignores the line on a route that isn't dark", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine(DARK)
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("d"))
+        end)
+
+        it("arrives when the last step is acknowledged", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            for _ = 1, 2 do
+                helper.simulateLine(DARK)
+                helper.fireTimers(taPackage.navStepDelayMs)
+            end
+            assert.are.equal(1, sent("se"))
+            helper.simulateLine(DARK)
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18", 1, true))
+        end)
+
+        -- A wrong turn is still caught: the refusal is printed in the dark like
+        -- anywhere else, so a drifting walk stops instead of groping onwards.
+        it("still stops on a direction the game refuses", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("No exit that way at step 1", 1, true))
+        end)
+
+        -- The behaviour actually asked for: trip, and send the same direction
+        -- again. What changes in the dark is that the floor check in between has
+        -- to be skipped -- there is no floor line coming, and waiting for one
+        -- would wedge the walk.
+        it("re-sends the tripped step without checking the floor", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            local bareReturns = sent("")
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            assert.are.equal(bareReturns, sent(""))   -- no floor check was asked for
+            assert.is_truthy(lastEchoes():find("Tripped in the dark", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("sw"))
+        end)
+
+        it("says what walking blind gives up before it sets off", function()
+            route({ dark = true })
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
+        end)
+
+        -- Named, and known to be dark and to start in the lit room with exits
+        -- n,u -- but nobody has walked it for us yet.
+        describe("end-of-labrynth-level-2", function()
+
+            it("is registered as a dark route starting from the lit labyrinth room", function()
+                local r = taPackage.navRoutes["end-of-labrynth-level-2"]
+                assert.is_true(r.dark)
+                assert.are.same({ room = "labyrinth", exits = "n,u" }, r.from)
+            end)
+
+            it("says the way there hasn't been recorded yet", function()
+                helper.simulateAlias("navigate-to end-of-labrynth-level-2")
+                assert.is_truthy(lastEchoes():find("I know the name end-of-labrynth-level-2",
+                    1, true))
+                assert.are.equal(0, #helper.sendCalls)
+            end)
+
+        end)
+
+    end)
+
     describe("the start check", function()
 
         it("probes the room before moving", function()

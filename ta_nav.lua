@@ -824,6 +824,22 @@ local NAV_ROUTES = {
                   "nw", "nw", "nw", "ne", "nw", "ne", "ne", "n", "n", "ne",
                   "e", "e", "se", "ne", "ne", "nw", "ne", "n", "ne", "ne", "n" },
     },
+    -- The far end of the second level of the labyrinth. Unlit -- see "Walking in
+    -- the dark" below for what that changes and why the route says so here.
+    -- Named but not yet walked: the directions are being gathered by hand.
+    -- Spelled the way it is asked for at the prompt, not the way the game spells
+    -- "labyrinth": this key is a command you type, and the one that matters is
+    -- the one your fingers already know.
+    ["end-of-labrynth-level-2"] = {
+        -- Where it starts IS known, and it is lit: the room prints an ordinary
+        -- brief and answers `ex` with n,u, so the start check is the same
+        -- fingerprint every other route gets. Stated literally rather than as a
+        -- map reference because nothing down here is mapped -- and cannot be,
+        -- since mapping reads the exits the dark won't show.
+        from    = { room = "labyrinth", exits = "n,u" },
+        pending = true,
+        dark    = true,
+    },
 }
 -- Second names for the two halves of the third-town journey. `after-doors` and
 -- `after-doors-to-town-3` say what each one is, which is what you want when
@@ -1747,6 +1763,17 @@ local function navRecoverAfterRefusedMove()
         if not walk or (taPackage.navGen or 0) ~= gen then return end
         -- `blocked` deliberately stays set: it is navResendStep that clears it,
         -- so the reprints and our own floor-check brief are all swallowed.
+        -- In the dark there is no floor line to ask for, so the check below
+        -- would send a bare return and wait for an answer that never comes.
+        -- Wait out the stumble and re-send. Said out loud each time because it
+        -- is a real loss: a fall in here can cost an item with nothing on
+        -- screen to say so.
+        if walk.dark then
+            navEcho("Tripped in the dark — re-sending the step. If the fall dropped"
+                .. " something, I can't see it to pick it back up.")
+            navScheduleResend()
+            return
+        end
         if walk.floor == nil then
             -- We never saw this room's floor, so we can't tell our dropped item
             -- from what was already lying here. Taking a guess risks pocketing
@@ -2271,6 +2298,9 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         arriveName   = arriveName,
         destRoomId   = destRoomId,
         phase        = "walking",
+        -- Read by the too-dark trigger, which is the only thing that advances
+        -- this walk once it is past the last lit room.
+        dark         = route.dark,
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
         debug        = debug,
@@ -2283,6 +2313,11 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
                  .. (#steps - resumeAt + 1) .. " of its " .. #steps .. " steps left")
             or ("Walking to " .. destination .. " — " .. #steps .. " steps"))
         .. (gated and ", plus a key errand for any door that's locked." or "."))
+    if route.dark then
+        navEcho("This route runs dark: I walk on \"It's too dark to see.\" instead of a room"
+            .. " brief. A wrong turn still stops the walk, but a trip that drops something"
+            .. " is a loss — I can't see the floor to pick it back up.")
+    end
     if debug then
         -- Record encumbrance alongside the pace. "In your haste" reads like a
         -- speed check, but a loaded character is the other obvious candidate,
@@ -2715,6 +2750,65 @@ createTrigger("^Sorry, there's no exit in that direction\\.$", function()
     stopNavigate()
     navEcho("No exit that way at " .. where .. " — stopping."
         .. " Either the route is wrong or I wasn't where I thought I was.")
+end, { type = "regex" })
+
+-- =========================================================================
+-- Walking in the dark
+-- =========================================================================
+--
+-- Some places print no room at all. The second level of the labyrinth is
+-- unlit: a move that lands you in one of its rooms answers with
+--
+--     It's too dark to see.
+--
+-- and nothing else -- no name, no occupants, no floor -- and `ex` says the same
+-- thing rather than listing the exits. Everything above advances on the arrival
+-- brief, so a walk sent in there sends its first dark step and then sits
+-- waiting for a brief that is never coming.
+--
+-- A route declares `dark = true` and this line becomes a second arrival signal.
+-- It is still the game acknowledging the move we just sent -- not a blind timer
+-- firing directions into the void -- so the pacing, the trip retry and every
+-- refusal below keep working exactly as they do in the light. A route that
+-- crosses both needs no marking of which rooms are which: whichever of the two
+-- answers arrives is the one that advances that step.
+--
+-- A wrong direction is still caught. "Sorry, there's no exit in that direction."
+-- is printed in the dark like anywhere else, and the trigger above ends the walk
+-- on it naming the step that failed -- so a dark walk that has drifted stops
+-- rather than groping on through the maze.
+--
+-- What the dark does cost us, both of them said out loud rather than left to be
+-- discovered:
+--
+--   * nothing to check on arrival. navArrive is called with no room name, so a
+--     dark route's `to` goes unverified: the last step being acknowledged is the
+--     only confirmation there is.
+--   * no floor line, so the post-trip pick-up cannot run (see the dark branch in
+--     navRecoverAfterRefusedMove). Anything a fall shakes loose in there stays
+--     on the floor.
+createTrigger("^It's too dark to see\\.$", function()
+    local j = taPackage.navigate
+    if not j or not j.dark then return end
+    -- The reprints after a refused move, swallowed until the move is actually
+    -- re-sent -- exactly as an arrival brief is, and for the same reason.
+    if j.blocked then return end
+    -- Anything that is not the walk sending a step: our own bare return during a
+    -- floor check or a seam check, and the final door probe. In the dark each of
+    -- those answers with this same line, and none of them is an arrival.
+    if j.phase ~= "walking" then return end
+    -- And only a move is answered by an arrival. A command's reply or a sweep's
+    -- own scans can print this line too -- `ex` in the dark prints precisely
+    -- this -- and counting one would run the walk ahead of the character.
+    if j.stepKind ~= "move" then return end
+    navDebug("arrived in the dark after step " .. j.index)
+    if j.index >= #j.steps then
+        -- No room name to check the arrival against, so nil: navArrive skips the
+        -- comparison rather than failing it.
+        navArrive(nil)
+    else
+        navScheduleStep()
+    end
 end, { type = "regex" })
 
 -- =========================================================================
