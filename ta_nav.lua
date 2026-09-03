@@ -1904,7 +1904,7 @@ local function navRecoverAfterRefusedMove()
         -- Wait out the stumble and re-send. Said out loud each time because it
         -- is a real loss: a fall in here can cost an item with nothing on
         -- screen to say so.
-        if walk.dark then
+        if walk.dark or walk.litHere == false then
             navEcho("Tripped in the dark — re-sending the step. If the fall dropped"
                 .. " something, I can't see it to pick it back up.")
             navScheduleResend()
@@ -2254,6 +2254,8 @@ local function navOnRoomBrief(room)
     end
 
     navDebug("arrived after step " .. j.index .. " (" .. room .. ")")
+    -- A room that printed a brief is a room whose floor we can read.
+    j.litHere = true
 
     if j.index >= #j.steps then
         navArrive(room)
@@ -2902,7 +2904,18 @@ end, { type = "regex" })
 -- brief, so a walk sent in there sends its first dark step and then sits
 -- waiting for a brief that is never coming.
 --
--- A route declares `dark = true` and this line becomes a second arrival signal.
+-- This line is a second arrival signal, and it is one on EVERY route rather
+-- than only on a route that declared itself dark. The reason is that "this area
+-- is lit" is something we are told, and being told wrong should cost a room's
+-- worth of surprise rather than the whole walk: a route that meets an unlit room
+-- it did not expect walks on through it instead of hanging on a brief that is
+-- never coming. Level 3 of the labyrinth is recorded as lit on exactly that kind
+-- of report.
+--
+-- What `dark = true` still declares is that NO brief is expected: it arms the
+-- watchdog below, skips the post-trip floor check, and says so before setting
+-- off. Where a room turns out dark on a route that expected light, `litHere`
+-- carries the same news one room at a time.
 -- It is still the game acknowledging the move we just sent -- not a blind timer
 -- firing directions into the void -- so the pacing, the trip retry and every
 -- refusal below keep working exactly as they do in the light. A route that
@@ -2925,7 +2938,7 @@ end, { type = "regex" })
 --     on the floor.
 createTrigger("^It's too dark to see\\.$", function()
     local j = taPackage.navigate
-    if not j or not j.dark then return end
+    if not j then return end
     -- The reprints after a refused move, swallowed until the move is actually
     -- re-sent -- exactly as an arrival brief is, and for the same reason.
     if j.blocked then return end
@@ -2938,6 +2951,9 @@ createTrigger("^It's too dark to see\\.$", function()
     -- this -- and counting one would run the walk ahead of the character.
     if j.stepKind ~= "move" then return end
     navDebug("arrived in the dark after step " .. j.index)
+    -- This room announced itself dark, whatever the route claims. Read by the
+    -- trip recovery, which cannot ask an unlit room what is on its floor.
+    j.litHere = false
     if j.index >= #j.steps then
         -- No room name to check the arrival against, so nil: navArrive skips the
         -- comparison rather than failing it.

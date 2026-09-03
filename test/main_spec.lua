@@ -15415,16 +15415,48 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("d"))
         end)
 
-        -- The flag is what turns this on. Everywhere else the line is noise --
-        -- an `ex` in an unlit corner of a lit route -- and advancing on it would
-        -- run the walk a room ahead of the character.
-        it("ignores the line on a route that isn't dark", function()
+        -- And on a route that never said it was dark, because "this area is
+        -- lit" is something we are TOLD. Being told wrong should cost a room's
+        -- worth of surprise, not the whole walk: the move plainly happened, so
+        -- the walk goes on rather than hanging on a brief that isn't coming.
+        it("advances a lit route through a room that turns out to be dark", function()
             route()
             helper.simulateAlias("navigate-to sewers/town-sewers-18")
             answerProbe(274)
             helper.simulateLine(DARK)
             helper.fireTimers(taPackage.navStepDelayMs)
-            assert.are.equal(0, sent("d"))
+            assert.are.equal(1, sent("d"))
+        end)
+
+        -- The floor check is skipped wherever the floor can't be READ, which is
+        -- a fact about the room rather than about the route: a lit route that
+        -- tripped in a room that had just announced itself dark would otherwise
+        -- send a bare return and wait for a floor line that never comes.
+        it("skips the floor check after a trip in an unexpectedly dark room", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            helper.simulateLine(DARK)                     -- step 1 landed, unlit
+            helper.fireTimers(taPackage.navStepDelayMs)   -- step 2 goes out
+            local bareReturns = sent("")
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            assert.are.equal(bareReturns, sent(""))
+            assert.is_truthy(lastEchoes():find("Tripped in the dark", 1, true))
+        end)
+
+        -- The other half of that: a room that printed a brief is a room whose
+        -- floor we can read, so the pick-up still runs.
+        it("still checks the floor after a trip in a lit room", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                 -- step 1 landed, lit
+            helper.fireTimers(taPackage.navStepDelayMs)
+            local bareReturns = sent("")
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(taPackage.navTripRetryMs)
+            assert.are.equal(bareReturns + 1, sent(""))
         end)
 
         it("arrives when the last step is acknowledged", function()
