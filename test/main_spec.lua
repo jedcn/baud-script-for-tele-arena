@@ -6071,17 +6071,59 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
-        -- The deliberate trade: the stop is taken ahead of checkFleeArena, so a
-        -- fight finished at low HP parks the character hurt rather than walking
-        -- it to the temple. Asserted so the precedence cannot drift back.
-        it("does not flee at low HP -- the stop wins", function()
+        -- The precedence that matters most: fleeing outranks the stop. Stopping
+        -- on the kill itself would park a hurt character in a shared arena with
+        -- nothing left to flee it, which is the state this feature exists to
+        -- avoid -- otherwise stop-all-scripts would already do the job.
+        it("still flees at low HP rather than parking hurt", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(15, 100)
             helper.simulateAlias("stop-after-next")
             helper.sendCalls = {}
             helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            assert.are.equal("w", helper.sendCalls[1])
+            -- Still armed: the stop is only deferred, not cancelled.
+            assert.is_true(taPackage.arenaStopAfterNext)
+        end)
+
+        -- ...and the deferred stop is then taken on arriving home healed, which
+        -- is the safe boundary. Drives the real path: flee, heal, walk back.
+        it("takes the deferred stop once it is home and healed", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(15, 100)
+            helper.simulateAlias("stop-after-next")
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("fleeing", taPackage.arenaState)
+            -- The temple trip and the heal have their own tests; pick the walk
+            -- back up on its last step, healed, and let the arrival dispatch run.
+            setHP(100, 100)
+            taPackage.arenaState = "returning"
+            taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+            helper.sendCalls = {}
+            helper.simulateLine("You're in the arena.")
             assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.arenaStopAfterNext)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- A level owed must not send us on a guild-hall round trip after we were
+        -- told to finish up -- and for a gold-farming run that trip would go on
+        -- to cash out and start a whole new character.
+        it("does not train on arriving home when the stop is pending", function()
+            setHP(100, 100)
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.arenaState = "returning"
+            helper.simulateAlias("stop-after-next")
+            taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
+            helper.sendCalls = {}
+            helper.simulateLine("You're in the arena.")
+            assert.is_nil(taPackage.arenaState)
+            assert.is_nil(taPackage.arenaJourney)
             assert.are.equal(0, #helper.sendCalls)
         end)
 

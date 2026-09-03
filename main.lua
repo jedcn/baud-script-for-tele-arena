@@ -3375,6 +3375,17 @@ local function arenaArrivedHome()
     -- which is no longer true; if we immediately walk out again for food, that
     -- is an ordinary full-health errand the roster already handles.
     arenaTeamHeal.announceHealed()
+    -- Home, and no longer hurt (the check above would have turned us round), so
+    -- this is the safe boundary a pending `stop-after-next` has been waiting for.
+    -- Ahead of the training trip below because a stop is a stop: being told to
+    -- finish up and then walking a full round trip to the guild hall is exactly
+    -- the surprise this guard prevents, and for a gold-farming run that trip
+    -- would go on to cash out and start a whole new character.
+    --
+    -- Behind onArenaArrivedHome above, which is the opposite case: a cash-out
+    -- already armed means the run trained before it was ever asked to stop, so
+    -- the round genuinely is over and finishing it beats parking mid-handover.
+    if taPackage.arenaStopIfArmed("home and healed") then return end
     -- A level is owed: bank it before starting another fight.
     --
     -- Without this, the only place training is ever considered after a kill is
@@ -3437,12 +3448,6 @@ end
 -- made even when it was flagged mid-fight. Mirrors arenaArrivedHome, but the
 -- no-errand case rings rather than resuming a (nonexistent) fight.
 local function arenaRingOrErrand()
-    -- The boundary `stop-after-next` waits for when the flag was armed anywhere
-    -- other than mid-fight: an errand trip that has walked home, a support-only
-    -- character that never held an arenaMonster to see die, or the scan pump
-    -- coming round again. Ahead of the heal and errand dispatch below on purpose
-    -- -- a stop the user asked for outranks a restock or a meal.
-    if taPackage.arenaStopIfArmed("back at a clear ring gap") then return end
     -- Standing in a clear arena, hurt: heal before summoning anything. The room
     -- being empty is exactly the window in which walking out still works, and
     -- ringing here would spend it. Same blind spot as arenaArrivedHome — a hit
@@ -3452,6 +3457,18 @@ local function arenaRingOrErrand()
         arenaHeal.departForTemple()
         return
     end
+    -- The boundary `stop-after-next` waits for when the flag was armed anywhere
+    -- other than mid-fight: an errand trip that has walked home, a support-only
+    -- character that never held an arenaMonster to see die, or the scan pump
+    -- coming round again.
+    --
+    -- BELOW the hurt check on purpose. Stopping while hurt would park the
+    -- character in a shared arena with no script left to flee it, which is the
+    -- one state this whole feature exists to avoid -- the difference between
+    -- "stop when it is safe to" and stop-all-scripts. Above the errand dispatch,
+    -- though: a stop the user asked for does outrank a restock or a meal, which
+    -- can wait for whatever they do next.
+    if taPackage.arenaStopIfArmed("back at a clear ring gap") then return end
     -- As in arenaArrivedHome: don't restock potions while a level is owed — the
     -- pair we already have is about to be dispelled at the temple so the hall will
     -- accept us, and a fresh pair would just re-taint us. The restock waits until
@@ -4517,8 +4534,9 @@ createAlias("^stop-after-next$", function()
     end
     -- echo, not cecho: a cecho never reaches the session log, and "did this arm?"
     -- is the first question asked of a run that went wrong.
-    echo("[arena] Armed -- finishing this monster, then stopping. There is no"
-        .. " cancel; stop-arena-fight or stop-all-scripts to stop right now.")
+    echo("[arena] Armed -- finishing this monster, then stopping (healing first"
+        .. " if it ends hurt). There is no cancel; stop-arena-fight or"
+        .. " stop-all-scripts to stop right now.")
 end, { type = "regex" })
 
 -- Our own gong ring is confirmed by this line; the monster we summoned arrives
@@ -4785,22 +4803,23 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     -- while actively fighting. If the monster died during an errand trip, we
     -- just clear it here; arenaResumeInCombat will ring on arrival home.
     if taPackage.arenaState ~= "fighting" then return end
-    -- `stop-after-next` armed: this death is the thing it was waiting for, so
-    -- stop before any of the follow-ups below.
-    --
-    -- Deliberately ahead of checkFleeArena, and that is a real trade: finishing a
-    -- fight at low HP now parks the character in a shared arena hurt and
-    -- unscripted, rather than walking it to the temple first. It is what "stop
-    -- after this monster" literally asks for, the room is clear at this instant,
-    -- and the user typed the alias, so they are at the keyboard. Ahead of
-    -- arenaTryTrain for the same reason -- a gold-farming run that walked off to
-    -- train would go on to cash out and start a whole new character.
+    -- Fleeing outranks a pending `stop-after-next`, and the order here is the
+    -- whole point of the feature. Stopping the moment the kill lands would leave
+    -- a hurt character standing in a shared arena with nothing left to flee it --
+    -- the next player's summon kills it. So a kill that leaves us low still walks
+    -- to the temple and heals; the stop is taken when we get home in one piece
+    -- (arenaArrivedHome), which is where the flag is honored instead.
+    if checkFleeArena() then return end
+    -- `stop-after-next` armed, and we are unhurt: this death is the thing it was
+    -- waiting for. Ahead of arenaTryTrain because being told to finish up and
+    -- then walking a round trip to the guild hall is a surprise, and for a
+    -- gold-farming run that trip would go on to cash out and start a whole new
+    -- character.
     --
     -- This is also the team-mode case: the death line is a room-wide broadcast,
     -- so a monster a team-mate killed prints exactly this and reaches here
     -- through the same name match. There is no "who landed the blow" to test.
     if taPackage.arenaStopIfArmed("the monster is down") then return end
-    if checkFleeArena() then return end
     -- Train if a level is owed and our potions have lapsed; otherwise ring
     -- for the next monster. While a level is owed but potions are still
     -- active, arenaTryTrain returns false, so we keep fighting — which both
