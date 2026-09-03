@@ -10561,6 +10561,170 @@ describe("errand vs. in-flight gong summon", function()
 
 end)
 
+-- =========================================================================
+-- The same wedge as above, but through the training detour rather than an
+-- errand. teekywiki's 5-minute XP status poll came back with a level owed in
+-- the very beat the gong ring was accepted, so the restore detour departed
+-- while the summon was still in flight. The flame giantess that materialized
+-- was never adopted, the walk out was refused first with "Sorry, you'll have to
+-- rest a while..." and then with "You cannot leave in the heat of battle!" — a
+-- state the retry didn't cover — and the character stood there taking hits for
+-- five minutes until it was stopped by hand (archived
+-- session-teekywiki-2026-09-03T12-57-00.log, 6777-6874).
+--
+-- Two fixes, one per gap: the detour departure now goes through
+-- arenaCanDepartNow like the errands, and the heat-of-battle retry knows about
+-- "restoring" and "training".
+
+describe("training detour vs. in-flight gong summon", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        setClass("Rogue")
+        taPackage.arenaProfile = "1"
+        -- A level owed: Rogue's level-2 threshold is 1120 XP and the sheet still
+        -- says level 1. The Experience line below is what checkTrainingNeeded
+        -- reads, so each test sets the state and then feeds the poll's reply.
+        taPackage.character.class = "Rogue"
+        taPackage.character.level = 1
+    end)
+
+    it("defers the restore detour while a ring is in flight", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = true
+        taPackage.arenaPotionsActive = 2
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("ringing", taPackage.arenaState)
+        assert.is_nil(taPackage.arenaJourney)
+        -- The one-shot restore guard must not be spent by a departure we refused.
+        assert.is_nil(taPackage.arenaRestoreTried)
+    end)
+
+    it("defers the restore detour while our own summon is still landing", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaOwnSummonPending = true
+        taPackage.arenaPotionsActive = 2
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("ringing", taPackage.arenaState)
+        assert.is_nil(taPackage.arenaJourney)
+        assert.is_nil(taPackage.arenaRestoreTried)
+    end)
+
+    it("defers the training walk while a ring is in flight", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = true
+        taPackage.arenaPotionsActive = 0  -- untainted: this would go straight to the hall
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("ringing", taPackage.arenaState)
+        assert.is_nil(taPackage.arenaJourney)
+    end)
+
+    it("still prints the XP tick when the detour is deferred", function()
+        -- The old code returned before the tick echo, so the 45-minute line went
+        -- missing from the log and the next one read "50 min" — the only outward
+        -- sign anything had gone wrong.
+        taPackage.arenaState = "ringing"
+        taPackage.arenaRingPending = true
+        taPackage.arenaPotionsActive = 2
+        taPackage.arenaSessionStartXp = 120
+        taPackage.arenaSessionStartTime = os.time()
+        taPackage.arenaXpCheckPending = true
+        helper.simulateLine("Experience:   1120")
+        local found = false
+        for _, msg in ipairs(helper.echoCalls) do
+            if string.find(msg, "+1000", 1, true) then found = true end
+        end
+        assert.is_true(found)
+    end)
+
+    it("departs for the temple from a clear ring gap", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaPotionsActive = 2
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("restoring", taPackage.arenaState)
+        assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+    end)
+
+    it("departs for the training hall from a clear ring gap", function()
+        taPackage.arenaState = "ringing"
+        taPackage.arenaPotionsActive = 0
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("training", taPackage.arenaState)
+        assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
+    end)
+
+    it("never pulls us out mid-fight to train", function()
+        -- arenaCanDepartNow also permits "fighting"; a level must not outrank the
+        -- monster we are swinging at, so the "ringing" test stays alongside it.
+        taPackage.arenaState = "fighting"
+        taPackage.arenaMonster = "flame giantess"
+        taPackage.arenaPotionsActive = 0
+        helper.simulateLine("Experience:   1120")
+        assert.are.equal("fighting", taPackage.arenaState)
+        assert.is_nil(taPackage.arenaJourney)
+    end)
+
+    describe("a detour walk blocked on the way out", function()
+
+        local timers
+
+        before_each(function()
+            timers = {}
+            _G.createTimer = function(interval, cb, opts)
+                timers[interval] = { cb = cb }
+                return "mock_timer"
+            end
+            taPackage.arenaRetryGeneration = 0
+        end)
+
+        it("retries a restore step blocked by heat of battle", function()
+            taPackage.arenaState = "restoring"
+            taPackage.arenaLastCmd = "sw"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_not_nil(timers[2000])
+            timers[2000].cb()
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("retries a training step blocked by heat of battle", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaLastCmd = "sw"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_not_nil(timers[2000])
+            timers[2000].cb()
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        -- The incident's exact sequence: the first step out is refused for rest,
+        -- the 30s retry draws the battle refusal, and that has to arm another
+        -- retry. Before the fix the chain ended here and nothing moved again.
+        it("keeps retrying through rest-then-battle, the way teekywiki wedged", function()
+            taPackage.arenaState = "restoring"
+            taPackage.arenaLastCmd = "sw"
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            assert.is_not_nil(timers[30000])
+            timers[30000].cb()
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_not_nil(timers[2000])
+            timers[2000].cb()
+            assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        -- A hand-typed move that draws the refusal while we are fighting or
+        -- ringing must not be retried by the script.
+        it("does not retry while fighting", function()
+            taPackage.arenaState = "fighting"
+            taPackage.arenaLastCmd = "sw"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_nil(timers[2000])
+        end)
+
+    end)
+
+end)
+
 describe("spell-name translation aliases", function()
 
     before_each(function()

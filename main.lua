@@ -3857,7 +3857,24 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     -- Between monsters and enough XP to level: head to train, but only once our
     -- stat potions have lapsed (arenaTryTrain returns false while any is active,
     -- in which case we fall through and keep ringing/fighting so they wear off).
-    if taPackage.arenaState == "ringing" and arenaTryTrain() then
+    --
+    -- "ringing" alone was not enough of a gate. This line arrives from the
+    -- 5-minute XP status poll, which can land anywhere -- including inside the
+    -- gong's two-step handshake, where the state is still "ringing" but a monster
+    -- is already on its way. On 2026-09-03 it did exactly that: the poll came
+    -- back with a level owed in the same beat the ring was accepted, so the
+    -- restore detour walked out while the summon was still in flight. The
+    -- giantess that materialized was never adopted (adoption needs state
+    -- "ringing"), the walk jammed on "You cannot leave in the heat of battle!",
+    -- and teekywiki stood there taking hits for five minutes until it was stopped
+    -- by hand (archived session-teekywiki-2026-09-03T12-57-00.log, 6777-6874).
+    -- arenaCanDepartNow adds the two pending-summon checks the errand walks have
+    -- always had; keep the "ringing" test as well, since it also permits
+    -- "fighting" and a level must never pull us out mid-fight. Deferring costs
+    -- nothing: the summon lands, we fight it, and the post-kill decision point
+    -- calls arenaTryTrain again.
+    if taPackage.arenaState == "ringing" and arenaCanDepartNow()
+        and arenaTryTrain() then
         return
     end
     if not taPackage.arenaXpCheckPending then return end
@@ -5191,15 +5208,24 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     end
 end, { type = "regex" })
 
--- Any walk-out that gets blocked by a monster — fleeing to the temple, or an
--- errand run to the bar ("tavern") or magic shop ("potions") — retries the same
+-- Any walk-out that gets blocked by a monster — fleeing to the temple, an errand
+-- run to the bar ("tavern") or magic shop ("potions"), or a level being banked
+-- via the temple ("restoring") or the guild hall ("training") — retries the same
 -- step until a between-attacks window opens. arenaCanDepartNow now stops us from
 -- departing into an in-flight summon, so this is a backstop for the case where a
 -- monster arrives after we've stepped out (e.g. another player's ring on the
--- shared gong). Omitting "potions" here is exactly what left problem.log wedged.
+-- shared gong).
+--
+-- Every state that walks out of the arena has to be listed here, and every
+-- omission has cost a session. Omitting "potions" is what left problem.log
+-- wedged; omitting "restoring"/"training" is what left teekywiki standing in
+-- front of a flame giantess for five minutes on 2026-09-03 (archived
+-- session-teekywiki-2026-09-03T12-57-00.log, 6777-6874) — nothing re-armed the
+-- move, and a detour state does not swing either, so it was a dead stop.
 createTrigger("^You cannot leave in the heat of battle!$", function()
     local st = taPackage.arenaState
-    if st ~= "fleeing" and st ~= "tavern" and st ~= "potions" then return end
+    if st ~= "fleeing" and st ~= "tavern" and st ~= "potions"
+        and st ~= "restoring" and st ~= "training" then return end
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
     local gen = taPackage.arenaRetryGeneration or 0
