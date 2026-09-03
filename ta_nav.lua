@@ -935,6 +935,7 @@ local NAV_ROUTES = {
         -- that, this route typed at the entrance would set off walking level 3's
         -- directions through level 2's maze with nothing able to notice.
         from    = { room = "labyrinth", exits = "d,s" },
+        to      = { room = "labyrinth" },
         -- Forty-seven steps, and unlike level 2 they are reported to be LIT --
         -- so no `dark`, and every move is answered by an ordinary room brief.
         -- Untested: this is the first scripted walk of it.
@@ -944,17 +945,27 @@ local NAV_ROUTES = {
         -- too then a later run pulls an already-pulled lever, which is harmless.
         -- That is an assumption, not a finding.
         --
-        -- No `to` yet: nobody has said what the room at the bottom of the last
-        -- two `d` steps is called. The first walk's log will say, and then an
-        -- arrival can be checked. Until then the walk simply ends when step 47
-        -- lands.
+        -- Forty-six steps, not the forty-seven first written down: the list
+        -- ended with two `d` steps and there is only one to walk. The first
+        -- scripted run (pelayo, 2026-09-03,
+        -- logs/session-pelayo-2026-09-03T19-39-14) took every one of steps 1-46
+        -- without a single refusal and then had the last `d` turned down flat,
+        -- and `ex` in the room it stopped in reads n,e,w,u -- twice. There is no
+        -- down exit there at all, so the extra step was a slip in transcription
+        -- rather than anything the maze does.
+        --
+        -- That room is the destination: a chimera stands in it, with a rowan
+        -- potion on the floor, and its `u` is the step-46 `d` we came in by.
+        -- `to` names it, which in a maze where all 46 rooms print "labyrinth" is
+        -- worth exactly as much as level 2's is -- it catches ending up
+        -- somewhere that isn't the labyrinth, and nothing finer.
         steps = {
                   "d", "w", "n", "n", "n", "w", "w", "w", "w", "w",
                   "s", "s", "s", "s", "s", "s", "e", "e", "e", "e",
                   "e", "e", "n", "n", "e", "e", "n", "n", "w", "s",
                   { cmd = "pull lever" },
                   "n", "e", "e", "n", "n", "w", "s", "w", "n", "n",
-                  "w", "w", "n", "e", "d", "d" },
+                  "w", "w", "n", "e", "d" },
     },
 }
 -- Second names for the two halves of the third-town journey. `after-doors` and

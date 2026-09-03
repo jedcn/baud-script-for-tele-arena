@@ -15557,12 +15557,21 @@ describe("navigate-to", function()
 
             local function ROUTE() return taPackage.navRoutes["end-of-labrynth-level-3"] end
 
-            it("is forty-seven steps with the lever at 31, and isn't dark", function()
+            it("is forty-six steps with the lever at 31, and isn't dark", function()
                 local r = ROUTE()
-                assert.are.equal(47, #r.steps)
+                assert.are.equal(46, #r.steps)
                 assert.are.same({ cmd = "pull lever" }, r.steps[31])
                 assert.is_nil(r.dark)
                 assert.is_nil(r.pending)
+            end)
+
+            -- The list first written down ended with two `d` steps. The live
+            -- walk took steps 1-46 without a single refusal and then had the
+            -- second `d` turned down flat, in a room whose `ex` reads n,e,w,u.
+            it("ends on a single d, the second having been a slip", function()
+                local steps = ROUTE().steps
+                assert.are.equal("d", steps[46])
+                assert.are.equal("e", steps[45])
             end)
 
             -- The reason the exit-set is recorded at all. Both ends of level 2
@@ -15571,6 +15580,10 @@ describe("navigate-to", function()
             -- maze from the entrance with nothing able to notice.
             it("starts from the labyrinth room with exits d,s", function()
                 assert.are.same({ room = "labyrinth", exits = "d,s" }, ROUTE().from)
+            end)
+
+            it("checks it arrived somewhere still called the labyrinth", function()
+                assert.are.same({ room = "labyrinth" }, ROUTE().to)
             end)
 
             it("sets off down from the room level 2 ends in", function()
