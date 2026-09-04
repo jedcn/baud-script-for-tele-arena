@@ -13816,6 +13816,60 @@ describe("navigate-to", function()
         installWorld()
     end)
 
+    -- `navigate-to` with nothing after it. The refusal for an unknown
+    -- destination has always listed the names inline; at twenty-odd routes that
+    -- line stopped being something anyone could read.
+    describe("listing the routes", function()
+
+        it("lists every route without sending anything", function()
+            helper.simulateAlias("navigate-to")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("end-of-labrynth-level-2", 1, true))
+            assert.is_truthy(out:find("town-3/hydra", 1, true))
+            assert.is_truthy(out:find("ruined-town", 1, true))
+            assert.are.equal(0, #helper.sendCalls)
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        -- The things you want to know before typing one of them.
+        it("says how long each is, and what would surprise you", function()
+            helper.simulateAlias("navigate-to")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("100 steps, dark", 1, true))
+            assert.is_truthy(out:find("needs a coil of rope", 1, true))
+            assert.is_truthy(out:find("no-pull-lever after the first walk", 1, true))
+            assert.is_truthy(out:find("variants: chasm-is-clear", 1, true))
+        end)
+
+        -- town-3/part-1 IS town-3/after-doors rather than a copy of it, so a
+        -- listing that counted both would be lying about how many routes exist.
+        it("counts a route once however many names it answers to", function()
+            helper.simulateAlias("navigate-to")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("another name for town-3/after-doors", 1, true))
+            assert.is_truthy(out:find("routes (", 1, true))
+            local routes, names = out:match("(%d+) routes %((%d+) names%)")
+            assert.is_truthy(routes)
+            assert.is_true(tonumber(names) > tonumber(routes))
+        end)
+
+        it("marks a route whose way there isn't recorded yet", function()
+            taPackage.navRoutes["town-3/not-walked-yet"] = { pending = true }
+            helper.simulateAlias("navigate-to")
+            assert.is_truthy(lastEchoes():find("nobody has recorded the way there yet",
+                1, true))
+        end)
+
+        -- The bare command must not eat a real destination.
+        it("still walks when given one", function()
+            route()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+        end)
+
+    end)
+
     describe("choosing a route", function()
 
         it("refuses an unknown destination and lists what it does know", function()

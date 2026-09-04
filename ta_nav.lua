@@ -2623,6 +2623,62 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
     navStep()
 end
 
+-- `navigate-to` on its own: what can I ask for?
+--
+-- The refusal for an unknown destination has always listed the names inline,
+-- and at twenty-four routes that line is no longer something you can read --
+-- nor does it say which of them is a two-hundred-step trek, which needs a rope
+-- in the pack, or which will shut a door behind you if you walk it twice. Those
+-- are the things you actually want to know before typing one.
+local function navListRoutes()
+    local names = {}
+    for name in pairs(NAV_ROUTES) do names[#names + 1] = name end
+    table.sort(names)
+    -- Two names for ONE route table -- town-3/part-1 is town-3/after-doors, not
+    -- a copy of it -- is deliberate in the table above. A listing that showed
+    -- them as two routes would be lying about how many there are, so the first
+    -- name alphabetically owns the entry and the other says whose it is.
+    local firstName, count, width = {}, 0, 0
+    for _, name in ipairs(names) do
+        local r = NAV_ROUTES[name]
+        if not firstName[r] then firstName[r], count = name, count + 1 end
+        width = math.max(width, #name)
+    end
+    navEcho(count .. " routes (" .. #names .. " names):")
+    for _, name in ipairs(names) do
+        local r, note = NAV_ROUTES[name], nil
+        if firstName[r] ~= name then
+            note = "another name for " .. firstName[r]
+        elseif r.pending then
+            note = "named, but nobody has recorded the way there yet"
+        else
+            local steps = taPackage.navRouteSteps(r)
+            local bits = { (steps and #steps or "?") .. " steps" }
+            if r.dark then bits[#bits + 1] = "dark" end
+            if r.door then bits[#bits + 1] = "ends at the " .. r.door.dir .. " door" end
+            if r.leverToggles then
+                bits[#bits + 1] = "toggling lever (no-pull-lever after the first walk)"
+            end
+            if r.requires then
+                bits[#bits + 1] = "needs "
+                    .. taPackage.navItemPhrase(taPackage.navWanted(r.requires))
+            end
+            if r.variants then
+                local vs = {}
+                for v in pairs(r.variants) do vs[#vs + 1] = v end
+                table.sort(vs)
+                bits[#bits + 1] = "variants: " .. table.concat(vs, ", ")
+            end
+            note = table.concat(bits, ", ")
+        end
+        navEcho(string.format("  %-" .. width .. "s  %s", name, note))
+    end
+end
+
+createAlias("^navigate-to\\s*$", function()
+    navListRoutes()
+end)
+
 createAlias("^navigate-to (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
     -- Trailing words, peeled off in any order and any number. A destination
