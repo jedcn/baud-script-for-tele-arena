@@ -1028,6 +1028,74 @@ NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from 
 -- sewers, around 3am. They are handled where they are -- as gates on
 -- `after-doors`, which walks at each one and lets the game's answer decide
 -- whether to fetch its key. Nothing past the junction behaves that way.
+-- =========================================================================
+-- The way back
+-- =========================================================================
+--
+-- The labyrinth routes are walked in one direction and come back the other, and
+-- the way back is the same directions reversed and flipped. That is a real
+-- assumption -- it takes every exit to have a reverse, and a one-way passage is
+-- a step this cannot know about -- but it is the same assumption
+-- `town-1/north-plaza` has been making since it was written, and the level-2
+-- stone is now settled: it opens a wall rather than teleporting (confirmed by
+-- the user after two walks), so the mirror is not defeated at step 45.
+--
+-- DERIVED, not transcribed. A hundred directions written out a second time
+-- would be a hundred chances for the two copies to disagree, and the copies
+-- would be edited months apart. Reversing at load time means a correction to a
+-- forward route is a correction to its return by construction -- which is the
+-- same argument the `legs` mechanism above is built on.
+--
+-- Commands are DROPPED rather than mirrored, and that is the whole subtlety.
+-- The reverse of `push stone` is not `push stone`: the wall it opened is
+-- already open to somebody walking back through it, and if that stone toggles
+-- the way level 3's lever does then pushing it on the way home would shut the
+-- wall in your own face. The same goes double for the lever, which is KNOWN to
+-- toggle. So a return route works nothing. If the way is shut after all, the
+-- walk stops at that step with "no exit that way" and names it, which is a
+-- recoverable failure and an honest one.
+local NAV_OPPOSITE = { n = "s", s = "n", e = "w", w = "e", ne = "sw", sw = "ne",
+                       nw = "se", se = "nw", u = "d", d = "u" }
+
+local function navReversed(name, overrides)
+    local src = NAV_ROUTES[name]
+    local steps, unknown = {}, nil
+    for i = #src.steps, 1, -1 do
+        local step = src.steps[i]
+        if type(step) == "string" then
+            local opp = NAV_OPPOSITE[step]
+            -- A direction with no recorded opposite would otherwise be dropped
+            -- or, worse, copied through unflipped -- either way producing a
+            -- route that walks confidently into a wall. Refuse the whole thing
+            -- instead: `pending` makes it say so and send nothing.
+            if not opp then unknown = step end
+            steps[#steps + 1] = opp or step
+        end
+    end
+    local out = { steps = steps, dark = src.dark, pending = unknown and true or nil }
+    for k, v in pairs(overrides or {}) do out[k] = v end
+    return out
+end
+
+-- Back up to where level 3 starts, which is the room level 2 ends in. Forty-five
+-- steps: level 3's forty-six less the lever, which must not be pulled on the way
+-- back for the reason above.
+NAV_ROUTES["start-of-labrynth-level-3"] = navReversed("end-of-labrynth-level-3", {
+    -- The room level 3 ends in, and the exit-set is from the live walk: pelayo
+    -- ran `ex` there twice and got n,e,w,u both times. The `u` is the way home.
+    from = { room = "labyrinth", exits = "e,n,u,w" },
+    to   = { room = "labyrinth" },
+})
+
+-- And back up through the dark to the room the whole descent starts from.
+-- Ninety-nine steps: level 2's hundred less the stone.
+NAV_ROUTES["start-of-labrynth-level-2"] = navReversed("end-of-labrynth-level-2", {
+    -- Shares this fingerprint with end-of-labrynth-level-3, which is right:
+    -- from this room you can go on down to level 3 or turn round and go home.
+    from = { room = "labyrinth", exits = "d,s" },
+    to   = { room = "labyrinth" },
+})
+
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 

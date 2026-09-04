@@ -15832,6 +15832,103 @@ describe("navigate-to", function()
 
     end)
 
+    -- The way out of the labyrinth is the way in, reversed and flipped. Derived
+    -- at load time rather than transcribed, so these tests are about the
+    -- derivation holding rather than about a second copy of 145 directions.
+    describe("the labyrinth return routes", function()
+
+        local OPP = { n = "s", s = "n", e = "w", w = "e", ne = "sw",
+                      sw = "ne", nw = "se", se = "nw", u = "d", d = "u" }
+
+        local function R(name) return taPackage.navRoutes[name] end
+
+        -- The property that matters: step i of the way back undoes step
+        -- (n + 1 - i) of the way out, for every step.
+        local function assertMirrors(backName, outName)
+            local back, out = R(backName).steps, R(outName).steps
+            local moves = {}
+            for _, step in ipairs(out) do
+                if type(step) == "string" then moves[#moves + 1] = step end
+            end
+            assert.are.equal(#moves, #back,
+                backName .. " should mirror every move of " .. outName)
+            for i, step in ipairs(back) do
+                local forward = moves[#moves + 1 - i]
+                assert.are.equal(OPP[forward], step,
+                    "step " .. i .. " of " .. backName .. " should undo " .. forward)
+            end
+        end
+
+        it("mirrors level 2, less the stone", function()
+            assert.are.equal(99, #R("start-of-labrynth-level-2").steps)
+            assertMirrors("start-of-labrynth-level-2", "end-of-labrynth-level-2")
+        end)
+
+        it("mirrors level 3, less the lever", function()
+            assert.are.equal(45, #R("start-of-labrynth-level-3").steps)
+            assertMirrors("start-of-labrynth-level-3", "end-of-labrynth-level-3")
+        end)
+
+        -- The reverse of `push stone` is not `push stone`. The wall it opened is
+        -- already open to somebody walking back through it, and if that stone
+        -- toggles the way level 3's lever is KNOWN to, pushing it on the way
+        -- home would shut the wall in your own face.
+        it("works nothing on the way back", function()
+            for _, name in ipairs({ "start-of-labrynth-level-2",
+                                    "start-of-labrynth-level-3" }) do
+                for i, step in ipairs(R(name).steps) do
+                    assert.is_true(type(step) == "string",
+                        name .. " step " .. i .. " should be a plain direction")
+                end
+            end
+        end)
+
+        it("comes back through the dark on level 2, and in the light on level 3", function()
+            assert.is_true(R("start-of-labrynth-level-2").dark)
+            assert.is_nil(R("start-of-labrynth-level-3").dark)
+        end)
+
+        it("is walkable, not pending", function()
+            assert.is_nil(R("start-of-labrynth-level-2").pending)
+            assert.is_nil(R("start-of-labrynth-level-3").pending)
+        end)
+
+        -- Each return starts where its outward leg stopped, and the two
+        -- fingerprints are what keep the four labyrinth routes apart in a maze
+        -- where every room prints the same name.
+        it("starts from the room its outward leg ends in", function()
+            assert.are.same({ room = "labyrinth", exits = "e,n,u,w" },
+                R("start-of-labrynth-level-3").from)
+            assert.are.same({ room = "labyrinth", exits = "d,s" },
+                R("start-of-labrynth-level-2").from)
+        end)
+
+        it("sets off up from where level 3 ends", function()
+            helper.simulateAlias("navigate-to start-of-labrynth-level-3")
+            brief("a labyrinth")
+            helper.simulateLine("Exits: n,e,w,u.")
+            assert.are.equal(1, sent("u"))
+        end)
+
+        it("sets off south into the dark from where level 2 ends", function()
+            helper.simulateAlias("navigate-to start-of-labrynth-level-2")
+            brief("a labyrinth")
+            helper.simulateLine("Exits: s,d.")
+            assert.are.equal(1, sent("s"))
+            assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
+        end)
+
+        it("refuses to walk the way back from the way in", function()
+            helper.simulateAlias("navigate-to start-of-labrynth-level-2")
+            brief("a labyrinth")
+            helper.simulateLine("Exits: n,u.")
+            assert.are.equal(0, sent("s"))
+            assert.is_truthy(lastEchoes():find("I don't know how to get there from here.",
+                1, true))
+        end)
+
+    end)
+
     describe("the start check", function()
 
         it("probes the room before moving", function()
