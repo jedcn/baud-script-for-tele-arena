@@ -954,6 +954,12 @@ local NAV_ROUTES = {
         -- there is no doubt which mode ran.
         leverToggles = true,
         --
+        -- Both ways of walking it are verified live on 2026-09-03: pelayo
+        -- pulled the lever (and found the extra `d`), and teekywiki then walked
+        -- it with `no-pull-lever` -- 46/46 steps, zero trips, 83.7s, no `pull
+        -- lever` sent and not one refusal along the way, which is the door
+        -- pelayo opened still standing open.
+        --
         -- Forty-six steps, not the forty-seven first written down: the list
         -- ended with two `d` steps and there is only one to walk. The first
         -- scripted run (pelayo, 2026-09-03,
@@ -1640,7 +1646,13 @@ local function navStep()
     -- Remembered because the room-brief handler has to know whether a brief is
     -- this step's answer or just noise from a command or a sweep.
     j.stepKind = kind
-    navDebug("send step " .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
+    -- A lever we are about to skip is traced as skipped, not as sent. The trace
+    -- is what a walk gets read back from days later, and "send step 31/46 'pull
+    -- lever'" on a line where nothing was sent is the kind of thing that costs
+    -- an hour when the question is whether the lever got worked.
+    local skipping = kind == "cmd" and j.noPullLever and step.cmd:match("^pull%s") ~= nil
+    navDebug((skipping and "skip step " or "send step ")
+        .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
     if kind == "move" then
         navSend(step)
     elseif kind == "gate" then

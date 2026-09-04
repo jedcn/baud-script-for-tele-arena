@@ -15813,6 +15813,19 @@ describe("navigate-to", function()
             assert.are.equal(0, sent("pull lever"))
         end)
 
+        -- The trace is what a walk gets read back from days later, so a step
+        -- that wasn't sent must not be traced as sent.
+        it("traces the skipped lever as skipped, not as sent", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            local out = lastEchoes()
+            assert.is_truthy(out:find("skip step 2/3 'pull lever'", 1, true))
+            assert.is_falsy(out:find("send step 2/3 'pull lever'", 1, true))
+        end)
+
         it("marks level 3's lever as one that toggles", function()
             assert.is_true(taPackage.navRoutes["end-of-labrynth-level-3"].leverToggles)
         end)
