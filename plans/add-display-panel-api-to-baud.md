@@ -209,6 +209,102 @@ depth 5 → 15×19, depth 7 → 19×27. Depth 3–5 is the usable range for a
 persistent panel. In a mock App shell, toggling a 7-row map took the dynamic
 region from 5 rows to 14 — comfortably under the cliff on any normal terminal.
 
+## Prior art: the shrine's hand-drawn TOWN 1 map
+
+A 30-year-old hand-drawn map of the first town (from the tele-arena shrine)
+turned up after the above was written. It independently arrives at most of the
+same scheme — `[X]` glyphs, `-` `|` `\` `/` connectors, `^`/`v` badges inside
+the glyph for vertical exits, colour per room class — which is good evidence
+those choices are right. Where it differs, **it is better**, and the plan below
+should follow it rather than the scheme sketched above.
+
+Our DB reproduces it. North plaza's six exits match the drawing edge for edge
+(`w` temple, `e` arena, `n` guild-hall, `s` south-plaza, `nw` equipment-shop,
+`ne` tavern), and rendering rooms 1–13 in its style gives:
+
+```
+      [D]
+       |
+       |
+ [E]  [Gv] [T^]
+    \  |  /
+     \ | /
+ [t]--[*]--[Av]
+       |
+       |
+ [a]--[ ]--[W]
+       |
+       |
+      [M]
+```
+
+### Five corrections it implies
+
+**1. Vertical pitch is 3 rows, not 2, and diagonals get two characters.**
+A single connector char leaves a diagonal ambiguous about which pair it joins.
+With a two-character diagonal the slope is explicit, and two crossing diagonals
+interleave across different cells instead of landing on the same one — so the
+`X` collapse described earlier becomes a rare fallback rather than a routine
+case. Pitch is 5 cols × 3 rows per room.
+
+**2. Show landmarks, not a neighbourhood.** The original plan drew BFS depth-3
+around the player. The historical map instead draws *what you would want to walk
+to* — and its room set is exactly computable:
+
+```sql
+SELECT * FROM rooms r WHERE r.name IN (
+  SELECT name FROM rooms r2 WHERE r2.area_id = r.area_id
+  GROUP BY name HAVING count(*) = 1);
+```
+
+That is the 13 boxes on the drawing, and it excludes precisely what the drawing
+omits: repeated-name wilderness (first-town has swamp ×30, forest ×28, cave ×5,
+clearing ×4). It yields 18 rooms for first-dungeon, 15 first-town, 11
+second-town, 7 third-town. For first-town the rule picks up two rooms the
+drawing does not have — `ruined plaza` and `ancient temple` — which are outside
+the historical map's scope rather than errors.
+
+**3. Off-map exits become text labels**, not drawn edges: "Passage to Town 2",
+"down to Dungeon", "Mountains", "Private Room". This solves the `passage` ferry,
+which has no planar representation, and gives frontier/boundary edges somewhere
+to go. Adopt it.
+
+**4. Flatten `u`/`d` onto one canvas for small maps.** The earlier plan badged
+vertical exits inside the parent glyph and did not draw the destination at all.
+The historical map does both: it badges the glyph *and* places the vertical
+neighbour as an adjacent box with the opposite badge, joined by an ordinary
+connector — `[Gv]` guild beside `[V^]` vaults, `[T^]` tavern below `[v]` private
+room. No floor tabs needed.
+
+This matters because those two rooms are reachable **only** by `u`/`d` (guild
+`d`→vaults, tavern `u`→private room). A renderer that walks compass edges alone
+silently drops them — ours did, on the first attempt. The data is correct; the
+renderer was not.
+
+This is a small-map technique. For the 179-room, 3-floor first dungeon,
+flattening is wrong and `report.ts`'s floor tabs remain right.
+
+**5. Glyph letters carry meaning**, with a key beneath: `t` temple, `a` armor
+shop, `W` weapon shop, `*` north plaza. A bare `·` says only that a room exists.
+Deriving the letter from the room name needs a collision rule (temple and tavern
+both want `T`; the drawing uses `t` and `T`).
+
+### What this changes about the proposal
+
+It splits the idea in two, and they are not equally good:
+
+- **An area landmark map** — the historical map, generated live, with "you are
+  here" highlighted. Small (13 rooms fits in ~13 rows), stable, genuinely useful
+  while playing, and mostly derivable from data we already have.
+- **A local neighbourhood minimap** — the original BFS-depth-3 sketch. Still
+  subject to the "only correct while mapping is on" problem below.
+
+The landmark map is the stronger of the two, and it weakens one objection in
+"Reasons to hold off": a landmark map does not need a trustworthy
+`currentRoomId` to be *useful*, only to draw the "you are here" marker. Without
+it, it degrades to a static-but-correct area map rather than becoming wrong.
+
+
 ## Reasons to hold off
 
 Recorded honestly, because the case is not obviously closed:
