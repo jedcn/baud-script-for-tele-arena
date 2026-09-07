@@ -190,12 +190,56 @@ indistinguishable from a typo because it silently becomes game input. Any
 capture work is worth little until this is fixed, since it is the failure mode
 that loses observations a human already made.
 
+## From the desert
+
+The desert map is topology only — no doors, traps or creatures marked. An area
+can be pure terrain, which no earlier map showed.
+
+**19. `z` is not trustworthy everywhere.** In the dungeon and sewers, flooding
+across non-vertical edges produced components each sitting at a single `z`. In
+the desert **one flat component of 197 rooms spans `z = 0, -2 and -3`** —
+dead reckoning drifted, almost certainly because the area was mapped from
+several anchors across sessions. So the dungeon-style "split by `z`, confirm by
+topology" recipe does **not** generalise. Where `z` and topology disagree,
+topology wins, and here `z` has to be discarded rather than confirmed.
+
+**20. A region boundary can be a single ordinary exit.** The desert meets the
+stoneworks at exactly one horizontal edge:
+
+```
+desert-22 --s--> stonework-chamber
+stonework-chamber --n--> desert-22
+```
+
+which is the shrine's `[S] Stoneworks` box. Same shape as first-town/mountains.
+The split is ready whenever we want it: 47 desert-proper rooms (desert 36,
+sandy passage 8, storage room 2, crude stone building 1) against 199 stoneworks
+rooms (corridor 175, chamber 24), currently all filed under `desert`.
+
+### The shrine maps are a completeness check
+
+The most useful thing the desert comparison gives us is not an atom. **Their
+map has 103 boxes; we have 47 desert-proper rooms.** We have walked roughly half
+the desert. It also has 28 unwalked exits, more than every other area combined
+(mountains 13, third-town 4, cellars 4), seven of them in desert rooms proper:
+`desert-9 w`, `-10 sw`, `-13 sw`, `-19 n`, `-24 se`, `-31 ne`, `-35 ne`.
+
+So a box count per area tells us where mapping is incomplete, and the drawing
+tells us roughly what shape the missing part is. That is worth doing for every
+area before trusting any export.
+
+**A warning for the stoneworks.** Our 199 stoneworks rooms fall into three flat
+components, not six, and 21 of the area's frontiers are in them. The user says
+the stoneworks has six levels. So that region is materially incomplete too, and
+`z` cannot be used to split it.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
 - [x] Sewers levels 1-3
-- [ ] Stoneworks, levels 1-6  (note: the `stoneworks` area holds 0 rooms today; the stonework corridors are filed elsewhere)
+- [x] The desert
+- [ ] Stoneworks, levels 1-6  (the `stoneworks` area holds 0 rooms; its 199 rooms are filed under `desert`, in 3 flat components not 6, with 21 unwalked exits)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
 
