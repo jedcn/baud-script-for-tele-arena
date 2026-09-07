@@ -141,12 +141,60 @@ before trusting either — the sewers were mapped later, and their doors are the
 ones `navigate-to` routes actually gate on, so they have been walked and
 re-walked while the dungeon's were passed once.
 
+## From sewers level 3
+
+Their 53 boxes against our 52 in the `z=-3` component; they draw neither pit,
+marking only the `[t]` that drops you in. The pearl door, the shaft and the
+hydra all match: `[^]` "Up to Desert" is `town-sewers-169`, `#` is the pearl
+door, and `[c] Hydra (Pearl Key)` is `town-sewers-165` — which `item_drops`
+already has dropping a pearl key.
+
+**15. A room can hold more than one hazard, and we can hold only one.** The
+shrine marks `town-sewers-168` as a Poison Trap; we have `crossbow trap` on it.
+`rooms.trap` is a single TEXT column, so even if both are true only one fits.
+
+**16. Poison is a hazard we never record at all.** `You're poisoned!` appears
+**345 times** in the logs — the most common hazard message in the game — and
+`main.lua` has no trigger for it. The trap triggers cover spiked trap, crossbow,
+falling rocks, falling block, scything blade, flame trap and trap door; poison
+is simply absent. This is the largest known gap between what the world does and
+what we write down.
+
+**17. A hazard's outcome depends on who walks into it.** "Your rogue abilities
+allowed you to detect and avoid a trap!" appears 26 times. A trap is not a fact
+about a room alone.
+
+**18. Traps are disarmed remotely, and the game says so only in passing.** Other
+players falling through a trap door are announced in the destination room ("X
+has just fallen into the room through a trap door in the ceiling!", 282+ lines),
+which is a *remote observation* of a hazard somewhere else.
+
+## Blocking bug: the one attempt to record a coupling was thrown away
+
+The logs contain the user trying to write down exactly the coupling this
+inventory is about:
+
+```
+> map-note Pull lever here so you aren't hurt by the trap on this level
+Sorry, that is not an appropriate command.
+```
+
+There is no `map-note` alias — it is `map-add-note` — so the text went to the
+BBS, which rejected it, and nothing was saved. It was attempted twice, and a
+third line reads "HEY CLAUDE I THINK A TRAP SHOULD'VE BEEN HERE AND WOULD'VE
+BEEN HERE IF I DIDN'T PULL THAT LEVER".
+
+**That is why `room_notes` has 0 rows.** The table was not unused; the alias
+name did not match what a person types, and an unmatched `map-*` command is
+indistinguishable from a typo because it silently becomes game input. Any
+capture work is worth little until this is fixed, since it is the failure mode
+that loses observations a human already made.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
-- [x] Sewers levels 1-2  (level 3 still to come)
-- [ ] Sewers level 3
+- [x] Sewers levels 1-3
 - [ ] Stoneworks, levels 1-6  (note: the `stoneworks` area holds 0 rooms today; the stonework corridors are filed elsewhere)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
