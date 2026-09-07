@@ -484,6 +484,48 @@ The landmark map is the stronger of the two, and it weakens one objection in
 it, it degrades to a static-but-correct area map rather than becoming wrong.
 
 
+## Candidate work (nothing started)
+
+A running list, collected while comparing our generated maps against the
+shrine's hand-drawn ones. Deliberately NOT ordered or begun — the intent is to
+scan all three dungeon levels first, add whatever each turns up, and only then
+decide what to build and in what order.
+
+### From dungeon level 1
+
+**1. `room_exits.lock_shared` column, filled in by hand.** Whether a door
+re-locks per player or stays open for everyone once anyone opens it. `NULL`
+unknown / `1` shared / `0` per-player. Not recoverable from the logs
+retroactively: the unlock line names neither room nor direction, so 167 bronze
+unlocks across seven characters cannot be attributed to particular doors after
+the fact. A nullable column beside `lock_door`/`lock_key` keeps it queryable and
+survives the mapper's merge logic; a freeform note would not.
+
+**2. Backfill doors from `rooms.description`.** Descriptions name both the
+material and the direction — "to the northeast through an enormous rough-hewn
+stone door", "an iron bound oak door to the southeast" — and hold whether or not
+the door happens to be locked right now. On level 1 they found all four doors
+where unlock messages had found one and misplaced another. Area-wide, 6 rooms
+mention a door in their description against 13 with a lock recorded, so the two
+sources are complementary and neither is complete. Reconcile rather than
+overwrite: flag conflicts, since a conflict is what exposed the entrance error.
+
+**3. Record the edge on every unlock, going forward.** `pendingLock` already
+knows the room and direction at unlock time; only the log line lacks them. Emit
+`(room, direction, key, character, timestamp)` and shared-vs-per-player becomes
+self-answering as it accumulates — two characters unlocking the same edge on one
+day proves per-player, one walking through with no message proves shared. Does
+nothing for existing data, which is why (1) is still needed.
+
+### From dungeon level 2
+
+_(to come)_
+
+### From dungeon level 3
+
+_(to come)_
+
+
 ## Reasons to hold off
 
 Recorded honestly, because the case is not obviously closed:
