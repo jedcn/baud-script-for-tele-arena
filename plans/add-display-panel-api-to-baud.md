@@ -519,7 +519,54 @@ nothing for existing data, which is why (1) is still needed.
 
 ### From dungeon level 2
 
-_(to come)_
+**4. Record what a trap requires.** The shrine annotates traps with the item
+that defeats them: "Pit Trap (bring rope)", "Poison Trap (bring verbenas)".
+That is preparation advice, and it is the most immediately useful thing on the
+map. We store `rooms.trap` as a bare string with no remedy.
+
+**5. Fixed room guardians, with counts.** Every `[c]` is labelled — Troll,
+Chimera, Ogre, Cyclops (Silver Key), Stone Giantess (2) — and the count matters
+for whether a room is survivable. We have a `monsters` table and `item_drops`,
+but nothing tying a monster to a room, and no notion of a permanent guardian as
+opposed to a wandering encounter. Note the Cyclops label doubles as the key
+source, so this and the door data are one subject: the guardian IS the lock.
+
+**6. Glyphs compose.** `[^c]` is the up-stairwell AND a Troll in one box. Our
+renderer assumes a single letter plus an optional `^`/`v` badge. A room needs a
+marker *set* — link, creature, trap, door can co-occur.
+
+**7. A hazard is not always a place.** The shrine does not draw `pit` as a room
+at all; it marks the trap that drops you there. That supports filing `pit` under
+level two, and suggests some rooms are better rendered inline on their trap than
+as boxes of their own.
+
+### Sharpens idea 2 (backfill doors from descriptions)
+
+Descriptions give positive evidence of the ABSENCE of a door, not just its
+presence: grand-hall reads "to the north through a grand archway, and to the
+southeast through an ornately carved stone door". So the backfill can retract
+records as well as add them — and on level 2 it must. Of our three recorded door
+pairs there, exactly one is real, and its material is wrong:
+
+| our record | description says | verdict |
+|---|---|---|
+| `grand-hall n` iron/silver | "north through a grand archway" | no door |
+| `grand-hall se` iron/silver | "southeast through an ornately carved stone door" | real, but stone not iron |
+| `cave-91 s` iron/silver | "exits are to the north and south" | no door |
+| `cave-57 ne` bronze | "exits are to the northeast and west" | no door |
+| `filthy-cave sw` bronze | "exits are to the northeast, northwest, and southwest" | no door |
+
+All 55 level-2 rooms have descriptions, so a missing door mention is evidence
+rather than a gap. The one surviving door matches the shrine's single "Silver
+Door" exactly. Corrections held back deliberately pending the level 3 survey.
+
+### Open: an off-by-one that changes sign
+
+Level 1: 50 boxes theirs, 51 rooms ours. Level 2: 55 boxes theirs, 55 ours —
+but ours includes `pit`, which they never draw, so on real rooms we are one
+short. One room sitting on the wrong level would explain both at once, though
+our own check (each level's flat-connected component has a uniform `z`) argues
+against that. Unresolved; worth another look after level 3.
 
 ### From dungeon level 3
 
