@@ -131,6 +131,18 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
     // vertical, then compass again, until neither can move.
     const taken = (c: number, r: number) =>
       [...local.values()].some(p => p.c === c && p.r === r);
+    // The wanted cell if it is free, else the nearest free one, searched in
+    // rings so the room stays as close to its true direction as possible.
+    const free = (_m: Map<number, Pos>, c: number, r: number): Pos => {
+      if (!taken(c, r)) return { c, r };
+      for (let ring = 1; ring < 40; ring++)
+        for (let dc = -ring; dc <= ring; dc++)
+          for (let dr = -ring; dr <= ring; dr++) {
+            if (Math.max(Math.abs(dc), Math.abs(dr)) !== ring) continue;
+            if (!taken(c + dc, r + dr)) return { c: c + dc, r: r + dr };
+          }
+      return { c, r };
+    };
     for (;;) {
       let moved = true;
       while (moved) {
@@ -140,7 +152,12 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
           if (!from || !internal(e) || local.has(e.to_id!)) continue;
           const o = OFF[e.direction];
           if (!o) continue;
-          local.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+          // Two distinct rooms can dead-reckon to the same cell -- this world is
+          // not Euclidean and loops genuinely misclose, which CLAUDE.md notes is
+          // by design in the data. Whoever gets there second must be nudged to
+          // the nearest free cell or it silently overwrites the first and the
+          // room vanishes from the drawing (35 stoneworks rooms did).
+          local.set(e.to_id!, free(local, from.c + o[0], from.r + o[1]));
           moved = true;
         }
       }
@@ -253,6 +270,12 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
 
   const drawn = grid.map(row => row.join('').replace(/\s+$/, ''));
   const margin = Math.max(...drawn.map(l => l.length)) + 3;
+  // Every room must appear. Placement can no longer collide, but a glyph could
+  // still be overwritten by a later one, so count what actually got drawn.
+  const boxes = (drawn.join('\n').match(/\[[^\]]*\]/g) ?? []).length;
+  if (boxes !== rooms.length)
+    throw new Error(`drew ${boxes} boxes for ${rooms.length} rooms — ${rooms.length - boxes} lost`);
+
   const lines = drawn.map((line, y) => {
     const ls = labels.get(y);
     return ls ? (line.padEnd(margin) + ls.join('   ')).replace(/\s+$/, '') : line;
@@ -307,6 +330,15 @@ const DRAWN = [
   // looked at while that is worked out.
   { slug: 'desert', title: 'The Desert', origin: 'crude-stone-building' },
   { slug: 'stoneworks', title: 'The Stoneworks', origin: 'stonework-chamber' },
+  // The sewers under the second town, three levels. Origins are the room you
+  // arrive in coming down from above.
+  { slug: 'sewers-level-1', title: 'Sewers, Level 1', origin: 'town-sewers' },
+  { slug: 'sewers-level-2', title: 'Sewers, Level 2', origin: 'town-sewers-63' },
+  { slug: 'sewers-level-3', title: 'Sewers, Level 3', origin: 'town-sewers-118' },
+  // The wilderness south-west of the first town, and what lies under it.
+  { slug: 'mountains', title: 'The Mountains', origin: 'mountains' },
+  { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
+  { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
 ];
 
 if (import.meta.main) {

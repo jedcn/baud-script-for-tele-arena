@@ -114,6 +114,20 @@ describe('renderArea', () => {
     expect((text.match(/\[ \]/g) ?? []).length).toBe(5);
   });
 
+  // Regression: two rooms can dead-reckon to the same cell -- this world is not
+  // Euclidean and loops genuinely misclose. The second one used to overwrite the
+  // first and vanish; 35 stonework rooms were missing from MAP.md that way.
+  it('draws every room even when two dead-reckon to the same cell', () => {
+    // a square that miscloses: n, e, s, w returns to a DIFFERENT room
+    const { lines } = renderArea({
+      rooms: [room(1, 'a'), room(2, 'b'), room(3, 'c'), room(4, 'd'), room(5, 'e')],
+      exits: [...pair(1, 'n', 2, 's'), ...pair(2, 'e', 3, 'w'),
+              ...pair(3, 's', 4, 'n'), ...pair(4, 'w', 5, 'e')],
+      origin: 'a',
+    });
+    expect((lines.join('\n').match(/\[[^\]]*\]/g) ?? []).length).toBe(5);
+  });
+
   it('turns an exit leaving the area into a text label', () => {
     const { lines } = renderArea({
       rooms: [room(1, 'plaza', 'north plaza')],
