@@ -247,22 +247,32 @@ interleave across different cells instead of landing on the same one — so the
 `X` collapse described earlier becomes a rare fallback rather than a routine
 case. Pitch is 5 cols × 3 rows per room.
 
-**2. Show landmarks, not a neighbourhood.** The original plan drew BFS depth-3
-around the player. The historical map instead draws *what you would want to walk
-to* — and its room set is exactly computable:
+**2. Draw the area, do not filter it.** The original plan drew BFS depth-3
+around the player. The shrine maps instead draw a whole town.
 
-```sql
-SELECT * FROM rooms r WHERE r.name IN (
-  SELECT name FROM rooms r2 WHERE r2.area_id = r.area_id
-  GROUP BY name HAVING count(*) = 1);
-```
+An earlier revision of this plan claimed the drawn set was computable as "rooms
+with a unique name in their area", because that reproduced TOWN 1 exactly. **The
+TOWN 2 map disproves it.** Every service in the second town hangs off a room
+named `path` (there are 10), so a unique-name filter keeps the shops and deletes
+everything joining them. The rule worked on town 1 only because that town's
+wilderness happens to be entirely repeated-name rooms.
 
-That is the 13 boxes on the drawing, and it excludes precisely what the drawing
-omits: repeated-name wilderness (first-town has swamp ×30, forest ×28, cave ×5,
-clearing ×4). It yields 18 rooms for first-dungeon, 15 first-town, 11
-second-town, 7 third-town. For first-town the rule picks up two rooms the
-drawing does not have — `ruined plaza` and `ancient temple` — which are outside
-the historical map's scope rather than errors.
+The real rule is just *the map is the area* — and what actually needs fixing is
+our area tagging:
+
+| area | rooms in DB | rooms on the shrine map |
+|---|---|---|
+| `second-town` | 21 | 21 — exact match |
+| `first-town` | 87 | 13 |
+
+`second-town` is tagged tightly. `first-town` bundles the town proper (ids 1-13)
+with 74 wilderness rooms: swamp x30, forest x28, cave x5, clearing x4,
+mountains x3, path x2, plus `ruined plaza` and `ancient temple`.
+
+**Action: split first-town's wilderness into its own area.** Then "render the
+area" reproduces both shrine maps with no heuristic. That is a data change, not
+a renderer change, and it is worth doing independently of this plan. Follow the
+DB-editing rules in CLAUDE.md (snapshot first).
 
 **3. Off-map exits become text labels**, not drawn edges: "Passage to Town 2",
 "down to Dungeon", "Mountains", "Private Room". This solves the `passage` ferry,
@@ -285,9 +295,43 @@ This is a small-map technique. For the 179-room, 3-floor first dungeon,
 flattening is wrong and `report.ts`'s floor tabs remain right.
 
 **5. Glyph letters carry meaning**, with a key beneath: `t` temple, `a` armor
-shop, `W` weapon shop, `*` north plaza. A bare `·` says only that a room exists.
-Deriving the letter from the room name needs a collision rule (temple and tavern
-both want `T`; the drawing uses `t` and `T`).
+shop, `W` weapon shop. A bare `·` says only that a room exists. Deriving the
+letter from the room name needs a collision rule (temple and tavern both want
+`T`; the drawings use `t` and `T`).
+
+`*` is **not** "north plaza" — its key entry is "North Plaza (new players start
+here)" and the parenthesis is the load-bearing half. Town 2's north plaza is a
+plain `[ ]`. `*` marks the spawn room. Do not derive it from a room name.
+
+Every room that is not a service is a bare `[ ]`, plazas and corridors alike —
+town 2 draws twelve of them. That is the convention, not a defect to fix: the
+reader navigates by the lettered boxes.
+
+### TOWN 2: a blind check
+
+The town 2 map was compared *after* generating ours from the DB, as a test.
+**21 rooms in both, identical topology, identical layout, box for box.** Three
+predictions made before seeing it were all wrong: it does not label the plazas,
+does not contract `path` rooms into edges, and draws the sewer stair as a badge
+with an adjacent label — exactly as generated.
+
+Corrections it produced, beyond the `*` and area-tagging notes above:
+
+- **Label placement**: park an off-map label immediately beside its room on
+  whichever side is free (the drawing puts "Down to Sewers" to the *left* of
+  `[v]`). Parking it at end-of-row makes it read as belonging to the wrong box.
+- **Label text**: name the destination the way a player would — "Passage to
+  Town 1", not the area slug `first-town`.
+- **Pitch is not a convention.** TOWN 1 uses two connector rows and mixes `-`
+  and `--`; TOWN 2 uses one connector row and single `-`. They were drawn by
+  hand on different days. A generator should pick one pitch and hold it.
+
+One genuine disagreement, where **our data is the more accurate**: the shrine
+keys `T = Tavern` in both towns. The game calls room 3 "the village tavern" and
+room 278 "the town's inn" — distinct names, otherwise identical descriptions.
+The shrine normalised two rooms to one label; we record what the game says.
+Both sources agree the town 2 inn has no walkable upstairs (no `^` badge, no `u`
+exit) despite its description mentioning a staircase.
 
 ### What this changes about the proposal
 
