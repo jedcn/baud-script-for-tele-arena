@@ -84,6 +84,36 @@ describe('renderArea', () => {
     expect(text).toContain('up to somewhere else');
   });
 
+  // Regression: the stoneworks chain flat regions together through stairs, so a
+  // whole region can be reachable only THROUGH a vertical edge. Running the
+  // compass and vertical passes once each placed the stair's far end but none
+  // of the rooms beyond it -- 45 rooms silently missing from the drawing.
+  it('places a flat region reachable only through a vertical edge', () => {
+    const { lines } = renderArea({
+      rooms: [room(1, 'top', 'north plaza'), room(2, 'landing', 'arena'),
+              room(3, 'beyond', 'temple'), room(4, 'further', 'inn')],
+      exits: [...pair(1, 'd', 2, 'u'), ...pair(2, 'e', 3, 'w'), ...pair(3, 'e', 4, 'w')],
+      origin: 'top',
+    });
+    const text = lines.join('\n');
+    for (const glyph of ['[ v]', '[A^]', '[t]', '[I]']) expect(text).toContain(glyph);
+  });
+
+  // Regression: a plain room draws as `[ ]`, a space in the middle, so a
+  // diagonal connector routed through it overwrote the blank and the room
+  // rendered as `[\\]` -- a room turned into a line segment.
+  it('never lets a connector overwrite a blank room glyph', () => {
+    const { lines } = renderArea({
+      rooms: [room(1, 'a'), room(2, 'b'), room(3, 'c'), room(4, 'd'), room(5, 'e')],
+      exits: [...pair(1, 'se', 2, 'nw'), ...pair(2, 'se', 3, 'nw'),
+              ...pair(3, 'ne', 4, 'sw'), ...pair(4, 'ne', 5, 'sw')],
+      origin: 'a',
+    });
+    const text = lines.join('\n');
+    expect(text).not.toMatch(/\[[\\\/|-]\]/);
+    expect((text.match(/\[ \]/g) ?? []).length).toBe(5);
+  });
+
   it('turns an exit leaving the area into a text label', () => {
     const { lines } = renderArea({
       rooms: [room(1, 'plaza', 'north plaza')],

@@ -7,6 +7,8 @@
 3. [First Dungeon, Level 1](#first-dungeon-level-1)
 4. [First Dungeon, Level 2](#first-dungeon-level-2)
 5. [First Dungeon, Level 3](#first-dungeon-level-3)
+6. [The Desert](#the-desert)
+7. [The Stoneworks](#the-stoneworks)
 
 ### First Town
 
@@ -156,7 +158,7 @@ Key:
                                    [ ]                 [ ]
                                       \               /
                                        \             /
-                    [ v--[ ]            [ ]       [ ]
+                    [ v]-[ ]            [ ]       [ ]
                      | \    \              \     /
                      |  \    \              \   /
                     [ ]  [ ^] [ ]            [ ]
@@ -256,5 +258,161 @@ Key:
                                                    |
                                                    |
                                                   [ ^]                                               up to First Dungeon, Level 2
+```
+
+### The Desert
+
+```
+     [ ]--[ ]--[ v]-[ ]--[ ]                            down to Sewers, Level 3
+                          |
+                          |
+                         [ ]
+                          |
+                          |
+                         [ ]
+                          |
+                          |
+          [ ]--[ ]--[ ]--[ ]
+           |
+           |
+          [ ]--[ ]
+         /        \
+        /          \
+     [ ]            [ ]
+    /                  \
+   /                    \
+[ ]                      [ ]                            se to unexplored
+              \             \
+                            \\
+                              [ ]       [ ]
+                               |       /
+                               |      /
+                         [ ]--[ ]--[ ]
+                           \   |      \
+                           \   |       \
+                            \ [ ]       [ ]       [ ]
+                             X   \         \     / |
+                            / \   \         \   /  |
+                         [ ]  \    [ ]       [ ]   |
+                          |    \  /         /      |
+                          |     \/         /       |
+                         [ ]   /\       [ ]        |    w to unexplored
+                            \/   \       | \       |
+                            /\    \      |  \      |
+                          /   [ ]  \    [ ]--[ ]   |    sw to unexplored
+                        /        \ \        /   \  |
+                       /          \ \      /     \ |
+                     /             [ ]  [ ]       [ ]
+                   /                 \\/           |
+                  /                   X\           |
+               [ ]                 [ ] \[ ]       [ ]   sw to unexplored   ne to unexplored   ne to unexplored
+                  \               /     \|
+                   \             /      \|
+                    [ ]--[ ]--[ ]       [ ]             n to unexplored
+                   /
+                  /
+               [ ]
+                  \
+                   \
+                    [ ]                                 s to The Stoneworks
+```
+
+### The Stoneworks
+
+```
+                                        [ ^]-[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]   n to unexplored
+                                          \                            |              |
+                                          \                            |              |
+                                           \                          [ ]--[ ]--[ ]--[ ]
+                                           \                           |              |
+                                            \                          |              |
+                                             \                   [ ]--[ ]            [ ]
+                                             \                    |                   |
+                                              \                   |                   |
+                                              \                  [ ]                 [ ]
+                                               \                  |                   |
+                                                \                 |                   |
+                                                \                [ ]                 [ ]
+                                                 \                |                   |
+                                                 \                |                   |
+[ v]                               [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]       [ ]--[ ]--[ ]
+ | \                                |\             \              |         |         |
+ |  \                               | \            \              |         |         |
+[ ]   \                            [ ] \            \            [ ]       [ ]       [ ]   e to unexplored
+   \    \                           |  \             \            |         |         |
+    \    \                          |   \            \            |         |         |
+     [ ]   \                       [ ]  [ ]--[ ^]     \          [ ]       [ ]       [ ]
+        \    \                      |  /  \    \      \           |         |         |
+         \    \                     | /    \   \       \          |         |         |
+          [ ]  [ ^]                [ ]      \   \      [ ]--[ ]--[ ]--[ ]--[ ]       [ ]   n to unexplored   s to unexplored   e to unexplored
+           |      \                 |       \    \      |    |
+           |       \                |        \   \      |\   |
+          [ ]--[ ]  [ ]--[ ]--[ ]--[ ]  [ ]   \   \    [ ]  [ ]                            e to unexplored   n to The Desert   nw to unexplored   w to unexplored
+           |      \  |  /           |  /   \   \  \   / | \  |
+           |       \ | /            | /     \   \  \ /  |  \ |
+          [ ]       [ ]  [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]-X[ ]                            w to unexplored
+             \         \            |            \ |\\      \
+              \         \           |             \| \\     \
+               [ ]       [ ]       [ ]            [ ] \[ ]  [ v]
+              /             \       | \               X      |
+             /               \      |  \             / \     |
+          [ ]                 [ ]--[ ]  [ ]  [ ]--[ ]-------[ ]
+         /                   /      |  /        \  |    \  / |
+        /                   /       | /          \ |     \/  |
+     [ ]                 [ ]       [ ]            [ ]--[ ]  [ ]
+        \               /           |            /        \    \
+         \             /            |           /          \    \
+          [ ]       [ ]            [ ]--[ ]--[ ]           \     [ ]                       s to unexplored   se to unexplored   nw to unexplored   se to unexplored
+             \     / | \          /   \     /               \       \
+              \   /  |  \        /     \   /                \        \
+          [ ]--[ ]  [ ]  [ ]--[ ]       [ ]                 [ v]      [ ]                  se to unexplored
+           |       /                   /                     |       /
+           |      /                   /                      |      /
+          [ ]  [ ]                 [ ]            [ ]       [ ]--[ ]                       nw to unexplored   ne to unexplored   nw to unexplored
+             \/                   /              /   \     / |      \
+             /\                  /              /     \   /  |       \
+          [ ]  [ ]       [ ]--[ ]            [ ]       [ ]  [ ]       [ ]                  nw to unexplored
+           |      \       |                 /              /           |
+           |       \      |                /              /            |
+          [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]       [ ]--[ ]            [ ]                  n to unexplored
+                     |    |    |  /              /                   /
+                     |    |    | /              /                   /
+                    [ v] [ ]  [ ]            [ ]                 [ ]
+                       \     /   \          /                   /
+                        \   /     \        /                   /
+                         [ ^]      [ ]--[ ]                 [ ]                            nw to unexplored
+                                           \                   \
+                                            \                   \
+                                             [ ]--[ ]--[ ]--[ v] [ ]
+                                              |                \  |
+                                              |                 \ |
+                                             [ ]            [ ]--[ ]]
+                                                \          /
+                                                 \        /
+                                                  [ ]--[ ]
+                                                 /
+                                                /
+                                        [ ]--[ ]
+                                         |
+                                         |
+                                        [ ]       [ ]--[ ]
+                                         |       /        \
+                                         |      /          \
+                                        [ ]--[ ]            [ ]                            w to unexplored
+                                                           /
+                                                          /
+                                                       [ ]
+                                                      /
+                                                     /
+                                                  [ ]
+                                                     \
+                                                      \
+                                        [ ]            [ ]
+                                       /   \          /
+                                      /     \        /
+                                   [ ]       [ ]--[ ]
+                                    |
+                                    |
+                                   [ ]
 ```
 

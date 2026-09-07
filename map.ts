@@ -115,27 +115,36 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
     const local = new Map<number, Pos>([[root, { c: 0, r: 0 }]]);
     const relevant = exits.filter(e => inComponent.has(e.from_id));
 
-    // Pass 1 -- compass edges, which carry a true direction.
-    for (let i = 0; i < members.length; i++)
-      for (const e of relevant) {
-        const from = local.get(e.from_id);
-        if (!from || !internal(e) || local.has(e.to_id!)) continue;
-        const o = OFF[e.direction];
-        if (o) local.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
-      }
-
-    // Pass 2 -- vertical neighbours. `u`/`d` have no compass offset, so park
-    // each in the first FREE adjacent cell and let the ^/v badges carry the
-    // vertical, the way the shrine maps show the vaults and the private room.
+    // Placement alternates two passes until nothing more can be placed.
     //
-    // Every part of this ordering matters, and each failure DROPS a room rather
-    // than misdrawing one. Skipping u/d entirely loses rooms reachable no other
-    // way. A fixed offset lands the neighbour on top of a real room. Running
-    // this before pass 1 lets a vertical room squat on a cell a compass edge
-    // then overwrites.
+    // Compass edges carry a true direction, so they are always preferred and
+    // are run to a fixpoint first. `u`/`d` have no compass offset, so a
+    // vertical neighbour is parked in the first FREE adjacent cell and the ^/v
+    // badges carry the vertical -- the way the shrine maps show the vaults and
+    // the private room.
+    //
+    // The alternation matters as much as the order. A region can be reachable
+    // only THROUGH a stair: the stoneworks chains flat regions together that
+    // way. Running each pass once places the vertical neighbour but never the
+    // rooms beyond it, which is 45 stonework rooms silently missing before the
+    // unplaced guard below caught it. So: compass to fixpoint, then one
+    // vertical, then compass again, until neither can move.
     const taken = (c: number, r: number) =>
       [...local.values()].some(p => p.c === c && p.r === r);
-    for (let i = 0; i < members.length; i++)
+    for (;;) {
+      let moved = true;
+      while (moved) {
+        moved = false;
+        for (const e of relevant) {
+          const from = local.get(e.from_id);
+          if (!from || !internal(e) || local.has(e.to_id!)) continue;
+          const o = OFF[e.direction];
+          if (!o) continue;
+          local.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+          moved = true;
+        }
+      }
+      let placedVertical = false;
       for (const e of relevant) {
         const from = local.get(e.from_id);
         if (!from || !internal(e) || local.has(e.to_id!)) continue;
@@ -146,9 +155,13 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
         for (const [dc, dr] of order)
           if (!taken(from.c + dc, from.r + dr)) {
             local.set(e.to_id!, { c: from.c + dc, r: from.r + dr });
+            placedVertical = true;
             break;
           }
+        if (placedVertical) break;
       }
+      if (!placedVertical) break;
+    }
 
     const cols = [...local.values()].map(p => p.c);
     const lo = Math.min(...cols), hi = Math.max(...cols);
@@ -169,13 +182,38 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
     () => Array.from({ length: width }, () => ' '));
 
   const centre = (p: Pos) => [(p.c - minC) * PITCH_X + 1, (p.r - minR) * PITCH_Y] as const;
+  // Cells a box occupies, reserved even where the glyph char is a space. A
+  // plain room draws as `[ ]`, so without this a diagonal connector passing
+  // through overwrites the blank middle and the room renders as `[\]`.
+  const reserved = new Set<string>();
   const put = (x: number, y: number, ch: string) => {
     if (!grid[y] || grid[y][x] === undefined) return;
+    if (reserved.has(`${x},${y}`)) return;
     const cur = grid[y][x];
     // Two diagonals through one cell is a genuine crossing, not a clobber.
     if (cur === ' ') grid[y][x] = ch;
     else if (cur !== ch && (cur === '/' || cur === '\\')) grid[y][x] = 'X';
   };
+
+  // Boxes first, then connectors. A room with a vertical exit gets a badge --
+  // `[A^]` -- which is four characters wide and so overruns into the column a
+  // horizontal connector wants. Drawing boxes first lets the connector give way
+  // (`[A^]-[t]`); the other order silently ate the closing bracket.
+  // Boxes. `[X]`, with `^`/`v` appended for vertical exits in either direction.
+  const used = new Map<string, string>();
+  for (const [id, p] of pos) {
+    const room = byId.get(id)!;
+    const dirs = new Set(exits.filter(e => e.from_id === id).map(e => e.direction));
+    const service = SERVICES[room.name];
+    if (service) used.set(service.letter, service.label);
+    const badge = (dirs.has('u') ? '^' : '') + (dirs.has('d') ? 'v' : '');
+    const glyph = `[${service?.letter ?? ' '}${badge}]`;
+    const [x, y] = centre(p);
+    for (let i = 0; i < glyph.length; i++) {
+      grid[y][x - 1 + i] = glyph[i];
+      reserved.add(`${x - 1 + i},${y}`);
+    }
+  }
 
   // Connectors. A vertical edge joins two rooms that pass 2 placed adjacently,
   // so draw it from the geometry of where they landed rather than from the
@@ -193,19 +231,6 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
     const steps = Math.abs(by - ay);
     for (let s = 1; s < steps; s++)
       put(Math.round(ax + (bx - ax) * (s / steps)), ay + Math.sign(by - ay) * s, ch);
-  }
-
-  // Boxes. `[X]`, with `^`/`v` appended for vertical exits in either direction.
-  const used = new Map<string, string>();
-  for (const [id, p] of pos) {
-    const room = byId.get(id)!;
-    const dirs = new Set(exits.filter(e => e.from_id === id).map(e => e.direction));
-    const service = SERVICES[room.name];
-    if (service) used.set(service.letter, service.label);
-    const badge = (dirs.has('u') ? '^' : '') + (dirs.has('d') ? 'v' : '');
-    const glyph = `[${service?.letter ?? ' '}${badge}]`;
-    const [x, y] = centre(p);
-    for (let i = 0; i < glyph.length; i++) put(x - 1 + i, y, glyph[i]);
   }
 
   // Off-map exits become text labels. They are appended AFTER rasterizing, not
@@ -276,6 +301,12 @@ const DRAWN = [
   { slug: 'first-dungeon-level-1', title: 'First Dungeon, Level 1', origin: 'dungeon-entrance' },
   { slug: 'first-dungeon-level-2', title: 'First Dungeon, Level 2', origin: 'bottom-of-a-circular-stairwell' },
   { slug: 'first-dungeon-level-3', title: 'First Dungeon, Level 3', origin: 'bottom-of-a-stairwell' },
+  // The desert and the stoneworks. Neither is split into levels yet -- the
+  // stoneworks especially is one area holding what the shrine draws as six --
+  // so these render as sprawls rather than tidy floors. They are here to be
+  // looked at while that is worked out.
+  { slug: 'desert', title: 'The Desert', origin: 'crude-stone-building' },
+  { slug: 'stoneworks', title: 'The Stoneworks', origin: 'stonework-chamber' },
 ];
 
 if (import.meta.main) {
