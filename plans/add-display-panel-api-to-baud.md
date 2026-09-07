@@ -420,12 +420,19 @@ Two mechanics explain it, and both are now in memory as `reference-doors-and-key
    `pendingLock` listens for — fires at most once a day per door and often never.
    The door data is systematically sparse, and `pendingLock` surviving to the
    next room brief lets an unlock be attributed to a later, unrelated move.
-2. **The game names a door by its material and the key by its own, and they
-   differ.** `iron key → stone door`, `copper key → oak door`, `brass key → iron
-   door`, `electrum key → brass door`, `silver key → iron door`. The shrine
-   labels each door by *the key that opens it*, so shrine labels match our
-   `lock_key` column, never `lock_door`. All four of its level 1 labels
-   reconcile exactly on that reading.
+2. **The door material is close to cosmetic, and there is no key-to-door
+   rule.** "stone door" is the generic dungeon door: ten different keys open
+   one (iron, jade, onyx, opal, pearl, platinum, quartz, ruby, tigereye,
+   topaz), and an "iron door" takes either brass or silver. Our own DB holds
+   `iron`/`brass` on two rooms and `iron`/`silver` on three. So `lock_key` is a
+   property of the **specific edge** and cannot be derived from `lock_door`.
+
+   (An earlier revision of this section claimed a fixed key/door pairing. That
+   was wrong — it generalised from the handful of pairs on level 1.)
+
+   The shrine labels each door by *the key that opens it*, so shrine labels
+   match our `lock_key` column, never `lock_door`. All four of its level 1
+   labels reconcile exactly on that reading.
 
 **Read doors from room descriptions instead.** They name material *and*
 direction — "to the northeast through an enormous rough-hewn stone door", "an
