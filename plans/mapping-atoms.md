@@ -347,14 +347,63 @@ is unreliable in this region, its 199 rooms form three flat components rather
 than six, and 21 unwalked exits sit inside it. Survey levels 2-6 first, so we
 know what six levels should look like before trying to find them.
 
+## From stoneworks level 2
+
+40 boxes. The level 1 pattern repeats exactly: one lever that disarms that
+level's own stone trap (`L2` -> `T2`, as `L1` -> `T1`), and one spoken gate —
+`say arok` here where level 1 had `say komi`.
+
+**27. Devices are systematic, one set per level.** Not scattered oddities. That
+is what makes them worth modelling rather than noting in prose.
+
+**28. Devices are already sitting in `rooms.description`, in rigid templates,
+and have never been extracted.** Description coverage is 759 of 760 rooms, so
+this is close to a complete source:
+
+```
+A small lever is partially concealed in a niche in the <dir> wall.        x 7
+A stone in the <dir> wall appears to protrude from the wall slightly
+  more than the others.                                                   x 2
+```
+
+Seven lever rooms against a one-lever-per-level pattern across six levels says
+we have walked past most of them. This is the same discovery as doors, one level
+up: the *device* is in the description, though its *effect* — which trap it
+disarms, which door it opens, where it teleports you — never is. Descriptions
+give the source end of a coupling for free; only the target end needs observing.
+
+## Open: we cannot yet say where level 1's stairs go
+
+We hold five vertical edges in the stoneworks and **two** descents from `z=0`:
+
+```
+stonework-corridor-28  (z=0)   d-> stonework-chamber-4   (z=-1)
+stonework-corridor-93  (z=0)   d-> stonework-chamber-15  (z=-1)
+stonework-corridor-52  (z=-1)  d-> stonework-chamber-9   (z=-2)
+stonework-corridor-111 (z=-1)  d-> stonework-chamber-17  (z=-2)
+stonework-corridor-78  (z=-2)  d-> stonework-chamber-12  (z=-3)
+```
+
+The shrine draws one `[v]` on level 1, so at most one of the two z=0 descents is
+it. Neither candidate's description mentions a protruding stone, so neither is
+an obviously mis-recorded teleport. The real problem is that `z` is not
+trustworthy in this region (one flat component already spans z=0, -2 and -3), so
+"z=0" is not a synonym for "level 1" here and the question cannot be settled by
+counting depth.
+
+What would settle it: the six levels have six known landmarks between them — two
+spoken gates, six levers, at least three push-stones. Anchoring our rooms to the
+shrine's levels by matching those, rather than by `z`, is the way in. Survey
+levels 3-6 first so the full landmark set is known.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
 - [x] Sewers levels 1-3
 - [x] The desert
-- [x] Stoneworks level 1  (levels 2-6 to come)
-- [ ] Stoneworks levels 2-6  (the `stoneworks` area holds 0 rooms; its 199 rooms are filed under `desert`, in 3 flat components not 6, with 21 unwalked exits)
+- [x] Stoneworks levels 1-2
+- [ ] Stoneworks levels 3-6  (the `stoneworks` area holds 0 rooms; its 199 rooms are filed under `desert`, in 3 flat components not 6, with 21 unwalked exits)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
 
