@@ -267,13 +267,61 @@ game and the shrine both say "Down to Level 2"; and `one/two/three` sorts as
 one, three, two, which is why the dungeon areas listed in the wrong order all
 through this survey.
 
+## From stoneworks level 1 — every hard atom, drawn
+
+55 boxes. Our 199 stoneworks rooms are still filed under `desert` in three flat
+components (197 mixed with the desert itself, 29, 20), none of which is 55, so
+there is nothing to compare counts against yet. What this map gives instead is
+the notation for everything the inventory has been circling:
+
+```
+L1 = Pull Lever to disarm stone trap (T1)    S2 = Push Stone to go to S3
+S1 = Push Stone to open door at D1           S3 = If on way out Push Stone to go to !
+ @ = "say komi" to enter the Stoneworks       v = Stairs Down to Level 2
+```
+
+`[@]` is identifiable: our `stonework-chamber`, exits `n,e,s`, which is exactly
+the room `ta_nav.lua`'s `town-3/stone-lvl-2` route starts from with a first step
+of `{ cmd = "say komi" }`.
+
+**21. A device disarms a hazard elsewhere.** `L1` -> `T1`. This is precisely the
+coupling the user tried to write down and lost to the `map-note` bug.
+
+**22. A device opens a door elsewhere.** `S1` -> `D1`. Note the door at `D1` has
+no key and no material; it is opened by an action in another room.
+
+**23. Teleport edges are not rare.** `S2` -> `S3`, and `S3` -> `!`. Two on this
+level alone. `docs/hidden-stone-teleport.md` records the one at
+`stonework-corridor-28` and says "Only one instance seen so far — may be the
+only teleport in the game. If more turn up, fix the mapper." More have turned up.
+
+**24. A device's effect can depend on the direction of travel.** "If on way out
+Push Stone to go to `!`" — the same stone is useful only outbound. So an effect
+is not always a pure function of the room.
+
+**25. A gate can be a spoken word rather than a key.** `say komi` to enter the
+stoneworks; `say arok` appears twice more in the routes. No door, no material,
+no key — an utterance, in a specific room.
+
+**26. Couplings need named endpoints, and that is the schema answer.** The
+shrine invented `L1`, `T1`, `S1`, `D1`, `S2`, `S3`, `!` for one reason: a
+coupling has two ends and both must be nameable. We already have stable room
+ids, so we have the endpoints. What has nowhere to live is the **relation**.
+
+That is the shape the survey has been driving at: a table of room-to-room
+relations that are not exits, carrying a verb (`pull lever`, `push stone`,
+`say <word>`), a source room, a target room or exit, an effect (disarms,
+opens, teleports), and a condition (direction of travel). `room_notes` is the
+prose version of this and cannot be queried, joined or drawn.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
 - [x] Sewers levels 1-3
 - [x] The desert
-- [ ] Stoneworks, levels 1-6  (the `stoneworks` area holds 0 rooms; its 199 rooms are filed under `desert`, in 3 flat components not 6, with 21 unwalked exits)
+- [x] Stoneworks level 1  (levels 2-6 to come)
+- [ ] Stoneworks levels 2-6  (the `stoneworks` area holds 0 rooms; its 199 rooms are filed under `desert`, in 3 flat components not 6, with 21 unwalked exits)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
 

@@ -1,8 +1,13 @@
 # Finding: hidden "push stone" teleport (mapper blind spot)
 
-**Status:** documented, code left unchanged (per user, 2026-07-09). Only one
-instance seen so far — may be the only teleport in the game. If more turn up,
-fix the mapper (see below).
+**Status:** documented, code left unchanged (per user, 2026-07-09).
+
+**Update 2026-09-07: more have turned up, so the condition this note set for
+fixing the mapper is met.** The shrine's hand-drawn map of stoneworks level 1
+marks two more push-stone teleports on that level alone — `S2 = Push Stone to go
+to S3` and `S3 = If on way out Push Stone to go to !` — and the second is
+conditional on the direction of travel. This is not a one-off blind spot; it is
+a mechanic. See `plans/mapping-atoms.md`.
 
 ## What happened
 
