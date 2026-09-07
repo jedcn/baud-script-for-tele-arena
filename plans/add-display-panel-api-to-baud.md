@@ -287,6 +287,34 @@ Only `rooms.area_id` changed: 760 rooms and 1607 exits before and after, no
 NULL areas, no dangling `to_id`. Snapshots either side in `../tele-arena-db`.
 A running baud session needs `/lua reloadScript()` to see it.
 
+**`first-dungeon` split into three level areas** (2026-09-06), same operation:
+`first-dungeon-level-one` (51 rooms), `-two` (54), `-three` (74); the now-empty
+`first-dungeon` was dropped. Membership came from topology — flooding across
+non-vertical edges alone yields exactly four components, each falling wholly
+inside one `z` — with `z` used only to confirm it. That ordering matters:
+coordinates are dead-reckoned and soft, so deriving levels from `z` would have
+meant trusting dead reckoning, where deriving from topology and checking `z`
+trusts the graph.
+
+Levels are joined by three staircases and nothing else, so they are separable in
+the same way first-town and the mountains were:
+
+```
+top-of-a-circular-stairwell (L1) <-> bottom-of-a-circular-stairwell (L2)
+top-of-a-stairwell          (L2) <-> bottom-of-a-stairwell          (L3)
+cave-61                     (L2) <-> pit                            (L3)   [trap door]
+```
+
+The third is not a staircase but the `trap door` trap on cave-61, and it is why
+level three is in two pieces: 73 rooms off the stairwell, plus `pit` alone.
+
+An earlier draft of this plan argued the dungeon should instead be paginated by
+`z` at render time, on the grounds that an area split would duplicate what `z`
+already records and would turn internal stairs into cross-area edges. Both
+halves were wrong. `z` is the soft record and `area_id` the hard one, and a
+cross-area label is exactly the wanted output — first town now reads "down to
+First Dungeon, Level One" with no new rendering code.
+
 **3. Off-map exits become text labels**, not drawn edges: "Passage to Town 2",
 "down to Dungeon", "Mountains", "Private Room". This solves the `passage` ferry,
 which has no planar representation, and gives frontier/boundary edges somewhere

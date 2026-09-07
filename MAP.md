@@ -14,7 +14,7 @@
 [E]  [Gv] [T^]
    \  |  /
     \ | /
-[t]--[ ]--[Av]        down to first-dungeon
+[t]--[ ]--[Av]        down to First Dungeon, Level One
       |
       |
 [a]--[ ]--[W]         sw to The Mountains   nw to third-town
