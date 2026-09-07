@@ -160,9 +160,16 @@ local NAV_ROUTES = {
         -- again rather than a new one: the two pearl doors on the leg after it
         -- were unlocked by whoever first came down here with the key, and an
         -- unlocked stone door stays unlocked, exactly like a thrown lever.
-        -- Nothing on this route relocks -- the ruby, platinum and onyx doors up
-        -- in the sewers do, which is what the gates on `after-doors` are for,
-        -- and they are the exception. So `chasm-is-clear` skips the sweep and
+        --
+        -- WITHIN A DAY. This block used to say nothing on the route relocks,
+        -- with the sewer doors as the exception. That was wrong: the user
+        -- confirmed on 2026-09-07 that the WHOLE WORLD resets daily -- levers,
+        -- pushed stones and every door alike -- and the sewer doors are not
+        -- special, they were just the ones observed relocking. So
+        -- `chasm-is-clear` is a claim about *today*: it is safe once somebody
+        -- has made the outward walk since the reset, and on a fresh day it
+        -- walks a still-armed route. Nothing enforces that; it is on the
+        -- caller. So `chasm-is-clear` skips the sweep and
         -- walks past the hydra, and the walker needs no pearl key of their own:
         -- the doors the key opens are already open. Nothing extra is asked of
         -- the pack -- see `requires` at the top of this route.

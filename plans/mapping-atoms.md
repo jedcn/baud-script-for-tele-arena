@@ -54,11 +54,34 @@ From towns 1-2 and dungeon levels 1-3, plus what navigation already needed.
 | atom | evidence | captured today |
 |---|---|---|
 | **Device acts elsewhere** | "you feel the floor vibrate faintly"; a lever that arms or disarms a distant trap; `say komi` opens a door in another room | nothing; `room_notes` exists for it and is empty |
-| **Persistence and reset** | levers and pushed stones are permanent; doors re-lock daily, server-wide; one character's lever pull serves everyone | nothing |
+| **Device state vs map fact** | the whole world resets daily — levers, stones and doors all revert; within a day one character's action serves everyone | nothing |
 
 The last two are the reason this survey is worth doing before building. A
 coupling is an edge between two rooms that is not an exit, and nothing in the
 schema can hold one.
+
+### The daily reset splits the data in two
+
+The user confirmed on 2026-09-07 that **everything resets daily and nothing is
+permanent**. That is not a detail about levers; it is a line through the whole
+model:
+
+- **Map facts** — there is a lever in this room; this exit has a door that a
+  silver key opens; this room holds a falling-stone trap. Durable, worth
+  checking in, worth exporting.
+- **Today's state** — that lever is currently thrown; that door is currently
+  open; that trap is currently disarmed. True for everyone at once, and gone
+  tomorrow.
+
+Three things in this repo already conflated them and were wrong as a result:
+`project-town-2-route-home` explained a short return route by levers opening
+walls "permanently"; `ta_nav.lua`'s `chasm-is-clear` variant skips a sweep and
+walks past a hydra on the same assumption; and this table said "permanent" until
+now. All are really claims about *a day on which someone already made the
+outward walk*.
+
+Any export — a checked-in database, JSON behind an HTML map — must keep the two
+apart, or it ships one afternoon's state as though it were the world.
 
 ## Survey queue
 
