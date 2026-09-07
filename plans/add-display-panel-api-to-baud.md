@@ -486,6 +486,10 @@ it, it degrades to a static-but-correct area map rather than becoming wrong.
 
 ## Candidate work (nothing started)
 
+> **Superseded as the primary thread.** The survey continues in
+> `mapping-atoms.md`, which asks what a room or exit can *be* rather than what
+> to build. Finish that inventory before ordering anything below.
+
 A running list, collected while comparing our generated maps against the
 shrine's hand-drawn ones. Deliberately NOT ordered or begun — the intent is to
 scan all three dungeon levels first, add whatever each turns up, and only then
