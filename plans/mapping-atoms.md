@@ -314,6 +314,39 @@ relations that are not exits, carrying a verb (`pull lever`, `push stone`,
 opens, teleports), and a condition (direction of travel). `room_notes` is the
 prose version of this and cannot be queried, joined or drawn.
 
+## Done: the stoneworks split off from the desert
+
+`desert` 246 -> **`desert` 47** + **`stoneworks` 199**. The `stoneworks` area
+already existed holding zero rooms; it now holds them.
+
+The partition was made by flooding the graph from `crude-stone-building` (the
+desert map's `[v]`, down to the sewers) with the one seam edge cut, rather than
+by filtering on room name. It came out split exactly along name lines anyway —
+desert 36, sandy passage 8, storage room 2, crude stone building 1 on one side;
+stonework corridor 175, stonework chamber 24 on the other, with no mixing. That
+agreement is the evidence the seam really is the only connection.
+
+The seam is the room both shrine maps draw: the desert map's `[S] Stoneworks`
+box is the stoneworks level 1 map's `[@]`, the room you `say komi` in.
+
+```
+desert-22          --s--> stonework-chamber
+stonework-chamber  --n--> desert-22
+```
+
+Only `rooms.area_id` changed: 760 rooms and 1607 exits before and after, no NULL
+areas, the four pre-existing non-reciprocal edges unchanged. Afterwards the two
+regions have exactly two cross-area edge pairs between them and the rest of the
+world — the seam, and the desert's shaft down to `sewers-level-3`.
+
+Frontiers now attribute where they belong instead of hiding inside one count:
+**stoneworks 21, desert 7.**
+
+Still open, and not attempted: carving the stoneworks into its six levels. `z`
+is unreliable in this region, its 199 rooms form three flat components rather
+than six, and 21 unwalked exits sit inside it. Survey levels 2-6 first, so we
+know what six levels should look like before trying to find them.
+
 ## Survey queue
 
 - [x] First town, second town
