@@ -54,6 +54,18 @@ run label:
 report:
     bun report.ts && open report.html
 
+# Draw the mapped areas as ASCII maps in a single Markdown file, MAP.md.
+#
+# The format is the one the tele-arena shrine used for its hand-drawn town maps
+# -- [X] boxes, - | \\ / connectors, ^/v badges for vertical exits, and a key --
+# because our generated maps reproduce those drawings room-for-room.
+#
+# Which areas get drawn is the DRAWN list at the bottom of map.ts. An area only
+# renders cleanly if it is tagged tightly (second-town holds exactly its 21
+# rooms); a loosely-tagged area draws its wilderness too.
+draw-map-as-markdown:
+    bun map.ts
+
 # Move every log out of ./logs into the sibling archive repo, so the working
 # logs directory only ever holds the current run's sessions.
 archive-logs:

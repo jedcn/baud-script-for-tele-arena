@@ -1,0 +1,261 @@
+// Render mapped areas as ASCII maps in a single Markdown file (MAP.md).
+//
+// The output format is the one the tele-arena shrine used for its hand-drawn
+// town maps: a `[X]` box per room, `-` `|` `\` `/` connectors between them,
+// `^`/`v` badges for vertical exits, and a key naming the lettered rooms. Our
+// generated maps reproduce those drawings room-for-room, so the format is worth
+// keeping rather than inventing a new one.
+//
+// `renderArea` is a pure function over plain rooms/exits so it can be tested
+// without a database -- the map DB is absent on the VPS, and `dbOpen` would
+// silently create an empty one.
+
+export type Room = { id: number; slug: string; name: string };
+export type Exit = { from_id: number; direction: string; to_id: number | null };
+
+// Grid displacement per compass direction, in (col, row). North is up, so it
+// decreases the row.
+const OFF: Record<string, [number, number]> = {
+  n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0],
+  ne: [1, -1], nw: [-1, -1], se: [1, 1], sw: [-1, 1],
+};
+
+// Characters per room. Five columns and three rows give a diagonal two
+// characters of run, so it reads as a slope rather than an ambiguous corner.
+// (The two hand-drawn shrine maps disagree with each other on pitch -- one uses
+// two connector rows, the other one -- so there is no convention to preserve.
+// Pick one and hold it.)
+const PITCH_X = 5, PITCH_Y = 3;
+
+// Rooms that get a letter, and what the key calls them. Everything else is a
+// bare `[ ]`: plazas and corridors alike, which is how the shrine maps read --
+// you navigate by the lettered boxes.
+export const SERVICES: Record<string, { letter: string; label: string }> = {
+  'arena': { letter: 'A', label: 'Arena' },
+  'armor shop': { letter: 'a', label: 'Armor Shop' },
+  'docks': { letter: 'D', label: 'Docks' },
+  'equipment shop': { letter: 'E', label: 'Equipment Shop' },
+  'guild hall': { letter: 'G', label: 'Guild Hall' },
+  'inn': { letter: 'I', label: 'Inn' },
+  'magic shop': { letter: 'M', label: 'Magic Shop' },
+  'private room': { letter: 'p', label: 'Private Room' },
+  'tavern': { letter: 'T', label: 'Tavern' },
+  'temple': { letter: 't', label: 'Temple' },
+  'town vaults': { letter: 'V', label: 'Town Vaults' },
+  'weapon shop': { letter: 'W', label: 'Weapon Shop' },
+};
+
+export type RenderOpts = {
+  rooms: Room[];
+  exits: Exit[];
+  origin: string;                      // slug to place at the grid origin
+  areaOf?: (roomId: number) => string; // area name for an off-map destination
+};
+
+type Pos = { c: number; r: number };
+
+/**
+ * Place every room on an integer grid, then paint boxes, connectors and
+ * off-map labels into a character buffer. Returns the map lines and the key.
+ */
+export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] } {
+  // Sort everything up front: placement depends on iteration order, and SQLite
+  // makes no ordering promise without ORDER BY. Sorting here makes the output a
+  // pure function of the data, so re-running produces a byte-identical file.
+  const rooms = [...opts.rooms].sort((a, b) => a.id - b.id);
+  const exits = [...opts.exits].sort(
+    (a, b) => a.from_id - b.from_id || a.direction.localeCompare(b.direction));
+
+  const ids = new Set(rooms.map(r => r.id));
+  const byId = new Map(rooms.map(r => [r.id, r]));
+  const origin = rooms.find(r => r.slug === opts.origin);
+  if (!origin) throw new Error(`origin room '${opts.origin}' is not in this area`);
+
+  const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
+  const pos = new Map<number, Pos>([[origin.id, { c: 0, r: 0 }]]);
+
+  // Pass 1 -- compass edges, which carry a true direction.
+  for (let i = 0; i < rooms.length; i++)
+    for (const e of exits) {
+      const from = pos.get(e.from_id);
+      if (!from || !internal(e) || pos.has(e.to_id!)) continue;
+      const o = OFF[e.direction];
+      if (o) pos.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+    }
+
+  // Pass 2 -- vertical neighbours. `u`/`d` have no compass offset, so park each
+  // in the first FREE adjacent cell and let the ^/v badges carry the vertical,
+  // the way the shrine maps show the vaults and the private room.
+  //
+  // Both halves of this matter. A renderer that skips u/d entirely silently
+  // DROPS those rooms (they are reachable no other way). A renderer that uses a
+  // fixed offset drops a different room, by parking the vertical neighbour on
+  // top of a real one. And running this before pass 1 drops a third, because a
+  // vertical room squats on a cell a compass edge then overwrites.
+  const taken = (c: number, r: number) =>
+    [...pos.values()].some(p => p.c === c && p.r === r);
+  for (let i = 0; i < rooms.length; i++)
+    for (const e of exits) {
+      const from = pos.get(e.from_id);
+      if (!from || !internal(e) || pos.has(e.to_id!)) continue;
+      if (e.direction !== 'u' && e.direction !== 'd') continue;
+      const order: [number, number][] = e.direction === 'u'
+        ? [[-1, -1], [1, -1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]]
+        : [[1, 1], [-1, 1], [0, 1], [1, 0], [-1, 0], [1, -1], [-1, -1], [0, -1]];
+      for (const [dc, dr] of order)
+        if (!taken(from.c + dc, from.r + dr)) {
+          pos.set(e.to_id!, { c: from.c + dc, r: from.r + dr });
+          break;
+        }
+    }
+
+  const placed = [...pos.values()];
+  const minC = Math.min(...placed.map(p => p.c)), maxC = Math.max(...placed.map(p => p.c));
+  const minR = Math.min(...placed.map(p => p.r)), maxR = Math.max(...placed.map(p => p.r));
+  const width = (maxC - minC) * PITCH_X + 5;
+  const height = (maxR - minR) * PITCH_Y + 1;
+  const grid: string[][] = Array.from({ length: height },
+    () => Array.from({ length: width }, () => ' '));
+
+  const centre = (p: Pos) => [(p.c - minC) * PITCH_X + 1, (p.r - minR) * PITCH_Y] as const;
+  const put = (x: number, y: number, ch: string) => {
+    if (!grid[y] || grid[y][x] === undefined) return;
+    const cur = grid[y][x];
+    // Two diagonals through one cell is a genuine crossing, not a clobber.
+    if (cur === ' ') grid[y][x] = ch;
+    else if (cur !== ch && (cur === '/' || cur === '\\')) grid[y][x] = 'X';
+  };
+
+  // Connectors. A vertical edge joins two rooms that pass 2 placed adjacently,
+  // so draw it from the geometry of where they landed rather than from the
+  // logical direction -- otherwise those rooms float unattached.
+  for (const e of exits) {
+    const a = pos.get(e.from_id), b = internal(e) ? pos.get(e.to_id!) : undefined;
+    if (!a || !b) continue;
+    const [ax, ay] = centre(a), [bx, by] = centre(b);
+    const dc = Math.sign(b.c - a.c), dr = Math.sign(b.r - a.r);
+    if (dr === 0) {
+      for (let x = Math.min(ax, bx) + 2; x <= Math.max(ax, bx) - 2; x++) put(x, ay, '-');
+      continue;
+    }
+    const ch = dc === 0 ? '|' : (dc === dr ? '\\' : '/');
+    const steps = Math.abs(by - ay);
+    for (let s = 1; s < steps; s++)
+      put(Math.round(ax + (bx - ax) * (s / steps)), ay + Math.sign(by - ay) * s, ch);
+  }
+
+  // Boxes. `[X]`, with `^`/`v` appended for vertical exits in either direction.
+  const used = new Map<string, string>();
+  for (const [id, p] of pos) {
+    const room = byId.get(id)!;
+    const dirs = new Set(exits.filter(e => e.from_id === id).map(e => e.direction));
+    const service = SERVICES[room.name];
+    if (service) used.set(service.letter, service.label);
+    const badge = (dirs.has('u') ? '^' : '') + (dirs.has('d') ? 'v' : '');
+    const glyph = `[${service?.letter ?? ' '}${badge}]`;
+    const [x, y] = centre(p);
+    for (let i = 0; i < glyph.length; i++) put(x - 1 + i, y, glyph[i]);
+  }
+
+  // Off-map exits become text labels. They are appended AFTER rasterizing, not
+  // written into the grid: an edge leaving the area has nowhere to go on this
+  // grid, and writing past the buffer would leave holes that `join` swallows.
+  // All labels land in one column so they read as a margin.
+  const labels = new Map<number, string[]>();
+  for (const e of exits) {
+    if (internal(e)) continue;
+    const p = pos.get(e.from_id);
+    if (!p) continue;
+    const where = e.to_id == null ? 'unexplored' : (opts.areaOf?.(e.to_id) ?? '?');
+    const label = e.direction === 'passage' ? `passage to ${where}`
+      : e.direction === 'u' ? `up to ${where}`
+      : e.direction === 'd' ? `down to ${where}`
+      : `${e.direction} to ${where}`;
+    const [, y] = centre(p);
+    labels.set(y, [...(labels.get(y) ?? []), label]);
+  }
+
+  const drawn = grid.map(row => row.join('').replace(/\s+$/, ''));
+  const margin = Math.max(...drawn.map(l => l.length)) + 3;
+  const lines = drawn.map((line, y) => {
+    const ls = labels.get(y);
+    return ls ? (line.padEnd(margin) + ls.join('   ')).replace(/\s+$/, '') : line;
+  });
+  const key = [...used.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([letter, label]) => `${letter} = ${label}`);
+  return { lines, key };
+}
+
+/** Assemble the whole MAP.md document from already-rendered areas. */
+export function buildMarkdown(
+  areas: { title: string; lines: string[]; key: string[] }[],
+): string {
+  const anchor = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const out: string[] = ['# Tele Arena Map', '', '## Table of Contents', ''];
+  areas.forEach((a, i) => out.push(`${i + 1}. [${a.title}](#${anchor(a.title)})`));
+  for (const a of areas) {
+    out.push('', `### ${a.title}`, '', '```');
+    out.push(...a.lines);
+    out.push('```', '');
+    if (a.key.length) {
+      out.push('Key:', '');
+      for (const k of a.key) out.push(`- \`${k.split(' = ')[0]}\` — ${k.split(' = ')[1]}`);
+      out.push('', '`[ ]` — a room with no shop or service (plaza, path, corridor).');
+      out.push('`^` / `v` — an exit up / down.');
+    }
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+}
+
+// --------------------------------------------------------------------------
+// CLI: `bun map.ts` (see `just draw-map-as-markdown`)
+// --------------------------------------------------------------------------
+
+// Which areas get drawn, in what order, and which room anchors the grid. The
+// origin only fixes where (0,0) sits -- it does not affect topology -- so pick
+// a central, memorable room.
+const DRAWN = [
+  { slug: 'first-town', title: 'First Town', origin: 'north-plaza' },
+  { slug: 'second-town', title: 'Second Town', origin: 'north-plaza-1' },
+];
+
+if (import.meta.main) {
+  const { Database } = await import('bun:sqlite');
+  const { existsSync } = await import('node:fs');
+
+  const DB_PATH = 'tele-arena.db';
+  if (!existsSync(DB_PATH)) {
+    console.error(`map: no ${DB_PATH} here — nothing to draw.`);
+    process.exit(1);
+  }
+  // A plain read-write handle, never mode=ro: baud keeps the DB in WAL mode and
+  // a read-only connection cannot attach the -wal file, so it silently returns
+  // stale data.
+  const db = new Database(DB_PATH);
+
+  const areaName = db.prepare(
+    'SELECT a.name FROM rooms r JOIN areas a ON a.id = r.area_id WHERE r.id = ?');
+
+  const rendered = DRAWN.map(({ slug, title, origin }) => {
+    const rooms = db.prepare(
+      `SELECT r.id, r.slug, r.name FROM rooms r
+       JOIN areas a ON a.id = r.area_id WHERE a.slug = ? ORDER BY r.id`)
+      .all(slug) as Room[];
+    if (!rooms.length) throw new Error(`area '${slug}' has no rooms`);
+    const exits = db.prepare(
+      `SELECT from_id, direction, to_id FROM room_exits
+       WHERE from_id IN (SELECT r.id FROM rooms r JOIN areas a ON a.id = r.area_id
+                         WHERE a.slug = ?) ORDER BY from_id, direction`)
+      .all(slug) as Exit[];
+    const { lines, key } = renderArea({
+      rooms, exits, origin,
+      areaOf: (id) => (areaName.get(id) as { name: string } | null)?.name ?? '?',
+    });
+    return { title, lines, key };
+  });
+
+  await Bun.write('MAP.md', buildMarkdown(rendered));
+  const total = rendered.reduce((n, a) => n + a.lines.length, 0);
+  console.log(`map: wrote MAP.md — ${rendered.length} areas, ${total} lines`);
+}
