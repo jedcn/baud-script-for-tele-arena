@@ -372,7 +372,67 @@ up: the *device* is in the description, though its *effect* — which trap it
 disarms, which door it opens, where it teleports you — never is. Descriptions
 give the source end of a coupling for free; only the target end needs observing.
 
-## Open: we cannot yet say where level 1's stairs go
+## Resolved: the levels come from the nav routes, not from `z`
+
+`z` is unusable in the stoneworks, and not merely offset. The largest flat
+component — 150 rooms with **no vertical edges inside it**, so every room in it
+was reached without going up or down — holds three different `z` values
+(0 x45, -2 x101, -3 x4). It was walked across several sessions that each
+anchored `z=0` where they began, so `z` is internally contradictory here. Level
+6's body sits at `z=-1` and level 5's at `z=-3`: `z` is anti-correlated with
+depth, not just noisy.
+
+The ground truth was already in the repo. `ta_nav.lua`'s `stone-lvl-2..6` are
+hand-copied walks that worked, and replaying their step lists against the room
+graph recovers the structure. Each route's `from` fingerprint can match several
+rooms, so the start is disambiguated by walking every candidate and keeping the
+one whose directions keep working:
+
+| route | start | result |
+|---|---|---|
+| `stone-lvl-3` | `stonework-chamber-4` | **45/45**, ends in `stonework-chamber-9` |
+| `stone-lvl-4` | `stonework-chamber-9` | 17/41, breaks on an unwalked stub |
+| `stone-lvl-5` | `stonework-chamber-12` | 24/35, breaks in `stonework-corridor-68` |
+| `stone-lvl-6` | `stonework-chamber-15` | **26/26**, ends in `stonework-chamber-17` |
+| `stone-lvl-2` | unresolved | 2/39 at best from any candidate |
+
+`stone-lvl-3` ends exactly where `stone-lvl-4` starts, and every level's arrival
+chamber is one of our five `d` targets, each leg ending by descending to the
+next:
+
+```
+corridor-28  -d-> chamber-4  [lvl 3, 30 rooms]  -> corridor-52
+corridor-52  -d-> chamber-9  [lvl 4, 18+ rooms] -> corridor-78
+corridor-78  -d-> chamber-12 [lvl 5, 17+ rooms] -> corridor-93
+corridor-93  -d-> chamber-15 [lvl 6, 21 rooms]  -> corridor-111
+corridor-111 -d-> chamber-17 (below level 6, toward town 3)
+```
+
+**29. A recorded walk is better evidence than a coordinate.** The routes were
+hand-copied precisely because the graph could not be trusted, and they turn out
+to be the only thing that can carve the region. Worth remembering when the
+export question comes back: a route is data, not just a script.
+
+### What blocks finishing the carve
+
+Specific exits the routes use that the graph does not have. These are a short
+in-game errand, not a modelling problem:
+
+| room | direction | seen by |
+|---|---|---|
+| `stonework-corridor-68` | `se` | `stone-lvl-4` step 18 (unwalked stub) |
+| `stonework-corridor-68` | `sw` | `stone-lvl-5` step 26 (no such exit) |
+| `stonework-corridor-30` | `s` | `stone-lvl-4` from chamber-4 |
+| `stonework-corridor-4` | `se` | `stone-lvl-2` candidate |
+| `stonework-corridor-58` | `se` | `stone-lvl-2` candidate |
+
+`stone-lvl-2` is the odd one. Its `from` fingerprint is a stonework chamber with
+exits `n,e,s`, and the stoneworks entry chamber — the desert seam, the `say
+komi` room, the shrine's `[@]` — has `n,e,s,w`. One exit too many. Either the
+`w` is spurious in our graph or the route's fingerprint predates it, and until
+that is settled level 2 cannot be anchored.
+
+## Superseded: we could not say where level 1's stairs go
 
 We hold five vertical edges in the stoneworks and **two** descents from `z=0`:
 
