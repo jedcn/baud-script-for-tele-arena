@@ -106,12 +106,47 @@ the surface twice — up to second town, and up this shaft to the desert. The
 shrine's level 1 draws only the town 2 stair. That is scope, not error, but it
 means a room-count difference is not automatically our bug.
 
+**14. A key is a relation, not a property.** Sewer level 2's legend pairs them
+by case: `p` is the room where the platinum key is found, `P` is the door it
+opens, drawn on the connector. Same for jade and onyx. A key joins a **source**
+to one or more **gated exits**.
+
+We hold only the door end. `room_exits.lock_key` says which key opens an exit;
+nothing says where that key comes from. `item_drops` knows an anaconda drops a
+ruby key but not in which room, and a key sitting in a room rather than on a
+monster has nowhere to live at all.
+
+This subsumes two earlier atoms: the guardian (atom 5, "Cyclops (Silver Key)")
+and the item in place (atom 8, the White Rune) are both the *source* end of this
+relation. It also explains, retroactively, why every shrine map names a door by
+its key rather than its material: to the map's author a door is not a thing with
+a material, it is the far end of a key relation. Our `lock_door` column is the
+part that carries almost no information.
+
+### Confidence: what the survey says is trustworthy
+
+Sewer level 2 is the first complete match — 55 rooms to 55 boxes, identical hub
+topology, all three doors with the right keys. Running total on doors:
+
+| map | shrine draws | ours correct before the survey |
+|---|---|---|
+| dungeon 1 | 4 | 1 of 2 recorded |
+| dungeon 2 | 1 | 1 of 3 recorded |
+| dungeon 3 | 1 | 1 of 2 recorded |
+| sewers 1 | 1 | 1 of 1 |
+| sewers 2 | 3 | 3 of 3 |
+
+The dungeon door data is bad; the sewer door data is perfect. Worth knowing why
+before trusting either — the sewers were mapped later, and their doors are the
+ones `navigate-to` routes actually gate on, so they have been walked and
+re-walked while the dungeon's were passed once.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
-- [x] Sewers level 1  (levels 2-3 still to come)
-- [ ] Sewers beneath town 2
+- [x] Sewers levels 1-2  (level 3 still to come)
+- [ ] Sewers level 3
 - [ ] Stoneworks, levels 1-6  (note: the `stoneworks` area holds 0 rooms today; the stonework corridors are filed elsewhere)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
