@@ -399,6 +399,51 @@ Still outstanding in the prototype: a vertical edge between two *placed* rooms
 draws no connector, so vaults and the private room float unattached. The shrine
 maps draw those links as ordinary `\` and `|` lines.
 
+### DUNGEON LEVEL 1: the maps disagreed, and the shrine was right
+
+Compared blind again. **50 boxes theirs, 51 rooms ours** — unresolved, and the
+usual duplicate-room signature (same name + same exit-set + adjacent) is useless
+here because 157 of 179 rooms are called `cave` and most are two-exit corridors.
+
+Their glyph vocabulary is richer than ours: `[c]` for a creature room naming the
+key it guards, `[t]` for a trap, `[^]`/`[v]` for the level links, and `#` drawn
+**on the connector** for a locked door. Topology at the entrance matched exactly
+(`w`, `ne`, `u`), but the door metadata did not, and **ours was wrong**.
+
+Confirmed in game: the entrance's `ne` is the locked one; `w` has no door at
+all. We had recorded a bronze door on `w` and nothing on `ne` — both wrong.
+
+Two mechanics explain it, and both are now in memory as `reference-doors-and-keys`:
+
+1. **A door is locked once per day, server-wide.** Once anyone opens it, it
+   stays open for everyone. So `Your X key unlocks the Y door` — the only line
+   `pendingLock` listens for — fires at most once a day per door and often never.
+   The door data is systematically sparse, and `pendingLock` surviving to the
+   next room brief lets an unlock be attributed to a later, unrelated move.
+2. **The game names a door by its material and the key by its own, and they
+   differ.** `iron key → stone door`, `copper key → oak door`, `brass key → iron
+   door`, `electrum key → brass door`, `silver key → iron door`. The shrine
+   labels each door by *the key that opens it*, so shrine labels match our
+   `lock_key` column, never `lock_door`. All four of its level 1 labels
+   reconcile exactly on that reading.
+
+**Read doors from room descriptions instead.** They name material *and*
+direction — "to the northeast through an enormous rough-hewn stone door", "an
+iron bound oak door to the southeast" — are present whether or not the door is
+currently locked, and are already captured in `rooms.description`. Descriptions
+found all four of level 1's doors; unlock messages had found one and misplaced
+another. Corrected:
+
+| edge | door | key | shrine calls it |
+|---|---|---|---|
+| `dungeon-entrance ne` | stone | iron | "Iron Door" |
+| `large-cavern se` | oak | copper | "Copper Door" |
+| `filthy-cavern e` | iron | brass | "Brass Door" |
+| `huge-cavern ne` | bronze | bronze | "Bronze Door" |
+
+The bogus bronze door on `dungeon-entrance w` was cleared. Backfilling the rest
+of the dungeon from descriptions is the obvious follow-up.
+
 ### An unrelated defect the area render surfaced
 
 Rendering first-town as an area makes `nw to third-town` appear off the weapon
