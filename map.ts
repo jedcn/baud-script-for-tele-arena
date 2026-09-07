@@ -273,9 +273,9 @@ const DRAWN = [
   // joined by exactly three passages), so each renders as an ordinary section
   // and the stairs between them fall out as cross-area labels. Origins are the
   // room you arrive in coming down from the level above.
-  { slug: 'first-dungeon-level-one', title: 'First Dungeon, Level One', origin: 'dungeon-entrance' },
-  { slug: 'first-dungeon-level-two', title: 'First Dungeon, Level Two', origin: 'bottom-of-a-circular-stairwell' },
-  { slug: 'first-dungeon-level-three', title: 'First Dungeon, Level Three', origin: 'bottom-of-a-stairwell' },
+  { slug: 'first-dungeon-level-1', title: 'First Dungeon, Level 1', origin: 'dungeon-entrance' },
+  { slug: 'first-dungeon-level-2', title: 'First Dungeon, Level 2', origin: 'bottom-of-a-circular-stairwell' },
+  { slug: 'first-dungeon-level-3', title: 'First Dungeon, Level 3', origin: 'bottom-of-a-stairwell' },
 ];
 
 if (import.meta.main) {

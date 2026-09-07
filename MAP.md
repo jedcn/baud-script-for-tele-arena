@@ -4,9 +4,9 @@
 
 1. [First Town](#first-town)
 2. [Second Town](#second-town)
-3. [First Dungeon, Level One](#first-dungeon-level-one)
-4. [First Dungeon, Level Two](#first-dungeon-level-two)
-5. [First Dungeon, Level Three](#first-dungeon-level-three)
+3. [First Dungeon, Level 1](#first-dungeon-level-1)
+4. [First Dungeon, Level 2](#first-dungeon-level-2)
+5. [First Dungeon, Level 3](#first-dungeon-level-3)
 
 ### First Town
 
@@ -17,7 +17,7 @@
 [E]  [Gv] [T^]
    \  |  /
     \ | /
-[t]--[ ]--[Av]        down to First Dungeon, Level One
+[t]--[ ]--[Av]        down to First Dungeon, Level 1
       |
       |
 [a]--[ ]--[W]         sw to The Mountains   nw to third-town
@@ -81,10 +81,10 @@ Key:
 `[ ]` — a room with no shop or service (plaza, path, corridor).
 `^` / `v` — an exit up / down.
 
-### First Dungeon, Level One
+### First Dungeon, Level 1
 
 ```
-                                                                                [ v]   down to First Dungeon, Level Two
+                                                                                [ v]   down to First Dungeon, Level 2
                                                                                /
                                                                               /
                                                                            [ ]
@@ -135,7 +135,7 @@ Key:
                                                   [ ]
 ```
 
-### First Dungeon, Level Two
+### First Dungeon, Level 2
 
 ```
                                         [ ]
@@ -147,7 +147,7 @@ Key:
                               [ ]            [ ]
                                             /
                                            /
-                                        [ ]                 [ ^]            up to First Dungeon, Level One
+                                        [ ]                 [ ^]            up to First Dungeon, Level 1
                                        /                     |
                                       /                      |
                                    [ ]                      [ ]
@@ -198,10 +198,10 @@ Key:
 [ ]            [ ]                           [ ]
    \          /                                 \
     \        /                                   \
-     [ ]--[ ]                                     [ v]                      down to First Dungeon, Level Three
+     [ ]--[ ]                                     [ v]                      down to First Dungeon, Level 3
 ```
 
-### First Dungeon, Level Three
+### First Dungeon, Level 3
 
 ```
                               [ ]--[ ]--[ ]--[ ]                                          [ ]
@@ -255,6 +255,6 @@ Key:
                                                   [ ]
                                                    |
                                                    |
-                                                  [ ^]                                               up to First Dungeon, Level Two
+                                                  [ ^]                                               up to First Dungeon, Level 2
 ```
 

@@ -259,10 +259,13 @@ So level 3 holds four rooms whose `z` disagrees with their area. That is the
 intended meaning: `z` is physical depth, the area is which level you explore it
 from.
 
-**Naming inconsistency to settle.** These are `sewers-level-1/2/3` (numerals)
-against `first-dungeon-level-one/two/three` (words). Both were what was asked
-for at the time. Worth aligning before more areas are split — renaming is an
-`UPDATE areas SET slug=...` and nothing in the code references either.
+**Naming settled: numerals.** The first dungeon's areas were renamed from
+`first-dungeon-level-one/two/three` to `-1/-2/-3` to match. Numerals win because
+room slugs already use them (`cave-61`, `town-sewers-117`, `desert-22`), so
+words for areas would have moved the inconsistency rather than removed it; the
+game and the shrine both say "Down to Level 2"; and `one/two/three` sorts as
+one, three, two, which is why the dungeon areas listed in the wrong order all
+through this survey.
 
 ## Survey queue
 

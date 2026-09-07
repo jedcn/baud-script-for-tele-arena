@@ -288,7 +288,8 @@ NULL areas, no dangling `to_id`. Snapshots either side in `../tele-arena-db`.
 A running baud session needs `/lua reloadScript()` to see it.
 
 **`first-dungeon` split into three level areas** (2026-09-06), same operation:
-`first-dungeon-level-one` (51 rooms), `-two` (54), `-three` (74); the now-empty
+`first-dungeon-level-one` (51 rooms), `-two` (54), `-three` (74) — since
+renamed to `-1/-2/-3`, see `mapping-atoms.md`; the now-empty
 `first-dungeon` was dropped. Membership came from topology — flooding across
 non-vertical edges alone yields exactly four components, each falling wholly
 inside one `z` — with `z` used only to confirm it. That ordering matters:
