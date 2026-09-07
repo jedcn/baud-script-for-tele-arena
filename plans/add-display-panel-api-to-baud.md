@@ -270,9 +270,22 @@ with 74 wilderness rooms: swamp x30, forest x28, cave x5, clearing x4,
 mountains x3, path x2, plus `ruined plaza` and `ancient temple`.
 
 **Action: split first-town's wilderness into its own area.** Then "render the
-area" reproduces both shrine maps with no heuristic. That is a data change, not
-a renderer change, and it is worth doing independently of this plan. Follow the
-DB-editing rules in CLAUDE.md (snapshot first).
+area" reproduces both shrine maps with no heuristic.
+
+**Done** (2026-09-06). Area #15 `mountains` / "The Mountains" now holds 74
+rooms; `first-town` holds the 13 the shrine map draws. Membership was decided by
+flooding the graph outward from the room `mountains` and refusing to enter the
+town, not by an id range — it independently produced the same 74. Exactly one
+edge pair crosses the boundary, as predicted:
+
+```
+south-plaza --sw--> mountains
+mountains   --ne--> south-plaza
+```
+
+Only `rooms.area_id` changed: 760 rooms and 1607 exits before and after, no
+NULL areas, no dangling `to_id`. Snapshots either side in `../tele-arena-db`.
+A running baud session needs `/lua reloadScript()` to see it.
 
 **3. Off-map exits become text labels**, not drawn edges: "Passage to Town 2",
 "down to Dungeon", "Mountains", "Private Room". This solves the `passage` ferry,
@@ -332,6 +345,42 @@ room 278 "the town's inn" — distinct names, otherwise identical descriptions.
 The shrine normalised two rooms to one label; we record what the game says.
 Both sources agree the town 2 inn has no walkable upstairs (no `^` badge, no `u`
 exit) despite its description mentioning a staircase.
+
+### Renderer lessons from generating both towns
+
+Three bugs, all in placement rather than in the data, all worth knowing before
+writing the real renderer:
+
+1. **A renderer that walks only compass edges silently drops rooms.** Vaults and
+   the private room are reachable from first-town solely by `u`/`d`. They simply
+   never appeared.
+2. **A fixed offset for a vertical neighbour lands it on a real room.** Placing
+   `d` at `(c+1, r+1)` put the vaults on top of the arena, which vanished.
+   Vertical neighbours must be parked in the first *free* adjacent cell.
+3. **Order matters: place compass rooms first, verticals second.** A vertical
+   room placed early squats on a cell a genuine compass edge needs, and the
+   compass room then overwrites it (the private room ate the docks).
+
+Still outstanding in the prototype: a vertical edge between two *placed* rooms
+draws no connector, so vaults and the private room float unattached. The shrine
+maps draw those links as ordinary `\` and `|` lines.
+
+### An unrelated defect the area render surfaced
+
+Rendering first-town as an area makes `nw to third-town` appear off the weapon
+shop. That is one of four non-reciprocal edges in the graph, confirmed present
+in the pre-split snapshot and therefore not caused by the split:
+
+```
+weapon-shop(12)         --nw--> underground-plaza(1012)     [reverse points elsewhere]
+underground-plaza-1(1015) --nw--> equipment-shop(8)         [reverse points elsewhere]
+stonework-corridor-158(872) --s--> stonework-corridor-121(831)
+stonework-corridor-120(830) --n--> stonework-corridor-157(871)
+```
+
+The first two are the "two edges into third-town are visibly mis-mapped" already
+noted in `ta_nav.lua`'s header. Worth fixing separately; drawing an area is a
+good way to notice this class of defect.
 
 ### What this changes about the proposal
 
