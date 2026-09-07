@@ -570,7 +570,56 @@ against that. Unresolved; worth another look after level 3.
 
 ### From dungeon level 3
 
-_(to come)_
+Room count matched exactly for the first time: 73 boxes, 73 rooms.
+
+**8. Items and features located in rooms.** The shrine draws `[*] White Rune`
+as a room marker. Runes are quest-critical — you cannot enter the arena once you
+carry one — and we have no record of this rune anywhere. `item_drops` has a
+`room_id`, but it records what a *monster* dropped, not what permanently sits in
+a place.
+
+**9. Quantified trap damage.** Their key reads "f = falling stone trap (does up
+to 180 damage)". We store `rooms.trap` as a bare name. With idea 4 (what item
+defeats it), a trap wants three fields, not one.
+
+**10. Traps get their own glyph per type.** `[f]` falling stone, `[t]` pit,
+`[p]` poison — each with a key entry. A single trap marker loses the distinction
+that decides whether you can survive the room.
+
+**11. Hidden doors exist, and the room will deny them.**
+`enormous-natural-cavern` reads "From what you can see, the only exit is to the
+west" while having a north exit carrying the Electrum Door — confirmed by both
+the shrine and our own unlock record. So a door can be real and unmentioned.
+
+### Correction: descriptions are a good positive source, a poor negative one
+
+The level 2 section above claims a missing door mention is evidence of no door.
+**Level 3 disproves that**, and the mistake would have been destructive: running
+that rule over level 3 deletes the real Electrum Door.
+
+What actually discriminates is the kind of sentence, not its silence:
+
+| description | evidence |
+|---|---|
+| names a door on a direction ("an ornately carved stone door to the southeast") | authoritative positive |
+| names the exit as something else ("north through a grand archway") | authoritative negative |
+| generic exit list ("The exits are to the north and south.") | no information either way |
+
+The generic cave template appears on `cave-91` (our door bogus) and on
+`cave-156` (our door real), so it cannot discriminate. Of the level 2
+retractions, only `grand-hall n` follows from its description; `cave-91`,
+`cave-57` and `filthy-cave` rest on the shrine map instead. **Idea 2 must
+therefore never retract on silence** — only on a description that positively
+names something else in that direction.
+
+### Resolved: the off-by-one is a level boundary, not a missing room
+
+Totals reconcile exactly. Theirs: 50 + 55 + 73 = 178. Ours excluding `pit`,
+which they never draw: 51 + 54 + 73 = 178. So our room set is complete and
+correct, and exactly one room sits on the wrong side of the level 1 / level 2
+boundary — we place it on 1, they place it on 2. Both stairwell ends are drawn
+on both maps, so it is not the stairwell itself. Finding it needs a topology
+diff rather than a count.
 
 
 ## Reasons to hold off
