@@ -83,12 +83,36 @@ outward walk*.
 Any export — a checked-in database, JSON behind an HTML map — must keep the two
 apart, or it ships one afternoon's state as though it were the world.
 
+## From the sewers (level 1 surveyed)
+
+**12. A shaft belongs to no level.** Two rooms named "town sewer" (singular,
+against 170 "town sewers") form a vertical drop from the desert into sewer level
+three, bypassing levels one and two:
+
+```
+crude-stone-building (desert, z=0)
+  -> town-sewer-1 (z=-1) -> town-sewer (z=-2) -> town-sewers-169 (z=-3)
+```
+
+They are flat-disconnected from every level they pass through, so each shows as
+a one-room component at its own depth. "Level" is a property of a horizontally
+connected region; some rooms are pure vertical transit and belong to none. The
+same shape recurs with pits (`pit`, `pit-1`, `pit-2`) — a room whose only links
+are vertical. Filing them by `z` alone is arbitrary and, for the dungeon `pit`,
+we already chose to file by *the level you fall from* instead.
+
+**13. A region can have entrances the map's author left out.** The sewers reach
+the surface twice — up to second town, and up this shaft to the desert. The
+shrine's level 1 draws only the town 2 stair. That is scope, not error, but it
+means a room-count difference is not automatically our bug.
+
 ## Survey queue
 
 - [x] First town, second town
 - [x] First dungeon, levels 1-3
+- [x] Sewers level 1  (levels 2-3 still to come)
 - [ ] Sewers beneath town 2
-- [ ] Stoneworks, levels 1-6
+- [ ] Stoneworks, levels 1-6  (note: the `stoneworks` area holds 0 rooms today; the stonework corridors are filed elsewhere)
 - [ ] Third town
 - [ ] Anything else with levers, stones or spoken words
 
