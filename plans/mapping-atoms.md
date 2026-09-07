@@ -233,6 +233,37 @@ components, not six, and 21 of the area's frontiers are in them. The user says
 the stoneworks has six levels. So that region is materially incomplete too, and
 `z` cannot be used to split it.
 
+## Done: the sewers split
+
+`sewers` became `sewers-level-1` (63), `sewers-level-2` (55), `sewers-level-3`
+(56); the emptied `sewers` area was dropped. Cross-area edges came out exactly
+as the shrine draws them:
+
+```
+[level 1]  u  town-sewers      -> path-4               [second-town]
+[level 1]  d  town-sewers-62   -> town-sewers-63       [level 2]
+[level 2]  d  town-sewers-117  -> town-sewers-118      [level 3]
+[level 3]  u  town-sewer-1     -> crude-stone-building [desert]
+```
+
+Two judgement calls, both following the first dungeon's precedent that a room
+of pure vertical transit is filed with the level it serves rather than by `z`:
+
+- `pit-1` and `pit-2` go to level 3, the level you fall from.
+- The two-room desert shaft (`town-sewer-1`, `town-sewer`) goes to level 3 as
+  well, even though those rooms dead-reckon to `z=-1` and `z=-2`. It touches no
+  level horizontally and lands on level 3, which is exactly how the shrine draws
+  it — as level 3's "Up to Desert" exit, absent from the level 1 and 2 maps.
+
+So level 3 holds four rooms whose `z` disagrees with their area. That is the
+intended meaning: `z` is physical depth, the area is which level you explore it
+from.
+
+**Naming inconsistency to settle.** These are `sewers-level-1/2/3` (numerals)
+against `first-dungeon-level-one/two/three` (words). Both were what was asked
+for at the time. Worth aligning before more areas are split — renaming is an
+`UPDATE areas SET slug=...` and nothing in the code references either.
+
 ## Survey queue
 
 - [x] First town, second town

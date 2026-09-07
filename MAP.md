@@ -55,7 +55,7 @@ Key:
 [E]--[ ]--[ ]--[ ]--[ ]--[ ]--[a]
          / |         |
         /  |         |
-     [ v] [ ]       [ ]             down to The Sewers
+     [ v] [ ]       [ ]             down to Sewers, Level 1
     /      |         |
    /       |         |
 [I]       [ ]       [t]
