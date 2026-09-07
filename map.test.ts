@@ -68,6 +68,22 @@ describe('renderArea', () => {
     expect(text).toContain('[pv]');
   });
 
+  // Regression: `pit` on dungeon level three is entered only by falling through
+  // a trap door from level two, so it is unreachable from that level's origin.
+  // Laying out from a single root placed it nowhere -- dropping it silently.
+  it('keeps a room that is unreachable from the origin, tiled alongside', () => {
+    const { lines } = renderArea({
+      rooms: [room(1, 'start', 'north plaza'), room(2, 'next', 'temple'), room(3, 'island', 'arena')],
+      exits: [...pair(1, 'e', 2, 'w'), { from_id: 3, direction: 'u', to_id: 99 }],
+      origin: 'start',
+      areaOf: () => 'somewhere else',
+    });
+    const text = lines.join('\n');
+    expect(text).toContain('[A^]');                 // the detached room is drawn
+    expect(text).toContain('[ ]--[t]');             // and the main component too
+    expect(text).toContain('up to somewhere else');
+  });
+
   it('turns an exit leaving the area into a text label', () => {
     const { lines } = renderArea({
       rooms: [room(1, 'plaza', 'north plaza')],

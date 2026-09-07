@@ -305,8 +305,14 @@ top-of-a-stairwell          (L2) <-> bottom-of-a-stairwell          (L3)
 cave-61                     (L2) <-> pit                            (L3)   [trap door]
 ```
 
-The third is not a staircase but the `trap door` trap on cave-61, and it is why
-level three is in two pieces: 73 rooms off the stairwell, plus `pit` alone.
+The third is not a staircase but the `trap door` trap on cave-61, and it left
+level three in two pieces: 73 rooms off the stairwell, plus `pit` alone. `pit`
+was therefore filed under **level two**, which is where it belongs functionally
+— you can only fall into it from level two and only climb back out to level two,
+so nothing on level three is reachable through it. Each level is now a single
+connected component. It is the one room whose area and `z` disagree (`z = -3`,
+area = level two): `z` records the physical depth, the area records which level
+you explore it from, and here those genuinely differ.
 
 An earlier draft of this plan argued the dungeon should instead be paginated by
 `z` at render time, on the grounds that an area split would duplicate what `z`

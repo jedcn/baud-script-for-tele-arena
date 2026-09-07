@@ -72,42 +72,93 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
   if (!origin) throw new Error(`origin room '${opts.origin}' is not in this area`);
 
   const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
-  const pos = new Map<number, Pos>([[origin.id, { c: 0, r: 0 }]]);
 
-  // Pass 1 -- compass edges, which carry a true direction.
-  for (let i = 0; i < rooms.length; i++)
-    for (const e of exits) {
-      const from = pos.get(e.from_id);
-      if (!from || !internal(e) || pos.has(e.to_id!)) continue;
-      const o = OFF[e.direction];
-      if (o) pos.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+  // Split into connected components first. A room can be unreachable from the
+  // origin without the map being wrong -- `pit` on dungeon level three is
+  // entered only by falling through a trap door from level two -- and laying
+  // out from a single root would place every such room nowhere, i.e. drop it
+  // from the drawing with no error. Each component is laid out on its own and
+  // the components are then tiled side by side, the way report.ts does it.
+  const neighbours = new Map<number, Set<number>>();
+  for (const e of exits) {
+    if (!internal(e)) continue;
+    if (!neighbours.has(e.from_id)) neighbours.set(e.from_id, new Set());
+    if (!neighbours.has(e.to_id!)) neighbours.set(e.to_id!, new Set());
+    neighbours.get(e.from_id)!.add(e.to_id!);
+    neighbours.get(e.to_id!)!.add(e.from_id);
+  }
+  const componentOf = new Map<number, number>();
+  const roots: number[] = [];
+  // The origin's component is laid out first so it stays leftmost.
+  for (const seed of [origin.id, ...rooms.map(r => r.id)]) {
+    if (componentOf.has(seed)) continue;
+    const index = roots.length;
+    roots.push(seed);
+    const stack = [seed];
+    componentOf.set(seed, index);
+    while (stack.length) {
+      const cur = stack.pop()!;
+      for (const n of neighbours.get(cur) ?? []) {
+        if (componentOf.has(n)) continue;
+        componentOf.set(n, index);
+        stack.push(n);
+      }
     }
+  }
 
-  // Pass 2 -- vertical neighbours. `u`/`d` have no compass offset, so park each
-  // in the first FREE adjacent cell and let the ^/v badges carry the vertical,
-  // the way the shrine maps show the vaults and the private room.
-  //
-  // Both halves of this matter. A renderer that skips u/d entirely silently
-  // DROPS those rooms (they are reachable no other way). A renderer that uses a
-  // fixed offset drops a different room, by parking the vertical neighbour on
-  // top of a real one. And running this before pass 1 drops a third, because a
-  // vertical room squats on a cell a compass edge then overwrites.
-  const taken = (c: number, r: number) =>
-    [...pos.values()].some(p => p.c === c && p.r === r);
-  for (let i = 0; i < rooms.length; i++)
-    for (const e of exits) {
-      const from = pos.get(e.from_id);
-      if (!from || !internal(e) || pos.has(e.to_id!)) continue;
-      if (e.direction !== 'u' && e.direction !== 'd') continue;
-      const order: [number, number][] = e.direction === 'u'
-        ? [[-1, -1], [1, -1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]]
-        : [[1, 1], [-1, 1], [0, 1], [1, 0], [-1, 0], [1, -1], [-1, -1], [0, -1]];
-      for (const [dc, dr] of order)
-        if (!taken(from.c + dc, from.r + dr)) {
-          pos.set(e.to_id!, { c: from.c + dc, r: from.r + dr });
-          break;
-        }
-    }
+  const pos = new Map<number, Pos>();
+  let cursor = 0;                       // left edge of the next component
+  const GAP = 2;
+  roots.forEach((root, index) => {
+    const members = rooms.filter(r => componentOf.get(r.id) === index).map(r => r.id);
+    const inComponent = new Set(members);
+    const local = new Map<number, Pos>([[root, { c: 0, r: 0 }]]);
+    const relevant = exits.filter(e => inComponent.has(e.from_id));
+
+    // Pass 1 -- compass edges, which carry a true direction.
+    for (let i = 0; i < members.length; i++)
+      for (const e of relevant) {
+        const from = local.get(e.from_id);
+        if (!from || !internal(e) || local.has(e.to_id!)) continue;
+        const o = OFF[e.direction];
+        if (o) local.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+      }
+
+    // Pass 2 -- vertical neighbours. `u`/`d` have no compass offset, so park
+    // each in the first FREE adjacent cell and let the ^/v badges carry the
+    // vertical, the way the shrine maps show the vaults and the private room.
+    //
+    // Every part of this ordering matters, and each failure DROPS a room rather
+    // than misdrawing one. Skipping u/d entirely loses rooms reachable no other
+    // way. A fixed offset lands the neighbour on top of a real room. Running
+    // this before pass 1 lets a vertical room squat on a cell a compass edge
+    // then overwrites.
+    const taken = (c: number, r: number) =>
+      [...local.values()].some(p => p.c === c && p.r === r);
+    for (let i = 0; i < members.length; i++)
+      for (const e of relevant) {
+        const from = local.get(e.from_id);
+        if (!from || !internal(e) || local.has(e.to_id!)) continue;
+        if (e.direction !== 'u' && e.direction !== 'd') continue;
+        const order: [number, number][] = e.direction === 'u'
+          ? [[-1, -1], [1, -1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]]
+          : [[1, 1], [-1, 1], [0, 1], [1, 0], [-1, 0], [1, -1], [-1, -1], [0, -1]];
+        for (const [dc, dr] of order)
+          if (!taken(from.c + dc, from.r + dr)) {
+            local.set(e.to_id!, { c: from.c + dc, r: from.r + dr });
+            break;
+          }
+      }
+
+    const cols = [...local.values()].map(p => p.c);
+    const lo = Math.min(...cols), hi = Math.max(...cols);
+    for (const [id, p] of local) pos.set(id, { c: p.c - lo + cursor, r: p.r });
+    cursor += (hi - lo) + 1 + GAP;
+  });
+
+  const unplaced = rooms.filter(r => !pos.has(r.id));
+  if (unplaced.length) throw new Error(
+    `${unplaced.length} room(s) could not be placed: ${unplaced.map(r => r.slug).join(', ')}`);
 
   const placed = [...pos.values()];
   const minC = Math.min(...placed.map(p => p.c)), maxC = Math.max(...placed.map(p => p.c));
@@ -218,6 +269,13 @@ export function buildMarkdown(
 const DRAWN = [
   { slug: 'first-town', title: 'First Town', origin: 'north-plaza' },
   { slug: 'second-town', title: 'Second Town', origin: 'north-plaza-1' },
+  // The dungeon under the first town. Each level is its own area (they are
+  // joined by exactly three passages), so each renders as an ordinary section
+  // and the stairs between them fall out as cross-area labels. Origins are the
+  // room you arrive in coming down from the level above.
+  { slug: 'first-dungeon-level-one', title: 'First Dungeon, Level One', origin: 'dungeon-entrance' },
+  { slug: 'first-dungeon-level-two', title: 'First Dungeon, Level Two', origin: 'bottom-of-a-circular-stairwell' },
+  { slug: 'first-dungeon-level-three', title: 'First Dungeon, Level Three', origin: 'bottom-of-a-stairwell' },
 ];
 
 if (import.meta.main) {
