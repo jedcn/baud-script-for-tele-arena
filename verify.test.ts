@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
-         routeReferences, type Room, type Exit } from './verify';
+         routeReferences, coordinates, type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -108,5 +108,25 @@ describe('routeReferences', () => {
   it('ignores route keys, which are labels rather than room references', () => {
     const f = routeReferences('["town-3/part-1"] = {', () => ({ areaExists: false, matches: 0 }));
     expect(f.ok).toBe(true);
+  });
+});
+
+describe('coordinates', () => {
+  const at = (m: Record<number, [number, number]>) =>
+    new Map(Object.entries(m).map(([k, v]) => [Number(k), { x: v[0], y: v[1] }]));
+  it('passes when every edge lands where its direction says', () => {
+    const e = [...pair(1, 'n', 2, 's'), ...pair(2, 'e', 3, 'w')];
+    const f = coordinates([room(1, 'a'), room(2, 'b'), room(3, 'c')], e,
+                          at({ 1: [0, 0], 2: [0, 1], 3: [1, 1] }));
+    expect(f.ok).toBe(true);
+  });
+  // The desert's exact defect: two rooms joined by an edge but dead-reckoned
+  // from different anchors, so findRoomByFingerprint stops matching.
+  it('flags an edge whose endpoints were reckoned from different anchors', () => {
+    const e = pair(1, 'sw', 2, 'ne');
+    const f = coordinates([room(1, 'a'), room(2, 'b')], e, at({ 1: [4, -2], 2: [12, -3] }));
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('a sw b');
+    expect(f.detail).toContain('mint duplicates');
   });
 });

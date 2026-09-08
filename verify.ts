@@ -6,7 +6,8 @@
 // unwalked frontiers, one-directional exits, horizontal moves that change
 // level, and rooms that exist but never get drawn.
 
-export type Room = { id: number; slug: string; description: string | null };
+export type Room = { id: number; slug: string; description: string | null;
+                     x?: number | null; y?: number | null };
 export type Exit = { from_id: number; direction: string; to_id: number | null };
 export type Finding = { check: string; ok: boolean; detail: string };
 
@@ -93,6 +94,42 @@ export function levelConsistency(rooms: Room[], allExits: Exit[], z: Map<number,
   };
 }
 
+const OFFSET: Record<string, [number, number]> = {
+  n: [0, 1], s: [0, -1], e: [1, 0], w: [-1, 0],
+  ne: [1, 1], nw: [-1, 1], se: [1, -1], sw: [-1, -1],
+};
+
+/**
+ * Walking one step must move you one cell in that direction. An edge whose
+ * stored x/y disagree means the two rooms were dead-reckoned from different
+ * anchors -- typically two mapping sessions -- and that breaks loop closure:
+ * findRoomByFingerprint matches on an exact coordinate, so it silently stops
+ * recognising rooms and mints duplicates instead.
+ *
+ * This is the check that was missing when the desert passed clean while
+ * carrying eight such edges, and then duplicated six rooms on the first loop.
+ */
+export function coordinates(rooms: Room[], allExits: Exit[],
+                            at: Map<number, { x: number; y: number } | null>): Finding {
+  const mine = new Set(rooms.map(r => r.id));
+  const by = new Map(rooms.map(r => [r.id, r.slug]));
+  const bad: string[] = [];
+  for (const e of allExits) {
+    if (e.to_id == null || !mine.has(e.from_id) || !mine.has(e.to_id)) continue;
+    const off = OFFSET[e.direction];
+    const a = at.get(e.from_id), b = at.get(e.to_id);
+    if (!off || !a || !b) continue;
+    if (a.x + off[0] !== b.x || a.y + off[1] !== b.y)
+      bad.push(`${by.get(e.from_id)} ${e.direction} ${by.get(e.to_id)}`);
+  }
+  return {
+    check: 'coordinates agree with the moves',
+    ok: bad.length === 0,
+    detail: bad.length === 0 ? 'every edge lands where its direction says'
+      : `${bad.length} disagree (loop closure will mint duplicates here): ` + bad.join(', '),
+  };
+}
+
 /** Descriptions carry doors, levers and stones, so a missing one is a real gap. */
 export function descriptions(rooms: Room[]): Finding {
   const missing = rooms.filter(r => !r.description);
@@ -164,7 +201,7 @@ if (import.meta.main) {
   let failed = 0;
   for (const slug of slugs) {
     const rooms = db.prepare(
-      `SELECT r.id, r.slug, r.description FROM rooms r JOIN areas a ON a.id = r.area_id
+      `SELECT r.id, r.slug, r.description, r.x, r.y FROM rooms r JOIN areas a ON a.id = r.area_id
        WHERE a.slug = ? ORDER BY r.id`).all(slug) as Room[];
     if (!rooms.length) { console.log(`\n${slug}: no rooms\n`); continue; }
     const mine = new Set(rooms.map(r => r.id));
@@ -172,6 +209,8 @@ if (import.meta.main) {
 
     const findings = [
       frontiers(rooms, exits),
+      coordinates(rooms, allExits, new Map(rooms.map(r =>
+        [r.id, r.x == null || r.y == null ? null : { x: r.x, y: r.y }]))),
       reciprocity(rooms, exits, allExits),
       levelConsistency(rooms, allExits, z),
       descriptions(rooms),
