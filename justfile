@@ -66,6 +66,15 @@ report:
 draw-map-as-markdown:
     bun map.ts
 
+# Check that a mapped area is sound. Run it between levels of a mapping session:
+#   just verify-area sewers-level-1
+# With no slug it checks every area. Checks for unwalked exits, one-directional
+# edges, moves that change depth impossibly (which is how a teleport recorded as
+# an ordinary exit gives itself away), missing descriptions, and that every room
+# can actually be drawn.
+verify-area slug="":
+    bun verify.ts {{slug}}
+
 # Move every log out of ./logs into the sibling archive repo, so the working
 # logs directory only ever holds the current run's sessions.
 archive-logs:
