@@ -1120,6 +1120,15 @@ end, { type = "regex" })
 -- World map triggers
 -- =========================================================================
 
+-- [mapdbg] tracing. Off by default: a mapping run walks hundreds of rooms and
+-- prints one of these per arrival, which buries the [map] lines that are a real
+-- aid and bloats the session log. `map-debug on` turns it back on when a walk
+-- goes wrong. A field rather than a local -- main.lua's 200-local budget.
+taPackage.mapDebug = false
+function taPackage.mapdbg(msg)
+    if taPackage.mapDebug then echo(msg) end
+end
+
 -- Reverse of each movement direction, used to record the back-edge when we
 -- discover a room by walking into it.
 local REVERSE_DIR = {
@@ -1296,7 +1305,7 @@ local function handleRoomEntry(matches)
     end
     taPackage.pendingLock = nil
 
-    echo("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
+    taPackage.mapdbg("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
         .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional)
         .. " coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y .. "," .. taPackage.coord.z .. ")")
 
@@ -1442,17 +1451,17 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     -- this guard sits before the [mapdbg] echo so a plain `ex` during normal
     -- play stays quiet.
     if not taPackage.mapping or not taPackage.currentRoomId then return end
-    echo("[mapdbg] Exits trigger: mapping=" .. tostring(taPackage.mapping)
+    taPackage.mapdbg("[mapdbg] Exits trigger: mapping=" .. tostring(taPackage.mapping)
         .. " currentRoomId=" .. tostring(taPackage.currentRoomId)
         .. " (" .. type(taPackage.currentRoomId) .. ")")
 
     if taPackage.currentRoomProvisional then
-        echo("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
+        taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
         local match = taPackage.db.findRoomByFingerprint(
             taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord)
-        echo("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
+        taPackage.mapdbg("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
             .. " val=" .. tostring(match))
         -- Coordinates drift across this world's non-Euclidean loops, so when the
         -- coordinate match misses, trust the door we walked through instead: the
@@ -1462,7 +1471,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             local back = REVERSE_DIR[taPackage.currentEntryDir]
             match = taPackage.db.findLoopClosure(
                 taPackage.currentRoom, dirs, taPackage.currentRoomId, back)
-            echo("[mapdbg] findLoopClosure back=" .. tostring(back)
+            taPackage.mapdbg("[mapdbg] findLoopClosure back=" .. tostring(back)
                 .. " -> type=" .. type(match) .. " val=" .. tostring(match))
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
@@ -1759,6 +1768,21 @@ end, { type = "regex" })
 local function stopMapping()
     taPackage.mapping = false
 end
+
+-- `map-debug on` / `map-debug off`. Traces every room entry and every
+-- fingerprint decision. Useful when a walk mis-links; unbearable otherwise.
+-- One capture rather than `(on|off)`: Lua patterns have no alternation, and the
+-- test helper converts these regexes to Lua patterns, so an alternation here
+-- silently matches nothing under test.
+createAlias("^map-debug (.+)$", function(matches)
+    local arg = matches[2]
+    if arg ~= "on" and arg ~= "off" then
+        echo("[map] usage: map-debug on   or   map-debug off")
+        return
+    end
+    taPackage.mapDebug = arg == "on"
+    echo("[map] mapdbg tracing " .. (taPackage.mapDebug and "on" or "off"))
+end, { type = "regex" })
 
 createAlias("^map-off$", function()
     stopMapping()

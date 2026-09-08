@@ -3837,6 +3837,27 @@ describe("World map triggers", function()
 
     describe("mapping mode aliases", function()
 
+        it("mapdbg tracing is off by default, so a mapping run stays readable", function()
+            assert.is_false(taPackage.mapDebug)
+            helper.echoCalls = {}
+            taPackage.mapdbg("[mapdbg] should not appear")
+            assert.are.equal(0, #helper.echoCalls)
+        end)
+
+        it("map-debug on enables tracing, map-debug off disables it", function()
+            helper.simulateAlias("map-debug on")
+            assert.is_true(taPackage.mapDebug)
+            helper.echoCalls = {}
+            taPackage.mapdbg("[mapdbg] traced")
+            assert.is_true(tableContains(helper.echoCalls, "[mapdbg] traced"))
+
+            helper.simulateAlias("map-debug off")
+            assert.is_false(taPackage.mapDebug)
+            helper.echoCalls = {}
+            taPackage.mapdbg("[mapdbg] silent again")
+            assert.are.equal(0, #helper.echoCalls)
+        end)
+
         it("map-off disables mapping", function()
             taPackage.mapping = true
             helper.simulateAlias("map-off")
