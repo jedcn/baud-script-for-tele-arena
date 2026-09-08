@@ -363,7 +363,9 @@ if (import.meta.main) {
       `SELECT r.id, r.slug, r.name FROM rooms r
        JOIN areas a ON a.id = r.area_id WHERE a.slug = ? ORDER BY r.id`)
       .all(slug) as Room[];
-    if (!rooms.length) throw new Error(`area '${slug}' has no rooms`);
+    // An area can legitimately be empty: one that has been cleared for
+    // re-mapping still wants its row, so `map-area <slug>` can refile into it.
+    if (!rooms.length) { console.log(`map: skipping '${slug}' — no rooms yet`); return null; }
     const exits = db.prepare(
       `SELECT from_id, direction, to_id FROM room_exits
        WHERE from_id IN (SELECT r.id FROM rooms r JOIN areas a ON a.id = r.area_id
@@ -374,7 +376,7 @@ if (import.meta.main) {
       areaOf: (id) => (areaName.get(id) as { name: string } | null)?.name ?? '?',
     });
     return { title, lines, key };
-  });
+  }).filter((a): a is { title: string; lines: string[]; key: string[] } => a !== null);
 
   await Bun.write('MAP.md', buildMarkdown(rendered));
   const total = rendered.reduce((n, a) => n + a.lines.length, 0);
