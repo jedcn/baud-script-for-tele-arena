@@ -104,6 +104,38 @@ export function descriptions(rooms: Room[]): Finding {
   };
 }
 
+/**
+ * `navigate-to` addresses rooms as "<area>/<room>" strings inside ta_nav.lua,
+ * which nothing type-checks. Renaming an area silently breaks every route that
+ * named it, and the break only shows up when someone tries to walk it -- which
+ * is how splitting `sewers` into three levels stranded the whole town-3 chain.
+ *
+ * `resolve` mirrors the real resolver in ta_db.roomsInAreaMatching: an exact
+ * slug match wins, else rooms whose NAME slugifies to the reference.
+ */
+export function routeReferences(
+  src: string,
+  resolve: (area: string, ref: string) => { areaExists: boolean; matches: number },
+): Finding {
+  const bad: string[] = [];
+  const re = /\b(?:from|to)\s*=\s*"([a-z0-9-]+)\/([a-z0-9-]+)"/g;
+  let m: RegExpExecArray | null;
+  let seen = 0;
+  while ((m = re.exec(src)) !== null) {
+    seen++;
+    const [, area, ref] = m;
+    const { areaExists, matches } = resolve(area, ref);
+    if (!areaExists) bad.push(`${area}/${ref} (no such area)`);
+    else if (matches !== 1) bad.push(`${area}/${ref} (${matches} matches)`);
+  }
+  return {
+    check: 'every navigate-to route reference resolves',
+    ok: bad.length === 0,
+    detail: bad.length === 0 ? `all ${seen} area/room references resolve`
+      : `${bad.length} broken: ` + [...new Set(bad)].join(', '),
+  };
+}
+
 export function report(findings: Finding[]): string {
   return findings.map(f => `  ${f.ok ? 'PASS' : 'FAIL'}  ${f.check}\n        ${f.detail}`).join('\n');
 }
@@ -157,6 +189,22 @@ if (import.meta.main) {
     console.log(`\n${slug}  (${rooms.length} rooms)  ${bad === 0 ? 'OK' : `${bad} PROBLEM(S)`}`);
     console.log(report(findings));
   }
+  // Route references are global rather than per-area, so they are checked once.
+  if (existsSync('ta_nav.lua')) {
+    const slugify = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const f = routeReferences(await Bun.file('ta_nav.lua').text(), (area, ref) => {
+      const rows = db.prepare(
+        `SELECT r.slug, r.name FROM rooms r JOIN areas a ON a.id = r.area_id WHERE a.slug = ?`)
+        .all(area) as { slug: string; name: string }[];
+      if (!rows.length) return { areaExists: false, matches: 0 };
+      const bySlug = rows.filter(r => r.slug === ref);
+      return { areaExists: true, matches: bySlug.length || rows.filter(r => slugify(r.name) === ref).length };
+    });
+    if (!f.ok) failed++;
+    console.log(`\nnavigate-to routes  ${f.ok ? 'OK' : 'PROBLEM'}`);
+    console.log(report([f]));
+  }
+
   console.log(failed === 0 ? '\nAll checks passed.\n' : `\n${failed} check(s) failed.\n`);
   process.exit(failed === 0 ? 0 : 1);
 }

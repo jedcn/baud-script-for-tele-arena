@@ -13703,7 +13703,8 @@ describe("navigate-to", function()
     -- display name and differ only by exit-set, which is why the start check
     -- fingerprints rather than matching on the name.
     local AREAS = { { id = 1, slug = "first-town" }, { id = 7, slug = "second-town" },
-                    { id = 8, slug = "sewers" }, { id = 14, slug = "third-town" } }
+                    { id = 8, slug = "sewers-level-1" }, { id = 15, slug = "sewers-level-2" },
+                    { id = 16, slug = "sewers-level-3" }, { id = 14, slug = "third-town" } }
     local ROOMS = {
         [1]    = { id = 1,    slug = "north-plaza",          name = "north plaza",       area = 1,
                    exits = { "e", "n", "ne", "nw", "s", "w" } },
@@ -13718,12 +13719,12 @@ describe("navigate-to", function()
                    exits = { "e", "n", "s", "w" } },
         -- The junction the ruby, platinum and onyx doors open off, and where
         -- after-doors ends. Here so that route's `to` resolves.
-        [426]  = { id = 426,  slug = "town-sewers-63",       name = "town sewers",       area = 8,
+        [426]  = { id = 426,  slug = "town-sewers-63",       name = "town sewers",       area = 15,
                    exits = { "e", "n", "s", "u", "w" } },
         -- The hydra's room: where the hydra leg ends and the stoneworks leg
         -- begins. Here so the hydra route's `to` resolves and it can be walked
         -- on its own.
-        [543]  = { id = 543,  slug = "town-sewers-165",      name = "town sewers",       area = 8,
+        [543]  = { id = 543,  slug = "town-sewers-165",      name = "town sewers",       area = 16,
                    exits = { "n", "w" } },
         -- Slugs are numbered globally but references resolve within one area,
         -- so the room holding the bare `underground-plaza` slug can sit in a
@@ -13793,13 +13794,13 @@ describe("navigate-to", function()
     -- A short stand-in for the real 16-step sewers route, so the tests read as
     -- tests of the engine rather than of one hard-coded direction list. The key
     -- is only a label; `to` is what says where the route ends.
-    local ROUTE = { from = "second-town/north-plaza", to = "sewers/town-sewers-18",
+    local ROUTE = { from = "second-town/north-plaza", to = "sewers-level-1/town-sewers-18",
                     steps = { "sw", "d", "se" } }
 
     local function route(overrides)
         local r = { from = ROUTE.from, to = ROUTE.to, steps = ROUTE.steps }
         for k, v in pairs(overrides or {}) do r[k] = v end
-        taPackage.navRoutes["sewers/town-sewers-18"] = r
+        taPackage.navRoutes["sewers-level-1/town-sewers-18"] = r
         return r
     end
 
@@ -13884,7 +13885,7 @@ describe("navigate-to", function()
         -- The bare command must not eat a real destination.
         it("still walks when given one", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
         end)
@@ -13915,14 +13916,14 @@ describe("navigate-to", function()
 
         it("refuses a route with a step it can't make sense of", function()
             route({ steps = { "sw", { shrug = true }, "se" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.is_truthy(lastEchoes():find("Step 2 of the route", 1, true))
             assert.are.equal(0, #helper.sendCalls)
         end)
 
         it("reports an unknown area in a route rather than walking", function()
             route({ from = "no-such-town/north-plaza" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.is_truthy(lastEchoes():find("there's no area called 'no-such-town'", 1, true))
             assert.are.equal(0, sent("sw"))
@@ -13930,7 +13931,7 @@ describe("navigate-to", function()
 
         it("reports an ambiguous room reference with the candidates", function()
             route({ from = "third-town/underground-plaza" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             local out = lastEchoes()
             assert.is_truthy(out:find("is ambiguous", 1, true))
             assert.is_truthy(out:find("third-town/underground-plaza-1", 1, true))
@@ -13944,7 +13945,7 @@ describe("navigate-to", function()
         -- is what made desert/stonework-chamber unreachable.
         it("takes the exact slug over the name it shares", function()
             route({ from = "first-town/north-plaza" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(1)
             assert.is_falsy(lastEchoes():find("is ambiguous", 1, true))
             assert.are.equal(1, sent("sw"))
@@ -14055,7 +14056,7 @@ describe("navigate-to", function()
                 assert.are.equal(taPackage.navRoutes["town-3/ruby-door"].from, AFTER().from)
                 assert.are.equal("second-town/north-plaza", AFTER().from)
                 assert.are.equal(taPackage.navRoutes["town-3/get-onyx-key"].to, AFTER().to)
-                assert.are.equal("sewers/town-sewers-63", AFTER().to)
+                assert.are.equal("sewers-level-2/town-sewers-63", AFTER().to)
             end)
 
             -- The walk down from the plaza is ruby-door's, step for step. What
@@ -14192,7 +14193,7 @@ describe("navigate-to", function()
             -- after-doors stops exactly where this one starts.
             it("begins where after-doors ends", function()
                 assert.are.equal(taPackage.navRoutes["town-3/after-doors"].to, CHAIN().from)
-                assert.are.equal("sewers/town-sewers-63", CHAIN().from)
+                assert.are.equal("sewers-level-2/town-sewers-63", CHAIN().from)
             end)
 
             it("names the eight legs in order", function()
@@ -14508,7 +14509,7 @@ describe("navigate-to", function()
                 -- runs through it, so we walk in and straight back out.
                 it("still ends in the hydra's room", function()
                     local flat = taPackage.navRouteSteps(LEG(), "chasm-is-clear")
-                    assert.are.equal("sewers/town-sewers-165", LEG().to)
+                    assert.are.equal("sewers-level-3/town-sewers-165", LEG().to)
                     assert.are.equal("n", flat[#flat])
                 end)
 
@@ -15240,8 +15241,8 @@ describe("navigate-to", function()
             -- what lets after-doors splice it in without moving us.
             it("starts and ends at the junction the doors open off", function()
                 local r = taPackage.navRoutes["town-3/get-platinum-key-from-63"]
-                assert.are.equal("sewers/town-sewers-63", r.from)
-                assert.are.equal("sewers/town-sewers-63", r.to)
+                assert.are.equal("sewers-level-2/town-sewers-63", r.from)
+                assert.are.equal("sewers-level-2/town-sewers-63", r.to)
                 assert.are.equal(taPackage.navRoutes["town-3/get-platinum-key"].to, r.to)
             end)
 
@@ -15335,7 +15336,7 @@ describe("navigate-to", function()
 
         it("walks when the room we're in matches", function()
             route({ from = FROM })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
         end)
@@ -15343,14 +15344,14 @@ describe("navigate-to", function()
         -- The game lists exits in its own order; the route writes them in any.
         it("does not care what order the exits are listed in", function()
             route({ from = { room = "north plaza", exits = "w,sw,s,n,e" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
         end)
 
         it("refuses when the exits don't match", function()
             route({ from = FROM })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(1)               -- first-town's north plaza: more exits
             assert.are.equal(0, sent("sw"))
             local out = lastEchoes()
@@ -15360,7 +15361,7 @@ describe("navigate-to", function()
 
         it("refuses when the room name doesn't match", function()
             route({ from = { room = "grand hall", exits = "e,n,s,sw,w" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(0, sent("sw"))
             assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
@@ -15371,7 +15372,7 @@ describe("navigate-to", function()
         -- weak, and it says so rather than pretending otherwise.
         it("accepts a start given as a name alone, and warns that it is weak", function()
             route({ from = { room = "north plaza" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
             local out = lastEchoes()
@@ -15382,7 +15383,7 @@ describe("navigate-to", function()
 
         it("still refuses a name-only start in a differently named room", function()
             route({ from = { room = "grand hall" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(0, sent("sw"))
         end)
@@ -15390,7 +15391,7 @@ describe("navigate-to", function()
         -- A fingerprint start must not quietly skip the other pre-flight check.
         it("still checks the pack for what the route needs", function()
             route({ from = FROM, requires = "coil of rope" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("i"))
             assert.are.equal(0, sent("sw"))
@@ -15410,7 +15411,7 @@ describe("navigate-to", function()
         -- still being tuned.
         it("traces a plain walk without being asked", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             local out = lastEchoes()
             assert.is_truthy(out:find("[nav|t]", 1, true))
@@ -15420,7 +15421,7 @@ describe("navigate-to", function()
         it("reports the pace and encumbrance it started with", function()
             route()
             setEncumberance(120, 200)
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             -- Read the pace rather than repeating it: it is still being tuned,
             -- and a literal here just breaks on the next adjustment.
@@ -15430,14 +15431,14 @@ describe("navigate-to", function()
 
         it("says so when encumbrance has never been read", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.is_truthy(lastEchoes():find("encumbrance unknown (run st)", 1, true))
         end)
 
         it("can be silenced with quiet", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 quiet")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 quiet")
             answerProbe(274)
             assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))
             assert.are.equal(1, sent("sw"))   -- and still walks
@@ -15445,14 +15446,14 @@ describe("navigate-to", function()
 
         it("still resolves the destination with debug appended", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 debug")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 debug")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))   -- not treated as an unknown route
         end)
 
         it("records how far into the walk a trip happened", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 debug")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 debug")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15462,7 +15463,7 @@ describe("navigate-to", function()
 
         it("summarises the walk when it ends", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 debug")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 debug")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15482,7 +15483,7 @@ describe("navigate-to", function()
 
         it("advances on the too-dark line as it would on a brief", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
             helper.simulateLine(DARK)
@@ -15496,7 +15497,7 @@ describe("navigate-to", function()
         -- the walk goes on rather than hanging on a brief that isn't coming.
         it("advances a lit route through a room that turns out to be dark", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine(DARK)
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15509,7 +15510,7 @@ describe("navigate-to", function()
         -- send a bare return and wait for a floor line that never comes.
         it("skips the floor check after a trip in an unexpectedly dark room", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine(DARK)                     -- step 1 landed, unlit
             helper.fireTimers(taPackage.navStepDelayMs)   -- step 2 goes out
@@ -15524,7 +15525,7 @@ describe("navigate-to", function()
         -- floor we can read, so the pick-up still runs.
         it("still checks the floor after a trip in a lit room", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")                                 -- step 1 landed, lit
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15536,7 +15537,7 @@ describe("navigate-to", function()
 
         it("arrives when the last step is acknowledged", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             for _ = 1, 2 do
                 helper.simulateLine(DARK)
@@ -15545,14 +15546,14 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("se"))
             helper.simulateLine(DARK)
             assert.is_nil(taPackage.navigate)
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18", 1, true))
         end)
 
         -- A wrong turn is still caught: the refusal is printed in the dark like
         -- anywhere else, so a drifting walk stops instead of groping onwards.
         it("still stops on a direction the game refuses", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("Sorry, there's no exit in that direction.")
             assert.is_nil(taPackage.navigate)
@@ -15565,7 +15566,7 @@ describe("navigate-to", function()
         -- would wedge the walk.
         it("re-sends the tripped step without checking the floor", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             local bareReturns = sent("")
             helper.simulateLine("In your haste, you trip and fall!")
@@ -15582,7 +15583,7 @@ describe("navigate-to", function()
         -- a hang leaves the character standing in a maze saying nothing.
         it("stops when a dark step goes completely unanswered", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.fireTimers(taPackage.navDarkAckMs)
             assert.is_nil(taPackage.navigate)
@@ -15593,7 +15594,7 @@ describe("navigate-to", function()
 
         it("leaves a lit route's steps unwatched", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.fireTimers(taPackage.navDarkAckMs)
             assert.is_not_nil(taPackage.navigate)
@@ -15606,7 +15607,7 @@ describe("navigate-to", function()
         -- run is step 2, and it must be the one named.
         it("doesn't report a re-sent step as the one that went quiet", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("In your haste, you trip and fall!")
             helper.fireTimers(taPackage.navTripRetryMs)
@@ -15621,7 +15622,7 @@ describe("navigate-to", function()
 
         it("says what walking blind gives up before it sets off", function()
             route({ dark = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.is_truthy(lastEchoes():find("This route runs dark", 1, true))
         end)
@@ -15814,13 +15815,13 @@ describe("navigate-to", function()
             local r = {}
             for k, v in pairs(LEVER) do r[k] = v end
             for k, v in pairs(overrides or {}) do r[k] = v end
-            taPackage.navRoutes["sewers/town-sewers-18"] = r
+            taPackage.navRoutes["sewers-level-1/town-sewers-18"] = r
             return r
         end
 
         it("pulls the lever by default", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15829,7 +15830,7 @@ describe("navigate-to", function()
 
         it("walks the route without pulling it when asked", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15843,7 +15844,7 @@ describe("navigate-to", function()
         -- it, mean the same thing whichever way the route was asked for.
         it("keeps the step numbering identical either way", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)   -- step 2, skipped
@@ -15856,7 +15857,7 @@ describe("navigate-to", function()
         -- this is the shape a typo takes: the right word on the wrong route.
         it("says so when the route has no lever to leave alone", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
             answerProbe(274)
             assert.is_truthy(lastEchoes():find("Nothing on this route pulls a lever", 1, true))
             assert.are.equal(1, sent("sw"))   -- and it still walks
@@ -15866,7 +15867,7 @@ describe("navigate-to", function()
         -- when it is about to pull one.
         it("warns before pulling a lever that toggles", function()
             leverRoute({ leverToggles = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.is_truthy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
             assert.is_truthy(lastEchoes():find("no-pull-lever", 1, true))
@@ -15874,14 +15875,14 @@ describe("navigate-to", function()
 
         it("doesn't warn when the pull is being skipped anyway", function()
             leverRoute({ leverToggles = true })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
             answerProbe(274)
             assert.is_falsy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
         end)
 
         it("combines with the other trailing flags", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever quiet")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever quiet")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -15892,7 +15893,7 @@ describe("navigate-to", function()
         -- that wasn't sent must not be traced as sent.
         it("traces the skipped lever as skipped, not as sent", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 no-pull-lever")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -16008,7 +16009,7 @@ describe("navigate-to", function()
 
         it("probes the room before moving", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(1, sent(""))
             assert.are.equal(1, sent("ex"))
             assert.are.equal(0, sent("sw"))  -- nothing walked until the probe answers
@@ -16016,7 +16017,7 @@ describe("navigate-to", function()
 
         it("walks the first step when the fingerprint is the route's start", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
         end)
@@ -16024,7 +16025,7 @@ describe("navigate-to", function()
         -- The whole reason the check fingerprints instead of matching on name.
         it("refuses from the same-named room in another town", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(1)  -- first-town's north plaza: same name, different exits
             local out = lastEchoes()
             assert.is_truthy(out:find("I don't know how to get there from here.", 1, true))
@@ -16035,7 +16036,7 @@ describe("navigate-to", function()
 
         it("refuses when the room matches nothing mapped", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             helper.simulateLine("You're in the mysterious grotto.")
             helper.simulateLine("Exits: n,s.")
             assert.is_truthy(lastEchoes():find("no room I have mapped", 1, true))
@@ -16044,7 +16045,7 @@ describe("navigate-to", function()
 
         it("reports a probe that never comes back", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             helper.fireTimers(5000)
             assert.is_truthy(lastEchoes():find("never told me what room I'm in", 1, true))
             assert.are.equal(0, sent("sw"))
@@ -16069,7 +16070,7 @@ describe("navigate-to", function()
         it("walks a route whose ends it can't resolve", function()
             route()
             noMap()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(1, sent("ex"))
             helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("Exits: e,n,s,sw,w.")
@@ -16081,7 +16082,7 @@ describe("navigate-to", function()
         it("says up front which checks it can't make", function()
             route()
             noMap()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             local out = lastEchoes()
             assert.is_truthy(out:find("No map on this machine", 1, true))
             assert.is_truthy(out:find("can't check where this route starts or where it ends",
@@ -16095,7 +16096,7 @@ describe("navigate-to", function()
         it("doesn't claim to have lost a check it can still make", function()
             route({ from = { room = "north plaza", exits = "e,n,s,sw,w" } })
             noMap()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             local out = lastEchoes()
             assert.is_truthy(out:find("can't check where it ends", 1, true))
             assert.is_falsy(out:find("where this route starts", 1, true))
@@ -16108,7 +16109,7 @@ describe("navigate-to", function()
         it("still refuses a fingerprint start that doesn't match, map or no map", function()
             route({ from = { room = "north plaza", exits = "e,n,s,sw,w" } })
             noMap()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             helper.simulateLine("You're in the mysterious grotto.")
             helper.simulateLine("Exits: n,s.")
             assert.are.equal(0, sent("sw"))
@@ -16119,7 +16120,7 @@ describe("navigate-to", function()
         it("names the room it found instead of the one it expected", function()
             route()
             noMap()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("Exits: e,n,s,sw,w.")
             local out = lastEchoes()
@@ -16133,7 +16134,7 @@ describe("navigate-to", function()
         -- The second still refuses, exactly as before.
         it("still refuses a bad reference when there IS a map", function()
             route({ from = "nowhere/at-all" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(0, #helper.sendCalls)
             local out = lastEchoes()
             assert.is_truthy(out:find("there's no area called 'nowhere'", 1, true))
@@ -16142,7 +16143,7 @@ describe("navigate-to", function()
 
         it("still refuses a room that doesn't exist in an area that does", function()
             route({ to = "second-town/no-such-room" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(0, #helper.sendCalls)
             assert.is_truthy(lastEchoes():find("there's no room 'no-such-room'", 1, true))
         end)
@@ -16176,7 +16177,7 @@ describe("navigate-to", function()
             -- A seam naming a mapped room: nothing here can identify it, so the
             -- walk is no worse off than it is between any two ordinary steps.
             it("carries on past a seam that names a map reference", function()
-                walkToTheSeam("sewers/town-sewers-18")
+                walkToTheSeam("sewers-level-1/town-sewers-18")
                 helper.simulateLine("You're in the town sewers.")
                 helper.simulateLine("Exits: u,se.")
                 local out = lastEchoes()
@@ -16214,7 +16215,7 @@ describe("navigate-to", function()
         end)
 
         -- The route this was built for. Six of its seven seams are fingerprints
-        -- and survive; the seventh names sewers/town-sewers-165 and doesn't.
+        -- and survive; the seventh names sewers-level-3/town-sewers-165 and doesn't.
         it("counts what survives on the third-town chain", function()
             noMap()
             helper.simulateAlias("navigate-to town-3/part-2 chasm-is-clear")
@@ -16246,7 +16247,7 @@ describe("navigate-to", function()
 
         local function resumeAt(n, from)
             route({ steps = LONG })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step " .. n)
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 from-step " .. n)
             answerProbe(from or 274)
         end
 
@@ -16288,14 +16289,14 @@ describe("navigate-to", function()
         -- that doesn't know whether the connection is back.
         it("still waits for the room probe before moving", function()
             route({ steps = LONG })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 from-step 3")
             assert.are.equal(1, sent("ex"))
             assert.are.equal(0, sent("se"))
         end)
 
         it("still checks what we're carrying", function()
             route({ steps = LONG, requires = "coil of rope" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 from-step 3")
             answerProbe(274)
             assert.are.equal(1, sent("i"))
             assert.are.equal(0, sent("se"))
@@ -16319,7 +16320,7 @@ describe("navigate-to", function()
         -- order alongside them.
         it("takes from-step alongside the other flags", function()
             route({ steps = LONG })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 from-step 3 quiet")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 from-step 3 quiet")
             answerProbe(274)
             assert.are.equal(1, sent("se"))
             assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))
@@ -16327,7 +16328,7 @@ describe("navigate-to", function()
 
         it("takes it before the other flags too", function()
             route({ steps = LONG })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 quiet from-step 3")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 quiet from-step 3")
             answerProbe(274)
             assert.are.equal(1, sent("se"))
         end)
@@ -16375,7 +16376,7 @@ describe("navigate-to", function()
 
         local function startWalking()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -16431,7 +16432,7 @@ describe("navigate-to", function()
             helper.simulateLine("You're in the town sewers.")
             helper.fireTimers(taPackage.navStepDelayMs)
             helper.simulateLine("You're in the town sewers.")   -- 3rd and last step
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 
@@ -16453,7 +16454,7 @@ describe("navigate-to", function()
 
             local function startWalkingTo(roomName)
                 route({ to = { room = roomName } })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                 answerProbe(274)
                 helper.fireTimers(taPackage.navStepDelayMs)
             end
@@ -16466,7 +16467,7 @@ describe("navigate-to", function()
                 helper.fireTimers(taPackage.navStepDelayMs)
                 -- The article is dropped before the name is compared.
                 helper.simulateLine("You're in a ruined plaza.")
-                assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+                assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
                 assert.is_nil(taPackage.navigate)
             end)
 
@@ -16489,7 +16490,7 @@ describe("navigate-to", function()
 
         local function startWalking()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -16669,7 +16670,7 @@ describe("navigate-to", function()
 
         local function tripAfterStartingOn(startFloor)
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274, startFloor)
             helper.simulateLine("In your haste, you trip and fall!")
             helper.fireTimers(taPackage.navTripRetryMs)
@@ -16772,7 +16773,7 @@ describe("navigate-to", function()
         -- Guessing here risks pocketing someone else's property.
         it("refuses to guess when the room's floor was never seen", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("You're on a path.")   -- arrival with no floor line
             taPackage.navigate.floor = nil             -- so this room's floor is unknown
@@ -16785,7 +16786,7 @@ describe("navigate-to", function()
 
         it("tracks the floor of each room it walks into", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274, "a rue potion")
             brief("path", "a torch")                   -- arrival in the next room
             assert.are.same({ "torch" }, taPackage.navigate.floor)
@@ -16797,7 +16798,7 @@ describe("navigate-to", function()
 
         local function walkToTheDoor()
             route({ door = { dir = "s", key = "ruby" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("You're on a path.")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -16826,11 +16827,11 @@ describe("navigate-to", function()
         -- what says which door was shut.
         it("names the step when a door blocks the middle of a route", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("The locked stone door prevents your exit in that direction.")
             local out = lastEchoes()
-            assert.is_truthy(out:find("blocks step 1 of sewers/town-sewers-18", 1, true))
+            assert.is_truthy(out:find("blocks step 1 of sewers-level-1/town-sewers-18", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 
@@ -16859,21 +16860,21 @@ describe("navigate-to", function()
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "FROM areas WHERE slug", 1, true) then
                     return params[1] == "second-town" and { id = 7 }
-                        or (params[1] == "sewers" and { id = 8 } or nil)
+                        or (params[1] == "sewers-level-1" and { id = 8 } or nil)
                 end
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 425 }
                 end
                 if string.find(sql, "LEFT JOIN areas a ON a.id = r.area_id", 1, true) then
-                    return params[1] == 425 and { slug = "town-sewers-62", area = "sewers" } or nil
+                    return params[1] == 425 and { slug = "town-sewers-62", area = "sewers-level-1" } or nil
                 end
                 return nil
             end
             walkToTheDoor()
             helper.simulateLine("You're in the town sewers.")
             local out = lastEchoes()
-            assert.is_truthy(out:find("standing in sewers/town-sewers-62", 1, true))
-            assert.is_truthy(out:find("one room past sewers/town-sewers-18", 1, true))
+            assert.is_truthy(out:find("standing in sewers-level-1/town-sewers-62", 1, true))
+            assert.is_truthy(out:find("one room past sewers-level-1/town-sewers-18", 1, true))
         end)
 
     end)
@@ -16894,7 +16895,7 @@ describe("navigate-to", function()
 
         local function walkTheWholeRoute()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("You're on a path.")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -16906,7 +16907,7 @@ describe("navigate-to", function()
         it("suspends mapping mode for the walk", function()
             taPackage.mapping = true
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.is_false(taPackage.mapping)
             assert.is_truthy(lastEchoes():find("Mapping was on — suspended it", 1, true))
@@ -16947,7 +16948,7 @@ describe("navigate-to", function()
         it("still reports the anchor when a walk is stopped part-way", function()
             taPackage.mapping = true
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateAlias("stop-navigating")
             assert.is_truthy(lastEchoes():find("Re-anchor with map-here <slug>", 1, true))
@@ -16966,7 +16967,7 @@ describe("navigate-to", function()
         -- Walk as far as the sweep step and let it start.
         local function sweeping()
             route({ steps = SWEEP_STEPS })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -16982,7 +16983,7 @@ describe("navigate-to", function()
 
         it("does not start the sweep if the walk was stopped first", function()
             route({ steps = SWEEP_STEPS })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -17011,7 +17012,7 @@ describe("navigate-to", function()
             helper.fireTimers(taPackage.navStepDelayMs)
             assert.are.equal(1, sent("se"))
             brief("town sewers")
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 
@@ -17024,7 +17025,7 @@ describe("navigate-to", function()
 
             local function sweepingFor()
                 route({ steps = WANT })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                 answerProbe(274)
                 brief("path")
                 helper.fireTimers(taPackage.navStepDelayMs)
@@ -17041,7 +17042,7 @@ describe("navigate-to", function()
             -- and "until I get a onyx key" is what the first live run said.
             it("gets the article right for a key that starts with a vowel", function()
                 route({ steps = { "sw", "d", { killAll = true, untilFound = "onyx key" }, "se" } })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                 answerProbe(274)
                 brief("path")
                 helper.fireTimers(taPackage.navStepDelayMs)
@@ -17072,7 +17073,7 @@ describe("navigate-to", function()
             -- Without a stated want, the old behaviour stands: clear the room.
             it("clears the whole room when nothing is named", function()
                 route({ steps = { "sw", "d", { killAll = true }, "se" } })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                 answerProbe(274)
                 brief("path")
                 helper.fireTimers(taPackage.navStepDelayMs)
@@ -17139,7 +17140,7 @@ describe("navigate-to", function()
                 -- A sweep with nothing to find has nothing to chase.
                 it("records nothing for a sweep that named no want", function()
                     route({ steps = { "sw", "d", { killAll = true }, "se" } })
-                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                     answerProbe(274)
                     brief("path")
                     helper.fireTimers(taPackage.navStepDelayMs)
@@ -17171,7 +17172,7 @@ describe("navigate-to", function()
 
                 local function chasing()
                     route({ steps = CHASE })
-                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                     answerProbe(274)
                     brief("path")
                     helper.fireTimers(taPackage.navStepDelayMs)
@@ -17230,7 +17231,7 @@ describe("navigate-to", function()
                     helper.fireTimers(taPackage.navStepDelayMs)
                     assert.are.equal(1, sent("e"))    -- the errand's own next step, at last
                     brief("town sewers")
-                    assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+                    assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
                 end)
 
                 it("does not chase a monster that came back", function()
@@ -17276,7 +17277,7 @@ describe("navigate-to", function()
                 it("gives each errand sweep its own budget", function()
                     route({ steps = { "w", { killAll = true, untilFound = "platinum key" }, "d",
                                       { killAll = true, untilFound = "platinum key" }, "e" } })
-                    helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                    helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                     answerProbe(274)
                     brief("town sewers")
                     helper.fireTimers(taPackage.navStepDelayMs)    -- first sweep
@@ -17338,7 +17339,7 @@ describe("navigate-to", function()
             helper.simulateLine("There is nobody here.")   -- room clear, sweep ends
             local out = lastEchoes()
             assert.is_truthy(out:find("the ruby key is still on the floor here", 1, true))
-            assert.is_truthy(out:find("Stopped sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(out:find("Stopped sewers-level-1/town-sewers-18.", 1, true))
             assert.is_falsy(taPackage.killAllActive)
             assert.is_nil(taPackage.navigate)
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -17368,7 +17369,7 @@ describe("navigate-to", function()
 
         local function blocked()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             helper.simulateLine("You cannot leave in the heat of battle!")
         end
@@ -17419,7 +17420,7 @@ describe("navigate-to", function()
 
         local function startWalking()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -17448,7 +17449,7 @@ describe("navigate-to", function()
 
         it("refuses to start a second walk while one is running", function()
             startWalking()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.is_truthy(lastEchoes():find("Already walking to", 1, true))
         end)
 
@@ -17456,7 +17457,7 @@ describe("navigate-to", function()
         -- stops swinging too — not stands there fighting a room on its own.
         it("stop-navigating halts a sweep the route started", function()
             route({ steps = { "sw", { killAll = true } } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -17477,7 +17478,7 @@ describe("navigate-to", function()
 
         local function startWalking(flags)
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18" .. (flags or ""))
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18" .. (flags or ""))
             answerProbe(274)
         end
 
@@ -17497,7 +17498,7 @@ describe("navigate-to", function()
         it("leaves the game on arrival", function()
             startWalking(" and-exit")
             walkToTheEnd()
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             -- Not before the beat that collects the reason for the push.
             assert.are.equal(0, sent("x"))
             helper.fireTimers(taPackage.navExitDelayMs)
@@ -17514,7 +17515,7 @@ describe("navigate-to", function()
             helper.fireTimers(taPackage.navExitDelayMs)
             assert.are.equal(1, #helper.httpRequestCalls)
             local push = helper.httpRequestCalls[1]
-            assert.are.equal("navigate-to sewers/town-sewers-18",
+            assert.are.equal("navigate-to sewers-level-1/town-sewers-18",
                 push.options.headers["X-Title"])
             assert.is_truthy(push.options.body:find("No exit that way at step 2", 1, true))
         end)
@@ -17543,7 +17544,7 @@ describe("navigate-to", function()
         -- asked for this isn't there to walk it by hand.
         it("leaves the game when it can't set off from this room", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 and-exit")
             answerProbe(1)                      -- the other north plaza
             assert.is_truthy(lastEchoes():find("I don't know how to get there from here", 1, true))
             helper.fireTimers(taPackage.navExitDelayMs)
@@ -17552,7 +17553,7 @@ describe("navigate-to", function()
 
         it("leaves the game when the pack is missing what the route needs", function()
             route({ requires = "coil of rope" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 and-exit")
             answerProbe(274)
             helper.simulateLine("You are carrying 559 gold crowns and a glowstone.")
             assert.is_truthy(lastEchoes():find("needs a coil of rope", 1, true))
@@ -17573,7 +17574,7 @@ describe("navigate-to", function()
         it("stays in the game when the flag wasn't given", function()
             startWalking()
             walkToTheEnd()
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             helper.fireTimers(taPackage.navExitDelayMs)
             assert.are.equal(0, sent("x"))
         end)
@@ -17600,7 +17601,7 @@ describe("navigate-to", function()
         -- afterwards anyway.
         it("is disarmed by stop-all-scripts before the walk has started", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 and-exit")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 and-exit")
             assert.is_nil(taPackage.navigate)           -- still waiting on the probe
             helper.simulateAlias("stop-all-scripts")
             assert.is_truthy(lastEchoes():find("[all] Stopped navigate.", 1, true))
@@ -17659,7 +17660,7 @@ describe("navigate-to", function()
 
         local function askToWalk()
             route({ requires = "coil of rope" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -17714,7 +17715,7 @@ describe("navigate-to", function()
 
             local function askToWalkForBoth()
                 route({ requires = BOTH })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
                 answerProbe(274)
             end
 
@@ -17745,7 +17746,7 @@ describe("navigate-to", function()
 
             it("names both when told 'anyway'", function()
                 route({ requires = BOTH })
-                helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+                helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 anyway")
                 answerProbe(274)
                 assert.are.equal(0, sent("i"))
                 assert.is_truthy(lastEchoes():find(
@@ -17771,7 +17772,7 @@ describe("navigate-to", function()
         -- room away, or today's hazard survivable without it.
         it("sets off regardless when told 'anyway'", function()
             route({ requires = "verbena potion" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 anyway")
             answerProbe(274)
             assert.are.equal(0, sent("i"))       -- never asked
             assert.are.equal(1, sent("sw"))
@@ -17780,7 +17781,7 @@ describe("navigate-to", function()
 
         it("takes 'anyway' alongside the other flags, in any order", function()
             route({ requires = "verbena potion" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway quiet")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 anyway quiet")
             answerProbe(274)
             assert.are.equal(1, sent("sw"))
             assert.is_falsy(lastEchoes():find("[nav|t]", 1, true))   -- quiet still applied
@@ -17789,7 +17790,7 @@ describe("navigate-to", function()
         it("still overrides on a fingerprint start", function()
             route({ from = { room = "north plaza", exits = "e,n,s,sw,w" },
                     requires = "verbena potion" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18 anyway")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 anyway")
             answerProbe(274)
             assert.are.equal(0, sent("i"))
             assert.are.equal(1, sent("sw"))
@@ -17797,7 +17798,7 @@ describe("navigate-to", function()
 
         it("leaves a route with no requirement alone", function()
             route()
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             assert.are.equal(0, sent("i"))
             assert.are.equal(1, sent("sw"))
@@ -17811,7 +17812,7 @@ describe("navigate-to", function()
 
         local function walking(overrides)
             route(overrides or { onPoison = "drink verbena" })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -17908,7 +17909,7 @@ describe("navigate-to", function()
 
         it("does not count the pit as a step of its own", function()
             route({ steps = { "sw", "d", "se", "n" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")                                        -- step 1 landed
             helper.simulateLine("You just fell through a trap door in the floor!")
@@ -17939,7 +17940,7 @@ describe("navigate-to", function()
             taPackage.navRoutes["sewers/leg-two"] =
                 { from = { room = "town sewers", exits = "u,se" }, steps = { "se", "n", "e" } }
             taPackage.navRoutes["sewers/joined"] =
-                { from = "second-town/north-plaza", to = "sewers/town-sewers-18",
+                { from = "second-town/north-plaza", to = "sewers-level-1/town-sewers-18",
                   legs = spec or { "sewers/leg-one", "sewers/leg-two" } }
             return taPackage.navRoutes["sewers/joined"]
         end
@@ -18027,14 +18028,14 @@ describe("navigate-to", function()
         -- Both `from` shapes a leg can have: room 274 is a real mapped room, so
         -- NEXT_MAPPED exercises the reference branch and NEXT_FP the literal one.
         local NEXT_FP = { from = { room = "north plaza", exits = "e,n,s,sw,w" },
-                          to = "sewers/town-sewers-18", steps = { "n" } }
+                          to = "sewers-level-1/town-sewers-18", steps = { "n" } }
         local NEXT_MAPPED = { from = "second-town/north-plaza",
-                              to = "sewers/town-sewers-18", steps = { "n" } }
+                              to = "sewers-level-1/town-sewers-18", steps = { "n" } }
 
         local function walkToSeam(leg)
             taPackage.navRoutes["sewers/next-leg"] = leg or NEXT_FP
             route({ steps = { "sw", { seam = "sewers/next-leg" }, "se" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")                                  -- step 1 lands
             helper.fireTimers(taPackage.navStepDelayMs)    -- the seam goes out
@@ -18102,8 +18103,8 @@ describe("navigate-to", function()
             helper.simulateLine("Exits: e,n,s,sw,w.")
             local out = lastEchoes()
             assert.is_truthy(out:find(
-                "run navigate-to sewers/town-sewers-18 from-step 1 "
-                .. "or run navigate-to sewers/town-sewers-18 from-step 2", 1, true))
+                "run navigate-to sewers-level-1/town-sewers-18 from-step 1 "
+                .. "or run navigate-to sewers-level-1/town-sewers-18 from-step 2", 1, true))
         end)
 
         -- The hydra-to-stoneworks seam is this shape: the leg names a mapped
@@ -18133,7 +18134,7 @@ describe("navigate-to", function()
 
         it("refuses a route whose seam names no known route", function()
             route({ steps = { "sw", { seam = "sewers/nowhere" } } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(0, sent(""))
             assert.is_truthy(lastEchoes():find(
                 "checks we've reached 'sewers/nowhere', and there's no such route", 1, true))
@@ -18149,13 +18150,13 @@ describe("navigate-to", function()
         -- A round trip, as every key errand is. Deliberately shares no direction
         -- with the gate or the route around it, so counting what was sent says
         -- which of the three moved.
-        local ERRAND = { from = "sewers/town-sewers-18", to = "sewers/town-sewers-18",
+        local ERRAND = { from = "sewers-level-1/town-sewers-18", to = "sewers-level-1/town-sewers-18",
                          steps = { "n", "s" } }
 
         local function gated(gate, steps)
             taPackage.navRoutes["sewers/errand"] = ERRAND
             route({ steps = steps or { "sw", gate, "se" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")                                  -- step 1 lands
             helper.fireTimers(taPackage.navStepDelayMs)     -- the gate goes out
@@ -18224,7 +18225,7 @@ describe("navigate-to", function()
             helper.fireTimers(taPackage.navStepDelayMs)    -- the last step
             assert.are.equal(1, sent("se"))
             brief("town sewers")
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 
@@ -18262,7 +18263,7 @@ describe("navigate-to", function()
         it("does not treat a final door probe as the gate before it", function()
             taPackage.navRoutes["sewers/errand"] = ERRAND
             route({ steps = { "sw", GATE() }, door = { dir = "s", key = "ruby" } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             brief("path")                                  -- step 1 lands
             helper.fireTimers(taPackage.navStepDelayMs)    -- the gate goes out
@@ -18292,9 +18293,9 @@ describe("navigate-to", function()
         -- session and walked again whether the door was locked or not.
         it("does not weld the errand into the route", function()
             gated(GATE())
-            local before = #taPackage.navRoutes["sewers/town-sewers-18"].steps
+            local before = #taPackage.navRoutes["sewers-level-1/town-sewers-18"].steps
             helper.simulateLine("The locked stone door prevents your exit in that direction.")
-            assert.are.equal(before, #taPackage.navRoutes["sewers/town-sewers-18"].steps)
+            assert.are.equal(before, #taPackage.navRoutes["sewers-level-1/town-sewers-18"].steps)
             assert.are.equal(before + 2, #taPackage.navigate.steps)
         end)
 
@@ -18310,17 +18311,17 @@ describe("navigate-to", function()
         it("refuses a route whose errand names no known route", function()
             taPackage.navRoutes["sewers/errand"] = ERRAND
             route({ steps = { "sw", GATE({ detour = "sewers/nowhere" }) } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.are.equal(0, sent(""))
             assert.is_truthy(lastEchoes():find(
-                "Step 2 of the route to sewers/town-sewers-18 sends us to 'sewers/nowhere'", 1, true))
+                "Step 2 of the route to sewers-level-1/town-sewers-18 sends us to 'sewers/nowhere'", 1, true))
         end)
 
         it("refuses a route whose errand is itself malformed", function()
             taPackage.navRoutes["sewers/errand"] = { from = ERRAND.from, to = ERRAND.to,
                                                     steps = { "n", 7 } }
             route({ steps = { "sw", GATE() } })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             assert.is_truthy(lastEchoes():find("whose step 2 isn't a direction", 1, true))
         end)
 
@@ -18330,7 +18331,7 @@ describe("navigate-to", function()
 
         local function walkWithCommand(steps)
             route({ steps = steps })
-            helper.simulateAlias("navigate-to sewers/town-sewers-18")
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
         end
 
@@ -18365,7 +18366,7 @@ describe("navigate-to", function()
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
             assert.are.equal(1, sent("push stone"))
-            assert.is_truthy(lastEchoes():find("Arrived at sewers/town-sewers-18.", 1, true))
+            assert.is_truthy(lastEchoes():find("Arrived at sewers-level-1/town-sewers-18.", 1, true))
             assert.is_nil(taPackage.navigate)
         end)
 

@@ -95,7 +95,7 @@ local NAV_ROUTES = {
     -- 364 steps: 359 across the eight, less the temple leg's last two, plus the
     -- seven seams. Half an hour or so with the hydra fight and the sweep.
     ["town-3/after-doors-to-town-3"] = {
-        from     = "sewers/town-sewers-63",
+        from     = "sewers-level-2/town-sewers-63",
         to       = "third-town/town-square",
         requires = { "coil of rope", "verbena potion" },
         onPoison = "drink verbena",
@@ -207,7 +207,7 @@ local NAV_ROUTES = {
     -- leg begins.
     ["town-3/after-doors"] = {
         from  = "second-town/north-plaza",
-        to    = "sewers/town-sewers-63",
+        to    = "sewers-level-2/town-sewers-63",
         steps = { -- town-3/ruby-door's sixteen steps, down to town-sewers-18.
                   "sw", "d", "se", "sw", "s", "se", "se", "sw",
                   "se", "se", "ne", "ne", "se", "se", "se", "e",
@@ -223,7 +223,7 @@ local NAV_ROUTES = {
     -- whether you need the get-ruby-key errand: the door relocks around 3am.
     ["town-3/ruby-door"] = {
         from  = "second-town/north-plaza",
-        to    = "sewers/town-sewers-18",
+        to    = "sewers-level-1/town-sewers-18",
         steps = { "sw", "d", "se", "sw", "s", "se", "se", "sw",
                   "se", "se", "ne", "ne", "se", "se", "se", "e" },
         door  = { dir = "s", key = "ruby" },
@@ -232,8 +232,8 @@ local NAV_ROUTES = {
     -- door. The return leg is the forward leg reversed direction by direction,
     -- checked against the mapped graph -- it lands back on town-sewers-18.
     ["town-3/get-ruby-key"] = {
-        from  = "sewers/town-sewers-18",
-        to    = "sewers/town-sewers-18",
+        from  = "sewers-level-1/town-sewers-18",
+        to    = "sewers-level-1/town-sewers-18",
         steps = { "e", "ne", "n", "ne", "ne", "nw", "nw", "n", "ne", "se", "se", "se",
                   { killAll = true, untilFound = "ruby key" },
                   "nw", "nw", "nw", "sw", "s", "se", "se", "sw", "sw", "s", "sw", "w" },
@@ -247,8 +247,8 @@ local NAV_ROUTES = {
     -- and its mirror in the return leg. Every step of both halves now walks
     -- through the mapped graph: out to town-sewers-101 and back to -63.
     ["town-3/get-platinum-key"] = {
-        from  = "sewers/town-sewers-18",
-        to    = "sewers/town-sewers-63",
+        from  = "sewers-level-1/town-sewers-18",
+        to    = "sewers-level-2/town-sewers-63",
         steps = { "s", "d", "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "n",
                   { killAll = true, untilFound = "platinum key" },
                   "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
@@ -266,8 +266,8 @@ local NAV_ROUTES = {
     -- are transcripts of a walk before they are code, and a correction to one
     -- should be made deliberately to the other.
     ["town-3/get-platinum-key-from-63"] = {
-        from  = "sewers/town-sewers-63",
-        to    = "sewers/town-sewers-63",
+        from  = "sewers-level-2/town-sewers-63",
+        to    = "sewers-level-2/town-sewers-63",
         steps = { "n", "nw", "nw", "n", "e", "ne", "ne", "ne", "n",
                   { killAll = true, untilFound = "platinum key" },
                   "s", "sw", "sw", "sw", "w", "s", "se", "se", "s" },
@@ -277,8 +277,8 @@ local NAV_ROUTES = {
     -- hand. Out to town-sewers-113 and back to the junction; both halves walk
     -- through the mapped graph.
     ["town-3/get-onyx-key"] = {
-        from  = "sewers/town-sewers-63",
-        to    = "sewers/town-sewers-63",
+        from  = "sewers-level-2/town-sewers-63",
+        to    = "sewers-level-2/town-sewers-63",
         steps = { "e", "se", "se", "s", "e", "se", "ne", "e",
                   { killAll = true, untilFound = "onyx key" },
                   "w", "sw", "nw", "w", "n", "nw", "nw", "w" },
@@ -291,8 +291,8 @@ local NAV_ROUTES = {
     -- walls can't be climbed unaided, which is what `requires` is guarding.
     -- Without the rope the errand ends at the bottom of it.
     ["town-3/hydra"] = {
-        from     = "sewers/town-sewers-63",
-        to       = "sewers/town-sewers-165",
+        from     = "sewers-level-2/town-sewers-63",
+        to       = "sewers-level-3/town-sewers-165",
         requires = "coil of rope",
         steps    = { "s", "d", "ne", "ne", "e", "u", "se", "se", "e", "ne", "n", "nw",
                      "ne", "ne", "n", "nw", "w", "n", "ne", "nw", "nw", "nw", "n",
@@ -353,7 +353,7 @@ local NAV_ROUTES = {
     -- walls, striking you!" -- for about 44 vitality. Nothing to be done about
     -- it, but don't walk this on a sliver of health.
     ["town-3/stoneworks-entrance"] = {
-        from     = "sewers/town-sewers-165",
+        from     = "sewers-level-3/town-sewers-165",
         requires = "verbena potion",
         onPoison = "drink verbena",
         steps    = { "w", "w", "u", "u", "u", "e", "e", "s", "s", "s",

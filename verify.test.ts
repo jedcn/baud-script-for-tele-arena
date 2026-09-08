@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
-         type Room, type Exit } from './verify';
+         routeReferences, type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -83,5 +83,30 @@ describe('report', () => {
     ]);
     expect(out).toContain('PASS  one');
     expect(out).toContain('FAIL  two');
+  });
+});
+
+describe('routeReferences', () => {
+  const ok = () => ({ areaExists: true, matches: 1 });
+  it('passes when every reference resolves', () => {
+    const src = 'from = "sewers-level-2/town-sewers-63",\n to = "third-town/town-square",';
+    expect(routeReferences(src, ok).ok).toBe(true);
+  });
+  // The exact regression: splitting `sewers` into three levels left every route
+  // that said "sewers/..." unwalkable, and nothing noticed until someone tried.
+  it('flags a reference to an area that no longer exists', () => {
+    const src = 'from = "sewers/town-sewers-63",';
+    const f = routeReferences(src, () => ({ areaExists: false, matches: 0 }));
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('sewers/town-sewers-63 (no such area)');
+  });
+  it('flags an ambiguous reference', () => {
+    const f = routeReferences('to = "first-town/cave",', () => ({ areaExists: true, matches: 3 }));
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('(3 matches)');
+  });
+  it('ignores route keys, which are labels rather than room references', () => {
+    const f = routeReferences('["town-3/part-1"] = {', () => ({ areaExists: false, matches: 0 }));
+    expect(f.ok).toBe(true);
   });
 });
