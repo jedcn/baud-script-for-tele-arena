@@ -173,6 +173,27 @@ export function routeReferences(
   };
 }
 
+/**
+ * An exit whose from_id names a room that no longer exists. The mapper holds
+ * currentRoomId in memory, so deleting rooms underneath a live session lets it
+ * write exits back for a room that is already gone -- which is how two rows
+ * survived the desert delete, seeded by an `ex` run seconds afterwards.
+ *
+ * Checked globally rather than per area, since an orphan has no area to be in.
+ */
+export function orphanExits(roomIds: Set<number>, allExits: Exit[]): Finding {
+  const bad = allExits.filter(e => !roomIds.has(e.from_id));
+  const dangling = allExits.filter(e => e.to_id != null && !roomIds.has(e.to_id));
+  const total = bad.length + dangling.length;
+  return {
+    check: 'no exit references a room that is gone',
+    ok: total === 0,
+    detail: total === 0 ? 'every exit is anchored at both ends'
+      : `${bad.length} from a deleted room (${bad.map(e => `${e.from_id} ${e.direction}`).join(', ')})`
+        + `, ${dangling.length} pointing at one`,
+  };
+}
+
 export function report(findings: Finding[]): string {
   return findings.map(f => `  ${f.ok ? 'PASS' : 'FAIL'}  ${f.check}\n        ${f.detail}`).join('\n');
 }
@@ -228,6 +249,15 @@ if (import.meta.main) {
     console.log(`\n${slug}  (${rooms.length} rooms)  ${bad === 0 ? 'OK' : `${bad} PROBLEM(S)`}`);
     console.log(report(findings));
   }
+  // Two global checks, run once rather than per area.
+  {
+    const ids = new Set((db.prepare('SELECT id FROM rooms').all() as any[]).map(r => r.id));
+    const f = orphanExits(ids, allExits);
+    if (!f.ok) failed++;
+    console.log(`\nwhole map  ${f.ok ? 'OK' : 'PROBLEM'}`);
+    console.log(report([f]));
+  }
+
   // Route references are global rather than per-area, so they are checked once.
   if (existsSync('ta_nav.lua')) {
     const slugify = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

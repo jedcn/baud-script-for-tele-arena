@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
-         routeReferences, coordinates, type Room, type Exit } from './verify';
+         routeReferences, coordinates, orphanExits, type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -128,5 +128,18 @@ describe('coordinates', () => {
     expect(f.ok).toBe(false);
     expect(f.detail).toContain('a sw b');
     expect(f.detail).toContain('mint duplicates');
+  });
+});
+
+describe('orphanExits', () => {
+  it('passes when every exit is anchored at both ends', () => {
+    expect(orphanExits(new Set([1, 2]), pair(1, 'n', 2, 's')).ok).toBe(true);
+  });
+  // Deleting rooms under a live session: the mapper still held currentRoomId,
+  // so its next `ex` seeded exits for a room that was already gone.
+  it('flags an exit left behind by a deleted room', () => {
+    const f = orphanExits(new Set([1]), [{ from_id: 673, direction: 'se', to_id: null }]);
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('673 se');
   });
 });
