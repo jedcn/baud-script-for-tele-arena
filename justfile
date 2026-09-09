@@ -74,6 +74,14 @@ draw-map-as-markdown:
 scrape-shrine-maps:
     bun scrape.ts
 
+# Redraw a shrine map with the reconciliation marked on it: [?] for a box the
+# walk never reached, [!] where the drawing and our map disagree about an exit.
+# A room slug says nothing about where a problem is; this shows you.
+#   just annotate dungeon-1
+# With no name it shows every area that has a problem, skipping the clean ones.
+annotate map="":
+    bun annotate.ts {{map}}
+
 # Check that a mapped area is sound. Run it between levels of a mapping session:
 #   just verify-area sewers-level-1
 # With no slug it checks every area. Checks for unwalked exits, one-directional
