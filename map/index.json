@@ -1,0 +1,76 @@
+{
+  "areas": [
+    {
+      "area": "cellars",
+      "name": "The Cellars",
+      "rooms": 43,
+      "file": "areas/cellars.json"
+    },
+    {
+      "area": "desert",
+      "name": "The Desert",
+      "rooms": 48,
+      "file": "areas/desert.json"
+    },
+    {
+      "area": "first-dungeon-level-1",
+      "name": "First Dungeon, Level 1",
+      "rooms": 51,
+      "file": "areas/first-dungeon-level-1.json"
+    },
+    {
+      "area": "first-dungeon-level-2",
+      "name": "First Dungeon, Level 2",
+      "rooms": 55,
+      "file": "areas/first-dungeon-level-2.json"
+    },
+    {
+      "area": "first-dungeon-level-3",
+      "name": "First Dungeon, Level 3",
+      "rooms": 73,
+      "file": "areas/first-dungeon-level-3.json"
+    },
+    {
+      "area": "first-town",
+      "name": "first-town",
+      "rooms": 13,
+      "file": "areas/first-town.json"
+    },
+    {
+      "area": "mountains",
+      "name": "The Mountains",
+      "rooms": 74,
+      "file": "areas/mountains.json"
+    },
+    {
+      "area": "second-town",
+      "name": "second-town",
+      "rooms": 21,
+      "file": "areas/second-town.json"
+    },
+    {
+      "area": "sewers-level-1",
+      "name": "Sewers, Level 1",
+      "rooms": 63,
+      "file": "areas/sewers-level-1.json"
+    },
+    {
+      "area": "sewers-level-2",
+      "name": "Sewers, Level 2",
+      "rooms": 55,
+      "file": "areas/sewers-level-2.json"
+    },
+    {
+      "area": "sewers-level-3",
+      "name": "Sewers, Level 3",
+      "rooms": 56,
+      "file": "areas/sewers-level-3.json"
+    },
+    {
+      "area": "third-town",
+      "name": "third-town",
+      "rooms": 10,
+      "file": "areas/third-town.json"
+    }
+  ]
+}

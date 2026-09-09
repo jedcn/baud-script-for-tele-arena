@@ -1,0 +1,747 @@
+{
+  "area": "cellars",
+  "name": "The Cellars",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "cellars/cellar",
+      "name": "cellar",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-162"
+        },
+        "sw": {
+          "to": null
+        },
+        "u": {
+          "to": "mountains/ancient-temple"
+        }
+      },
+      "description": "You are standing in what appears to be a rough hewn stone cellar. A stone staircase leading back up to the surface is in the center of the room, and stone archways exit to the east and southwest.",
+      "layout": {
+        "x": 23,
+        "y": -1
+      }
+    },
+    {
+      "id": "cellars/cave-162",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "cellars/cave-163"
+        },
+        "w": {
+          "to": "cellars/cellar"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": 24,
+        "y": -1
+      }
+    },
+    {
+      "id": "cellars/cave-163",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-164"
+        },
+        "nw": {
+          "to": "cellars/cave-162"
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast, northwest and southwest.",
+      "layout": {
+        "x": 25,
+        "y": -2
+      }
+    },
+    {
+      "id": "cellars/cave-164",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/cave-165"
+        },
+        "sw": {
+          "to": "cellars/cave-163"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 26,
+        "y": -1
+      }
+    },
+    {
+      "id": "cellars/cave-165",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "cellars/cave-166"
+        },
+        "s": {
+          "to": "cellars/cave-164"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and south.",
+      "layout": {
+        "x": 26,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/cave-166",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-167"
+        },
+        "se": {
+          "to": "cellars/cave-165"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": 25,
+        "y": 1
+      }
+    },
+    {
+      "id": "cellars/cave-167",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-168"
+        },
+        "sw": {
+          "to": "cellars/cave-166"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 26,
+        "y": 2
+      }
+    },
+    {
+      "id": "cellars/cave-168",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "cellars/cave-169"
+        },
+        "w": {
+          "to": "cellars/cave-167"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": 27,
+        "y": 2
+      }
+    },
+    {
+      "id": "cellars/cave-169",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "cellars/cave-168"
+        },
+        "se": {
+          "to": "cellars/cave-170"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and northwest.",
+      "layout": {
+        "x": 28,
+        "y": 1
+      }
+    },
+    {
+      "id": "cellars/cave-170",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-171"
+        },
+        "nw": {
+          "to": "cellars/cave-169"
+        },
+        "sw": {
+          "to": "cellars/cave-172"
+        }
+      },
+      "description": "Pelayo has just arrived from the east. You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and southwest.",
+      "layout": {
+        "x": 29,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/cave-171",
+      "name": "cave",
+      "exits": {
+        "u": {
+          "to": "cellars/forest-28"
+        },
+        "w": {
+          "to": "cellars/cave-170"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. A stone staircase leads up into daylight. The only other visible exit lies back the way you came.",
+      "layout": {
+        "x": 30,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/forest-28",
+      "name": "forest",
+      "exits": {
+        "d": {
+          "to": "cellars/cave-171"
+        },
+        "e": {
+          "to": "cellars/clearing-4"
+        }
+      },
+      "description": "You are standing in a grassy area in the forest. There is a weathered stone stairway leading downward into dark catacombs, and passable vegetation to the east.",
+      "layout": {
+        "x": 30,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/clearing-4",
+      "name": "clearing",
+      "exits": {
+        "e": {
+          "to": "cellars/forest-29"
+        },
+        "n": {
+          "to": "cellars/forest-31"
+        },
+        "s": {
+          "to": "cellars/forest-30"
+        },
+        "w": {
+          "to": "cellars/forest-28"
+        }
+      },
+      "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. There is passable vegetation to the north, south, east, and west.",
+      "layout": {
+        "x": 31,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/forest-29",
+      "name": "forest",
+      "exits": {
+        "d": {
+          "to": "cellars/flagstone-corridor"
+        },
+        "w": {
+          "to": "cellars/clearing-4"
+        }
+      },
+      "description": "You are standing in a grassy area in the forest. A jagged edged hole ringed with dead vegetation and rubble in the forest floor allows access to the darkness below. There is passable vegetation to the west.",
+      "layout": {
+        "x": 32,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/flagstone-corridor",
+      "name": "flagstone corridor",
+      "exits": {
+        "s": {
+          "to": null
+        },
+        "u": {
+          "to": "cellars/forest-29"
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. There is a jagged hole in the ceiling, and rubble litters the floor. The corridor leads to the south.",
+      "layout": {
+        "x": 32,
+        "y": 0
+      }
+    },
+    {
+      "id": "cellars/forest-30",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "cellars/clearing-4"
+        }
+      },
+      "description": "You are standing in a grassy area in the forest. There is passable vegetation to the north.",
+      "layout": {
+        "x": 31,
+        "y": -1
+      }
+    },
+    {
+      "id": "cellars/forest-31",
+      "name": "forest",
+      "exits": {
+        "s": {
+          "to": "cellars/clearing-4"
+        }
+      },
+      "description": "You are standing in a grassy area in the forest. There is passable vegetation to the south.",
+      "layout": {
+        "x": 31,
+        "y": 1
+      }
+    },
+    {
+      "id": "cellars/cave-172",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-170"
+        },
+        "s": {
+          "to": "cellars/cave-173"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": 28,
+        "y": -1
+      }
+    },
+    {
+      "id": "cellars/cave-173",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/cave-172"
+        },
+        "sw": {
+          "to": "cellars/cave-174"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 28,
+        "y": -2
+      }
+    },
+    {
+      "id": "cellars/cave-174",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-173"
+        },
+        "sw": {
+          "to": "cellars/cave-175"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 27,
+        "y": -3
+      }
+    },
+    {
+      "id": "cellars/cave-175",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-174"
+        },
+        "s": {
+          "to": "cellars/cave-176"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": 26,
+        "y": -4
+      }
+    },
+    {
+      "id": "cellars/cave-176",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/cave-175"
+        },
+        "sw": {
+          "to": "cellars/cave-177"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 26,
+        "y": -5
+      }
+    },
+    {
+      "id": "cellars/cave-177",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-176"
+        },
+        "w": {
+          "to": "cellars/cave-178"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": 25,
+        "y": -6
+      }
+    },
+    {
+      "id": "cellars/cave-178",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-177"
+        },
+        "sw": {
+          "to": "cellars/cave-179"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 24,
+        "y": -6
+      }
+    },
+    {
+      "id": "cellars/cave-179",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-178"
+        },
+        "w": {
+          "to": "cellars/cave-180"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": 23,
+        "y": -7
+      }
+    },
+    {
+      "id": "cellars/cave-180",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-179"
+        },
+        "w": {
+          "to": "cellars/cave-181"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 22,
+        "y": -7
+      }
+    },
+    {
+      "id": "cellars/cave-181",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-180"
+        },
+        "sw": {
+          "to": "cellars/cave-182"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 21,
+        "y": -7
+      }
+    },
+    {
+      "id": "cellars/cave-182",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "cellars/cave-181"
+        },
+        "nw": {
+          "to": "cellars/cave-183"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and northwest.",
+      "layout": {
+        "x": 20,
+        "y": -8
+      }
+    },
+    {
+      "id": "cellars/cave-183",
+      "name": "cave",
+      "exits": {
+        "s": {
+          "to": "cellars/cave-184"
+        },
+        "se": {
+          "to": "cellars/cave-182"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the south.",
+      "layout": {
+        "x": 19,
+        "y": -7
+      }
+    },
+    {
+      "id": "cellars/cave-184",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/cave-183"
+        },
+        "s": {
+          "to": "cellars/cave-185"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": -8
+      }
+    },
+    {
+      "id": "cellars/cave-185",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/cave-184"
+        },
+        "s": {
+          "to": "cellars/large-room"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": -9
+      }
+    },
+    {
+      "id": "cellars/large-room",
+      "name": "large room",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-189"
+        },
+        "n": {
+          "to": "cellars/cave-185"
+        },
+        "s": {
+          "to": "cellars/cave-192"
+        },
+        "w": {
+          "to": "cellars/cave-186"
+        }
+      },
+      "description": "You are standing in a large room some thirty feet across. The walls and floor of this room are of rough hewn stone, while the ceiling is that of a natural cave. This makes it appear as if this had once been a natural cave that has been expanded by some ancient culture. Stone archways exit to the north, south, east, and west.",
+      "layout": {
+        "x": 19,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-186",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/large-room"
+        },
+        "w": {
+          "to": "cellars/cave-187"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 18,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-187",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-186"
+        },
+        "w": {
+          "to": "cellars/cave-188"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 17,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-188",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-187"
+        },
+        "w": {
+          "to": "cellars/large-room-1"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 16,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/large-room-1",
+      "name": "large room",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-188"
+        }
+      },
+      "description": "You are standing in a large room some thirty feet across. The walls and floor of this room are of rough hewn stone, while the ceiling is that of a natural cave. This makes it appear as if this had once been a natural cave that has been expanded by some ancient culture. A stone archway exits to the east.",
+      "layout": {
+        "x": 15,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-189",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-190"
+        },
+        "w": {
+          "to": "cellars/large-room"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 20,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-190",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/cave-191"
+        },
+        "w": {
+          "to": "cellars/cave-189"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 21,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-191",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "cellars/large-room-2"
+        },
+        "w": {
+          "to": "cellars/cave-190"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": 22,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/large-room-2",
+      "name": "large room",
+      "exits": {
+        "w": {
+          "to": "cellars/cave-191"
+        }
+      },
+      "description": "You are standing in a large room some thirty feet across. The walls and floor of this room are of rough hewn stone, while the ceiling is that of a natural cave. This makes it appear as if this had once been a natural cave that has been expanded by some ancient culture. A stone archway exits to the west.",
+      "layout": {
+        "x": 23,
+        "y": -10
+      }
+    },
+    {
+      "id": "cellars/cave-192",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/large-room"
+        },
+        "s": {
+          "to": "cellars/large-room-3"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the south.",
+      "layout": {
+        "x": 19,
+        "y": -11
+      }
+    },
+    {
+      "id": "cellars/large-room-3",
+      "name": "large room",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "n": {
+          "to": "cellars/cave-192"
+        },
+        "s": {
+          "to": "cellars/cave-193"
+        }
+      },
+      "description": "You are standing in a large room some thirty feet across. The walls and floor of this room are of rough hewn stone, while the ceiling is that of a natural cave. This makes it appear as if this had once been a natural cave that has been expanded by some ancient culture. A shimering rectangular patch of darkness covers a portion of the eastern wall. Stone archways exit to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": -12
+      }
+    },
+    {
+      "id": "cellars/cave-193",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "cellars/large-room-3"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the north.",
+      "layout": {
+        "x": 19,
+        "y": -13
+      }
+    }
+  ]
+}

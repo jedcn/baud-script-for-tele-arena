@@ -1,0 +1,364 @@
+{
+  "area": "second-town",
+  "name": "second-town",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "second-town/path",
+      "name": "path",
+      "exits": {
+        "nw": {
+          "to": "second-town/south-plaza-1"
+        },
+        "se": {
+          "to": "second-town/docks-1"
+        }
+      },
+      "description": "You are standing on a path that leads into an open plaza to the northwest, and to the docks on the great lake to the southeast. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "id": "second-town/south-plaza-1",
+      "name": "south plaza",
+      "exits": {
+        "n": {
+          "to": "second-town/path-2"
+        },
+        "se": {
+          "to": "second-town/path"
+        },
+        "sw": {
+          "to": "second-town/path-1"
+        }
+      },
+      "description": "You are standing in a large open plaza at the south end of town surrounded by shade trees. A path to the north leads to a plaza in the northern end of town. To the southwest, a well trodden path leads to what appears to be a weapon shop. A third path to the southeast leads to the docks.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "second-town/path-1",
+      "name": "path",
+      "exits": {
+        "ne": {
+          "to": "second-town/south-plaza-1"
+        },
+        "sw": {
+          "to": "second-town/weapon-shop-1"
+        }
+      },
+      "description": "You are standing on a path that leads into a weapon shop to the southwest, and to the town's southern plaza to the northeast. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -3,
+        "y": 1
+      }
+    },
+    {
+      "id": "second-town/weapon-shop-1",
+      "name": "weapon shop",
+      "exits": {
+        "ne": {
+          "to": "second-town/path-1"
+        }
+      },
+      "description": "You are now inside the weapon shop, where you may purchase various weapons to use for sparring in the arena or for personal defense from the denizens of the dungeons. The shop keeper sits on a high stool behind a tall counter along the west wall. The exit is to the northeast.",
+      "layout": {
+        "x": -4,
+        "y": 0
+      }
+    },
+    {
+      "id": "second-town/path-2",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "second-town/north-plaza-1"
+        },
+        "s": {
+          "to": "second-town/south-plaza-1"
+        }
+      },
+      "description": "You are standing on a path that leads into open plazas to the north and south. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "second-town/north-plaza-1",
+      "name": "north plaza",
+      "exits": {
+        "e": {
+          "to": "second-town/path-6"
+        },
+        "n": {
+          "to": "second-town/path-5"
+        },
+        "s": {
+          "to": "second-town/path-2"
+        },
+        "sw": {
+          "to": "second-town/path-4"
+        },
+        "w": {
+          "to": "second-town/path-3"
+        }
+      },
+      "description": "You are standing in a large open plaza at the north end of town surrounded by shade trees. A path to the east leads to a plaza in the eastern end of town. To the west, a well trodden path leads to town's equipment shop. A third path to the south leads to a plaza in the southern end of town, and a fourth path leads to an inn to the southwest.",
+      "layout": {
+        "x": -2,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/path-3",
+      "name": "path",
+      "exits": {
+        "e": {
+          "to": "second-town/north-plaza-1"
+        },
+        "w": {
+          "to": "second-town/equipment-shop-1"
+        }
+      },
+      "description": "You are standing on a path that leads into an equipment shop to the west, and to the town's northern plaza to the east. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -3,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/equipment-shop-1",
+      "name": "equipment shop",
+      "exits": {
+        "e": {
+          "to": "second-town/path-3"
+        }
+      },
+      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the west wall, eyeing you warily. The exit is to the east.",
+      "layout": {
+        "x": -4,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/path-4",
+      "name": "path",
+      "exits": {
+        "d": {
+          "to": "sewers-level-1/town-sewers"
+        },
+        "ne": {
+          "to": "second-town/north-plaza-1"
+        },
+        "sw": {
+          "to": "second-town/inn"
+        }
+      },
+      "description": "You are standing on a path that leads into the town's inn to the southwest, and to the town's northern plaza to the northeast. Large old trees line the path and lend shade and birdsong to this quaint little town. There is a large rusty grate here which leads down into the town sewers.",
+      "layout": {
+        "x": -3,
+        "y": 3
+      }
+    },
+    {
+      "id": "second-town/inn",
+      "name": "inn",
+      "exits": {
+        "ne": {
+          "to": "second-town/path-4"
+        }
+      },
+      "description": "You are in the town's inn. The smoke from the many oil lamps decrease visibility to your imediate surroundings, and the wavering light they cast about the room leaves many shadows and unlit corners. There are several tables about the room, where the inn's patrons eat, drink, and generally enjoy themselves. The bar stands along the north wall and a door to the kitchen lies to the southwest, and a staircase leads up to the inn's rooms. The only visibile exit lies to the northeast.",
+      "layout": {
+        "x": -4,
+        "y": 2
+      }
+    },
+    {
+      "id": "second-town/path-5",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "second-town/magic-shop-1"
+        },
+        "s": {
+          "to": "second-town/north-plaza-1"
+        }
+      },
+      "description": "You are standing on a path that leads into a magic shop to the north and, to the town's northern plaza to the south. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -2,
+        "y": 5
+      }
+    },
+    {
+      "id": "second-town/magic-shop-1",
+      "name": "magic shop",
+      "exits": {
+        "s": {
+          "to": "second-town/path-5"
+        }
+      },
+      "description": "You're standing in a warm, dimly lit shop where various magical items are bought and sold by a shrewd mage in crimson robes with an air of power and complete confidence about him. He doesn't look like someone whose spells you'd like to be on the wrong end of. The sweet scent of incense drifts in from a workroom in the rear of the shop. The exit is to the south.",
+      "layout": {
+        "x": -2,
+        "y": 6
+      }
+    },
+    {
+      "id": "second-town/path-6",
+      "name": "path",
+      "exits": {
+        "e": {
+          "to": "second-town/east-plaza"
+        },
+        "w": {
+          "to": "second-town/north-plaza-1"
+        }
+      },
+      "description": "You are standing on a path that leads into open plazas to the east and west. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": -1,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/east-plaza",
+      "name": "east plaza",
+      "exits": {
+        "e": {
+          "to": "second-town/path-8"
+        },
+        "n": {
+          "to": "second-town/path-7"
+        },
+        "s": {
+          "to": "second-town/path-9"
+        },
+        "w": {
+          "to": "second-town/path-6"
+        }
+      },
+      "description": "You are standing in a large open plaza at the east end of town surrounded by shade trees. A well trodden path to the east leads to an armor shop. To the west, another well used path leads to an open plaza in the northern end of town. A third path to the south leads to towns temple, and a fourth path leads to the town's arena.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/path-7",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "second-town/arena-1"
+        },
+        "s": {
+          "to": "second-town/east-plaza"
+        }
+      },
+      "description": "You are standing on a path that leads into an open plaza to the south, and to the town's arena to the north. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "second-town/arena-1",
+      "name": "arena",
+      "exits": {
+        "s": {
+          "to": "second-town/path-7"
+        }
+      },
+      "description": "You now stand inside the gates of the town's arena. The charred and stained stone walls and scattered bits of bone, armor, and weaponry lying among the debris on the packed earthen floor. A huge bronze gong hangs at the center of the arena suspended on a framework made of the bones of some of the less fortunate of the arena's combatants. The exit through the arena gates is to the south.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "second-town/path-8",
+      "name": "path",
+      "exits": {
+        "e": {
+          "to": "second-town/armor-shop-1"
+        },
+        "w": {
+          "to": "second-town/east-plaza"
+        }
+      },
+      "description": "You are standing on a path that leads into an open plaza to the west, and to the armor shop to the east. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": 1,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/armor-shop-1",
+      "name": "armor shop",
+      "exits": {
+        "w": {
+          "to": "second-town/path-8"
+        }
+      },
+      "description": "You are now inside the armor shop, where you may aquire different sorts of armor and protective gear to guard yourself against the blows of your opponents in the arena, or from the various non-human foes to be found in the dungeons near the town. The shop keeper sits on a high stool behind a worn counter along the east wall, eyeing you warily. The exit is to the west.",
+      "layout": {
+        "x": 2,
+        "y": 4
+      }
+    },
+    {
+      "id": "second-town/path-9",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "second-town/east-plaza"
+        },
+        "s": {
+          "to": "second-town/temple-1"
+        }
+      },
+      "description": "You are standing on a path that leads into an open plaza to the north, and to the town's temple to the south. Large old trees line the path and lend shade and birdsong to this quaint little town.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "second-town/temple-1",
+      "name": "temple",
+      "exits": {
+        "n": {
+          "to": "second-town/path-9"
+        }
+      },
+      "description": "You are now in the main entry hall of a great temple. Huge black marble columns veined with platinum stretch to the ceiling some 100' overhead. The paterns in the tile floor are so ornate and complex as to be nearly impossible to follow or comprehend. Many black silk tapestries depicting various scenes of a religious or magical nature block your view into the many other areas of the temple. Blue robed priests and acolytes move here and there going about their duties. The exit is to the north.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "second-town/docks-1",
+      "name": "docks",
+      "exits": {
+        "nw": {
+          "to": "second-town/path"
+        },
+        "passage": {
+          "to": "first-town/docks"
+        }
+      },
+      "description": "You are standing on the docks. The water from the lake laps quietly against the docks making the peaceful scene on the lake all that more serene. A path leads towards a large open plaza to the northwest.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "area": "third-town",
+  "name": "third-town",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "third-town/town-square",
+      "name": "town square",
+      "exits": {
+        "e": {
+          "to": "third-town/stonework-corridor-175"
+        },
+        "ne": {
+          "to": "third-town/underground-plaza-2"
+        },
+        "nw": {
+          "to": "third-town/underground-plaza"
+        },
+        "se": {
+          "to": null
+        },
+        "sw": {
+          "to": "third-town/underground-plaza-1"
+        }
+      },
+      "description": "You are standing in the midst of a large open square in a subterranean cavern. The vaulted ceiling rises high above your head into near dark. The light from oil lamps spaced evenly about the square affords adequate light. Plain stone benches of good workmanship line the outer edges of the square. To the four primary compass points stand smooth stone walls carved with detailed scenes depicting various aspects of dwarven life. To the northeast, southeast, southwest, and northeast lie open plazas surrounding ornate stone fountains.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "third-town/underground-plaza",
+      "name": "underground plaza",
+      "exits": {
+        "ne": {
+          "to": "third-town/arena-2"
+        },
+        "nw": {
+          "to": "third-town/tavern-1"
+        },
+        "se": {
+          "to": "third-town/town-square"
+        },
+        "sw": {
+          "to": "third-town/armor-shop-2"
+        }
+      },
+      "description": "You are standing in a large open plaza at the southwest corner of an enormous subterranean cavern. An ornate stone fountain of fine craftsmanship stands in the center of the plaza. The gurgling fountain fills you with a sense of peace and tranquility, and the cool air is very still here. The plaza opens out into the town square to the northeast. To the northwest, southeast, and southwest lie large stone archways decorated with intricate stonework.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "id": "third-town/tavern-1",
+      "name": "tavern",
+      "exits": {
+        "se": {
+          "to": "third-town/underground-plaza"
+        }
+      },
+      "description": "You are in the tavern. The smoke from the many oil lamps decreases visibility to your imediate surroundings, and the wavering light they cast about the room leaves many shadows and unlit corners. There are several tables about the room, where the tavern's rowdy patrons, primarily dwarves, gnomes, and an occasional goblin make themselves at home. The bar stands along the north wall and a door to the kitchen lies to the west. The only visibile exit lies to the southeast.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "third-town/arena-2",
+      "name": "arena",
+      "exits": {
+        "sw": {
+          "to": "third-town/underground-plaza"
+        }
+      },
+      "description": "You are standing in an enormous natural cavern of dark reddish stone. The charred and stained walls and stonework floor tell of battles ancient and recent that have been fought in this place of death. The floor and walls of this cavern give off noticable heat. A huge iron gong hangs at the center of the arena suspended on a framework made of the bones of demons and dragons. The exit through a huge stone archway is to the southwest.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "third-town/underground-plaza-1",
+      "name": "underground plaza",
+      "exits": {
+        "ne": {
+          "to": "third-town/town-square"
+        },
+        "nw": {
+          "to": "first-town/equipment-shop"
+        },
+        "se": {
+          "to": null
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a large open plaza at the southwest corner of an enormous subterranean cavern. An ornate stone fountain of fine craftsmanship stands in the center of the plaza. The gurgling fountain fills you with a sense of peace and tranquility, and the cool air is very still here. The plaza opens out into the town square to the northeast. To the northwest, southeast, and southwest lie large stone archways decorated with intricate stonework.",
+      "layout": {
+        "x": -1,
+        "y": -1
+      }
+    },
+    {
+      "id": "third-town/armor-shop-2",
+      "name": "armor shop",
+      "exits": {
+        "ne": {
+          "to": "third-town/underground-plaza"
+        }
+      },
+      "description": "You are now inside the armor shop, where you may aquire different sorts of armor and protective gear to guard yourself against the blows of your opponents. The shop keeper sits on a high behind a worn counter along the west wall, eyeing you warily. A stone archway lies to the to the northeast.",
+      "layout": {
+        "x": -2,
+        "y": 0
+      }
+    },
+    {
+      "id": "third-town/underground-plaza-2",
+      "name": "underground plaza",
+      "exits": {
+        "e": {
+          "to": "third-town/temple-2"
+        },
+        "n": {
+          "to": "third-town/guild-hall-1"
+        },
+        "sw": {
+          "to": "third-town/town-square"
+        }
+      },
+      "description": "You are standing in a large open plaza at the northeast corner of an enormous subterranean cavern. An ornate stone fountain of fine craftsmanship stands in the center of the plaza. The gurgling fountain fills you with a sense of peace and tranquility, and the cool air is very still here. The plaza opens out into the town square to the southwest. To the north and east lie large stone archways decorated with intricate stonework.",
+      "layout": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "id": "third-town/guild-hall-1",
+      "name": "guild hall",
+      "exits": {
+        "s": {
+          "to": "third-town/underground-plaza-2"
+        }
+      },
+      "description": "You have entered the town guild hall, where one may seek the training neccessary to refine your combat and spell skills. This building is also a center of learning where the ancient art of sorcery is taught to those with the intelligence and skill to wield it effectively. Sages, wizards, and masters-at-arms rush about on errands or to and from training sessions. An ornately carved stone archway exits to the south.",
+      "layout": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "id": "third-town/temple-2",
+      "name": "temple",
+      "exits": {
+        "w": {
+          "to": "third-town/underground-plaza-2"
+        }
+      },
+      "description": "You are now in the main entry hall of a great temple. Huge reddish stone columns stretch to the ceiling some 50' overhead. The stone floor is made up of intricately engraved flagstones. Heavy cloth tapestries depicting various scenes of dwarven religious cerimonies block your view into the other areas of the temple. Grey robed priests and acolytes move here and there going about their daily duties. An ornate archway exits to the west.",
+      "layout": {
+        "x": 2,
+        "y": 1
+      }
+    },
+    {
+      "id": "third-town/stonework-corridor-175",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "w": {
+          "to": "third-town/town-square"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west. st Race:         Dwarven Class:        Acolyte Level:        15 Experience:   1828618 Rune:         Green Intellect:    20 Knowledge:    21 Physique:     20 Stamina:      19 Agility:      17 Charisma:     17 Mana:         15 / 15 Vitality:     361 / 361 Status:       Healthy Armor Rating: 12 Weapon:       Pyrehammer Armor:        Platemail Encumberance: 796 / 1000",
+      "layout": {
+        "x": 1,
+        "y": 0
+      }
+    }
+  ]
+}

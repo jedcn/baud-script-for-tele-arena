@@ -1,0 +1,197 @@
+{
+  "area": "first-town",
+  "name": "first-town",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "first-town/north-plaza",
+      "name": "north plaza",
+      "exits": {
+        "e": {
+          "to": "first-town/arena"
+        },
+        "n": {
+          "to": "first-town/guild-hall"
+        },
+        "ne": {
+          "to": "first-town/tavern"
+        },
+        "nw": {
+          "to": "first-town/equipment-shop"
+        },
+        "s": {
+          "to": "first-town/south-plaza"
+        },
+        "w": {
+          "to": "first-town/temple"
+        }
+      },
+      "description": "You are standing at the north end of a large open plaza surrounded by shade trees as well as assorted flowering shrubs and hedges whose scent wafts through the warm, dry air. To the west stands an ornate temple adorned with ornate stone and brass architecture. A quaint little shop lies to the northwest, and a dimly lit, smokey little tavern to the northeast. To the east lay the huge wrought iron gates of the arena. To north is the town guild hall. The other half of the plaza lies to the south."
+    },
+    {
+      "id": "first-town/arena",
+      "name": "arena",
+      "exits": {
+        "d": {
+          "to": "first-dungeon-level-1/dungeon-entrance"
+        },
+        "w": {
+          "to": "first-town/north-plaza"
+        }
+      },
+      "description": "You now stand inside the gates of the village's most noteworthy and notorious point of interest, the arena. The charred and stained stone walls and scattered bits of bone, armor, and weaponry lying among the debris on the packed earthen floor. A huge brass gong hangs at the center of the arena suspended on a framework made of the bones of some of the less fortunate of the arena's combatants. To the south is a wide stone staircase leading down to the dungeon gate. The exit through the arena gates is to the west.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-town/tavern",
+      "name": "tavern",
+      "exits": {
+        "sw": {
+          "to": "first-town/north-plaza"
+        },
+        "u": {
+          "to": "first-town/private-room"
+        }
+      },
+      "description": "You are in the village tavern. The smoke from the many oil lamps decrease visibility to your imediate surroundings, and the wavering light they cast about the room leaves many shadows and unlit corners. There are several tables about the room, where the tavern's patrons eat, drink, and generally enjoy themselves. The bar stands along the north wall and a door to the kitchen lies to the northeast. A large, full length mirror adorns the west wall. The only visible exits lie up a steep wooden ladder near the rear of the room, and out into the north plaza to the southwest."
+    },
+    {
+      "id": "first-town/private-room",
+      "name": "private room",
+      "exits": {
+        "d": {
+          "to": "first-town/tavern"
+        }
+      },
+      "description": "You are in a private room above the tavern. The room is well furnished, though not richly. A window in the northern wall affords a breathtaking view of the great lake to the north of town. A steep wooden staircase leads down through a trap door in the floor to the tavern common room."
+    },
+    {
+      "id": "first-town/guild-hall",
+      "name": "guild hall",
+      "exits": {
+        "d": {
+          "to": "first-town/town-vaults"
+        },
+        "n": {
+          "to": "first-town/docks"
+        },
+        "s": {
+          "to": "first-town/north-plaza"
+        }
+      },
+      "description": "You have entered the town guild hall, where one may seek the training neccessary to refine your combat and spell skills. This building is also a center of learning where the ancient art of sorcery is taught to those with the intelligence and skill to wield it effectively. Sages, wizards, and masters-at-arms rush about on errands or to and from training sessions. Ornately carved marble archways exit to the north and south, and a wide stone staircase leads downward."
+    },
+    {
+      "id": "first-town/town-vaults",
+      "name": "town vaults",
+      "exits": {
+        "u": {
+          "to": "first-town/guild-hall"
+        }
+      },
+      "description": "You are standing at the entrance to the town vaults. The room is bare, and fashioned from solid natural stone. On the south wall there is a huge iron door, and an open window covered with iron bars. A richly dressed man in the window looks at you expectantly. A wide stone staircase leads upward."
+    },
+    {
+      "id": "first-town/docks",
+      "name": "docks",
+      "exits": {
+        "passage": {
+          "to": "second-town/docks-1"
+        },
+        "s": {
+          "to": "first-town/guild-hall"
+        }
+      },
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-town/equipment-shop",
+      "name": "equipment shop",
+      "exits": {
+        "se": {
+          "to": "first-town/north-plaza"
+        }
+      },
+      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the north wall, eyeing you warily. The exit is to the southeast.",
+      "layout": {
+        "x": -2,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-town/temple",
+      "name": "temple",
+      "exits": {
+        "e": {
+          "to": "first-town/north-plaza"
+        }
+      },
+      "description": "You are now in the main entry hall of a great temple. Huge black marble columns veined with platinum stretch to the ceiling some 100' overhead. The paterns in the tile floor are so ornate and complex as to be nearly impossible to follow or comprehend. Many black silk tapestries depicting various scenes of a religious or magical nature block your view into the many other areas of the temple. Blue robed priests and acolytes move here and there going about their daily duties. The exit is to the east."
+    },
+    {
+      "id": "first-town/south-plaza",
+      "name": "south plaza",
+      "exits": {
+        "e": {
+          "to": "first-town/weapon-shop"
+        },
+        "n": {
+          "to": "first-town/north-plaza"
+        },
+        "s": {
+          "to": "first-town/magic-shop"
+        },
+        "sw": {
+          "to": "mountains/mountains"
+        },
+        "w": {
+          "to": "first-town/armor-shop"
+        }
+      },
+      "description": "You are standing at the south end of a large open plaza surrounded by shade trees as well as assorted flowering shrubs and hedges who's scent wafts through the warm, dry air. To the west stands the town's armor shop. The weapon shop lies to the east. There is a magic shop to the south. To the north lies the other half of the plaza and to the southwest lies the town's outer gate."
+    },
+    {
+      "id": "first-town/armor-shop",
+      "name": "armor shop",
+      "exits": {
+        "e": {
+          "to": "first-town/south-plaza"
+        }
+      },
+      "description": "You are now inside the armor shop, where you may aquire different sorts of armor and protective gear to guard yourself against the blows of your opponents in the arena, or from the various non-human foes to be found in the dungeons beneath the town. The shop keeper sits on a high behind a worn counter along the south wall, eyeing you warily. The exit is to the east."
+    },
+    {
+      "id": "first-town/weapon-shop",
+      "name": "weapon shop",
+      "exits": {
+        "nw": {
+          "to": "third-town/underground-plaza"
+        },
+        "w": {
+          "to": "first-town/south-plaza"
+        }
+      },
+      "description": "You are now inside the weapon shop, where you may purchase various weapons to use for sparring in the arena or for personal defense from the denizens of the dungeons. The shop keeper sits on a high stool behind a tall counter along the south wall. A stone archway lies to the to the northwest.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-town/magic-shop",
+      "name": "magic shop",
+      "exits": {
+        "n": {
+          "to": "first-town/south-plaza"
+        }
+      },
+      "description": "You're standing in a warm, dimly lit shop where various magical items are bought and sold by a shrewd mage in crimson robes with an air of power and complete confidence about him. He doesn't look like someone whose spells you'd like to be on the wrong end of. The sweet scent of incense drifts in from a workroom in the rear of the shop. The exit is to the north."
+    }
+  ]
+}

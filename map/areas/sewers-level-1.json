@@ -1,0 +1,1134 @@
+{
+  "area": "sewers-level-1",
+  "name": "Sewers, Level 1",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "sewers-level-1/town-sewers",
+      "name": "town sewers",
+      "exits": {
+        "e": {
+          "to": "sewers-level-1/town-sewers-31"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-1"
+        },
+        "u": {
+          "to": "second-town/path-4"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the east, southeast, and the only other exit it back up though the grate.",
+      "layout": {
+        "x": -3,
+        "y": 3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-1",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-2"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southwest.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-2",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-1"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-3"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south and northeast.",
+      "layout": {
+        "x": -3,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-3",
+      "name": "town sewers",
+      "exits": {
+        "n": {
+          "to": "sewers-level-1/town-sewers-2"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-4"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north and southeast.",
+      "layout": {
+        "x": -3,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-4",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-3"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-5"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": -2,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-5",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-14"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-4"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-6"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast, southwest, and northwest.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-6",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-5"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-7"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast and southeast.",
+      "layout": {
+        "x": -2,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-7",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-6"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-8"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": -1,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-8",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-9"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-7"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and northeast.",
+      "layout": {
+        "x": 0,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-9",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-10"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-8"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 1,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-10",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-11"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-15"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-9"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast, southwest, and southeast.",
+      "layout": {
+        "x": 2,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-11",
+      "name": "town sewers",
+      "exits": {
+        "n": {
+          "to": "sewers-level-1/town-sewers-12"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-10"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north and southwest.",
+      "layout": {
+        "x": 3,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-12",
+      "name": "town sewers",
+      "exits": {
+        "n": {
+          "to": "sewers-level-1/town-sewers-13"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-11"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north and south.",
+      "layout": {
+        "x": 3,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-13",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-14"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-12"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south and northwest.",
+      "layout": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-14",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-27"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-28"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-13"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-5"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and northeast.",
+      "layout": {
+        "x": 2,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-15",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-10"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-16"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 3,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-16",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-15"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-17"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 4,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-17",
+      "name": "town sewers",
+      "exits": {
+        "e": {
+          "to": "sewers-level-1/town-sewers-18"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-16"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the east and northwest.",
+      "layout": {
+        "x": 5,
+        "y": -6
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-18",
+      "name": "town sewers",
+      "exits": {
+        "e": {
+          "to": "sewers-level-1/town-sewers-42"
+        },
+        "n": {
+          "to": "sewers-level-1/town-sewers-19"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-62",
+          "door": {
+            "material": "stone",
+            "key": "ruby"
+          }
+        },
+        "w": {
+          "to": "sewers-level-1/town-sewers-17"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north, south, east, and west.",
+      "layout": {
+        "x": 6,
+        "y": -6
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-19",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-20"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-18"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south and northwest.",
+      "layout": {
+        "x": 6,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-20",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-21"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-19"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 5,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-21",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-22"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-20"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast and southeast.",
+      "layout": {
+        "x": 4,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-22",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-23"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-21"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 5,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-23",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-24"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-22"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southwest.",
+      "layout": {
+        "x": 6,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-24",
+      "name": "town sewers",
+      "exits": {
+        "e": {
+          "to": "sewers-level-1/town-sewers-32"
+        },
+        "n": {
+          "to": "sewers-level-1/town-sewers-25"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-23"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north, east, and southeast.",
+      "layout": {
+        "x": 5,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-25",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-26"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-24"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south and northwest.",
+      "layout": {
+        "x": 5,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-26",
+      "name": "town sewers",
+      "exits": {
+        "se": {
+          "to": "sewers-level-1/town-sewers-25"
+        },
+        "w": {
+          "to": "sewers-level-1/town-sewers-27"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the west and southeast.",
+      "layout": {
+        "x": 4,
+        "y": 2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-27",
+      "name": "town sewers",
+      "exits": {
+        "e": {
+          "to": "sewers-level-1/town-sewers-26"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-14"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the east and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-28",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-29"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-14"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-29",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-30"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-28"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-30",
+      "name": "town sewers",
+      "exits": {
+        "se": {
+          "to": "sewers-level-1/town-sewers-29"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-31"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and southeast.",
+      "layout": {
+        "x": -1,
+        "y": 4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-31",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-30"
+        },
+        "w": {
+          "to": "sewers-level-1/town-sewers"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the west and northeast.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-32",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-33"
+        },
+        "w": {
+          "to": "sewers-level-1/town-sewers-24"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the west and northeast.",
+      "layout": {
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-33",
+      "name": "town sewers",
+      "exits": {
+        "se": {
+          "to": "sewers-level-1/town-sewers-34"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-32"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and southeast.",
+      "layout": {
+        "x": 7,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-34",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-33"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-35"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-35",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-46"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-34"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-36"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south, northwest, and northeast.",
+      "layout": {
+        "x": 9,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-36",
+      "name": "town sewers",
+      "exits": {
+        "n": {
+          "to": "sewers-level-1/town-sewers-35"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-45"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-37"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north, southwest, and southeast.",
+      "layout": {
+        "x": 9,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-37",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-36"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-38"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 8,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-38",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-37"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-39"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast and southeast.",
+      "layout": {
+        "x": 7,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-39",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-38"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-40"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 8,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-40",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-43"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-39"
+        },
+        "s": {
+          "to": "sewers-level-1/town-sewers-41"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the south, northwest, and northeast.",
+      "layout": {
+        "x": 9,
+        "y": -6
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-41",
+      "name": "town sewers",
+      "exits": {
+        "n": {
+          "to": "sewers-level-1/town-sewers-40"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-42"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -7
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-42",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-41"
+        },
+        "w": {
+          "to": "sewers-level-1/town-sewers-18"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the west and northeast.",
+      "layout": {
+        "x": 8,
+        "y": -8
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-43",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-44"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-40"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 10,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-44",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-45"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-43"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southwest.",
+      "layout": {
+        "x": 11,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-45",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-36"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-44"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 10,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-46",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-47"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-53"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-35"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast, southwest, and southeast.",
+      "layout": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-47",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-48"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-46"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast and southwest.",
+      "layout": {
+        "x": 11,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-48",
+      "name": "town sewers",
+      "exits": {
+        "se": {
+          "to": "sewers-level-1/town-sewers-49"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-47"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and southeast.",
+      "layout": {
+        "x": 12,
+        "y": 2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-49",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-48"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-50"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 13,
+        "y": 1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-50",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-49"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-61"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-51"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest, southeast, and southwest.",
+      "layout": {
+        "x": 14,
+        "y": 0
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-51",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-50"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-52"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 13,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-52",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-51"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-53"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-54"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest, northeast, and southeast.",
+      "layout": {
+        "x": 12,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-53",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-46"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-52"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 11,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-54",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-60"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-52"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-59"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-55"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast, southeast, southwest, and northwest.",
+      "layout": {
+        "x": 13,
+        "y": -3
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-55",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-54"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-56"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northeast and southeast.",
+      "layout": {
+        "x": 12,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-56",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-55"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-57"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 13,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-57",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-58"
+        },
+        "nw": {
+          "to": "sewers-level-1/town-sewers-56"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and northeast.",
+      "layout": {
+        "x": 14,
+        "y": -6
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-58",
+      "name": "town sewers",
+      "exits": {
+        "ne": {
+          "to": "sewers-level-1/town-sewers-59"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-57"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the southwest and northeast.",
+      "layout": {
+        "x": 15,
+        "y": -5
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-59",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-54"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-58"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southwest.",
+      "layout": {
+        "x": 16,
+        "y": -4
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-60",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-61"
+        },
+        "sw": {
+          "to": "sewers-level-1/town-sewers-54"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southwest.",
+      "layout": {
+        "x": 14,
+        "y": -2
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-61",
+      "name": "town sewers",
+      "exits": {
+        "nw": {
+          "to": "sewers-level-1/town-sewers-50"
+        },
+        "se": {
+          "to": "sewers-level-1/town-sewers-60"
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the northwest and southeast.",
+      "layout": {
+        "x": 15,
+        "y": -1
+      }
+    },
+    {
+      "id": "sewers-level-1/town-sewers-62",
+      "name": "town sewers",
+      "exits": {
+        "d": {
+          "to": "sewers-level-2/town-sewers-63"
+        },
+        "n": {
+          "to": "sewers-level-1/town-sewers-18",
+          "door": {
+            "material": "stone",
+            "key": "ruby"
+          }
+        }
+      },
+      "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. Deep pools of murky brackish water obscure the floor of this filthy tunnel. The tunnel runs to the north. Iron rungs decend through a hole in the floor.",
+      "layout": {
+        "x": 6,
+        "y": -7
+      }
+    }
+  ]
+}

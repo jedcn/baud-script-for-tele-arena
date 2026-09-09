@@ -1,0 +1,1304 @@
+{
+  "area": "mountains",
+  "name": "The Mountains",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "mountains/mountains",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "first-town/south-plaza"
+        },
+        "s": {
+          "to": "mountains/mountains-1"
+        }
+      },
+      "description": "Pelayo has just arrived from the northeast. You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and south.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-1",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains"
+        },
+        "sw": {
+          "to": "mountains/mountains-2"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north and southwest.",
+      "layout": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "id": "mountains/mountains-2",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-1"
+        },
+        "se": {
+          "to": "mountains/cave-157"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The entrance to a dark cave lies to the southeast. The only other exit is to the northeast.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "mountains/cave-157",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-2"
+        },
+        "sw": {
+          "to": "mountains/cave-158"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and southwest. There is light to the northwest.",
+      "layout": {
+        "x": 0,
+        "y": -3
+      }
+    },
+    {
+      "id": "mountains/cave-158",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "mountains/cave-157"
+        },
+        "sw": {
+          "to": "mountains/cave-159"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": -1,
+        "y": -4
+      }
+    },
+    {
+      "id": "mountains/cave-159",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "mountains/cave-158"
+        },
+        "nw": {
+          "to": "mountains/cave-160"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and northwest.",
+      "layout": {
+        "x": -2,
+        "y": -5
+      }
+    },
+    {
+      "id": "mountains/cave-160",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "mountains/cave-159"
+        },
+        "w": {
+          "to": "mountains/cave-161"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": -3,
+        "y": -4
+      }
+    },
+    {
+      "id": "mountains/cave-161",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "mountains/cave-160"
+        },
+        "w": {
+          "to": "mountains/forest"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west. There is light to the west.",
+      "layout": {
+        "x": -4,
+        "y": -4
+      }
+    },
+    {
+      "id": "mountains/forest",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/cave-161"
+        },
+        "sw": {
+          "to": "mountains/forest-1"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and southwest.",
+      "layout": {
+        "x": -5,
+        "y": -4
+      }
+    },
+    {
+      "id": "mountains/forest-1",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest"
+        },
+        "s": {
+          "to": "mountains/forest-2"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and south.",
+      "layout": {
+        "x": -6,
+        "y": -5
+      }
+    },
+    {
+      "id": "mountains/forest-2",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "mountains/forest-1"
+        },
+        "s": {
+          "to": "mountains/forest-3"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and south.",
+      "layout": {
+        "x": -6,
+        "y": -6
+      }
+    },
+    {
+      "id": "mountains/forest-3",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "mountains/forest-2"
+        },
+        "sw": {
+          "to": "mountains/forest-4"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and southwest.",
+      "layout": {
+        "x": -6,
+        "y": -7
+      }
+    },
+    {
+      "id": "mountains/forest-4",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-3"
+        },
+        "sw": {
+          "to": "mountains/forest-5"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southwest.",
+      "layout": {
+        "x": -7,
+        "y": -8
+      }
+    },
+    {
+      "id": "mountains/forest-5",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-4"
+        },
+        "se": {
+          "to": "mountains/forest-6"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southeast.",
+      "layout": {
+        "x": -8,
+        "y": -9
+      }
+    },
+    {
+      "id": "mountains/forest-6",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-5"
+        },
+        "sw": {
+          "to": "mountains/forest-7"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southwest.",
+      "layout": {
+        "x": -7,
+        "y": -10
+      }
+    },
+    {
+      "id": "mountains/forest-7",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-6"
+        },
+        "se": {
+          "to": "mountains/forest-8"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southeast.",
+      "layout": {
+        "x": -8,
+        "y": -11
+      }
+    },
+    {
+      "id": "mountains/forest-8",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-7"
+        },
+        "se": {
+          "to": "mountains/forest-9"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -7,
+        "y": -12
+      }
+    },
+    {
+      "id": "mountains/forest-9",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-8"
+        },
+        "se": {
+          "to": "mountains/forest-10"
+        }
+      },
+      "description": "Pelayo has just arrived from the northwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -6,
+        "y": -13
+      }
+    },
+    {
+      "id": "mountains/forest-10",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-9"
+        },
+        "se": {
+          "to": "mountains/forest-11"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -5,
+        "y": -14
+      }
+    },
+    {
+      "id": "mountains/forest-11",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-10"
+        },
+        "sw": {
+          "to": "mountains/forest-12"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southwest.",
+      "layout": {
+        "x": -4,
+        "y": -15
+      }
+    },
+    {
+      "id": "mountains/forest-12",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-11"
+        },
+        "se": {
+          "to": "mountains/clearing"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southeast.",
+      "layout": {
+        "x": -5,
+        "y": -16
+      }
+    },
+    {
+      "id": "mountains/clearing",
+      "name": "clearing",
+      "exits": {
+        "ne": {
+          "to": null
+        },
+        "nw": {
+          "to": "mountains/forest-12"
+        },
+        "se": {
+          "to": "mountains/forest-13"
+        }
+      },
+      "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. Paths lead off to the northeast, northwest, and southeast.",
+      "layout": {
+        "x": -4,
+        "y": -17
+      }
+    },
+    {
+      "id": "mountains/forest-13",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/clearing"
+        },
+        "sw": {
+          "to": "mountains/forest-14"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southwest.",
+      "layout": {
+        "x": -3,
+        "y": -18
+      }
+    },
+    {
+      "id": "mountains/forest-14",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-13"
+        },
+        "sw": {
+          "to": "mountains/clearing-1"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southwest.",
+      "layout": {
+        "x": -4,
+        "y": -19
+      }
+    },
+    {
+      "id": "mountains/clearing-1",
+      "name": "clearing",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-14"
+        },
+        "se": {
+          "to": "mountains/forest-15"
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. Paths lead off to the northeast, southeast, and southwest.",
+      "layout": {
+        "x": -5,
+        "y": -20
+      }
+    },
+    {
+      "id": "mountains/forest-15",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-16"
+        },
+        "nw": {
+          "to": "mountains/clearing-1"
+        }
+      },
+      "description": "Pelayo has just arrived from the northwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and northwest.",
+      "layout": {
+        "x": -4,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/forest-16",
+      "name": "forest",
+      "exits": {
+        "se": {
+          "to": "mountains/forest-17"
+        },
+        "sw": {
+          "to": "mountains/forest-15"
+        }
+      },
+      "description": "Pelayo has just arrived from the southwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the southeast and southwest.",
+      "layout": {
+        "x": -3,
+        "y": -20
+      }
+    },
+    {
+      "id": "mountains/forest-17",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/forest-18"
+        },
+        "nw": {
+          "to": "mountains/forest-16"
+        }
+      },
+      "description": "Pelayo has just arrived from the northwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and northwest.",
+      "layout": {
+        "x": -2,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/forest-18",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/forest-19"
+        },
+        "w": {
+          "to": "mountains/forest-17"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and west.",
+      "layout": {
+        "x": -1,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/forest-19",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/forest-20"
+        },
+        "w": {
+          "to": "mountains/forest-18"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and west.",
+      "layout": {
+        "x": 0,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/forest-20",
+      "name": "forest",
+      "exits": {
+        "s": {
+          "to": "mountains/forest-21"
+        },
+        "w": {
+          "to": "mountains/forest-19"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the south and west.",
+      "layout": {
+        "x": 1,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/forest-21",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "mountains/forest-20"
+        },
+        "sw": {
+          "to": "mountains/forest-22"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and southwest.",
+      "layout": {
+        "x": 1,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/forest-22",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-21"
+        },
+        "sw": {
+          "to": "mountains/forest-23"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southwest.",
+      "layout": {
+        "x": 0,
+        "y": -23
+      }
+    },
+    {
+      "id": "mountains/forest-23",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "mountains/forest-22"
+        },
+        "se": {
+          "to": "mountains/forest-24"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southeast.",
+      "layout": {
+        "x": -1,
+        "y": -24
+      }
+    },
+    {
+      "id": "mountains/forest-24",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-23"
+        },
+        "se": {
+          "to": "mountains/forest-25"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": 0,
+        "y": -25
+      }
+    },
+    {
+      "id": "mountains/forest-25",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "mountains/forest-24"
+        },
+        "se": {
+          "to": "mountains/forest-26"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": 1,
+        "y": -26
+      }
+    },
+    {
+      "id": "mountains/forest-26",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/forest-27"
+        },
+        "nw": {
+          "to": "mountains/forest-25"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and northwest.",
+      "layout": {
+        "x": 2,
+        "y": -27
+      }
+    },
+    {
+      "id": "mountains/forest-27",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp"
+        },
+        "w": {
+          "to": "mountains/forest-26"
+        }
+      },
+      "description": "You are standing at the end of a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path leads off to the west and to the east is a damp and dismal swamp.",
+      "layout": {
+        "x": 3,
+        "y": -27
+      }
+    },
+    {
+      "id": "mountains/swamp",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-1"
+        },
+        "w": {
+          "to": "mountains/forest-27"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and a path leads into a dense forest lies to the west.",
+      "layout": {
+        "x": 4,
+        "y": -27
+      }
+    },
+    {
+      "id": "mountains/swamp-1",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-2"
+        },
+        "sw": {
+          "to": "mountains/swamp"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 5,
+        "y": -26
+      }
+    },
+    {
+      "id": "mountains/swamp-2",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-3"
+        },
+        "sw": {
+          "to": "mountains/swamp-1"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 6,
+        "y": -25
+      }
+    },
+    {
+      "id": "mountains/swamp-3",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/clearing-2"
+        },
+        "sw": {
+          "to": "mountains/swamp-2"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and southwest.",
+      "layout": {
+        "x": 7,
+        "y": -24
+      }
+    },
+    {
+      "id": "mountains/clearing-2",
+      "name": "clearing",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-4"
+        },
+        "w": {
+          "to": "mountains/swamp-3"
+        }
+      },
+      "description": "Pelayo has just arrived from the west. You are standing in a clearing in the swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. Trails lead off to the west and northeast.",
+      "layout": {
+        "x": 8,
+        "y": -24
+      }
+    },
+    {
+      "id": "mountains/swamp-4",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-5"
+        },
+        "sw": {
+          "to": "mountains/clearing-2"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -23
+      }
+    },
+    {
+      "id": "mountains/swamp-5",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp-6"
+        },
+        "nw": {
+          "to": null
+        },
+        "sw": {
+          "to": "mountains/swamp-4"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east, northwest, and southwest.",
+      "layout": {
+        "x": 10,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/swamp-6",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp-7"
+        },
+        "w": {
+          "to": "mountains/swamp-5"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and west.",
+      "layout": {
+        "x": 11,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/swamp-7",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp-8"
+        },
+        "w": {
+          "to": "mountains/swamp-6"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and west.",
+      "layout": {
+        "x": 12,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/swamp-8",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/clearing-3"
+        },
+        "w": {
+          "to": "mountains/swamp-7"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and west.",
+      "layout": {
+        "x": 13,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/clearing-3",
+      "name": "clearing",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "ne": {
+          "to": "mountains/swamp-9"
+        },
+        "w": {
+          "to": "mountains/swamp-8"
+        }
+      },
+      "description": "You are standing in a clearing in the swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. Trails lead off to the east, west, and northeast.",
+      "layout": {
+        "x": 14,
+        "y": -22
+      }
+    },
+    {
+      "id": "mountains/swamp-9",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/swamp-10"
+        },
+        "sw": {
+          "to": "mountains/clearing-3"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and southwest.",
+      "layout": {
+        "x": 15,
+        "y": -21
+      }
+    },
+    {
+      "id": "mountains/swamp-10",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/swamp-11"
+        },
+        "s": {
+          "to": "mountains/swamp-9"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north, south, and west.",
+      "layout": {
+        "x": 15,
+        "y": -20
+      }
+    },
+    {
+      "id": "mountains/swamp-11",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "n": {
+          "to": "mountains/swamp-12"
+        },
+        "s": {
+          "to": "mountains/swamp-10"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north, south, and east.",
+      "layout": {
+        "x": 15,
+        "y": -19
+      }
+    },
+    {
+      "id": "mountains/swamp-12",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/swamp-13"
+        },
+        "s": {
+          "to": "mountains/swamp-11"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and south.",
+      "layout": {
+        "x": 15,
+        "y": -18
+      }
+    },
+    {
+      "id": "mountains/swamp-13",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-14"
+        },
+        "s": {
+          "to": "mountains/swamp-12"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the south and northeast.",
+      "layout": {
+        "x": 15,
+        "y": -17
+      }
+    },
+    {
+      "id": "mountains/swamp-14",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-15"
+        },
+        "sw": {
+          "to": "mountains/swamp-13"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 16,
+        "y": -16
+      }
+    },
+    {
+      "id": "mountains/swamp-15",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/swamp-16"
+        },
+        "sw": {
+          "to": "mountains/swamp-14"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and southwest.",
+      "layout": {
+        "x": 17,
+        "y": -15
+      }
+    },
+    {
+      "id": "mountains/swamp-16",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "s": {
+          "to": "mountains/swamp-15"
+        },
+        "w": {
+          "to": "mountains/swamp-17"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the south, east, and west.",
+      "layout": {
+        "x": 17,
+        "y": -14
+      }
+    },
+    {
+      "id": "mountains/swamp-17",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp-16"
+        },
+        "nw": {
+          "to": "mountains/swamp-18"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and northwest.",
+      "layout": {
+        "x": 16,
+        "y": -14
+      }
+    },
+    {
+      "id": "mountains/swamp-18",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-19"
+        },
+        "nw": {
+          "to": null
+        },
+        "se": {
+          "to": "mountains/swamp-17"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast, northwest, and southeast.",
+      "layout": {
+        "x": 15,
+        "y": -13
+      }
+    },
+    {
+      "id": "mountains/swamp-19",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "mountains/swamp-20"
+        },
+        "sw": {
+          "to": "mountains/swamp-18"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and southwest.",
+      "layout": {
+        "x": 16,
+        "y": -12
+      }
+    },
+    {
+      "id": "mountains/swamp-20",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-21"
+        },
+        "w": {
+          "to": "mountains/swamp-19"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and northeast.",
+      "layout": {
+        "x": 17,
+        "y": -12
+      }
+    },
+    {
+      "id": "mountains/swamp-21",
+      "name": "swamp",
+      "exits": {
+        "se": {
+          "to": "mountains/swamp-22"
+        },
+        "sw": {
+          "to": "mountains/swamp-20"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the southeast and southwest.",
+      "layout": {
+        "x": 18,
+        "y": -11
+      }
+    },
+    {
+      "id": "mountains/swamp-22",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-23"
+        },
+        "nw": {
+          "to": "mountains/swamp-21"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and northeast.",
+      "layout": {
+        "x": 19,
+        "y": -12
+      }
+    },
+    {
+      "id": "mountains/swamp-23",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-24"
+        },
+        "sw": {
+          "to": "mountains/swamp-22"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 20,
+        "y": -11
+      }
+    },
+    {
+      "id": "mountains/swamp-24",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "mountains/swamp-25"
+        },
+        "sw": {
+          "to": "mountains/swamp-23"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and southwest.",
+      "layout": {
+        "x": 21,
+        "y": -10
+      }
+    },
+    {
+      "id": "mountains/swamp-25",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-26"
+        },
+        "se": {
+          "to": "mountains/swamp-24"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west, northeast, and southeast.",
+      "layout": {
+        "x": 20,
+        "y": -9
+      }
+    },
+    {
+      "id": "mountains/swamp-26",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-27"
+        },
+        "sw": {
+          "to": "mountains/swamp-25"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 21,
+        "y": -8
+      }
+    },
+    {
+      "id": "mountains/swamp-27",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "mountains/swamp-28"
+        },
+        "sw": {
+          "to": "mountains/swamp-26"
+        }
+      },
+      "description": "Pelayo has just arrived from the southwest. You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 22,
+        "y": -7
+      }
+    },
+    {
+      "id": "mountains/swamp-28",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/swamp-29"
+        },
+        "sw": {
+          "to": "mountains/swamp-27"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and southwest.",
+      "layout": {
+        "x": 23,
+        "y": -6
+      }
+    },
+    {
+      "id": "mountains/swamp-29",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "mountains/path-10"
+        },
+        "s": {
+          "to": "mountains/swamp-28"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and south.",
+      "layout": {
+        "x": 23,
+        "y": -5
+      }
+    },
+    {
+      "id": "mountains/path-10",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "mountains/path-11"
+        },
+        "s": {
+          "to": "mountains/swamp-29"
+        }
+      },
+      "description": "You are standing on an overgrown path which leads out of the swamp and into what appears to be the ruins of a forgotten town to the north. The swamp's insect population is strangely quiet in this area. The path leads off to the north and the swamp lies to the south.",
+      "layout": {
+        "x": 23,
+        "y": -4
+      }
+    },
+    {
+      "id": "mountains/path-11",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "mountains/ruined-plaza"
+        },
+        "s": {
+          "to": "mountains/path-10"
+        }
+      },
+      "description": "You are standing on an overgrown path which leads out of the swamp and into what appears to be the ruins of a forgotten town to the north. The swamp's insect population is strangely quiet in this area. The path leads off to the south and the town gates stand ajar to the north.",
+      "layout": {
+        "x": 23,
+        "y": -3
+      }
+    },
+    {
+      "id": "mountains/ruined-plaza",
+      "name": "ruined plaza",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "n": {
+          "to": "mountains/ancient-temple"
+        },
+        "ne": {
+          "to": null
+        },
+        "nw": {
+          "to": null
+        },
+        "s": {
+          "to": "mountains/path-11"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in the center of a ruined plaza which has succumbed to decay and the plantlife of the swamp. To the north is the entrance to a rather impressive temple which has stood the test of time well. The stonework and architecture are of a design you do not recognize. Ruined streets lead east, west, northeast, northwest, and south out through the open town gates.",
+      "layout": {
+        "x": 23,
+        "y": -2
+      }
+    },
+    {
+      "id": "mountains/ancient-temple",
+      "name": "ancient temple",
+      "exits": {
+        "d": {
+          "to": "cellars/cellar"
+        },
+        "s": {
+          "to": "mountains/ruined-plaza"
+        }
+      },
+      "description": "You are standing in an ancient temple dedicated to some forgotten deity. Althoqgh it is in good condition, nothing of value remains to be seen. The main exit lies to the south into the plaza, and a stone staircase near the north wall leads downward.",
+      "layout": {
+        "x": 23,
+        "y": -1
+      }
+    }
+  ]
+}

@@ -1,0 +1,972 @@
+{
+  "area": "first-dungeon-level-2",
+  "name": "First Dungeon, Level 2",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "first-dungeon-level-2/bottom-of-a-circular-stairwell",
+      "name": "bottom of a circular stairwell",
+      "exits": {
+        "s": {
+          "to": "first-dungeon-level-2/cave-45"
+        },
+        "u": {
+          "to": "first-dungeon-level-1/top-of-a-circular-stairwell"
+        }
+      },
+      "description": "You are now at the foot of a long winding stairway that leads up into the darkness. The room reeks of some odor you can't identify. the furnishings of this room, such as they are, are completely out of order. Rags and bits of straw lie strewn about the room with an occasional bone or piece of wood. To the south lies the only exit other than the spiral staircase.",
+      "layout": {
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-45",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/bottom-of-a-circular-stairwell"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-46"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 8,
+        "y": 3
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-46",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-45"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-47"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 7,
+        "y": 2
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-47",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-46"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/filthy-cave"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/filthy-cave",
+      "name": "filthy cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-47"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/cave-48"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-57",
+          "door": {
+            "material": "bronze",
+            "key": "bronze"
+          }
+        }
+      },
+      "description": "The cave in which you now stand reminds you of a stable that's not been cleaned in years. It is filthy and smells quite foul. Something about this room seems familiar, but you can't put your finger on it. Several bloodstains and other signs of mayhem put you ill at ease. The visible exits are to the northeast, northwest, and southwest.",
+      "layout": {
+        "x": 5,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-48",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-49"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/filthy-cave"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and northwest.",
+      "layout": {
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-49",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-50"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-48"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southeast.",
+      "layout": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-50",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-51"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-49"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": 3,
+        "y": 3
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-51",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-52"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-50"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-52",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-53"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-51"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 5,
+        "y": 5
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-53",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-54"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-52"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and south.",
+      "layout": {
+        "x": 5,
+        "y": 6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-54",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "first-dungeon-level-2/cave-53"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-55"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and southwest.",
+      "layout": {
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-55",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-54"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-56"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-56",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-55"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the northeast.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-57",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/filthy-cave",
+          "door": {
+            "material": "bronze",
+            "key": "bronze"
+          }
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-58"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": 4,
+        "y": -1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-58",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-57"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/cave-59"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and northwest.",
+      "layout": {
+        "x": 3,
+        "y": -1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-59",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-60"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-58"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and northwest.",
+      "layout": {
+        "x": 2,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-60",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "first-dungeon-level-2/cave-59"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-61"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-61",
+      "name": "cave",
+      "exits": {
+        "d": {
+          "to": "first-dungeon-level-2/pit"
+        },
+        "e": {
+          "to": "first-dungeon-level-2/cave-60"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/smelly-cave"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and south.",
+      "trap": {
+        "type": "trap door"
+      },
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/pit",
+      "name": "pit",
+      "exits": {
+        "u": {
+          "to": "first-dungeon-level-2/cave-61"
+        }
+      },
+      "description": "You are at the bottom of a pit. The smooth stone walls rise some ten feet above your head. It doesn't seem likely that you could climb them unaided. The remains of those unfortunate enough to become trapped here litter the floor around you.",
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/smelly-cave",
+      "name": "smelly cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-61"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-62"
+        }
+      },
+      "description": "This cave smells strongly of animals. It has the look and feel of the den of some wild beast. The rotting carcass of some animal far too mutilated and charred to identify says something of the occupant of this cavern. The obvious exits are to the north and south.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-62",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/smelly-cave"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-63"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-63",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-62"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-64"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-64",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-63"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-65"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and northwest.",
+      "layout": {
+        "x": 0,
+        "y": -3
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-65",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-64"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-66"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and south.",
+      "layout": {
+        "x": 1,
+        "y": -4
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-66",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-65"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-69"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-67"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast, southwest and north.",
+      "layout": {
+        "x": 1,
+        "y": -5
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-67",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-66"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-68"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": 0,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-68",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-67"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/large-cave"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": -1,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-69",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-80"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/cave-66"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and northwest.",
+      "layout": {
+        "x": 2,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/large-cave",
+      "name": "large cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-68"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-70"
+        }
+      },
+      "description": "A horrific scene lies before you in the form of a pile of mangled bones and skulls of various creatures, human and otherwise. An enormous palet of furs and skins lies on one side of the room, and by the size of it, it's likely the sleeping place of a giant. You start to think better of having ventured this deep into the ground. The only exits are east and southeast.",
+      "layout": {
+        "x": -2,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-70",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/large-cave"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-71"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and northwest.",
+      "layout": {
+        "x": -1,
+        "y": -7
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-71",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-70"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-72"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and southwest.",
+      "layout": {
+        "x": 0,
+        "y": -8
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-72",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-71"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-73"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": -1,
+        "y": -9
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-73",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-72"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-74"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": -2,
+        "y": -10
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-74",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-73"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-75"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": -3,
+        "y": -11
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-75",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-74"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-76"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": -4,
+        "y": -12
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-76",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-77"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/cave-75"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and northwest.",
+      "layout": {
+        "x": -3,
+        "y": -13
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-77",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-78"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-76"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": -2,
+        "y": -13
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-78",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-79"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-77"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": -1,
+        "y": -12
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-79",
+      "name": "cave",
+      "exits": {
+        "sw": {
+          "to": "first-dungeon-level-2/cave-78"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the southwest.",
+      "layout": {
+        "x": 0,
+        "y": -11
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-80",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "first-dungeon-level-2/cave-81"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-69"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": 3,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-81",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-82"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/cave-80"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and northwest.",
+      "layout": {
+        "x": 4,
+        "y": -7
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-82",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-83"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-81"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 5,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-83",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-84"
+        },
+        "se": {
+          "to": "first-dungeon-level-2/cave-87"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-82"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast, southeast and west.",
+      "layout": {
+        "x": 6,
+        "y": -6
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-84",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-85"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-83"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 7,
+        "y": -5
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-85",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "first-dungeon-level-2/cave-86"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-84"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -4
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-86",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "first-dungeon-level-2/dead-end-cave"
+        },
+        "w": {
+          "to": "first-dungeon-level-2/cave-85"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": 9,
+        "y": -4
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/dead-end-cave",
+      "name": "dead end cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-86"
+        }
+      },
+      "description": "You've entered what is obviously home to some wild beast. Likely a bear or some subterranian predator. Old gnawed bones and claw marks on the floor and walls of this small cave tell you that much. The only visible exit lies back the way you came.",
+      "layout": {
+        "x": 10,
+        "y": -5
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-87",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "first-dungeon-level-2/cave-83"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-88"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and southwest.",
+      "layout": {
+        "x": 7,
+        "y": -7
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-88",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-87"
+        },
+        "sw": {
+          "to": "first-dungeon-level-2/cave-89"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 6,
+        "y": -8
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-89",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "first-dungeon-level-2/cave-88"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-90"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": 5,
+        "y": -9
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-90",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-89"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/cave-91"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south.",
+      "trap": {
+        "type": "crossbow trap"
+      },
+      "layout": {
+        "x": 5,
+        "y": -10
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/cave-91",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-90"
+        },
+        "s": {
+          "to": "first-dungeon-level-2/grand-hall",
+          "door": {
+            "material": "iron",
+            "key": "silver"
+          }
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south.",
+      "layout": {
+        "x": 5,
+        "y": -11
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/grand-hall",
+      "name": "grand hall",
+      "exits": {
+        "n": {
+          "to": "first-dungeon-level-2/cave-91",
+          "door": {
+            "material": "iron",
+            "key": "silver"
+          }
+        },
+        "se": {
+          "to": "first-dungeon-level-2/top-of-a-stairwell",
+          "door": {
+            "material": "iron",
+            "key": "silver"
+          }
+        }
+      },
+      "description": "The splendor of the hall before you could have come right out of some fantasic storybook legend. Enormous ornately carved black marble columns inlaid with platinum and ivory bigger around than you are tall rise far above to the ceiling, towering some two hundred or more feet above your head. The floor and walls of this great hall are adorned with ornately carved tiles and other noteworthy architecture with a very definite origin, dwarves. The far wall of this hall is barely visible some thousand feet away. Several things about this hall lead you to believe that either it's original creators or someone or something has kept it up over the aeons. Many torches in sconces along the walls light the hall about as brightly as any underground room could be expected to be. The sheer size and elegance of this magnificent hall leaves you in awe of it's builders. The only visibile exits lie to the north through a grand archway, and to the southeast through an ornately carved stone door.",
+      "layout": {
+        "x": 5,
+        "y": -12
+      }
+    },
+    {
+      "id": "first-dungeon-level-2/top-of-a-stairwell",
+      "name": "top of a stairwell",
+      "exits": {
+        "d": {
+          "to": "first-dungeon-level-3/bottom-of-a-stairwell"
+        },
+        "nw": {
+          "to": "first-dungeon-level-2/grand-hall",
+          "door": {
+            "material": "iron",
+            "key": "silver"
+          }
+        }
+      },
+      "description": "You stand in a circular shaft with a stairwell that decends around the outer wall into the darkness below. The air in this chamber is somewhat cooler than that outside.",
+      "layout": {
+        "x": 6,
+        "y": -13
+      }
+    }
+  ]
+}
