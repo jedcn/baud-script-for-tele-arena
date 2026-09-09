@@ -359,7 +359,10 @@
         {
           "box": 29,
           "room": "cave-31",
-          "message": "the drawing goes se from here; we have no exit that way"
+          "towards": [
+            37
+          ],
+          "message": "the drawing goes se from here to a room we cannot reach"
         }
       ],
       "boxes": 50,
@@ -530,7 +533,10 @@
         {
           "box": 12,
           "room": "cave-61",
-          "message": "the drawing goes w from here; we have no exit that way"
+          "towards": [
+            11
+          ],
+          "message": "the drawing goes w from here to a room we cannot reach"
         }
       ],
       "boxes": 55,
@@ -1110,7 +1116,10 @@
         {
           "box": 22,
           "room": "town-sewers-23",
-          "message": "the drawing goes se from here; we have no exit that way"
+          "towards": [
+            29
+          ],
+          "message": "the drawing goes se from here to a room we cannot reach"
         },
         {
           "box": 16,
@@ -1529,7 +1538,10 @@
         {
           "box": 42,
           "room": "town-sewers-147",
-          "message": "the drawing goes w from here; we have no exit that way"
+          "towards": [
+            41
+          ],
+          "message": "the drawing goes w from here to a room we cannot reach"
         }
       ],
       "boxes": 53,

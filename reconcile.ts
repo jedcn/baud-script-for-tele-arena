@@ -21,7 +21,7 @@ export type Report = {
   matched: [number, string][];        // shrine box index -> our room slug
   unmatchedBoxes: number[];
   unmatchedRooms: string[];
-  conflicts: { box: number; room: string; message: string }[];
+  conflicts: { box: number; room: string; message: string; towards?: number[] }[];
 };
 
 /** Where to start: a shrine box we can name in our map with certainty. */
@@ -31,7 +31,7 @@ export function reconcile(area: string, shrine: ParsedMap,
                           ours: Record<string, OurRoom>, anchor: Anchor): Report {
   const boxToRoom = new Map<number, string>();
   const roomToBox = new Map<string, number>();
-  const conflicts: { box: number; room: string; message: string }[] = [];
+  const conflicts: { box: number; room: string; message: string; towards?: number[] }[] = [];
 
   const start = anchor.box(shrine);
   if (start < 0 || !ours[anchor.room])
@@ -76,8 +76,8 @@ export function reconcile(area: string, shrine: ParsedMap,
       let landed: string | null = null, via = '';
       for (const d of dirs) { const t = room.exits[d]; if (t) { landed = t; via = d; break; } }
       if (!landed) {
-        conflicts.push({ box, room: room.slug,
-                         message: `the drawing goes ${edge.dir} from here; we have no exit that way` });
+        conflicts.push({ box, room: room.slug, towards: [edge.to],
+                         message: `the drawing goes ${edge.dir} from here to a room we cannot reach` });
         continue;
       }
       if (roomToBox.has(landed)) {

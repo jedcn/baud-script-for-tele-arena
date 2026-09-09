@@ -2,7 +2,11 @@
 // says nothing about where a problem is.
 //
 //   [?] a box the walk never reached
-//   [!] a box whose exits the drawing and our map disagree about
+//   [!] the room you would be standing in when the two sources disagree
+//   [>] where the drawing says you can go from [!], and we say you cannot
+//
+// The [!] / [>] split matters: the room with the problem and the room in
+// dispute are different rooms, and conflating them sends you to the wrong one.
 //
 import { parseMap } from './parse';
 import { reconcile, ANCHORS, type OurRoom } from './reconcile';
@@ -43,7 +47,13 @@ if (import.meta.main) {
     if (!rep.unmatchedBoxes.length && !rep.conflicts.length) continue;
     const mark = new Map<number, string>();
     for (const i of rep.unmatchedBoxes) mark.set(i, '?');
-    for (const c of rep.conflicts) if (c.box >= 0) mark.set(c.box, '!');
+    // A disputed room is almost always also unreached, so `>` must win over `?`
+    // -- otherwise the one box a reader most needs to find looks like the
+    // thirty around it.
+    for (const c of rep.conflicts) if (c.box >= 0) {
+      for (const t of c.towards ?? []) mark.set(t, '>');
+      mark.set(c.box, '!');
+    }
     console.log(`\n${'='.repeat(66)}\n${name}  —  ${rep.matched.length}/${shrine.boxes.length} matched`
       + `   [?] unreached ${rep.unmatchedBoxes.length}   [!] disagreement\n${'='.repeat(66)}`);
     console.log(annotate(shrineText, mark));
