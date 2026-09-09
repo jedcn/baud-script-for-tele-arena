@@ -40,3 +40,13 @@ describe('reconcile', () => {
     expect(rep.conflicts[0]).toContain('anchor not found');
   });
 });
+
+describe('conflicts carry a location', () => {
+  it('names the box so a reader can be shown where on the map it is', () => {
+    const shrine = parseMap('[*]-[a]');
+    const rep = reconcile('t', shrine, ours({ plaza: {}, other: {} }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.conflicts[0].box).toBe(0);
+    expect(rep.conflicts[0].room).toBe('plaza');
+  });
+});

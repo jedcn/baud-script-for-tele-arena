@@ -353,7 +353,11 @@
         "enormous-cavern"
       ],
       "conflicts": [
-        "cave-31: drawing goes se, we have no exit that way (nor a stair)"
+        {
+          "box": 29,
+          "room": "cave-31",
+          "message": "the drawing goes se from here; we have no exit that way"
+        }
       ],
       "boxes": 50,
       "rooms": 51
@@ -517,7 +521,11 @@
         "top-of-a-stairwell"
       ],
       "conflicts": [
-        "cave-61 is box 12 and also reached as box 16"
+        {
+          "box": 16,
+          "room": "cave-61",
+          "message": "walking s from here reaches cave-61, which the drawing puts elsewhere"
+        }
       ],
       "boxes": 55,
       "rooms": 55
@@ -1086,9 +1094,26 @@
       ],
       "unmatchedRooms": [],
       "conflicts": [
-        "town-sewers-14 is box 10 and also reached as box 16",
-        "town-sewers-23: drawing goes se, we have no exit that way (nor a stair)",
-        "town-sewers-23 is box 22 and also reached as box 29"
+        {
+          "box": 16,
+          "room": "town-sewers-14",
+          "message": "walking ne from here reaches town-sewers-14, which the drawing puts elsewhere"
+        },
+        {
+          "box": 22,
+          "room": "town-sewers-23",
+          "message": "the drawing goes se from here; we have no exit that way"
+        },
+        {
+          "box": 16,
+          "room": "town-sewers-14",
+          "message": "walking nw from here reaches town-sewers-14, which the drawing puts elsewhere"
+        },
+        {
+          "box": 29,
+          "room": "town-sewers-23",
+          "message": "walking ne from here reaches town-sewers-23, which the drawing puts elsewhere"
+        }
       ],
       "boxes": 65,
       "rooms": 63
@@ -1489,7 +1514,11 @@
         "town-sewer-1"
       ],
       "conflicts": [
-        "town-sewers-147 is box 42 and also reached as box 46"
+        {
+          "box": 46,
+          "room": "town-sewers-147",
+          "message": "walking sw from here reaches town-sewers-147, which the drawing puts elsewhere"
+        }
       ],
       "boxes": 53,
       "rooms": 56

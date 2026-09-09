@@ -19,7 +19,7 @@ export type Report = {
   matched: [number, string][];        // shrine box index -> our room slug
   unmatchedBoxes: number[];
   unmatchedRooms: string[];
-  conflicts: string[];
+  conflicts: { box: number; room: string; message: string }[];
 };
 
 /** Where to start: a shrine box we can name in our map with certainty. */
@@ -29,12 +29,13 @@ export function reconcile(area: string, shrine: ParsedMap,
                           ours: Record<string, OurRoom>, anchor: Anchor): Report {
   const boxToRoom = new Map<number, string>();
   const roomToBox = new Map<string, number>();
-  const conflicts: string[] = [];
+  const conflicts: { box: number; room: string; message: string }[] = [];
 
   const start = anchor.box(shrine);
   if (start < 0 || !ours[anchor.room])
     return { area, matched: [], unmatchedBoxes: shrine.boxes.map(b => b.index),
-             unmatchedRooms: Object.keys(ours), conflicts: [`anchor not found: ${anchor.room}`] };
+             unmatchedRooms: Object.keys(ours),
+             conflicts: [{ box: -1, room: anchor.room, message: `anchor not found` }] };
 
   const pair = (box: number, room: string) => { boxToRoom.set(box, room); roomToBox.set(room, box); };
   pair(start, anchor.room);
@@ -65,10 +66,15 @@ export function reconcile(area: string, shrine: ParsedMap,
       const dirs = [edge.dir, 'u', 'd'];
       let landed: string | null = null, via = '';
       for (const d of dirs) { const t = room.exits[d]; if (t) { landed = t; via = d; break; } }
-      if (!landed) { conflicts.push(`${room.slug}: drawing goes ${edge.dir}, we have no exit that way (nor a stair)`); continue; }
+      if (!landed) {
+        conflicts.push({ box, room: room.slug,
+                         message: `the drawing goes ${edge.dir} from here; we have no exit that way` });
+        continue;
+      }
       if (roomToBox.has(landed)) {
         if (roomToBox.get(landed) !== edge.to)
-          conflicts.push(`${landed} is box ${roomToBox.get(landed)} and also reached as box ${edge.to}`);
+          conflicts.push({ box: edge.to, room: landed,
+                           message: `walking ${edge.dir} from here reaches ${landed}, which the drawing puts elsewhere` });
         continue;
       }
       pair(edge.to, landed);
@@ -126,9 +132,10 @@ if (import.meta.main) {
     console.log(`\n${name.padEnd(11)} ${ok ? 'ALIGNED' : 'PARTIAL'}  ${rep.matched.length}/${shrine.boxes.length} boxes matched to ${Object.keys(ours).length} rooms`);
     if (rep.unmatchedBoxes.length) console.log(`    ${rep.unmatchedBoxes.length} box(es) unmatched`);
     if (rep.unmatchedRooms.length) console.log(`    rooms with no box: ${rep.unmatchedRooms.slice(0, 6).join(', ')}${rep.unmatchedRooms.length > 6 ? ` +${rep.unmatchedRooms.length - 6}` : ''}`);
-    for (const c of [...new Set(rep.conflicts)].slice(0, 5)) console.log(`    conflict: ${c}`);
-    if (rep.conflicts.length > 5) console.log(`    ... +${rep.conflicts.length - 5} more`);
-    reports.push({ ...rep, conflicts: [...new Set(rep.conflicts)],
+    const uniq = [...new Map(rep.conflicts.map(c => [`${c.box}|${c.message}`, c])).values()];
+    for (const c of uniq.slice(0, 5)) console.log(`    conflict at ${c.room}: ${c.message}`);
+    if (uniq.length > 5) console.log(`    ... +${uniq.length - 5} more`);
+    reports.push({ ...rep, conflicts: uniq,
                    boxes: shrine.boxes.length, rooms: Object.keys(ours).length });
   }
   await Bun.write('map/reconcile.json', JSON.stringify({ generated: new Date().toISOString().slice(0, 10), reports }, null, 2) + '\n');
