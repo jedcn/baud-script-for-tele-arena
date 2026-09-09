@@ -430,10 +430,6 @@
           "cave-53"
         ],
         [
-          11,
-          "pit"
-        ],
-        [
           0,
           "cave-54"
         ],
@@ -447,6 +443,7 @@
         ]
       ],
       "unmatchedBoxes": [
+        11,
         16,
         19,
         22,
@@ -484,6 +481,7 @@
         54
       ],
       "unmatchedRooms": [
+        "pit",
         "smelly-cave",
         "cave-62",
         "cave-63",
@@ -522,9 +520,9 @@
       ],
       "conflicts": [
         {
-          "box": 16,
+          "box": 12,
           "room": "cave-61",
-          "message": "walking s from here reaches cave-61, which the drawing puts elsewhere"
+          "message": "the drawing goes w from here; we have no exit that way"
         }
       ],
       "boxes": 55,
@@ -1442,10 +1440,6 @@
         [
           42,
           "town-sewers-147"
-        ],
-        [
-          41,
-          "pit-2"
         ]
       ],
       "unmatchedBoxes": [
@@ -1474,6 +1468,7 @@
         36,
         38,
         40,
+        41,
         45,
         46,
         49,
@@ -1510,14 +1505,15 @@
         "town-sewers-145",
         "town-sewers-146",
         "pit-1",
+        "pit-2",
         "town-sewer",
         "town-sewer-1"
       ],
       "conflicts": [
         {
-          "box": 46,
+          "box": 42,
           "room": "town-sewers-147",
-          "message": "walking sw from here reaches town-sewers-147, which the drawing puts elsewhere"
+          "message": "the drawing goes w from here; we have no exit that way"
         }
       ],
       "boxes": 53,

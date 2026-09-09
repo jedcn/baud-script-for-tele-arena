@@ -26,6 +26,19 @@ describe('reconcile', () => {
     expect(rep.matched.length).toBe(2);
   });
 
+  // Regression: an ungated stair fallback fired wherever the drawing merely
+  // disagreed with us. On dungeon level 2 it took `d` from the pit trap,
+  // walked into the pit, dead-ended there and stranded 35 rooms behind it.
+  it('does not fall back to a stair when neither room is badged', () => {
+    const shrine = parseMap('[a]-[b]');
+    const rep = reconcile('t', shrine,
+      ours({ trap: { d: 'pit', e: 'other' }, pit: { u: 'trap' }, other: { w: 'trap' } }),
+      { box: m => m.boxes.findIndex(b => b.label === 'b'), room: 'trap' });
+    // walking w from `trap` is impossible, and `d` must not be substituted
+    expect(rep.matched.map(([, r]) => r)).not.toContain('pit');
+    expect(rep.conflicts.some(c => /no exit that way/.test(c.message))).toBe(true);
+  });
+
   it('reports a direction the drawing has and we do not', () => {
     const shrine = parseMap('[*]-[a]');
     const rep = reconcile('t', shrine, ours({ plaza: {}, other: {} }),

@@ -55,15 +55,22 @@ export function reconcile(area: string, shrine: ParsedMap,
     if (!room) continue;
     for (const edge of out.get(box) ?? []) {
       if (boxToRoom.has(edge.to)) continue;
-      // Prefer the direction the drawing shows, then fall back to a stair.
+      // Prefer the direction the drawing shows, and fall back to a stair only
+      // where a stair is possible.
       //
-      // A stair is drawn as an ordinary connector, so its drawn direction is
-      // meaningless -- town 1's vaults hang off the guild hall diagonally and
-      // are really `d`. But the ^/v badges are NOT a reliable signal for this:
-      // they describe each room's own stairs, not the link between them, and
-      // sewers level 2's onyx door joins two badged rooms by an ordinary `s`.
-      // So try the drawn direction first and only then u/d.
-      const dirs = [edge.dir, 'u', 'd'];
+      // A stair is drawn as an ordinary connector, so its drawn direction can
+      // be meaningless -- town 1's vaults hang off the guild hall diagonally
+      // and are really `d`. But the fallback must be GATED on a ^/v badge at
+      // one end, or it fires wherever the drawing simply disagrees with us:
+      // dungeon level 2's pit trap has a west exit in the drawing that our map
+      // lacks, and an ungated fallback took `d` instead, walked into the pit,
+      // dead-ended there and stranded 35 rooms behind it.
+      //
+      // The badges alone are not enough either -- they describe each room's own
+      // stairs, not the link -- so they permit the fallback rather than decide
+      // it, and the drawn direction is still tried first.
+      const badged = /[\^v]/.test(shrine.boxes[box].badge) || /[\^v]/.test(shrine.boxes[edge.to].badge);
+      const dirs = badged ? [edge.dir, 'u', 'd'] : [edge.dir];
       let landed: string | null = null, via = '';
       for (const d of dirs) { const t = room.exits[d]; if (t) { landed = t; via = d; break; } }
       if (!landed) {
