@@ -74,6 +74,12 @@ draw-map-as-markdown:
 scrape-shrine-maps:
     bun scrape.ts
 
+# Show where a room is on the shrine drawing. In game, `map-print-room-slug`
+# names the room you are standing in; paste it here to see the spot.
+#   just where cave-30
+where slug:
+    bun where.ts {{slug}}
+
 # Redraw a shrine map with the reconciliation marked on it: [?] for a box the
 # walk never reached, [!] where the drawing and our map disagree about an exit.
 # A room slug says nothing about where a problem is; this shows you.
