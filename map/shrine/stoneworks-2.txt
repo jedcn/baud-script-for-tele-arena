@@ -1,0 +1,43 @@
+# Stoneworks Level 2
+# https://tele-arena.tumblr.com/stoneworks2
+# fetched 2026-09-09
+
+                                    [v] Down to Level 3 
+                                     | 
+                                    [ ] 
+                                     | 
+                                    [@] 
+                                   / 
+                            [ ]-[ ] 
+                           / 
+            [ ]-[ ]     [T2] 
+           /       \   / 
+        [ ]         [ ] 
+         |             \ 
+         |              [ ] 
+         |               | 
+        [ ]             [ ]         [ ]-[^] Up to Level 1 
+       /                   \       / 
+    [ ]                     [ ]-[ ] 
+   /                       / 
+[ ]                 [ ]-[ ] 
+ |                   | 
+[ ]     [ ]-[ ]     [ ]     [ ]-[ ] 
+   \   /       \     |     /       \ 
+    [ ]         [ ]-[ ]-[ ]         [ ] 
+                                   / 
+                                [ ] 
+                               / 
+                            [ ] 
+                               \ 
+                    [ ]         [ ] 
+                   /   \       / 
+                [ ]     [ ]-[ ] 
+                 | 
+                [L2] 
+ 
+ 
+L2 = Pull Lever to disarm stone trap (T2) 
+ @ = "say arok" to get further into the Stoneworks 
+ v = Stairs Down to Level 3 
+ ^ = Stairs Up to Level 1

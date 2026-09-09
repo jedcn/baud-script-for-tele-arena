@@ -1,0 +1,46 @@
+# Stoneworks Level 1
+# https://tele-arena.tumblr.com/stoneworks1
+# fetched 2026-09-09
+
+To Desert 
+ | 
+[@]-[ ] 
+ |     \ 
+ |      [ ] 
+[ ]        \ 
+ |          [ ]           [ ]-[ ] 
+ |             \                 \ 
+[ ]             [ ]               [ ] 
+   \           /                     \ 
+    [ ]     [ ]                       [ ] 
+   /        /                        /   \ 
+[ ]      [ ]         [L1]         [ ]     [S1] 
+ |          \        /   \         | 
+ |           [ ]--[ ]     [ ]     [ ] 
+ |          /                \     | 
+[ ]--[ ]-[ ]                  [ ]-[ ] 
+ |          \                / 
+ |           [ ]-[ ]      [ ] 
+ |          /       \    / 
+[ ]      [ ]         [T1] 
+  \     /              | 
+  [ ]-[ ]             [ ]                 [!] 
+                     /                   / 
+                  [ ]             [ ]-[ ] 
+                 /               / 
+              [ ]             [ ] 
+               |               | 
+             [D1]-[ ]-[ ]-[ ]-[ ] 
+                               | 
+                              [ ] 
+                                 \ 
+                                  [ ]-[ ] 
+                                         \ 
+                                          [S2]   [S3]-[ ]-[ ]-[v] to Level 2 
+ 
+L1 = Pull Lever to disarm stone trap (T1) 
+S1 = Push Stone to open door at D1 
+S2 = Push Stone to go to S3 
+S3 = If on way out Push Stone to go to ! 
+ v = Stairs Down to Level 2 
+ @ = "say komi" to enter the Stoneworks

@@ -68,7 +68,17 @@ another. All three are links between two named rooms, and none is an exit.
         "s":  { "to": null },             // known to exist, never walked
         "w":  { "to": "stoneworks-1/corridor-9",
                 "door": { "material": "stone", "key": "iron" },
-                "hidden": true }          // the room's description denies it
+                "hidden": true },         // the room's description denies it
+
+        // Some ways are gated by what you CARRY rather than by a lock you open:
+        // "Green Rune required to enter Town 3". Unlike a key it is not spent
+        // on a door, so a router must check possession, not unlocking.
+        "sw": { "to": "third-town/town-square", "requires": ["green rune"] },
+
+        // And some are gated by an action taken elsewhere -- a chasm that only
+        // opens when a lever two rooms away is pulled.
+        "ne": { "to": "stoneworks-6/beyond-west-chasm",
+                "opened_by": "stoneworks-6/lever-6" }
       },
 
       // Things you do here. Covers devices AND remote couplings, because they
@@ -82,8 +92,13 @@ another. All three are links between two named rooms, and none is an exit.
       ],
 
       "guardian": { "monster": "cyclops", "count": 2, "yields": ["bronze key"] },
-      "trap":     { "type": "falling stone", "damage": 180, "remedy": "rope" },
-      "items":    ["white rune"],
+
+      // `disarm` names the action that turns it off, or null for one that
+      // cannot be -- stoneworks level 6 is drawn with "traps that can't be
+      // turned off", against levels 1-5 where each has its own lever.
+      "trap":     { "type": "falling stone", "damage": 180, "remedy": "rope",
+                    "disarm": "stoneworks-1/lever-room" },
+      "items":    ["white rune"],       // a rune lies in a room; see `requires`
       "notes":    ["`say arok` is needed again on the way back"],
 
       "layout":   { "x": 0, "y": 0 },     // drawing only, never identity
@@ -105,7 +120,14 @@ another. All three are links between two named rooms, and none is an exit.
   on an exit, or `null` when the effect is known to exist but not yet located —
   which is a real state, and better recorded than dropped.
 - **`effect`** is one of `gate` (opens a way), `disarm`, `teleport`, `signal`
-  (something happened elsewhere, unlocated).
+  (something happened elsewhere, unlocated). A `gate` action and the exit's
+  `opened_by` are the same fact from both ends, so a scraper writes both and a
+  checker can cross-examine them.
+- **`exits[].requires`** is possession, not unlocking: you must be carrying the
+  green rune to enter third town, and you still have it afterwards. Distinct
+  from `door.key`, which opens a specific lock. Runes also gate things
+  *negatively* -- the arena refuses you once you carry one -- so a router needs
+  them as state either way.
 - **`guardian.yields`** is the source end of a key relation; a door's
   `door.key` is the far end. A router joins them.
 

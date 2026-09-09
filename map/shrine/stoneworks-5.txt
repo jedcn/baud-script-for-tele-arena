@@ -1,0 +1,31 @@
+# Stoneworks Level 5
+# https://tele-arena.tumblr.com/stoneworks5
+# fetched 2026-09-09
+
+                            [v] Down to Level 6 
+                             | 
+                            [ ] 
+                             | 
+                            [ ] 
+                               \ 
+                                [T5] 
+Stone Giant(2)                     \ 
+[c]-[ ]                 [ ]         [ ] 
+       \               /   \       / 
+        [ ]-[ ]     [ ]     [ ]-[ ] 
+               \   /   \   /       \ 
+                [ ]     [ ]         [ ] 
+               /                     | 
+        [ ]-[ ]                     [ ] 
+       /                           / 
+    [ ]                         [ ] 
+   /                           / 
+[^] Up to Level 4           [ ] 
+                               \ 
+                                [ ] 
+                                 | 
+                                [L5c] Stone Giant(3) 
+ 
+L5 = Pull Lever to disarm stone trap (T5) 
+ v = Stairs Down to Level 6 
+ ^ = Stairs Up to Level 4

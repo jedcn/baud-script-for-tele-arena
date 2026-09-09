@@ -1,0 +1,37 @@
+# Stoneworks Level 3
+# https://tele-arena.tumblr.com/stoneworks3
+# fetched 2026-09-09
+
+ [v] Down to Level 4 
+  | 
+ [ ] 
+    \ 
+     [T3]                        [ ]-[^] Up to Level 2 
+        \                       / 
+         [ ]                 [ ] 
+          |                   | 
+Troll(2) [c]-[ ]     [ ]-[ ]-[ ] 
+          |     \   / 
+         [ ]     [ ] 
+            \ 
+             [ ] 
+            / 
+         [ ] 
+        / 
+     [ ]                     [c] Troll(2) 
+        \                     | 
+         [ ]     [ ]         [ ] 
+            \   /   \       /   \ 
+             [ ]     [ ]-[ ]     [ ] 
+                            \   / 
+                             [ ] 
+                            / 
+                     [ ]-[ ] 
+                      | 
+                     [ ] 
+                      | 
+                     [L3c] Female Troll(3) 
+ 
+L3 = Pull Lever to disarm stone trap (T3) 
+ v = Stairs Down to Level 4 
+ ^ = Stairs Up to Level 2

@@ -16,6 +16,12 @@ export const MAPS: { slug: string; url: string; title: string }[] = [
   { slug: 'sewers-2', url: 'https://tele-arena.tumblr.com/sewers2',  title: 'Sewers Level 2' },
   { slug: 'sewers-3', url: 'https://tele-arena.tumblr.com/sewers3',  title: 'Sewers Level 3' },
   { slug: 'desert',   url: 'https://tele-arena.tumblr.com/desert',   title: 'The Desert' },
+  { slug: 'stoneworks-1', url: 'https://tele-arena.tumblr.com/stoneworks1', title: 'Stoneworks Level 1' },
+  { slug: 'stoneworks-2', url: 'https://tele-arena.tumblr.com/stoneworks2', title: 'Stoneworks Level 2' },
+  { slug: 'stoneworks-3', url: 'https://tele-arena.tumblr.com/stoneworks3', title: 'Stoneworks Level 3' },
+  { slug: 'stoneworks-4', url: 'https://tele-arena.tumblr.com/stoneworks4', title: 'Stoneworks Level 4' },
+  { slug: 'stoneworks-5', url: 'https://tele-arena.tumblr.com/stoneworks5', title: 'Stoneworks Level 5' },
+  { slug: 'stoneworks-6', url: 'https://tele-arena.tumblr.com/stoneworks6', title: 'Stoneworks Level 6' },
 ];
 
 const ENTITIES: Record<string, string> = {

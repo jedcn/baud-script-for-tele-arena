@@ -1,0 +1,31 @@
+# Stoneworks Level 4
+# https://tele-arena.tumblr.com/stoneworks4
+# fetched 2026-09-09
+
+    [^] Up to Level 3 
+       \ 
+        [ ]                             [L4] 
+         |                               | 
+        [ ]                             [ ] 
+           \                           / 
+            [ ]                     [ ] 
+               \                       \ 
+                [ ]-----[ ]             [ ] 
+               /         |             / 
+            [ ]          |          [ ] 
+           /            [ ]          | 
+        [ ]              |          [ ] 
+       /   \             |         / 
+[ ]-[ ]     [ ]         [ ]     [ ] 
+ |           |         /   \   / 
+[ ]         [ ]     [ ]     [ ] 
+   \           \   / 
+    [T4]        [ ] 
+       \ 
+        [ ] 
+         | 
+        [v] Down to Level 5 
+ 
+L4 = Pull Lever to disarm stone trap (T4) 
+ v = Stairs Down to Level 5 
+ ^ = Stairs Up to Level 3

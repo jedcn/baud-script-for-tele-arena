@@ -1,0 +1,53 @@
+# Stoneworks Level 6
+# https://tele-arena.tumblr.com/stoneworks6
+# fetched 2026-09-09
+
+  Up to Level 5 
+     [^]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ] 
+                              | 
+                             [c]-[ ]-[ ]-[ ] 
+                         Stone Giant(2)   | 
+                                         [ ] 
+                                          | 
+                                         [ ] 
+                                          | 
+ [t]-[ ]-[ ]-[ ]-[ ]                     [ ] 
+  |               |                       | 
+ [L6]            [ ]             [ ]-[ ]-[ ] 
+  |               |     Stone     | 
+ [ ]              |     Giant(2) [c]-[ ]-[ ]-[t] 
+  |              [ ]              |           | 
+ [ ]              |              [ ]         [ ] 
+  |     Stone     |               |           | 
+ [ ]    Giant(3) [c]-[ ]-[ ]-[ ]-[ ]         [ ]-[ ]--[ ]--[ ] 
+  |               |                           |             | 
+ [ ]              |                          [ ]           [ ] 
+  |              [ ]                          |             | 
+ [ ]              |                    [ ]---[c]           [ ] 
+  |               |                     |   Stone           | 
+ [ ]-[ ]-[ ]-[ ]-[ ]                   [ ] Giant(3)        [ ] 
+              |                         |                   | 
+             [ ]                       [ ]                 [ ] 
+              |                         |                   | 
+             [ ]-[ ]-[ ]-[ ]-[c]-[ ]---[ ]                 [ ] 
+                            Stone       |                   | 
+                           Giant(2)     |                  [ ] 
+                                       [ ]                  | 
+                                        |                  [ ] 
+                                       [ ]                  | 
+                                        |                  [L7] 
+                                        |                   | 
+                                   [ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[t] 
+                                    | 
+                                   [ ] 
+                                    | 
+Town 3 <-[*]-[WC]-[ ]-[c]-[ ]-[EC]-[ ] 
+                    Stone 
+                   Giant(2) 
+ 
+L6 = Pull Lever to open West Chasm (WC) 
+L7 = Pull Lever to open East Chasm (EC) 
+ * = Yellow Rune 
+ ^ = Stairs Up to Level 5 
+ t = traps that can't be turned off 
+<- = Green Rune required to enter Town 3
