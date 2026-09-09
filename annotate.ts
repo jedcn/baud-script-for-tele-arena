@@ -12,9 +12,9 @@ import { parseMap } from './parse';
 import { reconcile, ANCHORS, type OurRoom } from './reconcile';
 
 /** Disagreements already settled in game, so they read as decided, not open. */
-export type Checked = { area: string; room: string; direction: string; verdict: string; when: string };
+export type Checked = { area: string; room: string; tried: string; result: string; when: string };
 export function findChecked(checked: Checked[], area: string, room: string, message: string): Checked | undefined {
-  return checked.find(c => c.area === area && c.room === room && message.includes(c.direction));
+  return checked.find(c => c.area === area && c.room === room && message.includes(c.tried));
 }
 
 export function annotate(text: string, mark: Map<number, string>): string {
@@ -35,7 +35,7 @@ if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
   const db = new Database('tele-arena.db');
   const only = process.argv[2];
-  const checked: Checked[] = JSON.parse(await Bun.file('map/checked.json').text()).checked;
+  const checked: Checked[] = JSON.parse(await Bun.file('map/checked.json').text()).observations;
   for (const [name, cfg] of Object.entries(ANCHORS)) {
     if (only && name !== only) continue;
     const shrineText = await Bun.file(`map/shrine/${cfg.map}.txt`).text();
@@ -62,14 +62,18 @@ if (import.meta.main) {
       mark.set(c.box, '!');
     }
     console.log(`\n${'='.repeat(66)}\n${name}  —  ${rep.matched.length}/${shrine.boxes.length} matched`
-      + `   [?] unreached ${rep.unmatchedBoxes.length}   [!] disagreement\n${'='.repeat(66)}`);
+      + `   [?] unreached ${rep.unmatchedBoxes.length}   [!] disagreement`);
+    if (rep.shapeMismatches.length)
+      console.log(`ALIGNMENT DRIFTED — ${rep.shapeMismatches.length} match(es) whose shape disagrees.`
+                + ` Nothing below can be trusted until that is fixed.`);
+    console.log('='.repeat(66));
     console.log(annotate(shrineText, mark));
     const seen = new Set<string>();
     for (const c of rep.conflicts) {
       const k = `${c.box}|${c.message}`; if (seen.has(k)) continue; seen.add(k);
       const settled = findChecked(checked, rep.area, c.room, c.message);
       console.log(`  [!] ${c.room}: ${c.message}`
-        + (settled ? `\n      SETTLED ${settled.when}: ${settled.verdict} — checked in game` : ''));
+        + (settled ? `\n      tried in game ${settled.when}: ${settled.tried} -> "${settled.result}"` : ''));
     }
   }
 }

@@ -3,6 +3,8 @@ BAUD_HOME := "~/src/baud"
 install:
     luarocks install busted
 
+# Both suites. Grep the tail for `0 fail` as well as busted's success line --
+# checking only one of them has hidden real failures before now.
 test:
     busted test/
     bun test

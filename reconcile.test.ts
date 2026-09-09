@@ -20,7 +20,7 @@ describe('reconcile', () => {
   // the game direction -- town 1's vaults hang off the guild hall diagonally
   // and are really `d`.
   it('falls back to a stair when the drawn direction has no exit', () => {
-    const shrine = parseMap('[*]\n \\\n  [V]');
+    const shrine = parseMap('[*v]\n  \\\n   [V^]');
     const rep = reconcile('t', shrine, ours({ hall: { d: 'vault' }, vault: { u: 'hall' } }),
       { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
     expect(rep.matched.length).toBe(2);
@@ -36,21 +36,21 @@ describe('reconcile', () => {
       { box: m => m.boxes.findIndex(b => b.label === 'b'), room: 'trap' });
     // walking w from `trap` is impossible, and `d` must not be substituted
     expect(rep.matched.map(([, r]) => r)).not.toContain('pit');
-    expect(rep.conflicts.some(c => /no exit that way/.test(c.message))).toBe(true);
+    expect(rep.conflicts.some(c => /no exit that way|cannot reach/.test(c.message))).toBe(true);
   });
 
   it('reports a direction the drawing has and we do not', () => {
     const shrine = parseMap('[*]-[a]');
     const rep = reconcile('t', shrine, ours({ plaza: {}, other: {} }),
       { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
-    expect(rep.conflicts.join(' ')).toContain('no exit that way');
+    expect(rep.conflicts.map(c => c.message).join(' ')).toMatch(/no exit that way|cannot reach/);
     expect(rep.unmatchedRooms).toContain('other');
   });
 
   it('says so plainly when the anchor is not in our map', () => {
     const rep = reconcile('t', parseMap('[*]'), ours({ elsewhere: {} }),
       { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'missing' });
-    expect(rep.conflicts[0]).toContain('anchor not found');
+    expect(rep.conflicts[0].message).toContain('anchor not found');
   });
 });
 
@@ -94,5 +94,43 @@ describe('a trap box stands for two rooms', () => {
       ours({ hall: { e: 'trap' }, trap: { w: 'hall', d: 'below' }, below: { u: 'trap', n: 'onward' }, onward: {} }),
       { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
     expect(rep.pits).toEqual([]);
+  });
+});
+
+describe('shape check', () => {
+  // The check that says whether a reconciliation can be believed at all. A room
+  // is not the box it is matched to if they have different numbers of ways out,
+  // and a drifted alignment still produces confident-looking conflicts.
+  it('passes when every matched room has as many ways as its box', () => {
+    const shrine = parseMap('[*]-[a]');
+    const rep = reconcile('t', shrine, ours({ plaza: { e: 'shop' }, shop: { w: 'plaza' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.shapeMismatches).toEqual([]);
+  });
+
+  it('flags a room matched to a box of a different shape', () => {
+    const shrine = parseMap('[*]-[a]');
+    const rep = reconcile('t', shrine,
+      ours({ plaza: { e: 'shop' }, shop: { w: 'plaza', n: 'attic' }, attic: { s: 'shop' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.shapeMismatches.map(m => m.room)).toContain('shop');
+  });
+
+  // An exit that leaves the area is drawn as a text label or a badge, not a
+  // connector, so counting it would make every room with a stair look wrong.
+  it('ignores exits that leave the area', () => {
+    const shrine = parseMap('[*]-[a]');
+    const rep = reconcile('t', shrine,
+      ours({ plaza: { e: 'shop', d: 'elsewhere/deep' }, shop: { w: 'plaza' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.shapeMismatches).toEqual([]);
+  });
+
+  it('ignores an exit that has never been walked', () => {
+    const shrine = parseMap('[*]-[a]');
+    const rep = reconcile('t', shrine,
+      ours({ plaza: { e: 'shop', n: null }, shop: { w: 'plaza' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.shapeMismatches).toEqual([]);
   });
 });

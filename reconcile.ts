@@ -18,6 +18,15 @@ export type Report = {
   area: string;
   /** Pit rooms folded into a trap box; see `absorbPits`. */
   pits: [number, string][];
+  /**
+   * Matches where the drawing and our map disagree about how many ways out the
+   * room has. A room is not the box it is matched to if their shapes differ, so
+   * any of these means the alignment has drifted and everything downstream of
+   * it is unreliable. This is the check that says whether a reconciliation can
+   * be believed at all -- without it, a drifted alignment still produces
+   * confident-looking conflicts.
+   */
+  shapeMismatches: { box: number; room: string; drawn: number; ours: number }[];
   matched: [number, string][];        // shrine box index -> our room slug
   unmatchedBoxes: number[];
   unmatchedRooms: string[];
@@ -36,7 +45,7 @@ export function reconcile(area: string, shrine: ParsedMap,
   const start = anchor.box(shrine);
   if (start < 0 || !ours[anchor.room])
     return { area, matched: [], unmatchedBoxes: shrine.boxes.map(b => b.index),
-             unmatchedRooms: Object.keys(ours), pits: [],
+             unmatchedRooms: Object.keys(ours), pits: [], shapeMismatches: [],
              conflicts: [{ box: -1, room: anchor.room, message: `anchor not found` }] };
 
   const pair = (box: number, room: string) => { boxToRoom.set(box, room); roomToBox.set(room, box); };
@@ -106,9 +115,34 @@ export function reconcile(area: string, shrine: ParsedMap,
     if (only.length === 1 && only[0][0] === 'u') { pits.push([boxIndex, below]); roomToBox.set(below, boxIndex); }
   }
 
+  const degree = new Map<number, number>();
+  for (const e of shrine.edges) {
+    degree.set(e.from, (degree.get(e.from) ?? 0) + 1);
+    degree.set(e.to, (degree.get(e.to) ?? 0) + 1);
+  }
+  const shapeMismatches = [];
+  for (const [boxIndex, slug] of boxToRoom) {
+    if (pits.some(([, p]) => p === slug)) continue;          // a pit is drawn inside its trap
+    const drawn = degree.get(boxIndex) ?? 0;
+    // Count only what the drawing actually draws as a connector: exits that go
+    // to another room of this same area and have been walked. An exit leaving
+    // the area is drawn as a text label ("down to Dungeon") or a ^/v badge, and
+    // an unwalked stub is not drawn at all -- counting either makes every room
+    // with a stair look mismatched.
+    //
+    // A pit hangs off its trap room in our map but not in the drawing, so the
+    // trap room legitimately has one exit more than its box.
+    const isTrap = /^[tpf]$/.test(shrine.boxes[boxIndex].label);
+    const oursCount = Object.values(ours[slug]?.exits ?? {})
+      .filter(dest => dest != null && ours[dest as string] !== undefined).length
+      - (isTrap ? 1 : 0);
+    if (drawn !== oursCount) shapeMismatches.push({ box: boxIndex, room: slug, drawn, ours: oursCount });
+  }
+
   return {
     area,
     pits,
+    shapeMismatches,
     matched: [...boxToRoom.entries()],
     unmatchedBoxes: shrine.boxes.filter(b => !boxToRoom.has(b.index)).map(b => b.index),
     unmatchedRooms: Object.keys(ours).filter(s => !roomToBox.has(s)),
@@ -153,8 +187,14 @@ if (import.meta.main) {
       ours[r.slug] = { slug: r.slug, exits };
     }
     const rep = reconcile(cfg.area, shrine, ours, cfg.anchor);
-    const ok = rep.unmatchedBoxes.length === 0 && rep.unmatchedRooms.length === 0 && rep.conflicts.length === 0;
+    const ok = rep.unmatchedBoxes.length === 0 && rep.unmatchedRooms.length === 0
+            && rep.conflicts.length === 0 && rep.shapeMismatches.length === 0;
     console.log(`\n${name.padEnd(11)} ${ok ? 'ALIGNED' : 'PARTIAL'}  ${rep.matched.length}/${shrine.boxes.length} boxes matched to ${Object.keys(ours).length} rooms`);
+    if (rep.shapeMismatches.length)
+      console.log(`    ${rep.shapeMismatches.length} match(es) whose shape disagrees — THE ALIGNMENT HAS DRIFTED,`
+                + ` conflicts below are not trustworthy`);
+    for (const m of rep.shapeMismatches.slice(0, 3))
+      console.log(`        ${m.room} has ${m.ours} exit(s); its box is drawn with ${m.drawn}`);
     if (rep.pits.length) console.log(`    ${rep.pits.length} pit(s) drawn inside a trap box: ${rep.pits.map(p => p[1]).join(', ')}`);
     if (rep.unmatchedBoxes.length) console.log(`    ${rep.unmatchedBoxes.length} box(es) unmatched`);
     if (rep.unmatchedRooms.length) console.log(`    rooms with no box: ${rep.unmatchedRooms.slice(0, 6).join(', ')}${rep.unmatchedRooms.length > 6 ? ` +${rep.unmatchedRooms.length - 6}` : ''}`);

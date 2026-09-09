@@ -16,11 +16,11 @@ describe('annotate', () => {
 import { findChecked } from './annotate';
 
 describe('findChecked', () => {
-  const checked = [{ area: 'first-dungeon-level-1', room: 'cave-31', direction: 'se',
-                     verdict: 'drawing-wrong', when: '2026-09-09' }];
-  it('marks a conflict that has been settled in game', () => {
+  const checked = [{ area: 'first-dungeon-level-1', room: 'cave-31', tried: 'se',
+                     result: "Sorry, there's no exit in that direction.", when: '2026-09-09' }];
+  it('attaches an observation made in game to the matching conflict', () => {
     expect(findChecked(checked, 'first-dungeon-level-1', 'cave-31',
-      'the drawing goes se from here to a room we cannot reach')?.verdict).toBe('drawing-wrong');
+      'the drawing goes se from here to a room we cannot reach')?.tried).toBe('se');
   });
   it('does not match a different direction from the same room', () => {
     expect(findChecked(checked, 'first-dungeon-level-1', 'cave-31',
