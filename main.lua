@@ -1117,6 +1117,82 @@ createTrigger("^(.+)$", function(matches)
 end, { type = "regex" })
 
 -- =========================================================================
+-- =========================================================================
+-- Position tracking
+-- =========================================================================
+--
+-- Knowing where you are and writing the map are different jobs, and until now
+-- they were the same code path: `player_location` was only stamped inside the
+-- Exits handler, behind the mapping gate, so walking anywhere with mapping off
+-- left the recorded position silently stale. It is also why
+-- `map-print-room-slug` answers with twelve candidates one step after a room it
+-- named exactly -- it compares appearances instead of following the exit you
+-- just walked.
+--
+-- This tracker is READ-ONLY. It never discovers, links or merges; it only
+-- follows edges the map already has. A bug here cannot corrupt the graph.
+--
+-- Three states, because "somewhere off the edge of the map" is a real answer
+-- and pretending otherwise is how rooms get invented:
+--
+--   known    we are in `here`, having walked a mapped exit to reach it
+--   off-map  we stepped through an unwalked stub; we know where we left and
+--            which way, but not where we are
+--   lost     no idea -- login, recall, a teleport, or a contradiction
+--
+-- It never guesses. Contradicted, it goes `lost` rather than picking a
+-- plausible room, which is exactly the failure that cost the desert twice.
+taPackage.here = nil
+taPackage.hereState = "lost"
+taPackage.offMap = nil
+
+-- Stamp the position for `just report` and for `where`. Called on every change,
+-- mapping or not, which is the whole point.
+function taPackage.setHere(roomId)
+    taPackage.here = roomId
+    taPackage.hereState = "known"
+    taPackage.offMap = nil
+    if taPackage.character and taPackage.character.name then
+        taPackage.db.setPlayerLocation(taPackage.character.name, roomId)
+    end
+end
+
+function taPackage.loseHere(why)
+    taPackage.here = nil
+    taPackage.hereState = "lost"
+    taPackage.offMap = nil
+    if why then echo("[where] lost track: " .. why) end
+end
+
+-- One move, followed against the map. `name` is the arriving room's name, which
+-- the brief gives us for free -- so the check costs no extra traffic. It cannot
+-- tell two identically-named rooms apart, but it catches every gross error, and
+-- the strong check (exit-set) still runs while mapping.
+function taPackage.trackMove(dir, name)
+    if taPackage.hereState == "off-map" then
+        taPackage.offMap.moves = taPackage.offMap.moves + 1
+        return
+    end
+    if taPackage.hereState ~= "known" or not dir then return end
+    local dest = taPackage.db.exitDestination(taPackage.here, dir)
+    if type(dest) ~= "number" then
+        -- Past the edge of what we have walked. Remember where we left from:
+        -- that is what makes the trip back, or a later re-anchor, possible.
+        taPackage.offMap = { from = taPackage.here, dir = dir, moves = 1 }
+        taPackage.here = nil
+        taPackage.hereState = "off-map"
+        return
+    end
+    local expect = taPackage.db.roomName(dest)
+    if expect and name and expect ~= name then
+        echo("[where] the map says " .. dir .. " leads to \"" .. expect
+            .. "\", but this is \"" .. name .. "\" — lost track.")
+        taPackage.loseHere(nil)
+        return
+    end
+    taPackage.setHere(dest)
+end
+
 -- World map triggers
 -- =========================================================================
 
@@ -1228,6 +1304,8 @@ local function handleRoomEntry(matches)
     -- thought we were" by comparing the new name against the *previous*
     -- currentRoom -- so that value has to survive until then.
     if not taPackage.mapping then
+        taPackage.trackMove(taPackage.pendingDirection, name)
+        taPackage.pendingDirection = nil
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.currentRoom = name
         return
@@ -1514,9 +1592,9 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
 
     -- Remember where this character is now (settled room id, after any merge),
     -- so `just report` can mark "you are here". Needs the logged-in name.
-    if taPackage.character and taPackage.character.name then
-        taPackage.db.setPlayerLocation(taPackage.character.name, taPackage.currentRoomId)
-    end
+    -- Mapping already resolved the room, merges included, so the tracker
+    -- follows it rather than working it out a second time.
+    taPackage.setHere(taPackage.currentRoomId)
 end, { type = "regex" })
 
 -- A rejected move: clear the pending direction so the next room line doesn't
@@ -1626,6 +1704,8 @@ createAlias("^map-here (.+)$", function(matches)
     else
         taPackage.coord = nil
     end
+    -- An explicit statement of where we are, so the tracker takes it too.
+    taPackage.setHere(room.id)
     -- Stamp location now so the report's "you are here" marker is right the
     -- moment you anchor, not only after the first move (map-here sends no ex).
     if taPackage.character and taPackage.character.name then
@@ -1782,6 +1862,33 @@ createAlias("^map-debug (.+)$", function(matches)
     end
     taPackage.mapDebug = arg == "on"
     echo("[map] mapdbg tracing " .. (taPackage.mapDebug and "on" or "off"))
+end, { type = "regex" })
+
+-- `push stone` teleports (docs/hidden-stone-teleport.md): the game glues the
+-- arrival onto the push, so no ordinary arrival brief fires and the tracker
+-- would happily keep believing we never left. There is no edge in the map to
+-- follow, so the honest result is `lost`.
+createOutboundTrigger("^push stone$", function()
+    if taPackage.hereState ~= "lost" then
+        taPackage.loseHere("`push stone` moves you somewhere the map has no edge for")
+    end
+end, { type = "regex" })
+
+-- `where` -- what the tracker currently believes, and why. Deliberately says
+-- "lost" rather than a best guess: a wrong answer here is worse than none.
+createAlias("^where$", function()
+    if taPackage.hereState == "known" and taPackage.here then
+        local ref = taPackage.db.roomRef(taPackage.here)
+        local name = taPackage.db.roomName(taPackage.here)
+        echo("[where] " .. tostring(ref) .. "  (" .. tostring(name) .. ")")
+    elseif taPackage.hereState == "off-map" and taPackage.offMap then
+        local o = taPackage.offMap
+        echo("[where] off the map — " .. o.moves .. " move(s) past "
+            .. tostring(taPackage.db.roomRef(o.from)) .. " going " .. o.dir)
+    else
+        echo("[where] lost — no position. `map-print-room-slug` to re-acquire,"
+            .. " or `map-here <slug>` if you know where you are.")
+    end
 end, { type = "regex" })
 
 createAlias("^map-off$", function()

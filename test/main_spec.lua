@@ -3835,6 +3835,90 @@ describe("World map triggers", function()
 
     end)
 
+    describe("position tracking", function()
+
+        before_each(function()
+            taPackage.mapping = false
+            taPackage.here = nil
+            taPackage.hereState = "lost"
+            taPackage.offMap = nil
+            taPackage.pendingDirection = nil
+            taPackage.character = { name = "Tester" }
+        end)
+
+        it("starts lost, and says so rather than guessing", function()
+            helper.echoCalls = {}
+            helper.simulateAlias("where")
+            local said = false
+            for _, m in ipairs(helper.echoCalls) do if m:find("lost", 1, true) then said = true end end
+            assert.is_true(said)
+        end)
+
+        -- The whole point: walking with mapping OFF used to leave the recorded
+        -- position stale, because it was only stamped inside the Exits handler.
+        it("follows a mapped exit while mapping is off", function()
+            taPackage.setHere(1)
+            helper.mockDbOneRow = function(sql)
+                if sql:find("SELECT to_id", 1, true) then return { to_id = 2 } end
+                if sql:find("SELECT name FROM rooms", 1, true) then return { name = "cave" } end
+                return nil
+            end
+            taPackage.trackMove("e", "cave")
+            assert.are.equal(2, taPackage.here)
+            assert.are.equal("known", taPackage.hereState)
+        end)
+
+        -- A contradiction must lose the position, never pick a plausible room.
+        it("goes lost when the arrival is not the room the map predicted", function()
+            taPackage.setHere(1)
+            helper.mockDbOneRow = function(sql)
+                if sql:find("SELECT to_id", 1, true) then return { to_id = 2 } end
+                if sql:find("SELECT name FROM rooms", 1, true) then return { name = "temple" } end
+                return nil
+            end
+            taPackage.trackMove("e", "cave")
+            assert.are.equal("lost", taPackage.hereState)
+            assert.is_nil(taPackage.here)
+        end)
+
+        it("goes off-map through an unwalked stub, remembering where it left", function()
+            taPackage.setHere(7)
+            helper.mockDbOneRow = function(sql)
+                if sql:find("SELECT to_id", 1, true) then return { to_id = nil } end
+                return nil
+            end
+            taPackage.trackMove("s", "desert")
+            assert.are.equal("off-map", taPackage.hereState)
+            assert.are.equal(7, taPackage.offMap.from)
+            assert.are.equal("s", taPackage.offMap.dir)
+            assert.are.equal(1, taPackage.offMap.moves)
+        end)
+
+        it("counts moves while off the map instead of re-anchoring", function()
+            taPackage.hereState = "off-map"
+            taPackage.offMap = { from = 7, dir = "s", moves = 1 }
+            taPackage.trackMove("e", "desert")
+            taPackage.trackMove("e", "desert")
+            assert.are.equal(3, taPackage.offMap.moves)
+            assert.are.equal("off-map", taPackage.hereState)
+        end)
+
+        it("does nothing when it has no position to move from", function()
+            taPackage.trackMove("e", "cave")
+            assert.are.equal("lost", taPackage.hereState)
+        end)
+
+        -- push stone teleports, and the game glues the arrival onto the push, so
+        -- no ordinary brief fires and the tracker would keep believing we never
+        -- moved. See docs/hidden-stone-teleport.md.
+        it("loses the position on `push stone`", function()
+            taPackage.setHere(3)
+            helper.simulateOutbound("push stone")
+            assert.are.equal("lost", taPackage.hereState)
+        end)
+
+    end)
+
     describe("mapping mode aliases", function()
 
         it("mapdbg tracing is off by default, so a mapping run stays readable", function()
