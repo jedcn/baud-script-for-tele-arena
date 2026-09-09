@@ -1,0 +1,39 @@
+# Dungeon Level 1
+# https://tele-arena.tumblr.com/dungeon1
+# fetched 2026-09-09
+
+                                                          Down to Level 2 
+                                                                [v] 
+                                                               # (Bronze 
+                                                 Cyclops(2) [c]    Door) 
+                                                (Bronze Key) | 
+                                                            [ ] 
+                                                           / 
+                                    [ ]-[ ]             [ ] 
+                       (Iron Door) #       \             | 
+                    [ ]-[ ]-[ ]-[^]         [ ]-[ ]     [ ] 
+                   /        Up to Town 1 (Arena)   \   / 
+                [ ]                                 [ ] 
+                 |
+                [ ] 
+     Minotaur    |  
+   (Copper Key) [c] 
+                   # (Copper Door) 
+                    [ ] 
+                       \ 
+        [ ]              [t] Spike Trap 
+       /                   \ 
+    [ ]                     [ ]                 [ ]             [ ] 
+     |                       | (Brass Door)    /   \           /   \ 
+    [ ]-[ ]            Ogre [c]#[ ]         [ ]     [ ]     [ ]     [ ] 
+           \    (Brass Key)/ |     \       /           \   /         | 
+            [ ]         [ ] [ ]     [ ]-[ ]             [ ]         [ ] 
+               \       /      \                          | 
+                [ ]-[ ]        [ ]                      [ ] 
+                     |          |                          \ 
+                    [ ]        [ ]                          [c] Cyclops 
+                   /          /   \                            (Iron Key) 
+                [ ]        [ ]     [ ] 
+                                      \ 
+                                       [ ] 
+# = locked doors

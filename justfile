@@ -66,6 +66,14 @@ report:
 draw-map-as-markdown:
     bun map.ts
 
+# Fetch the shrine's hand-drawn maps into map/shrine/ as raw text. The <pre>
+# block is the data -- a character's column says which rooms a connector joins
+# -- so these are saved verbatim and never reformatted. Re-run to refresh; the
+# files are checked in so a parser change needs no network, and so the material
+# survives the site going away.
+scrape-shrine-maps:
+    bun scrape.ts
+
 # Check that a mapped area is sound. Run it between levels of a mapping session:
 #   just verify-area sewers-level-1
 # With no slug it checks every area. Checks for unwalked exits, one-directional

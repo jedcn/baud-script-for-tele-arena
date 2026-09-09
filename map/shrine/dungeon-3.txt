@@ -1,0 +1,43 @@
+# Dungeon Level 3
+# https://tele-arena.tumblr.com/dungeon3
+# fetched 2026-09-09
+
+                [c]-[ ]-[ ]-[ ]                                 [*] White Rune 
+              Skeleton         \                                 | 
+              Lords(2)          [ ]                             [f] Stone Trap 
+                                   \             (Electrum Door) # 
+                                    [ ]                     [ ]-[c] 
+                                       \                   /    Stygian 
+                                        [ ]             [ ]     Dragon 
+                                         |             /     (Electrum Key) 
+                                        [ ]         [ ]           
+                                         |         / 
+    [ ]-[ ]         [ ]                 [ ]-[ ]-[ ] 
+         |           |                   | 
+        [ ]     [ ]-[ ]-[ ]-[ ]         [ ] 
+        / \     /            |           | 
+      [ ] [ ]-[ ]           [ ]         [ ] 
+      /                      |           | 
+[ ]-[ ]             [ ]-[ ]-[c]-[ ]-[ ]-[ ]             [ ]-[c] Cave 
+     |             /      Gargoyle                     /        Lion(2) 
+    [ ]         [ ]         (2)                     [ ] 
+      \        /                                   / 
+      [ ]   [ ]                                 [ ] 
+           /                                     | 
+        [ ]                   [ ]-[ ]-[ ]       [ ] 
+           \                  /         \        | 
+            [ ]             [ ]         [ ]-[ ]-[ ]-[ ] 
+             |             /                     |    \ 
+   Troll(2) [c]-[ ]-[ ]-[ ]                     [ ]   [ ] 
+                           \                   /        \ 
+                            [ ]             [ ]         [ ] 
+                               \           /   \          \ 
+                                [ ]     [ ]     [ ]       [c] Stone 
+                                 |                     Giantess(2) 
+                                [ ] 
+                                 | 
+                                [^] 
+                           Up to Level 2 
+ 
+# = locked door 
+f = falling stone trap (does up to 180 damage)

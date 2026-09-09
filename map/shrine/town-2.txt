@@ -1,0 +1,27 @@
+# Town 2
+# https://tele-arena.tumblr.com/town2
+# fetched 2026-09-09
+
+                                [M]     [A] 
+                                 |       | 
+                                [ ]     [ ] 
+                                 |       | 
+                        [E]-[ ]-[ ]-[ ]-[ ]-[ ]-[a] 
+                               / |       | 
+             Down to Sewers [v] [ ]     [ ] 
+                           /     |       | 
+                        [T]     [ ]     [t] 
+                               /   \ 
+                            [ ]     [ ] 
+                           /           \ 
+                        [W]             [D] Passage to Town 1 
+ 
+Key (click for related pages) 
+a = Armor Shop 
+D = Docks 
+E = Equipment Shop 
+M = Magic Shop 
+T = Tavern 
+t = Temple 
+W = Weapons Shop 
+A = Arena

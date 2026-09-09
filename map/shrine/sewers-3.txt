@@ -1,0 +1,32 @@
+# Sewers Level 3
+# https://tele-arena.tumblr.com/sewers3
+# fetched 2026-09-09
+
+                              (Pearl Door) 
+               Up to Desert [^]#[p]-[c]Hydra 
+                         Poison Trap | (Pearl Key) 
+                                    [ ] 
+                                       \ 
+                                        [ ] 
+                                           \ 
+                [ ]-[ ]-[ ]                 [ ] 
+               /     |     \               /   \ 
+    [ ]     [ ]     [ ]     [ ]     [ ] [ ]     [ ] 
+   /   \   /         |         \   /       \   / 
+[ ]     [ ] [ ]-[ ]-[ ]         [ ]         [ ] 
+           /                   /             | 
+        [ ]                 [ ]         [ ]-[ ]-[ ] 
+         |                 /                       \ 
+        [ ]-[ ]         [ ]                         [ ] 
+               \           \                         | 
+                [ ]         [ ]                     [ ] 
+                 |         /                       / 
+                [ ]     [ ]                     [ ] 
+               /                               / 
+            [ ]                             [ ] 
+           /             Pit Trap              \ 
+        [ ]             [ ]-[t]-[ ]             [ ] 
+         |             /           \             | 
+        [ ]         [ ]             [ ]         [ ] 
+           \       /                   \       / 
+            [ ]-[^] Up to Sewers Lvl 2  [ ]-[ ]

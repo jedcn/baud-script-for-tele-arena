@@ -1,0 +1,44 @@
+# Sewers Level 2
+# https://tele-arena.tumblr.com/sewers2
+# fetched 2026-09-09
+
+                                                    [ ] 
+                                                     | 
+                                            [ ]     [ ] 
+                                           /   \   / 
+                         (Platinum Key) [p]     [ ] 
+                                         | 
+        [ ]                             [ ] 
+       /   \                           / 
+    [ ]     [ ]     [ ]             [ ] 
+   /           \   /               / 
+[ ]             [ ]             [ ] 
+   \               \           / 
+    [ ]             [ ]-[ ]-[ ] 
+                         | 
+                        [ ]             [ ]     [ ] 
+                           \           /   \   /   \ 
+                            [ ]     [ ]     [ ]     [ ] 
+                               \   /                 | 
+                                [ ]                 [ ]         [ ] 
+                                 |                     \       /  \ 
+                            [ ]J[^]P[ ]                 [ ]-[j]   [ ] 
+                           /     O     \               (Jade Key)   \ 
+                        [ ]     [v]     [ ]                         [ ] 
+                       /                   \                       /  \ 
+                    [ ]                     [ ]                 [ ]   [ ] 
+                     |                       | 
+                    [ ]                     [ ]-[ ]     [ ]-[o] (Onyx Key) 
+                       \                   /       \   / 
+                        [ ]             [ ]         [ ] 
+                           \               \ 
+                            [ ]             [ ] 
+                           /                   \ 
+                        [ ]                     [ ] 
+                         | 
+                        [ ] 
+ 
+o = Onyx key          O = Onyx key door 
+p = Platinum key      P = Platinum key door 
+j = Jade key          J = Jade key door 
+     ^ & v = up and down stairs

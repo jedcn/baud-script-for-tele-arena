@@ -1,0 +1,35 @@
+# Town 1
+# https://tele-arena.tumblr.com/town1
+# fetched 2026-09-09
+
+       Passage to Town 2
+               |                
+         [V^] [D]  [v] Private Room
+            \  |    |           
+             \ |    |           
+         [E]  [Gv] [T^]         
+            \  |  /             
+             \ | /              
+         [t]--[*]-[Av] down to Dungeon
+               |               
+               |   
+         [a]--[ ]--[W]          
+             / |                
+            /  |                
+   Mountains  [M]              
+
+Key (click for related pages) 
+* = North Plaza (new players start here) 
+a = Armor Shop 
+D = Docks 
+E = Equipment Shop 
+G = Guild 
+M = Magic Shop 
+T = Tavern 
+t = Temple 
+V = Vaults 
+W = Weapons Shop 
+A = Arena (cannot enter once you have a rune) 
+
+v = down 
+^ = up

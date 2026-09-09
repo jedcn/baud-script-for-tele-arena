@@ -1,0 +1,47 @@
+# Dungeon Level 2
+# https://tele-arena.tumblr.com/dungeon2
+# fetched 2026-09-09
+
+                                         [ ] 
+                                        /   \ 
+                                     [ ]     [ ] 
+                                    /         | 
+                                 [ ]         [ ] 
+                                            /        Up to Level 1 
+                                         [ ]             [^c] Troll 
+                                        /                 | 
+                                     [ ]                 [ ] 
+                                      |                 / 
+                                     [ ]             [ ] 
+                Pit Trap (bring rope)   \           / 
+                     [ ]-[t]-[ ]         [ ]     [ ] 
+                      |         \           \   / 
+             Chimera [c]         [ ]         [c] Ogre 
+                      |             \       / 
+                     [ ]             [ ]-[ ] 
+                    / 
+                 [ ] 
+                    \ 
+                     [ ] 
+                        \ 
+                         [ ]                         [ ]-[ ] 
+                          |                         /       \ 
+                         [ ]                     [ ]         [ ] 
+                        /   \                   / 
+     Cyclops [c]-[ ]-[ ]     [ ]-[ ]     [ ]-[ ] 
+   (Silver Key) \                   \   /       \ 
+                 [ ]                 [ ]         [ ] 
+                    \                           / 
+                     [ ]                     [ ] 
+                    /                       / 
+                 [ ]                     [ ] 
+                /                         | 
+             [ ]                         [p] Poison Trap (bring verbenas) 
+            /                             | 
+         [ ]         [ ]                 [ ] 
+        /           /                     # (Silver Door)  
+     [ ]         [ ]               Stone [c]  
+        \       /                  Giantess \ 
+         [ ]-[ ]                     (2)     [v] 
+                                              Down to Level 3 
+# = locked door
