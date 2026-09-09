@@ -883,7 +883,7 @@ describe("Tele-Arena triggers", function()
             taPackage.currentRoomId = 7
             taPackage.currentRoom = "docks"
             helper.simulateLine("You buy passage across the great lake and board a ship...")
-            assert.are.equal("passage", taPackage.pendingDirection)
+            assert.are.equal("passage", taPackage.pendingDirs[1])
             assert.are.equal(7, taPackage.prevRoomId)
         end)
 
@@ -2843,7 +2843,7 @@ describe("World map triggers", function()
         it("discovers a room through an unknown exit and links both directions", function()
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "ne"
+            taPackage.pendingDirs = { "ne" }
             stubDiscover(6)
             helper.simulateLine("You're in the tavern.")
             assert.is_not_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
@@ -2863,7 +2863,7 @@ describe("World map triggers", function()
         it("re-enters a known room without discovering a new one", function()
             taPackage.currentRoomId = 6
             taPackage.prevRoomId = 6
-            taPackage.pendingDirection = "sw"
+            taPackage.pendingDirs = { "sw" }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 5 }
@@ -2886,7 +2886,7 @@ describe("World map triggers", function()
             taPackage.currentRoom = "magic shop"
             taPackage.currentRoomId = 13
             taPackage.prevRoomId = 13
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 10 }
@@ -2901,7 +2901,7 @@ describe("World map triggers", function()
         end)
 
         it("clears pendingDirection after entry", function()
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
             stubDiscover(9)
@@ -2997,7 +2997,7 @@ describe("World map triggers", function()
         it("dead-reckons the coordinate of a room reached through an unknown exit", function()
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
                     return { id = 1 }                       -- freshly minted room id
@@ -3022,7 +3022,7 @@ describe("World map triggers", function()
             -- exit-set matches. So a discovery DOES happen at this step.
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
                     return { id = 8 }                       -- discoverRoom's new id
@@ -3051,7 +3051,7 @@ describe("World map triggers", function()
             taPackage.currentAreaId = 7
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "d"
+            taPackage.pendingDirs = { "d" }
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 340 }                      -- known edge 5 --d--> 340
@@ -3073,7 +3073,7 @@ describe("World map triggers", function()
             taPackage.currentAreaId = 7
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = 60 }                       -- known edge to a legacy room
@@ -3097,7 +3097,7 @@ describe("World map triggers", function()
 
         it("sets pendingDirection when player moves north", function()
             helper.simulateAlias("n")
-            assert.are.equal("n", taPackage.pendingDirection)
+            assert.are.equal("n", taPackage.pendingDirs[1])
         end)
 
         it("captures prevRoom and prevRoomId when player moves", function()
@@ -3115,9 +3115,10 @@ describe("World map triggers", function()
 
         it("supports up and down", function()
             helper.simulateAlias("u")
-            assert.are.equal("u", taPackage.pendingDirection)
             helper.simulateAlias("d")
-            assert.are.equal("d", taPackage.pendingDirection)
+            -- Both are queued: two moves sent before either arrival is exactly
+            -- the typing-ahead case the queue exists for.
+            assert.are.same({ "u", "d" }, taPackage.pendingDirs)
         end)
 
     end)
@@ -3266,7 +3267,7 @@ describe("World map triggers", function()
     describe("failed move", function()
 
         it("clears pendingDirection without touching the graph", function()
-            taPackage.pendingDirection = "e"
+            taPackage.pendingDirs = { "e" }
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
             helper.simulateLine("Sorry, there's no exit in that direction.")
@@ -3276,13 +3277,13 @@ describe("World map triggers", function()
         end)
 
         it("treats a trip-and-fall as a rejected move (clears pendingDirection)", function()
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.simulateLine("In your haste, you trip and fall!")
             assert.is_nil(taPackage.pendingDirection)
         end)
 
         it("treats a rest-rejected move as rejected (clears pendingDirection)", function()
-            taPackage.pendingDirection = "se"
+            taPackage.pendingDirs = { "se" }
             helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
             assert.is_nil(taPackage.pendingDirection)
         end)
@@ -3294,7 +3295,7 @@ describe("World map triggers", function()
             taPackage.currentRoom = "magic shop"
             taPackage.currentRoomId = 13
             taPackage.prevRoomId = 13
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.simulateLine("In your haste, you trip and fall!")
             helper.simulateLine("You're in the magic shop.")
             assert.are.equal(13, taPackage.currentRoomId)
@@ -3308,7 +3309,7 @@ describe("World map triggers", function()
         it("tags the crossed edge and its reverse after passing a locked door", function()
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             stubDiscover(6)
             -- The unlock line arrives just before the destination brief.
             helper.simulateLine("Your bronze key unlocks the bronze door and allows you to pass through.")
@@ -3328,7 +3329,7 @@ describe("World map triggers", function()
 
         it("records a blocked door we lack the key for and clears the pending direction", function()
             taPackage.currentRoomId = 5
-            taPackage.pendingDirection = "e"
+            taPackage.pendingDirs = { "e" }
             helper.simulateLine("The locked iron door prevents your exit in that direction.")
             local upd = helper.findDbCall("execute", "UPDATE room_exits SET lock_key")
             assert.is_not_nil(upd)
@@ -3386,7 +3387,7 @@ describe("World map triggers", function()
             -- tagged the room we fell from
             assert.are.same({ "trap door", 146 }, helper.findDbCall("execute", "UPDATE rooms SET trap = ?").params)
             -- and set up the fall as a downward move so the next brief dead-reckons z-1
-            assert.are.equal("d", taPackage.pendingDirection)
+            assert.are.equal("d", taPackage.pendingDirs[1])
             assert.are.equal(146, taPackage.prevRoomId)
         end)
 
@@ -3408,7 +3409,7 @@ describe("World map triggers", function()
 
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             helper.simulateLine("You're in a cave.")
             local ins = helper.findDbCall("execute", "INSERT INTO rooms")
             assert.are.equal(3, ins.params[3])  -- area_id inherited
@@ -3418,7 +3419,7 @@ describe("World map triggers", function()
             taPackage.mapping = false
             taPackage.currentRoomId = 99  -- stale anchor from before
             taPackage.prevRoomId = 98
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             taPackage.coord = { x = 5, y = 5, z = 0 }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
@@ -3537,7 +3538,7 @@ describe("World map triggers", function()
         it("resets the named area and forgets the mapping anchor", function()
             taPackage.currentRoomId = 42
             taPackage.prevRoomId = 41
-            taPackage.pendingDirection = "n"
+            taPackage.pendingDirs = { "n" }
             taPackage.coord = { x = 1, y = 2, z = 0 }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 2 } end
@@ -3718,7 +3719,7 @@ describe("World map triggers", function()
         it("flags a newly discovered room as provisional, a reused one as not", function()
             taPackage.currentRoomId = 5
             taPackage.prevRoomId = 5
-            taPackage.pendingDirection = "se"
+            taPackage.pendingDirs = { "se" }
             stubDiscover(6)
             helper.simulateLine("You're in the north plaza.")
             assert.is_true(taPackage.currentRoomProvisional)
@@ -3726,7 +3727,7 @@ describe("World map triggers", function()
             helper.clearDbCalls()
             taPackage.currentRoomId = 6
             taPackage.prevRoomId = 6
-            taPackage.pendingDirection = "sw"
+            taPackage.pendingDirs = { "sw" }
             helper.mockDbOneRow = function(sql)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then return { to_id = 5 } end
                 return nil
@@ -3922,6 +3923,38 @@ describe("World map triggers", function()
             taPackage.trackMove("sw", "north plaza")    -- only one survives
             assert.are.equal("known", taPackage.hereState)
             assert.are.equal(4, taPackage.here)
+        end)
+
+        -- Typing ahead is ordinary play, and it used to corrupt things: two
+        -- moves sent before the first arrival overwrote a single slot, so the
+        -- arrival was matched against the wrong direction. The mapper reads the
+        -- same field to link edges, so this wrote wrong edges into the graph.
+        it("pairs arrivals with sent moves in order when you type ahead", function()
+            taPackage.setHere(1)
+            helper.mockDbOneRow = function(sql, params)
+                if sql:find("SELECT to_id", 1, true) then
+                    if params[1] == 1 and params[2] == "n" then return { to_id = 2 } end
+                    if params[1] == 2 and params[2] == "e" then return { to_id = 3 } end
+                    return { to_id = nil }
+                end
+                if sql:find("SELECT name FROM rooms", 1, true) then return { name = "cave" } end
+                return nil
+            end
+            helper.simulateAlias("n")
+            helper.simulateAlias("e")
+            assert.are.same({ "n", "e" }, taPackage.pendingDirs)
+            helper.simulateLine("You're in a cave.")   -- the arrival for `n`
+            assert.are.equal(2, taPackage.here)
+            helper.simulateLine("You're in a cave.")   -- the arrival for `e`
+            assert.are.equal(3, taPackage.here)
+        end)
+
+        it("drops a refused move so it is not matched against the next room", function()
+            taPackage.setHere(1)
+            helper.simulateAlias("n")
+            helper.simulateAlias("e")
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            assert.are.same({ "e" }, taPackage.pendingDirs)
         end)
 
         it("does nothing when it has no position to move from", function()

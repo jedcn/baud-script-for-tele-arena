@@ -764,7 +764,7 @@ createTrigger("^You buy passage across the great lake and board a ship", functio
     taPackage.suppressRoomEntry = nil
     taPackage.prevRoom = taPackage.currentRoom
     taPackage.prevRoomId = taPackage.currentRoomId
-    taPackage.pendingDirection = "passage"
+    taPackage.pushPendingDir("passage")
     send("i")
 end, { type = "regex" })
 
@@ -1151,6 +1151,28 @@ taPackage.offMap = nil
 -- the same principle the reconciler uses -- identity comes from the route.
 taPackage.hereCandidates = nil
 
+-- Moves we have sent and not yet seen an arrival for.
+--
+-- This was a single `pendingDirection` slot, which is wrong the moment anyone
+-- types ahead: send `n` then `e` before `n`'s brief comes back and the second
+-- overwrites the first, so the arrival is matched against the wrong direction.
+-- The tracker reported a false disagreement that way, and worse, the MAPPER
+-- uses the same field to link edges and dead-reckon coordinates -- so typing
+-- ahead while mapping writes wrong edges into the graph.
+--
+-- Moves and arrivals pair up in order, so a queue is the honest shape.
+taPackage.pendingDirs = {}
+
+function taPackage.pushPendingDir(dir)
+    taPackage.pendingDirs[#taPackage.pendingDirs + 1] = dir
+end
+
+-- The direction for the arrival now being handled. Refused moves shift the
+-- queue too, via the "no exit in that direction" trigger.
+function taPackage.shiftPendingDir()
+    return table.remove(taPackage.pendingDirs, 1)
+end
+
 -- Stamp the position for `just report` and for `where`. Called on every change,
 -- mapping or not, which is the whole point.
 function taPackage.setHere(roomId)
@@ -1323,6 +1345,11 @@ local function handleRoomEntry(matches)
     -- suspends mapping for its duration precisely so it can't write to the map
     -- (see navStart). The hook is installed by the navigation section below.
     if taPackage.navOnRoomBrief then taPackage.navOnRoomBrief(name) end
+
+    -- One arrival consumes one sent move. Placed after the guards above, so a
+    -- `look <dir>` peek or a slug probe -- neither of which is an arrival --
+    -- cannot eat somebody else's move.
+    taPackage.pendingDirection = taPackage.shiftPendingDir()
 
     -- A kill with no gold found before we left records zero loot.
     -- (Loot bookkeeping is independent of mapping mode.)
@@ -1508,7 +1535,7 @@ for _, dir in ipairs(moveDirections) do
         -- A real move: this arrival must not be suppressed, even if a prior
         -- `look <dir>` returned no room and left the flag armed.
         taPackage.suppressRoomEntry = nil
-        taPackage.pendingDirection = dir
+        taPackage.pushPendingDir(dir)
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.prevRoomId = taPackage.currentRoomId
         send(dir)
@@ -1651,6 +1678,9 @@ end, { type = "regex" })
 -- A rejected move: clear the pending direction so the next room line doesn't
 -- record a phantom exit from the room we never actually left.
 createTrigger("^Sorry, there's no exit in that direction\\.$", function()
+    -- Refused, so no arrival is coming for it. Drop it rather than leaving it
+    -- to be matched against the next room we really do enter.
+    taPackage.shiftPendingDir()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
@@ -1665,8 +1695,11 @@ end, { type = "regex" })
 -- the exit as a locked door (key unknown) so the map shows it, then clear the
 -- pending direction so the reprinted room isn't mistaken for an arrival.
 createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", function(matches)
-    if taPackage.mapping and taPackage.currentRoomId and taPackage.pendingDirection then
-        taPackage.db.setExitLock(taPackage.currentRoomId, taPackage.pendingDirection, nil, matches[2])
+    -- Refused, so no arrival is coming: take the move off the queue and record
+    -- the door against the direction it was actually refused in.
+    local dir = taPackage.shiftPendingDir()
+    if taPackage.mapping and taPackage.currentRoomId and dir then
+        taPackage.db.setExitLock(taPackage.currentRoomId, dir, nil, matches[2])
     end
     taPackage.pendingDirection = nil
 end, { type = "regex" })
@@ -1676,6 +1709,7 @@ end, { type = "regex" })
 -- pending direction so that reprint is treated as a re-scan of the room we're
 -- still in, not an arrival through the exit we tried to take.
 createTrigger("^In your haste, you trip and fall!$", function()
+    taPackage.shiftPendingDir()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
@@ -1684,6 +1718,7 @@ end, { type = "regex" })
 -- dead-reckoned onto the next arrival (which would mint a phantom room in the
 -- wrong direction). Separate from the arena-mode retry trigger elsewhere.
 createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", function()
+    taPackage.shiftPendingDir()
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
@@ -1693,6 +1728,7 @@ end, { type = "regex" })
 -- its exits). Shared by map-area; map-here anchors precisely instead.
 local function startMappingHere()
     taPackage.mapping = true
+    taPackage.pendingDirs = {}
     taPackage.pendingDirection = nil
     taPackage.prevRoomId = nil
     taPackage.currentRoomId = nil
@@ -1749,6 +1785,7 @@ createAlias("^map-here (.+)$", function(matches)
     taPackage.currentRoomProvisional = false
     taPackage.prevRoomId = nil
     taPackage.prevRoom = nil
+    taPackage.pendingDirs = {}
     taPackage.pendingDirection = nil
     if room.x ~= nil then
         taPackage.coord = { x = room.x, y = room.y, z = room.z }
@@ -2278,7 +2315,9 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
         taPackage.db.setRoomTrap(taPackage.currentRoomId, "trap door")
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.prevRoomId = taPackage.currentRoomId
-        taPackage.pendingDirection = "d"
+        -- The fall is the next arrival, so it goes to the FRONT of the queue --
+        -- ahead of anything typed but not yet resolved.
+        table.insert(taPackage.pendingDirs, 1, "d")
     end
 end, { type = "regex" })
 
