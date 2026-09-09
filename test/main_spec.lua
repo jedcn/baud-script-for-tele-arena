@@ -3903,6 +3903,27 @@ describe("World map triggers", function()
             assert.are.equal("off-map", taPackage.hereState)
         end)
 
+        -- Two rooms are called "tavern", but only one has an `sw` into a room
+        -- called "north plaza". One move settles it, with no appearance match.
+        it("works out where it is from the way you walked", function()
+            helper.mockDbRows = function(sql)
+                if sql:find("WHERE name = ?", 1, true) then return { { id = 3 }, { id = 9 } } end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                if sql:find("SELECT to_id", 1, true) then
+                    return params[1] == 3 and { to_id = 4 } or nil
+                end
+                if sql:find("SELECT name FROM rooms", 1, true) then return { name = "north plaza" } end
+                return nil
+            end
+            taPackage.trackMove(nil, "tavern")          -- two candidates
+            assert.are.equal("lost", taPackage.hereState)
+            taPackage.trackMove("sw", "north plaza")    -- only one survives
+            assert.are.equal("known", taPackage.hereState)
+            assert.are.equal(4, taPackage.here)
+        end)
+
         it("does nothing when it has no position to move from", function()
             taPackage.trackMove("e", "cave")
             assert.are.equal("lost", taPackage.hereState)

@@ -1145,6 +1145,11 @@ end, { type = "regex" })
 taPackage.here = nil
 taPackage.hereState = "lost"
 taPackage.offMap = nil
+-- While lost, the rooms we might be in. Narrowed by each move rather than
+-- guessed from appearance: two rooms are called "tavern", but only one of them
+-- has an `sw` into a room called "north plaza", so one step settles it. This is
+-- the same principle the reconciler uses -- identity comes from the route.
+taPackage.hereCandidates = nil
 
 -- Stamp the position for `just report` and for `where`. Called on every change,
 -- mapping or not, which is the whole point.
@@ -1152,6 +1157,7 @@ function taPackage.setHere(roomId)
     taPackage.here = roomId
     taPackage.hereState = "known"
     taPackage.offMap = nil
+    taPackage.hereCandidates = nil
     if taPackage.character and taPackage.character.name then
         taPackage.db.setPlayerLocation(taPackage.character.name, roomId)
     end
@@ -1161,7 +1167,35 @@ function taPackage.loseHere(why)
     taPackage.here = nil
     taPackage.hereState = "lost"
     taPackage.offMap = nil
+    taPackage.hereCandidates = nil
     if why then echo("[where] lost track: " .. why) end
+end
+
+-- Work out where we are from the walk, while lost. Each arrival narrows the
+-- set: keep only the candidates that actually have an exit this way into a room
+-- of this name. When one survives, that is where we are -- and it is a far
+-- stronger claim than any appearance match, because 194 rooms are called "cave"
+-- but very few of them are reached by this sequence of moves.
+--
+-- Losing every candidate is not a failure, it just means the walk did not start
+-- where we assumed; begin again from the name we can see.
+function taPackage.narrowHere(dir, name)
+    local kept = {}
+    if dir and taPackage.hereCandidates then
+        for _, id in ipairs(taPackage.hereCandidates) do
+            local dest = taPackage.db.exitDestination(id, dir)
+            if type(dest) == "number" and taPackage.db.roomName(dest) == name then
+                kept[#kept + 1] = dest
+            end
+        end
+    end
+    if #kept == 0 then kept = taPackage.db.roomIdsByName(name) or {} end
+    taPackage.hereCandidates = kept
+    if #kept == 1 then
+        taPackage.setHere(kept[1])
+        echo("[where] " .. tostring(taPackage.db.roomRef(kept[1]))
+            .. " — worked out from the way you walked.")
+    end
 end
 
 -- One move, followed against the map. `name` is the arriving room's name, which
@@ -1173,7 +1207,11 @@ function taPackage.trackMove(dir, name)
         taPackage.offMap.moves = taPackage.offMap.moves + 1
         return
     end
-    if taPackage.hereState ~= "known" or not dir then return end
+    if taPackage.hereState ~= "known" then
+        taPackage.narrowHere(dir, name)
+        return
+    end
+    if not dir then return end
     local dest = taPackage.db.exitDestination(taPackage.here, dir)
     if type(dest) ~= "number" then
         -- Past the edge of what we have walked. Remember where we left from:
@@ -1188,6 +1226,7 @@ function taPackage.trackMove(dir, name)
         echo("[where] the map says " .. dir .. " leads to \"" .. expect
             .. "\", but this is \"" .. name .. "\" — lost track.")
         taPackage.loseHere(nil)
+        taPackage.narrowHere(nil, name)
         return
     end
     taPackage.setHere(dest)
@@ -1491,8 +1530,19 @@ local function printRoomSlugCandidates(name, dirs)
         echo("[map] no known room matches '" .. name .. "' with exits " .. exits
             .. " (new room? use map-area to start mapping here)")
     elseif #matches == 1 then
-        echo("[map] this is " .. matches[1].slug .. "  ->  map-here " .. matches[1].slug)
+        -- A definitive identification, so the tracker takes it. Printing "this
+        -- is north-plaza" while `where` still answered "lost" was absurd.
+        taPackage.setHere(matches[1].id)
+        -- The `map-here` hint stays: it also turns MAPPING on, which is a
+        -- different thing from knowing where you are.
+        echo("[map] this is " .. matches[1].slug .. "  (position tracked)"
+            .. "  ->  map-here " .. matches[1].slug .. " to map from here")
     else
+        -- Ambiguous by appearance, but the walk will narrow it: seed the
+        -- candidate set so the next move or two settles it.
+        local ids = {}
+        for _, m in ipairs(matches) do ids[#ids + 1] = m.id end
+        taPackage.hereCandidates = ids
         local parts = {}
         for _, m in ipairs(matches) do
             local coord = (m.x ~= nil) and (" (" .. m.x .. "," .. m.y .. "," .. m.z .. ")") or ""
@@ -1500,6 +1550,7 @@ local function printRoomSlugCandidates(name, dirs)
         end
         echo("[map] " .. #matches .. " candidates for '" .. name .. "' [" .. exits .. "]: "
             .. table.concat(parts, ", "))
+        echo("[map] walk a room or two and they will narrow on their own.")
     end
 end
 
