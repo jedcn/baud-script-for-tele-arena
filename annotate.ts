@@ -11,6 +11,12 @@
 import { parseMap } from './parse';
 import { reconcile, ANCHORS, type OurRoom } from './reconcile';
 
+/** Disagreements already settled in game, so they read as decided, not open. */
+export type Checked = { area: string; room: string; direction: string; verdict: string; when: string };
+export function findChecked(checked: Checked[], area: string, room: string, message: string): Checked | undefined {
+  return checked.find(c => c.area === area && c.room === room && message.includes(c.direction));
+}
+
 export function annotate(text: string, mark: Map<number, string>): string {
   const p = parseMap(text);
   const lines = text.split('\n').filter(l => !l.startsWith('#')).map(l => l.split(''));
@@ -29,6 +35,7 @@ if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
   const db = new Database('tele-arena.db');
   const only = process.argv[2];
+  const checked: Checked[] = JSON.parse(await Bun.file('map/checked.json').text()).checked;
   for (const [name, cfg] of Object.entries(ANCHORS)) {
     if (only && name !== only) continue;
     const shrineText = await Bun.file(`map/shrine/${cfg.map}.txt`).text();
@@ -60,7 +67,9 @@ if (import.meta.main) {
     const seen = new Set<string>();
     for (const c of rep.conflicts) {
       const k = `${c.box}|${c.message}`; if (seen.has(k)) continue; seen.add(k);
-      console.log(`  [!] ${c.room}: ${c.message}`);
+      const settled = findChecked(checked, rep.area, c.room, c.message);
+      console.log(`  [!] ${c.room}: ${c.message}`
+        + (settled ? `\n      SETTLED ${settled.when}: ${settled.verdict} — checked in game` : ''));
     }
   }
 }

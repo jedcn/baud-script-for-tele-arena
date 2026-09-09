@@ -1,0 +1,16 @@
+{
+  "_comment": "Disagreements settled in game. A conflict listed here is a decided question, not an open one -- reconciliation still reports it, but marked, so it stops looking like work. `verdict` says which source was wrong.",
+  "checked": [
+    {
+      "area": "first-dungeon-level-1",
+      "room": "cave-31",
+      "direction": "se",
+      "drawing": "shows an se exit, leading to the Cyclops / Iron Key branch",
+      "game": "Sorry, there's no exit in that direction.",
+      "verdict": "drawing-wrong",
+      "when": "2026-09-09",
+      "by": "Castor",
+      "evidence": "logs/session-castor-2026-09-09T18-33-03.log"
+    }
+  ]
+}

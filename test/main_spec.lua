@@ -3895,9 +3895,30 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.offMap.moves)
         end)
 
-        it("counts moves while off the map instead of re-anchoring", function()
+        -- Walking off the map is not a one-way door: a uniquely named room
+        -- should put us straight back on it. The tracker used to count moves
+        -- forever, even through rooms only one room in the world is called.
+        it("re-acquires off the map when a room name identifies one room", function()
+            taPackage.hereState = "off-map"
+            taPackage.offMap = { from = 7, dir = "s", moves = 4 }
+            helper.mockDbRows = function(sql)
+                if sql:find("WHERE name = ?", 1, true) then return { { id = 12 } } end
+                return {}
+            end
+            taPackage.trackMove("n", "large cavern")
+            assert.are.equal("known", taPackage.hereState)
+            assert.are.equal(12, taPackage.here)
+            assert.is_nil(taPackage.offMap)
+        end)
+
+        it("keeps counting while off the map when the name settles nothing", function()
             taPackage.hereState = "off-map"
             taPackage.offMap = { from = 7, dir = "s", moves = 1 }
+            helper.mockDbRows = function(sql)
+                -- many rooms are called "desert", so nothing is settled
+                if sql:find("WHERE name = ?", 1, true) then return { { id = 1 }, { id = 2 }, { id = 3 } } end
+                return {}
+            end
             taPackage.trackMove("e", "desert")
             taPackage.trackMove("e", "desert")
             assert.are.equal(3, taPackage.offMap.moves)

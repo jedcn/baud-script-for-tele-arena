@@ -1227,6 +1227,15 @@ end
 function taPackage.trackMove(dir, name)
     if taPackage.hereState == "off-map" then
         taPackage.offMap.moves = taPackage.offMap.moves + 1
+        -- Keep trying to recognise where we are. Walking off the map is not a
+        -- one-way door: 28 room names identify exactly one room in the world,
+        -- so stepping through "large cavern" should put us straight back on it
+        -- rather than counting moves forever.
+        --
+        -- A narrowed set can be wrong -- a genuinely new room could share a name
+        -- with a known one -- but the very next move checks the claim against
+        -- the map, so a bad acquire is caught rather than compounded.
+        taPackage.narrowHere(dir, name)
         return
     end
     if taPackage.hereState ~= "known" then
