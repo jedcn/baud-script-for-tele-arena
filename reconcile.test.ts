@@ -63,3 +63,36 @@ describe('conflicts carry a location', () => {
     expect(rep.conflicts[0].room).toBe('plaza');
   });
 });
+
+describe('a trap box stands for two rooms', () => {
+  // The drawing gives the room you step into and the room you fall into a
+  // single box, because you experience them as one event. The pit is therefore
+  // not a room the drawing is missing.
+  it('folds the pit into its trap box instead of calling it unmatched', () => {
+    const shrine = parseMap('[*]-[t]');
+    const rep = reconcile('t', shrine,
+      ours({ hall: { e: 'trap' }, trap: { w: 'hall', d: 'pit' }, pit: { u: 'trap' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
+    expect(rep.pits.map(p => p[1])).toEqual(['pit']);
+    expect(rep.unmatchedRooms).not.toContain('pit');
+  });
+
+  // Only traps. A staircase down gets its own box -- town 1 draws the vaults
+  // as [V^] even though the guild hall drops into them.
+  it('does not fold a room reached by an ordinary staircase', () => {
+    const shrine = parseMap('[*]-[G]');
+    const rep = reconcile('t', shrine,
+      ours({ plaza: { e: 'hall' }, hall: { w: 'plaza', d: 'vault' }, vault: { u: 'hall' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'plaza' });
+    expect(rep.pits).toEqual([]);
+    expect(rep.unmatchedRooms).toContain('vault');
+  });
+
+  it('leaves a room alone if it has exits besides the way back up', () => {
+    const shrine = parseMap('[*]-[t]');
+    const rep = reconcile('t', shrine,
+      ours({ hall: { e: 'trap' }, trap: { w: 'hall', d: 'below' }, below: { u: 'trap', n: 'onward' }, onward: {} }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
+    expect(rep.pits).toEqual([]);
+  });
+});

@@ -16,6 +16,8 @@ import { parseMap, type ParsedMap } from './parse';
 export type OurRoom = { slug: string; exits: Record<string, string | null> };
 export type Report = {
   area: string;
+  /** Pit rooms folded into a trap box; see `absorbPits`. */
+  pits: [number, string][];
   matched: [number, string][];        // shrine box index -> our room slug
   unmatchedBoxes: number[];
   unmatchedRooms: string[];
@@ -34,7 +36,7 @@ export function reconcile(area: string, shrine: ParsedMap,
   const start = anchor.box(shrine);
   if (start < 0 || !ours[anchor.room])
     return { area, matched: [], unmatchedBoxes: shrine.boxes.map(b => b.index),
-             unmatchedRooms: Object.keys(ours),
+             unmatchedRooms: Object.keys(ours), pits: [],
              conflicts: [{ box: -1, room: anchor.room, message: `anchor not found` }] };
 
   const pair = (box: number, room: string) => { boxToRoom.set(box, room); roomToBox.set(room, box); };
@@ -89,8 +91,24 @@ export function reconcile(area: string, shrine: ParsedMap,
     }
   }
 
+  // A trap box stands for TWO rooms: the one you step into, and the one you
+  // fall into. The drawing gives them one box, so the pit is not a missing
+  // room -- it is drawn inside its trap. Fold it in rather than reporting it.
+  //
+  // Only traps do this. A staircase down gets its own box: town 1 draws the
+  // vaults as [V^] even though the guild hall drops into them.
+  const pits: [number, string][] = [];
+  for (const [boxIndex, slug] of boxToRoom) {
+    if (!/^[tpf]$/.test(shrine.boxes[boxIndex].label)) continue;
+    const below = ours[slug]?.exits['d'];
+    if (!below || roomToBox.has(below)) continue;
+    const only = Object.entries(ours[below]?.exits ?? {});
+    if (only.length === 1 && only[0][0] === 'u') { pits.push([boxIndex, below]); roomToBox.set(below, boxIndex); }
+  }
+
   return {
     area,
+    pits,
     matched: [...boxToRoom.entries()],
     unmatchedBoxes: shrine.boxes.filter(b => !boxToRoom.has(b.index)).map(b => b.index),
     unmatchedRooms: Object.keys(ours).filter(s => !roomToBox.has(s)),
@@ -137,6 +155,7 @@ if (import.meta.main) {
     const rep = reconcile(cfg.area, shrine, ours, cfg.anchor);
     const ok = rep.unmatchedBoxes.length === 0 && rep.unmatchedRooms.length === 0 && rep.conflicts.length === 0;
     console.log(`\n${name.padEnd(11)} ${ok ? 'ALIGNED' : 'PARTIAL'}  ${rep.matched.length}/${shrine.boxes.length} boxes matched to ${Object.keys(ours).length} rooms`);
+    if (rep.pits.length) console.log(`    ${rep.pits.length} pit(s) drawn inside a trap box: ${rep.pits.map(p => p[1]).join(', ')}`);
     if (rep.unmatchedBoxes.length) console.log(`    ${rep.unmatchedBoxes.length} box(es) unmatched`);
     if (rep.unmatchedRooms.length) console.log(`    rooms with no box: ${rep.unmatchedRooms.slice(0, 6).join(', ')}${rep.unmatchedRooms.length > 6 ? ` +${rep.unmatchedRooms.length - 6}` : ''}`);
     const uniq = [...new Map(rep.conflicts.map(c => [`${c.box}|${c.message}`, c])).values()];

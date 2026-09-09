@@ -3,6 +3,7 @@
   "reports": [
     {
       "area": "first-town",
+      "pits": [],
       "matched": [
         [
           7,
@@ -65,6 +66,7 @@
     },
     {
       "area": "second-town",
+      "pits": [],
       "matched": [
         [
           0,
@@ -159,6 +161,7 @@
     },
     {
       "area": "first-dungeon-level-1",
+      "pits": [],
       "matched": [
         [
           9,
@@ -364,6 +367,12 @@
     },
     {
       "area": "first-dungeon-level-2",
+      "pits": [
+        [
+          12,
+          "pit"
+        ]
+      ],
       "matched": [
         [
           6,
@@ -481,7 +490,6 @@
         54
       ],
       "unmatchedRooms": [
-        "pit",
         "smelly-cave",
         "cave-62",
         "cave-63",
@@ -530,6 +538,7 @@
     },
     {
       "area": "first-dungeon-level-3",
+      "pits": [],
       "matched": [
         [
           72,
@@ -832,6 +841,7 @@
     },
     {
       "area": "sewers-level-1",
+      "pits": [],
       "matched": [
         [
           1,
@@ -1118,6 +1128,7 @@
     },
     {
       "area": "sewers-level-2",
+      "pits": [],
       "matched": [
         [
           29,
@@ -1348,6 +1359,12 @@
     },
     {
       "area": "sewers-level-3",
+      "pits": [
+        [
+          42,
+          "pit-2"
+        ]
+      ],
       "matched": [
         [
           2,
@@ -1505,7 +1522,6 @@
         "town-sewers-145",
         "town-sewers-146",
         "pit-1",
-        "pit-2",
         "town-sewer",
         "town-sewer-1"
       ],

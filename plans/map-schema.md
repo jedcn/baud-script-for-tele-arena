@@ -131,6 +131,25 @@ another. All three are links between two named rooms, and none is an exit.
 - **`guardian.yields`** is the source end of a key relation; a door's
   `door.key` is the far end. A router joins them.
 
+## A shrine drawing convention: a trap box is two rooms
+
+`[t]`, `[p]` and `[f]` stand for **both** the room you step into and the room you
+fall into. The drawing gives them one box because you experience them as one
+event. So the pit is not a room the drawing is missing -- it is drawn inside its
+trap, and a reconciler that treats it as absent will chase a room that was never
+lost.
+
+Only traps do this. A staircase down gets its own box: town 1 draws the vaults
+as `[V^]` even though the guild hall drops into them.
+
+In this schema they stay two rooms, because they are two rooms to walk:
+
+```jsonc
+{ "id": "first-dungeon-level-2/cave-61",
+  "trap": { "type": "trap door", "remedy": "rope", "drops_to": "first-dungeon-level-2/pit" },
+  "exits": { "d": { "to": "first-dungeon-level-2/pit" } } }
+```
+
 ## Open questions
 
 1. **Two rooms, one fingerprint.** `stone-lvl-3` and `-4` both start from a
