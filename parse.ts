@@ -29,11 +29,14 @@ export function directionOf(dRow: number, dCol: number): string {
   return ns + ew;
 }
 
-/** `[V^]` -> label "V", badge "^".  `[ ]` -> label "", badge "". */
+/**
+ * `[V^]` -> label "V", badge "^".  `[ ]` -> label "", badge "".
+ * The badge is not always last: dungeon level 2 draws its stair up as `[^c]`,
+ * a stairwell that is also a creature room, so anchoring on a trailing badge
+ * missed it entirely.
+ */
 function splitBox(inner: string): { label: string; badge: string } {
-  const m = inner.match(/^(.*?)([\^v]*)$/);
-  const label = (m?.[1] ?? inner).trim();
-  return { label, badge: m?.[2] ?? '' };
+  return { badge: (inner.match(/[\^v]/g) ?? []).join(''), label: inner.replace(/[\^v]/g, '').trim() };
 }
 
 export function findBoxes(lines: string[]): Box[] {
@@ -61,7 +64,11 @@ function followRun(lines: string[], boxAt: Map<string, Box>, startRow: number, s
   while (steps++ < 200) {
     const ch = lines[row]?.[col];
     if (ch === undefined) return null;
-    const hit = boxAt.get(`${row},${col}`);
+    // Arriving within a column of a box counts as arriving. These are hand
+    // drawings and a diagonal often stops one short -- dungeon level 1's spike
+    // trap hangs off a `\` that misses its box by one, which split that map
+    // into two halves that no walk could cross.
+    const hit = boxAt.get(`${row},${col}`) ?? boxAt.get(`${row},${col - 1}`) ?? boxAt.get(`${row},${col + 1}`);
     if (hit) return hit;
     // A run may be padded with spaces (`[ ]     [ ]` joined by a long `-` run
     // is rare, but `|` runs skip blank rows in some maps) and may bend where a
