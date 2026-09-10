@@ -7,12 +7,13 @@
 3. [First Dungeon, Level 1](#first-dungeon-level-1)
 4. [First Dungeon, Level 2](#first-dungeon-level-2)
 5. [First Dungeon, Level 3](#first-dungeon-level-3)
-6. [Sewers, Level 1](#sewers-level-1)
-7. [Sewers, Level 2](#sewers-level-2)
-8. [Sewers, Level 3](#sewers-level-3)
-9. [The Mountains](#the-mountains)
-10. [The Cellars](#the-cellars)
-11. [Third Town](#third-town)
+6. [The Desert](#the-desert)
+7. [Sewers, Level 1](#sewers-level-1)
+8. [Sewers, Level 2](#sewers-level-2)
+9. [Sewers, Level 3](#sewers-level-3)
+10. [The Mountains](#the-mountains)
+11. [The Cellars](#the-cellars)
+12. [Third Town](#third-town)
 
 ### First Town
 
@@ -26,7 +27,7 @@
 [t]--[ ]--[Av]        down to First Dungeon, Level 1
       |
       |
-[a]--[ ]--[W]         sw to The Mountains   nw to third-town
+[a]--[ ]--[W]         sw to The Mountains
       |
       |
      [M]
@@ -264,6 +265,69 @@ Key:
                                                   [ ^]                                               up to First Dungeon, Level 2
 ```
 
+### The Desert
+
+```
+                    [ ]
+                   /   \
+                  /     \
+               [ ]       [ ]
+                \         |
+                 \        |
+                 \       [ ]
+                  \        \
+                  \         \
+                   \[ ]--[ ]--[ v]-[ ]--[ ]                            down to Sewers, Level 3
+                   \         \           |
+                    \         \          |
+                    \         [ ]       [ ]
+                     \       /           |
+                     \      /            |
+                      \  [ ]            [ ]                            nw to unexplored
+                      \   |              |
+                       \  |              |
+                       \ [ ]--[ ]--[ ]--[ ]
+                        \ |
+                        \ |
+                         [ ]--[ ]                                      s to unexplored
+                        /\   /
+                       /  X
+          [ ]       [ ] / \
+         //  \     / /    \
+        //    \   //       \
+     [ ]/      [ ]         \                                           se to unexplored
+      |/      /             \
+     /|    / /              \
+    /[ ] /[ ]                \                                         nw to unexplored
+   /  / \/                   \
+  / /   /\                    \
+[ ]--[ ]  [ ]  [ ]            \
+        \    X    \            \
+         X    \    \           \
+     [ ]  [ ]  [ ]  [ ]         \                                      n to unexplored   sw to unexplored
+               \  \    \        \
+                  \\    \        \
+                    [ ]  [ ]     \                                     ne to unexplored
+                     |    \ \     \
+                     |       \    \
+                    [ ]       [ ]\ \
+                       \       |   \ \
+                        \      |    \   \
+                         [ ]--[ ]--[ ]      \                          se to unexplored
+                               |                \
+                               |                   \
+                              [ ]                      \
+                                 \                         \
+                                  \                           \
+                                   [ ]                           [ ]
+                                      \                         /
+                                       \                       /
+                                        [ ]                 [ ]        ne to unexplored
+                                           \               /
+                                            \             /
+                                             [ ]--[ ]--[ ]             sw to unexplored   n to unexplored
+```
+
 ### Sewers, Level 1
 
 ```
@@ -360,7 +424,7 @@ Key:
 ### Sewers, Level 3
 
 ```
-                    [ ^v]                                         up to unexplored
+                    [ ^v]                                         up to The Desert
                        \
                         \
                          [ ^v]
@@ -549,25 +613,31 @@ Key:
 ### Third Town
 
 ```
-[T]       [A]  [G]
-   \     /      |
-    \   /       |
-     [ ]       [ ]--[t]
-    /   \     /
-   /     \   /
-[a]       [ ]--[ ]        se to unexplored   e to unexplored
-         /
-        /
-     [ ]                  nw to first-town   se to unexplored   sw to unexplored
+     [T]       [A]  [G]
+        \     /      |
+         \   /       |
+[E]       [ ]       [ ]--[t]
+   \     /   \     /
+    \   /     \   /
+     [a]       [ ]--[ ]        e to unexplored
+        \     /   \
+         \   /     \
+          [ ]       [ ]
+         /   \         \
+        /     \         \
+     [a]       [W]       [M]
 ```
 
 Key:
 
 - `A` — Arena
 - `a` — Armor Shop
+- `E` — Equipment Shop
 - `G` — Guild Hall
+- `M` — Magic Shop
 - `T` — Tavern
 - `t` — Temple
+- `W` — Weapon Shop
 
 `[ ]` — a room with no shop or service (plaza, path, corridor).
 `^` / `v` — an exit up / down.
