@@ -29,11 +29,18 @@ get asked twice.
 
       `nw` was not listed in game, so the whole row was bogus and went.
 
-- [ ] **Get a description for `docks`.** It is the only first-town room without
-      one, and no session log has ever captured it. In game: go to the docks and
-      `look`.
-- [ ] **Declare first town "no known issues"** once the three above are done and
-      `just verify-area first-town` is clean.
+- [x] ~~**Get a description for `docks`.**~~ **Done 2026-09-09**, captured in game
+      and cross-checked: the text says "an ornately carved marble archway exits
+      through the town wall to the south into the guild hall", and our map has
+      `docks --s--> guild-hall`. The two agree.
+
+      To capture one this way in future: `map-here <slug>` then `look`. The
+      description capture needs `currentRoomId`, which is only set while mapping,
+      so a bare `look` with mapping off records nothing.
+
+- [x] ~~**Declare first town "no known issues".**~~ **Done 2026-09-09.**
+      `just verify-area first-town` passes every check, and `just report` says
+      "no known problems" for it. 13 rooms, matching the shrine drawing's 13.
 
 ## Third town — the other half of the same fault
 
