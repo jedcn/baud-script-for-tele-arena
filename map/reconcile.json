@@ -1,17 +1,10 @@
 {
-  "generated": "2026-09-09",
+  "generated": "2026-09-10",
   "reports": [
     {
       "area": "first-town",
       "pits": [],
-      "shapeMismatches": [
-        {
-          "box": 6,
-          "room": "temple",
-          "drawn": 1,
-          "ours": 0
-        }
-      ],
+      "shapeMismatches": [],
       "matched": [
         [
           7,
@@ -87,12 +80,6 @@
           "room": "path-2",
           "drawn": 3,
           "ours": 2
-        },
-        {
-          "box": 16,
-          "room": "temple-1",
-          "drawn": 1,
-          "ours": 0
         }
       ],
       "matched": [
@@ -191,12 +178,6 @@
       "area": "first-dungeon-level-1",
       "pits": [],
       "shapeMismatches": [
-        {
-          "box": 19,
-          "room": "cave-6",
-          "drawn": 2,
-          "ours": 1
-        },
         {
           "box": 36,
           "room": "cave-27",
@@ -612,14 +593,7 @@
     {
       "area": "first-dungeon-level-3",
       "pits": [],
-      "shapeMismatches": [
-        {
-          "box": 6,
-          "room": "cave-156",
-          "drawn": 2,
-          "ours": 1
-        }
-      ],
+      "shapeMismatches": [],
       "matched": [
         [
           72,
@@ -1221,14 +1195,7 @@
     {
       "area": "sewers-level-2",
       "pits": [],
-      "shapeMismatches": [
-        {
-          "box": 3,
-          "room": "town-sewers-101",
-          "drawn": 2,
-          "ours": 1
-        }
-      ],
+      "shapeMismatches": [],
       "matched": [
         [
           29,
@@ -1466,12 +1433,6 @@
         ]
       ],
       "shapeMismatches": [
-        {
-          "box": 1,
-          "room": "town-sewers-168",
-          "drawn": 2,
-          "ours": 1
-        },
         {
           "box": 0,
           "room": "town-sewers-169",

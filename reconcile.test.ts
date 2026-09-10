@@ -134,3 +134,24 @@ describe('shape check', () => {
     expect(rep.shapeMismatches).toEqual([]);
   });
 });
+
+describe('shape check and traps', () => {
+  // Regression: subtracting an exit for EVERY trap box reported correct
+  // pairings as broken. cave-6 is a spiked trap with nothing below it.
+  it('does not adjust a trap that has no pit', () => {
+    const shrine = parseMap('[*]-[t]-[a]');
+    const rep = reconcile('t', shrine,
+      ours({ hall: { e: 'trap' }, trap: { w: 'hall', e: 'far' }, far: { w: 'trap' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
+    expect(rep.shapeMismatches).toEqual([]);
+  });
+
+  it('adjusts a trap whose pit was folded into it', () => {
+    const shrine = parseMap('[*]-[t]');
+    const rep = reconcile('t', shrine,
+      ours({ hall: { e: 'trap' }, trap: { w: 'hall', d: 'pit' }, pit: { u: 'trap' } }),
+      { box: m => m.boxes.findIndex(b => b.label === '*'), room: 'hall' });
+    expect(rep.pits.map(p => p[1])).toEqual(['pit']);
+    expect(rep.shapeMismatches).toEqual([]);
+  });
+});

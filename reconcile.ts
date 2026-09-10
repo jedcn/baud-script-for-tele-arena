@@ -130,12 +130,15 @@ export function reconcile(area: string, shrine: ParsedMap,
     // an unwalked stub is not drawn at all -- counting either makes every room
     // with a stair look mismatched.
     //
-    // A pit hangs off its trap room in our map but not in the drawing, so the
-    // trap room legitimately has one exit more than its box.
-    const isTrap = /^[tpf]$/.test(shrine.boxes[boxIndex].label);
+    // A pit hangs off its trap room in our map but not in the drawing, so a
+    // room with a pit folded into it legitimately has one exit more than its
+    // box. Only when a pit was actually folded, though: cave-6 is a SPIKED
+    // trap with nothing below it, and subtracting for every trap box reported
+    // a correct pairing as broken.
+    const foldedPit = pits.some(([bi]) => bi === boxIndex);
     const oursCount = Object.values(ours[slug]?.exits ?? {})
       .filter(dest => dest != null && ours[dest as string] !== undefined).length
-      - (isTrap ? 1 : 0);
+      - (foldedPit ? 1 : 0);
     if (drawn !== oursCount) shapeMismatches.push({ box: boxIndex, room: slug, drawn, ours: oursCount });
   }
 
