@@ -536,11 +536,22 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     if(!bar) return;
     var flagged = GRAPH.rooms.filter(function(r){ return (r.defects||[]).length; });
     var total = flagged.reduce(function(n,r){ return n + r.defects.length; }, 0);
-    if(!total){ bar.innerHTML = '<span class="ok">\u2713 no known problems</span>'; return; }
+    var overlapNote = '';
+    if(overlaps.length){
+      var n = overlaps.reduce(function(a,g){ return a + g.length; }, 0);
+      overlapNote = '<div class="bad">\u26A0 ' + n + ' rooms are drawn on top of each other in '
+        + overlaps.length + ' place' + (overlaps.length === 1 ? '' : 's') + ' — '
+        + overlaps.map(function(g){ return g.map(function(r){ return r.slug; }).join(' / '); }).join('; ')
+        + '. The map is showing fewer rooms than exist.</div>';
+    }
+    if(!total){
+      bar.innerHTML = overlapNote + '<span class="ok">\u2713 no known problems</span>';
+      return;
+    }
     var kinds = {};
     flagged.forEach(function(r){ r.defects.forEach(function(d){ kinds[d.kind] = (kinds[d.kind]||0)+1; }); });
     var parts = Object.keys(kinds).sort().map(function(k){ return kinds[k] + ' ' + k; });
-    bar.innerHTML = '<span class="bad">\u26A0 ' + total + ' known problem'
+    bar.innerHTML = overlapNote + '<span class="bad">\u26A0 ' + total + ' known problem'
       + (total === 1 ? '' : 's') + '</span> in ' + flagged.length + ' room'
       + (flagged.length === 1 ? '' : 's') + ' — ' + parts.join(', ')
       + '<button id="next-defect">show me one</button>';
@@ -733,6 +744,22 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       cell[id] = { c: cursor + (p.c - cp.minc), r: (p.r - cp.minr), f: p.f }; });
     cursor += (cp.maxc - cp.minc) + 1 + GAP;
   });
+
+  // Two rooms can be laid out on the same cell -- this world is not Euclidean
+  // and loops genuinely misclose -- and the second is then drawn exactly on top
+  // of the first, so the map silently shows fewer rooms than exist. That is the
+  // worst thing a map can do to someone using it to check their data, so say so
+  // rather than hide it.
+  var overlaps = [];
+  (function(){
+    var at = {};
+    GRAPH.rooms.forEach(function(r){
+      var p = cell[r.id]; if(!p) return;
+      var k = p.c + ',' + p.r + ',' + p.f;
+      (at[k] = at[k] || []).push(r);
+    });
+    Object.keys(at).forEach(function(k){ if(at[k].length > 1) overlaps.push(at[k]); });
+  })();
 
   // Distinct floors present, sorted high → low (upper floors first).
   var floorSet = {};

@@ -88,13 +88,29 @@ describe('the real town 1 map', () => {
     for (const pair of ['*A', '*G', '*t', '*T', '*E', '*_']) expect(pairs.has(pair)).toBe(true);
   });
 
-  it('leaves no box unconnected in any of the fifteen maps', async () => {
-    const { MAPS } = await import('./scrape');
-    for (const { slug } of MAPS) {
+  // The maps the parser was built against and is known to handle. The shrine
+  // has 51 in total and twelve of the rest use drawing styles it has not met --
+  // backticks and apostrophes as connectors, boxes butted together -- so this
+  // pins the ones that work rather than pretending they all do.
+  const PARSEABLE = ['town-1', 'town-2', 'dungeon-1', 'dungeon-2', 'dungeon-3',
+    'sewers-1', 'sewers-2', 'sewers-3', 'desert',
+    'stoneworks-1', 'stoneworks-2', 'stoneworks-3', 'stoneworks-4', 'stoneworks-5', 'stoneworks-6'];
+
+  it('leaves no box unconnected in the fifteen maps it was built for', async () => {
+    for (const slug of PARSEABLE) {
       const p = parseMap(await Bun.file(`map/shrine/${slug}.txt`).text());
       const linked = new Set(p.edges.flatMap(e => [e.from, e.to]));
       const orphans = p.boxes.filter(b => !linked.has(b.index));
       expect({ slug, orphans: orphans.length }).toEqual({ slug, orphans: 0 });
     }
+  });
+
+  it('parses town 3, which is small and settles a question we had in game', async () => {
+    const p = parseMap(await Bun.file('map/shrine/town-3.txt').text());
+    expect(p.boxes.length).toBe(13);
+    // one armor shop, one weapon shop, one magic shop -- not two of any
+    const letters = p.boxes.map(b => b.label).filter(Boolean).sort();
+    expect(letters.filter(l => l === 'a')).toHaveLength(1);
+    expect(letters.filter(l => l === 'W')).toHaveLength(1);
   });
 });
