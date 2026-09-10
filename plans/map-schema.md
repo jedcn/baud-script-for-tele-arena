@@ -150,6 +150,33 @@ In this schema they stay two rooms, because they are two rooms to walk:
   "exits": { "d": { "to": "first-dungeon-level-2/pit" } } }
 ```
 
+## Automatic reconciliation was tried and abandoned (2026-09-09)
+
+A tool matched the shrine drawings against the rooms we had walked, propagating
+identity from an anchor: from a matched pair, follow the drawing's edge going
+`e` and our map's exit going `e`, and pair the ends.
+
+It aligned three areas exactly -- town 1, dungeon level 3, sewers level 2 -- and
+was removed anyway, because it could not be trusted and repeatedly was.
+
+The failure was structural rather than a bug to fix. One wrong pairing poisons
+every pairing after it, silently: the walk continues confidently and reports a
+"disagreement" forty rooms later that is really an accumulated offset. Chasing
+one such report sent someone into the dungeon to check an exit that did not
+exist. Two separate checks written to catch that themselves produced false
+readings, which were also reported as fact.
+
+**What replaces it: nothing, deliberately.** The two sources do not need
+merging by a program. The drawings are good and can be authored into this schema
+directly. What we walked supplies names and descriptions. And where the game
+and the map really differ, the position tracker says so while you are standing
+in the room -- one at a time, with the game's own words as evidence, which is
+worth more than any number of guesses made in bulk.
+
+`scrape.ts` and `parse.ts` remain: turning a drawing into rooms and connections
+is still the way the desert and the stoneworks get authored. It is the automatic
+*matching against our database* that is gone.
+
 ## Open questions
 
 1. **Two rooms, one fingerprint.** `stone-lvl-3` and `-4` both start from a
