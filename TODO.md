@@ -7,6 +7,13 @@ get asked twice.
 
 - [ ] **Visual check.** `just report`, look at first town, say whether it matches
       the game as you know it.
+
+      The report now marks defects: a room with a known problem gets a red ring
+      and a ⚠, clicking it lists what is wrong, and a bar above the map counts
+      them with a button to jump to one. So a fix can be seen to have landed
+      rather than taken on trust. Today it reads:
+
+          ⚠ 19 known problems in 19 rooms — 16 coords, 1 no-description, 2 one-way
 - [ ] **Sort out `weapon-shop nw`.** It is one-directional and crosses towns:
 
       weapon-shop (first-town) --nw--> underground-plaza (third-town)

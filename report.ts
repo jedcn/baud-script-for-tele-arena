@@ -22,6 +22,7 @@ const roomGraphReady = hasTable("areas") && hasTable("rooms");
 
 const rooms = roomGraphReady ? db.prepare(`
   SELECT r.id, r.slug, r.name, r.description, r.visits, r.first_visited, r.area_id, r.trap,
+         r.x, r.y, r.z,
          a.slug AS area_slug, a.name AS area_name
   FROM rooms r
   LEFT JOIN areas a ON a.id = r.area_id
@@ -86,6 +87,46 @@ for (const n of roomNotes) {
   notesByRoom.get(n.room_id)!.push(n.note);
 }
 
+// Defects, computed the same way `just verify-area` does, so the map can SHOW a
+// problem rather than only a checker naming a room slug. Seeing a fault in the
+// drawing and then seeing it gone is the only way to be sure a fix landed.
+const roomById = new Map(rooms.map(r => [r.id, r]));
+const haveEdge = new Set(exits.filter(e => e.to_id != null)
+  .map(e => `${e.from_id}|${e.direction}|${e.to_id}`));
+const REVERSE_DIR: Record<string, string> = {
+  n: 's', s: 'n', e: 'w', w: 'e', ne: 'sw', sw: 'ne', nw: 'se', se: 'nw',
+  u: 'd', d: 'u', passage: 'passage',
+};
+const OFFSET: Record<string, [number, number]> = {
+  n: [0, 1], s: [0, -1], e: [1, 0], w: [-1, 0],
+  ne: [1, 1], nw: [-1, 1], se: [1, -1], sw: [-1, -1],
+};
+type Defect = { room: number; kind: string; detail: string };
+const defects: Defect[] = [];
+
+for (const e of exits) {
+  if (e.to_id == null) continue;
+  const from = roomById.get(e.from_id), to = roomById.get(e.to_id);
+  if (!from) continue;
+  if (!to) { defects.push({ room: e.from_id, kind: 'dangling', detail: `${e.direction} points at a room that no longer exists` }); continue; }
+  const rev = REVERSE_DIR[e.direction];
+  if (rev && !haveEdge.has(`${e.to_id}|${rev}|${e.from_id}`))
+    defects.push({ room: e.from_id, kind: 'one-way',
+                   detail: `${e.direction} -> ${to.slug}, but ${to.slug} has no ${rev} back` });
+  const off = OFFSET[e.direction];
+  if (off && from.x != null && to.x != null && (from.x + off[0] !== to.x || from.y + off[1] !== to.y))
+    defects.push({ room: e.from_id, kind: 'coords',
+                   detail: `${e.direction} -> ${to.slug}, but their coordinates are not one step apart` });
+}
+for (const r of rooms) if (!r.description)
+  defects.push({ room: r.id, kind: 'no-description', detail: 'no description recorded' });
+
+const defectsByRoom = new Map<number, Defect[]>();
+for (const d of defects) {
+  if (!defectsByRoom.has(d.room)) defectsByRoom.set(d.room, []);
+  defectsByRoom.get(d.room)!.push(d);
+}
+
 // Compact node/edge payload for the interactive map (embedded as JSON below).
 const graphData = {
   areas: areas.map(a => ({ id: a.id, slug: a.slug, name: a.name })),
@@ -93,6 +134,7 @@ const graphData = {
                            area_id: r.area_id, area_slug: r.area_slug, visits: r.visits,
                            first_visited: r.first_visited, trap: r.trap,
                            players: playersByRoom.get(r.id) ?? [],
+                           defects: defectsByRoom.get(r.id) ?? [],
                            items: itemsByRoom.get(r.id) ?? [],
                            notes: notesByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
@@ -359,7 +401,20 @@ const html = `<!DOCTYPE html>
   #room-panel h3 { margin: 0 0 0.15rem; font-size: 1rem; color: var(--text); word-break: break-word; }
   #room-panel .rp-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.6rem; }
   #room-panel .rp-desc { color: var(--text); line-height: 1.5; margin: 0.6rem 0 0.2rem; }
+  #defect-bar { margin: 0 0 8px; font-size: 13px; }
+  #defect-bar .ok { color: #3fb950; }
+  #defect-bar .bad { color: #f85149; font-weight: 600; }
+  #defect-bar button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+                       border-radius: 5px; padding: 2px 8px; margin-left: 8px; cursor: pointer;
+                       font-size: 12px; }
   #room-panel .rp-trap { color: #f85149; font-weight: 600; }
+  #room-panel .rp-defects { border: 1px solid #f85149; border-radius: 6px; padding: 8px 10px;
+                            margin: 10px 0; background: #2d1417; }
+  #room-panel .rp-defects strong { color: #f85149; font-size: 11px; text-transform: uppercase;
+                                   letter-spacing: .05em; }
+  #room-panel .rp-defects ul { margin: 6px 0 0; padding-left: 18px; }
+  #room-panel .rp-defects li { margin: 3px 0; font-size: 12px; line-height: 1.45; }
+  #room-panel .rp-defects code { color: #f85149; }
   #room-panel .rp-here { color: #e3b341; font-weight: 600; margin-bottom: 0.3rem; }
   #room-panel .rp-door { color: #db6d28; font-weight: 600; }
   #room-panel .rp-label { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; margin: 1rem 0 0.35rem; }
@@ -391,6 +446,7 @@ ${rooms.length > 0 ? `
 <div id="map-legend" class="map-legend"></div>
 <div id="area-filters" class="area-filters"></div>
 <div id="floor-tabs" class="floor-tabs"></div>
+<div id="defect-bar"></div>
 <div class="map-wrap"><svg id="map"></svg><aside id="room-panel"><p class="rp-empty">Click a room to see its name, description, and exits.</p></aside></div>
 <p class="note">Position follows direction — north is up, east is right, diagonals at the corners — but rooms are relaxed to lie flat, so a loop the game never drew on a true grid stays untangled (directions are approximate near such loops) · scroll to zoom, drag to pan · dashed octagons are known exits not yet walked · ▲/▼ badges and the floor tabs move between levels (a room reached by up/down sits above/below its neighbor).</p>
 ` : ""}
@@ -473,6 +529,27 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
 (function(){
   var GRAPH = ${JSON.stringify(graphData)};
   var svg = document.getElementById('map');
+  // A running count, so a fix can be seen to have landed without hunting for
+  // the room it was in.
+  (function(){
+    var bar = document.getElementById('defect-bar');
+    if(!bar) return;
+    var flagged = GRAPH.rooms.filter(function(r){ return (r.defects||[]).length; });
+    var total = flagged.reduce(function(n,r){ return n + r.defects.length; }, 0);
+    if(!total){ bar.innerHTML = '<span class="ok">\u2713 no known problems</span>'; return; }
+    var kinds = {};
+    flagged.forEach(function(r){ r.defects.forEach(function(d){ kinds[d.kind] = (kinds[d.kind]||0)+1; }); });
+    var parts = Object.keys(kinds).sort().map(function(k){ return kinds[k] + ' ' + k; });
+    bar.innerHTML = '<span class="bad">\u26A0 ' + total + ' known problem'
+      + (total === 1 ? '' : 's') + '</span> in ' + flagged.length + ' room'
+      + (flagged.length === 1 ? '' : 's') + ' — ' + parts.join(', ')
+      + '<button id="next-defect">show me one</button>';
+    var i = 0;
+    document.getElementById('next-defect').addEventListener('click', function(){
+      var r = flagged[i % flagged.length]; i++;
+      selectRoom(r.id); centerOn(r.id);
+    });
+  })();
   if(!svg) return;
   var NS = 'http://www.w3.org/2000/svg';
   var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
@@ -714,6 +791,14 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     var r = roomInfo[e.to];
     return escapeHtml((r && (r.name || r.slug)) || e.to_slug || '?');
   }
+  function defectHtml(r){
+    if(!r.defects || !r.defects.length) return '';
+    var items = r.defects.map(function(d){
+      return '<li><code>' + escapeHtml(d.kind) + '</code> — ' + escapeHtml(d.detail) + '</li>';
+    }).join('');
+    return '<div class="rp-defects"><strong>Known problems</strong><ul>' + items + '</ul></div>';
+  }
+
   function showRoom(id){
     if(!panel) return;
     var r = roomInfo[id];
@@ -730,6 +815,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     if(r.players && r.players.length){
       html += '<div class="rp-here">▸ ' + r.players.map(escapeHtml).join(', ') + '</div>';
     }
+    html += defectHtml(r);
     html += r.description
       ? '<div class="rp-desc">' + escapeHtml(r.description) + '</div>'
       : '<div class="rp-desc rp-empty">No description captured yet.</div>';
@@ -900,6 +986,24 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       oct.addEventListener('mouseleave', function(){ if(hoverLabel) hoverLabel.style.display = 'none'; });
       root.appendChild(oct);
       octByRoom[r.id] = oct;
+
+      // A room with a known defect gets a red ring and a warning mark, so a
+      // problem can be SEEN on the map and seen to be gone once it is fixed.
+      // The panel spells out what is wrong when the room is clicked.
+      if((r.defects || []).length){
+        var ring = document.createElementNS(NS,'polygon');
+        ring.setAttribute('points', octPoints(c.x, c.y, R + 4));
+        ring.setAttribute('fill','none');
+        ring.setAttribute('stroke','#f85149'); ring.setAttribute('stroke-width','2.5');
+        ring.style.pointerEvents = 'none';
+        root.appendChild(ring);
+        var warn = document.createElementNS(NS,'text');
+        warn.setAttribute('text-anchor','middle'); warn.setAttribute('font-size','13');
+        warn.setAttribute('x', c.x + R*0.5); warn.setAttribute('y', c.y + R*0.62);
+        warn.style.pointerEvents = 'none';
+        warn.textContent = '\u26A0';
+        root.appendChild(warn);
+      }
 
       // Key marker: a 🔑 on rooms where a key was found, so the payoff for a
       // locked door is findable at a glance. Sits at the top-left corner, clear
