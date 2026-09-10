@@ -718,15 +718,39 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
   // of the first, so the map silently shows fewer rooms than exist. That is the
   // worst thing a map can do to someone using it to check their data, so say so
   // rather than hide it.
-  var overlaps = [];
+  var overlaps = [], nudged = {};
   (function(){
-    var at = {};
+    var at = {}, taken = {};
+    function key(c, r, f){ return c + ',' + r + ',' + f; }
     GRAPH.rooms.forEach(function(r){
       var p = cell[r.id]; if(!p) return;
-      var k = p.c + ',' + p.r + ',' + p.f;
-      (at[k] = at[k] || []).push(r);
+      (at[key(p.c,p.r,p.f)] = at[key(p.c,p.r,p.f)] || []).push(r);
+      taken[key(p.c,p.r,p.f)] = true;
     });
-    Object.keys(at).forEach(function(k){ if(at[k].length > 1) overlaps.push(at[k]); });
+    Object.keys(at).forEach(function(k){
+      if(at[k].length < 2) return;
+      overlaps.push(at[k]);
+      // Keep the first where it is and move the rest to the nearest free cell,
+      // searched in rings so a room stays as close to its true position as it
+      // can. Direction is slightly wrong afterwards; a room you cannot see is
+      // wrong in a way you cannot correct for.
+      at[k].slice(1).forEach(function(r){
+        var p = cell[r.id];
+        for(var ring = 1; ring < 12; ring++){
+          for(var dc = -ring; dc <= ring; dc++){
+            for(var dr = -ring; dr <= ring; dr++){
+              if(Math.max(Math.abs(dc), Math.abs(dr)) !== ring) continue;
+              var nk = key(p.c+dc, p.r+dr, p.f);
+              if(taken[nk]) continue;
+              taken[nk] = true;
+              cell[r.id] = { c: p.c+dc, r: p.r+dr, f: p.f };
+              nudged[r.id] = true;
+              return;
+            }
+          }
+        }
+      });
+    });
   })();
 
   // A running count, so a fix can be seen to have landed without hunting for
@@ -742,7 +766,7 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       overlapNote = '<div class="bad">\u26A0 ' + n + ' rooms are drawn on top of each other in '
         + overlaps.length + ' place' + (overlaps.length === 1 ? '' : 's') + ' — '
         + overlaps.map(function(g){ return g.map(function(r){ return r.slug; }).join(' / '); }).join('; ')
-        + '. The map is showing fewer rooms than exist.</div>';
+        + '. Moved apart so all are visible, so their direction is approximate there.</div>';
     }
     if(!total){
       bar.innerHTML = overlapNote + '<span class="ok">\u2713 no known problems</span>';
@@ -1018,6 +1042,16 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       // A room with a known defect gets a red ring and a warning mark, so a
       // problem can be SEEN on the map and seen to be gone once it is fixed.
       // The panel spells out what is wrong when the room is clicked.
+      if(nudged[r.id]){
+        var nb = document.createElementNS(NS,'text');
+        nb.setAttribute('text-anchor','middle'); nb.setAttribute('font-size','11');
+        nb.setAttribute('fill','#d29922');
+        nb.setAttribute('x', c.x - R*0.5); nb.setAttribute('y', c.y + R*0.66);
+        nb.style.pointerEvents = 'none';
+        nb.textContent = '\u2194';
+        root.appendChild(nb);
+      }
+
       if((r.defects || []).length){
         var ring = document.createElementNS(NS,'polygon');
         ring.setAttribute('points', octPoints(c.x, c.y, R + 4));
