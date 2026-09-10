@@ -1,0 +1,54 @@
+# Stone Passages 3
+# https://tele-arena.tumblr.com/stonepassages3
+# fetched 2026-09-10
+
+                                     [^4SW] Up to Level 2 
+#SW = # of Stone Warriors               | 
+                                       [] 
+The uppercase letters A-E are blurs     | 
+that teleport to the lowercase     [t]-[]-[t] 
+letters.                                | 
+                                       [] 
+* teleports you to * on Level 1         | 
+                                       [] 
+                                        | 
+                                 [t]   []    [t] 
+                                  |     |     | 
+                           D-[t]-[]-[]-[]-[]-[]-[t] 
+                                  |     |     | 
+                                 []    [t]   [] 
+                                  |     |     | 
+                           []-[]-[]    []    []-[]-[] 
+                            |     |           |     | 
+                           []    [t]         [t]   [] 
+                            |                       | 
+                A    C-[t]-[]         [*]          []-[t]-E     a 
+                |           |          |            |           | 
+        Quartz [t]         []         [t]          []          [t] Jade 
+         Door   |           |          |            |           |  Door 
+     [v6SW]#[]-[]-[]-[]-[]-[]-[]-[]-[][ ]-[]-[]-[]-[]-[]-[]-[]-[]-[]#[4SW] 
+   Down to      |           |          |            |           |      Tigereye 
+   Level 4     [t]         []         [t]          []          [t]     Key 
+                |           |          |            |           | 
+                B    c-[t]-[]         [*]          []-[t]-e     b 
+                            |                       | 
+                           []    [t]         [t]   [] 
+                            |     |           |     | 
+                           []-[]-[]    []    []-[]-[] 
+                                  |     |     | 
+                                 []    [t]   [] 
+                                  |     |     | 
+                           d-[t]-[]-[]-[]-[]-[]-[t] 
+                                  |     |     | 
+                                 [t]   []    [t] 
+                                        | 
+                                       [] 
+                                        | 
+                                       [] 
+                                        | 
+                                   [t]-[]-[t] 
+                                        | 
+                                       [] 
+                                        # Tigereye Door 
+                                      [4SW] 
+                                   Quartz Key

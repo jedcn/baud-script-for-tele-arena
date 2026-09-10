@@ -1,0 +1,32 @@
+# Tunnels
+# https://tele-arena.tumblr.com/tunnels
+# fetched 2026-09-10
+
+                                       Up to Ledge  (You have to be 
+                        Stygian (3)      /           Promoted, or be 
+                            [c]       [ ]            with a Promoted 
+                           /             \           character leading 
+                        [ ]               [ ]        to get up to The 
+                       /   \               |         Ledge) 
+                    [ ]     [ ]--[ ]      [ ] 
+                   /         |      \      | 
+                [ ]         [ ]      [ ]--[ ] 
+               /           /               | 
+            [ ]         [c] Stygian       [ ] 
+               \         |    (2)        / 
+                [ ]     [ ]           [ ] 
+               /   \   /             / 
+            [ ]     [ ]           [c] Stygian 
+             |       |             |    (2) 
+            [ ]     [ ]           [ ] 
+           /         |           / 
+        [E]         [ ]--[ ]--[ ] 
+       /   \        / 
+    [*]     [ ]--[1] 
+     | 
+    [T] 
+ 
+    E = Entrance to Tunnels (when you answer the Riddle) 
+    1 = Up to Dead End Ledge 
+    T = Teleport Back to Riddle Room in Labyrinth 
+    * = Blue Rune Room

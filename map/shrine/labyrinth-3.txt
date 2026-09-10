@@ -1,0 +1,30 @@
+# Labyrinth 3
+# https://tele-arena.tumblr.com/labyrinth3
+# fetched 2026-09-10
+
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]--[ ] 
+ |         |                   |         |    | 
+[ ]  [ ]  [ ]  [ ]--[ ]--[ ]--[gv] [A]--[ ]  [ ] 
+ |    |         |         |              | 
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]--[ ] 
+                                    | 
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]  [e]--[ ]  [ ]--[ ] 
+ |                        |         #    |    | 
+[ ]  [ ]--[ ]--[ ]--[ ]  [ ]  [ ]--[f]--[$]  [ ] 
+ |    |              |    |    |              | 
+[ ]  [ ]  [ ]--[ ]  [ ]  [ ]  [ ]  [ ]--[ ]--[ ] 
+ |    |    |    |    |    |         |    |    | 
+[ ]  [ ]  [ ]  [ ]  [ ]  [ ]--[^]  [1]--[ ]--[B] 
+ |    |    |         |    |              | 
+[ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ]--[ ]--[ ]--[ ] 
+ |    |                   |    |         | 
+[ ]  [ ]--[ ]--[ ]--[ ]--[ ]  [ ]  [C]  [ ]  [ ] 
+ |                             |    |    |    | 
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ] 
+ 
+1 = Pull Lever to open door at # 
+v = Stairs Down to Level 4 
+^ = Stairs Up to Level 2 
+A,B,C = Springboards to corresponding letters on Level 2 
+e,f,g = Where you springboard up to from the corresponding letter on Level 5 
+$ = Where the Level 4 stairs come up

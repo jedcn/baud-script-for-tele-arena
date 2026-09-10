@@ -1,6 +1,6 @@
-# Stoneworks Level 4
+# Stoneworks 4
 # https://tele-arena.tumblr.com/stoneworks4
-# fetched 2026-09-09
+# fetched 2026-09-10
 
     [^] Up to Level 3 
        \ 

@@ -1,0 +1,46 @@
+# Stone Passages 6
+# https://tele-arena.tumblr.com/stonepassages6
+# fetched 2026-09-10
+
+                            [^] Up to Level 5 
+                             | 
+                [c]         [ ]                            [c] 
+                 |           |                              | 
+                [ ]         [ ]-[ ]-[c]-Ornate Stone Key   [ ] 
+                 |           |                              | 
+                [ ]         [ ]                            [ ] 
+                 |           |                              | 
+                [ ]         [ ]                            [ ] 
+                 |           |                              | 
+                [ ]         [c]-[c]-[c]                    [ ] 
+                 |                   |                      | 
+                [ ]                 [ ]                    [ ] 
+                 |                   |                      | 
+        [c]     [ ]         [c]-[c]-[c]                    [ ]     [c]     [c] 
+         |       |           |                              |       |       | 
+        [c]     [ ]         [ ]                            [ ]     [c]     [tx] 
+         |       |           |                              |       |       | 
+[Xc]-[]-[c]#[ ]-[ ]-[ ]-[ ]-[ ]-[]-[]-[]-[]-[]-[ ]-[ ]-[ ]-[ ]-[ ]#[c]-[ ]-[c] 
+         |       |                              |           |       | 
+        [c]     [ ]                            [ ]         [ ]     [c] 
+         |       |                              |           |       | 
+        [c]     [ ]                    [B]-[ ]-[ ]         [ ]     [c] 
+                 |               Teleport to Level 7        | 
+                [ ]                                        [ ] 
+                 |                                          | 
+                [ ]                                        [ ] 
+                 |                                          | 
+                [ ]                                        [ ] 
+                 |                                          | 
+                [ ]                                        [ ] 
+                 |                                          | 
+                [ ]                                        [ ] 
+                 |                                          | 
+                [c]                                        [c] 
+ 
+^ - Up to Level 5 
+# - Ornate Stone Door 
+B - Hidden Teleport to B on Level 7 
+X - Type "Lower Arm" to open x 
+t - Trap 
+c - Monster Lair (Dwarven Guards and/or Dwarven Captain)

@@ -1,0 +1,45 @@
+# Stone Passages 8
+# https://tele-arena.tumblr.com/stonepassages8
+# fetched 2026-09-10
+
+                          [^] Up to Level 7 
+                           | 
+                          [ ] 
+                           | 
+              [ ]         [ ]-[ ]-[ ]                         [ ] 
+               |           |                                   | 
+     [c@]-[ ]-[ ]         [ ]                                 [ ]-[ ]-[ct] 
+               |           |                                   | 
+              [ ]         [ ]                                 [ ] 
+               |           #                                   | 
+              [ ]         [c]-[c]-[c]                         [ ] 
+               |                   |                           | 
+              [ ]                 [ ]                         [ ]         
+               |                   |                           | 
+[c%]#[c%]#[ ]-[ ]         [c]-[c]-[c]                         [ ]-[ ]#[c%]#[c%] 
+               |           |                                   | 
+              [ ]         [ ]                                 [ ] 
+               |           |                                   | 
+              [ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ] 
+               |                                   |           | 
+              [ ]                                 [ ]         [ ] 
+               |                                   |           | 
+              [ ]                         [c]-[c]-[c]         [ ] 
+               |                           |                   | 
+[c%]#[c%]#[ ]-[ ]                         [ ]                 [ ]-[ ]#[c%]#[c%] 
+               |                           |                   | 
+              [ ]                         [ ]-[ ]-[ ]-[ ]     [ ] 
+               |                                       |       | 
+              [ ]                                     [ ]     [c] 
+               |                                       |       | 
+     [ct]-[ ]-[ ]                                 [ ]-[c]-[ ] [ ]-[ ]-[c$] 
+               |                                       |       | 
+              [ ]                                     [c]     [ ] 
+ 
+^ - Up to Level 7 
+c - Monster Lair 
+# - Ornate Stone Door 
+$ - "Close Jaws" or say anything for tons of gold 
+t - "Close Jaws" or say anything and you set off trap 
+@ - "Close Jaws" or say anything to be teleported to runestaff area 
+% - "Straighten Shield"

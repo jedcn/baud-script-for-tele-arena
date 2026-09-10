@@ -1,0 +1,32 @@
+# Labyrinth 2
+# https://tele-arena.tumblr.com/labyrinth2
+# fetched 2026-09-10
+
+This level will be dark unless the stone on Level 5 is pushed! 
+Glowstones will NOT work when it is Dark! 
+                                          
+[ ]--[ ]  [ ]--[ ]  [ ]--[ ]  [ ]--[ ]--[ ]--[ ] 
+ |    |    |    |    |    |    |              | 
+[ ]  [ ]--[ ]  [ ]--[ ]  [ ]  [ ]  [a]--[ ]--[ ] 
+ |                        |    |    | 
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]  [ ]  [ ]--[ ] 
+                     |              |    |    | 
+[ ]--[ ]--[ ]--[ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ] 
+ |              |    |    |              |    | 
+[ ]  [ ]--[ ]  [ ]--[1]  [ ]--[ ]--[ ]  [^]  [ ] 
+ |    |    |                        |         | 
+[ ]  [ ]  [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ] 
+ |    |                        | 
+[ ]  [ ]--[ ]  [v]  [ ]--[ ]  [ ]--[ ]--[ ]--[b] 
+ |         |    |    |    |                   | 
+[ ]--[ ]  [ ]  [ ]--[ ]  [ ]  [ ]--[ ]  [ ]--[ ] 
+      |    |              |    |    |    | 
+[ ]--[ ]  [ ]--[ ]--[ ]  [ ]  [ ]  [c]  [ ]--[ ] 
+ |                   |    |    |    |         | 
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]  [ ]--[ ]--[ ] 
+ 
+1 = Push Stone to turn on lights on Level 4 
+v = Stairs Down to Level 3 
+^ = Stairs Up to Level 1 
+a,b,c =  where you will springboard up to from 
+         the corresponding letter on Level 3

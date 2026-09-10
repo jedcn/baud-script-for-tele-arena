@@ -1,0 +1,45 @@
+# Stone Passages 7
+# https://tele-arena.tumblr.com/stonepassages7
+# fetched 2026-09-10
+
+                [c]         [^] Up to Level 6                   [c] 
+                 |           |                                   | 
+                [ ]         [ ]                                 [ ] 
+                 |           |                                   | 
+[S]x[c]-[c]-[ ]-[ ]         [ ]-[ ]-[c]                         [B]-[ ]-[c]-[c] 
+                 |           |                                   | 
+                [ ]         [ ]                                 [ ] 
+                 |           |                                   | 
+                [ ]         [c]#[c]-[c]                         [ ] 
+                 |                   |                           | 
+                [ ]                 [ ]                         [ ] 
+                 |                   |                           | 
+                [ ]         [c]-[c]-[c]                         [ ] 
+                 |           |                                   | 
+                [ ]         [ ]                                 [ ] 
+                 |           |                                   | 
+    [c]-[c]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[ ]-[c]-[c] 
+                 |                                   |           | 
+                [ ]                                 [ ]         [ ] 
+                 |                                   |           | 
+                [ ]                         [c]-[c]-[c]         [ ] 
+                 |                           |                   | 
+                [ ]                         [ ]                 [ ] 
+                 |                           |                   | 
+                [ ]                         [c]-[c]-[c]         [ ] 
+                 |                                   |           | 
+                [ ]                                 [ ]         [ ] 
+                 |                                   |           | 
+    [c]-[c]-[ ]-[ ]                                 [ ]         [ ]-[ ]-[c]-[c] 
+                 |                                   s           | 
+                [ ]                                 [v]         [ ] 
+                 |                            Down to Level 8    | 
+                [c]                                             [cX] 
+ 
+S - Type "Turn Sceptre" to open door at s 
+X - Type "Lower Arm" to open door at x 
+^ - Up to Level 6 
+v - Down to Level 8 
+B - Teleport spot from Level 6 
+# - Ornate Stone Door 
+c - Monster Lair

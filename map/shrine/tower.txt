@@ -1,0 +1,46 @@
+# Tower
+# https://tele-arena.tumblr.com/tower
+# fetched 2026-09-10
+
+                                                                   
+ Level 1                        Level 2                      
+ -------  To Forest             -------                           
+             |                          To lvl 1             
+            [ ]                             [v]                 
+             |                               |                    
+            [ ]                             [ ]                     
+             |                               | 
+            [ ]                 [b]-[ ]-[ ]-[ ]-[ ]-[ ]-[b] 
+             |                               | 
+[w]-[ ]-[ ]-[ ]-[ ]-[ ]-[w]                 [ ] 
+             |                               | 
+            [ ]                             [ ] 
+             |                               | 
+            [ ]                             [ ] 
+             |                               | 
+    [^]-[ ]-[ ]-[ ]-[^]         [s]-[ ]-[ ]-[ ]-[ ]-[ ]-[s] 
+ To lvl 3    |   To lvl 2 
+            [b]                  
+ 
+Level 3                         Level 4 
+-------                         ------- 
+ 
+    [v]-[ ]-[ ]-[ ]                                 [S] 
+ To lvl 1        |              To lvl 3             | 
+                [ ]             [v]-[ ]-[ ]         [ ] 
+     To lvl 4    |                       |           | 
+    [ ]-[^]     [ ]                     [ ]         [ ] 
+     |           |                       |           | 
+    [ ]         [ ]                     [ ]         [ ] 
+     |           |                       |           | 
+    [ ]-[ ]-[ ]-[ ]                     [s]-[ ]-[ ]-[ ] 
+                                         | 
+                                        [ ] 
+                                         | 
+                                [L]-[ ]-[ ] 
+ 
+L = Entrance to Labyrinth (Green Rune Required) 
+ 
+b = brigands         w = wolves & barbarians 
+s = swordspeople     S = Sorceress or 2 Griffons 
+      ^ & v = stairs up and down

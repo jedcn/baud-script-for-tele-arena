@@ -1,0 +1,38 @@
+# Orc Caves
+# https://tele-arena.tumblr.com/orccaves
+# fetched 2026-09-10
+
+             7 female orcs 
+                        [c]-[ ]-[c] 2 orc subchiefs, 2 shaman, 1 orc chieftan 
+                                 | 
+                                [ ] 
+                                   \ 
+                [ ]                 [ ] 
+               /   \                 |       3 orcs 
+            [ ]     [ ]-[ ]-[ ]     [ ]     [c]-[ ]-[c] 
+             |                 \   /         |       9 female orcs 
+            [c] 3 orc warriors  [ ]         [ ] 
+               \    & orc shaman           / 
+                [ ]                 [ ]-[ ] 
+                 |                 / 
+                [ ]             [ ] 
+                   \             | 
+                    [ ]-[ ]     [ ] 
+                           \   / 
+                            [ ]                 [c] 5 wolves 
+     5 wolves                | 3 wolves          | 
+    [c]-[ ]-[ ]             [c]3 orc warriors   [ ] 
+               \             |                 / 
+          2 orcs[c]         [ ]         [c]-[ ] 
+          2 wolves \       /           / 2 orcs 
+                    [ ]-[ ]         [ ]  2 wolves 
+                           \         | 
+                            [ ]     [ ] 
+                               \   / 
+                                [ ] 
+                               / 
+                            [ ] 
+                             | 
+                            [ ] 
+                             | 
+                       to Mountains

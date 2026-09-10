@@ -1,0 +1,53 @@
+# Flagstones 2
+# https://tele-arena.tumblr.com/flagstones2
+# fetched 2026-09-10
+
+         [J]                         [K] FLASH!            [kc] Affreet(2) 
+          |                           |                      | 
+         [c] Greater Demon          [lc] Ice Giant(2)       [ ] 
+          |                             \                    | 
+         [ ]                             [ ]            [ ]-[ ]-[ ]       
+          |                               |            /     |     \ 
+         [ ]                             [ ]        [ ]     [ ]     [ ] 
+            \                           /            |       |       | 
+             [ ]                     [ ]      Stone [t]     [ ]     [t] Poison 
+                \                   /         Trap   |       |       |  Slash 
+                 [ ]             [ ]                [L] - - -|- - - [ ] Trap 
+                    \           /                            | 
+                     [ ]-[t]-[ ]                            [ ] 
+                    /   Stone                                | 
+                 [ ]    Trap                                [ ] 
+                    \                                      /   \ 
+                     [ ]                                [ ]     [ ] 
+                        \                              /           \ 
+                Affreet [ic]        [I]             [ ]             [ ] 
+                                     |                 \           / 
+       [fc] Gargoyle(3)            [jc] Warlock(3)      [ ]     [ ] 
+         |                           |                     \   / 
+    [ ]-[ ]-[ ]                     [ ]                     [ ] 
+    /         \                        \                     | 
+  [ ]         [ ]                      [ ]             +--> [v] Apollyon 
+  /             \                     /   \            |        Dragon 
+[t] Flame Traps [t]                 [ ]   [ ]          +-----+ 
+  \             /                  /         \               |   
+   [ ]       [ ]                [ ]           [ ]            v 
+     \       /                 /                 \             
+      [ ] [ ]               [ ]                   [ ]   [ ]-[^]-[ ] 
+        \ /  \                 \                 /      /    |    \ 
+        [ ]   [ ]-[ ]-[ ]       [ ]           [ ]    [ ]    [ ]    [ ] 
+                        \          \         /       /       |       \ 
+                         [ ]        [ ]   [ ]     [ ]       [ ]       [ ] 
+                           \        /       \      |         |         | 
+            Stone Giant(3) [c]    [ ]       [ ]   [ ]       [ ]       [ ] 
+                          /        |         |       \       |       / 
+                       [G]        [gc]      [c]      [ ]    [ ]    [ ] 
+                               Stygian      Stygian     \  /   \  / 
+                               Dragon(2)    Dragon(2)   [ ]     [ ] 
+                                            Scroll #4   /         \ 
+                                             |       [ ]           [ ] 
+                                            [H]      /               \ 
+                                                  [ ]                 [ ] 
+                                                     \               / 
+                                                     [M]           [n] 
+ 
+(H teleports to Map 1 and M teleports to Map 3)

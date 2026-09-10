@@ -1,0 +1,17 @@
+# Complex Caverns 4
+# https://tele-arena.tumblr.com/complexcaverns4
+# fetched 2026-09-10
+
+[Dv]1       [ ]-[ ]      [^]1        [ ]              [D] 
+ |         /       \        \       /   \              | 
+[ ]     [ ]         [ ]      [ ]-[ ]     [ ]          [ ]         [ ]-[ ] 
+ |       |           |      /               \        /           /       \ 
+[ ]     [^]         [ ]  [ ]                 [ ]  [ ]         [ ]         [ ] 
+ |     Up to       /        \                 |    |           |         / 
+[ ]   Caverns 1 [ ]          [ ]             [ ]  [ ]         [ ]     [^]2 
+   \           /                \             |      \       / 
+    [ ]     [ ]                  [ ]     [ ]  |       [ ]-[ ] 
+       \   /                        \       \ |    
+        [ ]                          [ ]-[ ]-[Dv]2 
+ 
+  D = Greater/Arch Demon(ess) (2)        Numbers are up/down to each other

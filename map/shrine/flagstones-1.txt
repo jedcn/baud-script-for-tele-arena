@@ -1,0 +1,54 @@
+# Flagstones 1
+# https://tele-arena.tumblr.com/flagstones1
+# fetched 2026-09-10
+
+                                          Up to Cellars 
+                                                | 
+                                           [ ]- - -[ ] 
+                                          /     |     \ 
+                                   [ ]-[ ]      |      [ ]-[ ] 
+                                  /            [^]            \ 
+                               [ ]             [ ]             [ ] 
+                              /                [ ]                \ 
+  Scroll #3                [ ]                 [ ]                 [ ] 
+   Hydra(2)                 |                  [ ]                  | 
+    [hc]         [F]       [ ]                 [ ]                 [ ] 
+      |           |         |                  [ ]                  | 
+     [ ]     [ ]-[c]       [c] Ice Giant       [ ]       Ice Giant [c] 
+        \   /   Warlock(3)  |                  [e]                  | 
+         [ ]               [ ]                 [ ]                 [ ] 
+          |                 |                  [ ]                  | 
+         [ ]               [ ]                 [ ]                 [ ] 
+          |                   \                [ ]                / 
+         [ ]                   [ ]             [ ]             [ ] 
+          |                       \            [ ]            / 
+     [ ]-[ ]-[ ]                   [ ]-[ ]     [ ]     [ ]-[ ] 
+    /           \                         \     |     / 
+ [ ]             [t] Slash Trap            [ ]-[c]-[ ]      
+  |               |                             | Affreet 
+ [ ]             [t] Poison Slash Trap         [ ] 
+    \           /                             /   \ 
+     [ ]     [ ]                [a]        [A]    [B]         [b]  
+        \   /                    |                             | 
+         [ ]                    [ ]                           [ ] 
+          |                      |                             | 
+         [ ]            [*]-[ ]-[ ]                           [ ]-[ ]-[ ] 
+          |                      |                Scroll #1    |         
+    +--> [^]                    [ ]   Stygian     Stygian     [ ]        
+    |                            |    Dragon(2)   Dragon(2)    |           
+    |                           [c]-[ ]-[ ]-[c]   [c]-[ ]-[ ]-[c] 
+    |                    Warlock(3)          |     |          Warlock(3) 
+    |                                       [D]   [E]         
+    |                               
+    +--> [v]-[ ]                     [ ]-[ ]-[ ]-[ ]-[d]-[ ]-[ ]-[ ]-[ ] 
+                \                   /                          Stygian  \ 
+                 [ ]             [c] Ice Giantess(2) [E]       Dragon(3) [c] 
+                    \             |  Scroll #2      /   \               / 
+                     [ ]-[ ]     [ ]         [ ]-[ ]     [ ]         [ ] 
+                            \   /   \       /               \       / 
+                             [ ]     [ ]-[ ]                 [ ]-[ ] 
+ 
+^ = Stairs Up 
+v = Stairs Down 
+The Capital Letters TELEPORT to the corresponding lower case letter! 
+(See also Map 2 and Map 3; ex. F teleports to Map 2)

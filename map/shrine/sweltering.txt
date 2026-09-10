@@ -1,0 +1,43 @@
+# Sweltering
+# https://tele-arena.tumblr.com/sweltering
+# fetched 2026-09-10
+
+                              [G] 
+                           [ ]'                         [v]down to Hewn Granite 
+                     [ ]   [ ][1]                 [A]   [ ] 
+           [ ]   [ ]'  `[F]'                        `[ ]'        [G] 
+        [A]' `[ ]'        `[ ][B]                 [ ]'        [ ]' 
+              [ ]                                   `[A]   [F]'                
+                `[ ][ ][ ][ ][ ]                  [ ]' `[ ]' `[ ] 
+           [ ][ ]'             `[ ][ ][ ][ ][ ][ ]' 
+        [ ]'                                     `[ ] 
+        [ ]                                         `[ ] 
+ [ ][ ]'                                               `[ ]   [ ] 
+    [ ]                                                   `[ ]' `[ ][ ] 
+ [ ]'                                                      [ ]        `[ ] 
+   `[ ]                                                    [ ]         [ ] 
+    [ ]                                                    [ ]   [ ]   [ ] 
+       `[^] up to Ledge                                    [ ]   [ ]   [ ]   [] 
+[ ]     [ ]                                             [ ]'     [ ]     `[A]' 
+[ ]     [ ]                                             [ ]   [ ]'        [ ] 
+[ ]     [ ]                                             [ ]   [ ]      [B]' 
+[ ]     [ ]                                             [ ]   [ ] 
+[ ]     [ ]                                             [ ]   [ ] 
+[ ]     [ ]                                         [ ]'      [ ] 
+[ ]     [ ]                                     [ ]'       [ ]' 
+[ ]     [ ]                                 [ ]'       [ ]' 
+[ ]     [ ]                                 [ ]    [ ]'  `[ ]      [ ] 
+[ ]     [ ]                                 [ ]    [ ]      `[ ][A]' 
+[ ]        `[ ]                         [ ]'       [ ]            `[ ] 
+   `[ ]        `[ ]                 [ ]'       [ ]'                [ ] 
+       `[ ]       `[ ][ ][ ]     [ ]'      [ ]'                      `[B] 
+    [ ]'   `[ ]-[ ]'               `[ ][ ]' 
+       `[ ]'        [][][][][][][][]' 
+	    
+1 = Flame Giant Warlord (has Opal Key, needed in Corridors) 
+A = Apollyon Dragon (2) 
+B = Apollyon Dragon (3) 
+F = Flame Giant (2) 
+G = Flame Giantess (2) 
+^ = Up to Ledge 
+v = Down to Hewn Granite Corridors

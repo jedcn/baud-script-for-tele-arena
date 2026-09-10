@@ -1,6 +1,6 @@
-# Dungeon Level 3
+# Dungeon 3
 # https://tele-arena.tumblr.com/dungeon3
-# fetched 2026-09-09
+# fetched 2026-09-10
 
                 [c]-[ ]-[ ]-[ ]                                 [*] White Rune 
               Skeleton         \                                 | 

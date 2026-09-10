@@ -1,0 +1,21 @@
+# Complex Caverns 2
+# https://tele-arena.tumblr.com/complexcaverns2
+# fetched 2026-09-10
+
+[ ][ ][ ]   [ ][ ][ ]            [ ]         [^] [ ]-----[ ]-[ ]-[ ]-[D] 
+        \   /       \           /   \       / 2   |                   | 
+         [ ]        [ ]-[Dv]  [ ]     [ ]-[ ]    [ ]     [ ]-[ ]     [ ] 
+            \             1   /             \     |     /       \       \ 
+            [ ]             [ ]             [ ]  [ ] [ ]         [ ]     [ ] 
+           /   \              \              |    |     \ 2       |       | 
+        [ ]     [ ]-[ ]       [ ]           [ ]  [ ]     [v]     [ ]     [ ] 
+                     |         |             |    |                 \   / 
+                    [ ]        |  [ ]       [ ]  [ ]                 [ ] 
+                     |         | /           /    | 
+            [ ]-[ ]-[ ]       [D^]-----[ ]-[ ]   [*]# 
+             |                  1                 # 
+            [ ]                                             * = Violet Rune 
+               \     Up to       Numbers are up/down            Demon King 
+                [^] Caverns 1    to each other                  & Rod of Power 
+ 
+				D = Greater/Arch Demon(ess) (2)

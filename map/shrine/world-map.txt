@@ -1,0 +1,32 @@
+# World Map
+# https://tele-arena.tumblr.com/worldmap
+# fetched 2026-09-10
+
+             Town 3
+               |
+           Stoneworks
+               |
+             Desert
+               |
+             Sewers
+                 \
+                  Town 2
+                    |
+                  Town 1
+                  /     \
+           Mountains    Dungeons
+             /
+       Forest        Cellars
+         |   \      /       \
+         |     Swamp        Flagstones
+      Tower
+        /
+  Labyrinth
+      |
+   Tunnels
+      |
+    Ledge       Hewn Granite Corridors             Stone Passages
+     /           /                    \                   /
+  Sweltering Passages                 Valley -- Deep Forest
+                                       /                  \
+                              Complex of Caverns         Town 4

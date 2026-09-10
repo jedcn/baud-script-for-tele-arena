@@ -1,0 +1,51 @@
+# Flagstones 3
+# https://tele-arena.tumblr.com/flagstones3
+# fetched 2026-09-10
+
+                                      [w]-[ ]-[ ]-[w] 
+                                     /               \ 
+                                  [ ]                 [ ] 
+                                 /                        \ 
+                              [ ]     [w]-[ ]-[ ]-[w]     [ ] 
+                             /       /               \       \ 
+                          [w]     [^]   Flame         [ ]-[ ]-[w] Flame 
+                             \           Trap   Scroll #8         Trap 
+                              [ ] - - - - [t]-[ ]-[ ]-[c]-[ ]-[ ]-[t]-[ ]  
+Note:                                         Flame Giant                \ 
+[w]=Warlock(3)                        [w]-[ ]-[ ]                 [ ]     [w] 
+                                         \       \               /       / 
+                                          [ ]     [w]-[ ]-[ ]-[c]     [ ] 
+                                             \         Apollyon      / 
+                                  [v]         [ ]      Dragon(2)  [ ] 
+                                   |             \     Scroll #7 / 
+                                  [ ]             [w]-[ ]-[ ]-[w] 
+                                   | Warlock(3) 
+  Apollyon  [c]               [ ]-[c]-[ ]                  [c] Apollyon 
+  Dragon     |               /     |     \                  |  Dragon 
+  Scroll #6 [ ]           [ ]     [ ]     [ ]              [ ]              
+           /             /         |         \                \              
+        [ ]           [ ]         [ ]         [P]              [ ]            
+       /                           |                              \ 
+    [ ]         [ ]   [ ]-[ ]-[ ]-[o]-[ ]-[ ]-[ ]   [ ]           [ ]    
+   /            / \   /                         \   / \              \  
+[ ]          [ ]   [ ]            [O] FLASH!     [ ]   [ ]           [ ] 
+  \          /      |              |              |      \           /   
+  [ ]  [ ]-[ ]     [ ]            [c] Ogre       [ ]      [ ]-[ ]  [ ]      
+    \ /             |              |  Mage(3)     |             \ /       
+    [ ]            [c] Affreet(2) [ ]            [c] Affreet(2) [ ]       
+                                   | 
+                              [ ]-[p]-[ ] 
+                             /     |     \                              
+                          [ ]      |      [ ]                           
+                         /         |         \ 
+      [ ]             [ ]  Scroll [c] Stygian [ ] 
+     /   \               \     #5  |  Dragon / 
+  [ ]     [ ]             [ ]      |  (3) [ ] 
+   |         \               \     |     / 
+ [mc]         [ ]             [ ]-[N]-[ ]             [ ] 
+ Warlock(3)      \           /           \           /   \ 
+                  [ ]     [ ]             [ ]     [ ]     [ ]-[ ]-[c] 
+                     \   /                   \   /                Warlock(3) 
+                      [ ]                     [ ] 
+ 
+(N teleports back to Map 2)

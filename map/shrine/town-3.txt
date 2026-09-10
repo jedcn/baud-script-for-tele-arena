@@ -1,0 +1,17 @@
+# Town 3
+# https://tele-arena.tumblr.com/town3
+# fetched 2026-09-10
+
+[T]       [A] [G]               a = Armor Shop 
+   \     /     |                E = Equipment Shop 
+    \   /      |                G = Guild 
+     [ ]      [ ]--[t]          T = Tavern 
+        \     /                 M = Magic Shop  
+         \   /  to Stoneworks   t = Temple 
+[E]       [ ]-->    Level 6     W = Weapons Shop 
+   \     /   \                  A = Arena 
+    \   /     \ 
+     [ ]       [ ] 
+    /   \         \ 
+   /     \         \ 
+[a]       [W]       [M]

@@ -1,0 +1,46 @@
+# Cellars
+# https://tele-arena.tumblr.com/cellars
+# fetched 2026-09-10
+
+                        [ ]     [ ] 
+                       /   \   /                
+            [ ]     [ ]     [ ]             [ ]-[ ]        Elysian  [ ] 
+           /   \   /                       /       \       Dragon(3) | 
+    [ ]-[ ]     [ ]                     [ ]         [ ]     [v]- - -[c]-[v]  
+   /             |                         \           \     |       |   | 
+[ ]             [ ]    To Ruined Town       [ ]         [ ]-[^]     [ ]  | 
+ |             /             |               |         /                 | 
+[ ]         [ ]             [^]- - -[ ]     [ ]     [ ]         To Flagstones 
+   \           \           /           \   /         | 
+    [ ]         [ ]      /              [ ]         [ ] 
+       \           \   /               /           / 
+        [3]         [ ]             [ ]         [ ] 
+      From *3*         \           /           / 
+      (One Way)         [ ]     [ ]         [ ] 
+                           \   /             | 
+                            [ ]             [ ] 
+                                           / 
+                                    [ ]-[ ] 
+               FLASH!              /                           
+                *1*     [ ]-[ ]-[ ]                           
+                   \   / 
+                    [ ]                                   
+                   
+                   
+                [1] From *1* (One Way) 
+                 |                                  
+                [t] Poison Slash Trap 
+                 |                                  
+Stone           [ ]                                 
+Giant(2)         | Affreet          Stone 
+[c]-[ ]-[ ]-[ ]-[c]-[ ]-[ ]-[ ]-[c] Giantess(2) 
+                 |                  & Pearl Key 
+                *2*        
+               FLASH! 
+ 
+ 
+     Flame Trap [t2] From *2* (One Way) 
+                 |    
+      Ice Giant [c]-*3* Magic Door 
+                 # Pearl Door 
+                [*] Treasure Chest

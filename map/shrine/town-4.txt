@@ -1,0 +1,25 @@
+# Town 4
+# https://tele-arena.tumblr.com/town4
+# fetched 2026-09-10
+
+            [T]              a = Armor Shop 
+             | 
+        [ ]-[ ]              E = Equipment Shop 
+         | 
+[E]-[ ]-[ ]     [a]          T = Tavern 
+         |       | 
+        [ ]     [ ]          M = Magic Shop 
+         |       | 
+        [ ]-[ ]-[ ]-[ ]      W = Weapon Shop (advanced weapons!) 
+         |   |       | 
+[ ]-[ ]-[ ]-[ ]     [ ]-[W]   
+ |           | 
+[ ]         [ ]  
+ |           | 
+[M]         [ ] 
+             | 
+            [ ]-[ ] 
+                 | 
+                [ ] 
+                 | 
+                [v] Down to Deep Forest

@@ -1,0 +1,84 @@
+# Stone Passages 1
+# https://tele-arena.tumblr.com/stonepassages1
+# fetched 2026-09-10
+
+                                                 @ - "SAY DWARFLORD" only 
+                                                      required once a day 
+               #1  #1     #1  #1 
+                |    \   /    |                 T1 - Wall trap, 500-600 pts 
+            #1-[ ]    [ ]    [ ]-A 
+                  \    |    /                   #1 - When player enters 
+           #1     [ ] [ ] [ ]     #1                 any area marked #1 
+             \       \ | /       /                   his surroundings blur 
+              [ ]-[ ]-[%]-[ ]-[ ]                    is teleported to T2 
+             /         |         \                   (Which hits for 100pts 
+           #1        [T1]         #1                 of damage and poison.) 
+                       | 
+                      [*] 
+                       |         [%]                 WARNING: Poison is 
+                      [ ]         |                  cumulative. Recommended 
+                       |         [T2]                to travel with Priest or 
+       To Deep Forest [@]         |                  Verbenas 
+                       |         #1 
+						  
+------------------------------------------------------------------------------- 
+  Uppercase letters (A-J) teleport to lowercase (a-j) 
+ 
+   [ ]-[B]           [ ]-[#1]            [ ]-[D]        [ ]-[#1] 
+    |                 |                   |              | 
+   [ ]      [#1]     [ ]      [C]        [ ]     [#1]   [ ]      [E] 
+    |        |        |        |          |       |      |        | 
+  [aL1]-[ ]-[ ]     [bL2]-[ ]-[ ]      [cL3]-[ ]-[ ]   [dL4]-[ ]-[ ] 
+ 
+ 
+   [ ]-[#1]          [ ]-[#1]           [ ]-[H]         [ ]-[I] 
+    |                 |                  |               | 
+   [ ]      [F]      [ ]      [G]       [ ]     [#1]    [ ]     [#1] 
+    |        |        |        |         |       |       |       | 
+  [eL5]-[ ]-[ ]     [fL6]-[ ]-[ ]     [gL7]-[ ]-[ ]   [hL8]-[ ]-[ ] 
+ 
+                                                L# TT   L#  TT 
+    [ ]-[J]                                    --------------- 
+     |                        Blur to Above     L1  1   L6  0 
+    [ ]     [#1]                     *          L2  1   L7  1 
+     |       |                      /           L3  1   L8  0 
+  [iL9]-[ ]-[ ]        [j]-[4SW]#[ ]            L4  0   L9  1 
+                      Ornate Stone  \           L5  0 
+                         Key, Door  [ ] 
+                                     | 
+Lever Alley:        Down to Level 2 [v] 
+L1 - 1x 
+L2 - 1x 
+L3 - 1x 
+L4 - 2x 
+L5 - 2x 
+L6 - 2x 
+L7 - 1x 
+L8 - 2x 
+L9 - 3x 
+ 
+LEVERS WORK AS ON/OFF TOGGLES. Remember this! 
+Previous lever positions remain in effect the whole day/uptime. 
+ 
+Pull the appropriate lever as many times as indicated above, then move to 
+lower-case letter which teleports you to the next lever. Wash, rinse, repeat. 
+ 
+A wrong lever pull will keep you from going through that alley branch. Your 
+attempt to exit the branch will teleport you to the #1, where you must go 
+north through T2 to the % and start lever alley again. When you get to the 
+lever that misdirected you to the #1, toggle the lever (Pull lever once.) 
+Continue. 
+ 
+Landing on a [#1] (going the wrong way) will teleport+poison you to #1 above. 
+ 
+The #9 branch exit (J) teleports to a room west of 4SW (j). The 4SW room HAS 
+NO WEST EXIT. You must kill the 4th warrior to get the key to open the door to 
+the east. Or you must already have a key from a previous venture through 
+Level 6+. East east, zoom zoom. 
+ 
+4SW: 4 Stone Warriors. They have two hits - Kick for 400, Area damage 
+for up to 200 with possibility of tumbling out of the room, and direct-damage 
+up to 200 with chance of multiple-round-lasting paralysis. Defeating this first 
+set gives you the Ornate Stone Key (opens # door east). 
+ 
+Stone Keys are obtainable in Level 6 & Level 8

@@ -1,0 +1,38 @@
+# Stone Passages 2
+# https://tele-arena.tumblr.com/stonepassages2
+# fetched 2026-09-10
+
+       Tigereye                                   Ornate Stone 
+         Door                                         Door 
+      [4SW]#[]-[]-[]     G                 B    []-[]-[]#[^4SW] Up to Level 1 
+     Quartz        |     |                 |     |         Jade 
+       Key        []    [t]               [t]   []          Key 
+                   |     |                 |     | 
+            C-[t]-[]-[]-[]-[t]-a    e-[t]-[]-[]-[]-[t]-A 
+                   |     |                 |     | 
+                  [t]   []                []    [t] 
+                   |     |                 |     | 
+                   f    []-[]-[]    []-[]-[]     d 
+                               |     | 
+                              []    [] 
+                               |     | 
+                       []-[t]-[]-[]-[]-[t]-[#1] Teleport to Level 1 
+                               |     | 
+                              []    [] 
+                               |     | 
+                   b    []-[]-[]    []-[]-[]     g 
+                   |     |                 |     | 
+                  [t]   []                []    [t] 
+                   |     |                 |     | 
+            E-[t]-[]-[]-[]-[t]-h    c-[t]-[]-[]-[]-[t]-H 
+                   |     |                 |     | 
+        Quartz    []    [t]               [t]   []    Jade 
+         Door      |     |                 |     |    Door 
+     [v4SW]#[]-[]-[]     F                 D    []-[]-[]#[4SW] 
+ Down to Level 3                                          Tigereye 
+                                                          Key 
+ 
+#1 - Teleports back to #1 on Level 1 
+ t - Trap 
+Uppercase letters (A-H) teleport to lowercase (a-h) 
+Note: Keys from the Hewn Granite Corridors will work here, too
