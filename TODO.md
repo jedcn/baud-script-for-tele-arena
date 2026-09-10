@@ -14,7 +14,11 @@ get asked twice.
       rather than taken on trust. Today it reads:
 
           ⚠ 19 known problems in 19 rooms — 16 coords, 1 no-description, 2 one-way
-- [ ] **Sort out `weapon-shop nw`.** It is one-directional and crosses towns:
+- [x] ~~**Sort out `weapon-shop nw`.**~~ **Done 2026-09-09.** Confirmed in game:
+      the weapon shop has exactly one exit, `w`. The `nw` row was deleted. First
+      town now passes reciprocity, and the report's count went 19 -> 18.
+
+      What it was:
 
       weapon-shop (first-town) --nw--> underground-plaza (third-town)
 
@@ -23,16 +27,20 @@ get asked twice.
       is wrong. `ta_nav.lua` already warns about "two edges into third-town
       visibly mis-mapped"; this is one of them.
 
-      In game: stand in the weapon shop and `ex`.
-        - if `nw` IS listed -> the exit is real, the destination is wrong. Set
-          `to_id = NULL` so it reads as unwalked, and walk it properly.
-        - if `nw` is NOT listed -> the whole row is bogus. Delete it.
+      `nw` was not listed in game, so the whole row was bogus and went.
 
 - [ ] **Get a description for `docks`.** It is the only first-town room without
       one, and no session log has ever captured it. In game: go to the docks and
       `look`.
 - [ ] **Declare first town "no known issues"** once the three above are done and
       `just verify-area first-town` is clean.
+
+## Third town — the other half of the same fault
+
+- [ ] **`underground-plaza-1 nw -> equipment-shop`** is the mirror of the weapon
+      shop edge: a third-town room pointing into first town, one-directional.
+      These are the two `ta_nav.lua` calls "visibly mis-mapped", and one is now
+      gone. Same check: stand in that underground plaza and `ex`.
 
 ## Sewers level 1 — 63 rooms
 
