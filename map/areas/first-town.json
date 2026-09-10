@@ -105,6 +105,7 @@
           "to": "first-town/guild-hall"
         }
       },
+      "description": "You are standing on the docks. The water from the lake laps quietly against the docks making the peaceful scene on the lake all that more serene. An ornately carved marble archway exits through the town wall to the south into the guild hall.",
       "layout": {
         "x": 0,
         "y": 0
@@ -118,7 +119,7 @@
           "to": "first-town/north-plaza"
         }
       },
-      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the north wall, eyeing you warily. The exit is to the southeast.",
+      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the west wall, eyeing you warily. A stone archway lies to the to the southeast.",
       "layout": {
         "x": -2,
         "y": 0
@@ -170,9 +171,6 @@
       "id": "first-town/weapon-shop",
       "name": "weapon shop",
       "exits": {
-        "nw": {
-          "to": "third-town/underground-plaza"
-        },
         "w": {
           "to": "first-town/south-plaza"
         }

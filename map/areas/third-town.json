@@ -17,7 +17,7 @@
           "to": "third-town/underground-plaza"
         },
         "se": {
-          "to": null
+          "to": "third-town/underground-plaza-3"
         },
         "sw": {
           "to": "third-town/underground-plaza-1"
@@ -88,13 +88,13 @@
           "to": "third-town/town-square"
         },
         "nw": {
-          "to": "first-town/equipment-shop"
+          "to": "third-town/equipment-shop-2"
         },
         "se": {
-          "to": null
+          "to": "third-town/weapon-shop-2"
         },
         "sw": {
-          "to": null
+          "to": "third-town/armor-shop-3"
         }
       },
       "description": "You are standing in a large open plaza at the southwest corner of an enormous subterranean cavern. An ornate stone fountain of fine craftsmanship stands in the center of the plaza. The gurgling fountain fills you with a sense of peace and tranquility, and the cool air is very still here. The plaza opens out into the town square to the northeast. To the northwest, southeast, and southwest lie large stone archways decorated with intricate stonework.",
@@ -179,6 +179,79 @@
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west. st Race:         Dwarven Class:        Acolyte Level:        15 Experience:   1828618 Rune:         Green Intellect:    20 Knowledge:    21 Physique:     20 Stamina:      19 Agility:      17 Charisma:     17 Mana:         15 / 15 Vitality:     361 / 361 Status:       Healthy Armor Rating: 12 Weapon:       Pyrehammer Armor:        Platemail Encumberance: 796 / 1000",
       "layout": {
         "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "id": "third-town/armor-shop-3",
+      "name": "armor shop",
+      "exits": {
+        "ne": {
+          "to": "third-town/underground-plaza-1"
+        }
+      },
+      "description": "You are now inside the armor shop, where you may aquire different sorts of armor and protective gear to guard yourself against the blows of your opponents. The shop keeper sits on a high behind a worn counter along the west wall, eyeing you warily. A stone archway lies to the to the northeast.",
+      "layout": {
+        "x": -2,
+        "y": -2
+      }
+    },
+    {
+      "id": "third-town/weapon-shop-2",
+      "name": "weapon shop",
+      "exits": {
+        "nw": {
+          "to": "third-town/underground-plaza-1"
+        }
+      },
+      "description": "You are now inside the weapon shop, where you may purchase various weapons to use for sparring in the arena or for personal defense from the denizens of the dungeons. The shop keeper sits on a high stool behind a tall counter along the south wall. A stone archway lies to the to the northwest.",
+      "layout": {
+        "x": 0,
+        "y": -2
+      }
+    },
+    {
+      "id": "third-town/underground-plaza-3",
+      "name": "underground plaza",
+      "exits": {
+        "nw": {
+          "to": "third-town/town-square"
+        },
+        "se": {
+          "to": "third-town/magic-shop-2"
+        }
+      },
+      "description": "You are standing in a large open plaza at the southeast corner of an enormous subterranean cavern. An ornate stone fountain of fine craftsmanship stands in the center of the plaza. The gurgling fountain fills you with a sense of peace and tranquility, and the cool air is very still here. The plaza opens out into the town square to the northwest. To the southeast lies a large stone archway decorated with intricate stonework.",
+      "layout": {
+        "x": 1,
+        "y": -1
+      }
+    },
+    {
+      "id": "third-town/magic-shop-2",
+      "name": "magic shop",
+      "exits": {
+        "nw": {
+          "to": "third-town/underground-plaza-3"
+        }
+      },
+      "description": "You're standing in a warm, dimly lit shop where various magical items are bought and sold by a shrewd mage in crimson robes with an air of power and complete confidence about him. He doesn't look like someone whose spells you'd like to be on the wrong end of. The sweet scent of incense drifts in from a workroom in the rear of the shop. A stone archway lies to the to the northwest.",
+      "layout": {
+        "x": 2,
+        "y": -2
+      }
+    },
+    {
+      "id": "third-town/equipment-shop-2",
+      "name": "equipment shop",
+      "exits": {
+        "se": {
+          "to": "third-town/underground-plaza-1"
+        }
+      },
+      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the west wall, eyeing you warily. A stone archway lies to the to the southeast.",
+      "layout": {
+        "x": -2,
         "y": 0
       }
     }
