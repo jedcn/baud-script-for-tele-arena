@@ -42,12 +42,27 @@ get asked twice.
       `just verify-area first-town` passes every check, and `just report` says
       "no known problems" for it. 13 rooms, matching the shrine drawing's 13.
 
-## Third town — the other half of the same fault
+## Third town — 15 rooms
 
-- [ ] **`underground-plaza-1 nw -> equipment-shop`** is the mirror of the weapon
-      shop edge: a third-town room pointing into first town, one-directional.
-      These are the two `ta_nav.lua` calls "visibly mis-mapped", and one is now
-      gone. Same check: stand in that underground plaza and `ex`.
+- [x] ~~**`underground-plaza-1 nw -> equipment-shop`**~~ **Done 2026-09-09**, and
+      it was not what either of us expected. The exit is REAL; what was wrong was
+      where it went. Third town has its own equipment shop, and
+
+          first-town/equipment-shop    exits: se -> north-plaza
+          third-town equipment shop    exits: se
+
+      are identical by name and exit-set, so the mapper could not tell them apart
+      and linked to first town's. Same fingerprint failure as everywhere else.
+      Now `equipment-shop-2`, with its description captured on the walk.
+
+      Neither of the two edges ta_nav.lua warns about survives: one was a
+      phantom exit, one was a real exit to a conflated room. No town links to
+      another town any more except the docks ferry, which is real.
+
+- [ ] **`stonework-corridor-175 e` is unwalked** — the only remaining hole. It is
+      third town's door into the stoneworks, so walking it needs the stoneworks
+      re-mapped first, or it will mint rooms into third town.
+- [ ] No shrine map scraped for third town; there may not be one.
 
 ## Sewers level 1 — 63 rooms
 
