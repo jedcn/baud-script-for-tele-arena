@@ -529,38 +529,6 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
 (function(){
   var GRAPH = ${JSON.stringify(graphData)};
   var svg = document.getElementById('map');
-  // A running count, so a fix can be seen to have landed without hunting for
-  // the room it was in.
-  (function(){
-    var bar = document.getElementById('defect-bar');
-    if(!bar) return;
-    var flagged = GRAPH.rooms.filter(function(r){ return (r.defects||[]).length; });
-    var total = flagged.reduce(function(n,r){ return n + r.defects.length; }, 0);
-    var overlapNote = '';
-    if(overlaps.length){
-      var n = overlaps.reduce(function(a,g){ return a + g.length; }, 0);
-      overlapNote = '<div class="bad">\u26A0 ' + n + ' rooms are drawn on top of each other in '
-        + overlaps.length + ' place' + (overlaps.length === 1 ? '' : 's') + ' — '
-        + overlaps.map(function(g){ return g.map(function(r){ return r.slug; }).join(' / '); }).join('; ')
-        + '. The map is showing fewer rooms than exist.</div>';
-    }
-    if(!total){
-      bar.innerHTML = overlapNote + '<span class="ok">\u2713 no known problems</span>';
-      return;
-    }
-    var kinds = {};
-    flagged.forEach(function(r){ r.defects.forEach(function(d){ kinds[d.kind] = (kinds[d.kind]||0)+1; }); });
-    var parts = Object.keys(kinds).sort().map(function(k){ return kinds[k] + ' ' + k; });
-    bar.innerHTML = overlapNote + '<span class="bad">\u26A0 ' + total + ' known problem'
-      + (total === 1 ? '' : 's') + '</span> in ' + flagged.length + ' room'
-      + (flagged.length === 1 ? '' : 's') + ' — ' + parts.join(', ')
-      + '<button id="next-defect">show me one</button>';
-    var i = 0;
-    document.getElementById('next-defect').addEventListener('click', function(){
-      var r = flagged[i % flagged.length]; i++;
-      selectRoom(r.id); centerOn(r.id);
-    });
-  })();
   if(!svg) return;
   var NS = 'http://www.w3.org/2000/svg';
   var PALETTE = ['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#ff7b72','#7ee787','#f85149'];
@@ -759,6 +727,39 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       (at[k] = at[k] || []).push(r);
     });
     Object.keys(at).forEach(function(k){ if(at[k].length > 1) overlaps.push(at[k]); });
+  })();
+
+  // A running count, so a fix can be seen to have landed without hunting for
+  // the room it was in.
+  (function(){
+    var bar = document.getElementById('defect-bar');
+    if(!bar) return;
+    var flagged = GRAPH.rooms.filter(function(r){ return (r.defects||[]).length; });
+    var total = flagged.reduce(function(n,r){ return n + r.defects.length; }, 0);
+    var overlapNote = '';
+    if(overlaps.length){
+      var n = overlaps.reduce(function(a,g){ return a + g.length; }, 0);
+      overlapNote = '<div class="bad">\u26A0 ' + n + ' rooms are drawn on top of each other in '
+        + overlaps.length + ' place' + (overlaps.length === 1 ? '' : 's') + ' — '
+        + overlaps.map(function(g){ return g.map(function(r){ return r.slug; }).join(' / '); }).join('; ')
+        + '. The map is showing fewer rooms than exist.</div>';
+    }
+    if(!total){
+      bar.innerHTML = overlapNote + '<span class="ok">\u2713 no known problems</span>';
+      return;
+    }
+    var kinds = {};
+    flagged.forEach(function(r){ r.defects.forEach(function(d){ kinds[d.kind] = (kinds[d.kind]||0)+1; }); });
+    var parts = Object.keys(kinds).sort().map(function(k){ return kinds[k] + ' ' + k; });
+    bar.innerHTML = overlapNote + '<span class="bad">\u26A0 ' + total + ' known problem'
+      + (total === 1 ? '' : 's') + '</span> in ' + flagged.length + ' room'
+      + (flagged.length === 1 ? '' : 's') + ' — ' + parts.join(', ')
+      + '<button id="next-defect">show me one</button>';
+    var i = 0;
+    document.getElementById('next-defect').addEventListener('click', function(){
+      var r = flagged[i % flagged.length]; i++;
+      selectRoom(r.id); centerOn(r.id);
+    });
   })();
 
   // Distinct floors present, sorted high → low (upper floors first).

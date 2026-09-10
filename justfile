@@ -53,8 +53,13 @@ run label:
     trap 'echo "session log: $log"' EXIT
     TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text "$log"
 
+# Build report.html and open it. The build runs the page's own script against a
+# stub DOM first, so a report that would render a blank map fails here instead
+# of in your browser.
 report:
-    bun report.ts && open report.html
+    bun report.ts
+    bun test report.test.ts
+    open report.html
 
 # Draw the mapped areas as ASCII maps in a single Markdown file, MAP.md.
 #
