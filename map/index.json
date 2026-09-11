@@ -69,7 +69,7 @@
     {
       "area": "third-town",
       "name": "third-town",
-      "rooms": 15,
+      "rooms": 14,
       "file": "areas/third-town.json"
     }
   ]
