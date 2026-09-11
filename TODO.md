@@ -5,15 +5,17 @@ get asked twice.
 
 ## First town — 13 rooms
 
-- [ ] **Visual check.** `just report`, look at first town, say whether it matches
-      the game as you know it.
+- [x] ~~**Visual check.**~~ **Done 2026-09-09.** First town matches the game and
+      the shrine drawing.
 
-      The report now marks defects: a room with a known problem gets a red ring
-      and a ⚠, clicking it lists what is wrong, and a bar above the map counts
-      them with a button to jump to one. So a fix can be seen to have landed
-      rather than taken on trust. Today it reads:
+      The report marks defects: a room with a known problem gets a red ring and a
+      ⚠, clicking it lists what is wrong, and a bar above the map counts them
+      with a button to jump to one. So a fix can be seen to have landed rather
+      than taken on trust. It started at
 
           ⚠ 19 known problems in 19 rooms — 16 coords, 1 no-description, 2 one-way
+
+      and everything outside sewers level 1 has since been cleared.
 - [x] ~~**Sort out `weapon-shop nw`.**~~ **Done 2026-09-09.** Confirmed in game:
       the weapon shop has exactly one exit, `w`. The `nw` row was deleted. First
       town now passes reciprocity, and the report's count went 19 -> 18.
@@ -42,7 +44,7 @@ get asked twice.
       `just verify-area first-town` passes every check, and `just report` says
       "no known problems" for it. 13 rooms, matching the shrine drawing's 13.
 
-## Third town — 15 rooms
+## Third town — 14 rooms
 
 - [x] ~~**`underground-plaza-1 nw -> equipment-shop`**~~ **Done 2026-09-09**, and
       it was not what either of us expected. The exit is REAL; what was wrong was
@@ -58,6 +60,30 @@ get asked twice.
       Neither of the two edges ta_nav.lua warns about survives: one was a
       phantom exit, one was a real exit to a conflated room. No town links to
       another town any more except the docks ferry, which is real.
+
+- [x] ~~**Two armor shops.**~~ **Done 2026-09-10.** There is one, and the shrine
+      drawing was right.
+
+      It unravelled from a wrong description. Room 1012, the northwest plaza, was
+      carrying the southwest plaza's text byte for byte — "southwest corner",
+      "town square to the northeast", archways nw/se/sw. Captured the real text
+      in game; it names three ways out, ne/nw/se, and `ex` agreed:
+      `Exits: ne,se,nw.` Our graph had a fourth, `sw`, with a room on the end of
+      it whose description was in turn a copy of the real armor shop's.
+
+      So an armor shop already recorded off the southwest plaza got recorded a
+      second time off the northwest one. The edge was deleted outright rather
+      than re-stubbed to NULL — the usual re-stub rule protects a frontier you
+      still mean to walk, and there is no southwest exit to walk. The survivor
+      took the freed slug, `third-town/armor-shop-2`.
+
+      Worth remembering: the slug suffix is a global counter, not a per-area one.
+      `armor-shop-1` is second town's. There is no `third-town/armor-shop-1`.
+
+- [x] ~~**Declare third town "no known issues".**~~ **Done 2026-09-10.** 14 rooms,
+      one armor shop, and the drawing matches the shrine's. `just verify-area
+      third-town` passes everything except the unwalked exit below, which is a
+      hole in the stoneworks rather than in third town.
 
 - [ ] **`stonework-corridor-175 e` is unwalked** — the only remaining hole. It is
       third town's door into the stoneworks, so walking it needs the stoneworks
@@ -92,8 +118,6 @@ difference.
       rooms; author it from `map/shrine/desert.txt`.
 - [ ] **The stoneworks.** Deleted; 199 rooms held against the drawings' 267
       across six levels. Author from `map/shrine/stoneworks-1..6.txt`.
-- [ ] **Third town.** 10 rooms, only reachable edges are the two mis-mapped ones
-      above. No shrine map scraped for it yet.
 
 ## Bigger threads, not started
 
