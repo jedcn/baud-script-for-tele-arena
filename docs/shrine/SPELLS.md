@@ -44,6 +44,10 @@
 | Gimotumaru | Greater Area Heal | 7 | 180 | 14th | 5thP |
 | Ganazi | Restore Stats | 8 | 220 | 16th | 10thP |
 | Kusamotumaru | Deific Area Heal | 9 | 270 | 18th | 15thP |
+| totami | <english name> | 12 | 275 |
+| tomotu | <english name> |  13 | 600 |
+| tamidaku | <english name> |14 | 350 |
+| tomotumaru | <english name> | 15 | 900 |
 
 ## Sorceror / Arch Magus
 
