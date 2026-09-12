@@ -199,9 +199,10 @@ _Avoid_: mechanism, switch, trigger (a trigger is a baud pattern-match on server
 output — unrelated)
 
 **Latching**:
-A Device that stays where you put it: the first use opens the Seal, and using it
-again does nothing further. Idempotent — but only within one Reset, so it will
-need using again tomorrow.
+A Device that stays where you put it: the first use opens the Seal, the Seal
+stays open for the rest of the Reset, and using it again does nothing further.
+The levers on the way to third town are these. Idempotent — but within one Reset
+only, so it needs working again tomorrow.
 _Avoid_: permanent (it invites the conclusion that you will never have to work it
 again, and the next Reset says otherwise), one-shot, sticky, idempotent as the
 name — it is the property, not the kind of thing
@@ -212,6 +213,10 @@ opens it again. The lever at the end of the dark labyrinth's third Level is one,
 which is why only the first character through pulls it and everyone after walks
 `navigate-to end-of-labrynth-level-3 no-pull-lever`.
 _Avoid_: switch, flip-flop, momentary
+
+Both kinds hold state, so this is not a stateful/stateless distinction and a
+Latching Device is not "the stateless one" — every Device has Device State. The
+only difference is whether working it a second time changes anything.
 
 Which kind a Device is belongs to that Device alone and cannot be reasoned out
 from another one. The level-3 lever was written down as permanent because the
@@ -237,6 +242,11 @@ so every Seal anyone had cleared is back: Doors locked, a wall a Device removed
 standing again, a lowered drawbridge raised.
 _Avoid_: daily reset (a crash resets too, so "daily" is the wrong half of it),
 reboot, restart, respawn (nothing is respawning — the world is being rebuilt)
+
+The word does double duty, and both readings are wanted: the *event*, and the
+*interval* it opens. "Within a Reset" and "since the Reset" mean that interval,
+and it is the lifetime of every piece of Device State — the unit a Seal stays
+open for, and the reason nothing a Device does is permanent.
 
 **Device State**:
 What is true right now because of the Devices operated since the last Reset. It
