@@ -610,6 +610,18 @@ function normalizeFile(path: string): Event[] {
       return;
     }
 
+    // — a command an alias consumed. baud logs these with `$ ` rather than `> `
+    //   because they never reached the server (TextLogger.logAlias). Only logs
+    //   written after that change carry them; older ones lost aliases entirely,
+    //   which is why replaying an old mapping session means being told which
+    //   aliases ran. Checked before the `> ` rule since both are input.
+    const aliasLine = text.match(/^\$\s?(.*)$/);
+    if (aliasLine) {
+      const cmd = aliasLine[1].trim();
+      events.push({ ...at(), kind: "alias", text: trimmed, command: cmd, origin: "user" });
+      return;
+    }
+
     // — a command typed by hand: baud echoes it locally with a prompt, which is
     //   the only thing that distinguishes it from a command the script sent.
     const prompt = text.match(/^>\s?(.*)$/);
