@@ -279,6 +279,18 @@ function M.replayChain(paths, opts)
         return out
     end
 
+    -- Moves sent and not yet paired with an arrival, after the last log. Should
+    -- be empty at the end of any well-behaved session: a direction left in the
+    -- queue gets paired with whatever room is entered next, however much later,
+    -- and written into the graph as an edge that was never walked.
+    function g.pendingDirs()
+        local out = {}
+        for _, d in ipairs(taPackage and taPackage.pendingDirs or {}) do
+            out[#out + 1] = d
+        end
+        return out
+    end
+
     -- The `[map] ...` lines the run produced, in order. Useful for asserting
     -- that a closure did or did not happen. In a chain these are the LAST log's
     -- echoes only: the script state is reset between logs, which is what lets a
