@@ -5,9 +5,18 @@ install:
 
 # Both suites. Grep the tail for `0 fail` as well as busted's success line --
 # checking only one of them has hidden real failures before now.
+#
+# Both always run, and the recipe fails if either did. Previously a busted
+# failure aborted the recipe and `bun test` never ran at all, so a red Lua suite
+# silently stopped the TypeScript one from being checked -- which is exactly when
+# you most want to know the rest still works.
 test:
-    busted test/
-    bun test
+    #!/usr/bin/env bash
+    set -uo pipefail
+    rc=0
+    busted test/ || rc=1
+    bun test || rc=1
+    exit $rc
 
 # Turn raw session logs into normalized JSONL events — always the first step
 # when analyzing a log (see CLAUDE.md "Session logs"). Writes to stdout, so
