@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: twenty-five terms, chosen because a conversation actually
+This is a first pass: twenty-six terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -104,8 +104,13 @@ changes of depth.
 _Avoid_: warp, jump, portal
 
 A Device can cause one — the stoneworks' `S2` and `S3` stones, and the labyrinth
-Riddle. It is the one Device effect that is an event rather than a state, so a
-Reset has nothing to put back: a Teleport already happened.
+Riddle. It is the only Device effect that lands on the person rather than the
+world, which is why it is neither Latching nor Toggling and why a Reset does not
+touch it.
+
+One wrinkle recorded but not understood: the shrine gives `S3` as "If on way out
+Push Stone to go to !", so a Teleport's destination may depend on which way you
+were travelling.
 
 **Route**:
 A named, hand-written list of steps from one Room to somewhere far away, walked
@@ -201,17 +206,32 @@ what it has currently done is Device State, which the next Reset throws away.
 _Avoid_: mechanism, switch, trigger (a trigger is a baud pattern-match on server
 output — unrelated)
 
-A Device acts on exactly one of four things:
+**Device effect**:
+What a Device changes — either **the world** or **the person**, and the split
+governs everything else about it. A world effect is a Seal opened or shut, a Trap
+disarmed or armed, or Light on or off across a collection of Rooms. A person
+effect is always a Teleport.
+_Avoid_: outcome, result, action
 
-- a **Seal**, opened or shut
-- a **Trap**, disarmed or armed
-- **Light**, on or off across a whole collection of Rooms
-- a **Teleport**, moving whoever worked it
+Only world effects leave Device State behind, so only they are Latching or
+Toggling. That is not a footnote about Teleports being odd, it is the reason: a
+Reset rebuilds the world, and the person is not part of the world.
 
-Seals and Traps are the common pair — eleven of the sixteen Devices the shrine
-drawings document. Latching and Toggling classify the first three, which leave a
-state behind. A Teleport leaves none, so it is neither: work it again and it
-simply fires again.
+So a person effect asks nothing of you. A Teleport Device works every time it is
+worked, there is no "has it been thrown today" to find out, and a Reset has
+nothing to put back — it rebuilds the world and the stone still teleports. A world
+effect is the exact opposite, which is the whole reason a Toggling Device is
+dangerous to touch.
+
+Seals and Traps are the common pair, eleven of the sixteen Devices the shrine
+drawings document.
+
+Two things the split does not do. It does not follow the verb: `push stone`
+teleports in one Room and has a world effect in another — "you feel the floor
+vibrate faintly" (`docs/hidden-stone-teleport.md`) — so a Device is classified by
+what it does and never by how it is worked. And it does not own Teleports: the
+great-lake ferry is bought, not operated, so not every Teleport is a Device
+effect.
 
 **Latching**:
 A Device that stays where you put it: the first use opens the Seal, the Seal
