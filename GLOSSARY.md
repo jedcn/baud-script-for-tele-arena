@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: twenty-three terms, chosen because a conversation actually
+This is a first pass: twenty-five terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -103,6 +103,10 @@ is the specific corruption `just verify-area` hunts by looking for impossible
 changes of depth.
 _Avoid_: warp, jump, portal
 
+A Device can cause one — the stoneworks' `S2` and `S3` stones, and the labyrinth
+Riddle. It is the one Device effect that is an event rather than a state, so a
+Reset has nothing to put back: a Teleport already happened.
+
 **Route**:
 A named, hand-written list of steps from one Room to somewhere far away, walked
 by `navigate-to`. Its key is a **label** rather than a destination —
@@ -190,13 +194,24 @@ else.
 _Avoid_: lock, gate, barrier, exit
 
 **Device**:
-Something you operate in one Room that changes the world somewhere else — the
-two kinds are a **lever** (`pull lever`) and a **stone** (`push stone`). A
-Device's *effect* is a map fact worth recording; what it has currently done is
-Device State, which the next Reset throws away. Every Device is either Latching
-or Toggling.
+Something you operate in one Room that changes the world, usually somewhere else.
+Three ways to work one: a **lever** (`pull lever`), a **stone** (`push stone`),
+and a Riddle (`say <answer>`). A Device's *effect* is a map fact worth recording;
+what it has currently done is Device State, which the next Reset throws away.
 _Avoid_: mechanism, switch, trigger (a trigger is a baud pattern-match on server
 output — unrelated)
+
+A Device acts on exactly one of four things:
+
+- a **Seal**, opened or shut
+- a **Trap**, disarmed or armed
+- **Light**, on or off across a whole collection of Rooms
+- a **Teleport**, moving whoever worked it
+
+Seals and Traps are the common pair — eleven of the sixteen Devices the shrine
+drawings document. Latching and Toggling classify the first three, which leave a
+state behind. A Teleport leaves none, so it is neither: work it again and it
+simply fires again.
 
 **Latching**:
 A Device that stays where you put it: the first use opens the Seal, the Seal
@@ -218,6 +233,20 @@ Both kinds hold state, so this is not a stateful/stateless distinction and a
 Latching Device is not "the stateless one" — every Device has Device State. The
 only difference is whether working it a second time changes anything.
 
+**Riddle**:
+A Device worked by speaking an answer — `say komi` to enter the Stoneworks, `say
+arok` to get further down. The answer is knowledge rather than an object, which is
+what separates a Riddle from a Door: nothing in your inventory helps, and once you
+know it you have it for good.
+_Avoid_: password, puzzle, incantation, spell (a spell is cast and this is not
+one)
+
+A Riddle can want more than one answer. The labyrinth's `Z` room takes `say
+cinders` and then `say ether`, and its effect is a Teleport into the Tunnels. The
+two stoneworks Riddles are single-answer, Latching, and open Seals — which is why
+a Route re-says them every walk: `say arok` stays in the `no-pull-lever` variant
+precisely because saying it again is harmless.
+
 Which kind a Device is belongs to that Device alone and cannot be reasoned out
 from another one. The level-3 lever was written down as permanent because the
 levers on the way to third town are, and that was wrong — the same error as
@@ -232,6 +261,18 @@ distinguish the two kinds that matter to routing: one a Device can disarm
 is Device State, so the first kind is armed again after the next Reset — a
 Route that walked through it yesterday is not safe today.
 _Avoid_: hazard, damage room
+
+**Light**:
+Whether a collection of Rooms is lit. Always a group and never a single Room: the
+stone on the labyrinth's fifth Level lights its second Level, and one on the
+second lights the fourth.
+_Avoid_: torch, lamp, visibility — a light source you carry is a different thing
+and on the labyrinth's dark Level it does not help
+
+It matters because an unlit Room answers a Move with "It's too dark to see."
+instead of a Brief, so a Route through one declares `dark = true` and advances on
+that line. A Device that lights those Rooms would therefore turn a dark Route
+into an ordinary one.
 
 ## The world resets
 
