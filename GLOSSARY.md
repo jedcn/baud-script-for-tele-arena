@@ -108,9 +108,20 @@ Riddle. It is the only Device effect that lands on the person rather than the
 world, which is why it is neither Latching nor Toggling and why a Reset does not
 touch it.
 
-One wrinkle recorded but not understood: the shrine gives `S3` as "If on way out
-Push Stone to go to !", so a Teleport's destination may depend on which way you
-were travelling.
+A Teleport Device's destination is **fixed**: the same Device always lands you in
+the same Room. What varies is which Device you reach. The shrine's "If on way out
+Push Stone to go to !" on `S3` says when you will be standing there, not that the
+stone behaves differently — `[S2]` always goes to `[S3]`, and `[S3]` always goes
+to `[!]`.
+
+A Teleport is also **one-way**. There is no reverse and no reciprocal pair, which
+is the whole reason it must never be recorded as an Exit: doing so both invents an
+edge and fails the reciprocity check.
+
+Those two stones are the only way through Stoneworks level 1 in either direction —
+`[S2]` to go deeper toward the third town, `[S3]` to climb out toward the desert.
+So the way in and the way out are different paths, which is part of why a Route is
+a one-directional step list and not something you can reverse.
 
 **Route**:
 A named, hand-written list of steps from one Room to somewhere far away, walked
