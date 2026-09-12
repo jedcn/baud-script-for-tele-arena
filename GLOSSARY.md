@@ -179,10 +179,11 @@ a to-do)
 ## Obstacles and devices
 
 **Seal**:
-Something blocking passage along an Exit that can be cleared and comes back at
-the next Reset. A Door cleared with a key is one kind; a wall or a mist cleared
-by operating a Device elsewhere is another; a raised drawbridge over a chasm is a
-third.
+Something blocking access, which can be cleared and comes back at the next Reset.
+Usually it blocks an Exit: a Door cleared with a key, a wall or a mist cleared by
+operating a Device elsewhere, a raised drawbridge over a chasm. It can also block a
+**Device** — the tapestry in Hewn Granite hangs over a lever, and until it is moved
+aside the lever cannot be pulled.
 _Avoid_: wall, mist, barrier, blockage — each of those is one kind of Seal, not
 the category
 
@@ -200,11 +201,24 @@ _Avoid_: lock, gate, barrier, exit
 
 **Device**:
 Something you operate in one Room that changes the world, usually somewhere else.
-Three ways to work one: a **lever** (`pull lever`), a **stone** (`push stone`),
-and a Riddle (`say <answer>`). A Device's *effect* is a map fact worth recording;
+Each Device names its own command, and the list is open: so far a **lever**
+(`pull lever`), a **stone** (`push stone`), a Riddle (`say <answer>`) and a
+**tapestry** (`move tapestry`). A Device's *effect* is a map fact worth recording;
 what it has currently done is Device State, which the next Reset throws away.
 _Avoid_: mechanism, switch, trigger (a trigger is a baud pattern-match on server
 output — unrelated)
+
+A Room holds zero or more Devices, and a Device belongs to the Room you *operate*
+it in, never the Room it affects — those are usually different, which is why the
+coupling lives in a room note rather than as a column. Where a Room holds two they
+can be **ordered**: in Hewn Granite the lever is behind the tapestry, so
+`move tapestry` ("You pull the tapestry aside...") must come before `pull lever`
+("You pulled the lever."), and the drawing marks that Room `[M]` for both.
+
+Operating one can be refused outright — "Sorry, you can't do that now." with a
+monster still up, "You must rest a moment before proceeding!" while winded. So a
+Device is not a command that always takes, which matters for a Route step that
+advances on a pause rather than on an answer.
 
 **Device effect**:
 What a Device changes — either **the world** or **the person**, and the split
