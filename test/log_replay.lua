@@ -190,8 +190,13 @@ function M.replayChain(paths, opts)
     -- Every edge lacking its reverse. A non-empty list is a defect: `A --se--> B`
     -- obliges `B --nw--> A`.
     function g.oneWayEdges()
+        -- `passage` is its own reverse, matching verify.ts:16. It is the ferry
+        -- edge between the two towns' docks -- a Teleport deliberately recorded
+        -- as an edge, under a direction name that carries no grid delta. Leave it
+        -- out and every replay crossing the great lake reports two false defects.
         local REV = { n = "s", s = "n", e = "w", w = "e",
-                      ne = "sw", sw = "ne", nw = "se", se = "nw", u = "d", d = "u" }
+                      ne = "sw", sw = "ne", nw = "se", se = "nw", u = "d", d = "u",
+                      passage = "passage" }
         local out = {}
         for _, e in ipairs(db.rows(
             "SELECT from_id, direction, to_id FROM room_exits"

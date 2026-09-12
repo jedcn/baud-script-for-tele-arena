@@ -96,11 +96,11 @@ counting from the last accepted swing rather than waiting to be told. Same idea,
 different axis.
 
 **Teleport**:
-A change of location with no Exit to account for it — `push stone`, the
-great-lake ferry. The honest result of one is that position becomes **lost**,
-because the map has no edge to follow; a Teleport recorded as an ordinary Exit
-is the specific corruption `just verify-area` hunts by looking for impossible
-changes of depth.
+A change of location that no compass Exit accounts for — `push stone`, or the
+great-lake ferry (`buy passage`, 100 gold, and the crossing will sometimes cost
+you food or a robbery). Position becomes **lost** the first time, because nothing
+in the map says where it went. It need not stay that way: the destination is fixed,
+so it is knowable.
 _Avoid_: warp, jump, portal
 
 A Device can cause one — the stoneworks' `S2` and `S3` stones, and the labyrinth
@@ -114,9 +114,18 @@ Push Stone to go to !" on `S3` says when you will be standing there, not that th
 stone behaves differently — `[S2]` always goes to `[S3]`, and `[S3]` always goes
 to `[!]`.
 
-A Teleport is also **one-way**. There is no reverse and no reciprocal pair, which
-is the whole reason it must never be recorded as an Exit: doing so both invents an
-edge and fails the reciprocity check.
+So a Teleport Device **has a destination Room**, and once that is known the
+crossing can be recorded. Not as a compass direction — that would invent a grid
+delta and a reverse which do not exist — but under a direction name of its own. The
+ferry is the worked example: `docks --passage--> docks-1` and back, where `passage`
+is its own reverse (`verify.ts:16`) and carries no delta, so it joins two Rooms
+that share a name without distorting either town's coordinates. What the stone
+Teleports still need is exactly this treatment.
+
+Most Teleports are **one-way**: `[S2]` reaches `[S3]` and nothing comes back. The
+ferry is the exception, and only because there is a Device at each end — you `buy
+passage` from whichever dock you are standing on, so the pair is two Devices, not
+one that runs both ways.
 
 Those two stones are the only way through Stoneworks level 1 in either direction —
 `[S2]` to go deeper toward the third town, `[S3]` to climb out toward the desert.
