@@ -33,10 +33,23 @@ _Avoid_: floor — in this codebase "the floor" is the ground you read items off
 ("There is nothing on the floor."), which is a different thing entirely
 
 **Seam**:
-The join between two Areas: one Exit whose two ends belong to different areas.
-The exit stays on the old area's room and its destination belongs to the new
-one, which is what `map-area` re-files a room to achieve.
-_Avoid_: border, boundary, transition
+A Room you can leave, by one particular Exit, and arrive in a Room of a
+different Area. It is a place you stand in, anchor on and identify by
+Fingerprint — which is what a route's `{ seam = ... }` step checks and what
+`map-here` is for at the start of a crossing.
+_Avoid_: border, boundary, transition. Note that a **seam** is also the
+boundary between two Lua chunks, crossing through `taPackage` — unrelated to
+the map.
+
+**Crossing**:
+The reciprocal pair of Exits joining two Areas — the edge a Seam sits on either
+end of. Seams and crossings divide the labour: a crossing is what gets walked,
+linked, or left as a Stub, and a Seam is where you stand while doing it.
+_Avoid_: seam (a crossing is not a room), doorway, border
+
+Every crossing has **two** seams, one per side, so name the side you mean: "the
+third-town side of the stoneworks seam". A seam is an ordinary room in every
+other respect — most of its exits stay inside its own area.
 
 ## Movement
 
