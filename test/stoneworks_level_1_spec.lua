@@ -26,7 +26,9 @@
 local replay = dofile("test/log_replay.lua")
 
 local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
-local SETUP = { "map-area stoneworks-level-1 The Stoneworks, Level 1" }
+-- Per-log, because a chain needs one list each. This log predates baud
+-- logging aliases, so its `map-area` has to be supplied.
+local SETUP = { { "map-area stoneworks-level-1 The Stoneworks, Level 1" } }
 
 -- The walk is 24 moves along the outer edge from [@], confirmed move-for-move
 -- against map/shrine/stoneworks-1.txt: every arrival's exit-set matches the box
@@ -34,43 +36,6 @@ local SETUP = { "map-area stoneworks-level-1 The Stoneworks, Level 1" }
 local OUTER_MOVES = { "s", "s", "se", "sw", "s", "s", "se", "e", "ne", "ne",
                       "e", "se", "s", "sw", "sw", "s", "e", "e", "e", "e",
                       "s", "se", "e", "se" }
-
--- A corridor description states its own exits in a rigid form -- "The corridor
--- runs to the north and southeast." -- which makes it an independent check on
--- the edges we recorded. Chambers are freer prose (and 1087's west wall carries
--- a message that names no exit at all), so they are asserted by hand instead.
-local WORD = { north = "n", south = "s", east = "e", west = "w",
-               northeast = "ne", northwest = "nw",
-               southeast = "se", southwest = "sw" }
-
-local function describedExits(desc)
-    local said = {}
-    local runs = desc:match("corridor runs to the ([^.]+)%.")
-    if not runs then return nil end
-    for word in runs:gmatch("%a+") do
-        if WORD[word] then said[#said + 1] = WORD[word] end
-    end
-    table.sort(said)
-    return table.concat(said, ",")
-end
-
--- Corridors whose recorded exit-set disagrees with their own prose.
-local function corridorMismatches(g)
-    local bad = {}
-    for _, r in ipairs(g.rooms()) do
-        if r.description then
-            local said = describedExits(r.description)
-            if said then
-                local got = g.exitSet(r.id)
-                if said ~= got then
-                    bad[#bad + 1] = r.id .. " " .. r.slug
-                        .. ": prose says " .. said .. ", edges say " .. got
-                end
-            end
-        end
-    end
-    return bad
-end
 
 local function roomBySlug(g, slug)
     for _, r in ipairs(g.rooms()) do
@@ -150,7 +115,7 @@ describe("Stoneworks level 1 — outer-edge walk", function()
         end)
 
         it("never records an exit a room's own description denies", function()
-            assert.are.same({}, corridorMismatches(g))
+            assert.are.same({}, g.corridorMismatches())
         end)
 
         it("leaves the entry chamber's north exit an unwalked stub", function()

@@ -68,38 +68,77 @@ end
 -- `opts.stopAfter`, if set, stops feeding once that many server lines have gone
 -- through, for tests that want the graph mid-walk.
 function M.replay(path, opts)
+    return M.replayChain({ path }, opts)
+end
+
+-- Replay several logs in order against ONE database, which is what a resumed
+-- mapping session needs. `map-here stonework-corridor-20` only resolves if that
+-- room is already there, so a log that picks up where an earlier one stopped
+-- cannot be replayed alone -- against an empty database it fails, mapping never
+-- turns on, and nothing is built.
+--
+-- Between logs the SCRIPT state is reset and main.lua reloaded, while the
+-- database is kept. That models what really happened: each session was a fresh
+-- baud with a fresh taPackage, re-anchoring itself from a database that outlived
+-- the previous one. Carrying taPackage across instead would leave mapping still
+-- switched on, so the next session's login brief would be processed as a mapping
+-- arrival -- which is not what the game did.
+function M.replayChain(paths, opts)
     opts = opts or {}
     helper.resetAll()
     local db = SqliteDb.install()
-    dofile("main.lua")
-    for _, cmd in ipairs(opts.setup or {}) do
-        helper.simulateAlias(cmd)
-    end
-
-    local f = assert(io.open(path, "r"), "no such log: " .. path)
-    local buf = clean(f:read("a"))
-    f:close()
 
     local fed, typed, aliased = 0, 0, 0
-    for line in (buf .. "\n"):gmatch("([^\n]*)\n") do
-        if opts.stopAfter and fed >= opts.stopAfter then break end
-        local kind, text = classify(line)
-        if kind == "server" then
-            helper.simulateLine(text)
-            fed = fed + 1
-        elseif kind == "input" and text ~= "" then
-            -- The path typed input takes: first matching alias, else sent as
-            -- text. Outbound triggers see it too (that is how `push stone`
-            -- declares the position lost).
-            helper.simulateOutbound(text)
-            runCommand(text)
-            typed = typed + 1
-        elseif kind == "alias" and text ~= "" then
-            -- Same path, but the log has already told us no alias let it
-            -- through to the server, so this is the one line kind that needs no
-            -- guessing about what ran.
-            runCommand(text)
-            aliased = aliased + 1
+    for i, path in ipairs(paths) do
+        if i > 1 then
+            helper.resetAll()
+            -- resetAll clears taPackage; dofile reopens the SAME database file,
+            -- because SqliteDb.install left dbOpen pointing at it.
+            dofile("main.lua")
+        else
+            dofile("main.lua")
+        end
+        for _, cmd in ipairs((opts.setup or {})[i] or {}) do
+            helper.simulateAlias(cmd)
+        end
+
+        local f = assert(io.open(path, "r"), "no such log: " .. path)
+        local buf = clean(f:read("a"))
+        f:close()
+
+        -- Does this log record aliases? It changes what a `> ` line means, and
+        -- getting it wrong runs every move twice.
+        --
+        -- In a log that HAS `$ ` lines, a typed `nw` appears as BOTH `$ nw` (the
+        -- alias matched) and `> nw` (the send that same alias then made). They
+        -- are one keystroke, not two. Replaying both queues two pending
+        -- directions per move, so the next arrival is matched against the wrong
+        -- one and the graph comes apart -- 29 rooms and 16 stubs where the live
+        -- session built 27 and 3. So here `> ` means "already sent": outbound
+        -- triggers only, never the alias path.
+        --
+        -- In an older log aliases were not recorded at all, so `> nw` is the
+        -- only trace of the move and has to run as a command.
+        local records = buf:find("\n%$ ") ~= nil or buf:find("^%$ ") ~= nil
+
+        for line in (buf .. "\n"):gmatch("([^\n]*)\n") do
+            if opts.stopAfter and fed >= opts.stopAfter then break end
+            local kind, text = classify(line)
+            if kind == "server" then
+                helper.simulateLine(text)
+                fed = fed + 1
+            elseif kind == "input" and text ~= "" then
+                -- Outbound triggers see everything sent (that is how
+                -- `push stone` declares the position lost).
+                helper.simulateOutbound(text)
+                if not records then
+                    runCommand(text)
+                    typed = typed + 1
+                end
+            elseif kind == "alias" and text ~= "" then
+                runCommand(text)
+                aliased = aliased + 1
+            end
         end
     end
 
@@ -167,6 +206,61 @@ function M.replay(path, opts)
         return out
     end
 
+    -- Corridors whose recorded exit-set disagrees with their own Description.
+    --
+    -- A corridor states its exits in prose, in one of two rigid forms -- "The
+    -- corridor runs to the north and southeast." or "The corridor continues to
+    -- the east and southwest." -- which makes the Description an independent
+    -- check on the edges we recorded, and the one that catches conflation. Both
+    -- verbs matter: matching only "runs" silently skips every "continues" room
+    -- and reports them as fine.
+    --
+    -- Chambers are deliberately not checked here. Their prose is free ("The
+    -- northern portion of this chamber is obscured by a strange mist. The only
+    -- visible exit is east." -- where north is real but not visible, so the
+    -- naive reading is wrong), and one of them describes a wall rather than an
+    -- exit. Assert those by hand.
+    local WORD = { north = "n", south = "s", east = "e", west = "w",
+                   northeast = "ne", northwest = "nw",
+                   southeast = "se", southwest = "sw" }
+
+    function g.corridorMismatches()
+        local bad = {}
+        for _, r in ipairs(g.rooms()) do
+            local runs = r.description
+                and (r.description:match("corridor runs to the ([^.]+)%.")
+                     or r.description:match("corridor continues to the ([^.]+)%."))
+            if runs then
+                local said = {}
+                for word in runs:gmatch("%a+") do
+                    if WORD[word] then said[#said + 1] = WORD[word] end
+                end
+                table.sort(said)
+                said = table.concat(said, ",")
+                local got = g.exitSet(r.id)
+                if said ~= got then
+                    bad[#bad + 1] = r.id .. " " .. r.slug
+                        .. ": prose says " .. said .. ", edges say " .. got
+                end
+            end
+        end
+        return bad
+    end
+
+    -- How many corridors g.corridorMismatches() actually examined, so a test can
+    -- notice the check silently covering nothing.
+    function g.corridorsChecked()
+        local n = 0
+        for _, r in ipairs(g.rooms()) do
+            if r.description
+                and (r.description:match("corridor runs to the ([^.]+)%.")
+                     or r.description:match("corridor continues to the ([^.]+)%.")) then
+                n = n + 1
+            end
+        end
+        return n
+    end
+
     -- Rooms sharing a description, which is how conflation shows itself: two
     -- corridors that really do read alike are fine, two rooms that ARE one are
     -- not. Returns groups of ids.
@@ -186,7 +280,9 @@ function M.replay(path, opts)
     end
 
     -- The `[map] ...` lines the run produced, in order. Useful for asserting
-    -- that a closure did or did not happen.
+    -- that a closure did or did not happen. In a chain these are the LAST log's
+    -- echoes only: the script state is reset between logs, which is what lets a
+    -- test say "this session made no closure" without the earlier ones' noise.
     function g.mapEchoes()
         local out = {}
         for _, e in ipairs(helper.echoCalls) do
@@ -208,14 +304,19 @@ end
 
 -- Directions in the order the log sent them, read back from the log itself, so
 -- a test can state the walk it expects without transcribing it twice.
+-- Read from the `$ ` lines where the log has them. A direction IS an alias, so
+-- in a log that records aliases those lines are exactly the moves, and reading
+-- `> ` instead picks up login-menu answers -- the `n` that chooses a menu item
+-- before the game even starts reads as a move north.
 function M.movesIn(path)
     local DIRS = { n = true, s = true, e = true, w = true, ne = true, nw = true,
                    se = true, sw = true, u = true, d = true }
     local f = assert(io.open(path, "r"))
     local buf = f:read("a"); f:close()
+    local prefix = (buf:find("\n%$ ") or buf:find("^%$ ")) and "^%$" or "^>"
     local out = {}
     for line in (buf .. "\n"):gmatch("([^\n]*)\n") do
-        local cmd = line:match("^>%s*(%S+)%s*$")
+        local cmd = line:match(prefix .. "%s*(%S+)%s*$")
         if cmd and DIRS[cmd] then out[#out + 1] = cmd end
     end
     return out
