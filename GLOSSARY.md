@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: twenty-one terms, chosen because a conversation actually
+This is a first pass: twenty-three terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -193,9 +193,32 @@ _Avoid_: lock, gate, barrier, exit
 Something you operate in one Room that changes the world somewhere else — the
 two kinds are a **lever** (`pull lever`) and a **stone** (`push stone`). A
 Device's *effect* is a map fact worth recording; what it has currently done is
-Device State, which the next Reset throws away.
-_Avoid_: mechanism, switch, toggle, trigger (a trigger is a baud pattern-match
-on server output — unrelated)
+Device State, which the next Reset throws away. Every Device is either Latching
+or Toggling.
+_Avoid_: mechanism, switch, trigger (a trigger is a baud pattern-match on server
+output — unrelated)
+
+**Latching**:
+A Device that stays where you put it: the first use opens the Seal, and using it
+again does nothing further. Idempotent — but only within one Reset, so it will
+need using again tomorrow.
+_Avoid_: permanent (it invites the conclusion that you will never have to work it
+again, and the next Reset says otherwise), one-shot, sticky, idempotent as the
+name — it is the property, not the kind of thing
+
+**Toggling**:
+A Device that reverses itself: first use opens the Seal, second shuts it, third
+opens it again. The lever at the end of the dark labyrinth's third Level is one,
+which is why only the first character through pulls it and everyone after walks
+`navigate-to end-of-labrynth-level-3 no-pull-lever`.
+_Avoid_: switch, flip-flop, momentary
+
+Which kind a Device is belongs to that Device alone and cannot be reasoned out
+from another one. The level-3 lever was written down as permanent because the
+levers on the way to third town are, and that was wrong — the same error as
+calling the level-2 stone a Teleport. The asymmetry is the point: a Latching
+Device can be worked without knowing Device State, a Toggling one cannot, and
+nothing you can see in the Room tells you which is in front of you.
 
 **Trap**:
 A hazard that fires on a Room rather than on an Exit. The shrine drawings
