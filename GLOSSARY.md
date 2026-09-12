@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: sixteen terms, chosen because a conversation actually
+This is a first pass: seventeen terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -98,6 +98,26 @@ because the map has no edge to follow; a Teleport recorded as an ordinary Exit
 is the specific corruption `just verify-area` hunts by looking for impossible
 changes of depth.
 _Avoid_: warp, jump, portal
+
+**Route**:
+A named, hand-written list of steps from one Room to somewhere far away, walked
+by `navigate-to`. Its key is a **label** rather than a destination —
+`town-3/get-ruby-key` names an errand that ends where it began — and it names
+the single Room it starts from, by slug or by Fingerprint, refusing to walk
+unless you are standing there.
+_Avoid_: path, journey, directions, walk (a Route is the written plan, not the
+act of following it)
+
+Not every **step** is a Move: a step is a direction, a command (`pull lever`), a
+Room to clear of monsters, a **gate** (a Move through a Door that may or may not
+be shut, naming the key and the errand that fetches it), or a Seam check. A
+Route built from **legs** names other Routes to walk in order instead of copying
+their steps, with a Seam check inserted before each — so every leg stays
+runnable on its own and no direction is transcribed twice.
+
+A Route is never derived from the map: each one is a transcription of a walk that
+actually worked, because the graph is full of Stubs and Doors it cannot reason
+about. The map is read-only while a Route runs.
 
 ## Identity
 
