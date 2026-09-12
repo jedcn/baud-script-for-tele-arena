@@ -68,6 +68,25 @@ the room you are *already* in must not be counted as one.
 _Avoid_: walk (a whole journey), step (an element of a Route, which may be a
 command or a kill rather than a move)
 
+**Dead reckoning**:
+Working out where you are by accumulating Moves from a known starting Room,
+because the game never reports a position. Each move adds its direction's delta
+to the previous room's coordinate — north `+y`, east `+x`, up `+z`, diagonals
+both at once — and that sum is the only source of the `x/y/z` stamped on a room.
+_Avoid_: tracking (position tracking follows the map and survives with no
+coordinate at all), positioning, navigation (that is walking a Route)
+
+Two things follow, and both have cost us rooms. It **drifts**: these rooms never
+sat on a real grid, so a loop need not close geometrically and two distinct
+rooms can legitimately reckon onto the same cell — which is why coordinates are
+a hint and topology is the truth. And it needs an **anchor**: a cold start has
+no coordinate to reckon from, and `map-here` exists to restore one from a room's
+stored record.
+
+The same phrase turns up for time as well as space — recovering a cooldown by
+counting from the last accepted swing rather than waiting to be told. Same idea,
+different axis.
+
 **Teleport**:
 A change of location with no Exit to account for it — `push stone`, the
 great-lake ferry. The honest result of one is that position becomes **lost**,
