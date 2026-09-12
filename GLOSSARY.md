@@ -127,6 +127,12 @@ ferry is the exception, and only because there is a Device at each end — you `
 passage` from whichever dock you are standing on, so the pair is two Devices, not
 one that runs both ways.
 
+Not every Teleport comes from a Device. `use heartstone` is a carried item, so it
+works from any Room, and its destination is fixed like any other: the temple in the
+first town. That makes it the escape from a Room whose only way on is behind a Seal
+whose Device is on the far side — the situation a Reset creates for anyone who was
+past it when the BBS went down.
+
 Those two stones are the only way through Stoneworks level 1 in either direction —
 `[S2]` to go deeper toward the third town, `[S3]` to climb out toward the desert.
 So the way in and the way out are different paths, which is part of why a Route is
@@ -239,6 +245,17 @@ Operating one can be refused outright — "Sorry, you can't do that now." with a
 monster still up, "You must rest a moment before proceeding!" while winded. So a
 Device is not a command that always takes, which matters for a Route step that
 advances on a pause rather than on an answer.
+
+A Device is a **fixture of a Room**: you must be standing there. Something you
+carry that has the same sort of effect is not a Device, however alike they look —
+a key clears a Seal and a heartstone causes a Teleport, and neither belongs to a
+Room.
+
+And Device State is **shared by everyone on the BBS**, not held per character. One
+player's pull opens the Seal for all of them. That is what makes the level-3 lever
+protocol necessary — one character pulls, the rest walk `no-pull-lever` — and it is
+also the way out when a Reset leaves someone on the wrong side of a Seal whose
+Device is on the other: another player can work it for them.
 
 **Device effect**:
 What a Device changes — either **the world** or **the person**, and the split
