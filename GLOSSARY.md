@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: seventeen terms, chosen because a conversation actually
+This is a first pass: eighteen terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -109,15 +109,29 @@ _Avoid_: path, journey, directions, walk (a Route is the written plan, not the
 act of following it)
 
 Not every **step** is a Move: a step is a direction, a command (`pull lever`), a
-Room to clear of monsters, a **gate** (a Move through a Door that may or may not
-be shut, naming the key and the errand that fetches it), or a Seam check. A
-Route built from **legs** names other Routes to walk in order instead of copying
-their steps, with a Seam check inserted before each — so every leg stays
-runnable on its own and no direction is transcribed twice.
+Room to clear of monsters, a RouteGate, or a Seam check. A Route built from
+**legs** names other Routes to walk in order instead of copying their steps, with
+a Seam check inserted before each — so every leg stays runnable on its own and no
+direction is transcribed twice.
 
 A Route is never derived from the map: each one is a transcription of a walk that
 actually worked, because the graph is full of Stubs and Doors it cannot reason
 about. The map is read-only while a Route runs.
+
+**RouteGate**:
+A Route step that Moves through a Door which may or may not be shut, naming the
+key that opens it and the **detour** — the errand Route that fetches that key.
+Written `{ door = "s", key = "ruby", detour = "town-3/get-ruby-key" }`, so the
+data says "door" where the vocabulary says gate.
+_Avoid_: gate on its own (Door's `_Avoid_` already claims that spelling for the
+obstruction), door step, lock step
+
+Its point is that the Move *is* the question. The game answers a Door direction
+with a Brief if it already stands open, with "your `<key>` key unlocks…" if we
+are carrying the key, and with a refusal if we are not — and the first two both
+mean the detour can be skipped. Distinct from a Route's own final `door` field,
+which is a single direction tried on arrival to report whether it could be
+passed, and which fetches nothing.
 
 ## Identity
 
@@ -152,9 +166,10 @@ a to-do)
 ## Obstacles and devices
 
 **Door**:
-A locked gate on a single Exit, recorded as the Door's material and the key that
-opens it. There is no key→Door rule to infer: ten different keys each open some
-"stone door", so the pairing belongs to the specific Exit and nowhere else.
+A property of a single Exit: that it stays shut until opened with a particular
+key, recorded as the Door's material plus that key. There is no key→Door rule to
+infer: ten different keys each open some "stone door", so the pairing belongs to
+the specific Exit and nowhere else.
 _Avoid_: lock, gate, barrier, exit
 
 **Device**:
