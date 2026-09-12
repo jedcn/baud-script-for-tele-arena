@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: eighteen terms, chosen because a conversation actually
+This is a first pass: twenty-one terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -64,6 +64,10 @@ d`). Exits are stored one-way and are expected to come in reciprocal pairs, so
 one-way passage.
 _Avoid_: edge, link, connection, and especially **door** — a Door is a property
 *of* an Exit, not a synonym for one
+
+An Exit is topology, and topology survives a Reset. Whether it will admit you
+right now is Device State, and the two come apart: a Sealed Exit is still an
+Exit, still listed by `ex`, and still a walked edge in the map.
 
 **Move**:
 One step of travel in a compass direction, which the game answers with a Brief.
@@ -165,23 +169,55 @@ a to-do)
 
 ## Obstacles and devices
 
+**Seal**:
+Something blocking passage along an Exit that can be cleared and comes back at
+the next Reset. A Door cleared with a key is one kind; a wall or a mist cleared
+by operating a Device elsewhere is another; a raised drawbridge over a chasm is a
+third.
+_Avoid_: wall, mist, barrier, blockage — each of those is one kind of Seal, not
+the category
+
+A Seal does not remove the Exit it sits on. `[D1]` answered `Exits: n,e.` and
+then refused `n` in the same breath, and a hobgoblin bounced off it twice while
+we watched. So `ex` reports topology, and passage is Device State.
+
 **Door**:
 A property of a single Exit: that it stays shut until opened with a particular
-key, recorded as the Door's material plus that key. There is no key→Door rule to
-infer: ten different keys each open some "stone door", so the pairing belongs to
-the specific Exit and nowhere else.
+key, recorded as the Door's material plus that key. The Seal whose key is an
+object you carry. There is no key→Door rule to infer: ten different keys each
+open some "stone door", so the pairing belongs to the specific Exit and nowhere
+else.
 _Avoid_: lock, gate, barrier, exit
 
 **Device**:
 Something you operate in one Room that changes the world somewhere else — the
 two kinds are a **lever** (`pull lever`) and a **stone** (`push stone`). A
-Device's *effect* is a map fact worth recording; its *state* is only ever a fact
-about today, because the world resets daily.
+Device's *effect* is a map fact worth recording; what it has currently done is
+Device State, which the next Reset throws away.
 _Avoid_: mechanism, switch, toggle, trigger (a trigger is a baud pattern-match
 on server output — unrelated)
 
 **Trap**:
 A hazard that fires on a Room rather than on an Exit. The shrine drawings
 distinguish the two kinds that matter to routing: one a Device can disarm
-(`T1` with its `L1` lever) and one that cannot be turned off at all.
+(`T1` with its `L1` lever) and one that cannot be turned off at all. Disarming
+is Device State, so the first kind is armed again after the next Reset — a
+Route that walked through it yesterday is not safe today.
 _Avoid_: hazard, damage room
+
+## The world resets
+
+**Reset**:
+The BBS restarting, which restarts Tele-Arena with it — nightly at around 3 or
+4am, and again whenever the BBS crashes. A power cycle rather than a game event,
+so every Seal anyone had cleared is back: Doors locked, a wall a Device removed
+standing again, a lowered drawbridge raised.
+_Avoid_: daily reset (a crash resets too, so "daily" is the wrong half of it),
+reboot, restart, respawn (nothing is respawning — the world is being rebuilt)
+
+**Device State**:
+What is true right now because of the Devices operated since the last Reset. It
+is a claim about *today*, never a map fact, and the map must not learn to doubt
+its own topology because of it — which is why a Sealed Exit stays a walked edge
+rather than degrading to a Stub.
+_Avoid_: world state, flags, progress
