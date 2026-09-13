@@ -570,8 +570,15 @@ end
 
 -- All room ids sharing a display name; used to resolve a cold-start room
 -- (no prior room to walk from) when the name is unambiguous.
-function TaDb.roomIdsByName(name)
-    local rows = db:query("SELECT id FROM rooms WHERE name = ?", name) or {}
+-- With `areaId`, only rooms of that area. Identity matching wants the scoped
+-- form: a coordinate is dead-reckoned from its own area's origin, so comparing
+-- one across areas is meaningless -- and on 2026-09-13 a room three teleports
+-- into the Stoneworks matched a third-town corridor on an exact coordinate,
+-- because both areas number from (0,0,0).
+function TaDb.roomIdsByName(name, areaId)
+    local rows = areaId
+        and (db:query("SELECT id FROM rooms WHERE name = ? AND area_id = ?", name, areaId) or {})
+        or (db:query("SELECT id FROM rooms WHERE name = ?", name) or {})
     local ids = {}
     for _, row in ipairs(rows) do ids[#ids + 1] = row.id end
     return ids
@@ -702,13 +709,13 @@ end
 -- what keeps two distinct caves that share a fingerprint from collapsing once
 -- coordinates are known; when `coord` is nil (nothing to dead-reckon from) the
 -- guard is inert and we fall back to name+exit-set alone.
-function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord)
+function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
     end
     local match
-    for _, id in ipairs(TaDb.roomIdsByName(name)) do
+    for _, id in ipairs(TaDb.roomIdsByName(name, areaId)) do
         if id ~= excludeId then
             local cand = coord and TaDb.roomCoord(id)
             if cand and (cand.x ~= coord.x or cand.y ~= coord.y or cand.z ~= coord.z) then
@@ -739,7 +746,7 @@ end
 -- far side, so it must be here and not yet lead anywhere. An already-walked
 -- `back` commits that room to a different neighbour, so it can't be this one.
 -- Returns the unique such room, or nil if there's none or more than one.
-function TaDb.findLoopClosure(name, dirs, excludeId, back)
+function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId)
     if not back then return nil end
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
@@ -758,7 +765,7 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back)
     -- evidence was already in hand and simply not consulted.
     local mine = TaDb.roomDescription(excludeId)
     local match
-    for _, id in ipairs(TaDb.roomIdsByName(name)) do
+    for _, id in ipairs(TaDb.roomIdsByName(name, areaId)) do
         if id ~= excludeId then
             local have = TaDb.roomExitDirections(id)
             local haveCount, ok = 0, true

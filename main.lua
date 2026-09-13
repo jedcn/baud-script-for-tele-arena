@@ -1471,7 +1471,10 @@ local function handleRoomEntry(matches)
     local stored = taPackage.db.roomCoord(roomId)
     if stored then
         taPackage.coord = stored
-    elseif taPackage.arrivedByTeleport then
+        -- A room that already knows where it is re-anchors the chain a Teleport
+        -- broke.
+        taPackage.coordLost = nil
+    elseif taPackage.arrivedByTeleport or taPackage.coordLost then
         -- A Teleport has no grid position relative to where we were: there is no
         -- delta to add and no honest value to stamp, so leave the coordinate NULL
         -- rather than claim the origin. Coordinates are soft anyway, and the
@@ -1719,12 +1722,17 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
         local match = taPackage.db.findRoomByFingerprint(
-            taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord)
+            taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
+            taPackage.currentAreaId)
         taPackage.mapdbg("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
             .. " val=" .. tostring(match))
-        -- Which matcher found it decides whether we trust it now or check it
-        -- against the next room.
-        local byCoord = type(match) == "number"
+        -- Which matcher found it decides whether we trust it now or hold it for
+        -- the next room to confirm. A fingerprint match is only strong when there
+        -- was a coordinate to compare: findRoomByFingerprint SKIPS its coordinate
+        -- veto when `coord` is nil, so with none it is just name plus exit-set --
+        -- the weakest signal we have, and the one that has cost us rooms twice.
+        -- After a Teleport there is no coordinate, so those matches get held.
+        local byCoord = type(match) == "number" and taPackage.coord ~= nil
         -- Coordinates drift across this world's non-Euclidean loops, so when the
         -- coordinate match misses, trust the door we walked through instead: the
         -- room we re-entered is the same-name, same-exit-set room whose exit back
@@ -1732,7 +1740,8 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         if type(match) ~= "number" and taPackage.currentEntryDir then
             local back = REVERSE_DIR[taPackage.currentEntryDir]
             match = taPackage.db.findLoopClosure(
-                taPackage.currentRoom, dirs, taPackage.currentRoomId, back)
+                taPackage.currentRoom, dirs, taPackage.currentRoomId, back,
+                taPackage.currentAreaId)
             taPackage.mapdbg("[mapdbg] findLoopClosure back=" .. tostring(back)
                 .. " -> type=" .. type(match) .. " val=" .. tostring(match))
         end
@@ -1847,6 +1856,7 @@ end, { type = "regex" })
 local function startMappingHere()
     taPackage.mapping = true
     taPackage.pendingClosure = nil
+    taPackage.coordLost = nil
     taPackage.pendingDirs = {}
     taPackage.pendingDirection = nil
     taPackage.prevRoomId = nil
@@ -1899,6 +1909,7 @@ createAlias("^map-here (.+)$", function(matches)
     end
     taPackage.mapping = true
     taPackage.pendingClosure = nil
+    taPackage.coordLost = nil
     taPackage.currentAreaId = room.area_id
     taPackage.currentRoomId = room.id
     taPackage.currentRoom = room.name
@@ -2028,6 +2039,10 @@ end, { type = "regex" })
 createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in (.+)\\.$",
     function(matches)
         taPackage.arrivedByTeleport = true
+        -- And every room walked from here has no grid position either, until one
+        -- with a stored coordinate re-anchors us. Stamping (0,0,0) instead put a
+        -- second origin inside the area and matched a third-town corridor.
+        taPackage.coordLost = true
         -- Position is unknown to the tracker either way: the map holds no edge to
         -- follow, and the link lives on the device (devices.dest_room_id).
         if taPackage.hereState ~= "lost" then

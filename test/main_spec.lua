@@ -3714,6 +3714,11 @@ describe("World map triggers", function()
             taPackage.currentRoomId = 5
             taPackage.currentRoom = "north plaza"
             taPackage.currentRoomProvisional = true
+            -- A coordinate is required for this to merge on the spot. Without one
+            -- findRoomByFingerprint skips its coordinate veto and the match is only
+            -- name plus exit-set, which is now held for the next room to confirm --
+            -- see the coordless case below.
+            taPackage.coord = { x = 0, y = 0, z = 0 }
             -- Room 1 (existing) shares the name and the observed exit-set {n,s}.
             helper.mockDbRows = function(sql, params)
                 if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
@@ -3728,6 +3733,32 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.currentRoomId)          -- folded into the original
             assert.is_false(taPackage.currentRoomProvisional)
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+        end)
+
+        -- After a Teleport there is no coordinate, so a fingerprint match is just
+        -- name plus exit-set. On 2026-09-13 that merged a room three teleports into
+        -- the Stoneworks onto [!] -- correctly, by luck -- and two rooms earlier it
+        -- had merged one onto a THIRD-TOWN corridor, because both areas number
+        -- coordinates from (0,0,0). Weak evidence gets held now, like any other.
+        it("HOLDS a fingerprint match made with no coordinate", function()
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "north plaza"
+            taPackage.currentRoomProvisional = true
+            taPackage.coord = nil
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 1 }, { id = 5 } }
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then return { { direction = "n" }, { direction = "s" } } end
+                    return {}
+                end
+                return {}
+            end
+            helper.simulateLine("Exits: n,s.")
+            assert.are.equal(5, taPackage.currentRoomId)   -- still the provisional
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+            assert.is_not_nil(taPackage.pendingClosure)
+            assert.are.equal(1, taPackage.pendingClosure.into)
         end)
 
         it("HOLDS a topological loop closure instead of merging on the spot", function()

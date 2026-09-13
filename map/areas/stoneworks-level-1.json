@@ -431,6 +431,13 @@
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A stone in the northeast wall appears to protrude from the wall slightly more than the others. The corridor continues to the northwest.",
+      "devices": [
+        {
+          "command": "push stone",
+          "effect": "teleport",
+          "note": "Shrine [S2]. The only way deeper: it lands on the [S3] strip, which no compass exit reaches. Reply splices the arrival onto the push: \"You push the protruding stone into it's recess...You're in a stonework corridor.\" Description names it: \"A stone in the northeast wall appears to protrude from the wall slightly more than the others.\""
+        }
+      ],
       "layout": {
         "x": 11,
         "y": -13
@@ -867,6 +874,62 @@
         "x": 11,
         "y": -2
       }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-43",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-1/stonework-corridor-44"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A stone in the north wall appears to protrude from the wall slightly more than the others. The corridor continues to the east.",
+      "devices": [
+        {
+          "command": "push stone",
+          "effect": "teleport",
+          "note": "Shrine [S3]. The only way out of the strip toward the desert: lands on [!] (stonework-corridor-24), which IS reachable on foot from the rest of the level, so this is the shortcut back. The shrine's \"If on way out Push Stone to go to !\" describes when you want it, not a condition on the stone."
+        }
+      ]
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-44",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-1/stonework-corridor-46"
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-corridor-43"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west."
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-45",
+      "name": "stonework corridor",
+      "exits": {
+        "d": {
+          "to": null
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-corridor-46"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor continues to the west. There is a stone staircase here leading downward."
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-46",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-1/stonework-corridor-45"
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-corridor-44"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west."
     }
   ]
 }
