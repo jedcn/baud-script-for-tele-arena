@@ -239,6 +239,11 @@ if (import.meta.main) {
       originBox: '@',                      // "say komi" to enter
       originRoom: 'stonework-chamber',
     },
+    'stoneworks-level-2': {
+      file: 'map/shrine/stoneworks-2.txt',
+      originBox: '^',                      // the stairs back up to Level 1
+      originRoom: 'stonework-chamber-5',
+    },
   };
 
   const slug = process.argv[2];
