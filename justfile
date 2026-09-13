@@ -18,6 +18,15 @@ test:
     bun test || rc=1
     exit $rc
 
+# How much of a level have we walked? Prints the SHRINE's own drawing with our
+# rooms marked on it, so it can be compared with map/shrine/*.txt at a glance --
+# which MAP.md cannot, because map.ts derives its own layout by walking exits.
+# Then says what each frontier leads to, separating real unexplored territory
+# from unwalked links between rooms we already have.
+#   just coverage stoneworks-level-1
+coverage slug:
+    bun coverage.ts {{slug}}
+
 # Turn raw session logs into normalized JSONL events — always the first step
 # when analyzing a log (see CLAUDE.md "Session logs"). Writes to stdout, so
 # pipe it to jq. Example:
