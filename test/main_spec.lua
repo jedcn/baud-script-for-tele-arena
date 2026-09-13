@@ -3990,12 +3990,17 @@ describe("World map triggers", function()
 
     describe("mapping mode aliases", function()
 
-        it("mapdbg tracing is off by default, so a mapping run stays readable", function()
-            assert.is_false(taPackage.mapDebug)
-            helper.echoCalls = {}
-            taPackage.mapdbg("[mapdbg] should not appear")
-            assert.are.equal(0, #helper.echoCalls)
-        end)
+        -- Reversed 2026-09-13. Every mapper bug found that week was diagnosed
+        -- from these traces and nothing else, and session logs are now test
+        -- fixtures -- so a walk without them cannot be replayed afterwards. The
+        -- scrollback is the price.
+        it("mapdbg tracing is on by default, so a walk can be diagnosed later",
+            function()
+                assert.is_true(taPackage.mapDebug)
+                helper.echoCalls = {}
+                taPackage.mapdbg("[mapdbg] traced by default")
+                assert.is_true(tableContains(helper.echoCalls, "[mapdbg] traced by default"))
+            end)
 
         it("map-debug on enables tracing, map-debug off disables it", function()
             helper.simulateAlias("map-debug on")

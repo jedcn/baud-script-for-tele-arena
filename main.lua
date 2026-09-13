@@ -1266,11 +1266,20 @@ end
 -- World map triggers
 -- =========================================================================
 
--- [mapdbg] tracing. Off by default: a mapping run walks hundreds of rooms and
--- prints one of these per arrival, which buries the [map] lines that are a real
--- aid and bloats the session log. `map-debug on` turns it back on when a walk
--- goes wrong. A field rather than a local -- main.lua's 200-local budget.
-taPackage.mapDebug = false
+-- [mapdbg] tracing. ON by default, which is a reversal: it was off because a
+-- mapping run prints one of these per arrival, burying the [map] lines and
+-- bloating the log.
+--
+-- Both of those turned out to be the point. Every mapper bug found this week was
+-- diagnosed from these traces and from nothing else -- `discoverRoom` naming the
+-- id it minted, `findLoopClosure` naming the room it matched -- and the logs are
+-- now test fixtures, so a session walked without them is a session that cannot be
+-- replayed or argued about afterwards. The cost is scrollback; the benefit is
+-- being able to tell what happened.
+--
+-- `map-debug off` still quiets it. A field rather than a local -- main.lua's
+-- 200-local budget.
+taPackage.mapDebug = true
 function taPackage.mapdbg(msg)
     if taPackage.mapDebug then echo(msg) end
 end
