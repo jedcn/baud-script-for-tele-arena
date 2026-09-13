@@ -172,7 +172,7 @@
           "to": "stoneworks-level-1/stonework-corridor-8"
         },
         "nw": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-corridor-34"
         },
         "sw": {
           "to": "stoneworks-level-1/stonework-corridor-6"
@@ -206,7 +206,7 @@
       "name": "stonework corridor",
       "exits": {
         "ne": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-corridor-35"
         },
         "nw": {
           "to": "stoneworks-level-1/stonework-corridor-8"
@@ -216,6 +216,9 @@
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south, northwest, and northeast.",
+      "trap": {
+        "type": "falling rocks"
+      },
       "layout": {
         "x": 6,
         "y": -6
@@ -674,7 +677,7 @@
           "to": "stoneworks-level-1/stonework-corridor-33"
         },
         "se": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-corridor-7"
         },
         "w": {
           "to": "stoneworks-level-1/stonework-corridor-32"
@@ -684,6 +687,85 @@
       "layout": {
         "x": 2,
         "y": -7
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-35",
+      "name": "stonework corridor",
+      "exits": {
+        "ne": {
+          "to": "stoneworks-level-1/stonework-corridor-36"
+        },
+        "sw": {
+          "to": "stoneworks-level-1/stonework-corridor-9"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northeast and southwest.",
+      "layout": {
+        "x": 7,
+        "y": -5
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-36",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "nw": {
+          "to": "stoneworks-level-1/stonework-corridor-37"
+        },
+        "sw": {
+          "to": "stoneworks-level-1/stonework-corridor-35"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east, northwest, and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -4
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-37",
+      "name": "stonework corridor",
+      "exits": {
+        "nw": {
+          "to": "stoneworks-level-1/stonework-corridor-38"
+        },
+        "se": {
+          "to": "stoneworks-level-1/stonework-corridor-36"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northwest and southeast.",
+      "layout": {
+        "x": 7,
+        "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-38",
+      "name": "stonework corridor",
+      "exits": {
+        "se": {
+          "to": "stoneworks-level-1/stonework-corridor-37"
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A small lever is partially concealed in a niche in the north wall. The corridor runs to the southwest and southeast.",
+      "devices": [
+        {
+          "command": "pull lever",
+          "effect": "trap",
+          "repeats": "once",
+          "note": "Shrine [L1]. Disarms the falling-rocks trap in stonework-corridor-9 (shrine [T1]), four moves away. Verified by observation 2026-09-13: trap fired, lever pulled, trap did not fire on the return. Reply is a plain \"You pulled the lever.\" The lever is visible in the room description -- \"A small lever is partially concealed in a niche in the north wall.\" repeats=once is assumed, not tested."
+        }
+      ],
+      "layout": {
+        "x": 6,
+        "y": -2
       }
     }
   ]
