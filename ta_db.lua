@@ -489,95 +489,17 @@ function TaDb.setRoomTrap(roomId, trap)
     dbLog("[DB\xE2\x86\x92rooms] trap: #" .. tostring(roomId) .. " " .. tostring(trap))
 end
 
--- Record a device in a room. `fields` carries whatever the effect needs:
--- repeats, dest_room_id, light_area_id, trap_room_id, sealed_by, note. Returns
--- the new id, or nil when this room already has a device with that command --
--- the UNIQUE is deliberate, since two levers in one room would be
--- indistinguishable to `pull lever` anyway.
-function TaDb.addDevice(roomId, command, effect, fields)
-    fields = fields or {}
-    local changes = db:execute(
-        "INSERT OR IGNORE INTO devices (room_id, command, effect, repeats,"
-        .. " dest_room_id, light_area_id, trap_room_id, sealed_by, note)"
-        .. " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        roomId, command, effect, fields.repeats, fields.dest_room_id,
-        fields.light_area_id, fields.trap_room_id, fields.sealed_by, fields.note)
-    if not changes or changes == 0 then return nil end
-    local row = db:queryOne("SELECT last_insert_rowid() AS id")
-    local id = row and row.id
-    dbLog("[DB\xE2\x86\x92devices] +#" .. tostring(id) .. " " .. tostring(command)
-        .. " (" .. tostring(effect) .. ") room=" .. tostring(roomId))
-    return id
-end
-
--- Every device you can work while standing in this room, oldest first.
+-- Every device you can work while standing in this room, oldest first. Read-only
+-- and the only device function here: the table is populated by hand in SQL, not
+-- while playing. There are on the order of twenty devices in the whole game and
+-- they have not changed in thirty years, so an in-game capture API would be
+-- code with no second user. What this one feeds is the [device] line on room
+-- entry, so a lever announces itself before you walk past it.
 function TaDb.devicesInRoom(roomId)
     return db:query(
         "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
         .. " trap_room_id, sealed_by, note FROM devices WHERE room_id = ? ORDER BY id",
         roomId) or {}
-end
-
--- One device by id, or nil.
-function TaDb.deviceById(id)
-    return db:queryOne(
-        "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
-        .. " trap_room_id, sealed_by, note FROM devices WHERE id = ?", id)
-end
-
--- Every device, for listing and for `just report`.
-function TaDb.allDevices()
-    return db:query(
-        "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
-        .. " trap_room_id, sealed_by, note FROM devices ORDER BY id") or {}
-end
-
--- Set one column on a device. Restricted to the columns a device actually has,
--- so a typo cannot build a statement against something else.
-local DEVICE_FIELDS = {
-    repeats = true, dest_room_id = true, light_area_id = true,
-    trap_room_id = true, sealed_by = true, note = true, effect = true,
-}
-function TaDb.setDeviceField(id, field, value)
-    if not DEVICE_FIELDS[field] then
-        return nil, "not a device field: " .. tostring(field)
-    end
-    local changes = db:execute("UPDATE devices SET " .. field .. " = ? WHERE id = ?", value, id)
-    dbLog("[DB\xE2\x86\x92devices] #" .. tostring(id) .. " " .. field .. "=" .. tostring(value))
-    return changes
-end
-
--- Remove a device, and un-point anything that named it so nothing dangles --
--- nothing enforces these references, so a deleted device would otherwise leave
--- exits sealed by an id that is gone.
-function TaDb.deleteDevice(id)
-    db:execute("UPDATE room_exits SET sealed_by = NULL WHERE sealed_by = ?", id)
-    db:execute("UPDATE devices SET sealed_by = NULL WHERE sealed_by = ?", id)
-    local changes = db:execute("DELETE FROM devices WHERE id = ?", id)
-    dbLog("[DB\xE2\x86\x92devices] -#" .. tostring(id))
-    return changes
-end
-
--- Mark one exit as Sealed by a device, or clear it with a nil deviceId. The
--- exit must already exist: `ex` seeds every listed direction, and a Seal does
--- not remove the exit it sits on -- `[D1]` answered "Exits: n,e." while refusing
--- `n`. Returns the number of rows changed, so 0 means no such exit.
-function TaDb.setExitSeal(fromId, direction, deviceId)
-    local changes = db:execute(
-        "UPDATE room_exits SET sealed_by = ? WHERE from_id = ? AND direction = ?",
-        deviceId, fromId, direction)
-    dbLog("[DB\xE2\x86\x92room_exits] seal: #" .. tostring(fromId) .. " " .. tostring(direction)
-        .. " by=" .. tostring(deviceId))
-    return changes
-end
-
--- Every exit a given device seals, as { from_id, direction, to_id } rows. The
--- reverse of setExitSeal, and the reason a device needs no seal target column:
--- one device can seal several exits, which `say komi` does.
-function TaDb.exitsSealedBy(deviceId)
-    return db:query(
-        "SELECT from_id, direction, to_id FROM room_exits WHERE sealed_by = ?"
-        .. " ORDER BY from_id, direction", deviceId) or {}
 end
 
 -- Coordinate-based identity: the one room in `areaId` with this display name

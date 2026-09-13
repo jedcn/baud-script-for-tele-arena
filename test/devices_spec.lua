@@ -1,31 +1,37 @@
--- Devices and Seals, tested against real SQLite rather than the call recorder.
+-- What the devices schema can and cannot hold.
 --
--- The point of the table is what it can express, so the assertions are on rows:
--- that one device can seal two exits, that deleting a device leaves nothing
--- dangling, that a teleport cannot be given a repeat behaviour. None of that is
--- visible in "did it issue this statement".
+-- There is no Lua API for writing devices, on purpose: there are on the order of
+-- twenty in the whole game, they have not changed in thirty years, and they are
+-- entered by hand in SQL. So these tests are SQL too. What they check is the
+-- shape -- that the schema can express the four effects, that one device can
+-- open several Seals, that sealing an exit does not disturb the topology -- since
+-- the shape is the only thing there is to get wrong.
+--
+-- They also pin the two absences that are deliberate, because a later reader
+-- would otherwise reasonably add them back: no Device State column, and no
+-- cascade on delete.
 
 local helper = require("test.test_helper")
 local SqliteDb = dofile("test/sqlite_db.lua")
 
-describe("Devices", function()
+describe("the devices schema", function()
 
     local db, TaDb
 
-    -- A tiny world: one area, four rooms, and exits between them. Built through
-    -- the real schema so the devices table is the one ta_db.lua creates.
+    -- A tiny world through the real schema, so the tables are the ones ta_db.lua
+    -- creates rather than a copy that can drift from them.
     before_each(function()
         helper.resetAll()
         db = SqliteDb.install()
         TaDb = dofile("ta_db.lua")
         local areaId = TaDb.ensureArea("stoneworks-level-1", "The Stoneworks, Level 1")
-        TaDb.discoverRoom("stonework chamber", areaId)      -- 1  [D1]
+        TaDb.discoverRoom("stonework chamber", areaId)      -- 1  the riddle chamber
         TaDb.discoverRoom("stonework corridor", areaId)     -- 2
-        TaDb.discoverRoom("stonework corridor", areaId)     -- 3  [S1] lever room
-        TaDb.discoverRoom("stonework corridor", areaId)     -- 4  [S2] stone room
+        TaDb.discoverRoom("stonework corridor", areaId)     -- 3  a lever room
+        TaDb.discoverRoom("stonework corridor", areaId)     -- 4  a stone room
         TaDb.recordKnownExit(1, "n")
         TaDb.recordKnownExit(1, "e")
-        TaDb.recordKnownExit(2, "s")
+        TaDb.recordKnownExit(1, "s")
         TaDb.recordKnownExit(4, "nw")
     end)
 
@@ -33,179 +39,153 @@ describe("Devices", function()
         if db then db.remove() end
     end)
 
-    describe("recording one", function()
+    local function addDevice(roomId, command, effect, extra)
+        db.exec("INSERT INTO devices (room_id, command, effect" .. (extra and extra.cols or "")
+            .. ") VALUES (" .. roomId .. ", '" .. command .. "', '" .. effect .. "'"
+            .. (extra and extra.vals or "") .. ")")
+        return db.one("SELECT MAX(id) AS id FROM devices").id
+    end
 
-        it("stores the room you operate it in, the command and the effect", function()
-            local id = TaDb.addDevice(3, "pull lever", "seal")
-            local d = TaDb.deviceById(id)
-            assert.are.equal(3, d.room_id)
-            assert.are.equal("pull lever", d.command)
+    describe("holds the four effects", function()
+
+        it("a seal, with no target column of its own", function()
+            local id = addDevice(3, "pull lever", "seal")
+            local d = db.one("SELECT * FROM devices WHERE id=" .. id)
             assert.are.equal("seal", d.effect)
+            -- The sealed thing points back at the device, so all three target
+            -- columns stay empty on a seal.
+            assert.is_nil(d.dest_room_id)
+            assert.is_nil(d.trap_room_id)
+            assert.is_nil(d.light_area_id)
         end)
 
-        it("refuses a second device with the same command in one room", function()
-            assert.is_not_nil(TaDb.addDevice(3, "pull lever", "seal"))
-            -- `pull lever` takes no argument, so two levers in one room could not
-            -- be told apart in the first place.
-            assert.is_nil(TaDb.addDevice(3, "pull lever", "seal"))
+        it("a teleport, with a fixed destination room", function()
+            local id = addDevice(4, "push stone", "teleport",
+                { cols = ", dest_room_id", vals = ", 2" })
+            assert.are.equal(2, db.one("SELECT dest_room_id FROM devices WHERE id=" .. id).dest_room_id)
         end)
 
-        it("allows two devices in one room when the commands differ", function()
-            -- The Hewn Granite case: move the tapestry, then pull the lever.
-            local tapestry = TaDb.addDevice(3, "move tapestry", "seal")
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            assert.is_not_nil(tapestry)
-            assert.is_not_nil(lever)
-            assert.are.equal(2, #TaDb.devicesInRoom(3))
+        it("a trap device, pointing at the room whose trap it disarms", function()
+            local id = addDevice(3, "pull lever", "trap",
+                { cols = ", trap_room_id", vals = ", 1" })
+            assert.are.equal(1, db.one("SELECT trap_room_id FROM devices WHERE id=" .. id).trap_room_id)
         end)
 
-        it("records that one device is behind another", function()
-            local tapestry = TaDb.addDevice(3, "move tapestry", "seal")
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            TaDb.setDeviceField(lever, "sealed_by", tapestry)
-            assert.are.equal(tapestry, TaDb.deviceById(lever).sealed_by)
-        end)
-
-        it("rejects a field that is not a device column", function()
-            local id = TaDb.addDevice(3, "pull lever", "seal")
-            local ok, err = TaDb.setDeviceField(id, "room_id = 9; DROP TABLE", "x")
-            assert.is_nil(ok)
-            assert.is_truthy(err)
+        it("a light device, pointing at an AREA and not a room", function()
+            local areaId = TaDb.areaIdBySlug("stoneworks-level-1")
+            local id = addDevice(4, "push stone", "light",
+                { cols = ", light_area_id", vals = ", " .. areaId })
+            assert.are.equal(areaId, db.one("SELECT light_area_id FROM devices WHERE id=" .. id).light_area_id)
         end)
     end)
 
-    describe("Seals", function()
+    describe("Seals, recorded on the exit they block", function()
 
-        it("marks an exit as sealed by a device", function()
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            assert.are.equal(1, TaDb.setExitSeal(1, "n", lever))
-            local row = db.one("SELECT sealed_by FROM room_exits WHERE from_id=1 AND direction='n'")
-            assert.are.equal(lever, row.sealed_by)
+        it("lets ONE device open SEVERAL exits", function()
+            -- The reason a seal has no target column on the device row. `say komi`
+            -- opens two doors; a single column could name only one of them.
+            local komi = addDevice(1, "say komi", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. komi
+                .. " WHERE from_id=1 AND direction IN ('e','s')")
+            local rows = db.rows("SELECT direction FROM room_exits WHERE sealed_by="
+                .. komi .. " ORDER BY direction")
+            assert.are.equal(2, #rows)
+            assert.are.equal("e", rows[1].direction)
+            assert.are.equal("s", rows[2].direction)
         end)
 
-        it("lets ONE device seal SEVERAL exits", function()
-            -- `say komi` opens two doors. This is the reason the seal is recorded
-            -- from the exit's side: a target column on the device row could name
-            -- only one of them.
-            local komi = TaDb.addDevice(1, "say komi", "seal")
-            TaDb.setExitSeal(1, "n", komi)
-            TaDb.setExitSeal(1, "e", komi)
-            local sealed = TaDb.exitsSealedBy(komi)
-            assert.are.equal(2, #sealed)
-            local dirs = {}
-            for _, e in ipairs(sealed) do dirs[#dirs + 1] = e.direction end
-            table.sort(dirs)
-            assert.are.same({ "e", "n" }, dirs)
-        end)
-
-        it("does not create the exit it seals", function()
-            -- A Seal goes ON an exit and does not remove or invent one: [D1]
-            -- answered "Exits: n,e." while refusing `n`.
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            assert.are.equal(0, TaDb.setExitSeal(1, "sw", lever))
-            assert.is_nil(db.one("SELECT 1 AS x FROM room_exits WHERE from_id=1 AND direction='sw'"))
-        end)
-
-        it("leaves the sealed exit's destination alone", function()
-            -- Topology is a map fact; whether a Device has been worked today is
+        it("leaves a walked destination alone when an exit is sealed", function()
+            -- Topology is a map fact; whether a device has been worked today is
             -- not. Sealing must not degrade a walked edge to a stub.
             TaDb.linkExit(1, "n", 2)
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            TaDb.setExitSeal(1, "n", lever)
-            local row = db.one("SELECT to_id FROM room_exits WHERE from_id=1 AND direction='n'")
-            assert.are.equal(2, row.to_id)
+            local lever = addDevice(3, "pull lever", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. lever
+                .. " WHERE from_id=1 AND direction='n'")
+            local e = db.one("SELECT to_id, sealed_by FROM room_exits WHERE from_id=1 AND direction='n'")
+            assert.are.equal(2, e.to_id)
+            assert.are.equal(lever, e.sealed_by)
         end)
 
-        it("clears a seal when given no device", function()
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            TaDb.setExitSeal(1, "n", lever)
-            TaDb.setExitSeal(1, "n", nil)
-            local row = db.one("SELECT sealed_by FROM room_exits WHERE from_id=1 AND direction='n'")
-            assert.is_nil(row.sealed_by)
-        end)
-    end)
-
-    describe("effects that point somewhere", function()
-
-        it("gives a teleport a fixed destination room", function()
-            local stone = TaDb.addDevice(4, "push stone", "teleport")
-            TaDb.setDeviceField(stone, "dest_room_id", 2)
-            assert.are.equal(2, TaDb.deviceById(stone).dest_room_id)
+        it("can seal a stub, before the far side has ever been walked", function()
+            -- You know [S1] seals [D1]'s north long before you know what is past
+            -- it. An exit-keyed seal can say that; a two-room one could not.
+            local lever = addDevice(3, "pull lever", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. lever
+                .. " WHERE from_id=1 AND direction='e'")
+            local e = db.one("SELECT to_id, sealed_by FROM room_exits WHERE from_id=1 AND direction='e'")
+            assert.is_nil(e.to_id)
+            assert.are.equal(lever, e.sealed_by)
         end)
 
-        it("gives a trap device the room whose trap it disarms", function()
-            local lever = TaDb.addDevice(3, "pull lever", "trap")
-            TaDb.setDeviceField(lever, "trap_room_id", 1)
-            assert.are.equal(1, TaDb.deviceById(lever).trap_room_id)
-        end)
-
-        it("gives a light device an area, not a room", function()
-            local areaId = TaDb.areaIdBySlug("stoneworks-level-1")
-            local stone = TaDb.addDevice(4, "push stone", "light")
-            TaDb.setDeviceField(stone, "light_area_id", areaId)
-            assert.are.equal(areaId, TaDb.deviceById(stone).light_area_id)
+        it("holds a device that is itself behind another device", function()
+            -- Hewn Granite: the lever is behind the tapestry, so `move tapestry`
+            -- comes first. A Seal over a Device rather than over an Exit.
+            local tapestry = addDevice(3, "move tapestry", "seal")
+            local lever = addDevice(3, "pull lever", "seal",
+                { cols = ", sealed_by", vals = ", " .. tapestry })
+            assert.are.equal(tapestry, db.one("SELECT sealed_by FROM devices WHERE id=" .. lever).sealed_by)
         end)
     end)
 
-    describe("repeat behaviour", function()
+    describe("two devices in one room", function()
 
-        it("stores once and toggle", function()
-            local a = TaDb.addDevice(3, "pull lever", "seal")
-            TaDb.setDeviceField(a, "repeats", "once")
-            assert.are.equal("once", TaDb.deviceById(a).repeats)
-            TaDb.setDeviceField(a, "repeats", "toggle")
-            assert.are.equal("toggle", TaDb.deviceById(a).repeats)
+        it("is allowed when the commands differ", function()
+            assert.is_not_nil(addDevice(3, "move tapestry", "seal"))
+            assert.is_not_nil(addDevice(3, "pull lever", "seal"))
+            assert.are.equal(2, db.one("SELECT COUNT(*) AS n FROM devices WHERE room_id=3").n)
         end)
 
-        it("leaves it NULL by default, which is what a teleport keeps", function()
-            local stone = TaDb.addDevice(4, "push stone", "teleport")
-            assert.is_nil(TaDb.deviceById(stone).repeats)
-        end)
-    end)
-
-    describe("deleting one", function()
-
-        it("un-seals every exit that named it, so nothing dangles", function()
-            -- Nothing enforces these references, so the cleanup has to be done
-            -- in code or the exit keeps an id that is gone.
-            local komi = TaDb.addDevice(1, "say komi", "seal")
-            TaDb.setExitSeal(1, "n", komi)
-            TaDb.setExitSeal(1, "e", komi)
-            TaDb.deleteDevice(komi)
-            assert.are.equal(0, db.one(
-                "SELECT COUNT(*) AS n FROM room_exits WHERE sealed_by IS NOT NULL").n)
-        end)
-
-        it("un-points any device that was behind it", function()
-            local tapestry = TaDb.addDevice(3, "move tapestry", "seal")
-            local lever = TaDb.addDevice(3, "pull lever", "seal")
-            TaDb.setDeviceField(lever, "sealed_by", tapestry)
-            TaDb.deleteDevice(tapestry)
-            assert.is_nil(TaDb.deviceById(lever).sealed_by)
-        end)
-
-        it("reports 0 for a device that was not there", function()
-            assert.are.equal(0, TaDb.deleteDevice(999))
+        it("is refused for the same command twice", function()
+            -- `pull lever` takes no argument, so two levers in one room could not
+            -- be told apart in the game either.
+            addDevice(3, "pull lever", "seal")
+            local ok = pcall(function()
+                db.exec("INSERT INTO devices (room_id, command, effect)"
+                    .. " VALUES (3, 'pull lever', 'seal')")
+            end)
+            assert.is_false(ok)
         end)
     end)
 
-    describe("the schema after migration", function()
+    describe("deliberate absences", function()
 
-        it("has dropped room_notes", function()
-            assert.is_nil(db.one(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='room_notes'"))
-        end)
-
-        it("holds no record of whether a device has been worked today", function()
+        it("has no column for whether a device has been worked today", function()
             -- Device State belongs to this Reset, not to the map. A column for it
-            -- would be wrong by 4am.
+            -- would be wrong by 4am, so nobody should add one.
             local cols = {}
-            for _, c in ipairs(db.rows("PRAGMA table_info(devices)")) do
-                cols[c.name] = true
-            end
+            for _, c in ipairs(db.rows("PRAGMA table_info(devices)")) do cols[c.name] = true end
             assert.is_nil(cols.state)
             assert.is_nil(cols.is_open)
             assert.is_nil(cols.thrown)
+            assert.is_nil(cols.open)
+        end)
+
+        it("does NOT cascade a delete, so hand-editing must un-point first", function()
+            -- Recorded rather than fixed. SQLite is not enforcing these
+            -- references (PRAGMA foreign_keys is 0), so deleting a device leaves
+            -- exits pointing at an id that is gone. Every deletion in SQL has to
+            -- clear room_exits.sealed_by and devices.sealed_by itself -- which is
+            -- what CLAUDE.md's device section says to do.
+            local komi = addDevice(1, "say komi", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. komi .. " WHERE from_id=1 AND direction='e'")
+            db.exec("DELETE FROM devices WHERE id=" .. komi)
+            local dangling = db.one("SELECT COUNT(*) AS n FROM room_exits e"
+                .. " WHERE e.sealed_by IS NOT NULL"
+                .. " AND NOT EXISTS (SELECT 1 FROM devices d WHERE d.id = e.sealed_by)")
+            assert.are.equal(1, dangling.n)
+        end)
+    end)
+
+    describe("room entry", function()
+
+        it("announces the devices you can work here", function()
+            -- The one thing the script reads devices for: a lever should reach you
+            -- before you walk past it.
+            addDevice(3, "pull lever", "seal", { cols = ", repeats", vals = ", 'once'" })
+            local list = TaDb.devicesInRoom(3)
+            assert.are.equal(1, #list)
+            assert.are.equal("pull lever", list[1].command)
+            assert.are.equal("once", list[1].repeats)
         end)
     end)
 end)

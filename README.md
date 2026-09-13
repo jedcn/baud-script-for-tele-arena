@@ -87,65 +87,70 @@ spoken riddle answer, a tapestry to move aside. They are the mechanics the exit
 graph cannot express on its own, because a Device is almost never in the room it
 affects — a lever here disarms a trap twenty rooms away.
 
-Recorded structurally, not as prose, so the map can be reasoned about. The
-vocabulary is `GLOSSARY.md`'s and the columns follow it.
+There are on the order of twenty in the whole game and they have not changed in
+thirty years, so **there is no capture workflow**: the `devices` table is filled
+in by hand in SQL. The script only ever reads it, to announce what you can work
+in a room as you enter (`[device] …`, while mapping).
 
-A Device belongs to the room you **operate** it in. Its `effect` is one of four:
+The vocabulary is `GLOSSARY.md`'s and the columns follow it.
 
-| effect | what it acts on |
+### The table
+
+`devices` — a Device belongs to the room you **operate** it in, never the room it
+affects.
+
+| column | meaning |
 |---|---|
-| `seal` | opens (or toggles) a **Seal** — a shut door, a wall, a mist |
-| `teleport` | moves whoever worked it, always to the same room |
-| `trap` | disarms (or re-arms) the trap in some room |
-| `light` | lights a whole **area**, never a single room |
+| `room_id` | where you stand to work it |
+| `command` | what you send, verbatim: `pull lever`, `push stone`, `say komi`, `move tapestry`. Free text — the verbs are an open set |
+| `effect` | `seal`, `teleport`, `trap` or `light` |
+| `repeats` | `once` (working it again this Reset does nothing more) or `toggle` (each use reverses the last). NULL for a `teleport`, which is neither |
+| `dest_room_id` | `teleport` only: where it lands you, always the same room |
+| `trap_room_id` | `trap` only: whose trap it disarms |
+| `light_area_id` | `light` only: an **area**, never a room — the level lives in the area slug, so one id names both |
+| `sealed_by` | this Device is itself behind a Seal cleared by that Device (the Hewn Granite tapestry) |
+| `note` | free text, about the Device rather than scattered on a room |
+| `UNIQUE (room_id, command)` | two levers in one room could not be told apart by `pull lever` anyway |
 
-- **`map-add-device <effect> <command>`** — record one in the room you're
-  standing in, e.g. `map-add-device seal pull lever`,
-  `map-add-device teleport push stone`, `map-add-device seal say komi`. The
-  effect comes first so the command can contain spaces. Prints the new id.
-
-- **`map-device-repeats <id> once|toggle`** — whether working it again does
-  anything more *this Reset*. `once` and the Seal stays open however many times
-  you pull; `toggle` and the second pull shuts it. Refused for a teleport, which
-  is neither — it fires every time and leaves no state behind.
-
-- **`map-device-dest <id> <room-slug>`** — where a teleport lands you.
-- **`map-device-trap <id> <room-slug>`** — the room whose trap it disarms.
-- **`map-device-light <id> <area-slug>`** — the area it lights. One argument
-  names both area and level, since the level lives in the slug
-  (`labyrinth-level-2`).
-- **`map-device-behind <id> <other-id>`** — this Device can't be worked until
-  that one has been. The Hewn Granite case: the lever is behind the tapestry, so
-  `move tapestry` comes first.
-- **`map-device-note <id> <text>`** — free text, attached to the Device it's
-  about rather than scattered on a room.
-- **`map-devices`** / **`map-devices <room-slug>`** / **`map-devices all`** — list.
-- **`map-del-device <id>`** — remove it, un-pointing anything that named it.
-
-### Seals
-
-A Seal is recorded on the **exit it blocks**, naming the Device that opens it —
-the same place and shape as `lock_key`/`lock_door`, which is the Seal a carried
-key clears.
-
-- **`map-seal <dir> <device-id>`** — the exit `dir` out of the room you're in is
-  sealed, and that Device opens it.
-- **`map-seal <room-slug> <dir> <device-id>`** — for an exit elsewhere, which is
-  the usual case: the Device and the Seal are normally rooms apart.
-- **`map-unseal <room-slug> <dir>`** — it turned out not to be sealed.
+`room_exits.sealed_by` — a **Seal** is recorded on the exit it blocks, naming the
+Device that opens it. Same place and shape as `lock_key`/`lock_door`, which is the
+Seal a carried key clears.
 
 Recording it this way round is what lets **one Device open several Seals** —
-`say komi` opens two doors, which a single target column on the Device could not
-express.
+`say komi` opens two doors, which a target column on the Device could not express.
+It also lets you seal an exit whose far side has never been walked: you know
+`[S1]` seals `[D1]`'s north long before you know what is past it.
 
-Two things this deliberately does not do. A Seal does **not** remove the exit it
-sits on: `[D1]` answered `Exits: n,e.` and refused `n` in the same breath, so
-`ex` reports topology and passage is a separate question. And nothing records
-whether a Device has been worked **today** — that's Device State, a fact about
-this Reset rather than about the map, and it would be wrong by 4am.
+### Filling it in
 
-Devices surface on **room entry** as `[device] …` while mapping, so a lever
-reaches you before you walk past it, and in the `just report` room panel.
+```sql
+-- a riddle that opens two doors
+INSERT INTO devices (room_id, command, effect, repeats)
+  VALUES ((SELECT id FROM rooms WHERE slug='stonework-chamber'), 'say komi', 'seal', 'once');
+UPDATE room_exits SET sealed_by = last_insert_rowid()
+  WHERE from_id = (SELECT id FROM rooms WHERE slug='stonework-chamber')
+    AND direction IN ('e','s');
+
+-- a stone that teleports, always to the same room
+INSERT INTO devices (room_id, command, effect, dest_room_id) VALUES (
+  (SELECT id FROM rooms WHERE slug='stonework-corridor-20'), 'push stone', 'teleport',
+  (SELECT id FROM rooms WHERE slug='stonework-corridor-25'));
+```
+
+**Deleting one needs care.** `PRAGMA foreign_keys` is off, so nothing un-points
+what named it — clear `room_exits.sealed_by` and `devices.sealed_by` yourself
+first, or you leave exits pointing at an id that is gone. There is a test pinning
+that this does *not* cascade, so the behaviour is deliberate rather than forgotten.
+
+### Two things it deliberately does not record
+
+A Seal does **not** remove the exit it sits on: `[D1]` answered `Exits: n,e.` and
+refused `n` in the same breath, so `ex` reports topology and passage is a separate
+question.
+
+And nothing records whether a Device has been worked **today**. That is Device
+State, a fact about this Reset rather than about the map, and it would be wrong by
+4am.
 
 ## Viewing the map
 

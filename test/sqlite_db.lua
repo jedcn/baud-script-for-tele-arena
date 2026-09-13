@@ -106,6 +106,15 @@ local function makeDb(dbPath, state)
         if not changes then
             error("sqlite3 failed for: " .. stmt .. "\n" .. out)
         end
+        -- A failed statement still lets the trailing SELECT run, so the CHANGES
+        -- line matches and the error would pass unnoticed -- which is how a
+        -- UNIQUE violation looked like a success. Anything sqlite3 printed
+        -- besides that line is a complaint, and a silent failure in a test
+        -- helper is worse than a loud one.
+        local noise = out:gsub("CHANGES%-?%d+ROWID%-?%d+%s*", "")
+        if noise:find("Error", 1, true) or noise:find("error", 1, true) then
+            error("sqlite3 rejected: " .. stmt .. "\n" .. noise)
+        end
         state.lastRowid = math.tointeger(tonumber(rowid))
         return math.tointeger(tonumber(changes))
     end
@@ -171,6 +180,11 @@ function M.install()
     end
     function handle.one(sql)
         return makeDb(dbPath, state):queryOne(sql)
+    end
+    -- Writes, for tests about what the SCHEMA can hold rather than about a Lua
+    -- API. The devices table is populated by hand in SQL, so its tests are too.
+    function handle.exec(sql)
+        return makeDb(dbPath, state):execute(sql)
     end
     function handle.remove()
         for _, suffix in ipairs({ "", "-wal", "-shm" }) do

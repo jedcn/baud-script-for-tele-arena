@@ -6153,11 +6153,6 @@ end, { type = "regex" })
 -- single function, and a file is a function. See ta_nav.lua's header for the
 -- seam (everything crosses through taPackage). Loaded here, where the section
 -- used to sit, so trigger and alias registration order is unchanged.
--- Devices and their seals. Its own chunk for the reason ta_nav.lua is:
--- main.lua has about thirty of its 200 local slots left, and a new section of
--- aliases is exactly what CLAUDE.md says to move out rather than spend them on.
-dofile(scriptDir .. "ta_devices.lua")
-
 dofile(scriptDir .. "ta_nav.lua")
 
 -- =========================================================================
