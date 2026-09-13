@@ -23,6 +23,7 @@ export type Box = { id: string; label: string; r: number; c0: number; c1: number
 export type Drawing = {
   lines: string[]; boxes: Box[];
   edges: Map<string, string>;      // "boxA|boxB" -> direction A->B
+  legend: Map<string, string>;     // label -> the key line that explains it
 };
 
 const REVERSE: Record<string, string> = {
@@ -40,6 +41,13 @@ export function parseDrawing(text: string): Drawing {
   // The legend begins at the first "X = ..." line; everything above it is the map.
   const end = all.findIndex(l => /^\s*\S{1,4}\s=\s/.test(l));
   const grid = end >= 0 ? all.slice(0, end) : all;
+  // Keep the legend: it is the only place a Teleport's destination is written
+  // down, since no connector can draw one.
+  const legend = new Map<string, string>();
+  for (const line of end >= 0 ? all.slice(end) : []) {
+    const m = line.match(/^\s*(\S{1,4})\s*[=-]\s*(.+?)\s*$/);
+    if (m) legend.set(m[1], m[2]);
+  }
   const W = Math.max(...grid.map(l => l.length)) + 8;
   const g = grid.map(l => l.padEnd(W, ' '));
   const at = (r: number, c: number) => (r >= 0 && r < g.length && c >= 0 && c < W) ? g[r][c] : ' ';
@@ -104,7 +112,7 @@ export function parseDrawing(text: string): Drawing {
       add(near(r - 1, c, 'R'), near(rB + 1, cB, 'L'), 'sw');
     }
   }
-  return { lines: g, boxes, edges };
+  return { lines: g, boxes, edges, legend };
 }
 
 /** Directions out of a drawing box, to the box each reaches. */
@@ -113,6 +121,23 @@ export function drawingExits(d: Drawing, boxId: string): Record<string, string> 
   for (const [k, dir] of d.edges) {
     const [a, b] = k.split('|');
     if (a === boxId) out[dir] = b;
+  }
+  return out;
+}
+
+/**
+ * Teleport destinations, read from the legend: "S2 = Push Stone to go to S3".
+ *
+ * A Teleport cannot be drawn -- there is no connector for "you end up over
+ * there" -- so the drawing shows the destination as a detached box and says where
+ * it came from only in words. Which means a walk of the boxes can never reach it,
+ * and the [S3] strip read as unwalked after being walked.
+ */
+export function teleportLinks(d: Drawing): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const [label, text] of d.legend) {
+    const m = text.match(/to go to (\S+?)\.?$/);
+    if (m && d.boxes.some(b => b.label === m[1])) out.set(label, m[1]);
   }
   return out;
 }
@@ -127,7 +152,14 @@ export type Room = { id: number; slug: string; exits: Record<string, number | nu
  * box already taken is reported rather than reused, since that means the two
  * graphs disagree about shape.
  */
-export function pairRooms(d: Drawing, rooms: Room[], startRoomId: number, startBoxId: string) {
+export function pairRooms(
+  d: Drawing, rooms: Room[], startRoomId: number, startBoxId: string,
+  // room id -> room id, from devices with effect='teleport'. Without these the
+  // walk stops at every Teleport, because the drawing has no edge to follow.
+  teleports: Map<number, number> = new Map(),
+) {
+  const links = teleportLinks(d);
+  const boxByLabel = new Map(d.boxes.filter(b => b.label).map(b => [b.label, b.id]));
   const byId = new Map(rooms.map(r => [r.id, r]));
   const pair = new Map<number, string>([[startRoomId, startBoxId]]);
   const taken = new Set<string>([startBoxId]);
@@ -151,6 +183,19 @@ export function pairRooms(d: Drawing, rooms: Room[], startRoomId: number, startB
         continue;
       }
       pair.set(to, beyond); taken.add(beyond); queue.push(to);
+    }
+    // Then the Teleport, if this room has one and the legend says where its box
+    // lands. The destination is a detached box, so nothing else can reach it.
+    const dest = teleports.get(id);
+    const label = d.boxes.find(b => b.id === boxId)!.label;
+    const targetLabel = label ? links.get(label) : undefined;
+    const target = targetLabel ? boxByLabel.get(targetLabel) : undefined;
+    if (dest != null && target && !pair.has(dest)) {
+      if (taken.has(target)) {
+        problems.push(`${byId.get(dest)!.slug} wants drawing box [${targetLabel}], already paired`);
+      } else {
+        pair.set(dest, target); taken.add(target); queue.push(dest);
+      }
     }
   }
   return { pair, problems };
@@ -231,7 +276,16 @@ if (import.meta.main) {
     process.exit(1);
   }
 
-  const { pair, problems } = pairRooms(drawing, rooms, start.id, startBox.id);
+  // Teleports come from the devices table, which is where a Teleport's
+  // destination lives -- it is deliberately not a compass edge.
+  const teleports = new Map<number, number>();
+  for (const t of db.prepare(
+    `SELECT room_id, dest_room_id FROM devices
+     WHERE effect = 'teleport' AND dest_room_id IS NOT NULL`).all() as any[]) {
+    teleports.set(t.room_id, t.dest_room_id);
+  }
+
+  const { pair, problems } = pairRooms(drawing, rooms, start.id, startBox.id, teleports);
   const mapped = new Set(pair.values());
 
   console.log(`\n${slug} — ${pair.size} of ${drawing.boxes.length} rooms in the drawing\n`);

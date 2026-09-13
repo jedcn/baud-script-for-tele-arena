@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { parseDrawing, drawingExits, pairRooms, renderCoverage, type Room } from './coverage';
+import { parseDrawing, drawingExits, pairRooms, renderCoverage, teleportLinks, type Room } from './coverage';
 
 // A miniature shrine drawing, using every connector the real ones do.
 //
@@ -133,5 +133,71 @@ describe('renderCoverage', () => {
   it('shows a landmark in brackets when walked, parentheses when not', () => {
     expect(renderCoverage(d, new Set([cBox.id])).join('\n')).toContain('[C]');
     expect(renderCoverage(d, new Set()).join('\n')).toContain('(C)');
+  });
+});
+
+// A Teleport cannot be drawn: there is no connector for "you end up over there".
+// So the drawing leaves the destination detached and says where it came from only
+// in the legend -- which meant a walk of the boxes could never reach it, and the
+// [S3] strip read as unwalked after being walked.
+//
+//   [@]-[A]      [B]-[ ]
+//
+// A teleports to B, and nothing connects them on the page.
+const TELE = `[@]-[A]      [B]-[ ]
+
+@ = the start
+A = Push Stone to go to B
+B = where you land
+`;
+
+describe('teleportLinks', () => {
+  it('reads a destination out of the legend', () => {
+    expect(teleportLinks(parseDrawing(TELE)).get('A')).toBe('B');
+  });
+
+  it('ignores a legend line naming no box', () => {
+    const d = parseDrawing('[@]-[A]\n\n@ = start\nA = Push Stone to go to Narnia\n');
+    expect(teleportLinks(d).has('A')).toBe(false);
+  });
+
+  it('ignores legend lines that are not teleports', () => {
+    const d = parseDrawing(TELE);
+    expect(teleportLinks(d).has('@')).toBe(false);
+    expect(teleportLinks(d).has('B')).toBe(false);
+  });
+});
+
+describe('pairRooms across a teleport', () => {
+  const d = parseDrawing(TELE);
+  const at = (l: string) => d.boxes.find(b => b.label === l)!.id;
+  // Our graph has no edge from 2 to 3: the link lives on the device.
+  const rooms: Room[] = [
+    { id: 1, slug: 'start', exits: { e: 2 } },
+    { id: 2, slug: 'stone-room', exits: { w: 1 } },
+    { id: 3, slug: 'landed', exits: { e: 4 } },
+    { id: 4, slug: 'beyond', exits: { w: 3 } },
+  ];
+
+  it('cannot reach the detached boxes without the device', () => {
+    const { pair } = pairRooms(d, rooms, 1, at('@'));
+    expect(pair.size).toBe(2);
+  });
+
+  it('reaches them when the device says where the stone lands', () => {
+    const { pair, problems } = pairRooms(d, rooms, 1, at('@'), new Map([[2, 3]]));
+    expect(problems).toEqual([]);
+    expect(pair.size).toBe(4);
+    expect(pair.get(3)).toBe(at('B'));
+  });
+
+  it('reports a destination whose box is already paired', () => {
+    // Two stones whose legend lines both land on [B], and two different rooms of
+    // ours claiming to be where each lands. Both cannot be [B].
+    const two = parseDrawing(
+      '[@]-[A]      [B]-[ ]\n\n@ = Push Stone to go to B\nA = Push Stone to go to B\nB = where you land\n');
+    const atTwo = (l: string) => two.boxes.find(b => b.label === l)!.id;
+    const { problems } = pairRooms(two, rooms, 1, atTwo('@'), new Map([[1, 3], [2, 4]]));
+    expect(problems.some(p => p.includes('already paired'))).toBe(true);
   });
 });
