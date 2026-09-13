@@ -25,6 +25,17 @@ local RESUME = "logs/session-tojolias-2026-09-12T10-18-42.log"
 -- carries its own.
 local SETUP = { { "map-area stoneworks-level-1 The Stoneworks, Level 1" } }
 
+-- Two anchors the logs name by a slug that no longer means the same room. A slug
+-- is a function of MINT ORDER, and fixing findLoopClosure made the first session
+-- mint the two rooms it had been losing -- which renumbered every later corridor
+-- by one. Left alone, each resumption anchors on the room BEFORE the one it
+-- wanted and walks off into fresh territory (37 rooms instead of 29).
+local ANCHORS = {
+    ["map-here stonework-corridor-20"] = "map-here stonework-corridor-21",  -- [S2]
+    ["map-here stonework-corridor-24"] = "map-here stonework-corridor-25",  -- [!]
+}
+
+
 -- Four moves back over already-mapped rooms to the frontier at
 -- stonework-corridor-16, then four into new ground.
 local RETRACE = { "nw", "w", "nw", "n" }
@@ -34,10 +45,10 @@ local NEW = { "n", "ne", "e", "ne" }
 -- reachable on foot -- the legend also offers it via a push-stone Teleport from
 -- S3, which is a different way in, not a second room.
 local EXPECTED_NEW = {
-    { slug = "stonework-corridor-21", exits = "ne,s" },
-    { slug = "stonework-corridor-22", exits = "e,sw" },
-    { slug = "stonework-corridor-23", exits = "ne,w" },
-    { slug = "stonework-corridor-24", exits = "sw" },
+    { slug = "stonework-corridor-22", exits = "ne,s" },
+    { slug = "stonework-corridor-23", exits = "e,sw" },
+    { slug = "stonework-corridor-24", exits = "ne,w" },
+    { slug = "stonework-corridor-25", exits = "sw" },
 }
 
 local function roomBySlug(g, slug)
@@ -52,7 +63,7 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
     local g
 
     setup(function()
-        g = replay.replayChain({ OUTER, RESUME }, { setup = SETUP })
+        g = replay.replayChain({ OUTER, RESUME }, { setup = SETUP, rewrite = ANCHORS })
     end)
 
     teardown(function()
@@ -80,10 +91,10 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
 
     describe("the graph after both sessions", function()
 
-        it("holds 27 rooms: 23 from the first walk plus 4 new", function()
+        it("holds 29 rooms: 25 from the first walk plus 4 new", function()
             -- The four retraced rooms must mint nothing. Re-entering a mapped
             -- room is the case the mapper gets right, and this is what says so.
-            assert.are.equal(27, g.roomCount())
+            assert.are.equal(29, g.roomCount())
         end)
 
         it("attempts no loop closure at all in this session", function()
@@ -99,12 +110,12 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
         end)
 
         it("spends the frontier it crossed and opens no new one", function()
-            -- Four stubs before, three after: corridor-16's `n` was walked and
-            -- the new rooms are a dead-end spur, so nothing was added.
-            assert.are.equal(3, #g.stubs())
+            -- Six before, five after: the frontier room's `n` was walked and the
+            -- new rooms are a dead-end spur, so nothing was added.
+            assert.are.equal(5, #g.stubs())
         end)
 
-        it("leaves the three remaining stubs where the drawing has more to walk",
+        it("leaves the five remaining stubs where the drawing has more to walk",
             function()
                 local slugs = {}
                 for _, s in ipairs(g.stubs()) do
@@ -114,10 +125,14 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
                     slugs[#slugs + 1] = row.slug .. " " .. dir
                 end
                 table.sort(slugs)
+                -- Sorted as Lua sorts them: a space precedes a hyphen, so the
+                -- unsuffixed chamber's two stubs come before chamber-1's.
                 assert.are.same({
                     "stonework-chamber e",
-                    "stonework-corridor-7 nw",
-                    "stonework-corridor-9 ne",
+                    "stonework-chamber n",
+                    "stonework-chamber-1 e",
+                    "stonework-corridor-10 ne",
+                    "stonework-corridor-8 nw",
                 }, slugs)
             end)
     end)
@@ -139,7 +154,7 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
             for _, want in ipairs(EXPECTED_NEW) do
                 at[#at + 1] = assert(roomBySlug(g, want.slug))
             end
-            local frontier = assert(roomBySlug(g, "stonework-corridor-16"))
+            local frontier = assert(roomBySlug(g, "stonework-corridor-17"))
             assert.are.equal(at[1].id, frontier.exits.n)
             assert.are.equal(frontier.id, at[1].exits.s)
             assert.are.equal(at[2].id, at[1].exits.ne)
@@ -148,7 +163,7 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
         end)
 
         it("ends at a dead end, which the drawing marks [!]", function()
-            local last = assert(roomBySlug(g, "stonework-corridor-24"))
+            local last = assert(roomBySlug(g, "stonework-corridor-25"))
             assert.are.equal("sw", g.exitSet(last.id))
             assert.is_truthy(last.exits.sw, "its one exit should be walked")
         end)
@@ -161,8 +176,7 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
             -- corridor-22 is the one that says "continues to the" rather than
             -- "runs to the"; the prose check has to read both verbs or it skips
             -- this room and calls the level clean.
-            assert.is_truthy(#g.corridorMismatches() < 2,
-                "this session should add no new prose/edge disagreement")
+            assert.are.same({}, g.corridorMismatches())
             assert.is_truthy(g.corridorsChecked() >= 25,
                 "the prose check should be examining the new corridors")
         end)

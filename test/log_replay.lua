@@ -65,6 +65,15 @@ end
 -- into which Area -- the test has to supply that. Newer logs carry the alias
 -- lines themselves and need no setup.
 --
+-- `opts.rewrite` substitutes command text as the log is replayed, keyed by the
+-- exact line. It exists for one reason, and it is not a convenience: a room's
+-- slug is a function of MINT ORDER, so `map-here stonework-corridor-20` only
+-- names the room the log meant against the database that log produced. Fixing
+-- the mapper so an earlier session mints two rooms it had been losing renumbered
+-- every later slug by one, and the resumption's anchor silently moved to the room
+-- before the one it wanted. Stating the substitution in the fixture keeps the
+-- replay honest about the walk while naming the right room.
+--
 -- `opts.stopAfter`, if set, stops feeding once that many server lines have gone
 -- through, for tests that want the graph mid-walk.
 function M.replay(path, opts)
@@ -136,7 +145,7 @@ function M.replayChain(paths, opts)
                     typed = typed + 1
                 end
             elseif kind == "alias" and text ~= "" then
-                runCommand(text)
+                runCommand((opts.rewrite or {})[text] or text)
                 aliased = aliased + 1
             end
         end

@@ -562,6 +562,14 @@ function TaDb.roomIdsByName(name)
     return ids
 end
 
+-- The description recorded for a room id, or nil when the room is gone or has
+-- never been looked at. Used by findLoopClosure as the strongest identity signal
+-- available, so an absent one must read as "no evidence" rather than "no match".
+function TaDb.roomDescription(roomId)
+    local row = db:queryOne("SELECT description FROM rooms WHERE id = ?", roomId)
+    return row and row.description
+end
+
 -- The display name recorded for a room id (nil if the room is gone).
 function TaDb.roomName(roomId)
     local row = db:queryOne("SELECT name FROM rooms WHERE id = ?", roomId)
@@ -703,6 +711,18 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back)
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
     end
+    -- The description of the room we are standing in, already stored by the time
+    -- this runs: the `look` accumulator terminates on the same "Exits:" line that
+    -- drives closure and is registered first (main.lua 1063 vs 1597), so it has
+    -- written to the provisional room before we get here.
+    --
+    -- This is the check that was missing. Name and exit-set are nearly worthless
+    -- as identity here -- 176 rooms are called "stonework corridor" -- and on
+    -- 2026-09-11 two different chambers matched on both while the candidate's
+    -- return door happened to be an unwalked stub, so the mapper merged them and
+    -- destroyed one. Their descriptions were nothing alike. The higher-entropy
+    -- evidence was already in hand and simply not consulted.
+    local mine = TaDb.roomDescription(excludeId)
     local match
     for _, id in ipairs(TaDb.roomIdsByName(name)) do
         if id ~= excludeId then
@@ -711,6 +731,21 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back)
             for dir in pairs(have) do
                 haveCount = haveCount + 1
                 if not want[dir] then ok = false; break end
+            end
+            -- A description we can compare and that DIFFERS means a different
+            -- room, so refuse. Deliberately strict, and it can be wrong in one
+            -- direction: a Description carries Device State (a Seal reads as
+            -- "fitted with massive iron doors" shut and "which stand open" open),
+            -- so a genuine closure onto a room whose seal has since moved will be
+            -- refused and mint a duplicate instead. That is the better failure --
+            -- a duplicate is visible and mergeable, where a wrong merge deletes a
+            -- room and misattaches everything walked after it.
+            --
+            -- No description on either side is not evidence of anything, so it
+            -- falls through to the old behaviour rather than blocking.
+            if ok and mine and TaDb.roomDescription(id)
+                and TaDb.roomDescription(id) ~= mine then
+                ok = false
             end
             -- Same exit-set, and the return door exists but is still unwalked
             -- (a real numeric to_id means it already leads somewhere else).

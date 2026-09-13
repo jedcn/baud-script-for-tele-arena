@@ -34,6 +34,17 @@ local SHUT = "logs/session-tojolias-2026-09-12T10-37-22.log"
 -- Only OUTER predates baud recording aliases.
 local SETUP = { { "map-area stoneworks-level-1 The Stoneworks, Level 1" } }
 
+-- Two anchors the logs name by a slug that no longer means the same room. A slug
+-- is a function of MINT ORDER, and fixing findLoopClosure made the first session
+-- mint the two rooms it had been losing -- which renumbered every later corridor
+-- by one. Left alone, each resumption anchors on the room BEFORE the one it
+-- wanted and walks off into fresh territory (37 rooms instead of 29).
+local ANCHORS = {
+    ["map-here stonework-corridor-20"] = "map-here stonework-corridor-21",  -- [S2]
+    ["map-here stonework-corridor-24"] = "map-here stonework-corridor-25",  -- [!]
+}
+
+
 -- Eight moves back over mapped rooms from [!] to [D1], then the ninth that the
 -- game refused.
 local WALK = { "sw", "w", "sw", "s", "w", "w", "w", "w", "n" }
@@ -50,7 +61,7 @@ describe("Stoneworks level 1 — an exit the game lists but refuses", function()
     local g
 
     setup(function()
-        g = replay.replayChain({ OUTER, RESUME, SHUT }, { setup = SETUP })
+        g = replay.replayChain({ OUTER, RESUME, SHUT }, { setup = SETUP, rewrite = ANCHORS })
     end)
 
     teardown(function()
@@ -84,11 +95,11 @@ describe("Stoneworks level 1 — an exit the game lists but refuses", function()
         end)
 
         it("mints no room", function()
-            assert.are.equal(27, g.roomCount())
+            assert.are.equal(29, g.roomCount())
         end)
 
         it("adds no exit to the room it was refused from", function()
-            local d1 = assert(roomBySlug(g, "stonework-chamber-1"))
+            local d1 = assert(roomBySlug(g, "stonework-chamber-2"))
             assert.are.equal("e,n", g.exitSet(d1.id))
         end)
 
@@ -107,7 +118,7 @@ describe("Stoneworks level 1 — an exit the game lists but refuses", function()
             -- Walked on the 11th, shut on the 12th. Topology is a map fact;
             -- whether a Device has been operated today is not, so the edge
             -- stays and the graph does not learn to doubt it.
-            local d1 = assert(roomBySlug(g, "stonework-chamber-1"))
+            local d1 = assert(roomBySlug(g, "stonework-chamber-2"))
             local north = d1.exits.n
             assert.is_truthy(north, "north should still be a walked edge, not a stub")
             local back = g.db.one(
@@ -117,13 +128,13 @@ describe("Stoneworks level 1 — an exit the game lists but refuses", function()
         end)
 
         it("does not turn the refusal into a new frontier", function()
-            -- Three stubs, the same three as before this session. A refused move
-            -- is not an unexplored exit.
-            assert.are.equal(3, #g.stubs())
+            -- Five stubs, the same five as before this session. A refused move is
+            -- not an unexplored exit.
+            assert.are.equal(5, #g.stubs())
         end)
 
         it("keeps the Description that explains the refusal", function()
-            local d1 = assert(roomBySlug(g, "stonework-chamber-1"))
+            local d1 = assert(roomBySlug(g, "stonework-chamber-2"))
             assert.is_truthy(d1.description:find("obscured by a strange mist", 1, true))
             assert.is_truthy(d1.description:find("only visible exit is east", 1, true))
         end)

@@ -12,16 +12,15 @@
 --
 -- Two groups below, and the difference matters:
 --
---   "reproduces the session"  Characterisation. These lock the harness down by
---                            asserting the replay matches what the live run
---                            actually produced -- bug and all. If one of these
---                            breaks, the harness has drifted from reality and
---                            nothing else here can be trusted.
+-- The expectations are taken from map/shrine/stoneworks-1.txt, checked against
+-- the walk move by move before being frozen.
 --
---   "builds a correct graph"  The real expectations, taken from the shrine
---                             drawing. THESE FAIL TODAY. That is the point of
---                             the suite: they are the specification for the
---                             mapper fix, not a description of it.
+-- They were the SPECIFICATION for a fix rather than a description of one, and
+-- failed for two days while a second group asserted the buggy behaviour instead
+-- (which is what proved the harness reproduced the live session faithfully). The
+-- fix landed on 2026-09-13: findLoopClosure now refuses a candidate whose stored
+-- Description differs from the one just captured. Both groups collapsed into this
+-- one when it did.
 
 local replay = dofile("test/log_replay.lua")
 
@@ -77,41 +76,22 @@ describe("Stoneworks level 1 — outer-edge walk", function()
         end)
     end)
 
-    describe("reproduces the session (characterisation — bug and all)", function()
-
-        it("mints 23 rooms for a 25-room walk", function()
-            assert.are.equal(23, g.roomCount())
-        end)
-
-        it("closes a loop that was never walked, exactly once", function()
-            assert.are.equal(1, #g.echoesMatching("linked into"))
-        end)
-
-        it("leaves every edge reciprocal despite that", function()
-            assert.are.same({}, g.oneWayEdges())
-        end)
-
-        it("leaves 4 stubs on the frontier", function()
-            assert.are.equal(4, #g.stubs())
-        end)
-
-        it("gives the entry chamber a north edge into a corridor, not the desert",
-            function()
-                -- The bug, stated plainly. 1087's own description ends "There is
-                -- also a stone archway leading out into the desert to the
-                -- north", so this edge is the merge overwriting the Crossing.
-                local entry = roomBySlug(g, "stonework-chamber")
-                local north = entry.exits.n
-                assert.is_truthy(north)
-                assert.are.equal("stonework corridor",
-                    g.db.one("SELECT name FROM rooms WHERE id = " .. north).name)
-            end)
-    end)
-
-    describe("builds a correct graph (the specification — FAILS TODAY)", function()
+    -- These were two groups until the mapper was fixed. One asserted the walk
+    -- reproduced the live session BUG AND ALL, which is what proved the harness
+    -- faithful; the other stated what the graph should be, and failed. The fix
+    -- (a description check in findLoopClosure) flipped them, so the
+    -- characterisation half has done its job and is gone.
+    describe("builds a correct graph", function()
 
         it("mints one room per room walked: 25, not 23", function()
+            -- Before the fix this was 23. Two rooms were lost to a single false
+            -- closure: one merged away, and one never minted at all because the
+            -- mapper then followed an edge it thought it already had.
             assert.are.equal(25, g.roomCount())
+        end)
+
+        it("closes no loop, because the walk never returns anywhere", function()
+            assert.are.equal(0, #g.echoesMatching("linked into"))
         end)
 
         it("never records an exit a room's own description denies", function()
@@ -119,18 +99,18 @@ describe("Stoneworks level 1 — outer-edge walk", function()
         end)
 
         it("leaves the entry chamber's north exit an unwalked stub", function()
-            -- The Crossing back to the desert was never walked, so `n` must
-            -- still be a Stub. It being anything else is what made this chamber
-            -- eligible for a false closure in the first place.
+            -- The desert Crossing, never walked. Before the fix the merge had
+            -- filled it with a corridor -- and that stub being empty is exactly
+            -- what made the chamber eligible for the false closure.
             local entry = roomBySlug(g, "stonework-chamber")
             assert.is_false(entry.exits.n, "north should be an unwalked stub")
         end)
 
         it("keeps the two chambers with exits n,e,s apart", function()
-            -- The drawing has two: [@] at the desert door, and the box five
-            -- moves south of it. They differ in description -- one carries the
-            -- cryptic message, the other says "The only visible exits are
-            -- north, south, and east".
+            -- The drawing has two: [@] at the desert door, and the box five moves
+            -- south of it. Their descriptions are nothing alike -- one carries the
+            -- cryptic message, the other says "The only visible exits are north,
+            -- south, and east" -- which is the evidence the fix consults.
             local chambers = {}
             for _, r in ipairs(g.rooms()) do
                 if r.name == "stonework chamber" and g.exitSet(r.id) == "e,n,s" then
@@ -140,10 +120,15 @@ describe("Stoneworks level 1 — outer-edge walk", function()
             assert.are.equal(2, #chambers)
         end)
 
-        it("leaves 5 stubs on the frontier, not 4", function()
-            -- The four it has, plus the east exit of the chamber that the merge
-            -- swallowed. These five are where the remaining ~26 rooms hang.
-            assert.are.equal(5, #g.stubs())
+        it("keeps every edge reciprocal", function()
+            assert.are.same({}, g.oneWayEdges())
+        end)
+
+        it("leaves 6 stubs on the frontier", function()
+            -- Four the buggy run also had, plus two the merge had hidden: the
+            -- swallowed chamber's east exit, and the entry chamber's north --
+            -- restoring the desert Crossing restores a frontier with it.
+            assert.are.equal(6, #g.stubs())
         end)
     end)
 end)
