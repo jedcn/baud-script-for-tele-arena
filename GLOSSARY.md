@@ -195,10 +195,12 @@ identity. The riddle chamber, before and after `say komi`:
 - open: "…south and east through stone archways **which stand open to bare stone
   corridors**."
 
-Same Room, same `ex`, different prose. `[D1]` is the same story told the other
-way: "The northern portion of this chamber is obscured by a strange mist. The
-only visible exit is east" — the mist *is* the Seal, written into the
-Description, and "only visible" is the game being careful where we were not.
+Same Room, same `ex`, different prose. `[D1]` looked like the same story and is not:
+"The northern portion of this chamber is obscured by a strange mist. The only
+visible exit is east" reads identically whether its Seal is open or shut, because
+the mist is permanent scenery rather than the Seal. That Seal is legible in the
+*other* Room the Exit joins — see Seal. "Only visible" was the game being exact
+where we were reading loosely.
 
 Two consequences. What we store is whatever state the Room was in when we last
 looked, not a fact about the Room — 1087's stored text is the post-komi variant.
@@ -236,10 +238,24 @@ A Seal does not remove the Exit it sits on. `[D1]` answered `Exits: n,e.` and
 then refused `n` in the same breath, and a hobgoblin bounced off it twice while
 we watched. So `ex` reports topology, and passage is Device State.
 
-It does show in the **Description**, though, which is the one place the game
-admits it: a mist over the archway, or doors that are "fitted with massive iron"
-rather than standing open. So `look` tells you whether a Seal is shut right now
-and `ex` never does — and that is also why a Description is not an identity.
+It does show in a **Description**, which is the one place the game admits it —
+but not necessarily the Description of the Room you are standing in, and that
+took a walk to find out. The Seal between `[D1]` and the corridor north of it
+reads, in the corridor:
+
+- shut: "The corridor **continues to** the northeast."
+- open: "The corridor **runs to** the northeast and south."
+
+`ex` answered `ne,s` both times. Meanwhile `[D1]`'s own Description is identical
+either way, mist and all: the mist is scenery that hides the north archway
+permanently, which is why it says "the only **visible** exit is east" and not
+"the only exit". So a Seal can be legible from one end of its Exit and invisible
+from the other, and it is `look` that tells you, never `ex`.
+
+One consequence for anything checking prose against edges: while a Seal is shut,
+a corridor names one fewer exit than `ex` lists. That reads exactly like a
+recorded exit the room denies — which is a real defect elsewhere — so the check
+cannot treat it as one.
 
 **Door**:
 A property of a single Exit: that it stays shut until opened with a particular

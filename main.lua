@@ -1961,11 +1961,26 @@ end, { type = "regex" })
 -- arrival onto the push, so no ordinary arrival brief fires and the tracker
 -- would happily keep believing we never left. There is no edge in the map to
 -- follow, so the honest result is `lost`.
-createOutboundTrigger("^push stone$", function()
-    if taPackage.hereState ~= "lost" then
-        taPackage.loseHere("`push stone` moves you somewhere the map has no edge for")
-    end
-end, { type = "regex" })
+-- `push stone` is overloaded: at [S2] it teleports, at [S1] it opens a seal four
+-- rooms away and you do not move at all (docs/hidden-stone-teleport.md calls the
+-- overloading a mechanic, not a one-off).
+--
+-- So there is nothing to decide when the command goes out, and deciding anyway
+-- was wrong: an outbound trigger here used to declare the position lost on the
+-- verb alone, which it did on 2026-09-13 while the character had not gone
+-- anywhere. The game tells the two apart in its reply, so key off that.
+--
+-- Only the teleport needs handling. The game glues the arrival onto the tail of
+-- the push line, so `^You're in ` never matches it and handleRoomEntry never
+-- runs -- position becomes genuinely unknown, with no edge in the map to follow.
+-- The remote reply ("As you push ... you feel the floor vibrate faintly") needs
+-- no trigger at all: nothing about where we are has changed.
+createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in ",
+    function()
+        if taPackage.hereState ~= "lost" then
+            taPackage.loseHere("`push stone` moves you somewhere the map has no edge for")
+        end
+    end, { type = "regex" })
 
 -- `where` -- what the tracker currently believes, and why. Deliberately says
 -- "lost" rather than a best guess: a wrong answer here is worse than none.

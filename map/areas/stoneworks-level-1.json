@@ -266,7 +266,11 @@
           "to": "stoneworks-level-1/stonework-corridor-11"
         },
         "s": {
-          "to": "stoneworks-level-1/stonework-chamber-1"
+          "to": "stoneworks-level-1/stonework-chamber-1",
+          "sealedBy": {
+            "command": "push stone",
+            "room": "stoneworks-level-1/stonework-corridor-42"
+          }
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northeast and south.",
@@ -283,7 +287,11 @@
           "to": "stoneworks-level-1/stonework-corridor-13"
         },
         "n": {
-          "to": "stoneworks-level-1/stonework-corridor-12"
+          "to": "stoneworks-level-1/stonework-corridor-12",
+          "sealedBy": {
+            "command": "push stone",
+            "room": "stoneworks-level-1/stonework-corridor-42"
+          }
         }
       },
       "description": "You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. The northern portion of this chamber is obscured by a strange mist. The only visible exit is east through a stone archway.",
@@ -711,7 +719,7 @@
       "name": "stonework corridor",
       "exits": {
         "e": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-chamber-3"
         },
         "nw": {
           "to": "stoneworks-level-1/stonework-corridor-37"
@@ -765,6 +773,98 @@
       ],
       "layout": {
         "x": 6,
+        "y": -2
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-chamber-3",
+      "name": "stonework chamber",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-1/stonework-corridor-39"
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-corridor-36"
+        }
+      },
+      "description": "You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. The only visible exits are north and west through stone archways.",
+      "layout": {
+        "x": 9,
+        "y": -4
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-39",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-1/stonework-corridor-40"
+        },
+        "s": {
+          "to": "stoneworks-level-1/stonework-chamber-3"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": 9,
+        "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-40",
+      "name": "stonework corridor",
+      "exits": {
+        "ne": {
+          "to": "stoneworks-level-1/stonework-corridor-41"
+        },
+        "s": {
+          "to": "stoneworks-level-1/stonework-corridor-39"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south and northeast.",
+      "layout": {
+        "x": 9,
+        "y": -2
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-41",
+      "name": "stonework corridor",
+      "exits": {
+        "nw": {
+          "to": null
+        },
+        "se": {
+          "to": "stoneworks-level-1/stonework-corridor-42"
+        },
+        "sw": {
+          "to": "stoneworks-level-1/stonework-corridor-40"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northwest, southeast, and southwest.",
+      "layout": {
+        "x": 10,
+        "y": -1
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-42",
+      "name": "stonework corridor",
+      "exits": {
+        "nw": {
+          "to": "stoneworks-level-1/stonework-corridor-41"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A stone in the northeast wall appears to protrude from the wall slightly more than the others. The corridor continues to the northwest.",
+      "devices": [
+        {
+          "command": "push stone",
+          "effect": "seal",
+          "note": "Shrine [S1]. Opens the seal on stonework-corridor-12 <-> stonework-chamber-1 (shrine [D1]). Description names it: \"A stone in the northeast wall appears to protrude from the wall slightly more than the others.\" Reply is \"As you push the protruding stone into it's recess, you feel the floor vibrate faintly.\" -- a REMOTE effect, not a teleport, though `push stone` is the same verb that teleports at [S2]. repeats untested. The seal shows in stonework-corridor-12's description, not in [D1]'s: shut it reads \"The corridor continues to the northeast\", open \"The corridor runs to the northeast and south\". [D1] reads the same either way."
+        }
+      ],
+      "layout": {
+        "x": 11,
         "y": -2
       }
     }

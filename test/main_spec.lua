@@ -2768,6 +2768,42 @@ end)
 -- main.lua triggers for world map and combat
 -- =========================================================================
 
+describe("push stone", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.setHere(5)
+    end)
+
+    -- The verb is overloaded: at [S2] it teleports, at [S1] it works a seal four
+    -- rooms away and you do not move. An outbound trigger used to declare the
+    -- position lost on the command alone, which was wrong for every remote stone
+    -- -- observed on 2026-09-13, where the tracker gave up while the character
+    -- stood still.
+    it("keeps the position when the stone acts somewhere else", function()
+        helper.simulateOutbound("push stone")
+        helper.simulateLine(
+            "As you push the protruding stone into it's recess, you feel the floor vibrate faintly.")
+        assert.are.equal("known", taPackage.hereState)
+        assert.are.equal(5, taPackage.here)
+    end)
+
+    -- The teleport reply glues the arrival onto the push line, so `^You're in `
+    -- never matches and handleRoomEntry never runs. Position is genuinely unknown.
+    it("loses the position when the stone teleports", function()
+        helper.simulateOutbound("push stone")
+        helper.simulateLine(
+            "You push the protruding stone into it's recess...You're in a stonework corridor.")
+        assert.are.equal("lost", taPackage.hereState)
+    end)
+
+    it("does not lose the position on the command alone", function()
+        helper.simulateOutbound("push stone")
+        assert.are.equal("known", taPackage.hereState)
+    end)
+end)
+
 describe("World map triggers", function()
 
     before_each(function()
@@ -3872,12 +3908,19 @@ describe("World map triggers", function()
             assert.are.equal("lost", taPackage.hereState)
         end)
 
-        -- push stone teleports, and the game glues the arrival onto the push, so
-        -- no ordinary brief fires and the tracker would keep believing we never
-        -- moved. See docs/hidden-stone-teleport.md.
-        it("loses the position on `push stone`", function()
+        -- A teleporting stone glues the arrival onto the push line, so no ordinary
+        -- brief fires and the tracker would keep believing we never moved. See
+        -- docs/hidden-stone-teleport.md.
+        --
+        -- Keyed off the REPLY, not the command: the same verb works a remote seal
+        -- at [S1] without moving you, and losing the position there was a bug
+        -- watched on 2026-09-13. The `push stone` describe block below covers both
+        -- replies; this keeps the tracking case where the rest of tracking lives.
+        it("loses the position when `push stone` teleports", function()
             taPackage.setHere(3)
             helper.simulateOutbound("push stone")
+            helper.simulateLine(
+                "You push the protruding stone into it's recess...You're in a stonework corridor.")
             assert.are.equal("lost", taPackage.hereState)
         end)
 
