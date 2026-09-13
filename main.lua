@@ -3340,12 +3340,36 @@ local ARENA_ARTICLE_WORDS = {
     a = true, an = true, the = true,
     two = true, three = true, four = true, five = true, six = true,
 }
--- Reduce a plural monster noun to its singular. Most plurals just add "s"
--- ("dragons" -> "dragon", "ogre mages" -> "ogre mage"), but some take an "-i"
--- plural instead ("affreeti" -> "affreet", "efreeti" -> "efreet"), so when
--- there's no trailing "s" fall back to stripping a trailing "i".
+-- Reduce a plural monster noun to its singular -- the form the death line
+-- ("The ogress falls to the ground lifeless!") and our attack target both use.
+-- Sending the plural back gets `Sorry, you don't see "ogresse" nearby.` and the
+-- kill scan then retries it forever (logs/session-tojolias-2026-09-13T19-09-40.log
+-- line 422, on "There are two ogresses here."), so the rules below are driven by
+-- the names actually in the monsters table rather than by English at large:
+--
+--   -women/-men  "lizard men" -> "lizard man", "swordswomen" -> "swordswoman"
+--   -ves         "wolves" -> "wolf"
+--   -es          only after a sibilant, where the plural needs the extra vowel:
+--                "ogresses" -> "ogress", "foxes" -> "fox". Stripping "es"
+--                unconditionally would give "ogre mages" -> "ogre mag".
+--   -s           the common case: "dragons" -> "dragon"
+--   -i           "affreeti" -> "affreet", "efreeti" -> "efreet"
+--
+-- A noun whose SINGULAR already ends in "s" is returned untouched, because every
+-- rule above damages it: "ogress" and "ice giantess" end in "ss", and "cyclops"
+-- is its own plural.
 local function singularizeMonster(noun)
-    if noun:match("s$") then
+    if noun:match("women$") then
+        return (noun:gsub("women$", "woman"))
+    elseif noun:match("men$") then
+        return (noun:gsub("men$", "man"))
+    elseif noun:match("ss$") or noun:match("cyclops$") then
+        return noun
+    elseif noun:match("ves$") then
+        return (noun:gsub("ves$", "f"))
+    elseif noun:match("[sxz]es$") or noun:match("[cs]hes$") then
+        return (noun:gsub("es$", ""))
+    elseif noun:match("s$") then
         return (noun:gsub("s$", ""))
     elseif noun:match("i$") then
         return (noun:gsub("i$", ""))

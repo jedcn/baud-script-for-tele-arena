@@ -11970,6 +11970,50 @@ describe("ta.follow", function()
                 assert.are.equal("affreet", taPackage.killTarget)
             end)
 
+            -- Dropping a single "s" off a sibilant plural produces a word the
+            -- game does not know: `a ogresse` came back `Sorry, you don't see
+            -- "ogresse" nearby.` and the sweep retried it until it was stopped
+            -- by hand (logs/session-tojolias-2026-09-13T19-09-40.log line 422).
+            it("keeps the sibilant when de-pluralising an -es plural", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are two ogresses here.")
+                assert.are.equal("ogress", taPackage.killTarget)
+            end)
+
+            it("de-pluralises an -es plural after x", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are three foxes here.")
+                assert.are.equal("fox", taPackage.killTarget)
+            end)
+
+            it("de-pluralises a -ves plural to its f", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are four wolves here.")
+                assert.are.equal("wolf", taPackage.killTarget)
+            end)
+
+            it("de-pluralises -men and -women", function()
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are two lizard men here.")
+                assert.are.equal("lizard man", taPackage.killTarget)
+                helper.simulateAlias("kill-stop")
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are two swordswomen here.")
+                assert.are.equal("swordswoman", taPackage.killTarget)
+            end)
+
+            it("leaves a noun whose singular already ends in s alone", function()
+                -- A cyclops is its own plural, and a giantess ends in "ss":
+                -- every stripping rule would mangle one or the other.
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are two cyclops here.")
+                assert.are.equal("cyclops", taPackage.killTarget)
+                helper.simulateAlias("kill-stop")
+                helper.simulateAlias("kill-all")
+                helper.simulateLine("There are two ice giantesses here.")
+                assert.are.equal("ice giantess", taPackage.killTarget)
+            end)
+
             it("targets the first of a mixed monster list, then the rest", function()
                 helper.simulateAlias("kill-all")
                 helper.simulateLine("You're in an enormous chamber.")
