@@ -15,7 +15,7 @@ export type Room = {
   id: string; name: string; description?: string;
   exits: Record<string, Exit>;
   trap?: { type: string };
-  notes?: string[];
+  devices?: { command: string; effect: string; repeats?: string; note?: string }[];
   layout?: { x: number; y: number };
 };
 export type Area = {
@@ -31,16 +31,23 @@ export function roomId(areaSlug: string, roomSlug: string): string {
 /** Turn one area's rows into the documented shape. Pure, so it is testable. */
 export function buildArea(
   areaSlug: string, areaName: string,
-  rooms: Row[], exits: Row[], notes: Row[],
+  rooms: Row[], exits: Row[], devices: Row[],
   // id -> "area/slug" for EVERY room in the world, not just this area. A
   // per-area lookup silently turns every cross-area exit into a dead end --
   // the arena's stair down to the dungeon vanished that way.
   idToRoomId: Map<number, string>,
 ): Area {
-  const notesFor = new Map<number, string[]>();
-  for (const n of notes) {
-    if (!notesFor.has(n.room_id)) notesFor.set(n.room_id, []);
-    notesFor.get(n.room_id)!.push(n.note);
+  // Devices grouped by the room you OPERATE them in, which is not the room they
+  // affect -- see GLOSSARY.md. What a device opens is carried on the exit
+  // (sealed_by) rather than here, because one device can open several.
+  const devicesFor = new Map<number, Room['devices']>();
+  for (const d of devices) {
+    if (!devicesFor.has(d.room_id)) devicesFor.set(d.room_id, []);
+    devicesFor.get(d.room_id)!.push({
+      command: d.command, effect: d.effect,
+      ...(d.repeats ? { repeats: d.repeats } : {}),
+      ...(d.note ? { note: d.note } : {}),
+    });
   }
   const byRoom = new Map<number, Row[]>();
   for (const e of exits) {
@@ -66,8 +73,8 @@ export function buildArea(
       room.exits[e.direction] = exit;
     }
     if (r.trap) room.trap = { type: r.trap };
-    const n = notesFor.get(r.id);
-    if (n?.length) room.notes = n;
+    const dv = devicesFor.get(r.id);
+    if (dv?.length) room.devices = dv;
     if (r.x != null && r.y != null) room.layout = { x: r.x, y: r.y };
     return room;
   });
@@ -96,8 +103,10 @@ if (import.meta.main) {
     const exits = db.prepare(
       `SELECT from_id, direction, to_id, lock_door, lock_key FROM room_exits
        WHERE from_id IN (${ids}) ORDER BY from_id, direction`).all() as Row[];
-    const notes = db.prepare(`SELECT room_id, note FROM room_notes WHERE room_id IN (${ids})`).all() as Row[];
-    const area = buildArea(a.slug, a.name, rooms, exits, notes, idToRoomId);
+    const devices = db.prepare(
+      `SELECT room_id, command, effect, repeats, note FROM devices
+       WHERE room_id IN (${ids}) ORDER BY room_id, id`).all() as Row[];
+    const area = buildArea(a.slug, a.name, rooms, exits, devices, idToRoomId);
     await Bun.write(`map/areas/${a.slug}.json`, JSON.stringify(area, null, 2) + '\n');
     index.push({ area: a.slug, name: a.name, rooms: area.rooms.length, file: `areas/${a.slug}.json` });
     console.log(`  ${a.slug.padEnd(24)} ${area.rooms.length} rooms`);

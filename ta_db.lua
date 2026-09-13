@@ -97,17 +97,69 @@ for _, col in ipairs({ "lock_key", "lock_door" }) do
     end
 end
 
--- Freeform per-room annotations. Unlike locks/traps (which live on the exit or
--- room as structured columns), a note captures human understanding that has no
--- clean relational shape -- notably remote couplings the graph can't express:
--- "pull lever here or a trap fires 20 rooms ahead", "say komi here to open the
--- south door". Many notes may accumulate on one room; each is one row.
-db:execute([[CREATE TABLE IF NOT EXISTS room_notes (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  room_id    INTEGER NOT NULL REFERENCES rooms(id),
-  note       TEXT NOT NULL,
-  created_at TEXT NOT NULL
+-- Devices: the things you operate to change the world. A lever, a stone, a
+-- spoken riddle answer, a tapestry to move aside. See GLOSSARY.md; the shapes
+-- here follow it deliberately.
+--
+-- `room_id` is where you STAND to work it, never what it affects -- those are
+-- usually different rooms and that separation is the whole point.
+--
+-- `command` is what you send, verbatim: 'pull lever', 'push stone', 'say komi',
+-- 'move tapestry'. There is no fixed set of verbs, so it is free text rather
+-- than an enum.
+--
+-- `effect` is one of:
+--   seal      opens (or toggles) a Seal. NO target column: the sealed thing
+--             points back here, via room_exits.sealed_by or devices.sealed_by.
+--             That is what lets one device open SEVERAL seals -- `say komi`
+--             opens two doors, which a single target column could not express.
+--   teleport  moves whoever worked it, to `dest_room_id`. Always the same room.
+--   light     lights `light_area_id`. Always a whole area, never one room.
+--   trap      disarms (or re-arms) the trap in `trap_room_id`.
+--
+-- `repeats` is 'once' (work it again this Reset and nothing further happens) or
+-- 'toggle' (each use reverses the last). NULL for a teleport, which is neither:
+-- it fires every time, and leaves no state for a Reset to undo.
+--
+-- What is deliberately NOT here: whether the device has been worked today. That
+-- is Device State, a fact about this Reset rather than about the map, and it
+-- would be wrong by 4am.
+db:execute([[CREATE TABLE IF NOT EXISTS devices (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_id       INTEGER NOT NULL REFERENCES rooms(id),
+  command       TEXT NOT NULL,
+  effect        TEXT NOT NULL,
+  repeats       TEXT,
+  dest_room_id  INTEGER REFERENCES rooms(id),
+  light_area_id INTEGER REFERENCES areas(id),
+  trap_room_id  INTEGER REFERENCES rooms(id),
+  sealed_by     INTEGER REFERENCES devices(id),
+  note          TEXT,
+  UNIQUE (room_id, command)
 )]])
+
+-- A Seal lives on the thing it blocks, pointing at the device that clears it --
+-- the same place and shape as lock_key/lock_door, which is the Seal a carried
+-- key clears. Added here rather than in the CREATE above so an existing
+-- database picks it up.
+if not tableHasColumn("room_exits", "sealed_by") then
+    db:execute("ALTER TABLE room_exits ADD COLUMN sealed_by INTEGER REFERENCES devices(id)")
+end
+
+-- room_notes is gone: freeform prose about levers and riddles predates having a
+-- shape for them, and could never be routed off. Dropped only when EMPTY, so a
+-- database that still holds notes nobody has transcribed keeps them rather than
+-- losing them to a script reload -- which is the case on any machine that was
+-- not here for the migration.
+if tableExists("room_notes") then
+    local row = db:queryOne("SELECT COUNT(*) AS n FROM room_notes")
+    if row and (row.n or 0) == 0 then
+        db:execute("DROP TABLE room_notes")
+    else
+        echo("[map] room_notes still holds " .. tostring(row and row.n)
+            .. " note(s) -- transcribe them to devices, then DROP TABLE room_notes")
+    end
+end
 
 -- Last known room per character, so `just report` can mark "you are here". A
 -- character maps into the shared DB under its own name; last-known (not live)
@@ -437,26 +489,95 @@ function TaDb.setRoomTrap(roomId, trap)
     dbLog("[DB\xE2\x86\x92rooms] trap: #" .. tostring(roomId) .. " " .. tostring(trap))
 end
 
--- Attach a freeform note to a room. Notes accumulate (never overwrite), so a
--- lever room can gather several discoveries over time. Returns the new note id.
-function TaDb.addRoomNote(roomId, note)
-    db:execute("INSERT INTO room_notes (room_id, note, created_at) VALUES (?, ?, ?)",
-        roomId, note, now())
+-- Record a device in a room. `fields` carries whatever the effect needs:
+-- repeats, dest_room_id, light_area_id, trap_room_id, sealed_by, note. Returns
+-- the new id, or nil when this room already has a device with that command --
+-- the UNIQUE is deliberate, since two levers in one room would be
+-- indistinguishable to `pull lever` anyway.
+function TaDb.addDevice(roomId, command, effect, fields)
+    fields = fields or {}
+    local changes = db:execute(
+        "INSERT OR IGNORE INTO devices (room_id, command, effect, repeats,"
+        .. " dest_room_id, light_area_id, trap_room_id, sealed_by, note)"
+        .. " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        roomId, command, effect, fields.repeats, fields.dest_room_id,
+        fields.light_area_id, fields.trap_room_id, fields.sealed_by, fields.note)
+    if not changes or changes == 0 then return nil end
     local row = db:queryOne("SELECT last_insert_rowid() AS id")
     local id = row and row.id
-    dbLog("[DB\xE2\x86\x92room_notes] +#" .. tostring(id) .. " room=" .. tostring(roomId))
+    dbLog("[DB\xE2\x86\x92devices] +#" .. tostring(id) .. " " .. tostring(command)
+        .. " (" .. tostring(effect) .. ") room=" .. tostring(roomId))
     return id
 end
 
--- Every note on a room, oldest first, as { id, note, created_at } rows.
-function TaDb.roomNotes(roomId)
-    return db:query("SELECT id, note, created_at FROM room_notes WHERE room_id = ? ORDER BY id", roomId) or {}
+-- Every device you can work while standing in this room, oldest first.
+function TaDb.devicesInRoom(roomId)
+    return db:query(
+        "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
+        .. " trap_room_id, sealed_by, note FROM devices WHERE room_id = ? ORDER BY id",
+        roomId) or {}
 end
 
--- Remove one note by its id. Returns the number of rows deleted (0 if no such
--- note), so the caller can tell the user whether anything was pruned.
-function TaDb.deleteRoomNote(id)
-    return db:execute("DELETE FROM room_notes WHERE id = ?", id)
+-- One device by id, or nil.
+function TaDb.deviceById(id)
+    return db:queryOne(
+        "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
+        .. " trap_room_id, sealed_by, note FROM devices WHERE id = ?", id)
+end
+
+-- Every device, for listing and for `just report`.
+function TaDb.allDevices()
+    return db:query(
+        "SELECT id, room_id, command, effect, repeats, dest_room_id, light_area_id,"
+        .. " trap_room_id, sealed_by, note FROM devices ORDER BY id") or {}
+end
+
+-- Set one column on a device. Restricted to the columns a device actually has,
+-- so a typo cannot build a statement against something else.
+local DEVICE_FIELDS = {
+    repeats = true, dest_room_id = true, light_area_id = true,
+    trap_room_id = true, sealed_by = true, note = true, effect = true,
+}
+function TaDb.setDeviceField(id, field, value)
+    if not DEVICE_FIELDS[field] then
+        return nil, "not a device field: " .. tostring(field)
+    end
+    local changes = db:execute("UPDATE devices SET " .. field .. " = ? WHERE id = ?", value, id)
+    dbLog("[DB\xE2\x86\x92devices] #" .. tostring(id) .. " " .. field .. "=" .. tostring(value))
+    return changes
+end
+
+-- Remove a device, and un-point anything that named it so nothing dangles --
+-- nothing enforces these references, so a deleted device would otherwise leave
+-- exits sealed by an id that is gone.
+function TaDb.deleteDevice(id)
+    db:execute("UPDATE room_exits SET sealed_by = NULL WHERE sealed_by = ?", id)
+    db:execute("UPDATE devices SET sealed_by = NULL WHERE sealed_by = ?", id)
+    local changes = db:execute("DELETE FROM devices WHERE id = ?", id)
+    dbLog("[DB\xE2\x86\x92devices] -#" .. tostring(id))
+    return changes
+end
+
+-- Mark one exit as Sealed by a device, or clear it with a nil deviceId. The
+-- exit must already exist: `ex` seeds every listed direction, and a Seal does
+-- not remove the exit it sits on -- `[D1]` answered "Exits: n,e." while refusing
+-- `n`. Returns the number of rows changed, so 0 means no such exit.
+function TaDb.setExitSeal(fromId, direction, deviceId)
+    local changes = db:execute(
+        "UPDATE room_exits SET sealed_by = ? WHERE from_id = ? AND direction = ?",
+        deviceId, fromId, direction)
+    dbLog("[DB\xE2\x86\x92room_exits] seal: #" .. tostring(fromId) .. " " .. tostring(direction)
+        .. " by=" .. tostring(deviceId))
+    return changes
+end
+
+-- Every exit a given device seals, as { from_id, direction, to_id } rows. The
+-- reverse of setExitSeal, and the reason a device needs no seal target column:
+-- one device can seal several exits, which `say komi` does.
+function TaDb.exitsSealedBy(deviceId)
+    return db:query(
+        "SELECT from_id, direction, to_id FROM room_exits WHERE sealed_by = ?"
+        .. " ORDER BY from_id, direction", deviceId) or {}
 end
 
 -- Coordinate-based identity: the one room in `areaId` with this display name

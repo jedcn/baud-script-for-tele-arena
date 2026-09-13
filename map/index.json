@@ -67,6 +67,12 @@
       "file": "areas/sewers-level-3.json"
     },
     {
+      "area": "stoneworks-level-1",
+      "name": "The Stoneworks, Level 1",
+      "rooms": 27,
+      "file": "areas/stoneworks-level-1.json"
+    },
+    {
       "area": "third-town",
       "name": "third-town",
       "rooms": 14,

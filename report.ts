@@ -76,16 +76,21 @@ for (const d of roomItemDrops) {
   if (!list.includes(d.item)) list.push(d.item);   // distinct items per room
 }
 
-// Freeform per-room notes, grouped by room, so the panel can show a lever/riddle
-// annotation right where you'd look for it. Guard the table for older DBs.
-const roomNotes = (roomGraphReady && hasTable("room_notes"))
-  ? db.prepare(`SELECT room_id, note FROM room_notes ORDER BY room_id, id`).all() as any[]
+// The devices you can operate in each room, grouped by room, so the panel can
+// show a lever or a riddle where it is actually worked. Replaces the freeform
+// room_notes this used to read: a device is structured, so it can say what it
+// opens rather than describing it in prose.
+const roomDevices = (roomGraphReady && hasTable("devices"))
+  ? db.prepare(`SELECT room_id, command, effect, repeats, note FROM devices ORDER BY room_id, id`).all() as any[]
   : [];
-const notesByRoom = new Map<number, string[]>();
-for (const n of roomNotes) {
-  if (!notesByRoom.has(n.room_id)) notesByRoom.set(n.room_id, []);
-  notesByRoom.get(n.room_id)!.push(n.note);
+const devicesByRoom = new Map<number, string[]>();
+for (const d of roomDevices) {
+  if (!devicesByRoom.has(d.room_id)) devicesByRoom.set(d.room_id, []);
+  const kind = d.repeats ? `${d.effect}, ${d.repeats}` : d.effect;
+  devicesByRoom.get(d.room_id)!.push(
+    `${d.command} (${kind})` + (d.note ? ` — ${d.note}` : ''));
 }
+
 
 // Defects, computed the same way `just verify-area` does, so the map can SHOW a
 // problem rather than only a checker naming a room slug. Seeing a fault in the
@@ -136,7 +141,7 @@ const graphData = {
                            players: playersByRoom.get(r.id) ?? [],
                            defects: defectsByRoom.get(r.id) ?? [],
                            items: itemsByRoom.get(r.id) ?? [],
-                           notes: notesByRoom.get(r.id) ?? [] })),
+                           devices: devicesByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
                            lock_key: e.lock_key, lock_door: e.lock_door })),
 };
@@ -424,8 +429,8 @@ const html = `<!DOCTYPE html>
   #room-panel .rp-dir { display: inline-block; min-width: 2.4em; color: var(--blue); font-weight: 600; }
   #room-panel ul.rp-items { list-style: none; margin: 0; padding: 0; }
   #room-panel ul.rp-items li { padding: 0.15rem 0; color: var(--text); }
-  #room-panel ul.rp-notes { list-style: none; margin: 0; padding: 0; }
-  #room-panel ul.rp-notes li { padding: 0.2rem 0.5rem; margin: 0.2rem 0; color: var(--text); border-left: 3px solid #e3b341; background: rgba(227,179,65,0.08); border-radius: 2px; }
+  #room-panel ul.rp-devices { list-style: none; margin: 0; padding: 0; }
+  #room-panel ul.rp-devices li { padding: 0.2rem 0.5rem; margin: 0.2rem 0; color: var(--text); border-left: 3px solid #e3b341; background: rgba(227,179,65,0.08); border-radius: 2px; }
   #room-panel .rp-empty { color: var(--muted); font-style: italic; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--muted); }
   .map-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: middle; }
@@ -883,9 +888,9 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
         return '<li>' + key + escapeHtml(it) + '</li>';
       }).join('') + '</ul>';
     }
-    if(r.notes && r.notes.length){
-      html += '<div class="rp-label">Notes</div>';
-      html += '<ul class="rp-notes">' + r.notes.map(function(n){
+    if(r.devices && r.devices.length){
+      html += '<div class="rp-label">Devices</div>';
+      html += '<ul class="rp-devices">' + r.devices.map(function(n){
         return '<li>' + escapeHtml(n) + '</li>';
       }).join('') + '</ul>';
     }

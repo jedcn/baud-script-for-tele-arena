@@ -80,37 +80,72 @@ on a room that belongs to the old area, it will move that room too.
   `map-reset-area first-dungeon`. Leaves every other area intact. Follow it with
   `map-area <slug>` to begin re-mapping.
 
-## Room notes
+## Devices
 
-Some rooms have mechanics the graph can't express as structured data — a riddle
-solved by typing `say komi` that slides open the local doors, or a **remote**
-coupling like a lever here that disables a trap 20 rooms away, or a stone here
-that opens a door somewhere else. Locks and traps are stored as columns on the
-exit/room, but these couplings have no clean relational shape (and when you act,
-you often don't even know the far room's id). Capture them as freeform notes
-instead — prose that records your understanding of what to do and why.
+A **Device** is something you operate to change the world: a lever, a stone, a
+spoken riddle answer, a tapestry to move aside. They are the mechanics the exit
+graph cannot express on its own, because a Device is almost never in the room it
+affects — a lever here disarms a trap twenty rooms away.
 
-- **`map-add-note <text>`** — attach a note to the room you're standing in,
-  e.g. `map-add-note say komi here to open the S and E doors`.
+Recorded structurally, not as prose, so the map can be reasoned about. The
+vocabulary is `GLOSSARY.md`'s and the columns follow it.
 
-- **`map-add-note <room-slug> <text>`** — attach a note to **any** room by slug,
-  e.g. `map-add-note cave-11 pull lever here or a trap fires 20 rooms ahead`.
-  Use this to annotate the *far* room a remote effect lands in — and note it
-  works even when mapping is off. The two forms are told apart by whether the
-  first word is a known room slug; real slugs are hyphenated (`first-dungeon-12`),
-  so an ordinary note that happens to start with a word like "say" won't collide.
+A Device belongs to the room you **operate** it in. Its `effect` is one of four:
 
-- **`map-notes`** / **`map-notes <slug>`** — list a room's notes, each with an id.
+| effect | what it acts on |
+|---|---|
+| `seal` | opens (or toggles) a **Seal** — a shut door, a wall, a mist |
+| `teleport` | moves whoever worked it, always to the same room |
+| `trap` | disarms (or re-arms) the trap in some room |
+| `light` | lights a whole **area**, never a single room |
 
-- **`map-del-note <id>`** — remove one note by its id (from `map-notes`).
+- **`map-add-device <effect> <command>`** — record one in the room you're
+  standing in, e.g. `map-add-device seal pull lever`,
+  `map-add-device teleport push stone`, `map-add-device seal say komi`. The
+  effect comes first so the command can contain spaces. Prints the new id.
 
-Notes **accumulate** (a new one never overwrites an old one), so a room can
-gather several discoveries over time. They surface two ways: on **room entry**
-they echo as `[note] …` *before* you act — so a warning like "pull lever or a
-trap fires ahead" reaches you in the moment, not just after — and in the
-`just report` room panel as a highlighted Notes list. (Entry echo only fires
-while mapping, the one time your position is known; the by-slug form exists so
-you can still annotate a room you aren't standing in.)
+- **`map-device-repeats <id> once|toggle`** — whether working it again does
+  anything more *this Reset*. `once` and the Seal stays open however many times
+  you pull; `toggle` and the second pull shuts it. Refused for a teleport, which
+  is neither — it fires every time and leaves no state behind.
+
+- **`map-device-dest <id> <room-slug>`** — where a teleport lands you.
+- **`map-device-trap <id> <room-slug>`** — the room whose trap it disarms.
+- **`map-device-light <id> <area-slug>`** — the area it lights. One argument
+  names both area and level, since the level lives in the slug
+  (`labyrinth-level-2`).
+- **`map-device-behind <id> <other-id>`** — this Device can't be worked until
+  that one has been. The Hewn Granite case: the lever is behind the tapestry, so
+  `move tapestry` comes first.
+- **`map-device-note <id> <text>`** — free text, attached to the Device it's
+  about rather than scattered on a room.
+- **`map-devices`** / **`map-devices <room-slug>`** / **`map-devices all`** — list.
+- **`map-del-device <id>`** — remove it, un-pointing anything that named it.
+
+### Seals
+
+A Seal is recorded on the **exit it blocks**, naming the Device that opens it —
+the same place and shape as `lock_key`/`lock_door`, which is the Seal a carried
+key clears.
+
+- **`map-seal <dir> <device-id>`** — the exit `dir` out of the room you're in is
+  sealed, and that Device opens it.
+- **`map-seal <room-slug> <dir> <device-id>`** — for an exit elsewhere, which is
+  the usual case: the Device and the Seal are normally rooms apart.
+- **`map-unseal <room-slug> <dir>`** — it turned out not to be sealed.
+
+Recording it this way round is what lets **one Device open several Seals** —
+`say komi` opens two doors, which a single target column on the Device could not
+express.
+
+Two things this deliberately does not do. A Seal does **not** remove the exit it
+sits on: `[D1]` answered `Exits: n,e.` and refused `n` in the same breath, so
+`ex` reports topology and passage is a separate question. And nothing records
+whether a Device has been worked **today** — that's Device State, a fact about
+this Reset rather than about the map, and it would be wrong by 4am.
+
+Devices surface on **room entry** as `[device] …` while mapping, so a lever
+reaches you before you walk past it, and in the `just report` room panel.
 
 ## Viewing the map
 
