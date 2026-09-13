@@ -332,10 +332,13 @@ Key:
 ### The Stoneworks, Level 1
 
 ```
-[ ]--[ ]                                               [ ]--[ ]--[ ]--[ v]   n to unexplored   down to unexplored
- |      \
- |       \
-[ ]       [ ]                      [ ]                                       nw to unexplored
+                    [ ]--[ ]
+                            \
+                             \
+[ ]--[ ]                      [ ]                      [ ]--[ ]--[ ]--[ v]   n to unexplored   down to unexplored
+ |      \                        \
+ |       \                        \
+[ ]       [ ]                      [ ]
  |           \                    /   \
  |            \                  /     \
 [ ]            [ ]            [ ]       [ ]

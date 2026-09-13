@@ -839,7 +839,7 @@
       "name": "stonework corridor",
       "exits": {
         "nw": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-corridor-48"
         },
         "se": {
           "to": "stoneworks-level-1/stonework-corridor-42"
@@ -946,6 +946,54 @@
       "layout": {
         "x": 5,
         "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-48",
+      "name": "stonework corridor",
+      "exits": {
+        "nw": {
+          "to": "stoneworks-level-1/stonework-corridor-49"
+        },
+        "se": {
+          "to": "stoneworks-level-1/stonework-corridor-41"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northwest and southeast.",
+      "layout": {
+        "x": 9,
+        "y": 0
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-49",
+      "name": "stonework corridor",
+      "exits": {
+        "se": {
+          "to": "stoneworks-level-1/stonework-corridor-48"
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-chamber-4"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the west and southeast.",
+      "layout": {
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-chamber-4",
+      "name": "stonework chamber",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-1/stonework-corridor-49"
+        }
+      },
+      "description": "a ogress You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. The only visible exit is east through a stone archway.",
+      "layout": {
+        "x": 7,
+        "y": 1
       }
     }
   ]
