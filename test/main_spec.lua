@@ -2781,6 +2781,68 @@ describe("push stone", function()
     -- position lost on the command alone, which was wrong for every remote stone
     -- -- observed on 2026-09-13, where the tracker gave up while the character
     -- stood still.
+    -- The mapper's blind spot, fixed 2026-09-13. The arrival is spliced onto the
+    -- push line, so the `^You're in ` trigger never sees it; before this, the
+    -- mapper stayed on the stone, misattributed the following `ex`, and hung the
+    -- destination off it by a phantom compass edge. That is the corruption in
+    -- docs/hidden-stone-teleport.md and in the deleted 199-room stoneworks data.
+    describe("a teleporting stone", function()
+
+        before_each(function()
+            taPackage.mapping = true
+            taPackage.currentAreaId = 1
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "stonework corridor"
+            taPackage.coord = { x = 3, y = 3, z = 0 }
+            -- discoverRoom reads back the row it inserted by slug; mirror the
+            -- stubDiscover helper the mapping block below uses.
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                    return { id = 9 }
+                end
+                return nil
+            end
+            helper.mockDbRows = function() return {} end
+        end)
+
+        it("treats the arrival as a room, not as a reprint of the stone's room",
+            function()
+                helper.simulateLine(
+                    "You push the protruding stone into it's recess...You're in a stonework corridor.")
+                -- Not 5: both rooms are "stonework corridor", and the cold-start
+                -- shortcut would have concluded we never left.
+                assert.are.equal(9, taPackage.currentRoomId)
+            end)
+
+        it("links no compass edge for it", function()
+            helper.simulateLine(
+                "You push the protruding stone into it's recess...You're in a stonework corridor.")
+            assert.is_nil(helper.findDbCall("execute",
+                "ON CONFLICT(from_id, direction) DO UPDATE SET to_id"))
+        end)
+
+        it("consumes no sent move from the queue", function()
+            taPackage.pendingDirs = { "nw" }
+            helper.simulateLine(
+                "You push the protruding stone into it's recess...You're in a stonework corridor.")
+            assert.are.same({ "nw" }, taPackage.pendingDirs)
+            assert.is_nil(taPackage.pendingDirection)
+        end)
+
+        it("stamps no coordinate, because a teleport has no grid position", function()
+            helper.simulateLine(
+                "You push the protruding stone into it's recess...You're in a stonework corridor.")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET x = ?"))
+            assert.is_nil(taPackage.coord)
+        end)
+
+        it("clears the flag, so an ordinary arrival is unaffected", function()
+            helper.simulateLine(
+                "You push the protruding stone into it's recess...You're in a stonework corridor.")
+            assert.is_nil(taPackage.arrivedByTeleport)
+        end)
+    end)
+
     it("keeps the position when the stone acts somewhere else", function()
         helper.simulateOutbound("push stone")
         helper.simulateLine(

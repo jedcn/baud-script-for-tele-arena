@@ -1310,6 +1310,20 @@ end
 -- unique room with this name, else discover a fresh one. Returns the room id and
 -- whether it was newly discovered (provisional, i.e. a merge candidate).
 local function resolveColdStart(name)
+    -- After a Teleport we have definitely left, so the "we never moved" shortcut
+    -- below is wrong -- and wrong in the worst way here, because [S2] and [S3]
+    -- are both "stonework corridor", so it would conclude we are still standing
+    -- on the stone we just pushed.
+    --
+    -- An ambiguous name must mint rather than pick, for the same reason: with 176
+    -- rooms called "stonework corridor", `ids[1]` is a coin toss. Minting leaves a
+    -- provisional room, which the Exits handler can still fold into a known one on
+    -- the evidence of its exit-set.
+    if taPackage.arrivedByTeleport then
+        local ids = taPackage.db.roomIdsByName(name)
+        if #ids == 1 then return ids[1], false end
+        return taPackage.db.discoverRoom(name, taPackage.currentAreaId), true
+    end
     if taPackage.currentRoomId and name == taPackage.currentRoom then
         return taPackage.currentRoomId, false
     end
@@ -1358,7 +1372,16 @@ local function handleRoomEntry(matches)
     -- One arrival consumes one sent move. Placed after the guards above, so a
     -- `look <dir>` peek or a slug probe -- neither of which is an arrival --
     -- cannot eat somebody else's move.
-    taPackage.pendingDirection = taPackage.shiftPendingDir()
+    -- A Teleport is not a compass move, so it consumes nothing from the queue and
+    -- leaves pendingDirection nil -- which is what stops an edge being linked for
+    -- it further down. Recording one as a compass edge is the specific corruption
+    -- docs/hidden-stone-teleport.md describes: the whole [S3] strip once hung off
+    -- [S2] by a phantom `e`.
+    if taPackage.arrivedByTeleport then
+        taPackage.pendingDirection = nil
+    else
+        taPackage.pendingDirection = taPackage.shiftPendingDir()
+    end
 
     -- A kill with no gold found before we left records zero loot.
     -- (Loot bookkeeping is independent of mapping mode.)
@@ -1439,6 +1462,13 @@ local function handleRoomEntry(matches)
     local stored = taPackage.db.roomCoord(roomId)
     if stored then
         taPackage.coord = stored
+    elseif taPackage.arrivedByTeleport then
+        -- A Teleport has no grid position relative to where we were: there is no
+        -- delta to add and no honest value to stamp, so leave the coordinate NULL
+        -- rather than claim the origin. Coordinates are soft anyway, and the
+        -- renderer lays out by walking exits -- a teleport destination is simply a
+        -- component of its own, the way the dungeon's pit is.
+        taPackage.coord = nil
     else
         local c = arriveCoord or { x = 0, y = 0, z = 0 }
         taPackage.db.setRoomCoord(roomId, c.x, c.y, c.z)
@@ -1458,9 +1488,15 @@ local function handleRoomEntry(matches)
     end
     taPackage.pendingLock = nil
 
+    -- The coordinate is legitimately nil after a Teleport, which has no grid
+    -- position. The string is built whether or not tracing is on, so this has to
+    -- tolerate that rather than index through it.
     taPackage.mapdbg("[mapdbg] entry '" .. tostring(name) .. "' roomId=" .. tostring(roomId)
         .. " (" .. type(roomId) .. ") provisional=" .. tostring(taPackage.currentRoomProvisional)
-        .. " coord=(" .. taPackage.coord.x .. "," .. taPackage.coord.y .. "," .. taPackage.coord.z .. ")")
+        .. " coord=" .. (taPackage.coord
+            and ("(" .. taPackage.coord.x .. "," .. taPackage.coord.y
+                 .. "," .. taPackage.coord.z .. ")")
+            or "none (teleport)"))
 
     -- Follow the room we entered into its area. If a session starts in one area
     -- (e.g. `map-here path-4` in second-town) and then walks across a frontier
@@ -1975,11 +2011,21 @@ end, { type = "regex" })
 -- runs -- position becomes genuinely unknown, with no edge in the map to follow.
 -- The remote reply ("As you push ... you feel the floor vibrate faintly") needs
 -- no trigger at all: nothing about where we are has changed.
-createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in ",
-    function()
+-- The game glues the arrival onto the tail of the push line, so the room trigger
+-- anchored at `^You're in ` never matches it and the mapper used to miss the move
+-- entirely: currentRoomId stayed on the stone, the following `ex` was
+-- misattributed, and the destination got hung off it by a phantom compass edge.
+-- Drive the arrival from here instead, flagged as a Teleport.
+createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in (.+)\\.$",
+    function(matches)
+        taPackage.arrivedByTeleport = true
+        -- Position is unknown to the tracker either way: the map holds no edge to
+        -- follow, and the link lives on the device (devices.dest_room_id).
         if taPackage.hereState ~= "lost" then
             taPackage.loseHere("`push stone` moves you somewhere the map has no edge for")
         end
+        handleRoomEntry(matches)
+        taPackage.arrivedByTeleport = nil
     end, { type = "regex" })
 
 -- `where` -- what the tracker currently believes, and why. Deliberately says
