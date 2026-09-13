@@ -184,3 +184,19 @@ test("classifies dialup furniture outside the game as bbs, not unknown", () => {
   expect(events.filter(e => e.kind === "unknown").length).toBe(0);
   expect(events.filter(e => e.kind === "bbs").length).toBe(2);
 });
+
+test("classifies a sprung trap, with the type the mapper stores", () => {
+  // These were `unknown` until Stoneworks level 2 was walked into [T2]
+  // (logs/session-tojolias-2026-09-13T19-34-24.log line 290). A trap prints no
+  // damage number, so the line itself is the only record that one fired -- and
+  // the `trap` field is the same string main.lua writes to rooms.trap, so a log
+  // can be checked against the map.
+  const events = normalizeFile(fixture(HEADER + [
+    "Entering Tele-Arena...",
+    "Several large stones fall on you from above!",
+    "You just fell through a trap door in the floor!",
+  ].join("\n")));
+  expect(events.filter(e => e.kind === "unknown").length).toBe(0);
+  expect(events.find(e => e.kind === "trap")!.trap).toBe("falling rocks");
+  expect(events.find(e => e.kind === "trap-door")!.trap).toBe("trap door");
+});

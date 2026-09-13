@@ -277,6 +277,27 @@ const RULES: Rule[] = [
     fields: m => ({ door: m[1] }) },
   { kind: "trip", re: /^In your haste, you trip and fall!$/ },
 
+  // — traps —
+  // One line per trap kind, mirroring main.lua's handleTrap triggers, which are
+  // the authoritative vocabulary. None of them prints a damage number: the loss
+  // is only visible as the vitality drop on the next status line, which is why
+  // the mapper stashes HP before the hit. `trap` carries the same string the
+  // mapper writes to rooms.trap, so a log and the map can be compared directly.
+  { kind: "trap", re: /^A spiked trap catches your foot and pain shoots up your leg!$/,
+    fields: () => ({ trap: "spiked trap" }) },
+  { kind: "trap", re: /^Several crossbow bolts fire from holes in the walls, striking you!$/,
+    fields: () => ({ trap: "crossbow trap" }) },
+  { kind: "trap", re: /^Several large stones fall on you from above!$/,
+    fields: () => ({ trap: "falling rocks" }) },
+  { kind: "trap", re: /^A huge stone block slams down on you from above!$/,
+    fields: () => ({ trap: "falling block" }) },
+  { kind: "trap", re: /^A scything blade slices into your stomach!$/,
+    fields: () => ({ trap: "scything blade" }) },
+  { kind: "trap", re: /^A ball of flame explodes from an opening in the wall and engulfs you!$/,
+    fields: () => ({ trap: "flame trap" }) },
+  { kind: "trap-door", re: /^You just fell through a trap door in the floor!$/,
+    fields: () => ({ trap: "trap door" }) },
+
   // — movement / room —
   // An unlit room prints this INSTEAD of a brief, and `ex` answers with it too.
   // It is the whole vocabulary of the labyrinth's second level: the walk of
