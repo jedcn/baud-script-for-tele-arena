@@ -8,12 +8,13 @@
 4. [First Dungeon, Level 2](#first-dungeon-level-2)
 5. [First Dungeon, Level 3](#first-dungeon-level-3)
 6. [The Desert](#the-desert)
-7. [Sewers, Level 1](#sewers-level-1)
-8. [Sewers, Level 2](#sewers-level-2)
-9. [Sewers, Level 3](#sewers-level-3)
-10. [The Mountains](#the-mountains)
-11. [The Cellars](#the-cellars)
-12. [Third Town](#third-town)
+7. [The Stoneworks, Level 1](#the-stoneworks-level-1)
+8. [Sewers, Level 1](#sewers-level-1)
+9. [Sewers, Level 2](#sewers-level-2)
+10. [Sewers, Level 3](#sewers-level-3)
+11. [The Mountains](#the-mountains)
+12. [The Cellars](#the-cellars)
+13. [Third Town](#third-town)
 
 ### First Town
 
@@ -326,6 +327,51 @@ Key:
                                            \               /
                                             \             /
                                              [ ]--[ ]--[ ]             sw to unexplored   n to unexplored
+```
+
+### The Stoneworks, Level 1
+
+```
+[ ]--[ ]                                                     n to unexplored   se to unexplored
+ |
+ |
+[ ]
+ |
+ |
+[ ]
+   \
+    \
+     [ ]
+    /
+   /
+[ ]
+ |
+ |
+[ ]                 [ ]--[ ]                                 nw to unexplored   e to unexplored
+ |                 /        \
+ |                /          \
+[ ]            [ ]            [ ]                            ne to unexplored
+   \          /                |
+    \        /                 |
+     [ ]--[ ]                 [ ]                      [ ]
+                             /                        /
+                            /                        /
+                         [ ]                 [ ]--[ ]
+                        /                   /
+                       /                   /
+                    [ ]                 [ ]
+                     |                   |
+                     |                   |
+                    [ ]--[ ]--[ ]--[ ]--[ ]
+                                         |
+                                         |
+                                        [ ]
+                                           \
+                                            \
+                                             [ ]--[ ]
+                                                     \
+                                                      \
+                                                       [ ]
 ```
 
 ### Sewers, Level 1
