@@ -373,6 +373,21 @@ function TaDb.resetArea(areaId)
     db:execute(
         "UPDATE room_exits SET to_id = NULL WHERE to_id IN (SELECT id FROM rooms WHERE area_id = ?)",
         areaId)
+    -- Devices in this area go with it, and anything that named them is
+    -- un-pointed first. Nothing enforces these references, so without this a
+    -- reset leaves exits sealed by an id that no longer exists -- including exits
+    -- in OTHER areas, since a device seals rooms far from itself.
+    db:execute(
+        "UPDATE room_exits SET sealed_by = NULL WHERE sealed_by IN"
+        .. " (SELECT id FROM devices WHERE room_id IN (SELECT id FROM rooms WHERE area_id = ?))",
+        areaId)
+    db:execute(
+        "UPDATE devices SET sealed_by = NULL WHERE sealed_by IN"
+        .. " (SELECT id FROM devices WHERE room_id IN (SELECT id FROM rooms WHERE area_id = ?))",
+        areaId)
+    db:execute(
+        "DELETE FROM devices WHERE room_id IN (SELECT id FROM rooms WHERE area_id = ?)",
+        areaId)
     db:execute(
         "DELETE FROM room_exits WHERE from_id IN (SELECT id FROM rooms WHERE area_id = ?)",
         areaId)

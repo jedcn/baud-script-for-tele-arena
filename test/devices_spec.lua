@@ -203,6 +203,29 @@ describe("the devices schema", function()
         end)
     end)
 
+    describe("resetting an area", function()
+
+        it("takes its devices with it and leaves nothing pointing at them", function()
+            -- A device seals rooms far from itself, so a reset can strand exits in
+            -- OTHER areas. Nothing enforces the references, so resetArea has to
+            -- un-point them by hand.
+            local komi = addDevice(1, "say komi", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. komi
+                .. " WHERE from_id=1 AND direction IN ('e','s')")
+            TaDb.resetArea(TaDb.areaIdBySlug("stoneworks-level-1"))
+            assert.are.equal(0, db.one("SELECT COUNT(*) AS n FROM devices").n)
+            assert.are.equal(0, db.one(
+                "SELECT COUNT(*) AS n FROM room_exits WHERE sealed_by IS NOT NULL").n)
+        end)
+
+        it("un-points a device that was behind another before deleting both", function()
+            local tapestry = addDevice(3, "move tapestry", "seal")
+            addDevice(3, "pull lever", "seal", { cols = ", sealed_by", vals = ", " .. tapestry })
+            TaDb.resetArea(TaDb.areaIdBySlug("stoneworks-level-1"))
+            assert.are.equal(0, db.one("SELECT COUNT(*) AS n FROM devices").n)
+        end)
+    end)
+
     describe("room entry", function()
 
         it("announces the devices you can work here", function()
