@@ -1620,6 +1620,55 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         .. " currentRoomId=" .. tostring(taPackage.currentRoomId)
         .. " (" .. type(taPackage.currentRoomId) .. ")")
 
+    -- Confirm or refute a loop closure deferred from the previous arrival.
+    --
+    -- findLoopClosure matches on name, exit-set and "the return door is an
+    -- unwalked stub", and in this world all three are weak: 176 rooms are called
+    -- "stonework corridor", and a corridor's description names only its exits, so
+    -- two with the same exit-set read identically. On 2026-09-13 a walk matched a
+    -- brand-new corridor to one on the far arm of the level and merged them.
+    --
+    -- Coordinates cannot settle it. That same log holds a FALSE closure one
+    -- diagonal off (reckoned (3,-6) against a candidate at (4,-5)) and a TRUE one
+    -- one diagonal off the other way ((1,-6) against (0,-5)). Any tolerance loose
+    -- enough for the real closure admits the bad one, and that is structural: a
+    -- real closure IS a coordinate disagreement, which is why this fallback exists.
+    --
+    -- What does settle it is the next move. Believing it stood in the candidate,
+    -- that walk stepped `sw` and arrived somewhere answering ne,se,w where the
+    -- candidate's `sw` neighbour was recorded as ne,sw. So: hold the closure, walk
+    -- one more room, and ask the graph whether it agrees.
+    if taPackage.pendingClosure and taPackage.currentRoomProvisional then
+        local pc = taPackage.pendingClosure
+        taPackage.pendingClosure = nil
+        local onward = taPackage.currentEntryDir
+        local expected = onward and taPackage.prevRoomId == pc.from
+            and taPackage.db.exitDestination(pc.into, onward) or nil
+        if type(expected) == "number"
+            and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
+            -- The candidate's graph predicted this room. Fold the held room in,
+            -- and this arrival is the room it predicted.
+            taPackage.db.mergeRoomInto(pc.from, pc.into)
+            taPackage.db.mergeRoomInto(taPackage.currentRoomId, expected)
+            taPackage.currentRoomId = expected
+            taPackage.currentRoomProvisional = false
+            local snapped = taPackage.db.roomCoord(expected)
+            if snapped then taPackage.coord = snapped end
+            echo("[map] loop closure confirmed: #" .. tostring(pc.from)
+                .. " was #" .. tostring(pc.into))
+        else
+            -- Refuted, or nothing to check against. Either way the two rooms stay
+            -- separate: a duplicate is visible and mergeable, where a wrong merge
+            -- deletes a room and misattaches everything walked after it.
+            echo("[map] loop closure into #" .. tostring(pc.into)
+                .. " refused -- the next room is not what it predicted")
+        end
+    elseif taPackage.pendingClosure then
+        -- The next arrival was not a fresh room, so there is nothing to confirm
+        -- against. Drop it rather than carrying it into a later move.
+        taPackage.pendingClosure = nil
+    end
+
     if taPackage.currentRoomProvisional then
         taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
@@ -1628,6 +1677,9 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord)
         taPackage.mapdbg("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
             .. " val=" .. tostring(match))
+        -- Which matcher found it decides whether we trust it now or check it
+        -- against the next room.
+        local byCoord = type(match) == "number"
         -- Coordinates drift across this world's non-Euclidean loops, so when the
         -- coordinate match misses, trust the door we walked through instead: the
         -- room we re-entered is the same-name, same-exit-set room whose exit back
@@ -1641,15 +1693,27 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then
-            taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
-            taPackage.currentRoomId = match
-            -- Re-anchor dead-reckoning to the room we closed onto: its stored
-            -- coordinate is consistent with its already-mapped neighbours, while
-            -- the drifted provisional's was not. Without this the drift compounds
-            -- into another duplicate on the next move.
-            local snapped = taPackage.db.roomCoord(match)
-            if snapped then taPackage.coord = snapped end
-            echo("[map] linked into #" .. tostring(match) .. " (" .. tostring(taPackage.currentRoom) .. ")")
+            if byCoord then
+                -- An exact coordinate match on top of name and exit-set. Nothing
+                -- weak about that, so merge now.
+                taPackage.db.mergeRoomInto(taPackage.currentRoomId, match)
+                taPackage.currentRoomId = match
+                -- Re-anchor dead-reckoning to the room we closed onto: its stored
+                -- coordinate is consistent with its already-mapped neighbours,
+                -- while the drifted provisional's was not. Without this the drift
+                -- compounds into another duplicate on the next move.
+                local snapped = taPackage.db.roomCoord(match)
+                if snapped then taPackage.coord = snapped end
+                echo("[map] linked into #" .. tostring(match) .. " (" .. tostring(taPackage.currentRoom) .. ")")
+            else
+                -- Topological only, so hold it for the next move to confirm. The
+                -- room stays minted meanwhile: if the closure is refuted it was
+                -- always a separate room, and if confirmed it folds in one move
+                -- later at no cost.
+                taPackage.pendingClosure = { from = taPackage.currentRoomId, into = match }
+                echo("[map] possible loop closure into #" .. tostring(match)
+                    .. " -- one more move will settle it")
+            end
         end
         taPackage.currentRoomProvisional = false
     end
@@ -1737,6 +1801,7 @@ end, { type = "regex" })
 -- its exits). Shared by map-area; map-here anchors precisely instead.
 local function startMappingHere()
     taPackage.mapping = true
+    taPackage.pendingClosure = nil
     taPackage.pendingDirs = {}
     taPackage.pendingDirection = nil
     taPackage.prevRoomId = nil
@@ -1788,6 +1853,7 @@ createAlias("^map-here (.+)$", function(matches)
         return
     end
     taPackage.mapping = true
+    taPackage.pendingClosure = nil
     taPackage.currentAreaId = room.area_id
     taPackage.currentRoomId = room.id
     taPackage.currentRoom = room.name
@@ -1865,6 +1931,15 @@ end, { type = "regex" })
 -- room); map-off stops it.
 local function stopMapping()
     taPackage.mapping = false
+    -- A held loop closure can only be settled by the next move, so stopping here
+    -- leaves a duplicate. Say so plainly and say what resolves it: the cost of
+    -- deferring is paid entirely by whoever closes a loop as their last act.
+    if taPackage.pendingClosure then
+        echo("[map] a possible loop closure into #" .. tostring(taPackage.pendingClosure.into)
+            .. " is unresolved, so room #" .. tostring(taPackage.pendingClosure.from)
+            .. " stays a duplicate. One more move before map-off would have settled it.")
+        taPackage.pendingClosure = nil
+    end
 end
 
 -- `map-debug on` / `map-debug off`. Traces every room entry and every

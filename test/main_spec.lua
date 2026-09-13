@@ -3632,11 +3632,18 @@ describe("World map triggers", function()
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
         end)
 
-        it("closes a drifted loop by topology when the coordinate match misses", function()
+        it("HOLDS a topological loop closure instead of merging on the spot", function()
             -- We walked sw into provisional 5; dead-reckoning drifted, so the
             -- fingerprint (coordinate) match misses. The fallback uses the return
-            -- door (ne): room 1 has the same exit-set with an unexplored ne, so
-            -- it's the closure. Coord then snaps to room 1's stored position.
+            -- door (ne): room 1 has the same exit-set with an unexplored ne, so it
+            -- is a CANDIDATE closure.
+            --
+            -- It used to merge here. It no longer does: name plus exit-set plus an
+            -- unwalked return door is weak evidence, and on 2026-09-13 a walk
+            -- matched a new corridor to one on the far arm of the level on exactly
+            -- that basis. Neither coordinates nor descriptions can separate a real
+            -- closure from that one (see stoneworks_level_1_loop_spec.lua), so the
+            -- candidate is held for the next arrival to confirm or refute.
             taPackage.currentRoomId = 5
             taPackage.currentRoom = "town sewers"
             taPackage.currentRoomProvisional = true
@@ -3662,10 +3669,16 @@ describe("World map triggers", function()
                 return nil
             end
             helper.simulateLine("Exits: ne,nw,sw.")
-            assert.are.equal(1, taPackage.currentRoomId)          -- closed onto room 1 topologically
+            -- Still the provisional room, and nothing deleted.
+            assert.are.equal(5, taPackage.currentRoomId)
             assert.is_false(taPackage.currentRoomProvisional)
-            assert.are.same({ x = 0, y = 0, z = 0 }, taPackage.coord)  -- re-anchored to room 1
-            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+            -- Held, and named, so the next arrival can settle it.
+            assert.is_not_nil(taPackage.pendingClosure)
+            assert.are.equal(5, taPackage.pendingClosure.from)
+            assert.are.equal(1, taPackage.pendingClosure.into)
+            assert.is_true(tableContains(helper.echoCalls,
+                "[map] possible loop closure into #1 -- one more move will settle it"))
         end)
 
         it("does not topo-close when the return door already leads somewhere", function()

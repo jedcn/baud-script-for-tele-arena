@@ -577,6 +577,25 @@ function TaDb.roomIdsByName(name)
     return ids
 end
 
+-- Does room `id` look exactly like a room called `name` with exit-set `dirs`?
+-- The Fingerprint check, asked of a room we already hold rather than searched
+-- for. Used to confirm a deferred loop closure: if the closure was real, the room
+-- we walk into next must be the one the candidate's graph says is that way.
+function TaDb.roomLooksLike(id, name, dirs)
+    if TaDb.roomName(id) ~= name then return false end
+    local have = TaDb.roomExitDirections(id)
+    local want, wantCount = {}, 0
+    for _, d in ipairs(dirs) do
+        if not want[d] then want[d] = true; wantCount = wantCount + 1 end
+    end
+    local haveCount = 0
+    for d in pairs(have) do
+        haveCount = haveCount + 1
+        if not want[d] then return false end
+    end
+    return haveCount == wantCount
+end
+
 -- The description recorded for a room id, or nil when the room is gone or has
 -- never been looked at. Used by findLoopClosure as the strongest identity signal
 -- available, so an absent one must read as "no evidence" rather than "no match".
