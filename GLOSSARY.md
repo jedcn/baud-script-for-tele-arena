@@ -184,9 +184,28 @@ _Avoid_: description, look, room text
 **Description**:
 The prose a Room gives to `look`. It names every Exit it has in words ("The
 corridor runs to the north and southeast"), which makes it the highest-entropy
-identifier we get for free and the best available cross-check on the Exits we
-recorded.
-_Avoid_: brief, long description
+thing we get for free about a Room and the best available cross-check on the
+Exits we recorded.
+_Avoid_: brief, long description, and **identifier** — see below: it is not one
+
+A Description **changes with Device State**, so it is not stable and not an
+identity. The riddle chamber, before and after `say komi`:
+
+- shut: "…south and east through stone archways **fitted with massive iron doors**."
+- open: "…south and east through stone archways **which stand open to bare stone
+  corridors**."
+
+Same Room, same `ex`, different prose. `[D1]` is the same story told the other
+way: "The northern portion of this chamber is obscured by a strange mist. The
+only visible exit is east" — the mist *is* the Seal, written into the
+Description, and "only visible" is the game being careful where we were not.
+
+Two consequences. What we store is whatever state the Room was in when we last
+looked, not a fact about the Room — 1087's stored text is the post-komi variant.
+And a Description that differs from one we hold is **not** evidence of a
+different Room: it may be the same Room with a Device thrown. The reverse still
+holds, though, which is what the cross-check rests on — prose naming an Exit the
+graph lacks, or lacking one the graph has, is worth investigating either way.
 
 **Fingerprint**:
 A Room's name plus its exact exit-set — the identity check used before walking a
@@ -216,6 +235,11 @@ the category
 A Seal does not remove the Exit it sits on. `[D1]` answered `Exits: n,e.` and
 then refused `n` in the same breath, and a hobgoblin bounced off it twice while
 we watched. So `ex` reports topology, and passage is Device State.
+
+It does show in the **Description**, though, which is the one place the game
+admits it: a mist over the archway, or doors that are "fitted with massive iron"
+rather than standing open. So `look` tells you whether a Seal is shut right now
+and `ex` never does — and that is also why a Description is not an identity.
 
 **Door**:
 A property of a single Exit: that it stays shut until opened with a particular
