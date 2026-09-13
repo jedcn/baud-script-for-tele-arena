@@ -1765,8 +1765,15 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                 -- always a separate room, and if confirmed it folds in one move
                 -- later at no cost.
                 taPackage.pendingClosure = { from = taPackage.currentRoomId, into = match }
+                -- Name the moves that can settle it. Confirming asks the candidate
+                -- what lies through the door we walk next, so only a direction it
+                -- has already walked can answer -- and the obvious move, back the
+                -- way we came, is often exactly the one it cannot.
+                local settle = taPackage.db.walkedExits(match)
                 echo("[map] possible loop closure into #" .. tostring(match)
-                    .. " -- one more move will settle it")
+                    .. " -- settle it by walking " ..
+                    (#settle > 0 and table.concat(settle, " or ")
+                     or "on (that room has no walked exit, so nothing can confirm it yet)"))
             end
         end
         taPackage.currentRoomProvisional = false

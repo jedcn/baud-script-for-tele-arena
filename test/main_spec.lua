@@ -3806,8 +3806,10 @@ describe("World map triggers", function()
             assert.is_not_nil(taPackage.pendingClosure)
             assert.are.equal(5, taPackage.pendingClosure.from)
             assert.are.equal(1, taPackage.pendingClosure.into)
+            -- The message names the moves that can settle it: only a direction
+            -- the candidate has already walked predicts anything.
             assert.is_true(tableContains(helper.echoCalls,
-                "[map] possible loop closure into #1 -- one more move will settle it"))
+                "[map] possible loop closure into #1 -- settle it by walking ne or nw or sw"))
         end)
 
         it("does not topo-close when the return door already leads somewhere", function()

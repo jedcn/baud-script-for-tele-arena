@@ -584,6 +584,24 @@ function TaDb.roomIdsByName(name, areaId)
     return ids
 end
 
+-- Directions out of `id` that already lead somewhere known, as a sorted list.
+--
+-- These are the moves that can settle a held loop closure: confirming one asks
+-- the candidate what is through the door we are about to walk, so a direction the
+-- candidate has never walked predicts nothing and proves nothing. Telling the
+-- walker which moves those are turns "one more move will settle it" from advice
+-- into an instruction -- on 2026-09-13 a closure went unsettled because the only
+-- obvious move, back the way we came, was the one the candidate knew least about.
+function TaDb.walkedExits(id)
+    local dirs = {}
+    for _, row in ipairs(db:query(
+        "SELECT direction FROM room_exits WHERE from_id = ? AND to_id IS NOT NULL"
+        .. " ORDER BY direction", id) or {}) do
+        dirs[#dirs + 1] = row.direction
+    end
+    return dirs
+end
+
 -- Does room `id` look exactly like a room called `name` with exit-set `dirs`?
 -- The Fingerprint check, asked of a room we already hold rather than searched
 -- for. Used to confirm a deferred loop closure: if the closure was real, the room
