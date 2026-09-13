@@ -2026,7 +2026,7 @@ describe("ta_db", function()
 
         it("upserts a concrete edge", function()
             TaDb.linkExit(5, "ne", 6)
-            local call = helper.findDbCall("execute", "INSERT OR REPLACE INTO room_exits")
+            local call = helper.findDbCall("execute", "ON CONFLICT(from_id, direction) DO UPDATE SET to_id")
             assert.is_not_nil(call)
             assert.are.equal(5, call.params[1])
             assert.are.equal("ne", call.params[2])
@@ -2824,7 +2824,7 @@ describe("World map triggers", function()
             local edges = {}
             for _, c in ipairs(helper.dbCalls) do
                 if c.method == "execute"
-                    and string.find(c.sql, "INSERT OR REPLACE INTO room_exits", 1, true) then
+                    and string.find(c.sql, "ON CONFLICT(from_id, direction) DO UPDATE SET to_id", 1, true) then
                     edges[#edges + 1] = c.params
                 end
             end
@@ -3010,7 +3010,7 @@ describe("World map triggers", function()
             local edges = {}
             for _, c in ipairs(helper.dbCalls) do
                 if c.method == "execute"
-                    and string.find(c.sql, "INSERT OR REPLACE INTO room_exits", 1, true) then
+                    and string.find(c.sql, "ON CONFLICT(from_id, direction) DO UPDATE SET to_id", 1, true) then
                     edges[#edges + 1] = c.params
                 end
             end

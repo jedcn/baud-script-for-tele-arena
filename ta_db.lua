@@ -407,9 +407,21 @@ function TaDb.exitDestination(fromId, dir)
 end
 
 -- Record a confirmed edge with a concrete destination (a walked exit).
+-- Record where an exit leads. An UPSERT that touches ONLY to_id, never INSERT OR
+-- REPLACE: that form deletes the conflicting row and inserts a fresh one, so
+-- every column it does not name -- lock_key, lock_door, sealed_by -- is silently
+-- reset to NULL.
+--
+-- Caught in the log of 2026-09-13. The riddle chamber refused `s` and `e` with
+-- "The locked iron door prevents your exit", which correctly recorded an iron
+-- door on both. `s` was not walked again and kept it; `e` was walked, and its
+-- door was gone. The same erasure would take out `sealed_by` the first time
+-- anyone walks a sealed exit after the device is thrown -- which is every sealed
+-- exit, eventually. Facts about an exit have to survive learning where it goes.
 function TaDb.linkExit(fromId, dir, toId)
     db:execute(
-        "INSERT OR REPLACE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)"
+        .. " ON CONFLICT(from_id, direction) DO UPDATE SET to_id = excluded.to_id",
         fromId, dir, toId
     )
     dbLog("[DB\xE2\x86\x92room_exits] #" .. tostring(fromId) .. " --" .. dir .. "--> #" .. tostring(toId))

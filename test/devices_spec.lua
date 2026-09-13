@@ -147,6 +147,33 @@ describe("the devices schema", function()
         end)
     end)
 
+    describe("walking a sealed exit", function()
+
+        it("does not erase the seal when the destination is learned", function()
+            -- The bug this test exists for: linkExit used INSERT OR REPLACE,
+            -- which deletes the row and re-inserts it, so every column it does
+            -- not name went to NULL. The riddle chamber's `e` lost its iron door
+            -- that way the moment it was walked (log of 2026-09-13), and
+            -- sealed_by would go the same way the first time anyone walks a
+            -- sealed exit after the device is thrown.
+            local komi = addDevice(1, "say komi", "seal")
+            db.exec("UPDATE room_exits SET sealed_by=" .. komi
+                .. ", lock_door='iron' WHERE from_id=1 AND direction='e'")
+            TaDb.linkExit(1, "e", 2)
+            local e = db.one("SELECT to_id, sealed_by, lock_door FROM room_exits"
+                .. " WHERE from_id=1 AND direction='e'")
+            assert.are.equal(2, e.to_id)
+            assert.are.equal(komi, e.sealed_by)
+            assert.are.equal("iron", e.lock_door)
+        end)
+
+        it("still records the destination on an exit with no seal", function()
+            TaDb.linkExit(1, "n", 2)
+            assert.are.equal(2, db.one(
+                "SELECT to_id FROM room_exits WHERE from_id=1 AND direction='n'").to_id)
+        end)
+    end)
+
     describe("deliberate absences", function()
 
         it("has no column for whether a device has been worked today", function()
