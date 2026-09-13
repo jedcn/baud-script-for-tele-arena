@@ -3535,6 +3535,34 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET area_id"))
         end)
 
+        -- Crossing a Seam with mapping already on: the anchor is the room the
+        -- mapper just walked into and linked, so it is known exactly. Re-resolving
+        -- it by name would be a coin toss among every other "stonework corridor",
+        -- and the walk would write Level 2's exits onto a Level 1 room.
+        it("keeps a live anchor rather than re-resolving it by name", function()
+            taPackage.mapping = true
+            taPackage.currentRoomId = 42
+            taPackage.currentRoom = "stonework corridor"
+            taPackage.currentAreaId = 7
+            taPackage.coord = { x = 1, y = -9, z = 0 }
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                return nil
+            end
+            helper.simulateAlias("map-area stoneworks-level-2 The Stoneworks, Level 2")
+            assert.are.equal(42, taPackage.currentRoomId)
+            assert.are.equal(3, taPackage.currentAreaId)
+            -- Dead reckoning carries across the Seam.
+            assert.are.same({ x = 1, y = -9, z = 0 }, taPackage.coord)
+            for _, c in ipairs(helper.sendCalls) do
+                assert.are_not.equal("", c, "no bare return: nothing to re-resolve")
+            end
+            -- The room itself still moves into the new area, so the Seam splits.
+            local moved = helper.findDbCall("execute", "UPDATE rooms SET area_id")
+            assert.are.equal(3, moved.params[1])
+            assert.are.equal(42, moved.params[2])
+        end)
+
     end)
 
     describe("map-here alias", function()

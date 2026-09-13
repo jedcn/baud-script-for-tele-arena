@@ -1898,7 +1898,27 @@ createAlias("^map-area (.+)$", function(matches)
     end
     taPackage.currentAreaId = areaId
     echo("[map] mapping " .. slug .. " from here")
-    startMappingHere()
+    -- An anchor held while MAPPING is live was earned: we walked here and the
+    -- mapper linked the edge, so it knows the room id. Cold-starting over it
+    -- would throw that away and re-resolve the room by name -- and where the
+    -- names repeat, resolveColdStart's last resort is `ids[1]`, i.e. a coin toss
+    -- among 176 rooms called "stonework corridor". Crossing a Seam is exactly
+    -- when that happens: walk `d` off Level 1's last corridor, run `map-area
+    -- stoneworks-level-2`, and the cold start could anchor the walk on a Level 1
+    -- room and write Level 2's exits onto it. So keep the anchor (and its coord,
+    -- so dead reckoning carries across the Seam) and only turn mapping on.
+    --
+    -- With mapping OFF the anchor is stale -- the character has since been walked
+    -- around by hand, and the id is whatever the last session left behind -- so
+    -- there the bare return and a fresh resolve are the only honest option.
+    if anchored and taPackage.mapping then
+        taPackage.pendingClosure = nil
+        taPackage.coordLost = nil
+        echo("[map] kept anchor #" .. tostring(anchored) .. " (walked in from "
+            .. "the previous area)")
+    else
+        startMappingHere()
+    end
 end, { type = "regex" })
 
 -- Resume mapping at a known room: `map-here cave-11`. Use this in an
