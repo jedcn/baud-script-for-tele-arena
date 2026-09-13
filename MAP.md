@@ -332,46 +332,46 @@ Key:
 ### The Stoneworks, Level 1
 
 ```
-[ ]--[ ]                                                     n to unexplored   se to unexplored
- |
- |
-[ ]
- |
- |
-[ ]
-   \
-    \
-     [ ]
-    /
-   /
-[ ]
- |
- |
-[ ]                 [ ]--[ ]                                 nw to unexplored   e to unexplored
- |                 /        \
- |                /          \
-[ ]            [ ]            [ ]                            ne to unexplored
-   \          /                |
-    \        /                 |
-     [ ]--[ ]                 [ ]                      [ ]
-                             /                        /
-                            /                        /
-                         [ ]                 [ ]--[ ]
-                        /                   /
-                       /                   /
-                    [ ]                 [ ]
-                     |                   |
-                     |                   |
-                    [ ]--[ ]--[ ]--[ ]--[ ]
-                                         |
-                                         |
-                                        [ ]
-                                           \
-                                            \
-                                             [ ]--[ ]
-                                                     \
-                                                      \
-                                                       [ ]
+[ ]--[ ]                                                n to unexplored
+ |      \
+ |       \
+[ ]       [ ]
+ |           \
+ |            \
+[ ]            [ ]
+   \              \
+    \              \
+     [ ]            [ ]
+    /              /
+   /              /
+[ ]  [ ]       [ ]                                      se to unexplored
+ |    | \     /
+ |    |  \   /
+[ ]--[ ]  [ ]  [ ]--[ ]                                 nw to unexplored
+ |           \/        \
+ |           /\         \
+[ ]       [ ]  [ ]       [ ]                            ne to unexplored   e to unexplored
+   \       |              |
+    \      |              |
+     [ ]--[ ]            [ ]                      [ ]
+                        /                        /
+                       /                        /
+                    [ ]                 [ ]--[ ]
+                   /                   /
+                  /                   /
+               [ ]                 [ ]
+                |                   |
+                |                   |
+               [ ]--[ ]--[ ]--[ ]--[ ]
+                                    |
+                                    |
+                                   [ ]
+                                      \
+                                       \
+                                        [ ]--[ ]
+                                                \
+                                                 \
+                                                  [ ]
 ```
 
 ### Sewers, Level 1
