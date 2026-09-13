@@ -1634,6 +1634,25 @@ local function printRoomSlugCandidates(name, dirs)
         end
         echo("[map] " .. #matches .. " candidates for '" .. name .. "' [" .. exits .. "]: "
             .. table.concat(parts, ", "))
+        -- The map already stamped where this character was standing when it last
+        -- ran, so when that room is one of the candidates it is almost certainly
+        -- the answer -- and a tie-break is free. On 2026-09-13 a probe in the
+        -- Stoneworks offered four identical corridors while player_location named
+        -- the right one, and the walk spent a move narrowing them down by hand.
+        -- A hint, not a pick: the location is stamped while MAPPING, so a
+        -- character walked around with mapping off has silently moved on.
+        local lastSeen = taPackage.character and taPackage.character.name
+            and taPackage.db.playerLocation(taPackage.character.name)
+        if lastSeen then
+            for _, m in ipairs(matches) do
+                if m.id == lastSeen then
+                    echo("[map] the map last saw you in " .. m.slug
+                        .. " -- if nothing walked since, that is this room"
+                        .. "  ->  map-here " .. m.slug)
+                    break
+                end
+            end
+        end
         echo("[map] walk a room or two and they will narrow on their own.")
     end
 end

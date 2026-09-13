@@ -3334,6 +3334,62 @@ describe("World map triggers", function()
             assert.is_true(hit)
         end)
 
+        -- Four identical "stonework corridor" candidates came back while
+        -- player_location named the right one, and the walk spent a move
+        -- narrowing them by hand
+        -- (logs/session-tojolias-2026-09-13T19-46-09.log line 108).
+        it("names the room the map last saw you in, when it is a candidate", function()
+            taPackage.character = { name = "Tojolias" }
+            taPackage.slugProbe = { name = "cave" }
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "rooms WHERE name", 1, true) then
+                    return { { id = 4, slug = "cave-3" }, { id = 9, slug = "cave-8" } }
+                elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                    return { { direction = "e" }, { direction = "w" } }
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "FROM player_location", 1, true) then
+                    return { room_id = 9 }
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: e,w.")
+            local hint = nil
+            for _, m in ipairs(helper.echoCalls) do
+                if string.find(m, "last saw you", 1, true) then hint = m end
+            end
+            assert.is_not_nil(hint)
+            assert.is_truthy(string.find(hint, "cave-8", 1, true))
+            assert.is_falsy(string.find(hint, "cave-3", 1, true))
+        end)
+
+        it("stays quiet when the last-seen room is not one of the candidates", function()
+            -- A stale stamp (walked around with mapping off) must not point at a
+            -- room the probe just ruled out.
+            taPackage.character = { name = "Tojolias" }
+            taPackage.slugProbe = { name = "cave" }
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "rooms WHERE name", 1, true) then
+                    return { { id = 4, slug = "cave-3" }, { id = 9, slug = "cave-8" } }
+                elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                    return { { direction = "e" }, { direction = "w" } }
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "FROM player_location", 1, true) then
+                    return { room_id = 77 }
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: e,w.")
+            for _, m in ipairs(helper.echoCalls) do
+                assert.is_falsy(string.find(m, "last saw you", 1, true))
+            end
+        end)
+
     end)
 
     describe("failed move", function()

@@ -488,6 +488,15 @@ function TaDb.setPlayerLocation(player, roomId)
     dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ #" .. tostring(roomId))
 end
 
+-- Where the map last saw a character. Only ever a hint: it is stamped while
+-- mapping (and by map-here), so a character walked around with mapping off has
+-- moved on without saying so. Used to break a tie between rooms that look alike.
+function TaDb.playerLocation(player)
+    local row = db:queryOne(
+        "SELECT room_id FROM player_location WHERE player = ?", player)
+    return row and row.room_id or nil
+end
+
 function TaDb.setRoomDescription(roomId, description)
     db:execute("UPDATE rooms SET description = ? WHERE id = ?", description, roomId)
     dbLog("[DB\xE2\x86\x92rooms] desc: #" .. tostring(roomId))
