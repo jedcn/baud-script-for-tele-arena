@@ -8,16 +8,38 @@
       "name": "stonework chamber",
       "exits": {
         "e": {
-          "to": null
+          "to": "stoneworks-level-1/stonework-corridor-25",
+          "door": {
+            "material": "iron"
+          },
+          "sealedBy": {
+            "command": "say komi",
+            "room": "stoneworks-level-1/stonework-chamber"
+          }
         },
         "n": {
           "to": "stoneworks-level-1/stonework-corridor-3"
         },
         "s": {
-          "to": "stoneworks-level-1/stonework-corridor"
+          "to": "stoneworks-level-1/stonework-corridor",
+          "door": {
+            "material": "iron"
+          },
+          "sealedBy": {
+            "command": "say komi",
+            "room": "stoneworks-level-1/stonework-chamber"
+          }
         }
       },
       "description": "You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. The western wall bears this cryptic message: \"Speak the element of the guardian of the temple catacombs in the language of spellcraft to gain entrance.\" The visible exits are south and east through stone archways which stand open to bare stone corridors. There is also a stone archway leading out into the desert to the north.",
+      "devices": [
+        {
+          "command": "say komi",
+          "effect": "seal",
+          "repeats": "once",
+          "note": "Answer to the west wall riddle. Opens the s and e iron doors together. Reply is \"As the answer passes your lips, you feel the floor vibrate faintly.\" While shut, look says the archways are \"fitted with massive iron doors\"; once open, \"which stand open to bare stone corridors\" -- the description carries the seal state."
+        }
+      ],
       "layout": {
         "x": 0,
         "y": 0
@@ -37,7 +59,7 @@
           "to": "stoneworks-level-1/stonework-corridor-4"
         }
       },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and southeast.",
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
       "layout": {
         "x": 0,
         "y": -1
@@ -469,6 +491,23 @@
       "layout": {
         "x": 11,
         "y": -2
+      }
+    },
+    {
+      "id": "stoneworks-level-1/stonework-corridor-25",
+      "name": "stonework corridor",
+      "exits": {
+        "se": {
+          "to": null
+        },
+        "w": {
+          "to": "stoneworks-level-1/stonework-chamber"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the west and southeast.",
+      "layout": {
+        "x": 1,
+        "y": 0
       }
     }
   ]

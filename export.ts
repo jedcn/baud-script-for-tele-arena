@@ -10,7 +10,14 @@ import { existsSync, mkdirSync } from 'node:fs';
 
 type Row = Record<string, any>;
 
-export type Exit = { to: string | null; door?: { material: string; key: string } };
+export type Exit = {
+  to: string | null;
+  // A Door is the Seal a carried key clears, so `key` is only present when a key
+  // is what opens it. An exit opened by a Device carries `sealedBy` instead --
+  // saying `key: "unknown"` there would be a lie, not a gap.
+  door?: { material: string; key?: string };
+  sealedBy?: { command: string; room: string };
+};
 export type Room = {
   id: string; name: string; description?: string;
   exits: Record<string, Exit>;
@@ -31,7 +38,7 @@ export function roomId(areaSlug: string, roomSlug: string): string {
 /** Turn one area's rows into the documented shape. Pure, so it is testable. */
 export function buildArea(
   areaSlug: string, areaName: string,
-  rooms: Row[], exits: Row[], devices: Row[],
+  rooms: Row[], exits: Row[], devices: Row[], allDevices: Row[],
   // id -> "area/slug" for EVERY room in the world, not just this area. A
   // per-area lookup silently turns every cross-area exit into a dead end --
   // the arena's stair down to the dungeon vanished that way.
@@ -49,6 +56,12 @@ export function buildArea(
       ...(d.note ? { note: d.note } : {}),
     });
   }
+  const sealers = new Map<number, { command: string; room: string }>();
+  for (const d of allDevices) {
+    const room = idToRoomId.get(d.room_id);
+    if (room) sealers.set(d.id, { command: d.command, room });
+  }
+
   const byRoom = new Map<number, Row[]>();
   for (const e of exits) {
     if (!byRoom.has(e.from_id)) byRoom.set(e.from_id, []);
@@ -68,8 +81,15 @@ export function buildArea(
         if (!dest) throw new Error(`exit ${r.slug} ${e.direction} points at unknown room ${e.to_id}`);
         exit.to = dest;
       }
-      if (e.lock_door || e.lock_key)
-        exit.door = { material: e.lock_door ?? 'unknown', key: e.lock_key ?? 'unknown' };
+      if (e.lock_door || e.lock_key) {
+        exit.door = { material: e.lock_door ?? 'unknown' };
+        // Only claim a key when one is known, or when nothing else explains the
+        // block. A Device-sealed exit has no key at all.
+        if (e.lock_key) exit.door.key = e.lock_key;
+        else if (!e.sealed_by) exit.door.key = 'unknown';
+      }
+      const sealer = sealers.get(e.sealed_by);
+      if (sealer) exit.sealedBy = sealer;
       room.exits[e.direction] = exit;
     }
     if (r.trap) room.trap = { type: r.trap };
@@ -90,6 +110,12 @@ if (import.meta.main) {
     (db.prepare('SELECT r.id, r.slug, a.slug AS area FROM rooms r JOIN areas a ON a.id = r.area_id')
       .all() as Row[]).map(r => [r.id, roomId(r.area, r.slug)]));
 
+  // Every device in the world, not just this area's: the device that opens an
+  // exit is usually somewhere else entirely, which is the whole reason a Seal is
+  // recorded on the exit and points at it.
+  const allDevices = db.prepare(
+    'SELECT id, room_id, command FROM devices ORDER BY id').all() as Row[];
+
   const wanted = process.argv.slice(2);
   const areas = (db.prepare('SELECT id, slug, name FROM areas ORDER BY slug').all() as Row[])
     .filter(a => wanted.length === 0 || wanted.includes(a.slug));
@@ -101,12 +127,12 @@ if (import.meta.main) {
     if (!rooms.length) continue;
     const ids = rooms.map(r => r.id).join(',');
     const exits = db.prepare(
-      `SELECT from_id, direction, to_id, lock_door, lock_key FROM room_exits
+      `SELECT from_id, direction, to_id, lock_door, lock_key, sealed_by FROM room_exits
        WHERE from_id IN (${ids}) ORDER BY from_id, direction`).all() as Row[];
     const devices = db.prepare(
       `SELECT room_id, command, effect, repeats, note FROM devices
        WHERE room_id IN (${ids}) ORDER BY room_id, id`).all() as Row[];
-    const area = buildArea(a.slug, a.name, rooms, exits, devices, idToRoomId);
+    const area = buildArea(a.slug, a.name, rooms, exits, devices, allDevices, idToRoomId);
     await Bun.write(`map/areas/${a.slug}.json`, JSON.stringify(area, null, 2) + '\n');
     index.push({ area: a.slug, name: a.name, rooms: area.rooms.length, file: `areas/${a.slug}.json` });
     console.log(`  ${a.slug.padEnd(24)} ${area.rooms.length} rooms`);

@@ -34,7 +34,7 @@ const areas = roomGraphReady
   : [];
 
 const exits = roomGraphReady ? db.prepare(`
-  SELECT e.from_id, e.direction, e.to_id, e.lock_key, e.lock_door, t.slug AS to_slug
+  SELECT e.from_id, e.direction, e.to_id, e.lock_key, e.lock_door, e.sealed_by, t.slug AS to_slug
   FROM room_exits e
   LEFT JOIN rooms t ON t.id = e.to_id
   ORDER BY e.from_id, e.direction
@@ -81,8 +81,19 @@ for (const d of roomItemDrops) {
 // room_notes this used to read: a device is structured, so it can say what it
 // opens rather than describing it in prose.
 const roomDevices = (roomGraphReady && hasTable("devices"))
-  ? db.prepare(`SELECT room_id, command, effect, repeats, note FROM devices ORDER BY room_id, id`).all() as any[]
+  ? db.prepare(`SELECT id, room_id, command, effect, repeats, note FROM devices ORDER BY room_id, id`).all() as any[]
   : [];
+// device id -> how to describe working it, for a Seal on an exit. The device is
+// usually in a different room from the exit it opens, so the label names both.
+const sealerLabel = new Map<number, string>();
+{
+  const slugById = new Map<number, string>(rooms.map(r => [r.id, r.slug]));
+  for (const d of roomDevices) {
+    const slug = slugById.get(d.room_id);
+    sealerLabel.set(d.id, `${d.command}${slug ? ` in ${slug}` : ''}`);
+  }
+}
+
 const devicesByRoom = new Map<number, string[]>();
 for (const d of roomDevices) {
   if (!devicesByRoom.has(d.room_id)) devicesByRoom.set(d.room_id, []);
@@ -143,7 +154,8 @@ const graphData = {
                            items: itemsByRoom.get(r.id) ?? [],
                            devices: devicesByRoom.get(r.id) ?? [] })),
   exits: exits.map(e => ({ from: e.from_id, dir: e.direction, to: e.to_id, to_slug: e.to_slug,
-                           lock_key: e.lock_key, lock_door: e.lock_door })),
+                           lock_key: e.lock_key, lock_door: e.lock_door,
+                           sealed_by: e.sealed_by ? sealerLabel.get(e.sealed_by) : null })),
 };
 
 const monsters = db.prepare(`
@@ -900,9 +912,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
       exs.forEach(function(e){
         // Annotate a locked exit inline so the door + key show right in the room's
         // exit list (not only on the map's door line).
-        var lock = e.lock_door
-          ? ' <span class="rp-door">🔒 ' + escapeHtml(e.lock_door)
-            + (e.lock_key ? ' (' + escapeHtml(e.lock_key) + ' key)' : '') + '</span>'
+        var lock = (e.lock_door || e.sealed_by)
+          ? ' <span class="rp-door">🔒 ' + escapeHtml(e.lock_door || 'sealed')
+            + (e.lock_key ? ' (' + escapeHtml(e.lock_key) + ' key)' : '')
+            + (e.sealed_by ? ' (' + escapeHtml(e.sealed_by) + ')' : '') + '</span>'
           : '';
         html += '<li><span class="rp-dir">' + escapeHtml(e.dir) + '</span> ' + destLabel(e) + lock + '</li>';
       });
@@ -923,6 +936,10 @@ ${monsterCards || "<p class='note'>No monster descriptions captured yet.</p>"}
     html += '<div class="rp-sub">locked door</div>';
     html += '<div class="rp-desc">Between <span class="rp-door">' + escapeHtml(an)
       + '</span> and <span class="rp-door">' + escapeHtml(bn) + '</span>.</div>';
+    if(e.sealed_by){
+      html += '<div class="rp-label">Opened by</div><div class="rp-door">'
+        + escapeHtml(e.sealed_by) + '</div>';
+    }
     if(e.lock_key){
       html += '<div class="rp-label">Key</div><div class="rp-door">' + escapeHtml(e.lock_key) + ' key</div>';
     }
