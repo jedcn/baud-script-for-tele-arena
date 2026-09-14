@@ -1690,7 +1690,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     -- Confirm or refute a loop closure deferred from the previous arrival.
     --
     -- findLoopClosure matches on name, exit-set and "the return door is an
-    -- unwalked stub", and in this world all three are weak: 176 rooms are called
+    -- unwalked stub", and in this world all three are weak: 85 rooms are called
     -- "stonework corridor", and a corridor's description names only its exits, so
     -- two with the same exit-set read identically. On 2026-09-13 a walk matched a
     -- brand-new corridor to one on the far arm of the level and merged them.
@@ -1921,7 +1921,7 @@ createAlias("^map-area (.+)$", function(matches)
     -- mapper linked the edge, so it knows the room id. Cold-starting over it
     -- would throw that away and re-resolve the room by name -- and where the
     -- names repeat, resolveColdStart's last resort is `ids[1]`, i.e. a coin toss
-    -- among 176 rooms called "stonework corridor". Crossing a Seam is exactly
+    -- among the 85 rooms called "stonework corridor". Crossing a Seam is exactly
     -- when that happens: walk `d` off Level 1's last corridor, run `map-area
     -- stoneworks-level-2`, and the cold start could anchor the walk on a Level 1
     -- room and write Level 2's exits onto it. So keep the anchor (and its coord,

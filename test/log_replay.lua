@@ -74,6 +74,19 @@ end
 -- before the one it wanted. Stating the substitution in the fixture keeps the
 -- replay honest about the walk while naming the right room.
 --
+-- `opts.seed` is a list of SQL statements run against the fresh database before
+-- the first log, for rows a walk needs that no log in the chain builds. The one
+-- case it exists for is a walk that crosses a Seam: Stoneworks level 2 opens with
+-- `map-here stonework-corridor-45`, a level 1 room, and replaying the ten level 1
+-- logs that eventually mint it would triple the suite's runtime to assert nothing
+-- about level 2. What level 1 actually contributes is two things, and the seed
+-- states both: the room the stairs come down from, and the SLUGS level 1 has
+-- already taken -- because a slug is the lowest free `-N`, so the logs'
+-- `map-here` lines only name the right room if the numbering starts where it
+-- really did. Seed rows are inert: they carry no coordinates and (bar the Seam)
+-- no exits, and area-scoped matching means level 2 never mistakes one for a room
+-- it walked.
+--
 -- `opts.stopAfter`, if set, stops feeding once that many server lines have gone
 -- through, for tests that want the graph mid-walk.
 function M.replay(path, opts)
@@ -106,6 +119,11 @@ function M.replayChain(paths, opts)
             dofile("main.lua")
         else
             dofile("main.lua")
+        end
+        -- Seeded after main.lua, which is what creates the schema, and before
+        -- setup, which may name a seeded room.
+        if i == 1 then
+            for _, sql in ipairs(opts.seed or {}) do db.exec(sql) end
         end
         for _, cmd in ipairs((opts.setup or {})[i] or {}) do
             helper.simulateAlias(cmd)
@@ -157,7 +175,8 @@ function M.replayChain(paths, opts)
     function g.rooms()
         local out = {}
         for _, r in ipairs(db.rows(
-            "SELECT id, slug, name, description, x, y, z, visits FROM rooms ORDER BY id")) do
+            "SELECT id, slug, name, description, x, y, z, visits, trap FROM rooms"
+            .. " ORDER BY id")) do
             r.exits = {}
             for _, e in ipairs(db.rows(
                 "SELECT direction, to_id FROM room_exits WHERE from_id = " .. r.id
