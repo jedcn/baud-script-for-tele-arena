@@ -54,11 +54,26 @@ export type RenderOpts = {
 
 type Pos = { c: number; r: number };
 
+export type Pos = { c: number; r: number };
+
+export type Placement = {
+  /** Room id -> integer grid cell. */
+  pos: Map<number, Pos>;
+  /** The same rooms and exits, sorted, so a renderer paints deterministically. */
+  rooms: Room[];
+  exits: Exit[];
+};
+
 /**
- * Place every room on an integer grid, then paint boxes, connectors and
- * off-map labels into a character buffer. Returns the map lines and the key.
+ * Place every room of an area on an integer grid by walking its exits from an
+ * origin. Shared by the two renderers -- the ASCII maps in MAP.md and the SVG
+ * in map.html -- because the hard part is the placement, not the paint, and two
+ * copies of it would drift. Coordinates in the database are deliberately NOT
+ * consulted (CLAUDE.md: "coordinates are soft; topology is truth").
  */
-export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] } {
+export function placeRooms(opts: {
+  rooms: Room[]; exits: Exit[]; origin: string;
+}): Placement {
   // Sort everything up front: placement depends on iteration order, and SQLite
   // makes no ordering promise without ORDER BY. Sorting here makes the output a
   // pure function of the data, so re-running produces a byte-identical file.
@@ -190,6 +205,19 @@ export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] }
   if (unplaced.length) throw new Error(
     `${unplaced.length} room(s) could not be placed: ${unplaced.map(r => r.slug).join(', ')}`);
 
+  return { pos, rooms, exits };
+}
+
+/**
+ * Place every room on an integer grid, then paint boxes, connectors and
+ * off-map labels into a character buffer. Returns the map lines and the key.
+ */
+export function renderArea(opts: RenderOpts): { lines: string[]; key: string[] } {
+  const { pos, rooms, exits } = placeRooms(opts);
+  const byId = new Map(rooms.map(r => [r.id, r]));
+  const ids = new Set(rooms.map(r => r.id));
+  const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
+
   const placed = [...pos.values()];
   const minC = Math.min(...placed.map(p => p.c)), maxC = Math.max(...placed.map(p => p.c));
   const minR = Math.min(...placed.map(p => p.r)), maxR = Math.max(...placed.map(p => p.r));
@@ -314,7 +342,7 @@ export function buildMarkdown(
 // Which areas get drawn, in what order, and which room anchors the grid. The
 // origin only fixes where (0,0) sits -- it does not affect topology -- so pick
 // a central, memorable room.
-const DRAWN = [
+export const DRAWN = [
   { slug: 'first-town', title: 'First Town', origin: 'north-plaza' },
   { slug: 'second-town', title: 'Second Town', origin: 'north-plaza-1' },
   // The dungeon under the first town. Each level is its own area (they are
