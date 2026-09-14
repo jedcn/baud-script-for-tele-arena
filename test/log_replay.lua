@@ -239,38 +239,67 @@ function M.replayChain(paths, opts)
         return out
     end
 
-    -- Corridors whose recorded exit-set disagrees with their own Description.
+    -- Rooms whose recorded exit-set disagrees with their own Description.
     --
-    -- A corridor states its exits in prose, in one of two rigid forms -- "The
-    -- corridor runs to the north and southeast." or "The corridor continues to
-    -- the east and southwest." -- which makes the Description an independent
-    -- check on the edges we recorded, and the one that catches conflation. Both
-    -- verbs matter: matching only "runs" silently skips every "continues" room
-    -- and reports them as fine.
+    -- A room states its exits in prose, in one of two rigid forms, which makes the
+    -- Description an independent check on the edges we recorded -- and the only
+    -- check that catches CONFLATION, where two rooms were merged into one and the
+    -- survivor ends up wearing both sets of exits. The 2026-09 desert damage reads
+    -- exactly like that: `desert` says "except to the south and northeast" and
+    -- carries five edges.
     --
-    -- Chambers are deliberately not checked here. Their prose is free ("The
-    -- northern portion of this chamber is obscured by a strange mist. The only
-    -- visible exit is east." -- where north is real but not visible, so the
-    -- naive reading is wrong), and one of them describes a wall rather than an
-    -- exit. Assert those by hand.
+    --   corridors   "The corridor runs to the north and southeast." Both verbs
+    --               matter: matching only "runs" silently skips every "continues"
+    --               room and reports them as fine.
+    --   the desert  "Huge black outcroppings of rock block travel in all directions
+    --               except to the south and northeast."
+    --
+    -- Chambers are deliberately not read. Their prose is free, and the form it
+    -- does use is a claim about VISIBILITY rather than about exits ("The northern
+    -- portion of this chamber is obscured by a strange mist. The only visible exit
+    -- is east." -- where north is real but not visible), so reading it would report
+    -- a true edge as a defect. Assert those by hand.
+    --
+    -- `u`/`d` are excluded on both sides: stairs get a sentence of their own
+    -- ("There is a stone staircase here leading downward") and never appear among
+    -- the directions.
     local WORD = { north = "n", south = "s", east = "e", west = "w",
                    northeast = "ne", northwest = "nw",
                    southeast = "se", southwest = "sw" }
 
-    function g.corridorMismatches()
+    -- The directions a description names, as a sorted "n,se" string, or nil where
+    -- it uses no form we trust.
+    local function proseDirs(description)
+        if not description then return nil end
+        local said = description:match("corridor runs to the ([^.]+)%.")
+            or description:match("corridor continues to the ([^.]+)%.")
+            or description:match("block travel in all directions except to the ([^.]+)%.")
+        if not said then return nil end
+        local dirs, seen = {}, {}
+        for word in said:gmatch("%a+") do
+            local dir = WORD[word]
+            if dir and not seen[dir] then
+                seen[dir] = true
+                dirs[#dirs + 1] = dir
+            end
+        end
+        if #dirs == 0 then return nil end
+        table.sort(dirs)
+        return table.concat(dirs, ",")
+    end
+    g.proseDirs = proseDirs
+
+    function g.proseMismatches()
         local bad = {}
         for _, r in ipairs(g.rooms()) do
-            local runs = r.description
-                and (r.description:match("corridor runs to the ([^.]+)%.")
-                     or r.description:match("corridor continues to the ([^.]+)%."))
-            if runs then
-                local said = {}
-                for word in runs:gmatch("%a+") do
-                    if WORD[word] then said[#said + 1] = WORD[word] end
+            local said = proseDirs(r.description)
+            if said then
+                local got = {}
+                for dir in pairs(r.exits) do
+                    if dir ~= "u" and dir ~= "d" then got[#got + 1] = dir end
                 end
-                table.sort(said)
-                said = table.concat(said, ",")
-                local got = g.exitSet(r.id)
+                table.sort(got)
+                got = table.concat(got, ",")
                 if said ~= got then
                     bad[#bad + 1] = r.id .. " " .. r.slug
                         .. ": prose says " .. said .. ", edges say " .. got
@@ -280,16 +309,12 @@ function M.replayChain(paths, opts)
         return bad
     end
 
-    -- How many corridors g.corridorMismatches() actually examined, so a test can
-    -- notice the check silently covering nothing.
-    function g.corridorsChecked()
+    -- How many rooms g.proseMismatches() actually examined, so a test can notice
+    -- the check silently covering nothing.
+    function g.prosesChecked()
         local n = 0
         for _, r in ipairs(g.rooms()) do
-            if r.description
-                and (r.description:match("corridor runs to the ([^.]+)%.")
-                     or r.description:match("corridor continues to the ([^.]+)%.")) then
-                n = n + 1
-            end
+            if proseDirs(r.description) then n = n + 1 end
         end
         return n
     end

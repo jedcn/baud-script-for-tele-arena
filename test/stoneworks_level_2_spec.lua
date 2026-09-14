@@ -182,21 +182,16 @@ describe("Stoneworks level 2", function()
             assert.are.same({}, g.oneWayEdges())
         end)
 
-        it("records no exit a corridor's own description denies, bar the stairs",
-            function()
-            -- One exception, and the prose is the thing that is odd, not our
-            -- edges: the last room says "The corridor continues to the south."
-            -- and then gives the stairs a sentence of their own, "There is a
-            -- stone staircase here leading downward." So `d` is never in the list
-            -- corridorMismatches() reads -- exactly as in stonework-corridor-45
-            -- on level 1, the room these logs come down from. Stated exactly
-            -- rather than excluded, so a SECOND mismatch still fails the test.
-            local bad = g.corridorMismatches()
-            assert.are.equal(1, #bad, table.concat(bad, "; "))
-            assert.is_truthy(bad[1]:find("prose says s, edges say d,s", 1, true))
+        it("records no exit a room's own description denies", function()
+            -- Stairs are the one thing the prose never lists among its directions:
+            -- the last room of this level says "The corridor continues to the
+            -- south." and then gives them a sentence of their own, "There is a
+            -- stone staircase here leading downward." So the check ignores `u`/`d`
+            -- on both sides, and this level comes out clean.
+            assert.are.same({}, g.proseMismatches())
             -- ... and the check really looked at this level, rather than passing
             -- because no description matched its pattern.
-            assert.is_true(g.corridorsChecked() >= 30)
+            assert.is_true(g.prosesChecked() >= 30)
         end)
 
         it("leaves one Stub: the stairs down to level 3", function()
@@ -275,7 +270,7 @@ describe("Stoneworks level 2", function()
             -- The prose says the exit is southwest, singular, while `ex` says
             -- `n,sw`: the Seal is legible in this room's description, so what is
             -- stored is a fact about the Reset it was read in. This is why
-            -- chambers are exempt from corridorMismatches().
+            -- chambers are exempt from proseMismatches().
             local seal = follow(entryRoom(), "w sw w nw n nw ne ne e ne")
             assert.is_truthy(seal.description:find("The visible exit is southwest", 1, true))
             assert.is_truthy(seal.description:find("guardian of the white rune", 1, true))

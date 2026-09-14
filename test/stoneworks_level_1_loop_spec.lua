@@ -142,7 +142,7 @@ describe("Stoneworks level 1 — walking a loop", function()
         it("records no exit any room's own description denies", function()
             -- The conflation shows up here: the room the walk was wrongly told it
             -- stood in gains exits its prose does not mention.
-            assert.are.same({}, g.corridorMismatches())
+            assert.are.same({}, g.proseMismatches())
         end)
 
         it("keeps every edge reciprocal", function()

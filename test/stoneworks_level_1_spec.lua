@@ -95,7 +95,7 @@ describe("Stoneworks level 1 — outer-edge walk", function()
         end)
 
         it("never records an exit a room's own description denies", function()
-            assert.are.same({}, g.corridorMismatches())
+            assert.are.same({}, g.proseMismatches())
         end)
 
         it("leaves the entry chamber's north exit an unwalked stub", function()

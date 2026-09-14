@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
-         routeReferences, coordinates, orphanExits, type Room, type Exit } from './verify';
+         routeReferences, coordinates, orphanExits, proseAgreement, proseDirections,
+         type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -64,6 +65,82 @@ describe('levelConsistency', () => {
     const f = levelConsistency(rooms, e, depths(e, 1));
     expect(f.ok).toBe(false);
     expect(f.detail).toMatch(/z -?\d+ -> -?\d+/);
+  });
+});
+
+describe('proseDirections', () => {
+  it('reads the desert form', () => {
+    expect(proseDirections('You are standing in a rocky windswept desert. Huge black'
+      + ' outcroppings of rock block travel in all directions except to the south'
+      + ' and northeast.')).toEqual(['ne', 's']);
+  });
+
+  it('reads both corridor verbs', () => {
+    // Matching only "runs" silently skipped every "continues" room and passed
+    // them all as fine.
+    expect(proseDirections('The corridor runs to the north and southeast.'))
+      .toEqual(['n', 'se']);
+    expect(proseDirections('The corridor continues to the east and southwest.'))
+      .toEqual(['e', 'sw']);
+  });
+
+  it('declines the chamber form rather than guessing', () => {
+    // "The only visible exit is east" is a claim about VISIBILITY. Stoneworks
+    // level 1's mist room has a real `n` exit the prose cannot see, so reading
+    // this form would report a true edge as a defect.
+    expect(proseDirections('The northern portion of this chamber is obscured by a'
+      + ' strange mist. The only visible exit is east.')).toBeNull();
+  });
+
+  it('returns null for prose that names no direction', () => {
+    expect(proseDirections('A featureless room.')).toBeNull();
+    expect(proseDirections(null)).toBeNull();
+  });
+});
+
+describe('proseAgreement', () => {
+  const desertRoom = (id: number, slug: string, dirs: string) =>
+    room(id, slug, 'Huge black outcroppings of rock block travel in all directions'
+      + ` except to the ${dirs}.`);
+
+  it('passes when the edges are exactly what the room says', () => {
+    const f = proseAgreement([desertRoom(1, 'desert', 'south and northeast')],
+      [{ from_id: 1, direction: 's', to_id: 2 }, { from_id: 1, direction: 'ne', to_id: null }]);
+    expect(f.ok).toBe(true);
+    expect(f.detail).toContain('1 of 1');
+  });
+
+  it('catches the conflation the desert actually had', () => {
+    // Two rooms merged into one leave the survivor wearing both sets of exits,
+    // and nothing else in verify.ts notices: the graph stays reciprocal, every
+    // room keeps a description, and it all still draws.
+    const f = proseAgreement([desertRoom(1, 'desert', 'south and northeast')],
+      ['s', 'ne', 'e', 'n', 'sw'].map(d => ({ from_id: 1, direction: d, to_id: 9 })));
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('prose says ne,s, edges say e,n,ne,s,sw');
+  });
+
+  it('ignores stairs, which prose gives a sentence of their own', () => {
+    // "There is a stone staircase here leading downward" is not in the list of
+    // directions, so a `d` must not count against the room.
+    const f = proseAgreement([room(1, 'x', 'The corridor continues to the south.')],
+      [{ from_id: 1, direction: 's', to_id: 2 }, { from_id: 1, direction: 'd', to_id: 3 }]);
+    expect(f.ok).toBe(true);
+  });
+
+  it('excuses a room whose prose is known to omit a real exit', () => {
+    // third town's doorway: you arrive from the town square going east, and the
+    // corridor does not count that as one of its exits.
+    const f = proseAgreement(
+      [room(1, 'stonework-corridor-175', 'The corridor continues to the east.')],
+      [{ from_id: 1, direction: 'e', to_id: null }, { from_id: 1, direction: 'w', to_id: 2 }]);
+    expect(f.ok).toBe(true);
+  });
+
+  it('says how many rooms it could read, so a silent no-op shows', () => {
+    const f = proseAgreement([room(1, 'x', 'A featureless room.')], []);
+    expect(f.ok).toBe(true);
+    expect(f.detail).toContain('0 of 1');
   });
 });
 

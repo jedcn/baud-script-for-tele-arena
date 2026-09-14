@@ -176,8 +176,8 @@ describe("Stoneworks level 1 — resuming and crossing a frontier", function()
             -- corridor-22 is the one that says "continues to the" rather than
             -- "runs to the"; the prose check has to read both verbs or it skips
             -- this room and calls the level clean.
-            assert.are.same({}, g.corridorMismatches())
-            assert.is_truthy(g.corridorsChecked() >= 25,
+            assert.are.same({}, g.proseMismatches())
+            assert.is_truthy(g.prosesChecked() >= 25,
                 "the prose check should be examining the new corridors")
         end)
     end)

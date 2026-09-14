@@ -141,6 +141,81 @@ export function descriptions(rooms: Room[]): Finding {
   };
 }
 
+// A room's own description names its exits, in one of a few rigid forms, which
+// makes the prose an independent check on the edges we recorded -- and the only
+// check that catches CONFLATION, where two rooms were merged into one and the
+// survivor ends up wearing both sets of exits. That is what the desert's 2026-09
+// damage looks like: `desert` says "except to the south and northeast" and
+// carries five edges.
+//
+// Only forms that have proved reliable are read. The chamber form ("The only
+// visible exit is east") is deliberately absent: `stonework-chamber-1` has a real
+// `n` exit hidden by mist, so "visible" is not the same claim.
+const PROSE_WORD: Record<string, string> = {
+  north: 'n', south: 's', east: 'e', west: 'w',
+  northeast: 'ne', northwest: 'nw', southeast: 'se', southwest: 'sw',
+};
+const PROSE_FORMS = [
+  /block travel in all directions except to (?:the )?([^.]+)\./,   // the desert
+  /corridor (?:runs|continues) to the ([^.]+)\./,                  // the stoneworks
+];
+
+/** The directions a description names, or null where it uses no form we trust. */
+export function proseDirections(description: string | null): string[] | null {
+  if (!description) return null;
+  for (const re of PROSE_FORMS) {
+    const m = description.match(re);
+    if (!m) continue;
+    const dirs = [...new Set((m[1].match(/[a-z]+/g) ?? [])
+      .map(w => PROSE_WORD[w]).filter(Boolean))];
+    if (dirs.length) return dirs.sort();
+  }
+  return null;
+}
+
+/**
+ * Rooms whose prose really does omit a real exit, with the reason. Each one is a
+ * doorway you arrive through rather than a way the room describes leaving, so the
+ * game's wording is right and so are our edges.
+ */
+export const PROSE_EXCEPTIONS: Record<string, string> = {
+  'stonework-corridor-175': 'third town\'s doorway: entered from the town square'
+    + ' to the west, which the corridor does not count among its exits',
+};
+
+/**
+ * Every exit a room has, against every exit its description names. Stairs are
+ * excluded: `u`/`d` get a sentence of their own ("There is a stone staircase here
+ * leading downward") and never appear in the list of directions.
+ */
+export function proseAgreement(rooms: Room[], exits: Exit[]): Finding {
+  const byRoom = new Map<number, string[]>();
+  for (const e of exits) {
+    if (e.direction === 'u' || e.direction === 'd') continue;
+    if (!byRoom.has(e.from_id)) byRoom.set(e.from_id, []);
+    byRoom.get(e.from_id)!.push(e.direction);
+  }
+  let checked = 0;
+  const bad: string[] = [];
+  for (const r of rooms) {
+    const said = proseDirections(r.description);
+    if (!said) continue;
+    checked++;
+    if (PROSE_EXCEPTIONS[r.slug]) continue;
+    const got = (byRoom.get(r.id) ?? []).sort();
+    if (said.join(',') !== got.join(',')) {
+      bad.push(`${r.slug} (prose says ${said.join(',') || 'none'}, edges say ${got.join(',') || 'none'})`);
+    }
+  }
+  return {
+    check: 'no room contradicts its own description',
+    ok: bad.length === 0,
+    detail: bad.length === 0
+      ? `${checked} of ${rooms.length} rooms name their exits in prose, and all agree`
+      : `${bad.length} of ${checked} disagree: ` + bad.join(', '),
+  };
+}
+
 /**
  * `navigate-to` addresses rooms as "<area>/<room>" strings inside ta_nav.lua,
  * which nothing type-checks. Renaming an area silently breaks every route that
@@ -235,6 +310,7 @@ if (import.meta.main) {
       reciprocity(rooms, exits, allExits),
       levelConsistency(rooms, allExits, z),
       descriptions(rooms),
+      proseAgreement(rooms, exits),
     ];
     // The drawing is a check too: renderArea throws if a room cannot be placed
     // or if fewer boxes come out than rooms went in.
