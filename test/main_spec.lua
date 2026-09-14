@@ -634,6 +634,7 @@ describe("Tele-Arena triggers", function()
     describe("abandonment (thirst ticks with nothing in between)", function()
 
         local THIRSTY = "You're thirsty."
+        local POISONED = "You're poisoned!"
 
         it("leaves the game after three ticks in a row", function()
             helper.simulateLine(THIRSTY)
@@ -716,7 +717,53 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine(THIRSTY)
             helper.simulateLine(THIRSTY)
             helper.simulateLine(THIRSTY)
-            assert.are.equal(0, taPackage.abandonedThirstStreak)
+            assert.are.equal(0, taPackage.abandonedTickStreak)
+        end)
+
+        -- Poison repeats once per tick just like thirst, and a character left
+        -- standing in it dies the same slow way (tojolias, 2026-09-13).
+        it("leaves the game after three poison ticks in a row", function()
+            helper.simulateLine(POISONED)
+            helper.simulateLine("")
+            helper.simulateLine(POISONED)
+            helper.simulateLine("")
+            helper.simulateLine(POISONED)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+            assert.is_true(taPackage.exitGamePending)
+        end)
+
+        it("does nothing on two poison ticks", function()
+            helper.simulateLine(POISONED)
+            helper.simulateLine(POISONED)
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("starts over when anything else happens between poison ticks", function()
+            helper.simulateLine(POISONED)
+            helper.simulateLine(POISONED)
+            helper.simulateLine("You're in the north plaza.")
+            helper.simulateLine(POISONED)
+            helper.simulateLine(POISONED)
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+        end)
+
+        -- A mix is no less abandoned than either alone.
+        it("counts thirst and poison ticks toward one streak", function()
+            helper.simulateLine(THIRSTY)
+            helper.simulateLine(POISONED)
+            helper.simulateLine(THIRSTY)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("names poison when poison set it off", function()
+            helper.simulateLine(POISONED)
+            helper.simulateLine(POISONED)
+            helper.simulateLine(POISONED)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("[abandoned] 3 poison ticks", 1, true) then said = true end
+            end
+            assert.is_true(said)
         end)
 
         it("keeps retrying until the game confirms", function()

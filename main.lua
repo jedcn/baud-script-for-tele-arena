@@ -4743,30 +4743,50 @@ end, { type = "regex" })
 -- "nobody is home" evidence as thirst, so letting one reset the streak would
 -- keep a character alive-and-abandoned indefinitely. Thirst outnumbers hunger
 -- about 50:1 in the logs, but interleaving does happen.
-local ABANDONED_THIRST_LIMIT = 3
+--
+-- Poison ticks count exactly like thirst. "You're poisoned!" repeats once per
+-- tick for as long as the poison lasts, in the same blank-line-separated shape,
+-- and a character left standing in it is being ground down just the same: in
+-- session-tojolias-2026-09-13T20-35-17.log:1085 a navigate-to arrived at town-2
+-- with no cure left and eighteen poison ticks followed with nothing in between.
+-- The two share one streak, since a mix of them is no less abandoned.
+local ABANDONED_TICK_LIMIT = 3
+local ABANDONED_TICKS = {
+    ["You're thirsty."] = "thirst",
+    ["You're poisoned!"] = "poison",
+}
 
 createTrigger("^(.+)$", function(matches)
     local line = trimLine(matches[2])
     if line == "" or line == ">" then return end
     if line == "You're hungry." then return end
-    if line ~= "You're thirsty." then
-        taPackage.abandonedThirstStreak = 0
+    local tick = ABANDONED_TICKS[line]
+    if not tick then
+        taPackage.abandonedTickStreak = 0
         return
     end
 
-    local streak = (taPackage.abandonedThirstStreak or 0) + 1
-    taPackage.abandonedThirstStreak = streak
-    if streak < ABANDONED_THIRST_LIMIT then return end
+    local streak = (taPackage.abandonedTickStreak or 0) + 1
+    taPackage.abandonedTickStreak = streak
+    -- Which kind of tick the run is made of, for the message: one name if it's
+    -- all one kind, "thirst/poison" once they mix.
+    if streak == 1 then
+        taPackage.abandonedTickKind = tick
+    elseif taPackage.abandonedTickKind ~= tick then
+        taPackage.abandonedTickKind = "thirst/poison"
+    end
+    if streak < ABANDONED_TICK_LIMIT then return end
 
     -- Clear before leaving. exitGameWithRetry re-sends "x" every 2s until the
     -- game confirms, so the exit is already covered; without this reset a
     -- refusal ("Sorry, you'll have to rest a while...") followed by one more
     -- tick would fire the whole thing again from a streak of one.
-    taPackage.abandonedThirstStreak = 0
-    echo("[abandoned] " .. streak .. " thirst ticks with nothing in between"
+    taPackage.abandonedTickStreak = 0
+    local kind = taPackage.abandonedTickKind
+    echo("[abandoned] " .. streak .. " " .. kind .. " ticks with nothing in between"
         .. " — leaving the game (x).")
     sendNtfy("Abandoned", (taPackage.character.name or "The character")
-        .. " saw " .. streak .. " thirst ticks with no other activity"
+        .. " saw " .. streak .. " " .. kind .. " ticks with no other activity"
         .. " and left the game with x.")
     -- Same order as the nightly shutdown: stop everything first so a wedged
     -- walk or fight isn't still issuing commands into the exit, and do it
