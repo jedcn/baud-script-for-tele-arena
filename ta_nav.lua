@@ -687,9 +687,25 @@ local NAV_ROUTES = {
     -- `ruined-town` states both of its ends. The tail is better than a check: the
     -- last two steps `u`, `ne` are the exact reverse of the first two steps of
     -- `town-3/ruby-door` (`sw`, `d`), the path between the plaza and the sewers.
-    -- The three `d` into the sewers mirror that route's three `u` out. Between
-    -- those ends nothing is verifiable -- the map stops at the riddle door two
-    -- stoneworks levels down -- so these directions are the walk itself.
+    -- The three `d` into the sewers mirror that route's three `u` out.
+    --
+    -- Steps 88-100 ARE verifiable now that Stoneworks level 2 is mapped, and they
+    -- agree edge for edge: `s s sw w sw sw se s se e ne e u` walks
+    -- stonework-corridor-83 (the level 3 stairs, where step 87's `u` lands) to
+    -- stonework-chamber-5 and up to stonework-corridor-45 on level 1. That is the
+    -- from-step to resume at after coming up from level 3 by hand:
+    -- `navigate-to town-2 from-step 88`.
+    --
+    -- Two of those steps are Device State, which is why the route walks them
+    -- without a word and why it only works on a day whose levers are thrown:
+    -- step 89 crosses the `say arok` wall SOUTHBOUND (whether a shut wall blocks
+    -- that way has never been tested -- the walk has only ever crossed it going
+    -- north, after opening it), and step 92 walks into stonework-corridor-56,
+    -- which is the falling-rocks trap the `pull lever` in stonework-chamber-8
+    -- disarms. Unpulled, this route takes the hit there.
+    --
+    -- The rest of the stretch is still unverifiable -- the map stops at the level
+    -- 3 stairs -- so those directions are the walk itself.
     --
     -- Two stretches of the log are NOT here, both confirmed by the user as
     -- getting lost rather than route: a wander out to the magic shop and back
