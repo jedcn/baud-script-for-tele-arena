@@ -910,7 +910,7 @@
       "name": "stonework corridor",
       "exits": {
         "d": {
-          "to": null
+          "to": "stoneworks-level-2/stonework-chamber-5"
         },
         "w": {
           "to": "stoneworks-level-1/stonework-corridor-46"

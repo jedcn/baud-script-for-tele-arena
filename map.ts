@@ -327,10 +327,12 @@ const DRAWN = [
   // The desert, which is not split into levels and renders as a sprawl.
   { slug: 'desert', title: 'The Desert', origin: 'crude-stone-building' },
   // The stoneworks, one area per level now, which is what the shrine draws. The
-  // old flat `stoneworks` area held all six at once and is empty; level 1 is the
-  // only one mapped so far. Origin is the riddle chamber, where the shrine's
-  // drawing starts -- `say komi` there opens the way in.
+  // old flat `stoneworks` area held all six at once and is empty; levels 1 and 2
+  // are mapped. Level 1's origin is the riddle chamber, where the shrine's
+  // drawing starts -- `say komi` there opens the way in; level 2's is the room
+  // you arrive in coming down from level 1.
   { slug: 'stoneworks-level-1', title: 'The Stoneworks, Level 1', origin: 'stonework-chamber' },
+  { slug: 'stoneworks-level-2', title: 'The Stoneworks, Level 2', origin: 'stonework-chamber-5' },
   // The sewers under the second town, three levels. Origins are the room you
   // arrive in coming down from above.
   { slug: 'sewers-level-1', title: 'Sewers, Level 1', origin: 'town-sewers' },

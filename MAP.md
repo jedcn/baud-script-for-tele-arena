@@ -9,12 +9,13 @@
 5. [First Dungeon, Level 3](#first-dungeon-level-3)
 6. [The Desert](#the-desert)
 7. [The Stoneworks, Level 1](#the-stoneworks-level-1)
-8. [Sewers, Level 1](#sewers-level-1)
-9. [Sewers, Level 2](#sewers-level-2)
-10. [Sewers, Level 3](#sewers-level-3)
-11. [The Mountains](#the-mountains)
-12. [The Cellars](#the-cellars)
-13. [Third Town](#third-town)
+8. [The Stoneworks, Level 2](#the-stoneworks-level-2)
+9. [Sewers, Level 1](#sewers-level-1)
+10. [Sewers, Level 2](#sewers-level-2)
+11. [Sewers, Level 3](#sewers-level-3)
+12. [The Mountains](#the-mountains)
+13. [The Cellars](#the-cellars)
+14. [Third Town](#third-town)
 
 ### First Town
 
@@ -335,7 +336,7 @@ Key:
                     [ ]--[ ]
                             \
                              \
-[ ]--[ ]                      [ ]                      [ ]--[ ]--[ ]--[ v]   n to unexplored   down to unexplored
+[ ]--[ ]                      [ ]                      [ ]--[ ]--[ ]--[ v]   n to unexplored   down to The Stoneworks, Level 2
  |      \                        \
  |       \                        \
 [ ]       [ ]                      [ ]
@@ -378,6 +379,57 @@ Key:
                                       \
                                        \
                                         [ ]
+```
+
+### The Stoneworks, Level 2
+
+```
+                                             [ v]        down to unexplored
+                                              |
+                                              |
+                                             [ ]
+                                              |
+                                              |
+                                             [ ]
+                                            /
+                                           /
+                                   [ ]--[ ]
+                                  /
+                                 /
+               [ ]--[ ]       [ ]
+              /        \     /
+             /          \   /
+          [ ]            [ ]
+           |                \
+           |                 \
+          [ ]                 [ ]
+         /                     |
+        /                      |
+     [ ]                      [ ]            [ ]--[ ^]   up to The Stoneworks, Level 1
+    /                            \          /
+   /                              \        /
+[ ]                      [ ]       [ ]--[ ]
+ |                        | \     /
+ |                        |  \   /
+[ ]       [ ]--[ ]       [ ]  [ ]  [ ]--[ ]
+   \     /        \       |       /        \
+    \   /          \      |      /          \
+     [ ]            [ ]--[ ]--[ ]            [ ]
+                                            /
+                                           /
+                                        [ ]
+                                       /
+                                      /
+                                   [ ]
+                                      \
+                                       \
+                         [ ]            [ ]
+                        /   \          /
+                       /     \        /
+                    [ ]       [ ]--[ ]
+                     |
+                     |
+                    [ ]
 ```
 
 ### Sewers, Level 1
