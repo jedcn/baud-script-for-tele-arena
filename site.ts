@@ -78,7 +78,11 @@ export type LevelStats = {
   rooms: number; frontiers: number; devices: number; traps: number;
   doors: number; seals: number; leaving: number;
 };
-export type LevelSvg = { svg: string; stats: LevelStats; width: number; height: number };
+export type LevelSvg = {
+  svg: string; stats: LevelStats; width: number; height: number;
+  /** Where the layout pass put each room, for the page to drag from and reset to. */
+  home: Record<string, [number, number]>;
+};
 
 /** The short label for a link that leaves this area: "Level 3", or "The Desert". */
 export function awayLabel(fromName: string, toName: string): string {
@@ -105,14 +109,23 @@ export function boxLabel(room: Room): string {
 }
 
 /**
- * Draw one level. Edges first so boxes sit on top of them, then the stubs that
- * mark where nobody has walked, then the boxes.
+ * Draw one level.
  *
  * Every exit in the JSON ends up visible as one of four things, because an exit
  * that renders as nothing is indistinguishable from an exit we failed to record:
  * a line to another box on this level, a dashed stub with a label (it leaves the
  * area), a dashed stub with an open circle (`to: null`, the frontier), or a
  * ▲/▼ badge (`u`/`d`, which have no compass offset to draw along).
+ *
+ * Geometry is anchored rather than absolute, so the page can move a room and keep
+ * the map connected. Everything that belongs to ONE room -- its box, its label,
+ * its trap and device dots, its stair badges, its stubs -- is a child of a group
+ * carrying `data-a="<room id>"` and positioned by that group's `transform`, so
+ * moving the room is one attribute. The only things left to recompute are the
+ * pieces that span two rooms: an edge (two endpoints) and the Door or Seal mark
+ * at its midpoint, both tagged `data-a` and `data-b`. `pos` goes to the page as
+ * data so the drag has somewhere to keep the new positions, and a reset has the
+ * old ones.
  */
 export function renderLevel(
   area: Area, nameOf: (areaSlug: string) => string,
@@ -137,18 +150,26 @@ export function renderLevel(
   const minR = Math.min(...cells.map(p => p.r)), maxR = Math.max(...cells.map(p => p.r));
   const width = (maxC - minC) * CELL_W + BOX_W + PAD * 2;
   const height = (maxR - minR) * CELL_H + BOX_H + PAD * 2;
-  const cx = (id: number) => PAD + (pos.get(id)!.c - minC) * CELL_W + BOX_W / 2;
-  const cy = (id: number) => PAD + (pos.get(id)!.r - minR) * CELL_H + BOX_H / 2;
+  const at = (roomId: string): [number, number] => {
+    const p = pos.get(ids.get(roomId)!)!;
+    return [PAD + (p.c - minC) * CELL_W + BOX_W / 2, PAD + (p.r - minR) * CELL_H + BOX_H / 2];
+  };
+  const home: Record<string, [number, number]> = {};
+  for (const room of area.rooms) home[room.id] = at(room.id);
 
   const stats: LevelStats = {
     rooms: area.rooms.length, frontiers: 0, devices: 0, traps: 0,
     doors: 0, seals: 0, leaving: 0,
   };
-  const edges: string[] = [], stubs: string[] = [], boxes: string[] = [], marks: string[] = [];
+  const edges: string[] = [], gates: string[] = [], boxes: string[] = [];
+  const own = new Map<string, string[]>();          // room id -> its own stubs/badges
+  const part = (roomId: string, svg: string) => {
+    if (!own.has(roomId)) own.set(roomId, []);
+    own.get(roomId)!.push(svg);
+  };
   const seen = new Set<string>();
 
   for (const room of area.rooms) {
-    const from = ids.get(room.id)!;
     for (const [dir, ex] of Object.entries(room.exits) as [string, Exit][]) {
       const gate = ex.sealedBy ? 'seal' : ex.door ? 'door' : null;
       const title = ex.sealedBy
@@ -158,37 +179,37 @@ export function renderLevel(
           : `${dir}`;
 
       // Leaves the level, or nobody has walked it: a stub either way, since
-      // there is no second box to draw a line to.
+      // there is no second box to draw a line to. Drawn in the room's own
+      // coordinates, which is what lets it travel with the room.
       if (ex.to == null || !ids.has(ex.to)) {
         const o = COMPASS[dir] ?? [0, dir === 'u' ? -1 : 1];
         const len = ex.to == null ? STUB : STUB + 2;
-        const x1 = cx(from) + o[0] * (BOX_W / 2), y1 = cy(from) + o[1] * (BOX_H / 2);
+        const x1 = o[0] * (BOX_W / 2), y1 = o[1] * (BOX_H / 2);
         const x2 = x1 + o[0] * len, y2 = y1 + o[1] * len;
         if (ex.to == null) {
           stats.frontiers++;
-          stubs.push(`<line class="stub" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`
+          part(room.id, `<line class="stub" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`
             + `<circle class="frontier" cx="${x2}" cy="${y2}" r="4">`
             + `<title>${esc(dir)}: exit known, never walked</title></circle>`);
         } else {
           stats.leaving++;
           const label = awayLabel(area.name, nameOf(ex.to.split('/')[0]));
           const anchor = o[0] > 0 ? 'start' : o[0] < 0 ? 'end' : 'middle';
-          stubs.push(`<line class="away" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`
+          part(room.id, `<line class="away" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`
             + `<text class="away-label" x="${x2 + o[0] * 4}" y="${y2 + (o[1] >= 0 ? 11 : -5)}"`
             + ` text-anchor="${anchor}">${esc(label)}</text>`
             + `<title>${esc(dir)} to ${esc(ex.to)}</title>`);
         }
-        if (gate) marks.push(gateMark(gate, (x1 + x2) / 2, (y1 + y2) / 2, title));
+        if (gate) part(room.id, gateMark(gate, (x1 + x2) / 2, (y1 + y2) / 2, title));
         continue;
       }
 
-      const to = ids.get(ex.to)!;
       // u/d carry no direction on a flat drawing, so they get a badge on the box
       // rather than a line that would lie about which way the room lies.
       if (dir === 'u' || dir === 'd') {
         const up = dir === 'u';
-        marks.push(`<text class="vbadge" x="${cx(from) + BOX_W / 2 - 5}"`
-          + ` y="${cy(from) + (up ? -BOX_H / 2 + 9 : BOX_H / 2 - 2)}">${up ? '▲' : '▼'}`
+        part(room.id, `<text class="vbadge" x="${BOX_W / 2 - 5}"`
+          + ` y="${up ? -BOX_H / 2 + 9 : BOX_H / 2 - 2}">${up ? '▲' : '▼'}`
           + `<title>${esc(dir)} to ${esc(ex.to)}</title></text>`);
         continue;
       }
@@ -201,22 +222,24 @@ export function renderLevel(
       // `n` and `ne`, say) from vanishing instead -- no area has one today, and
       // if one appears the two lines will coincide, which is a cosmetic problem
       // where dropping an exit would be a lie.
-      const key = [Math.min(from, to), Math.max(from, to)].join('-')
-        + ':' + [dir, REVERSE[dir] ?? dir].sort().join('-');
+      const pair = [room.id, ex.to].sort();
+      const key = pair.join('|') + ':' + [dir, REVERSE[dir] ?? dir].sort().join('-');
       if (seen.has(key)) continue;
       seen.add(key);
-      edges.push(`<line class="edge" x1="${cx(from)}" y1="${cy(from)}"`
-        + ` x2="${cx(to)}" y2="${cy(to)}"><title>${esc(title)}</title></line>`);
+      const [ax, ay] = home[pair[0]], [bx, by] = home[pair[1]];
+      const anchors = ` data-a="${esc(pair[0])}" data-b="${esc(pair[1])}"`;
+      edges.push(`<line class="edge"${anchors} x1="${ax}" y1="${ay}"`
+        + ` x2="${bx}" y2="${by}"><title>${esc(title)}</title></line>`);
       if (gate) {
         if (gate === 'seal') stats.seals++; else stats.doors++;
-        marks.push(gateMark(gate, (cx(from) + cx(to)) / 2, (cy(from) + cy(to)) / 2, title));
+        gates.push(`<g class="gate"${anchors}`
+          + ` transform="translate(${(ax + bx) / 2},${(ay + by) / 2})">`
+          + gateMark(gate, 0, 0, title) + `</g>`);
       }
     }
   }
 
   for (const room of area.rooms) {
-    const id = ids.get(room.id)!;
-    const x = cx(id) - BOX_W / 2, y = cy(id) - BOX_H / 2;
     const classes = ['box'];
     if (room.trap) { classes.push('trapped'); stats.traps++; }
     if (room.devices?.length) { classes.push('device'); stats.devices += room.devices.length; }
@@ -225,24 +248,28 @@ export function renderLevel(
     const bits = [room.id, room.name];
     if (room.trap) bits.push(`trap: ${room.trap.type}`);
     for (const d of room.devices ?? []) bits.push(`\`${d.command}\` (${d.effect})`);
-    boxes.push(`<g class="${classes.join(' ')}" data-id="${esc(room.id)}" tabindex="0">`
-      + `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5"/>`
-      + `<text class="label" x="${cx(id)}" y="${cy(id) + 4}">${esc(boxLabel(room))}</text>`
-      + `<title>${esc(bits.join('\n'))}</title></g>`);
-    if (room.trap) {
-      marks.push(`<circle class="trap-dot" cx="${x + 5}" cy="${y + 5}" r="3.5"/>`);
-    }
-    if (room.devices?.length) {
-      marks.push(`<circle class="device-dot" cx="${x + BOX_W - 5}" cy="${y + 5}" r="3.5"/>`);
-    }
+    const [x, y] = home[room.id];
+    // <title> first: it is a tooltip only as the FIRST child of its element, and
+    // the stubs and badges that follow carry titles of their own.
+    boxes.push(`<g class="${classes.join(' ')}" data-id="${esc(room.id)}"`
+      + ` data-a="${esc(room.id)}" transform="translate(${x},${y})" tabindex="0">`
+      + `<title>${esc(bits.join('\n'))}</title>`
+      + `<rect x="${-BOX_W / 2}" y="${-BOX_H / 2}" width="${BOX_W}" height="${BOX_H}" rx="5"/>`
+      + `<text class="label" x="0" y="4">${esc(boxLabel(room))}</text>`
+      + (room.trap
+        ? `<circle class="trap-dot" cx="${-BOX_W / 2 + 5}" cy="${-BOX_H / 2 + 5}" r="3.5"/>` : '')
+      + (room.devices?.length
+        ? `<circle class="device-dot" cx="${BOX_W / 2 - 5}" cy="${-BOX_H / 2 + 5}" r="3.5"/>` : '')
+      + (own.get(room.id) ?? []).join('')
+      + `</g>`);
   }
 
   const svg = `<svg class="level" viewBox="0 0 ${width} ${height}"`
     + ` style="max-width:${width}px" role="img"`
     + ` aria-label="${esc(area.name)}">\n`
-    + edges.join('\n') + '\n' + stubs.join('\n') + '\n'
-    + boxes.join('\n') + '\n' + marks.join('\n') + '\n</svg>';
-  return { svg, stats, width, height };
+    + edges.join('\n') + '\n' + gates.join('\n') + '\n'
+    + boxes.join('\n') + '\n</svg>';
+  return { svg, stats, width, height, home };
 }
 
 function gateMark(kind: 'door' | 'seal', x: number, y: number, title: string): string {
@@ -334,11 +361,18 @@ aside { flex: 0 0 20rem; display: flex; flex-direction: column; gap: 1rem; }
 #panel li { border-left: 3px solid var(--amber); background: rgba(227,179,65,0.08);
   padding: 0.25rem 0.5rem; margin: 0.25rem 0; border-radius: 2px; }
 #panel li.trap { border-left-color: var(--red); background: rgba(248,81,73,0.08); }
-svg.level { display: block; width: 100%; height: auto; }
+svg.level { display: block; width: 100%; height: auto; touch-action: none; }
+.box { cursor: grab; }
+.box.dragging { cursor: grabbing; }
+.box.dragging rect { stroke: var(--blue); stroke-width: 2.5px; }
+button.ghost { background: var(--raised); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 5px; padding: 0.35rem 0.7rem; font: inherit; font-size: 0.78rem; cursor: pointer; }
+button.ghost:hover { color: var(--text); border-color: var(--blue); }
+button.ghost[disabled] { opacity: 0.45; cursor: default; }
+.hint { color: var(--muted); font-size: 0.78rem; }
 .box rect { fill: var(--raised); stroke: #4d5560; stroke-width: 1.5px; }
 .box .label { fill: var(--muted); font-size: 11px; text-anchor: middle;
   font-family: inherit; pointer-events: none; }
-.box { cursor: pointer; }
 .box:hover rect, .box:focus rect { stroke: var(--blue); stroke-width: 2px; outline: none; }
 .box.sel rect { stroke: var(--blue); stroke-width: 2.5px; fill: #1c2b3d; }
 .box.service rect { fill: #1b2a36; stroke: var(--blue); }
@@ -367,7 +401,68 @@ var groups = DATA.groups, rooms = DATA.rooms, levels = DATA.levels;
 var areaSel = document.getElementById('area'),
     levelSel = document.getElementById('level'),
     stats = document.getElementById('stats'),
+    resetBtn = document.getElementById('reset'),
     panel = document.getElementById('panel');
+
+// ---------------------------------------------------------------------------
+// Positions. DATA.home is where the layout pass put each room; 'pos' is where it
+// is now, which the reader can change by dragging. A room id is 'area/slug', so
+// the level a room belongs to is the part before the slash -- no lookup needed.
+var pos = {}, shown = null;
+for (var id in DATA.home) pos[id] = [DATA.home[id][0], DATA.home[id][1]];
+
+function levelOf(id) { return id.slice(0, id.indexOf('/')); }
+function storeKey(slug) { return 'ta-map-layout:' + slug; }
+
+// Saved arrangements are a convenience, not data: a browser with storage blocked
+// or cleared must still draw the map, so every read and write is guarded and a
+// failure is simply ignored.
+function loadSaved(slug) {
+  try {
+    var raw = localStorage.getItem(storeKey(slug));
+    if (!raw) return;
+    var saved = JSON.parse(raw);
+    for (var id in saved) if (pos[id]) pos[id] = saved[id];
+  } catch (e) { /* no storage, or nonsense in it */ }
+}
+function save(slug) {
+  var out = {};
+  for (var id in pos) if (levelOf(id) === slug) out[id] = pos[id];
+  try { localStorage.setItem(storeKey(slug), JSON.stringify(out)); } catch (e) {}
+}
+
+// Elements are tagged with the room(s) they belong to: one 'data-a' for a room's
+// own box and stubs, 'data-a' + 'data-b' for the pieces that span two rooms. The
+// index is built once so a drag is not a query per frame.
+var ownEls = {}, linkEls = {};
+function index() {
+  ownEls = {}; linkEls = {};
+  document.querySelectorAll('[data-a]').forEach(function (el) {
+    var a = el.getAttribute('data-a'), b = el.getAttribute('data-b');
+    if (b == null) { (ownEls[a] = ownEls[a] || []).push(el); return; }
+    (linkEls[a] = linkEls[a] || []).push(el);
+    (linkEls[b] = linkEls[b] || []).push(el);
+  });
+}
+
+/** Move everything that depends on where room 'id' is. */
+function place(id) {
+  var p = pos[id];
+  (ownEls[id] || []).forEach(function (el) {
+    el.setAttribute('transform', 'translate(' + p[0] + ',' + p[1] + ')');
+  });
+  (linkEls[id] || []).forEach(function (el) {
+    var a = pos[el.getAttribute('data-a')], b = pos[el.getAttribute('data-b')];
+    if (!a || !b) return;
+    if (el.tagName === 'line') {
+      el.setAttribute('x1', a[0]); el.setAttribute('y1', a[1]);
+      el.setAttribute('x2', b[0]); el.setAttribute('y2', b[1]);
+    } else {
+      el.setAttribute('transform',
+        'translate(' + (a[0] + b[0]) / 2 + ',' + (a[1] + b[1]) / 2 + ')');
+    }
+  });
+}
 
 function fillLevels(areaName, want) {
   var g = groups.filter(function (x) { return x.area === areaName; })[0];
@@ -399,6 +494,10 @@ function show(slug) {
     + (s.doors ? ' · <b>' + s.doors + '</b> doors' : '')
     + (s.seals ? ' · <b>' + s.seals + '</b> seals' : '');
   if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
+  shown = slug;
+  index();
+  loadSaved(slug);
+  for (var id in pos) if (levelOf(id) === slug) place(id);
   select(null);
 }
 
@@ -441,14 +540,82 @@ areaSel.addEventListener('change', function () {
   show(levelSel.value);
 });
 levelSel.addEventListener('change', function () { show(levelSel.value); });
-document.addEventListener('click', function (e) {
-  var box = e.target && e.target.closest ? e.target.closest('.box') : null;
-  if (box) select(box.getAttribute('data-id'));
+// ---------------------------------------------------------------------------
+// Dragging. The map's layout is derived from topology, so it is one valid drawing
+// of the level among many -- being able to pull a room where you expect it is how
+// you argue with it.
+//
+// Pointer movement is in CSS pixels and the SVG is scaled to its pane, so every
+// delta is converted through the viewBox before it moves anything.
+var drag = null;
+var CLICK_SLOP = 4;                   // px of travel still counted as a click
+
+function userScale(svg) {
+  var vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/);
+  var box = svg.getBoundingClientRect ? svg.getBoundingClientRect() : null;
+  if (!vb[2] || !box || !box.width) return 1;
+  return Number(vb[2]) / box.width;
+}
+
+function closestOf(el, sel) { return el && el.closest ? el.closest(sel) : null; }
+
+document.addEventListener('pointerdown', function (e) {
+  var box = closestOf(e.target, '.box');
+  if (!box) return;
+  var svg = closestOf(box, 'svg');
+  drag = { id: box.getAttribute('data-id'), box: box, travelled: 0,
+           k: svg ? userScale(svg) : 1, x: e.clientX, y: e.clientY };
+  box.classList.add('dragging');
+  // Capture, so a fast drag that outruns the box keeps sending us moves.
+  if (box.setPointerCapture && e.pointerId != null) {
+    try { box.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  if (e.preventDefault) e.preventDefault();
 });
+
+document.addEventListener('pointermove', function (e) {
+  if (!drag) return;
+  var dx = (e.clientX - drag.x) * drag.k, dy = (e.clientY - drag.y) * drag.k;
+  drag.x = e.clientX; drag.y = e.clientY;
+  drag.travelled += Math.abs(dx) + Math.abs(dy);
+  var p = pos[drag.id];
+  pos[drag.id] = [p[0] + dx, p[1] + dy];
+  place(drag.id);
+});
+
+document.addEventListener('pointerup', function () {
+  if (!drag) return;
+  drag.box.classList.remove('dragging');
+  // A press that went nowhere is a click: show the room. Selecting on pointerup
+  // rather than on click is what keeps a drag from also opening the panel.
+  if (drag.travelled <= CLICK_SLOP) select(drag.id);
+  else if (shown) save(shown);
+  drag = null;
+});
+
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') select(null);
-  var box = e.target && e.target.closest ? e.target.closest('.box') : null;
-  if (box && (e.key === 'Enter' || e.key === ' ')) select(box.getAttribute('data-id'));
+  if (e.key === 'Escape') { select(null); return; }
+  var box = closestOf(e.target, '.box');
+  if (!box) return;
+  var id = box.getAttribute('data-id');
+  if (e.key === 'Enter' || e.key === ' ') { select(id); return; }
+  var step = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
+  if (!step) return;
+  var far = e.shiftKey ? 10 : 2;
+  pos[id] = [pos[id][0] + step[0] * far, pos[id][1] + step[1] * far];
+  place(id);
+  if (shown) save(shown);
+  if (e.preventDefault) e.preventDefault();
+});
+
+resetBtn.addEventListener('click', function () {
+  if (!shown) return;
+  try { localStorage.removeItem(storeKey(shown)); } catch (e) {}
+  for (var id in pos) {
+    if (levelOf(id) !== shown) continue;
+    pos[id] = [DATA.home[id][0], DATA.home[id][1]];
+    place(id);
+  }
 });
 
 // A hash names a level, so a link can point at one: map.html#stoneworks-level-2
@@ -503,12 +670,14 @@ export function buildPage(areas: Area[]): string {
   }
 
   const levels: Record<string, LevelStats> = {};
+  const home: Record<string, [number, number]> = {};
   const panes: string[] = [];
   for (const g of groups) {
     for (const ref of g.levels) {
-      const { svg, stats } = renderLevel(bySlug.get(ref.slug)!, nameOf);
-      levels[ref.slug] = stats;
-      panes.push(`<div class="canvas" data-level="${esc(ref.slug)}" hidden>${svg}</div>`);
+      const level = renderLevel(bySlug.get(ref.slug)!, nameOf);
+      levels[ref.slug] = level.stats;
+      Object.assign(home, level.home);
+      panes.push(`<div class="canvas" data-level="${esc(ref.slug)}" hidden>${level.svg}</div>`);
     }
   }
 
@@ -536,8 +705,13 @@ export function buildPage(areas: Area[]): string {
   <div><label for="area">Area</label>
     <select id="area">${groups.map(option).join('')}</select></div>
   <div><label for="level">Level</label><select id="level"></select></div>
+  <div><label for="reset">Layout</label>
+    <button class="ghost" id="reset" type="button">Reset this level</button></div>
   <div class="stats" id="stats"></div>
 </div>
+<div class="hint" style="padding: 0 1.5rem 0.75rem">Drag a room to move it — its exits
+  follow. Arrow keys nudge the room you have selected. Your arrangement is kept in this
+  browser, per level, until you reset it.</div>
 <main>
 ${panes.join('\n')}
 <aside>
@@ -548,7 +722,7 @@ ${LEGEND.map(([sw, text]) => `    <div>${sw}<span>${esc(text)}</span></div>`).jo
 </aside>
 </main>
 <script>
-var DATA = ${jsonForScript({ groups, rooms, levels })};
+var DATA = ${jsonForScript({ groups, rooms, levels, home })};
 ${SCRIPT}
 </script>
 </body>

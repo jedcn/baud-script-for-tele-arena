@@ -161,6 +161,15 @@ describe('renderLevel', () => {
     expect(svg).not.toContain('undefined');
   });
 
+  it('puts the room tooltip first in its group, where a browser reads it', () => {
+    // <title> is a tooltip only as the first child of its element. The stubs and
+    // badges that follow carry titles of their own, and with the room's title
+    // last the browser shows one of theirs for the whole box.
+    const out = renderLevel(MINI, NAME_OF).svg;
+    const box = out.slice(out.indexOf('<g class="box'));
+    expect(box.slice(box.indexOf('>') + 1)).toStartWith('<title>');
+  });
+
   it('escapes what it puts in a title', () => {
     const quoted: Area = {
       ...MINI,
@@ -183,6 +192,8 @@ class El {
   value = '';
   disabled = false;
   kids: El[] = [];
+  parent: El | null = null;
+  captured: number | null = null;
   listeners: Record<string, Function[]> = {};
   constructor(public tag: string, attrs: Record<string, string> = {}, classes: string[] = []) {
     this.attrs = attrs;
@@ -193,11 +204,14 @@ class El {
   private html = '';
   get innerHTML() { return this.html; }
   set innerHTML(v: string) { this.html = v; if (v === '') this.kids = []; }
+  get tagName() { return this.tag; }
   getAttribute(n: string) { return this.attrs[n] ?? null; }
-  setAttribute(n: string, v: string) { this.attrs[n] = v; }
+  setAttribute(n: string, v: string | number) { this.attrs[n] = String(v); }
   addEventListener(t: string, fn: Function) { (this.listeners[t] ??= []).push(fn); }
-  appendChild(k: El) { this.kids.push(k); return k; }
+  appendChild(k: El) { this.kids.push(k); k.parent = this; return k; }
   remove() {}
+  setPointerCapture(id: number) { this.captured = id; }
+  getBoundingClientRect() { return { x: 0, y: 0, width: 1000, height: 800, top: 0, left: 0 }; }
   get classList() {
     return {
       add: (c: string) => this.classes.add(c),
@@ -206,8 +220,13 @@ class El {
       contains: (c: string) => this.classes.has(c),
     };
   }
-  closest(sel: string) {
-    return sel === '.box' && this.classes.has('box') ? this : null;
+  /** Enough of a selector match for the page: a class, or a tag name. */
+  matches(sel: string) {
+    return sel.startsWith('.') ? this.classes.has(sel.slice(1)) : this.tag === sel;
+  }
+  closest(sel: string): El | null {
+    for (let el: El | null = this; el; el = el.parent) if (el.matches(sel)) return el;
+    return null;
   }
   querySelectorAll() { return [] as El[]; }
 }
@@ -217,18 +236,38 @@ class El {
  * catch what this catches: report.html once died on load because a variable was
  * read before the line that filled it, and the page rendered nothing while the
  * build reported success.
+ *
+ * The stub is built from the real page: its level panes, its room ids, and one
+ * edge per pair of rooms the page says are joined, so the drag code moves the
+ * same things a browser would move.
  */
 function runPage(html: string, hash = '') {
   const src = html.match(/<script>([\s\S]*?)<\/script>/)![1];
-  const levelSlugs = [...html.matchAll(/data-level="([^"]+)"/g)].map(m => m[1]);
-  const roomIds = [...html.matchAll(/data-id="([^"]+)"/g)].map(m => m[1]);
+  // Room ids and level slugs come from the page's own payload rather than from
+  // its markup: the inline script contains the literal `data-id="` as part of a
+  // selector, so scraping attributes picks up a room called `' + id + '`.
+  const data = JSON.parse(src.match(/var DATA = (\{[\s\S]*?\});\n/)![1]);
+  const levelSlugs = Object.keys(data.levels);
+  const roomIds = Object.keys(data.home);
+  const pairs = [...html.matchAll(/<line class="edge" data-a="([^"]+)" data-b="([^"]+)"/g)]
+    .map(m => [m[1], m[2]] as [string, string]);
 
-  const panes = levelSlugs.map(s => new El('div', { 'data-level': s }));
-  // One box per level pane is enough to click; the page finds them by data-id.
-  const boxes = roomIds.map(id => new El('g', { 'data-id': id }, ['box']));
+  const panes = levelSlugs.map(slug => {
+    const pane = new El('div', { 'data-level': slug });
+    pane.appendChild(new El('svg', { viewBox: '0 0 1000 800' }));
+    return pane;
+  });
+  const svgOf = (slug: string) => panes.find(p => p.attrs['data-level'] === slug)!.kids[0];
+  const boxes = roomIds.map(id => {
+    const box = new El('g', { 'data-id': id, 'data-a': id }, ['box']);
+    box.parent = svgOf(id.slice(0, id.indexOf('/')));
+    return box;
+  });
+  const edges = pairs.map(([a, b]) =>
+    new El('line', { 'data-a': a, 'data-b': b, x1: '0', y1: '0', x2: '0', y2: '0' }));
   const area = new El('select'), level = new El('select');
-  const stats = new El('div'), panel = new El('div');
-  const byId: Record<string, El> = { area, level, stats, panel };
+  const stats = new El('div'), panel = new El('div'), reset = new El('button');
+  const byId: Record<string, El> = { area, level, stats, panel, reset };
 
   const doc: any = {
     getElementById: (id: string) => byId[id] ?? new El('div'),
@@ -237,6 +276,7 @@ function runPage(html: string, hash = '') {
     _l: {} as Record<string, Function>,
     querySelectorAll(sel: string) {
       if (sel === '[data-level]') return panes;
+      if (sel === '[data-a]') return [...boxes, ...edges];
       if (sel === '.box.sel') return boxes.filter(b => b.classes.has('sel'));
       const m = sel.match(/^\[data-id="(.*)"\]$/);
       if (m) return boxes.filter(b => b.attrs['data-id'] === m[1]);
@@ -245,8 +285,25 @@ function runPage(html: string, hash = '') {
   };
   const loc: any = { hash };
   const hist: any = { replaceState(_s: unknown, _t: string, url: string) { loc.hash = url; } };
-  new Function('document', 'location', 'history', src)(doc, loc, hist);
-  return { doc, area, level, stats, panel, panes, boxes };
+  const store: Record<string, string> = {};
+  const storage = {
+    getItem: (k: string) => store[k] ?? null,
+    setItem: (k: string, v: string) => { store[k] = v; },
+    removeItem: (k: string) => { delete store[k]; },
+  };
+  new Function('document', 'location', 'history', 'localStorage', src)(doc, loc, hist, storage);
+
+  /** Press, move by (dx, dy) CSS pixels, release. */
+  const dragBox = (box: El, dx: number, dy: number) => {
+    doc._l.pointerdown({ target: box, clientX: 100, clientY: 100, pointerId: 1,
+                         preventDefault() {} });
+    if (dx || dy) doc._l.pointermove({ clientX: 100 + dx, clientY: 100 + dy });
+    doc._l.pointerup({});
+  };
+  const boxFor = (slug: string) =>
+    boxes.find(b => b.attrs['data-id'].startsWith(slug + '/'))!;
+
+  return { doc, area, level, stats, panel, reset, panes, boxes, edges, store, dragBox, boxFor };
 }
 
 describe('map.html', () => {
@@ -286,12 +343,81 @@ describe('map.html', () => {
   });
 
   it('shows a room when one is clicked', async () => {
-    const areas = await areasP;
-    const { doc, boxes, panel } = runPage(buildPage(areas), '#stoneworks-level-2');
-    const box = boxes.find(b => b.attrs['data-id'].startsWith('stoneworks-level-2/'))!;
-    doc._l.click({ target: box });
+    // A press that goes nowhere is a click. Selecting on pointerup rather than on
+    // click is what stops a drag from also opening the panel.
+    const { dragBox, boxFor, panel } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    dragBox(box, 0, 0);
     expect(panel.innerHTML).toContain(box.attrs['data-id']);
     expect(box.classes.has('sel')).toBe(true);
+  });
+
+  it('moves a dragged room, and the exits with it', async () => {
+    const { dragBox, boxFor, edges, panel } = runPage(
+      buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    const id = box.attrs['data-id'];
+    const before = box.attrs['transform'];
+    const edge = edges.find(e => e.attrs['data-a'] === id || e.attrs['data-b'] === id)!;
+    const edgeBefore = [edge.attrs['x1'], edge.attrs['y1'], edge.attrs['x2'], edge.attrs['y2']];
+
+    dragBox(box, 60, 40);
+
+    expect(box.attrs['transform']).not.toBe(before);
+    // The whole point: the line still ends on the box at each end.
+    expect([edge.attrs['x1'], edge.attrs['y1'], edge.attrs['x2'], edge.attrs['y2']])
+      .not.toEqual(edgeBefore);
+    // A drag is not a click, so the panel stays as it was.
+    expect(panel.innerHTML).not.toContain(id);
+    expect(box.classes.has('dragging')).toBe(false);
+  });
+
+  it('converts pointer pixels through the viewBox', async () => {
+    // The SVG is scaled to its pane, so a 100px drag is not 100 user units. Here
+    // the stub reports a 1000px-wide box for a 1000-unit viewBox, so the scale is
+    // 1 and the arithmetic is checkable by hand.
+    const { dragBox, boxFor } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    const [x0, y0] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    dragBox(box, 60, 40);
+    const [x1, y1] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x1 - x0).toBeCloseTo(60, 6);
+    expect(y1 - y0).toBeCloseTo(40, 6);
+  });
+
+  it('keeps an arrangement per level, and gives it back', async () => {
+    const html = buildPage(await areasP);
+    const first = runPage(html, '#stoneworks-level-2');
+    const id = first.boxFor('stoneworks-level-2').attrs['data-id'];
+    first.dragBox(first.boxFor('stoneworks-level-2'), 60, 40);
+    const moved = first.boxFor('stoneworks-level-2').attrs['transform'];
+    expect(Object.keys(first.store)).toEqual(['ta-map-layout:stoneworks-level-2']);
+    expect(JSON.parse(first.store['ta-map-layout:stoneworks-level-2'])[id]).toBeDefined();
+  });
+
+  it('resets a level to where the layout pass put it', async () => {
+    const { dragBox, boxFor, reset, store } = runPage(
+      buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    const home = box.attrs['transform'];
+    dragBox(box, 60, 40);
+    expect(box.attrs['transform']).not.toBe(home);
+    reset.listeners.click[0]();
+    expect(box.attrs['transform']).toBe(home);
+    expect(store['ta-map-layout:stoneworks-level-2']).toBeUndefined();
+  });
+
+  it('nudges the room under the keyboard, without touching any other', async () => {
+    const { doc, boxFor, boxes } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    const other = boxes.filter(b => b !== box
+      && b.attrs['data-id'].startsWith('stoneworks-level-2/'))[0];
+    const before = other.attrs['transform'];
+    const [x0] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    doc._l.keydown({ key: 'ArrowRight', target: box, preventDefault() {} });
+    const [x1] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x1).toBeGreaterThan(x0);
+    expect(other.attrs['transform']).toBe(before);
   });
 
   it('cannot be broken out of by a room description', async () => {
