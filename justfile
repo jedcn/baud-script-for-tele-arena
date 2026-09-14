@@ -79,6 +79,22 @@ report:
     bun test report.test.ts
     open report.html
 
+# Build map.html: the whole mapped world as one browsable page. Pick an Area,
+# pick a Level, click a room. Rooms are SVG boxes rather than `[ ]`, so a Device,
+# a Trap, a Door, a Seal and an unwalked exit each get their own mark -- see the
+# legend on the page.
+#
+# It reads the checked-in JSON under map/, NOT tele-arena.db, which is the point:
+# the export is meant to be enough on its own, and this page is the thing that
+# proves it. Run `bun export.ts` first if the database has moved on.
+#
+# Placement comes from map.ts, the same pass that draws MAP.md, so the two never
+# disagree about the shape of a level.
+draw-map-as-html:
+    bun site.ts
+    bun test site.test.ts
+    open map.html
+
 # Draw the mapped areas as ASCII maps in a single Markdown file, MAP.md.
 #
 # The format is the one the tele-arena shrine used for its hand-drawn town maps
