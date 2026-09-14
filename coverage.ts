@@ -239,6 +239,14 @@ if (import.meta.main) {
       originBox: '@',                      // "say komi" to enter
       originRoom: 'stonework-chamber',
     },
+    // The desert's one certain landmark: [v] is the room whose `d` drops into the
+    // sewers, and crude-stone-building is the only room of ours with that exit.
+    // Every other box on that drawing is an anonymous stretch of sand.
+    desert: {
+      file: 'map/shrine/desert.txt',
+      originBox: 'v',
+      originRoom: 'crude-stone-building',
+    },
     'stoneworks-level-2': {
       file: 'map/shrine/stoneworks-2.txt',
       originBox: '^',                      // the stairs back up to Level 1
