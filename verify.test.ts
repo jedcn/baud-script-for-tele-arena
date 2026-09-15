@@ -84,6 +84,28 @@ describe('proseDirections', () => {
       .toEqual(['e', 'sw']);
   });
 
+  it('reads the same shape for a passage, a tunnel, a path and a room', () => {
+    // One dialect per kind of place, and they are not interchangeable in the
+    // prose: the desert's approach is a "sandy stone passage", the sewers are a
+    // "filthy tunnel", the wilderness has paths and trails, and the storage room
+    // west of the crude stone building says "The room continues to the east."
+    expect(proseDirections('The passage continues to the north and south.'))
+      .toEqual(['n', 's']);
+    expect(proseDirections('The tunnel runs to the northwest and northeast.'))
+      .toEqual(['ne', 'nw']);
+    expect(proseDirections('The trail continues to the east, west, and south.'))
+      .toEqual(['e', 's', 'w']);
+    expect(proseDirections('The room continues to the east.')).toEqual(['e']);
+  });
+
+  it('adds a way out that something LEADS through', () => {
+    // sandy-passage-7, where the strip meets the desert: "The passage continues
+    // to the east and a crude stone archway leads out into the desert to the
+    // south." -- and `ex` answers e,s.
+    expect(proseDirections('The passage continues to the east and a crude stone'
+      + ' archway leads out into the desert to the south.')).toEqual(['e', 's']);
+  });
+
   it('declines the chamber form rather than guessing', () => {
     // "The only visible exit is east" is a claim about VISIBILITY. Stoneworks
     // level 1's mist room has a real `n` exit the prose cannot see, so reading

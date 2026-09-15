@@ -271,9 +271,15 @@ function M.replayChain(paths, opts)
     -- it uses no form we trust.
     local function proseDirs(description)
         if not description then return nil end
-        local said = description:match("corridor runs to the ([^.]+)%.")
-            or description:match("corridor continues to the ([^.]+)%.")
-            or description:match("block travel in all directions except to the ([^.]+)%.")
+        -- Each noun matters as much as each verb: the stoneworks say corridor,
+        -- the desert's approach says passage, the sewers and caves say tunnel,
+        -- the wilderness says path or trail, a storage room says room.
+        local said = description:match("block travel in all directions except to the ([^.]+)%.")
+        for _, noun in ipairs({ "corridor", "passage", "tunnel", "path", "trail", "room" }) do
+            if said then break end
+            said = description:match(noun .. " runs to the ([^.]+)%.")
+                or description:match(noun .. " continues to the ([^.]+)%.")
+        end
         if not said then return nil end
         local dirs, seen = {}, {}
         local function add(word)
@@ -292,6 +298,7 @@ function M.replayChain(paths, opts)
         -- meaning an exit ("A small lever is partially concealed in a niche in
         -- the north wall").
         for word in description:gmatch("lies to the (%a+)") do add(word) end
+        for word in description:gmatch("leads? [^.]-to the (%a+)") do add(word) end
         if #dirs == 0 then return nil end
         table.sort(dirs)
         return table.concat(dirs, ",")

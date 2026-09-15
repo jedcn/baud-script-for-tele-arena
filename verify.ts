@@ -157,7 +157,11 @@ const PROSE_WORD: Record<string, string> = {
 };
 const PROSE_FORMS = [
   /block travel in all directions except to (?:the )?([^.]+)\./,   // the desert
-  /corridor (?:runs|continues) to the ([^.]+)\./,                  // the stoneworks
+  // "The corridor runs to the north and southeast." Both verbs matter, and so
+  // does each noun: the stoneworks say corridor, the desert's approach says
+  // passage, the caves say tunnel, the wilderness says path or trail, and a
+  // storage room says room.
+  /(?:corridor|passage|tunnel|path|trail|room) (?:runs|continues) to the ([^.]+)\./,
 ];
 
 // A way out that is a LANDMARK gets a sentence of its own, outside the list of
@@ -167,7 +171,7 @@ const PROSE_FORMS = [
 // the forms above already matched, because plenty of rooms mention a direction
 // without meaning an exit ("A small lever is partially concealed in a niche in
 // the north wall", "The shop keeper sits behind a counter along the south wall").
-const PROSE_ALSO = /\blies to the ([a-z]+)/g;
+const PROSE_ALSO = /\b(?:lies to the|leads? [^.]*?\bto the) ([a-z]+)/g;
 
 /** The directions a description names, or null where it uses no form we trust. */
 export function proseDirections(description: string | null): string[] | null {
