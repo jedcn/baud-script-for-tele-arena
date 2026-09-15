@@ -435,6 +435,7 @@
         {
           "command": "push stone",
           "effect": "teleport",
+          "dest": "stoneworks-level-1/stonework-corridor-43",
           "note": "Shrine [S2]. The only way deeper: it lands on the [S3] strip, which no compass exit reaches. Reply splices the arrival onto the push: \"You push the protruding stone into it's recess...You're in a stonework corridor.\" Description names it: \"A stone in the northeast wall appears to protrude from the wall slightly more than the others.\""
         }
       ],
@@ -775,6 +776,7 @@
           "command": "pull lever",
           "effect": "trap",
           "repeats": "once",
+          "trapRoom": "stoneworks-level-1/stonework-corridor-9",
           "note": "Shrine [L1]. Disarms the falling-rocks trap in stonework-corridor-9 (shrine [T1]), four moves away. Verified by observation 2026-09-13: trap fired, lever pulled, trap did not fire on the return. Reply is a plain \"You pulled the lever.\" The lever is visible in the room description -- \"A small lever is partially concealed in a niche in the north wall.\" repeats=once is assumed, not tested."
         }
       ],
@@ -888,6 +890,7 @@
         {
           "command": "push stone",
           "effect": "teleport",
+          "dest": "stoneworks-level-1/stonework-corridor-24",
           "note": "Shrine [S3]. The only way out of the strip toward the desert: lands on [!] (stonework-corridor-24), which IS reachable on foot from the rest of the level, so this is the shortcut back. The shrine's \"If on way out Push Stone to go to !\" describes when you want it, not a condition on the stone."
         }
       ]

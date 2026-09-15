@@ -164,6 +164,10 @@ export function pairRooms(
   const pair = new Map<number, string>([[startRoomId, startBoxId]]);
   const taken = new Set<string>([startBoxId]);
   const problems: string[] = [];
+  // Ways out of the area. The shrine draws the room across a Seam as a caption
+  // rather than a box ("Down to Sewers", "[S] Stoneworks"), so an exit leading out
+  // has no connector to match and is not a disagreement -- it is the area ending.
+  const leaves: string[] = [];
   const queue = [startRoomId];
   while (queue.length) {
     const id = queue.shift()!;
@@ -174,7 +178,8 @@ export function pairRooms(
       if (to == null) continue;
       const beyond = theirs[dir];
       if (!beyond) {
-        problems.push(`${byId.get(id)!.slug} --${dir}--> exists for us, not in the drawing`);
+        if (!byId.has(to)) leaves.push(`${byId.get(id)!.slug} ${dir} (out of this area)`);
+        else problems.push(`${byId.get(id)!.slug} --${dir}--> exists for us, not in the drawing`);
         continue;
       }
       if (pair.has(to)) continue;
@@ -205,7 +210,7 @@ export function pairRooms(
       }
     }
   }
-  return { pair, problems };
+  return { pair, problems, leaves };
 }
 
 /**
@@ -233,33 +238,73 @@ export function renderCoverage(d: Drawing, mapped: Set<string>): string[] {
   return out;
 }
 
+/**
+ * Which shrine drawing goes with which area, and the room that sits on which box.
+ * Add a line per area as each is mapped; the shrine's six stoneworks drawings are
+ * stoneworks-1..6.
+ */
+export const SHRINE_MAPS: Record<string,
+  { file: string; originBox: string; originRoom: string }> = {
+
+  'stoneworks-level-1': {
+    file: 'map/shrine/stoneworks-1.txt',
+    originBox: '@',                      // "say komi" to enter
+    originRoom: 'stonework-chamber',
+  },
+  // The desert's one certain landmark: [v] is the room whose `d` drops into the
+  // sewers, and crude-stone-building is the only room of ours with that exit.
+  // Every other box on that drawing is an anonymous stretch of sand.
+  desert: {
+    file: 'map/shrine/desert.txt',
+    originBox: 'v',
+    originRoom: 'crude-stone-building',
+  },
+  'stoneworks-level-2': {
+    file: 'map/shrine/stoneworks-2.txt',
+    originBox: '^',                      // the stairs back up to Level 1
+    originRoom: 'stonework-chamber-5',
+  },
+};
+
+/**
+ * Turn an exported area (map/areas/*.json) into what pairRooms wants: integer ids
+ * with the bare slug, and the Teleports read off the devices. The CLI reads the
+ * live database instead, because during a walk that is the thing you want to look
+ * at -- but the JSON has to be sufficient on its own, and this is what proves it.
+ */
+export function roomsFromExport(area: {
+  rooms: { id: string; exits: Record<string, { to: string | null }>;
+           devices?: { effect: string; dest?: string }[] }[];
+}): { rooms: Room[]; teleports: Map<number, number>; idOf: Map<string, number> } {
+  const idOf = new Map(area.rooms.map((r, i) => [r.id, i + 1]));
+  // A destination outside this area still needs a number, or its exit reads as
+  // unwalked. Numbers past the area's own count are never in `rooms`, which is
+  // exactly how pairRooms tells "another area's room" from one of ours.
+  let outside = area.rooms.length;
+  const num = (roomId: string) => {
+    if (!idOf.has(roomId)) idOf.set(roomId, ++outside);
+    return idOf.get(roomId)!;
+  };
+  const rooms: Room[] = area.rooms.map(r => ({
+    id: idOf.get(r.id)!,
+    slug: r.id.slice(r.id.indexOf('/') + 1),
+    exits: Object.fromEntries(Object.entries(r.exits)
+      .map(([dir, ex]) => [dir, ex.to == null ? null : num(ex.to)])),
+  }));
+  const teleports = new Map<number, number>();
+  for (const r of area.rooms) {
+    for (const d of r.devices ?? []) {
+      if (d.effect === 'teleport' && d.dest) teleports.set(idOf.get(r.id)!, num(d.dest));
+    }
+  }
+  return { rooms, teleports, idOf };
+}
+
 if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
   const { existsSync } = await import('node:fs');
 
-  // Which drawing goes with which area, and the room that sits on which box. Add
-  // a line per level as each is mapped; the shrine's six stoneworks drawings are
-  // stoneworks-1..6.
-  const SHRINE: Record<string, { file: string; originBox: string; originRoom: string }> = {
-    'stoneworks-level-1': {
-      file: 'map/shrine/stoneworks-1.txt',
-      originBox: '@',                      // "say komi" to enter
-      originRoom: 'stonework-chamber',
-    },
-    // The desert's one certain landmark: [v] is the room whose `d` drops into the
-    // sewers, and crude-stone-building is the only room of ours with that exit.
-    // Every other box on that drawing is an anonymous stretch of sand.
-    desert: {
-      file: 'map/shrine/desert.txt',
-      originBox: 'v',
-      originRoom: 'crude-stone-building',
-    },
-    'stoneworks-level-2': {
-      file: 'map/shrine/stoneworks-2.txt',
-      originBox: '^',                      // the stairs back up to Level 1
-      originRoom: 'stonework-chamber-5',
-    },
-  };
+  const SHRINE = SHRINE_MAPS;
 
   const slug = process.argv[2];
   const spec = slug ? SHRINE[slug] : undefined;
@@ -305,7 +350,8 @@ if (import.meta.main) {
     teleports.set(t.room_id, t.dest_room_id);
   }
 
-  const { pair, problems } = pairRooms(drawing, rooms, start.id, startBox.id, teleports);
+  const { pair, problems, leaves } = pairRooms(
+    drawing, rooms, start.id, startBox.id, teleports);
   const mapped = new Set(pair.values());
 
   console.log(`\n${slug} — ${pair.size} of ${drawing.boxes.length} rooms in the drawing\n`);
@@ -340,6 +386,7 @@ if (import.meta.main) {
   say('frontiers into NEW rooms', opens);
   say('unwalked links between rooms we already have — walking one closes a loop', closes);
   say('unwalked exits the drawing does not show (a label, or off this map)', offMap);
+  say('walked exits that leave the area — the drawing captions these', leaves);
 
   const unpaired = drawing.boxes.filter(b => !mapped.has(b.id));
   console.log(`\nboxes not yet ours (${unpaired.length})`);

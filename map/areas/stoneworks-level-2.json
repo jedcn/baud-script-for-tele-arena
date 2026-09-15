@@ -556,6 +556,7 @@
           "command": "pull lever",
           "effect": "trap",
           "repeats": "once",
+          "trapRoom": "stoneworks-level-2/stonework-corridor-56",
           "note": "Shrine [L2]. Disarms the falling-rocks trap in stonework-corridor-56 (shrine [T2]), eight moves away at the other end of the level. The lever is in the description -- \"A small lever is partially concealed in a niche in the south wall\" (the [L1] lever is in the NORTH wall). Reply is a plain \"You pulled the lever.\" Verified 2026-09-13: trap fired on entry, lever pulled, trap did not fire on re-entry. NOT yet proven that the trap would have fired a second time had the lever been left alone -- the control needs a fresh Reset (enter, take the hit, step out and back in). repeats=once is assumed, not tested."
         }
       ],

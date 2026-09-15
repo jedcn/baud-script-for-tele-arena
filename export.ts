@@ -22,7 +22,17 @@ export type Room = {
   id: string; name: string; description?: string;
   exits: Record<string, Exit>;
   trap?: { type: string };
-  devices?: { command: string; effect: string; repeats?: string; note?: string }[];
+  devices?: {
+    command: string; effect: string; repeats?: string; note?: string;
+    // Where the effect LANDS, when it lands on one room: the room a Teleport puts
+    // you in, or the room whose Trap a lever disarms. Without these the JSON
+    // cannot say what a device does, which is not a small gap -- `just coverage`
+    // needs a Teleport's destination to reach the rooms no compass exit does, and
+    // a reader of the map needs to know which trap the lever is for. A Seal has
+    // neither, on purpose: one device can open several, so the Seal is recorded on
+    // the exits it blocks (`sealedBy`) and pointed back here.
+    dest?: string; trapRoom?: string;
+  }[];
   layout?: { x: number; y: number };
 };
 export type Area = {
@@ -53,6 +63,10 @@ export function buildArea(
     devicesFor.get(d.room_id)!.push({
       command: d.command, effect: d.effect,
       ...(d.repeats ? { repeats: d.repeats } : {}),
+      ...(d.dest_room_id && idToRoomId.get(d.dest_room_id)
+        ? { dest: idToRoomId.get(d.dest_room_id)! } : {}),
+      ...(d.trap_room_id && idToRoomId.get(d.trap_room_id)
+        ? { trapRoom: idToRoomId.get(d.trap_room_id)! } : {}),
       ...(d.note ? { note: d.note } : {}),
     });
   }
@@ -130,8 +144,8 @@ if (import.meta.main) {
       `SELECT from_id, direction, to_id, lock_door, lock_key, sealed_by FROM room_exits
        WHERE from_id IN (${ids}) ORDER BY from_id, direction`).all() as Row[];
     const devices = db.prepare(
-      `SELECT room_id, command, effect, repeats, note FROM devices
-       WHERE room_id IN (${ids}) ORDER BY room_id, id`).all() as Row[];
+      `SELECT room_id, command, effect, repeats, dest_room_id, trap_room_id, note
+         FROM devices WHERE room_id IN (${ids}) ORDER BY room_id, id`).all() as Row[];
     const area = buildArea(a.slug, a.name, rooms, exits, devices, allDevices, idToRoomId);
     await Bun.write(`map/areas/${a.slug}.json`, JSON.stringify(area, null, 2) + '\n');
     index.push({ area: a.slug, name: a.name, rooms: area.rooms.length, file: `areas/${a.slug}.json` });

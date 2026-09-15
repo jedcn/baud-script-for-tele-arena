@@ -208,6 +208,22 @@ describe('pairRooms across a teleport', () => {
     expect(pair.get(99)).toBe(at('C'));
   });
 
+  it('separates a way OUT of the area from a wrong edge', () => {
+    // Both are exits with no connector in the drawing. One is the area ending --
+    // the shrine captions the room across a Seam ("[S] Stoneworks") instead of
+    // drawing it -- and the other is an edge we should not have. Lumping them
+    // together means every finished area reports a disagreement it cannot fix.
+    const d = parseDrawing(MINI);
+    const at = (l: string) => d.boxes.find(b => b.label === l)!.id;
+    const rooms: Room[] = [
+      { id: 1, slug: 'start', exits: { e: 2, u: 77 } },   // 77 is another area's
+      { id: 2, slug: 'a', exits: { w: 1, n: 1 } },        // and this `n` is wrong
+    ];
+    const { problems, leaves } = pairRooms(d, rooms, 1, at('@'));
+    expect(leaves).toEqual(['start u (out of this area)']);
+    expect(problems).toEqual(['a --n--> exists for us, not in the drawing']);
+  });
+
   it('reports a destination whose box is already paired', () => {
     // Two stones whose legend lines both land on [B], and two different rooms of
     // ours claiming to be where each lands. Both cannot be [B].
@@ -216,5 +232,65 @@ describe('pairRooms across a teleport', () => {
     const atTwo = (l: string) => two.boxes.find(b => b.label === l)!.id;
     const { problems } = pairRooms(two, rooms, 1, atTwo('@'), new Map([[1, 3], [2, 4]]));
     expect(problems.some(p => p.includes('already paired'))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The committed map against the committed drawings.
+//
+// Everything above tests the parser on fixtures. This tests the DATA: that
+// map/areas/*.json still agrees with map/shrine/*.txt, box for box, for every
+// area registered in SHRINE_MAPS. It needs no database -- which is the point
+// twice over, since it is the same claim the static page makes.
+//
+// Until now that agreement existed only because somebody ran `just coverage` and
+// read the output. A walk, an export or a hand-repair that breaks it now fails
+// here instead.
+
+import { SHRINE_MAPS, roomsFromExport } from './coverage';
+
+describe('the exported map agrees with the shrine drawings', () => {
+  for (const [slug, spec] of Object.entries(SHRINE_MAPS)) {
+    it(`${slug} pairs with ${spec.file}`, async () => {
+      const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
+      const drawing = parseDrawing(await Bun.file(spec.file).text());
+      const { rooms, teleports } = roomsFromExport(area);
+      const start = rooms.find(r => r.slug === spec.originRoom);
+      const startBox = drawing.boxes.find(b => b.label === spec.originBox);
+      expect(start, `${spec.originRoom} is in ${slug}`).toBeDefined();
+      expect(startBox, `box [${spec.originBox}] is in the drawing`).toBeDefined();
+
+      const { pair, problems } = pairRooms(
+        drawing, rooms, start!.id, startBox!.id, teleports);
+
+      // A room of ours whose exits the drawing does not have is either a wrong
+      // edge or a room paired to the wrong box -- both worth failing over. An exit
+      // that LEAVES the area is neither, and pairRooms separates those out: the
+      // shrine captions the room across a Seam instead of drawing it.
+      expect(problems).toEqual([]);
+
+      // And every room we have is somewhere on the page. Boxes we have NOT walked
+      // are fine -- that is just an unfinished area -- so this counts our rooms,
+      // not the drawing's.
+      expect(pair.size).toBeGreaterThanOrEqual(rooms.length);
+    });
+  }
+
+  it('covers the areas that have been walked to completion', async () => {
+    // Named explicitly, so finishing an area without registering its drawing, or
+    // registering one and never checking it, both show up as a failure here.
+    expect(Object.keys(SHRINE_MAPS).sort())
+      .toEqual(['desert', 'stoneworks-level-1', 'stoneworks-level-2']);
+    for (const slug of ['desert', 'stoneworks-level-1', 'stoneworks-level-2']) {
+      const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
+      const drawing = parseDrawing(await Bun.file(SHRINE_MAPS[slug].file).text());
+      const { rooms, teleports } = roomsFromExport(area);
+      const spec = SHRINE_MAPS[slug];
+      const { pair } = pairRooms(drawing, rooms,
+        rooms.find(r => r.slug === spec.originRoom)!.id,
+        drawing.boxes.find(b => b.label === spec.originBox)!.id, teleports);
+      // Every box on the page accounted for: the area is finished.
+      expect(pair.size, `${slug} has unwalked boxes`).toBe(drawing.boxes.length);
+    }
   });
 });
