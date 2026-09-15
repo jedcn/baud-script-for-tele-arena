@@ -969,7 +969,11 @@
           "to": "sewers-level-3/town-sewer"
         },
         "u": {
-          "to": "desert/crude-stone-building"
+          "to": "desert/crude-stone-building",
+          "door": {
+            "material": "stone",
+            "key": "pearl"
+          }
         }
       },
       "description": "You are standing in the sewers beneath the town. The air down here smells rather foul, and the walls drip with greenish slime. This circular room is roughly eight feet in diameter. Iron rungs on the wall ascend from a hole in the floor to a hole in the ceiling.",
