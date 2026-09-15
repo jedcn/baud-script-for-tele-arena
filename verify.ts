@@ -160,15 +160,28 @@ const PROSE_FORMS = [
   /corridor (?:runs|continues) to the ([^.]+)\./,                  // the stoneworks
 ];
 
+// A way out that is a LANDMARK gets a sentence of its own, outside the list of
+// directions: "Huge black outcroppings of rock block travel in all directions
+// except to the east and southwest. The entrance to a crude circular stone
+// building lies to the north." -- and `ex` answers n,e,sw. Read only when one of
+// the forms above already matched, because plenty of rooms mention a direction
+// without meaning an exit ("A small lever is partially concealed in a niche in
+// the north wall", "The shop keeper sits behind a counter along the south wall").
+const PROSE_ALSO = /\blies to the ([a-z]+)/g;
+
 /** The directions a description names, or null where it uses no form we trust. */
 export function proseDirections(description: string | null): string[] | null {
   if (!description) return null;
   for (const re of PROSE_FORMS) {
     const m = description.match(re);
     if (!m) continue;
-    const dirs = [...new Set((m[1].match(/[a-z]+/g) ?? [])
-      .map(w => PROSE_WORD[w]).filter(Boolean))];
-    if (dirs.length) return dirs.sort();
+    const dirs = new Set((m[1].match(/[a-z]+/g) ?? [])
+      .map(w => PROSE_WORD[w]).filter(Boolean) as string[]);
+    for (const also of description.matchAll(PROSE_ALSO)) {
+      const dir = PROSE_WORD[also[1]];
+      if (dir) dirs.add(dir);
+    }
+    if (dirs.size) return [...dirs].sort();
   }
   return null;
 }

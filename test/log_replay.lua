@@ -276,13 +276,22 @@ function M.replayChain(paths, opts)
             or description:match("block travel in all directions except to the ([^.]+)%.")
         if not said then return nil end
         local dirs, seen = {}, {}
-        for word in said:gmatch("%a+") do
+        local function add(word)
             local dir = WORD[word]
             if dir and not seen[dir] then
                 seen[dir] = true
                 dirs[#dirs + 1] = dir
             end
         end
+        for word in said:gmatch("%a+") do add(word) end
+        -- A way out that is a LANDMARK gets a sentence of its own, outside the
+        -- list of directions: "... block travel in all directions except to the
+        -- east and southwest. The entrance to a crude circular stone building
+        -- lies to the north." -- and `ex` answers n,e,sw. Only read once a form
+        -- above has matched, because plenty of rooms name a direction without
+        -- meaning an exit ("A small lever is partially concealed in a niche in
+        -- the north wall").
+        for word in description:gmatch("lies to the (%a+)") do add(word) end
         if #dirs == 0 then return nil end
         table.sort(dirs)
         return table.concat(dirs, ",")

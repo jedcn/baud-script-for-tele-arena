@@ -92,6 +92,27 @@ describe('proseDirections', () => {
       + ' strange mist. The only visible exit is east.')).toBeNull();
   });
 
+  it('adds a landmark way out, which gets a sentence of its own', () => {
+    // The room south of the crude stone building answers `ex` with n,e,sw while
+    // its list of directions names only two: the building entrance is a separate
+    // sentence (logs/session-tojolias-2026-09-14T19-50-04.log line 670). Reading
+    // only the list reports the `n` we walked in through as a defect -- which is
+    // what it did, to this room and to the old desert-36, until it learned this.
+    expect(proseDirections('You are standing in a rocky windswept desert. Huge black'
+      + ' outcroppings of rock block travel in all directions except to the east and'
+      + ' southwest. The entrance to a crude circular stone building lies to the'
+      + ' north.')).toEqual(['e', 'n', 'sw']);
+  });
+
+  it('does not read a direction that is scenery rather than a way out', () => {
+    // Devices and shopkeepers are described by which wall they are on. Only a
+    // room whose prose already lists its exits is read at all, and only the
+    // "lies to the" form adds to that list.
+    expect(proseDirections('The corridor continues to the east. A stone in the north'
+      + ' wall appears to protrude from the wall slightly more than the others.'))
+      .toEqual(['e']);
+  });
+
   it('returns null for prose that names no direction', () => {
     expect(proseDirections('A featureless room.')).toBeNull();
     expect(proseDirections(null)).toBeNull();
