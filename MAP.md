@@ -270,19 +270,31 @@ Key:
 ### The Desert
 
 ```
-[ ]--[ ]--[ v]-[ ]--[ ]   down to Sewers, Level 3
-                     |
-                     |
-                    [ ]
-                     |
-                     |
-                    [ ]
-                     |
-                     |
-     [ ]--[ ]--[ ]--[ ]
-      |
-      |
-     [ ]                  e to unexplored   sw to unexplored
+     [ ]--[ ]--[ v]-[ ]--[ ]        down to Sewers, Level 3
+                          |
+                          |
+                         [ ]
+                          |
+                          |
+                         [ ]
+                          |
+                          |
+          [ ]--[ ]--[ ]--[ ]
+           |
+           |
+[ ]       [ ]--[ ]                  sw to unexplored
+   \     /        \
+    \   /          \
+     [ ]            [ ]
+        \              \
+         \              \
+          [ ]            [ ]
+             \              \
+              \              \
+               [ ]            [ ]
+                  \            |
+                   \           |
+                    [ ]--[ ]--[ ]   e to unexplored   s to unexplored   sw to unexplored
 ```
 
 ### The Stoneworks, Level 1
