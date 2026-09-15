@@ -30,45 +30,8 @@
 
 local replay = dofile("test/log_replay.lua")
 
-local LOGS = { "logs/session-tojolias-2026-09-14T19-50-04.log" }
-
--- What the sewers hand to this walk, and the one room of the OLD desert the walk
--- touched before resetting it.
---
--- `town-sewer-1` is where `map-here` anchors, at the top of the shaft up from the
--- sewers. Its `u` leads to the old crude stone building, which is what the first
--- move of the session resolves to -- so the old room has to be here, or the reset
--- deletes nothing and the walk never cold-starts. The other 47 rooms of the old
--- desert are not seeded: the reset removes the lot, and nothing in the session
--- looks at them.
-local function seedBefore()
-    local SEWERS = "(SELECT id FROM areas WHERE slug = 'sewers-level-3')"
-    local DESERT = "(SELECT id FROM areas WHERE slug = 'desert')"
-    local ROOM = "(SELECT id FROM rooms WHERE slug = '%s')"
-    return {
-        "INSERT INTO areas (slug, name) VALUES ('sewers-level-3', 'Sewers, Level 3')",
-        "INSERT INTO areas (slug, name) VALUES ('desert', 'The Desert')",
-        "INSERT INTO rooms (slug, name, area_id, x, y, z) VALUES"
-            .. " ('town-sewer-1', 'town sewer', " .. SEWERS .. ", 8, 5, -1)",
-        "INSERT INTO rooms (slug, name, area_id, x, y, z) VALUES"
-            .. " ('town-sewer', 'town sewer', " .. SEWERS .. ", 8, 5, -2)",
-        "INSERT INTO rooms (slug, name, description, area_id) VALUES"
-            .. " ('crude-stone-building', 'crude stone building',"
-            .. " 'You are in a circular stone building approximately forty feet in"
-            .. " diameter.', " .. DESERT .. ")",
-        -- The shaft, and the Seam as it stood: walked in both directions.
-        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
-            .. ROOM:format("town-sewer-1") .. ", 'd', " .. ROOM:format("town-sewer") .. ")",
-        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
-            .. ROOM:format("town-sewer") .. ", 'u', " .. ROOM:format("town-sewer-1") .. ")",
-        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
-            .. ROOM:format("town-sewer-1") .. ", 'u', "
-            .. ROOM:format("crude-stone-building") .. ")",
-        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
-            .. ROOM:format("crude-stone-building") .. ", 'd', "
-            .. ROOM:format("town-sewer-1") .. ")",
-    }
-end
+local fixture = dofile("test/desert_fixture.lua")
+local LOGS = { fixture.LOGS[1] }
 
 -- The strip as the shrine draws it (map/shrine/desert.txt, the top row and the
 -- chain south), and as `ex` answered on the walk. Followed from the building
@@ -92,31 +55,13 @@ local STRIP = {
 
 describe("The desert, session one", function()
 
-    local g
-    local byId, bySlugIndex
-
-    local function index()
-        if not byId then
-            byId, bySlugIndex = {}, {}
-            for _, r in ipairs(g.rooms()) do
-                byId[r.id] = r
-                bySlugIndex[r.slug] = r
-            end
-        end
-    end
-
-    local function bySlug(slug)
-        index()
-        return bySlugIndex[slug]
-    end
-
-    local function areaOf(slug)
-        return g.db.one("SELECT a.slug AS s FROM rooms r JOIN areas a ON a.id = r.area_id"
-            .. " WHERE r.slug = '" .. slug .. "'").s
-    end
+    local g, at
+    local function bySlug(slug) return at.bySlug(slug) end
+    local function areaOf(slug) return at.areaOf(slug) end
 
     setup(function()
-        g = replay.replayChain(LOGS, { seed = seedBefore() })
+        g = replay.replayChain(LOGS, { seed = fixture.seed() })
+        at = fixture.index(g)
     end)
 
     teardown(function()
@@ -129,9 +74,7 @@ describe("The desert, session one", function()
             -- 12 rooms: two storage rooms, the building, seven sandy passages and
             -- the first room of the desert proper. The old building is gone and a
             -- new one stands in its place -- same slug, because the reset freed it.
-            assert.are.equal(12, g.db.one(
-                "SELECT COUNT(*) AS n FROM rooms WHERE area_id ="
-                .. " (SELECT id FROM areas WHERE slug = 'desert')").n)
+            assert.are.equal(12, at.deserts())
             assert.are.equal(1, #g.echoesMatching("reset area desert"))
             assert.are.equal("desert", areaOf("crude-stone-building"))
         end)
@@ -150,16 +93,16 @@ describe("The desert, session one", function()
     describe("the strip", function()
 
         it("walks the shrine's top row and the chain south", function()
-            local at = assert(bySlug("crude-stone-building"))
+            local here = assert(bySlug("crude-stone-building"))
             for i, step in ipairs(STRIP) do
-                local id = at.exits[step.dir]
+                local id = here.exits[step.dir]
                 assert.is_truthy(id, "step " .. i .. " (" .. step.dir .. ") leads nowhere from "
-                    .. at.slug)
-                local nxt = byId[id]
+                    .. here.slug)
+                local nxt = at.byId[id]
                 assert.is_truthy(nxt, "step " .. i .. " lands on a room that is gone")
                 assert.are.equal(step.slug, nxt.slug, "step " .. i .. " (" .. step.dir .. ")")
                 assert.are.equal(step.exits, g.exitSet(nxt.id), "exits of " .. nxt.slug)
-                at = nxt
+                here = nxt
             end
         end)
 
