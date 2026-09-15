@@ -121,6 +121,11 @@ describe("The desert, the first loop", function()
                     { "desert-5", "e" }, { "desert-5", "s" },      -- the four-way room
                     { "desert-7", "sw" }, { "desert-10", "sw" },
                     { "crude-stone-building", "d" }, { "town-sewer-1", "u" },
+                    -- And the Stoneworks' own way out to the desert, which no
+                    -- session has reached yet: the fixture seeds the far side of
+                    -- that Seam so the last session can be recognised walking into
+                    -- it, and until then its `n` is a frontier like any other.
+                    { "stonework-chamber", "n" },
                 }) do
                     local room = assert(at.bySlug(spec[1]), spec[1] .. " is missing")
                     want[#want + 1] = room.id .. " " .. spec[2]

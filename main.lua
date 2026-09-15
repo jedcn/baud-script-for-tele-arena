@@ -1721,8 +1721,18 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             taPackage.currentRoomProvisional = false
             local snapped = taPackage.db.roomCoord(expected)
             if snapped then taPackage.coord = snapped end
-            echo("[map] loop closure confirmed: #" .. tostring(pc.from)
+            echo("[map] " .. (pc.seam and "Seam crossing confirmed: #"
+                              or "loop closure confirmed: #") .. tostring(pc.from)
                 .. " was #" .. tostring(pc.into))
+            -- A confirmed Seam leaves us standing in the other area, so follow it:
+            -- rooms minted from here belong to where we actually are, not to the
+            -- area we walked out of. handleRoomEntry does this for a KNOWN room,
+            -- and cannot for one it has just folded in.
+            local landedIn = taPackage.db.roomArea(expected)
+            if landedIn and landedIn ~= taPackage.currentAreaId then
+                taPackage.currentAreaId = landedIn
+                echo("[map] now mapping " .. tostring(taPackage.db.areaSlugOf(expected)))
+            end
         else
             -- Refuted, or nothing to check against. Either way the two rooms stay
             -- separate: a duplicate is visible and mergeable, where a wrong merge
@@ -1752,6 +1762,9 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         -- the weakest signal we have, and the one that has cost us rooms twice.
         -- After a Teleport there is no coordinate, so those matches get held.
         local byCoord = type(match) == "number" and taPackage.coord ~= nil
+        -- Set when the candidate is in another area: the echo says so, and a
+        -- confirmed merge has to follow us into that area.
+        local acrossSeam = false
         -- Coordinates drift across this world's non-Euclidean loops, so when the
         -- coordinate match misses, trust the door we walked through instead: the
         -- room we re-entered is the same-name, same-exit-set room whose exit back
@@ -1777,6 +1790,22 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                     .. ") and nothing separates them -- minted it as new."
                     .. " If it is one of them, merge it by hand.")
             end
+            -- Still nothing, and the exit we walked was a frontier? Then we may
+            -- have just crossed a Seam into an area that is already mapped, which
+            -- neither matcher above can see: both search the current area. Two
+            -- frontiers meeting is the evidence (see findSeamRoom), and the answer
+            -- is held for the next move like any other topological match.
+            if type(match) ~= "number" then
+                local seam = taPackage.db.findSeamRoom(
+                    taPackage.currentRoom, dirs, taPackage.currentRoomId, back,
+                    taPackage.currentAreaId)
+                taPackage.mapdbg("[mapdbg] findSeamRoom back=" .. tostring(back)
+                    .. " -> type=" .. type(seam) .. " val=" .. tostring(seam))
+                if type(seam) == "number" then
+                    match = seam
+                    acrossSeam = true
+                end
+            end
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then
@@ -1797,13 +1826,17 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                 -- room stays minted meanwhile: if the closure is refuted it was
                 -- always a separate room, and if confirmed it folds in one move
                 -- later at no cost.
-                taPackage.pendingClosure = { from = taPackage.currentRoomId, into = match }
+                taPackage.pendingClosure = { from = taPackage.currentRoomId, into = match,
+                                             seam = acrossSeam or nil }
                 -- Name the moves that can settle it. Confirming asks the candidate
                 -- what lies through the door we walk next, so only a direction it
                 -- has already walked can answer -- and the obvious move, back the
                 -- way we came, is often exactly the one it cannot.
                 local settle = taPackage.db.walkedExits(match)
-                echo("[map] possible loop closure into #" .. tostring(match)
+                echo("[map] " .. (acrossSeam and "possible Seam crossing into #"
+                                  or "possible loop closure into #") .. tostring(match)
+                    .. (acrossSeam and (" (" .. tostring(taPackage.db.areaSlugOf(match))
+                                        .. ")") or "")
                     .. " -- settle it by walking " ..
                     (#settle > 0 and table.concat(settle, " or ")
                      or "on (that room has no walked exit, so nothing can confirm it yet)"))
@@ -2051,7 +2084,9 @@ local function stopMapping()
     -- leaves a duplicate. Say so plainly and say what resolves it: the cost of
     -- deferring is paid entirely by whoever closes a loop as their last act.
     if taPackage.pendingClosure then
-        echo("[map] a possible loop closure into #" .. tostring(taPackage.pendingClosure.into)
+        echo("[map] a possible " .. (taPackage.pendingClosure.seam and "Seam crossing"
+                                    or "loop closure")
+            .. " into #" .. tostring(taPackage.pendingClosure.into)
             .. " is unresolved, so room #" .. tostring(taPackage.pendingClosure.from)
             .. " stays a duplicate. One more move before map-off would have settled it.")
         taPackage.pendingClosure = nil

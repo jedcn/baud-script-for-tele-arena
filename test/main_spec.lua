@@ -2379,6 +2379,100 @@ describe("ta_db", function()
 
     end)
 
+    describe("findSeamRoom", function()
+
+        -- Same stubbing as findLoopClosure's, which works because the query it
+        -- adds ("... AND (area_id IS NULL OR area_id != ?)") starts the same way.
+        local function stub(ids, exits, dests)
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    local rows = {}
+                    for _, id in ipairs(ids) do rows[#rows + 1] = { id = id } end
+                    return rows
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    local rows = {}
+                    for _, dir in ipairs(exits[params[1]] or {}) do
+                        rows[#rows + 1] = { direction = dir }
+                    end
+                    return rows
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = (dests or {})[params[1]] }
+                end
+                return nil
+            end
+        end
+
+        it("finds the room across the Seam when its way back is unwalked", function()
+            -- Walked `s` out of the desert into the Stoneworks: the return door is
+            -- `n`, and the chamber's `n` is the frontier nobody had walked. Two
+            -- frontiers meeting is the whole evidence, and it is what the
+            -- area-scoped matchers cannot see.
+            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = nil })
+            assert.are.equal(1, TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", 11))
+        end)
+
+        it("refuses when the way back has already been walked", function()
+            -- Its `n` commits to a neighbour, so it is not the room we just
+            -- entered from the north.
+            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = 7 })
+            assert.is_nil(TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", 11))
+        end)
+
+        it("refuses when the exit-set differs", function()
+            stub({ 1 }, { [1] = { "n", "e" } }, { [1] = nil })
+            assert.is_nil(TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", 11))
+        end)
+
+        it("hands back several candidates rather than choosing", function()
+            -- Distance is no help here: across a Seam the two areas' coordinates
+            -- are reckoned from different origins, so they cannot be compared.
+            stub({ 1, 2 },
+                { [1] = { "n", "e", "s" }, [2] = { "n", "e", "s" } },
+                { [1] = nil, [2] = nil })
+            local match, candidates = TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", 11)
+            assert.is_nil(match)
+            assert.are.same({ 1, 2 }, candidates)
+        end)
+
+        it("does not compare descriptions, unlike findLoopClosure", function()
+            -- A Seam is where descriptions differ most honestly: the riddle
+            -- chamber reads "archways which stand open" the day the seal is open
+            -- and "fitted with massive iron doors" after the Reset. Refusing on
+            -- that difference is exactly what minted the duplicate on 2026-09-14.
+            -- The stub answers no description at all for either room, so this test
+            -- pins that none is ASKED for: a lookup would return nil and the old
+            -- code would have fallen through anyway.
+            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = nil })
+            local asked = false
+            local rows = helper.mockDbOneRow
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT description FROM rooms", 1, true) then
+                    asked = true
+                end
+                return rows(sql, params)
+            end
+            assert.are.equal(1, TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", 11))
+            assert.is_false(asked, "findSeamRoom must not consult descriptions")
+        end)
+
+        it("needs an area to be outside of", function()
+            -- Without one there is no "another area" to search, and the query
+            -- would compare every room against itself.
+            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = nil })
+            assert.is_nil(TaDb.findSeamRoom("stonework chamber",
+                { "n", "e", "s" }, 9, "n", nil))
+        end)
+    end)
+
     describe("coordinates", function()
 
         it("roomCoord returns the stored coordinate", function()
@@ -3927,6 +4021,100 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.currentRoomId)          -- folded into the original
             assert.is_false(taPackage.currentRoomProvisional)
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+        end)
+
+        it("follows a confirmed Seam into the other area", function()
+            -- The merge leaves us standing in a room of the OTHER area, so rooms
+            -- minted from here belong to where we actually are. handleRoomEntry
+            -- does this for a room it recognises and cannot for one it has just
+            -- folded in, so the confirmation has to.
+            taPackage.pendingClosure = { from = 9, into = 1, seam = true }
+            taPackage.currentRoomProvisional = true
+            taPackage.currentRoomId = 10
+            taPackage.prevRoomId = 9
+            taPackage.currentEntryDir = "e"
+            taPackage.currentRoom = "stonework corridor"
+            taPackage.currentAreaId = 11               -- the desert, where we set off
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 5 then return { { direction = "e" }, { direction = "w" } } end
+                    return {}
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                -- The candidate's `e` leads to room 5 ...
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    if params[1] == 1 then return { to_id = 5 } end
+                    return nil
+                -- ... which looks like the room we just walked into ...
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "stonework corridor" }
+                -- ... and lives in another area.
+                elseif string.find(sql, "SELECT area_id FROM rooms", 1, true) then
+                    return { area_id = 22 }
+                elseif string.find(sql, "SELECT a.slug AS slug FROM rooms r", 1, true) then
+                    return { slug = "stoneworks-level-1" }
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: e,w.")
+            assert.are.equal(5, taPackage.currentRoomId)
+            assert.are.equal(22, taPackage.currentAreaId)
+            local confirmed, moved
+            for _, m in ipairs(helper.echoCalls) do
+                if type(m) == "string" and m:find("Seam crossing confirmed", 1, true) then
+                    confirmed = m
+                end
+                if type(m) == "string" and m:find("now mapping", 1, true) then moved = m end
+            end
+            assert.is_not_nil(confirmed, "the confirmation was not announced as a Seam")
+            assert.is_not_nil(moved, "the area change was not announced")
+            assert.is_truthy(moved:find("stoneworks-level-1", 1, true), moved)
+        end)
+
+        it("holds a Seam crossing, and says which area it leads into", function()
+            -- Walking out of one mapped area into another: the room is real and
+            -- already mapped, and both area-scoped matchers are blind to it. What
+            -- identifies it is two frontiers meeting -- the exit we walked was a
+            -- stub, and its way back is a stub too -- so it is held for the next
+            -- move like any other topological match.
+            taPackage.currentRoomId = 9
+            taPackage.currentRoom = "stonework chamber"
+            taPackage.currentRoomProvisional = true
+            taPackage.currentEntryDir = "s"           -- so the return door is n
+            taPackage.currentAreaId = 11              -- the desert
+            taPackage.coord = { x = 3, y = -21, z = 0 }
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    -- Nothing of this name in the desert; one in the Stoneworks.
+                    if string.find(sql, "area_id != ?", 1, true) then return { { id = 1 } } end
+                    return {}
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then
+                        return { { direction = "n" }, { direction = "e" }, { direction = "s" } }
+                    end
+                    return {}
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT a.slug AS slug FROM rooms r", 1, true) then
+                    return { slug = "stoneworks-level-1" }
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: n,e,s.")
+            assert.are.equal(9, taPackage.currentRoomId)     -- nothing merged yet
+            assert.is_not_nil(taPackage.pendingClosure)
+            assert.are.equal(1, taPackage.pendingClosure.into)
+            assert.is_true(taPackage.pendingClosure.seam)
+            local said
+            for _, m in ipairs(helper.echoCalls) do
+                if type(m) == "string" and m:find("Seam crossing", 1, true) then said = m end
+            end
+            assert.is_not_nil(said, "nothing was echoed about the Seam")
+            assert.is_truthy(said:find("stoneworks-level-1", 1, true), said)
         end)
 
         it("says so when a room looks like more than one room already mapped",

@@ -20,6 +20,8 @@ M.LOGS = {
     "logs/session-tojolias-2026-09-14T20-12-25.log",  -- east and round the first loop
     "logs/session-tojolias-2026-09-14T20-21-08.log",  -- the south-west arm, and a
                                                       -- closure the mapper missed
+    "logs/session-tojolias-2026-09-14T20-44-59.log",  -- seven loops closed
+    "logs/session-tojolias-2026-09-14T20-53-34.log",  -- the rest, and into the Stoneworks
 }
 
 -- The first `n` sessions. A spec asks for the prefix it is about, rather than
@@ -58,6 +60,41 @@ function M.seed()
         "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
             .. ROOM:format("crude-stone-building") .. ", 'd', "
             .. ROOM:format("town-sewer-1") .. ")",
+
+        -- And the far side of the OTHER Seam, which the last session walks into:
+        -- the Stoneworks' riddle chamber, with the desert crossing still an
+        -- unwalked Stub on its `n` and its other two archways walked. Two
+        -- frontiers facing each other is what lets findSeamRoom recognise it, so
+        -- the corridors have to be here for its exit-set to be right.
+        "INSERT INTO areas (slug, name) VALUES ('stoneworks-level-1',"
+            .. " 'The Stoneworks, Level 1')",
+        "INSERT INTO rooms (slug, name, description, area_id) VALUES"
+            .. " ('stonework-chamber', 'stonework chamber',"
+            .. " 'You are standing in a stonework chamber, fitted with dull grey stone"
+            .. " tiles. The visible exits are south and east through stone archways"
+            .. " which stand open to bare stone corridors. There is also a stone"
+            .. " archway leading out into the desert to the north.',"
+            .. " (SELECT id FROM areas WHERE slug = 'stoneworks-level-1'))",
+        "INSERT INTO rooms (slug, name, area_id) VALUES ('stonework-corridor-25',"
+            .. " 'stonework corridor',"
+            .. " (SELECT id FROM areas WHERE slug = 'stoneworks-level-1'))",
+        "INSERT INTO rooms (slug, name, area_id) VALUES ('stonework-corridor',"
+            .. " 'stonework corridor',"
+            .. " (SELECT id FROM areas WHERE slug = 'stoneworks-level-1'))",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
+            .. ROOM:format("stonework-chamber") .. ", 'n', NULL)",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
+            .. ROOM:format("stonework-chamber") .. ", 'e', "
+            .. ROOM:format("stonework-corridor-25") .. ")",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
+            .. ROOM:format("stonework-corridor-25") .. ", 'w', "
+            .. ROOM:format("stonework-chamber") .. ")",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
+            .. ROOM:format("stonework-chamber") .. ", 's', "
+            .. ROOM:format("stonework-corridor") .. ")",
+        "INSERT INTO room_exits (from_id, direction, to_id) VALUES ("
+            .. ROOM:format("stonework-corridor") .. ", 'n', "
+            .. ROOM:format("stonework-chamber") .. ")",
     }
 end
 

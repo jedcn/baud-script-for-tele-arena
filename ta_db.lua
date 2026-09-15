@@ -652,6 +652,14 @@ function TaDb.roomArea(roomId)
     return row and row.area_id
 end
 
+-- The slug of the area a room belongs to, for saying where we have ended up.
+function TaDb.areaSlugOf(roomId)
+    local row = db:queryOne(
+        "SELECT a.slug AS slug FROM rooms r JOIN areas a ON a.id = r.area_id"
+        .. " WHERE r.id = ?", roomId)
+    return row and row.slug
+end
+
 -- The full row for a room by its (unique) slug, or nil. Used by `map-here` to
 -- re-anchor at a known room when the name alone is ambiguous.
 function TaDb.roomBySlug(slug)
@@ -860,6 +868,69 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId, coord)
         end
         if best and not tied then return best end
     end
+    return nil, candidates
+end
+
+-- Rooms of this name in every area BUT one. The mirror of roomIdsByName's scoped
+-- form, and used for exactly one thing: recognising the room on the far side of a
+-- Seam. See findSeamRoom.
+function TaDb.roomIdsByNameOutsideArea(name, areaId)
+    local rows = db:query(
+        "SELECT id FROM rooms WHERE name = ? AND (area_id IS NULL OR area_id != ?)",
+        name, areaId) or {}
+    local ids = {}
+    for _, row in ipairs(rows) do ids[#ids + 1] = row.id end
+    return ids
+end
+
+-- The room on the far side of a Seam: a room in ANOTHER area, of this name and
+-- exit-set, whose exit back the way we came has never been walked.
+--
+-- This is the one case the area-scoped matchers structurally cannot see. Walk `n`
+-- out of the desert into the Stoneworks and the mapper is standing in a mapped
+-- room it has no way to recognise: findRoomByFingerprint and findLoopClosure both
+-- search the CURRENT area, because name and exit-set repeat so heavily within one
+-- (24 rooms are called "stonework chamber") that widening the search once merged a
+-- stoneworks room into third town. So crossing a Seam mints a duplicate, twice now
+-- (logs/session-tojolias-2026-09-14T19-50-04.log and ...T20-53-34.log), each time
+-- fixed by hand.
+--
+-- What makes this safe where a general cross-area search is not: TWO FRONTIERS
+-- MEETING. The exit we just walked was a stub, and the candidate's exit back is a
+-- stub too -- the other area has an unwalked way out pointing at us, in exactly
+-- the reverse direction. Frontiers are few and specific, and the caller holds the
+-- answer for the next move to confirm, so a wrong guess is refuted rather than
+-- merged.
+--
+-- The description is deliberately NOT compared, unlike findLoopClosure. A Seam is
+-- where descriptions differ most honestly: the Stoneworks' riddle chamber reads
+-- "archways which stand open to bare stone corridors" the day the seal is open and
+-- "fitted with massive iron doors" the day after the Reset, and refusing on that
+-- is what minted the duplicate. Uniqueness plus the two frontiers carries it
+-- instead; several candidates mean no answer.
+function TaDb.findSeamRoom(name, dirs, excludeId, back, areaId)
+    if not back or not areaId then return nil end
+    local want, wantCount = {}, 0
+    for _, dir in ipairs(dirs) do
+        if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
+    end
+    local candidates = {}
+    for _, id in ipairs(TaDb.roomIdsByNameOutsideArea(name, areaId)) do
+        if id ~= excludeId then
+            local have = TaDb.roomExitDirections(id)
+            local haveCount, ok = 0, true
+            for dir in pairs(have) do
+                haveCount = haveCount + 1
+                if not want[dir] then ok = false; break end
+            end
+            if ok and haveCount == wantCount and have[back]
+                and type(TaDb.exitDestination(id, back)) ~= "number" then
+                candidates[#candidates + 1] = id
+            end
+        end
+    end
+    if #candidates == 1 then return candidates[1] end
+    if #candidates == 0 then return nil end
     return nil, candidates
 end
 
