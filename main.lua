@@ -1758,11 +1758,25 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         -- the way we came is still unexplored. Topology over 30-year-old grid math.
         if type(match) ~= "number" and taPackage.currentEntryDir then
             local back = REVERSE_DIR[taPackage.currentEntryDir]
-            match = taPackage.db.findLoopClosure(
+            local tooMany
+            match, tooMany = taPackage.db.findLoopClosure(
                 taPackage.currentRoom, dirs, taPackage.currentRoomId, back,
-                taPackage.currentAreaId)
+                taPackage.currentAreaId, taPackage.coord)
             taPackage.mapdbg("[mapdbg] findLoopClosure back=" .. tostring(back)
                 .. " -> type=" .. type(match) .. " val=" .. tostring(match))
+            -- Several candidates and no way to choose: the room stays minted, which
+            -- is right, but SAY so. Giving up quietly is how a duplicate appears
+            -- with nothing in the log to notice -- desert-25 was minted as a copy
+            -- of desert-7 that way, and only caught because someone was watching
+            -- (logs/session-tojolias-2026-09-14T20-21-08.log).
+            if tooMany then
+                local ids = {}
+                for _, id in ipairs(tooMany) do ids[#ids + 1] = "#" .. tostring(id) end
+                echo("[map] #" .. tostring(taPackage.currentRoomId) .. " looks like "
+                    .. #tooMany .. " rooms already mapped (" .. table.concat(ids, ", ")
+                    .. ") and nothing separates them -- minted it as new."
+                    .. " If it is one of them, merge it by hand.")
+            end
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then

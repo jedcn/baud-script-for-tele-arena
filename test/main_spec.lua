@@ -2260,7 +2260,7 @@ describe("ta_db", function()
         -- mockDbOneRow, exitDestination for each room's `back` exit. `dests` maps
         -- a room id to the to_id of its return exit (a number = already walked;
         -- nil/absent = an unexplored return door).
-        local function stub(name, ids, exits, dests)
+        local function stub(name, ids, exits, dests, coords)
             helper.mockDbRows = function(sql, params)
                 if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
                     local rows = {}
@@ -2278,6 +2278,10 @@ describe("ta_db", function()
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
                     return { to_id = (dests or {})[params[1]] }
+                elseif string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    local at = (coords or {})[params[1]]
+                    if at then return { x = at[1], y = at[2], z = at[3] or 0 } end
+                    return nil
                 end
                 return nil
             end
@@ -2302,11 +2306,70 @@ describe("ta_db", function()
             assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
         end)
 
-        it("returns nil when two candidates both qualify (ambiguous)", function()
+        it("hands back the candidates when it cannot choose between them", function()
+            -- With no coordinate to compare there is nothing to separate two rooms
+            -- that match on name, exit-set and return door, so no closure is
+            -- offered -- but the caller is told what the pair was. Giving up
+            -- SILENTLY is how desert-25 was minted as a copy of desert-7 with
+            -- nothing in the log to notice
+            -- (logs/session-tojolias-2026-09-14T20-21-08.log).
             stub("town sewers", { 1, 2, 9 },
                 { [1] = { "ne", "nw", "sw" }, [2] = { "ne", "nw", "sw" } },
                 { [1] = nil, [2] = nil })
-            assert.is_nil(TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne"))
+            local match, candidates =
+                TaDb.findLoopClosure("town sewers", { "ne", "nw", "sw" }, 9, "ne")
+            assert.is_nil(match)
+            assert.are.same({ 1, 2 }, candidates)
+        end)
+
+        it("prefers the nearest candidate when several qualify", function()
+            -- The desert case: two rooms called "desert" with exits e,nw,sw and an
+            -- unwalked sw, one a diagonal from where we reckon we are and one four
+            -- cells away. The near one is the better bet -- and it is only a bet,
+            -- which is why the caller holds it for the next move to confirm rather
+            -- than merging on it.
+            stub("desert", { 1, 2, 9 },
+                { [1] = { "e", "nw", "sw" }, [2] = { "e", "nw", "sw" } },
+                { [1] = nil, [2] = nil },
+                { [1] = { 1, -8 }, [2] = { 0, -11 } })
+            assert.are.equal(1, TaDb.findLoopClosure("desert", { "e", "nw", "sw" }, 9, "sw",
+                nil, { x = 2, y = -7, z = 0 }))
+        end)
+
+        it("measures a diagonal as one move, the way the walk does", function()
+            -- Chebyshev, not Euclid: room 1 is one diagonal away and room 2 is two
+            -- moves due east, so room 1 is nearer even though the straight-line
+            -- distances are 1.41 and 2.
+            stub("desert", { 1, 2, 9 },
+                { [1] = { "e", "nw", "sw" }, [2] = { "e", "nw", "sw" } },
+                { [1] = nil, [2] = nil },
+                { [1] = { 1, 1 }, [2] = { 2, 0 } })
+            assert.are.equal(1, TaDb.findLoopClosure("desert", { "e", "nw", "sw" }, 9, "sw",
+                nil, { x = 0, y = 0, z = 0 }))
+        end)
+
+        it("refuses to choose between two candidates the same distance away",
+            function()
+                stub("desert", { 1, 2, 9 },
+                    { [1] = { "e", "nw", "sw" }, [2] = { "e", "nw", "sw" } },
+                    { [1] = nil, [2] = nil },
+                    { [1] = { 1, 0 }, [2] = { -1, 0 } })
+                local match, candidates =
+                    TaDb.findLoopClosure("desert", { "e", "nw", "sw" }, 9, "sw",
+                        nil, { x = 0, y = 0, z = 0 })
+                assert.is_nil(match)
+                assert.are.same({ 1, 2 }, candidates)
+            end)
+
+        it("will not compare a candidate on another level", function()
+            -- z is not a distance, it is a different floor. A room directly below
+            -- is not "zero away".
+            stub("desert", { 1, 2, 9 },
+                { [1] = { "e", "nw", "sw" }, [2] = { "e", "nw", "sw" } },
+                { [1] = nil, [2] = nil },
+                { [1] = { 0, 0, -1 }, [2] = { 5, 5, 0 } })
+            assert.are.equal(2, TaDb.findLoopClosure("desert", { "e", "nw", "sw" }, 9, "sw",
+                nil, { x = 0, y = 0, z = 0 }))
         end)
 
         it("returns nil without a back direction", function()
@@ -3865,6 +3928,45 @@ describe("World map triggers", function()
             assert.is_false(taPackage.currentRoomProvisional)
             assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
         end)
+
+        it("says so when a room looks like more than one room already mapped",
+            function()
+                -- The desert minted desert-25 as a copy of desert-7 and said
+                -- nothing, because TWO rooms matched on name, exit-set, return door
+                -- and description, one of them equidistant-looking, and the matcher
+                -- gave up silently. Minting is the right call when nothing
+                -- separates them; being quiet about it is not -- the duplicate is
+                -- only mergeable if somebody knows it is there
+                -- (logs/session-tojolias-2026-09-14T20-21-08.log).
+                taPackage.currentRoomId = 9
+                taPackage.currentRoom = "desert"
+                taPackage.currentRoomProvisional = true
+                taPackage.currentEntryDir = "ne"          -- so the return door is sw
+                taPackage.coord = nil                     -- nothing to choose on
+                helper.mockDbRows = function(sql, params)
+                    if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                        return { { id = 1 }, { id = 2 }, { id = 9 } }
+                    elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id",
+                        1, true) then
+                        if params[1] == 1 or params[1] == 2 then
+                            return { { direction = "e" }, { direction = "nw" },
+                                     { direction = "sw" } }
+                        end
+                        return {}
+                    end
+                    return {}
+                end
+                helper.simulateLine("Exits: e,nw,sw.")
+                assert.are.equal(9, taPackage.currentRoomId)   -- still its own room
+                local said
+                for _, m in ipairs(helper.echoCalls) do
+                    if type(m) == "string" and m:find("looks like", 1, true) then said = m end
+                end
+                assert.is_not_nil(said, "nothing was echoed about the ambiguity")
+                assert.is_truthy(said:find("#1", 1, true))
+                assert.is_truthy(said:find("#2", 1, true))
+                assert.is_truthy(said:find("merge it by hand", 1, true))
+            end)
 
         -- After a Teleport there is no coordinate, so a fingerprint match is just
         -- name plus exit-set. On 2026-09-13 that merged a room three teleports into

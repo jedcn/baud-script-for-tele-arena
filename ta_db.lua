@@ -773,7 +773,22 @@ end
 -- far side, so it must be here and not yet lead anywhere. An already-walked
 -- `back` commits that room to a different neighbour, so it can't be this one.
 -- Returns the unique such room, or nil if there's none or more than one.
-function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId)
+--
+-- Returns the id, or nil. On nil it ALSO returns the candidates it could not
+-- choose between, so the caller can say so: giving up silently is how a duplicate
+-- room appears with nothing in the log to notice it
+-- (logs/session-tojolias-2026-09-14T20-21-08.log, where desert-25 was minted as a
+-- copy of desert-7).
+--
+-- `coord` is the dead-reckoned position of the room we are standing in, used ONLY
+-- to choose between several candidates, never to confirm one. Two rooms can match
+-- on name, exit-set, return door AND description here -- the desert is 37 rooms
+-- called "desert" drawn from a handful of exit-sets -- and when they do, the one a
+-- diagonal away is a better bet than the one four cells away. It is still only a
+-- bet: the caller holds whatever comes back and lets the next move settle it, so a
+-- wrong guess is refuted and mints exactly the duplicate it would have minted
+-- anyway.
+function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId, coord)
     if not back then return nil end
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
@@ -791,7 +806,7 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId)
     -- destroyed one. Their descriptions were nothing alike. The higher-entropy
     -- evidence was already in hand and simply not consulted.
     local mine = TaDb.roomDescription(excludeId)
-    local match
+    local candidates = {}
     for _, id in ipairs(TaDb.roomIdsByName(name, areaId)) do
         if id ~= excludeId then
             local have = TaDb.roomExitDirections(id)
@@ -819,12 +834,33 @@ function TaDb.findLoopClosure(name, dirs, excludeId, back, areaId)
             -- (a real numeric to_id means it already leads somewhere else).
             if ok and haveCount == wantCount and have[back]
                 and type(TaDb.exitDestination(id, back)) ~= "number" then
-                if match then return nil end  -- ambiguous: >1 candidate
-                match = id
+                candidates[#candidates + 1] = id
             end
         end
     end
-    return match
+    if #candidates == 1 then return candidates[1] end
+    if #candidates == 0 then return nil end
+
+    -- Several. Prefer the nearest by reckoned position, measured as the larger of
+    -- the two axis distances so a diagonal counts as one move -- the same unit the
+    -- walk moves in. A candidate with no coordinate cannot be compared and so
+    -- cannot win.
+    if coord then
+        local best, bestDist, tied = nil, nil, false
+        for _, id in ipairs(candidates) do
+            local at = TaDb.roomCoord(id)
+            if at and at.z == coord.z then
+                local dist = math.max(math.abs(at.x - coord.x), math.abs(at.y - coord.y))
+                if not bestDist or dist < bestDist then
+                    best, bestDist, tied = id, dist, false
+                elseif dist == bestDist then
+                    tied = true
+                end
+            end
+        end
+        if best and not tied then return best end
+    end
+    return nil, candidates
 end
 
 -- Fold a provisional room into an existing one (loop closure): repoint every
