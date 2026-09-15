@@ -34,7 +34,7 @@ describe("The desert, the first loop", function()
     local g, at
 
     setup(function()
-        g = replay.replayChain(fixture.LOGS, { seed = fixture.seed() })
+        g = replay.replayChain(fixture.upTo(2), { seed = fixture.seed() })
         at = fixture.index(g)
     end)
 

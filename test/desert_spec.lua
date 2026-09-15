@@ -31,7 +31,7 @@
 local replay = dofile("test/log_replay.lua")
 
 local fixture = dofile("test/desert_fixture.lua")
-local LOGS = { fixture.LOGS[1] }
+local LOGS = fixture.upTo(1)
 
 -- The strip as the shrine draws it (map/shrine/desert.txt, the top row and the
 -- chain south), and as `ex` answered on the walk. Followed from the building

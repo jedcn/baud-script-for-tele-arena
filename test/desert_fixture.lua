@@ -18,7 +18,19 @@ local M = {}
 M.LOGS = {
     "logs/session-tojolias-2026-09-14T19-50-04.log",  -- the strip in from the sewers
     "logs/session-tojolias-2026-09-14T20-12-25.log",  -- east and round the first loop
+    "logs/session-tojolias-2026-09-14T20-21-08.log",  -- the south-west arm, and a
+                                                      -- closure the mapper missed
 }
+
+-- The first `n` sessions. A spec asks for the prefix it is about, rather than
+-- reaching for M.LOGS directly: adding a later session to the list would
+-- otherwise silently change what every earlier spec replays, which is exactly
+-- what happened the first time session three was added.
+function M.upTo(n)
+    local out = {}
+    for i = 1, n do out[i] = assert(M.LOGS[i], "no session " .. i) end
+    return out
+end
 
 function M.seed()
     local SEWERS = "(SELECT id FROM areas WHERE slug = 'sewers-level-3')"
