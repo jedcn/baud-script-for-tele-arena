@@ -4341,13 +4341,13 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
         .. gained .. " XP (total: " .. xp .. ")")
     -- Phone notification so arena progress is visible off-screen. The XP echo
     -- above runs every 5 min, but a check-in every 5 min is too chatty for a
-    -- phone, so throttle the ping to every 45 min. Fire-and-forget (no callback)
+    -- phone, so throttle the ping to every 90 min. Fire-and-forget (no callback)
     -- — a failed ping must never disturb the fight loop.
     --
     -- Silent during a gold-farming run, for the same reason the level pushes are
     -- (see checkLevelUpNotification): that character is levelled and thrown
     -- away, so neither its XP nor the gold it is carrying on the way there is
-    -- news. A round runs for hours, which is a check-in every 45 minutes about a
+    -- news. A round runs for hours, which is a check-in every 90 minutes about a
     -- character nobody is watching. The push worth waking up for in that loop is
     -- the handover ("Gave N gold to ...", ta_create), and it still fires. The
     -- echo above runs either way, so the run stays readable on screen.
@@ -4355,7 +4355,7 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     do
         local now = os.time()
         local lastNtfy = taPackage.arenaLastNtfyTime
-        if not lastNtfy or (now - lastNtfy) >= 2700 then
+        if not lastNtfy or (now - lastNtfy) >= 5400 then
             taPackage.arenaLastNtfyTime = now
             local hp = getVitality()
             local gold = getGold()
