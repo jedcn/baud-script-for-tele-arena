@@ -9,7 +9,7 @@
     {
       "area": "desert",
       "name": "The Desert",
-      "rooms": 23,
+      "rooms": 36,
       "file": "areas/desert.json"
     },
     {

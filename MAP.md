@@ -270,31 +270,37 @@ Key:
 ### The Desert
 
 ```
-     [ ]--[ ]--[ v]-[ ]--[ ]        down to Sewers, Level 3
+                    [ ]--[ ]--[ v]-[ ]--[ ]        down to Sewers, Level 3
+                                         |
+                                         |
+                                        [ ]
+                                         |
+                                         |
+                                        [ ]
+                                         |
+                                         |
+                         [ ]--[ ]--[ ]--[ ]
                           |
                           |
-                         [ ]
-                          |
-                          |
-                         [ ]
-                          |
-                          |
-          [ ]--[ ]--[ ]--[ ]
-           |
-           |
-[ ]       [ ]--[ ]                  sw to unexplored
-   \     /        \
-    \   /          \
-     [ ]            [ ]
-        \              \
-         \              \
-          [ ]            [ ]
-             \              \
-              \              \
-               [ ]            [ ]
-                  \            |
-                   \           |
-                    [ ]--[ ]--[ ]   e to unexplored   s to unexplored   sw to unexplored
+               [ ]       [ ]--[ ]
+              /   \     /        \
+             /     \   /          \
+          [ ]       [ ]            [ ]
+         /             \              \
+        /               \              \
+[ ]--[ ]                 [ ]            [ ]        se to unexplored
+ |                          \              \
+ |                           \              \
+[ ]                           [ ]            [ ]   sw to unexplored
+   \                             \            |
+    \                             \           |
+     [ ]       [ ]            [ ]  [ ]--[ ]--[ ]   e to unexplored   s to unexplored
+        \     /   \            | \/
+         \   /     \           | /\
+          [ ]       [ ]       [ ]  [ ]             se to unexplored   w to unexplored
+                       \          /
+                        \        /
+                         [ ]--[ ]                  sw to unexplored   se to unexplored
 ```
 
 ### The Stoneworks, Level 1
