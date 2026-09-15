@@ -191,6 +191,23 @@ describe('pairRooms across a teleport', () => {
     expect(pair.get(3)).toBe(at('B'));
   });
 
+  it('marks a box that belongs to another area, and stops there', () => {
+    // The desert's `[S]` box IS stoneworks-level-1's riddle chamber: the drawing
+    // draws the room across the Seam, and we do have it, filed under the other
+    // area. So the box counts as walked -- and the walk must not follow it, or it
+    // reads the neighbouring area's graph through this area's drawing. It used to
+    // queue a room it had no record of and die on the next lookup.
+    const d = parseDrawing(MINI);
+    const at = (l: string) => d.boxes.find(b => b.label === l)!.id;
+    const rooms: Room[] = [
+      { id: 1, slug: 'start', exits: { e: 2 } },
+      { id: 2, slug: 'a', exits: { w: 1, se: 99 } },   // 99 lives in another area
+    ];
+    const { pair, problems } = pairRooms(d, rooms, 1, at('@'));
+    expect(problems).toEqual([]);
+    expect(pair.get(99)).toBe(at('C'));
+  });
+
   it('reports a destination whose box is already paired', () => {
     // Two stones whose legend lines both land on [B], and two different rooms of
     // ours claiming to be where each lands. Both cannot be [B].

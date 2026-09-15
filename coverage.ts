@@ -179,10 +179,17 @@ export function pairRooms(
       }
       if (pair.has(to)) continue;
       if (taken.has(beyond)) {
-        problems.push(`${byId.get(to)!.slug} wants a drawing box already paired`);
+        problems.push(`${byId.get(to)?.slug ?? `#${to}`} wants a drawing box already paired`);
         continue;
       }
-      pair.set(to, beyond); taken.add(beyond); queue.push(to);
+      // A destination in ANOTHER area still occupies its box -- the drawing draws
+      // the room across a Seam, and we do have it, just filed elsewhere. So mark
+      // the box walked and stop: following its exits would read a neighbouring
+      // area's graph through this area's drawing. The desert's `[S]` is the case:
+      // its box is stoneworks-level-1's riddle chamber, and before this the walk
+      // queued a room it had no record of and died on it.
+      pair.set(to, beyond); taken.add(beyond);
+      if (byId.has(to)) queue.push(to);
     }
     // Then the Teleport, if this room has one and the legend says where its box
     // lands. The destination is a detached box, so nothing else can reach it.
