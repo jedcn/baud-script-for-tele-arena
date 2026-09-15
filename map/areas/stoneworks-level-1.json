@@ -18,7 +18,7 @@
           }
         },
         "n": {
-          "to": null
+          "to": "desert/desert-90"
         },
         "s": {
           "to": "stoneworks-level-1/stonework-corridor",

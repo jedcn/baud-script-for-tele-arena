@@ -474,7 +474,7 @@
           "to": "desert/desert-16"
         },
         "sw": {
-          "to": null
+          "to": "desert/desert-83"
         }
       },
       "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north, southeast and southwest.",
@@ -977,13 +977,13 @@
       "name": "desert",
       "exits": {
         "e": {
-          "to": null
+          "to": "desert/desert-79"
         },
         "n": {
           "to": "desert/desert-42"
         },
         "s": {
-          "to": null
+          "to": "desert/desert-84"
         },
         "w": {
           "to": "desert/desert-44"
@@ -1037,7 +1037,7 @@
           "to": "desert/desert-47"
         },
         "nw": {
-          "to": null
+          "to": "desert/desert-80"
         },
         "s": {
           "to": "desert/desert-45"
@@ -1094,7 +1094,7 @@
           "to": "desert/desert-48"
         },
         "s": {
-          "to": null
+          "to": "desert/desert-78"
         }
       },
       "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the south, east and northwest.",
@@ -1128,7 +1128,7 @@
           "to": "desert/desert-52"
         },
         "se": {
-          "to": null
+          "to": "desert/desert-64"
         },
         "sw": {
           "to": "desert/desert-50"
@@ -1185,7 +1185,7 @@
           "to": "desert/desert-55"
         },
         "se": {
-          "to": null
+          "to": "desert/desert-63"
         },
         "w": {
           "to": "desert/desert-52"
@@ -1202,7 +1202,7 @@
       "name": "desert",
       "exits": {
         "e": {
-          "to": null
+          "to": "desert/desert-57"
         },
         "n": {
           "to": "desert/desert-56"
@@ -1232,6 +1232,617 @@
       "layout": {
         "x": 6,
         "y": -10
+      }
+    },
+    {
+      "id": "desert/desert-57",
+      "name": "desert",
+      "exits": {
+        "se": {
+          "to": "desert/desert-58"
+        },
+        "w": {
+          "to": "desert/desert-55"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the west and southeast.",
+      "layout": {
+        "x": 7,
+        "y": -11
+      }
+    },
+    {
+      "id": "desert/desert-58",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-57"
+        },
+        "s": {
+          "to": "desert/desert-59"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the south and northwest.",
+      "layout": {
+        "x": 8,
+        "y": -12
+      }
+    },
+    {
+      "id": "desert/desert-59",
+      "name": "desert",
+      "exits": {
+        "n": {
+          "to": "desert/desert-58"
+        },
+        "se": {
+          "to": "desert/desert-60"
+        },
+        "sw": {
+          "to": "desert/desert-62"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north, southeast and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -13
+      }
+    },
+    {
+      "id": "desert/desert-60",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-59"
+        },
+        "sw": {
+          "to": "desert/desert-61"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -14
+      }
+    },
+    {
+      "id": "desert/desert-61",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-60"
+        },
+        "nw": {
+          "to": "desert/desert-62"
+        },
+        "sw": {
+          "to": "desert/desert-67"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest, northeast, and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -15
+      }
+    },
+    {
+      "id": "desert/desert-62",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-59"
+        },
+        "nw": {
+          "to": "desert/desert-63"
+        },
+        "se": {
+          "to": "desert/desert-61"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest, northeast and southeast.",
+      "layout": {
+        "x": 7,
+        "y": -14
+      }
+    },
+    {
+      "id": "desert/desert-63",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-54"
+        },
+        "se": {
+          "to": "desert/desert-62"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": 6,
+        "y": -13
+      }
+    },
+    {
+      "id": "desert/desert-64",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-51"
+        },
+        "se": {
+          "to": "desert/desert-65"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": 4,
+        "y": -14
+      }
+    },
+    {
+      "id": "desert/desert-65",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-64"
+        },
+        "se": {
+          "to": "desert/desert-66"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": 5,
+        "y": -15
+      }
+    },
+    {
+      "id": "desert/desert-66",
+      "name": "desert",
+      "exits": {
+        "e": {
+          "to": "desert/desert-67"
+        },
+        "nw": {
+          "to": "desert/desert-65"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the east and northwest.",
+      "layout": {
+        "x": 6,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-67",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-61"
+        },
+        "se": {
+          "to": "desert/desert-68"
+        },
+        "w": {
+          "to": "desert/desert-66"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the west, northeast, and southeast.",
+      "layout": {
+        "x": 7,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-68",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-67"
+        },
+        "sw": {
+          "to": "desert/desert-69"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -17
+      }
+    },
+    {
+      "id": "desert/desert-69",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-68"
+        },
+        "sw": {
+          "to": "desert/desert-70"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the southwest and northeast.",
+      "layout": {
+        "x": 7,
+        "y": -18
+      }
+    },
+    {
+      "id": "desert/desert-70",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-69"
+        },
+        "sw": {
+          "to": "desert/desert-71"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the southwest and northeast.",
+      "layout": {
+        "x": 6,
+        "y": -19
+      }
+    },
+    {
+      "id": "desert/desert-71",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-70"
+        },
+        "w": {
+          "to": "desert/desert-72"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the west and northeast.",
+      "layout": {
+        "x": 5,
+        "y": -20
+      }
+    },
+    {
+      "id": "desert/desert-72",
+      "name": "desert",
+      "exits": {
+        "e": {
+          "to": "desert/desert-71"
+        },
+        "n": {
+          "to": "desert/desert-73"
+        },
+        "w": {
+          "to": "desert/desert-88"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north, east, and west.",
+      "layout": {
+        "x": 4,
+        "y": -20
+      }
+    },
+    {
+      "id": "desert/desert-73",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-74"
+        },
+        "nw": {
+          "to": "desert/desert-76"
+        },
+        "s": {
+          "to": "desert/desert-72"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the south, northwest and northeast.",
+      "layout": {
+        "x": 4,
+        "y": -19
+      }
+    },
+    {
+      "id": "desert/desert-74",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-75"
+        },
+        "sw": {
+          "to": "desert/desert-73"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southwest.",
+      "layout": {
+        "x": 5,
+        "y": -18
+      }
+    },
+    {
+      "id": "desert/desert-75",
+      "name": "desert",
+      "exits": {
+        "se": {
+          "to": "desert/desert-74"
+        },
+        "sw": {
+          "to": "desert/desert-76"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the southwest and southeast.",
+      "layout": {
+        "x": 4,
+        "y": -17
+      }
+    },
+    {
+      "id": "desert/desert-76",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-75"
+        },
+        "nw": {
+          "to": "desert/desert-77"
+        },
+        "se": {
+          "to": "desert/desert-73"
+        },
+        "sw": {
+          "to": "desert/desert-87"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest, northeast, southwest, and southeast.",
+      "layout": {
+        "x": 3,
+        "y": -18
+      }
+    },
+    {
+      "id": "desert/desert-77",
+      "name": "desert",
+      "exits": {
+        "n": {
+          "to": "desert/desert-78"
+        },
+        "se": {
+          "to": "desert/desert-76"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north and southeast.",
+      "layout": {
+        "x": 2,
+        "y": -17
+      }
+    },
+    {
+      "id": "desert/desert-78",
+      "name": "desert",
+      "exits": {
+        "n": {
+          "to": "desert/desert-49"
+        },
+        "s": {
+          "to": "desert/desert-77"
+        },
+        "w": {
+          "to": "desert/desert-79"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north, south, and west.",
+      "layout": {
+        "x": 2,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-79",
+      "name": "desert",
+      "exits": {
+        "e": {
+          "to": "desert/desert-78"
+        },
+        "w": {
+          "to": "desert/desert-43"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the east and west.",
+      "layout": {
+        "x": 1,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-80",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-81"
+        },
+        "se": {
+          "to": "desert/desert-46"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": -3,
+        "y": -11
+      }
+    },
+    {
+      "id": "desert/desert-81",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-82"
+        },
+        "se": {
+          "to": "desert/desert-80"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": -4,
+        "y": -10
+      }
+    },
+    {
+      "id": "desert/desert-82",
+      "name": "desert",
+      "exits": {
+        "n": {
+          "to": "desert/desert-83"
+        },
+        "se": {
+          "to": "desert/desert-81"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north and southeast.",
+      "layout": {
+        "x": -5,
+        "y": -9
+      }
+    },
+    {
+      "id": "desert/desert-83",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-15"
+        },
+        "s": {
+          "to": "desert/desert-82"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the south and northeast.",
+      "layout": {
+        "x": -5,
+        "y": -8
+      }
+    },
+    {
+      "id": "desert/desert-84",
+      "name": "desert",
+      "exits": {
+        "n": {
+          "to": "desert/desert-43"
+        },
+        "se": {
+          "to": "desert/desert-85"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the north and southeast.",
+      "layout": {
+        "x": 0,
+        "y": -15
+      }
+    },
+    {
+      "id": "desert/desert-85",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-84"
+        },
+        "se": {
+          "to": "desert/desert-86"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest and southeast.",
+      "layout": {
+        "x": 1,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-86",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-87"
+        },
+        "nw": {
+          "to": "desert/desert-85"
+        },
+        "se": {
+          "to": "desert/desert-88"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest, northeast and southeast.",
+      "layout": {
+        "x": 2,
+        "y": -17
+      }
+    },
+    {
+      "id": "desert/desert-87",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-76"
+        },
+        "sw": {
+          "to": "desert/desert-86"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the southwest and northeast.",
+      "layout": {
+        "x": 3,
+        "y": -16
+      }
+    },
+    {
+      "id": "desert/desert-88",
+      "name": "desert",
+      "exits": {
+        "e": {
+          "to": "desert/desert-72"
+        },
+        "nw": {
+          "to": "desert/desert-86"
+        },
+        "sw": {
+          "to": "desert/desert-89"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the east, southwest and northwest.",
+      "layout": {
+        "x": 3,
+        "y": -18
+      }
+    },
+    {
+      "id": "desert/desert-89",
+      "name": "desert",
+      "exits": {
+        "ne": {
+          "to": "desert/desert-88"
+        },
+        "se": {
+          "to": "desert/desert-90"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northeast and southeast.",
+      "layout": {
+        "x": 2,
+        "y": -19
+      }
+    },
+    {
+      "id": "desert/desert-90",
+      "name": "desert",
+      "exits": {
+        "nw": {
+          "to": "desert/desert-89"
+        },
+        "s": {
+          "to": "stoneworks-level-1/stonework-chamber"
+        }
+      },
+      "description": "You are standing in a rocky windswept desert. Huge black outcroppings of rock block travel in all directions except to the northwest. The entrance to a cave in a large rock outcropping lies to the south.",
+      "layout": {
+        "x": 3,
+        "y": -20
       }
     }
   ]
