@@ -79,6 +79,12 @@
       "file": "areas/sewers-level-3.json"
     },
     {
+      "area": "stone-passages",
+      "name": "The Stone Passages",
+      "rooms": 1,
+      "file": "areas/stone-passages.json"
+    },
+    {
       "area": "stoneworks-level-1",
       "name": "The Stoneworks, Level 1",
       "rooms": 55,

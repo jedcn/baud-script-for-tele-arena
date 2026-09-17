@@ -2239,7 +2239,7 @@
       "name": "stone passage",
       "exits": {
         "n": {
-          "to": null
+          "to": "stone-passages/large-stone-chamber"
         },
         "s": {
           "to": "deep-forest/deep-forest-120"

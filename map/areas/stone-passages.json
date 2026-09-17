@@ -1,0 +1,28 @@
+{
+  "area": "stone-passages",
+  "name": "The Stone Passages",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "stone-passages/large-stone-chamber",
+      "name": "large stone chamber",
+      "exits": {
+        "n": {
+          "to": null,
+          "door": {
+            "material": "stone",
+            "key": "unknown"
+          }
+        },
+        "s": {
+          "to": "deep-forest/stone-passage"
+        }
+      },
+      "description": "You're in a large stone chamber illuminated by brightly glowing orbs suspended in the air just below the ceiling. The north and south walls of this room are covered in dwarven runes. The east and west walls bear detailed carvings depicting dwarven nobles at various gatherings including feasts, court audiences, contests of skill at arms. To the north and south are ornate stone archways. Over the archway to the north is this inscription: \"Speak the password to enter\".",
+      "layout": {
+        "x": 2,
+        "y": 27
+      }
+    }
+  ]
+}
