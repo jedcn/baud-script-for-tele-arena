@@ -1,0 +1,486 @@
+{
+  "area": "fourth-town",
+  "name": "fourth-town",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "fourth-town/weapon-shop-3",
+      "name": "weapon shop",
+      "exits": {
+        "w": {
+          "to": "fourth-town/catwalk"
+        }
+      },
+      "description": "You are now inside the weapon shop, where you may purchase various weapons to use for personal defense from the denizens of the dungeons. The shop keeper sits on a high stool behind a tall counter along the east wall. The exit is to the west.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/weapon-shop-3"
+        },
+        "n": {
+          "to": "fourth-town/catwalk-1"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north. To the east lies an ornately carved wooden archway.",
+      "layout": {
+        "x": -1,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-1",
+      "name": "catwalk",
+      "exits": {
+        "s": {
+          "to": "fourth-town/catwalk"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-2"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues south and west.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-2",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-1"
+        },
+        "n": {
+          "to": "fourth-town/catwalk-3"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-4"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north, east, and west.",
+      "layout": {
+        "x": -2,
+        "y": 1
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-3",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/armor-shop-3"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-2"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues south. To the north lies an ornately carved wooden archway.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "fourth-town/armor-shop-3",
+      "name": "armor shop",
+      "exits": {
+        "s": {
+          "to": "fourth-town/catwalk-3"
+        }
+      },
+      "description": "You are now inside the armor shop, where you may aquire different sorts of armor and protective gear to guard yourself against the blows of your opponents in the arenas, or from the various non-human foes to be found in the dungeons. The shop keeper sits on a high stool behind a worn counter along the north wall, eyeing you warily. The exit is to the south.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-4",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-2"
+        },
+        "w": {
+          "to": "fourth-town/northeast-plaza"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. A large wooden platform lies to the west. The catwalk continues east.",
+      "layout": {
+        "x": -3,
+        "y": 1
+      }
+    },
+    {
+      "id": "fourth-town/northeast-plaza",
+      "name": "northeast plaza",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-4"
+        },
+        "s": {
+          "to": "fourth-town/southeast-plaza"
+        },
+        "w": {
+          "to": "fourth-town/northwest-plaza"
+        }
+      },
+      "description": "You are standing in the northeastern section of a large open square platform made of wood. The platform is ringed by intricately carved wooden railing. The trunk of a huge tree lies in the center of the platform, and appears to be the central support for the surrounding structure. The rest of the platform lies to the south and west, and a wooden catwalk leads off into the trees to the east.",
+      "layout": {
+        "x": -4,
+        "y": 1
+      }
+    },
+    {
+      "id": "fourth-town/northwest-plaza",
+      "name": "northwest plaza",
+      "exits": {
+        "e": {
+          "to": "fourth-town/northeast-plaza"
+        },
+        "n": {
+          "to": "fourth-town/catwalk-5"
+        },
+        "s": {
+          "to": "fourth-town/southwest-plaza"
+        }
+      },
+      "description": "You are standing in the northwestern section of a large open square platform made of wood. The platform is ringed by intricately carved wooden railing. The trunk of a huge tree lies in the center of the platform, and appears to be the central support for the surrounding structure. The rest of the platform lies to the south and east, and a wooden catwalk leads off into the trees to the north.",
+      "layout": {
+        "x": -5,
+        "y": 1
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-5",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-6"
+        },
+        "s": {
+          "to": "fourth-town/northwest-plaza"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. A large wooden platform lies to the south. The catwalk continues north.",
+      "layout": {
+        "x": -5,
+        "y": 2
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-6",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-7"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-5"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-9"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north, south, and west.",
+      "layout": {
+        "x": -5,
+        "y": 3
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-7",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-8"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-6"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues east and south.",
+      "layout": {
+        "x": -5,
+        "y": 4
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-8",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/tavern-2"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-7"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues west. To the north lies an ornately carved wooden archway.",
+      "layout": {
+        "x": -4,
+        "y": 4
+      }
+    },
+    {
+      "id": "fourth-town/tavern-2",
+      "name": "tavern",
+      "exits": {
+        "s": {
+          "to": "fourth-town/catwalk-8"
+        }
+      },
+      "description": "You are in the tavern. The smoke from the many oil lamps decreases visibility to your imediate surroundings, and the wavering light they cast about the room leaves many shadows and unlit corners. There are several tables about the room, where the tavern's patrons, primarily elves, and an occasional human make themselves at home. The bar stands along the north wall and a door to the kitchen lies to the east. The only visibile exit lies to the south.",
+      "layout": {
+        "x": -4,
+        "y": 5
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-9",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-6"
+        },
+        "w": {
+          "to": "fourth-town/equipment-shop-3"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues east. To the west lies an ornately carved wooden archway.",
+      "layout": {
+        "x": -6,
+        "y": 3
+      }
+    },
+    {
+      "id": "fourth-town/equipment-shop-3",
+      "name": "equipment shop",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-9"
+        }
+      },
+      "description": "You are now inside the equipment shop, where one may purchase supplies and provisions essential to survival in the dungeons or the wilderness. The shop keeper sits on a tall stool behind a counter along the west wall, eyeing you warily. The exit is to the east.",
+      "layout": {
+        "x": -7,
+        "y": 3
+      }
+    },
+    {
+      "id": "fourth-town/southwest-plaza",
+      "name": "southwest plaza",
+      "exits": {
+        "e": {
+          "to": "fourth-town/southeast-plaza"
+        },
+        "n": {
+          "to": "fourth-town/northwest-plaza"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-10"
+        }
+      },
+      "description": "You are standing in the southwestern section of a large open square platform made of wood. The platform is ringed by intricately carved wooden railing. The trunk of a huge tree lies in the center of the platform, and appears to be the central support for the surrounding structure. The rest of the platform lies to the north and east, and a wooden catwalk leads off into the trees to the west.",
+      "layout": {
+        "x": -5,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-10",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/southwest-plaza"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-11"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. A large wooden platform lies to the east. The catwalk continues west.",
+      "layout": {
+        "x": -6,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-11",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-10"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-12"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues east and south.",
+      "layout": {
+        "x": -7,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-12",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-11"
+        },
+        "s": {
+          "to": "fourth-town/magic-shop-3"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north. To the south lies an ornately carved wooden archway.",
+      "layout": {
+        "x": -7,
+        "y": -1
+      }
+    },
+    {
+      "id": "fourth-town/magic-shop-3",
+      "name": "magic shop",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-12"
+        }
+      },
+      "description": "You're standing in a warm, dimly lit shop where various magical items are bought and sold by a shrewd mage in crimson robes with an air of power and complete confidence about him. He doesn't look like someone whose spells you'd like to be on the wrong end of. The sweet scent of incense drifts in from a workroom in the rear of the shop. The exit is to the north.",
+      "layout": {
+        "x": -7,
+        "y": -2
+      }
+    },
+    {
+      "id": "fourth-town/southeast-plaza",
+      "name": "southeast plaza",
+      "exits": {
+        "n": {
+          "to": "fourth-town/northeast-plaza"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-13"
+        },
+        "w": {
+          "to": "fourth-town/southwest-plaza"
+        }
+      },
+      "description": "You are standing in the southeastern section of a large open square platform made of wood. The platform is ringed by intricately carved wooden railing. The trunk of a huge tree lies in the center of the platform, and appears to be the central support for the surrounding structure. The rest of the platform lies to the north and west, and a wooden catwalk leads off into the trees to the south.",
+      "layout": {
+        "x": -4,
+        "y": 0
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-13",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/southeast-plaza"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-14"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. A large wooden platform lies to the north. The catwalk continues south.",
+      "layout": {
+        "x": -4,
+        "y": -1
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-14",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-13"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-15"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north and south.",
+      "layout": {
+        "x": -4,
+        "y": -2
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-15",
+      "name": "catwalk",
+      "exits": {
+        "e": {
+          "to": "fourth-town/catwalk-16"
+        },
+        "n": {
+          "to": "fourth-town/catwalk-14"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues to the north and east.",
+      "layout": {
+        "x": -4,
+        "y": -3
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-16",
+      "name": "catwalk",
+      "exits": {
+        "s": {
+          "to": "fourth-town/catwalk-17"
+        },
+        "w": {
+          "to": "fourth-town/catwalk-15"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues south and west.",
+      "layout": {
+        "x": -3,
+        "y": -3
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-17",
+      "name": "catwalk",
+      "exits": {
+        "n": {
+          "to": "fourth-town/catwalk-16"
+        },
+        "s": {
+          "to": "fourth-town/catwalk-18"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk continues north and south.",
+      "layout": {
+        "x": -3,
+        "y": -4
+      }
+    },
+    {
+      "id": "fourth-town/catwalk-18",
+      "name": "catwalk",
+      "exits": {
+        "d": {
+          "to": null
+        },
+        "n": {
+          "to": "fourth-town/catwalk-17"
+        }
+      },
+      "description": "You are standing on a wooden catwalk suspended high in the trees of a deep forest. The forest floor lies some fifty feet below you, and is hidden in shadow. The catwalk is anchored against the trunk of a huge tree to the south, and continues north. There is a round hole in the platform near the tree trunk which leads down to some large branches which appear climbable.",
+      "layout": {
+        "x": -3,
+        "y": -5
+      }
+    }
+  ]
+}

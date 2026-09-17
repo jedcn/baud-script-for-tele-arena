@@ -37,6 +37,12 @@
       "file": "areas/first-town.json"
     },
     {
+      "area": "fourth-town",
+      "name": "fourth-town",
+      "rooms": 28,
+      "file": "areas/fourth-town.json"
+    },
+    {
       "area": "mountains",
       "name": "The Mountains",
       "rooms": 74,
