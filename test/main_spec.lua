@@ -3255,6 +3255,49 @@ describe("World map triggers", function()
             assert.is_falsy(taPackage.suppressRoomEntry)         -- flag consumed
         end)
 
+        -- The Stone Passages, north of the deep forest, break the rule that a
+        -- `look` reply is a "You are standing..." description: this one answers
+        -- with an arrival brief, contraction and all, and under a LONGER name than
+        -- the move brief. Unguarded, the probe's own look re-entered the handler,
+        -- minted a second room for the same passage and sent another look -- 32
+        -- laps on 2026-09-17 before the session was killed by hand.
+        it("does not mint a second room from a look reply phrased as a brief", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in a stone passage.")       -- the arrival
+            assert.are.equal("stone passage", taPackage.currentRoom)
+            assert.are.equal(1, taPackage.currentRoomId)
+            helper.simulateLine("look")                             -- the probe's echo
+            helper.clearDbCalls()
+            helper.simulateLine("You're in a stone passage leading north and south.")
+            assert.are.equal("stone passage", taPackage.currentRoom)  -- still one room
+            assert.are.equal(1, taPackage.currentRoomId)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            -- The line is the room's description, which is what it always was.
+            helper.simulateLine("Exits: n,s.")
+            local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+            assert.is_not_nil(desc)
+            assert.are.equal(1, desc.params[2])
+        end)
+
+        -- And the guard lifts with the capture, or the next real arrival is eaten.
+        it("stops ignoring room lines once the ex reply ends the look", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in a stone passage.")
+            helper.simulateLine("look")
+            helper.simulateLine("Exits: n,s.")                      -- terminates it
+            stubDiscover(2)
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cave", taPackage.currentRoom)
+        end)
+
+        -- A capture that never sees its Exits line would hold the guard open for
+        -- good, so a move abandons it the way it clears the look-suppress flag.
+        it("a real move abandons a look capture left open", function()
+            taPackage.monsterDb.state = "accumulating_room"
+            helper.simulateAlias("n")
+            assert.are.equal("idle", taPackage.monsterDb.state)
+        end)
+
         it("a real move clears a stale look-suppress flag", function()
             taPackage.suppressRoomEntry = true                   -- e.g. a look that hit a wall
             helper.simulateAlias("n")

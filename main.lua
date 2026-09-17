@@ -1563,12 +1563,34 @@ local function handleRoomEntry(matches)
     send("ex")
 end
 
+-- A room line that arrives while a bare `look` is still being captured is that
+-- look's own output, not an arrival. Defined here rather than beside the "You
+-- are" triggers below because every preposition now goes through it, and in Lua
+-- a local has to exist before the trigger that names it.
+local function handleRoomEntryUnlessLooking(matches)
+    if taPackage.monsterDb.state == "accumulating_room" then return end
+    handleRoomEntry(matches)
+end
+
 -- One trigger per preposition (mutually exclusive prefixes, so no double-fire).
--- The "You're" contraction is always a move brief.
-createTrigger("^You're in (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're inside (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're on (.+)\\.$", handleRoomEntry, { type = "regex" })
-createTrigger("^You're at (.+)\\.$", handleRoomEntry, { type = "regex" })
+--
+-- "The 'You're' contraction is always a move brief" is what this comment used to
+-- say, and the Stone Passages north of the deep forest disproved it on
+-- 2026-09-17: that room briefs as "You're in a stone passage." on arrival and
+-- answers `look` with "You're in a stone passage leading north and south." -- an
+-- arrival brief, contraction and all, and under a LONGER name. Every other room
+-- describes itself as "You are standing deep within...", which is why only the
+-- "You are" forms were guarded. So the mapper's own probe re-entered here, minted
+-- a second room for the same passage, and sent another `look`, which answered the
+-- same way: 32 laps before the session was killed by hand.
+--
+-- These go through the same guard as the "You are" forms now. A bare `look` is
+-- outstanding from its echo until the `Exits:` line terminates the description
+-- capture, and a room line inside that window is the look talking, not a move.
+createTrigger("^You're in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You're inside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You're on (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+createTrigger("^You're at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 -- "outside" is the fifth preposition, and it went missing for a long time
 -- because exactly one known room uses it -- "You're outside the town gates.",
 -- between the first town's south plaza and the mountains. The cost was paid
@@ -1577,7 +1599,7 @@ createTrigger("^You're at (.+)\\.$", handleRoomEntry, { type = "regex" })
 -- And a `navigate-to ruined-town` walk stepped into it on 2026-08-04 and simply
 -- stopped: the arrival never registered, so the walk sat waiting for a brief
 -- that had already gone past.
-createTrigger("^You're outside (.+)\\.$", handleRoomEntry, { type = "regex" })
+createTrigger("^You're outside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 -- Some rooms print their move brief with "You are ..." instead of the "You're"
 -- contraction (e.g. "You are inside the dungeon entrance.", "You are in a large
@@ -1585,10 +1607,6 @@ createTrigger("^You're outside (.+)\\.$", handleRoomEntry, { type = "regex" })
 -- description, so it's ambiguous by wording. The tell: a look line arrives while
 -- we're accumulating a description; a move brief arrives when we're idle. Only
 -- treat "You are ..." as an arrival when we're not mid-look.
-local function handleRoomEntryUnlessLooking(matches)
-    if taPackage.monsterDb.state == "accumulating_room" then return end
-    handleRoomEntry(matches)
-end
 createTrigger("^You are in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 createTrigger("^You are inside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 createTrigger("^You are on (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
@@ -1607,8 +1625,14 @@ local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
 for _, dir in ipairs(moveDirections) do
     createAlias("^" .. dir .. "$", function()
         -- A real move: this arrival must not be suppressed, even if a prior
-        -- `look <dir>` returned no room and left the flag armed.
+        -- `look <dir>` returned no room and left the flag armed, or a bare `look`
+        -- never saw the `Exits:` line that ends its capture. Both would otherwise
+        -- swallow the brief we are about to walk into.
         taPackage.suppressRoomEntry = nil
+        if taPackage.monsterDb.state == "accumulating_room" then
+            taPackage.monsterDb.state = "idle"
+            taPackage.monsterDb.accumulatedLines = {}
+        end
         taPackage.pushPendingDir(dir)
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.prevRoomId = taPackage.currentRoomId
