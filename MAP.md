@@ -16,6 +16,7 @@
 12. [The Mountains](#the-mountains)
 13. [The Cellars](#the-cellars)
 14. [Third Town](#third-town)
+15. [Fourth Town](#fourth-town)
 
 ### First Town
 
@@ -744,6 +745,53 @@ Key:
 - `M` — Magic Shop
 - `T` — Tavern
 - `t` — Temple
+- `W` — Weapon Shop
+
+`[ ]` — a room with no shop or service (plaza, path, corridor).
+`^` / `v` — an exit up / down.
+
+### Fourth Town
+
+```
+               [T]
+                |
+                |
+          [ ]--[ ]
+           |
+           |
+[E]--[ ]--[ ]            [a]
+           |              |
+           |              |
+          [ ]            [ ]
+           |              |
+           |              |
+          [ ]--[ ]--[ ]--[ ]--[ ]
+           |    |              |
+           |    |              |
+[ ]--[ ]--[ ]  [ ]            [ ]--[W]   e to unexplored   w to unexplored
+ |              |
+ |              |
+[ ]            [ ]
+ |              |
+ |              |
+[M]            [ ]
+                |
+                |
+               [ ]--[ ]
+                     |
+                     |
+                    [ ]
+                     |
+                     |
+                    [ v]                 down to unexplored
+```
+
+Key:
+
+- `a` — Armor Shop
+- `E` — Equipment Shop
+- `M` — Magic Shop
+- `T` — Tavern
 - `W` — Weapon Shop
 
 `[ ]` — a room with no shop or service (plaza, path, corridor).

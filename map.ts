@@ -370,6 +370,10 @@ export const DRAWN = [
   { slug: 'mountains', title: 'The Mountains', origin: 'mountains' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
+  // The fourth town, which no mapped area reaches yet -- the only way on from it
+  // is catwalk-18's `d`, down to the deep forest. Its four plazas sit in a 2x2
+  // square at the centre; the north-west one anchors the grid.
+  { slug: 'fourth-town', title: 'Fourth Town', origin: 'northwest-plaza' },
 ];
 
 if (import.meta.main) {
