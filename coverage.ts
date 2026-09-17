@@ -264,6 +264,14 @@ export const SHRINE_MAPS: Record<string,
     originBox: '^',                      // the stairs back up to Level 1
     originRoom: 'stonework-chamber-5',
   },
+  // The fourth town, whose drawing carries one correction -- see the header of
+  // town-4.txt. Five of its boxes are labelled shops, so the origin has a choice
+  // of landmarks; [W] is the one the walk started from.
+  'fourth-town': {
+    file: 'map/shrine/town-4.txt',
+    originBox: 'W',                      // Weapon Shop ("advanced weapons!")
+    originRoom: 'weapon-shop-3',
+  },
 };
 
 /**

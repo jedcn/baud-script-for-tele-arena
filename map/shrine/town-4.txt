@@ -1,18 +1,27 @@
 # Town 4
 # https://tele-arena.tumblr.com/town4
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: the corridor east of the plazas is drawn here with
+# five rooms, where the shrine draws four. The walk of 2026-09-17 found a room
+# the drawing omits -- the game answered `ex` with "Exits: e,w" between a room
+# with "Exits: n,e,w" and the northeast plaza (logs/session-tojolias-2026-09-
+# 17T18-00-50.log). With that one box added every one of our 28 rooms pairs,
+# with no disagreements; without it nothing east of the plazas lines up. So the
+# boxes east of the insertion, and the connectors hanging off them, are shifted
+# right by one cell. `just scrape-shrine-maps` will revert this -- re-apply it.
 
             [T]              a = Armor Shop 
              | 
         [ ]-[ ]              E = Equipment Shop 
          | 
-[E]-[ ]-[ ]     [a]          T = Tavern 
-         |       | 
-        [ ]     [ ]          M = Magic Shop 
-         |       | 
-        [ ]-[ ]-[ ]-[ ]      W = Weapon Shop (advanced weapons!) 
-         |   |       | 
-[ ]-[ ]-[ ]-[ ]     [ ]-[W]   
+[E]-[ ]-[ ]         [a]      T = Tavern 
+         |           | 
+        [ ]         [ ]      M = Magic Shop 
+         |           | 
+        [ ]-[ ]-[ ]-[ ]-[ ]  W = Weapon Shop (advanced weapons!) 
+         |   |           | 
+[ ]-[ ]-[ ]-[ ]         [ ]-[W]   
  |           | 
 [ ]         [ ]  
  |           | 

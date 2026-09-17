@@ -280,8 +280,8 @@ describe('the exported map agrees with the shrine drawings', () => {
     // Named explicitly, so finishing an area without registering its drawing, or
     // registering one and never checking it, both show up as a failure here.
     expect(Object.keys(SHRINE_MAPS).sort())
-      .toEqual(['desert', 'stoneworks-level-1', 'stoneworks-level-2']);
-    for (const slug of ['desert', 'stoneworks-level-1', 'stoneworks-level-2']) {
+      .toEqual(['desert', 'fourth-town', 'stoneworks-level-1', 'stoneworks-level-2']);
+    for (const slug of ['desert', 'fourth-town', 'stoneworks-level-1', 'stoneworks-level-2']) {
       const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
       const drawing = parseDrawing(await Bun.file(SHRINE_MAPS[slug].file).text());
       const { rooms, teleports } = roomsFromExport(area);
