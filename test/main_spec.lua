@@ -3771,6 +3771,8 @@ describe("World map triggers", function()
         it("re-files the room you're standing in into the new area", function()
             -- Crossed a frontier into a fresh area and stopped on the entry room,
             -- which was discovered under the previous area's id. map-area moves it.
+            -- Mapping is on because that crossing is what discovered the room.
+            taPackage.mapping = true
             taPackage.currentRoomId = 42
             taPackage.currentAreaId = 7  -- previous (second-town) area
             helper.mockDbOneRow = function(sql)
@@ -3783,6 +3785,62 @@ describe("World map triggers", function()
             assert.are.equal(3, moved.params[1])   -- new area id
             assert.are.equal(42, moved.params[2])  -- the anchored room
             assert.are.equal(3, taPackage.currentAreaId)
+        end)
+
+        -- stopMapping leaves currentRoomId set, so the anchor outlives `map-off`.
+        -- Walk by hand to somewhere no mapped room touches, run map-area there,
+        -- and re-filing that leftover would drag a room we are nowhere near --
+        -- along with the exit it holds -- into the new area.
+        it("does not re-file a stale anchor left over from a finished walk", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = 42   -- wherever map-off left us, walks ago
+            taPackage.currentAreaId = 7
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                return nil
+            end
+            helper.simulateAlias("map-area fourth-town")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET area_id"))
+            assert.are.equal(3, taPackage.currentAreaId)
+        end)
+
+        -- A fourth town reached across unmapped ground: nothing links it to the
+        -- map, so map-area has to cold-start by name -- and "town square" is
+        -- already the third town's. Unscoped, that lookup returns exactly one row
+        -- and a single match reads as certainty, so the walk would anchor on the
+        -- third town's square and write the fourth town's exits onto it.
+        it("mints a room rather than adopting a same-named room in another area", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = nil
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT id FROM areas", 1, true) then return { id = 3 } end
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then return { id = 61 } end
+                return nil
+            end
+            local scopedLookups, globalLookups = 0, 0
+            helper.mockDbRows = function(sql, params)
+                if sql == "SELECT id FROM rooms WHERE name = ? AND area_id = ?" then
+                    scopedLookups = scopedLookups + 1
+                    assert.are.equal(3, params[2])
+                    return {}                      -- the fresh area has no rooms yet
+                elseif sql == "SELECT id FROM rooms WHERE name = ?" then
+                    globalLookups = globalLookups + 1
+                    return { { id = 12 } }         -- the third town's town square
+                end
+                return {}
+            end
+            helper.simulateAlias("map-area fourth-town")
+            helper.simulateLine("You're in the town square.")
+            assert.are.equal(1, scopedLookups)
+            assert.are.equal(0, globalLookups)
+            local ins = helper.findDbCall("execute", "INSERT INTO rooms")
+            assert.is_not_nil(ins)
+            assert.are.equal("town square", ins.params[2])
+            assert.are.equal(3, ins.params[3])     -- filed under the new area
+            assert.are.equal(61, taPackage.currentRoomId)
+            assert.is_true(taPackage.currentRoomProvisional)
+            -- One-shot: an ordinary cold start later is still global.
+            assert.is_nil(taPackage.coldStartArea)
         end)
 
         it("does not move any room when there's no current anchor", function()

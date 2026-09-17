@@ -1319,6 +1319,23 @@ end
 -- unique room with this name, else discover a fresh one. Returns the room id and
 -- whether it was newly discovered (provisional, i.e. a merge candidate).
 local function resolveColdStart(name)
+    -- `map-area <slug>` states which area we are standing in, so the cold start
+    -- it asks for must only consider rooms of THAT area. The lookup below is
+    -- global, which is fine while every new area is reached across a frontier
+    -- from a mapped one -- but walk to a town no mapped area touches, run
+    -- `map-area fourth-town`, and a single global name match reads as certainty:
+    -- "town square" resolves to the THIRD town's square, and the walk writes the
+    -- fourth town's exits onto it. A fresh area has no rooms of its own, so
+    -- minting is the only honest answer. One-shot, set by map-area immediately
+    -- before it bare-returns, so an ordinary cold start (session start, recall)
+    -- is unaffected.
+    local scoped = taPackage.coldStartArea
+    taPackage.coldStartArea = nil
+    if scoped then
+        local ids = taPackage.db.roomIdsByName(name, scoped)
+        if #ids == 1 then return ids[1], false end
+        return taPackage.db.discoverRoom(name, scoped), true
+    end
     -- After a Teleport we have definitely left, so the "we never moved" shortcut
     -- below is wrong -- and wrong in the worst way here, because [S2] and [S3]
     -- are both "stonework corridor", so it would conclude we are still standing
@@ -1957,8 +1974,15 @@ createAlias("^map-area (.+)$", function(matches)
     -- the two areas. Do this before startMappingHere clears currentRoomId, so we
     -- move the room the session already knows we're in rather than re-resolving
     -- an ambiguous name.
+    -- Re-file only a LIVE anchor. With mapping on, `anchored` is the room the
+    -- mapper just walked into across the frontier and linked, so moving it is
+    -- exactly what splits the Seam. With mapping OFF the anchor is a leftover
+    -- from wherever mapping last stopped -- stopMapping does not clear it, and
+    -- the character has been walked around by hand since -- so re-filing it
+    -- drags a room we are nowhere near into the new area.
     local anchored = taPackage.currentRoomId
-    if anchored then
+    local walkedIn = anchored ~= nil and taPackage.mapping
+    if walkedIn then
         taPackage.db.setRoomArea(anchored, areaId)
         echo("[map] moved current room into " .. slug)
     end
@@ -1977,12 +2001,16 @@ createAlias("^map-area (.+)$", function(matches)
     -- With mapping OFF the anchor is stale -- the character has since been walked
     -- around by hand, and the id is whatever the last session left behind -- so
     -- there the bare return and a fresh resolve are the only honest option.
-    if anchored and taPackage.mapping then
+    if walkedIn then
         taPackage.pendingClosure = nil
         taPackage.coordLost = nil
         echo("[map] kept anchor #" .. tostring(anchored) .. " (walked in from "
             .. "the previous area)")
     else
+        -- Scope the cold start that startMappingHere is about to trigger to this
+        -- area, so a fresh one mints rather than adopting a same-named room in
+        -- an area we are not standing in.
+        taPackage.coldStartArea = areaId
         startMappingHere()
     end
 end, { type = "regex" })
