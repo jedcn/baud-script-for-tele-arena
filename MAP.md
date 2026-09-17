@@ -17,6 +17,7 @@
 13. [The Cellars](#the-cellars)
 14. [Third Town](#third-town)
 15. [Fourth Town](#fourth-town)
+16. [The Deep Forest](#the-deep-forest)
 
 ### First Town
 
@@ -783,7 +784,7 @@ Key:
                     [ ]
                      |
                      |
-                    [ v]                 down to unexplored
+                    [ v]                 down to The Deep Forest
 ```
 
 Key:
@@ -796,3 +797,52 @@ Key:
 
 `[ ]` — a room with no shop or service (plaza, path, corridor).
 `^` / `v` — an exit up / down.
+
+### The Deep Forest
+
+```
+                                                                                [ ]                                      n to unexplored
+                                                                               /   \
+                                                                              /     \
+                                                                           [ ]       [ ]
+                                                                            |           \
+                                                                            |            \
+                                                       [ v]-[ ]--[ v]      [ ]            [ ]--[ ]
+                                                          \         \     /                |
+                                                           \         \   /                 |
+     [ ]--[ ]       [ ]                                [ ]--[ ^]      [ ^]                [ ]
+    /        \     /                                    |                \                 |
+   /          \   /                                     |                 \                |
+[ ]            [ ]                                     [ ]                 [ ]            [ ]
+                |                                       |                                    \
+                |                                       |                                     \
+               [ ]                      [ ]--[ ]--[ ]--[ ]                                     [ ]                       nw to unexplored
+                  \                    /                  \                                       \
+                   \                  /                    \                                       \
+                    [ ]            [ ]       [ ]            [ ]                                     [ ]
+                       \          /         /                  \                                     |
+                        \        /         /                    \                                    |
+                         [ ]--[ ]       [ ]                      [ ]                                [ ]
+                        /                |                        |                                    \
+                       /                 |                        |                                     \
+                    [ ]                 [ ]                      [ ]--[ ]       [ ]--[ ]                 [ ]
+                     |                     \                    /        \     /        \               /   \
+                     |                      \                  /          \   /          \             /     \
+               [ ]--[ ]                      [ ]            [ ]            [ ]            [ ]       [ ]       [ ]
+              /        \                      |              |                             |       /           |
+             /          \                     |              |                             |      /            |
+          [ ]            [ ]                 [ ]            [ ]                           [ ]  [ ]            [ ]
+                        /                       \          /                             /   \                 |
+                       /                         \        /                             /     \                |
+                    [ ]                           [ ]--[ ]                           [ ]  [ ]--[ ]--[ ]--[ ]--[ ]
+                     |                           /        \                           |    |                     \
+                     |                          /          \                          |    |                      \
+                    [ ]                      [ ]            [ ]            [ ]       [ ]  [ ]  [ ^v]               [ ]   up to fourth-town
+                   /                        /                  \          /         /    /        \               /
+                  /                        /                    \        /         /    /          \             /
+               [ ]                 [ ]--[ ]                      [ ]--[ ]       [ ]  [ ]            [ ^]      [ ]
+                                                                                   \/                  \     /
+                                                                                   /\                   \   /
+                                                                                [ ]  [ ]                 [ ]
+```
+

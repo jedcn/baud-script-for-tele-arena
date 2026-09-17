@@ -470,7 +470,7 @@
       "name": "catwalk",
       "exits": {
         "d": {
-          "to": null
+          "to": "deep-forest/wooden-platform"
         },
         "n": {
           "to": "fourth-town/catwalk-17"

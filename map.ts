@@ -374,6 +374,11 @@ export const DRAWN = [
   // is catwalk-18's `d`, down to the deep forest. Its four plazas sit in a 2x2
   // square at the centre; the north-west one anchors the grid.
   { slug: 'fourth-town', title: 'Fourth Town', origin: 'northwest-plaza' },
+  // The deep forest below the fourth town's catwalks. Two levels in one area for
+  // now: four wooden platforms and a rope bridge hang at the catwalks' height,
+  // and three ways down from them reach the forest floor. The origin is the
+  // platform you land on coming down from catwalk-18.
+  { slug: 'deep-forest', title: 'The Deep Forest', origin: 'wooden-platform' },
 ];
 
 if (import.meta.main) {

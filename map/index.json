@@ -7,6 +7,12 @@
       "file": "areas/cellars.json"
     },
     {
+      "area": "deep-forest",
+      "name": "The Deep Forest",
+      "rooms": 88,
+      "file": "areas/deep-forest.json"
+    },
+    {
       "area": "desert",
       "name": "The Desert",
       "rooms": 102,
