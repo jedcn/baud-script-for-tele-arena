@@ -593,6 +593,28 @@ function TaDb.roomIdsByName(name, areaId)
     return ids
 end
 
+-- The whole walked graph in one query: every exit that leads somewhere, as
+-- { from_id = , direction = , to_id = } rows.
+--
+-- One query rather than a per-room lookup because the caller is a breadth-first
+-- search (`live-navigate`), and asking the database per room turns one round trip
+-- into one per room visited -- a thousand of them on a world this size.
+function TaDb.allExits()
+    return db:query(
+        "SELECT from_id, direction, to_id FROM room_exits WHERE to_id IS NOT NULL") or {}
+end
+
+-- Every room id in an area, for a search that wants to stop at the first room of
+-- a named area rather than at one named room.
+function TaDb.roomIdsInArea(areaSlug)
+    local rows = db:query(
+        "SELECT r.id FROM rooms r JOIN areas a ON a.id = r.area_id WHERE a.slug = ?",
+        areaSlug) or {}
+    local ids = {}
+    for _, row in ipairs(rows) do ids[#ids + 1] = row.id end
+    return ids
+end
+
 -- Directions out of `id` that already lead somewhere known, as a sorted list.
 --
 -- These are the moves that can settle a held loop closure: confirming one asks

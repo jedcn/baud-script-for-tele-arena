@@ -3489,3 +3489,107 @@ createTrigger("^An? (.+) has just arrived from above\\.$",
     function(matches) navNoteArrival(matches[2]) end, { type = "regex" })
 createTrigger("^An? (.+) has just arrived from below\\.$",
     function(matches) navNoteArrival(matches[2]) end, { type = "regex" })
+
+-- ---------------------------------------------------------------------------
+-- live-navigate: a route worked out from the map, not written out by hand
+--
+-- `navigate-to` walks routes that somebody typed into this file, which is right
+-- for the ones that matter -- they pull levers, carry keys, cross a chasm in a
+-- particular order, and no search would invent that. This is the other half: the
+-- map is a graph, so for "just get me there" a breadth-first search over
+-- room_exits answers in one query and always knows the shortest way.
+--
+-- It is deliberately dumber than a written route. It knows nothing about levers,
+-- keys, doors that need opening, or a Device that has to be worked first; it
+-- walks exits that somebody has already walked, and that is all. Where a written
+-- route exists, prefer it.
+
+-- Breadth-first search of the walked graph from `fromId` to the first room
+-- `isGoal` accepts. Returns the directions to send, and the room reached; or nil
+-- when nothing connects. A taPackage field rather than a local: ta_nav.lua has
+-- its own 200-local budget and this is the cheap way to spend none of it.
+function taPackage.navSearch(fromId, isGoal)
+    if isGoal(fromId) then return {}, fromId end
+    local nbr = {}
+    for _, e in ipairs(taPackage.db.allExits()) do
+        local list = nbr[e.from_id]
+        if not list then list = {}; nbr[e.from_id] = list end
+        list[#list + 1] = e
+    end
+    -- `false` rather than nil for the start, so "have I seen this room" stays a
+    -- nil test while the start still terminates the walk back.
+    local cameFrom, queue, head = { [fromId] = false }, { fromId }, 1
+    while head <= #queue do
+        local id = queue[head]
+        head = head + 1
+        for _, e in ipairs(nbr[id] or {}) do
+            if cameFrom[e.to_id] == nil then
+                cameFrom[e.to_id] = { from = id, dir = e.direction }
+                if isGoal(e.to_id) then
+                    local steps, cur = {}, e.to_id
+                    while cameFrom[cur] do
+                        table.insert(steps, 1, cameFrom[cur].dir)
+                        cur = cameFrom[cur].from
+                    end
+                    return steps, e.to_id
+                end
+                queue[#queue + 1] = e.to_id
+            end
+        end
+    end
+    return nil
+end
+
+-- What counts as arriving. An area slug means the nearest room of that area,
+-- which is what "get me to the fourth town" asks for; anything else is a room
+-- slug, with an `area/room` form accepted because that is how the map prints
+-- rooms everywhere else. Returns a predicate and something to call it.
+function taPackage.navGoal(arg)
+    local ids = taPackage.db.roomIdsInArea(arg)
+    if #ids > 0 then
+        local want = {}
+        for _, id in ipairs(ids) do want[id] = true end
+        return function(id) return want[id] == true end, "the nearest room in " .. arg
+    end
+    local slug = arg:match("[^/]+$") or arg
+    local room = taPackage.db.roomBySlug(slug)
+    if not room then return nil end
+    -- Labelled with what was typed: roomBySlug selects id/name/coords and not the
+    -- slug it was given, so reading one back off the row would be nil.
+    return function(id) return id == room.id end, slug
+end
+
+createAlias("^live-navigate (.+)$", function(matches)
+    local arg = matches[2]:match("^%s*(.-)%s*$")
+    local justSay = arg:match("^(.-)%s+directions%-only$")
+    if justSay then arg = justSay end
+    -- The search starts from where the tracker says we are, and it says "lost"
+    -- rather than guessing -- so this has to as well. A wrong starting room walks
+    -- you confidently into a wall.
+    if taPackage.hereState ~= "known" or not taPackage.here then
+        navEcho("I don't know which room you're in, so I can't search from it."
+            .. " `map-print-room-slug`, then `map-here <slug>`.")
+        return
+    end
+    local isGoal, label = taPackage.navGoal(arg)
+    if not isGoal then
+        navEcho("No area or room called " .. arg .. ". `map-list-areas` lists the areas.")
+        return
+    end
+    local steps, reached = taPackage.navSearch(taPackage.here, isGoal)
+    if not steps then
+        navEcho("Nothing walked connects "
+            .. (taPackage.db.roomRef(taPackage.here) or ("#" .. tostring(taPackage.here)))
+            .. " to " .. label .. ". Some of the way there is still unmapped.")
+        return
+    end
+    if #steps == 0 then
+        navEcho("You're already in " .. label .. ".")
+        return
+    end
+    navEcho(label .. " is " .. #steps .. " steps: " .. table.concat(steps, " "))
+    if justSay then return end
+    navEcho("Nothing here knows about levers, keys or doors -- if the way needs"
+        .. " one, use navigate-to instead.")
+    navStart("live:" .. label, { steps = steps }, nil, nil, reached, false, nil, nil, nil)
+end, { type = "regex" })

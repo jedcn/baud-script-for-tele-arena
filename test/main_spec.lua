@@ -19384,3 +19384,99 @@ describe("Auto-login", function()
     end)
 
 end)
+
+describe("live-navigate", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    -- A five-room line with a branch, as { from_id, direction, to_id } rows:
+    --   1 --e--> 2 --e--> 3 --n--> 4        (4 is in the far area)
+    --                     3 --s--> 5
+    local function stubGraph(areaIds)
+        helper.mockDbRows = function(sql)
+            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                return {
+                    { from_id = 1, direction = "e", to_id = 2 },
+                    { from_id = 2, direction = "w", to_id = 1 },
+                    { from_id = 2, direction = "e", to_id = 3 },
+                    { from_id = 3, direction = "w", to_id = 2 },
+                    { from_id = 3, direction = "n", to_id = 4 },
+                    { from_id = 4, direction = "s", to_id = 3 },
+                    { from_id = 3, direction = "s", to_id = 5 },
+                    { from_id = 5, direction = "n", to_id = 3 },
+                }
+            elseif string.find(sql, "SELECT r.id FROM rooms r JOIN areas a", 1, true) then
+                return areaIds or {}
+            end
+            return {}
+        end
+    end
+
+    it("finds the shortest way to a room", function()
+        stubGraph()
+        local steps, reached = taPackage.navSearch(1, function(id) return id == 4 end)
+        assert.are.same({ "e", "e", "n" }, steps)
+        assert.are.equal(4, reached)
+    end)
+
+    it("stops at the nearest room of a whole area", function()
+        stubGraph()
+        -- Both 4 and 5 are one step past 3; the search takes whichever it reaches
+        -- first, and either is a correct answer to "get me to that area".
+        local steps = taPackage.navSearch(1, function(id) return id == 4 or id == 5 end)
+        assert.are.equal(3, #steps)
+        assert.are.equal("e", steps[1])
+    end)
+
+    it("returns no steps when you are already there", function()
+        stubGraph()
+        local steps = taPackage.navSearch(3, function(id) return id == 3 end)
+        assert.are.same({}, steps)
+    end)
+
+    it("returns nil when nothing walked connects the two", function()
+        stubGraph()
+        assert.is_nil(taPackage.navSearch(1, function(id) return id == 99 end))
+    end)
+
+    it("refuses to search when the tracker has lost you", function()
+        stubGraph()
+        taPackage.hereState = "lost"
+        taPackage.here = nil
+        helper.simulateAlias("live-navigate fourth-town")
+        local said = table.concat(helper.echoCalls, " ")
+        assert.is_truthy(said:find("don't know which room", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("says so rather than walking when nothing connects", function()
+        stubGraph()
+        taPackage.hereState = "known"
+        taPackage.here = 1
+        helper.mockDbOneRow = function(sql)
+            if string.find(sql, "SELECT id, name, area_id", 1, true) then return { id = 99 } end
+            return nil
+        end
+        helper.simulateAlias("live-navigate far-away")
+        local said = table.concat(helper.echoCalls, " ")
+        assert.is_truthy(said:find("Nothing walked connects", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    -- `directions-only` is the shape this started as: print the moves and stop,
+    -- for reading rather than walking.
+    it("prints the directions and sends nothing with directions-only", function()
+        stubGraph({ { id = 4 } })
+        taPackage.hereState = "known"
+        taPackage.here = 1
+        helper.simulateAlias("live-navigate somewhere directions-only")
+        local said = table.concat(helper.echoCalls, " ")
+        assert.is_truthy(said:find("e e n", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+end)
