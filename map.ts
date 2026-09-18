@@ -379,6 +379,9 @@ export const DRAWN = [
   // and three ways down from them reach the forest floor. The origin is the
   // platform you land on coming down from catwalk-18.
   { slug: 'deep-forest', title: 'The Deep Forest', origin: 'wooden-platform' },
+  // West out of the forest. The origin is the room you arrive in, which is the
+  // only landmark it has while the walk is young.
+  { slug: 'valley', title: 'The Valley', origin: 'valley' },
 ];
 
 if (import.meta.main) {

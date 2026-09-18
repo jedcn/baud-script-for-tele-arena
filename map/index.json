@@ -9,7 +9,7 @@
     {
       "area": "deep-forest",
       "name": "The Deep Forest",
-      "rooms": 184,
+      "rooms": 200,
       "file": "areas/deep-forest.json"
     },
     {
@@ -101,6 +101,12 @@
       "name": "third-town",
       "rooms": 14,
       "file": "areas/third-town.json"
+    },
+    {
+      "area": "valley",
+      "name": "The Valley",
+      "rooms": 10,
+      "file": "areas/valley.json"
     }
   ]
 }
