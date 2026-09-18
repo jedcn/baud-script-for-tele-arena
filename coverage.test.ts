@@ -266,6 +266,32 @@ async function pairArea(slug: string) {
   return { spec, drawing, rooms, teleports, start, startBox };
 }
 
+// The valley is walked out -- no frontiers anywhere in it -- and the pairing
+// still leaves six boxes unclaimed, because pairRooms is a BFS through our exits
+// and one direction it cannot follow strands everything behind it. That shape,
+// "nothing left to walk and boxes still unpaired", is what the CLI now explains
+// rather than reporting as missing rooms.
+describe('a stalled pairing is not the same as an unwalked area', () => {
+  it('leaves boxes unpaired behind a disagreement, with no frontier to blame', async () => {
+    const area = JSON.parse(await Bun.file('map/areas/valley.json').text());
+    const drawing = parseDrawing(await Bun.file(SHRINE_MAPS.valley.file).text());
+    const { rooms, teleports } = roomsFromExport(area);
+    const start = rooms.find(r => r.slug === SHRINE_MAPS.valley.originRoom)!;
+    const box = drawing.boxes.find(b => b.label === SHRINE_MAPS.valley.originBox)!;
+    const { pair, problems } = pairRooms(drawing, rooms, start.id, box.id, teleports);
+
+    // Every exit of ours leads somewhere: the area has no frontier left.
+    const stubs = rooms.flatMap(r =>
+      Object.entries(r.exits).filter(([, to]) => to == null).map(([d]) => `${r.slug} ${d}`));
+    expect(stubs).toEqual([]);
+
+    // And yet the pairing does not reach every box, which is the pairing's limit
+    // and not a gap in the map.
+    expect(problems.length).toBeGreaterThan(0);
+    expect(pair.size).toBeLessThan(drawing.boxes.length);
+  });
+});
+
 describe('the exported map agrees with the shrine drawings', () => {
   for (const slug of COMPLETE) {
     it(`${slug} pairs with its drawing, box for box`, async () => {

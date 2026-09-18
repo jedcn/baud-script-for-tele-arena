@@ -19,6 +19,8 @@
 15. [Fourth Town](#fourth-town)
 16. [The Deep Forest](#the-deep-forest)
 17. [The Valley](#the-valley)
+18. [The Complex of Natural Caverns](#the-complex-of-natural-caverns)
+19. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -907,58 +909,58 @@ Key:
 ### The Valley
 
 ```
-                                                                 [ ]        ne to The Hewn Granite Corridors
+                                                                 [ ]                                 ne to The Hewn Granite Corridors
                                                                 /
                                                                /
                                                        [ ]--[ ]
                                                         |
                                                         |
-                                   [ ]--[ ]            [ ]                  se to unexplored
-                                  /        \          /
-                                 /          \        /
-                         [ ]--[ ]            [ ]--[ ]                       s to unexplored   sw to unexplored
-                        /
-                       /
-               [ ]--[ ]
-              /
-             /
-          [ ]
-           |
-           |
-          [ ]
-         /
-        /
-     [ ]
-        \
-         \
-          [ ]
-           |
-           |
-          [ ]
-             \
-              \
-               [ ]
-                  \
-                   \
-                    [ ]
-                     |
-                     |
-                    [ ]
-                       \
-                        \
-                         [ ]       [ ]                                      se to unexplored
-                            \     / |
-                             \   /  |
-                              [ ]  [ ]
-                                    |
-                                    |
-          [ ]                      [ ]
+                                   [ ]--[ ]            [ ]
+                                  /        \          /   \
+                                 /          \        /     \
+                         [ ]--[ ]            [ ]--[ ]       [ ]--[ ]
+                        /      |            /                |      \
+                       /       |           /                 |       \
+               [ ]--[ ]       [ ]       [ ]                 [ ]       [ ]
+              /                 \       /                  /           |
+             /                   \     /                  /            |
+          [ ]                     \    /               [ ]            [ ]
+           |                      \   /                   \              \
+           |                       \ /                     \              \
+          [ ]                      [ ]                      [ ]            [ ]
+         /                        /                          |              |
+        /                        /                           |              |
+     [ ]                      [ ]            [ ]            [ ]            [ ]
+        \                      |            / |                \            |
+         \                     |           /  |                 \           |
+          [ ]                 [ ]       [ ]  [ ]                 [ ]       [ ]--[ ]--[ ]
+           |                     \     /        \                   \     /             \
+           |                      \   /          \                   \   /               \
+          [ ]                      [ ]            [ ]--[ ]            [ ]                 [ ]
+             \                                            \              \                   \
+              \                                            \              \                   \
+               [ ]                                          [ ]--[ ]--[ ]--[ ]                 [ ]
+                  \                                          |                                  |
+                   \                                         |                                  |
+                    [ ]                                [ ]--[ ]                                [ ]
+                     |                                                                          |
+                     |                                                                          |
+                    [ ]                                                                        [ ]
+                       \                                                                      /
+                        \                                                                    /
+                         [ ]       [ ]                                                    [ ]
+                            \     / | \                                                  /
+                             \   /  |  \                                                /
+                              [ ]  [ ]  [ ]                 [ ]--[ ]            [ ]--[ ]
+                                    |         \            /        \          /
+                                    |              \      /          \        /
+          [ ]                      [ ]                 [ ]            [ ]--[ ]
              \                    /
               \                  /
                [ ]            [ ]
                 |              |
                 |              |
-               [ ]--[ ]       [ ]--[ ]--[ ]                      [ ]--[ ]   se to The Deep Forest
+               [ ]--[ ]       [ ]--[ ]--[ ]                      [ ]--[ ]                            se to The Deep Forest
               /                            \                    /
              /                              \                  /
      [ ]--[ ]                                [ ]--[ ]       [ ]
@@ -979,6 +981,18 @@ Key:
                               [ ]
                                |
                                |
-                              [ v]                                          down to The Complex of Natural Caverns
+                              [ v]                                                                   down to The Complex of Natural Caverns
+```
+
+### The Complex of Natural Caverns
+
+```
+[ ^]   nw to unexplored   up to The Valley
+```
+
+### The Hewn Granite Corridors
+
+```
+[ ]   n to unexplored   sw to The Valley
 ```
 

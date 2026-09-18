@@ -382,6 +382,12 @@ export const DRAWN = [
   // West out of the forest. The origin is the room you arrive in, which is the
   // only landmark it has while the walk is young.
   { slug: 'valley', title: 'The Valley', origin: 'valley' },
+  // Two areas opened off the valley and each has one room walked so far: down to
+  // the caverns from valley-14, north-east to the corridors from valley-54.
+  { slug: 'complex-caverns', title: 'The Complex of Natural Caverns',
+    origin: 'complex-of-natural-caverns' },
+  { slug: 'hewn-granite-corridors', title: 'The Hewn Granite Corridors',
+    origin: 'hewn-granite-corridor' },
 ];
 
 if (import.meta.main) {

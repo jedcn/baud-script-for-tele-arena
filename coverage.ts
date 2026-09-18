@@ -415,6 +415,23 @@ if (import.meta.main) {
   console.log(`\nboxes not yet ours (${unpaired.length})`);
   console.log('  ' + (unpaired.map(b => b.label ? `[${b.label}]` : `r${b.r}c${b.c0}`).join('  ') || 'none'));
 
+  // "Not yet ours" reads as "rooms you have not walked", and that is only true
+  // while there is somewhere left to walk. pairRooms is a BFS through OUR exits,
+  // so a single direction it cannot follow -- a disagreement -- strands every box
+  // behind it, walked or not. An area with no frontiers and unpaired boxes is
+  // therefore describing a pairing failure, not missing rooms, and on the valley
+  // it left six boxes listed that map.html was drawing all along. Say so, rather
+  // than leave the reader to reconcile two lines that contradict each other.
+  if (unpaired.length && !opens.length && !closes.length) {
+    console.log(`\n  ^ but there is nothing left to walk here: no frontiers, and no`);
+    console.log(`    unwalked link between rooms we have. The pairing stopped early`);
+    console.log(problems.length
+      ? `    at the ${problems.length === 1 ? 'disagreement' : 'disagreements'} below, so those boxes were never reached --`
+      : `    without reaching those boxes --`);
+    console.log(`    they may well be rooms you already have. map.html draws every`);
+    console.log(`    room either way; this pairing is what cannot see them.`);
+  }
+
   if (problems.length) {
     console.log(`\nDISAGREEMENTS WITH THE DRAWING (${problems.length})`);
     for (const p of problems) console.log('  ' + p);

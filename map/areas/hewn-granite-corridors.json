@@ -1,0 +1,24 @@
+{
+  "area": "hewn-granite-corridors",
+  "name": "The Hewn Granite Corridors",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "hewn-granite-corridors/hewn-granite-corridor",
+      "name": "hewn granite corridor",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "sw": {
+          "to": "valley/valley-54"
+        }
+      },
+      "description": "Glowing orbs set in the walls give off an eerie yellow light. The high vaulted ceiling is supported by huge columns set at regular intervals. Exits lie to the north and southwest.",
+      "layout": {
+        "x": -22,
+        "y": 39
+      }
+    }
+  ]
+}

@@ -55,6 +55,12 @@
       "file": "areas/fourth-town.json"
     },
     {
+      "area": "hewn-granite-corridors",
+      "name": "The Hewn Granite Corridors",
+      "rooms": 1,
+      "file": "areas/hewn-granite-corridors.json"
+    },
+    {
       "area": "mountains",
       "name": "The Mountains",
       "rooms": 74,
@@ -111,7 +117,7 @@
     {
       "area": "valley",
       "name": "The Valley",
-      "rooms": 33,
+      "rooms": 100,
       "file": "areas/valley.json"
     }
   ]
