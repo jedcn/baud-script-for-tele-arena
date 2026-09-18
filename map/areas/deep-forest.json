@@ -433,7 +433,7 @@
       "name": "deep forest",
       "exits": {
         "n": {
-          "to": null
+          "to": "deep-forest/deep-forest-160"
         },
         "se": {
           "to": "deep-forest/deep-forest-23"
@@ -2950,7 +2950,7 @@
       "name": "deep forest",
       "exits": {
         "se": {
-          "to": null
+          "to": "deep-forest/deep-forest-159"
         },
         "u": {
           "to": "deep-forest/wooden-platform-6"
@@ -2960,6 +2960,43 @@
       "layout": {
         "x": -6,
         "y": 13
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-159",
+      "name": "deep forest",
+      "exits": {
+        "nw": {
+          "to": "deep-forest/deep-forest-158"
+        },
+        "se": {
+          "to": "deep-forest/deep-forest-160"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies southeast and northwest.",
+      "layout": {
+        "x": -5,
+        "y": 12
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-160",
+      "name": "deep forest",
+      "exits": {
+        "ne": {
+          "to": null
+        },
+        "nw": {
+          "to": "deep-forest/deep-forest-159"
+        },
+        "s": {
+          "to": "deep-forest/deep-forest-24"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast, south, and northwest.",
+      "layout": {
+        "x": -4,
+        "y": 11
       }
     }
   ]
