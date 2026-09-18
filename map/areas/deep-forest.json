@@ -2086,7 +2086,7 @@
           "to": "deep-forest/deep-forest-111"
         },
         "s": {
-          "to": null
+          "to": "deep-forest/deep-forest-122"
         }
       },
       "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast and south.",
@@ -2188,7 +2188,7 @@
           "to": "deep-forest/deep-forest-119"
         },
         "se": {
-          "to": null
+          "to": "deep-forest/deep-forest-121"
         },
         "sw": {
           "to": "deep-forest/deep-forest-117"
@@ -2249,6 +2249,292 @@
       "layout": {
         "x": 2,
         "y": 26
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-121",
+      "name": "deep forest",
+      "exits": {
+        "nw": {
+          "to": "deep-forest/deep-forest-118"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northwest.",
+      "layout": {
+        "x": 1,
+        "y": 23
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-122",
+      "name": "deep forest",
+      "exits": {
+        "n": {
+          "to": "deep-forest/deep-forest-112"
+        },
+        "se": {
+          "to": "deep-forest/deep-forest-123"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies north and southeast.",
+      "layout": {
+        "x": -5,
+        "y": 20
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-123",
+      "name": "deep forest",
+      "exits": {
+        "nw": {
+          "to": "deep-forest/deep-forest-122"
+        },
+        "s": {
+          "to": "deep-forest/deep-forest-124"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies south and northwest.",
+      "layout": {
+        "x": -4,
+        "y": 19
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-124",
+      "name": "deep forest",
+      "exits": {
+        "e": {
+          "to": "deep-forest/deep-forest-125"
+        },
+        "n": {
+          "to": "deep-forest/deep-forest-123"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies north and east.",
+      "layout": {
+        "x": -4,
+        "y": 18
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-125",
+      "name": "deep forest",
+      "exits": {
+        "se": {
+          "to": "deep-forest/deep-forest-126"
+        },
+        "w": {
+          "to": "deep-forest/deep-forest-124"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies southeast and west.",
+      "layout": {
+        "x": -3,
+        "y": 18
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-126",
+      "name": "deep forest",
+      "exits": {
+        "ne": {
+          "to": "deep-forest/deep-forest-127"
+        },
+        "nw": {
+          "to": "deep-forest/deep-forest-125"
+        },
+        "se": {
+          "to": null
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast, southeast, and northwest.",
+      "layout": {
+        "x": -2,
+        "y": 17
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-127",
+      "name": "deep forest",
+      "exits": {
+        "ne": {
+          "to": "deep-forest/deep-forest-128"
+        },
+        "sw": {
+          "to": "deep-forest/deep-forest-126"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast and southwest.",
+      "layout": {
+        "x": -1,
+        "y": 18
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-128",
+      "name": "deep forest",
+      "exits": {
+        "e": {
+          "to": "deep-forest/deep-forest-129"
+        },
+        "nw": {
+          "to": "deep-forest/deep-forest-130"
+        },
+        "sw": {
+          "to": "deep-forest/deep-forest-127"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies east, southwest, northwest.",
+      "layout": {
+        "x": 0,
+        "y": 19
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-129",
+      "name": "deep forest",
+      "exits": {
+        "ne": {
+          "to": "deep-forest/deep-forest-132"
+        },
+        "se": {
+          "to": "deep-forest/deep-forest-136"
+        },
+        "w": {
+          "to": "deep-forest/deep-forest-128"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast, southeast, and west.",
+      "layout": {
+        "x": 1,
+        "y": 19
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-130",
+      "name": "deep forest",
+      "exits": {
+        "n": {
+          "to": "deep-forest/deep-forest-131"
+        },
+        "se": {
+          "to": "deep-forest/deep-forest-128"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies north and southeast.",
+      "layout": {
+        "x": -1,
+        "y": 20
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-131",
+      "name": "deep forest",
+      "exits": {
+        "s": {
+          "to": "deep-forest/deep-forest-130"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies south.",
+      "layout": {
+        "x": -1,
+        "y": 21
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-132",
+      "name": "deep forest",
+      "exits": {
+        "ne": {
+          "to": "deep-forest/deep-forest-133"
+        },
+        "sw": {
+          "to": "deep-forest/deep-forest-129"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies northeast and southwest.",
+      "layout": {
+        "x": 2,
+        "y": 20
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-133",
+      "name": "deep forest",
+      "exits": {
+        "n": {
+          "to": "deep-forest/deep-forest-134"
+        },
+        "sw": {
+          "to": "deep-forest/deep-forest-132"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies north and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 21
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-134",
+      "name": "deep forest",
+      "exits": {
+        "nw": {
+          "to": "deep-forest/deep-forest-135"
+        },
+        "s": {
+          "to": "deep-forest/deep-forest-133"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies south and northwest.",
+      "layout": {
+        "x": 3,
+        "y": 22
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-135",
+      "name": "deep forest",
+      "exits": {
+        "se": {
+          "to": "deep-forest/deep-forest-134"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies southeast.",
+      "layout": {
+        "x": 2,
+        "y": 23
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-136",
+      "name": "deep forest",
+      "exits": {
+        "nw": {
+          "to": "deep-forest/deep-forest-129"
+        },
+        "s": {
+          "to": "deep-forest/deep-forest-137"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies south and northwest.",
+      "layout": {
+        "x": 2,
+        "y": 18
+      }
+    },
+    {
+      "id": "deep-forest/deep-forest-137",
+      "name": "deep forest",
+      "exits": {
+        "n": {
+          "to": "deep-forest/deep-forest-136"
+        }
+      },
+      "description": "You are standing deep within a dense forest. The occasional sounds of birds and other small animals in the trees do little to lighten the oppressive mood in this dismally mirky wood. Passable terrain lies north.",
+      "layout": {
+        "x": 2,
+        "y": 17
       }
     }
   ]

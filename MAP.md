@@ -801,34 +801,34 @@ Key:
 ### The Deep Forest
 
 ```
-                                                                                                                        [ ]   n to unexplored
+                                                                                                                        [ ]        n to The Stone Passages
                                                                                                                          |
                                                                                                                          |
                                                                                                                    [ ]--[ ]
                                                                                                                   /
                                                                                                                  /
-                                                                                               [ ]            [ ]             se to unexplored
-                                                                                              /   \          /
-                                                                                             /     \        /
-                                                                                          [ ]       [ ]--[ ]
-                                                                                           |
-                                                                                           |
-                                                                      [ ]--[ ]--[ ]       [ ]                                 nw to unexplored
-                                                                     /             \     /
-                                                                    /               \   /
-                                                                 [ ]                 [ ]                                      s to unexplored
-                                                                /
-                                                               /
-                                                            [ ]                                                               se to unexplored
-                                                           /
-                                                          /
-                                                       [ ]
-                                                      /
-                                                     /
-                                        [ ]--[ ]--[ ]                                                                         nw to unexplored
-                                       /
-                                      /
-                                   [ ]                                                                                        w to unexplored
+                                                                                               [ ]            [ ]
+                                                                                              /   \          /   \
+                                                                                             /     \        /     \
+                                                                                          [ ]       [ ]--[ ]       [ ]  [ ]
+                                                                                           |                               \
+                                                                                           |                                \
+                                                                      [ ]--[ ]--[ ]       [ ]                                [ ]   nw to unexplored
+                                                                     /             \     /                                    |
+                                                                    /               \   /                                     |
+                                                                 [ ]                 [ ]                 [ ]                 [ ]
+                                                                /                     |                   |                 /
+                                                               /                      |                   |                /
+                                                            [ ]                      [ ]                 [ ]            [ ]        se to unexplored
+                                                           /                            \                   \          /
+                                                          /                              \                   \        /
+                                                       [ ]                                [ ]                 [ ]--[ ]
+                                                      /                                    |                 /        \
+                                                     /                                     |                /          \
+                                        [ ]--[ ]--[ ]                                     [ ]--[ ]       [ ]            [ ]        nw to unexplored
+                                       /                                                          \     /                |
+                                      /                                                            \   /                 |
+                                   [ ]                                                              [ ]                 [ ]        w to unexplored   se to unexplored
                                       \
                                        \
                                         [ ]--[ ]
@@ -858,7 +858,7 @@ Key:
                          [ ]            [ ]  [ ]--[ ]
                             \               /        \
                              \             /          \
-                              [ ]       [ ]            [ ]                      [ ]                                           n to unexplored
+                              [ ]       [ ]            [ ]                      [ ]                                                n to unexplored
                                  \     /                                       /   \
                                   \   /                                       /     \
                                    [ ]                                     [ ]       [ ]
@@ -894,7 +894,7 @@ Key:
                     [ ]                           [ ]--[ ]                           [ ]  [ ]--[ ]--[ ]--[ ]--[ ]
                      |                           /        \                           |    |                     \
                      |                          /          \                          |    |                      \
-                    [ ]                      [ ]            [ ]            [ ]       [ ]  [ ]  [ ^v]               [ ]        up to fourth-town
+                    [ ]                      [ ]            [ ]            [ ]       [ ]  [ ]  [ ^v]               [ ]             up to fourth-town
                    /                        /                  \          /         /    /        \               /
                   /                        /                    \        /         /    /          \             /
                [ ]                 [ ]--[ ]                      [ ]--[ ]       [ ]  [ ]            [ ^]      [ ]
