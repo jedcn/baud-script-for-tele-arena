@@ -1744,6 +1744,13 @@ local function navStep()
     local skipping = kind == "cmd" and j.noPullLever and step.cmd:match("^pull%s") ~= nil
     navDebug((skipping and "skip step " or "send step ")
         .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
+    -- Said out loud, not just traced, when the walk asked for it: a `live-navigate`
+    -- route was worked out a moment ago and written down nowhere, so this line is
+    -- the only account of how far along it is. The skipped-lever case says its own
+    -- piece below, so it isn't announced twice.
+    if j.announceSteps and not skipping then
+        navEcho("Taking step " .. j.index .. "/" .. #j.steps .. ": " .. navStepLabel(step))
+    end
     if kind == "move" then
         navSend(step)
     elseif kind == "gate" then
@@ -2598,6 +2605,10 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         dark         = route.dark,
         -- Read by navStep, which is where a `pull ...` step gets skipped.
         noPullLever  = noPullLever,
+        -- Read by navStep: say every step out loud as it goes out. Off for a
+        -- written route, whose steps you can read in this file -- `live-navigate`
+        -- turns it on because its route exists only for the length of the walk.
+        announceSteps = route.announceSteps,
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
         debug        = debug,
@@ -3591,5 +3602,6 @@ createAlias("^live-navigate (.+)$", function(matches)
     if justSay then return end
     navEcho("Nothing here knows about levers, keys or doors -- if the way needs"
         .. " one, use navigate-to instead.")
-    navStart("live:" .. label, { steps = steps }, nil, nil, reached, false, nil, nil, nil)
+    navStart("live:" .. label, { steps = steps, announceSteps = true },
+        nil, nil, reached, false, nil, nil, nil)
 end, { type = "regex" })

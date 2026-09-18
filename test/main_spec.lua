@@ -14708,6 +14708,18 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("sw"))
         end)
 
+        -- Counting the steps out loud is `live-navigate`'s, and opt-in. A
+        -- written route's steps are in ta_nav.lua to be read, and a sixty-one
+        -- step walk that narrates every one of them buries the lines that
+        -- matter -- a locked door, a lever, a seam that didn't check out.
+        it("does not count the steps out loud for a written route", function()
+            route({ from = "second-town/north-plaza" })
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
+            answerProbe(274)
+            assert.are.equal(1, sent("sw"))
+            assert.is_falsy(lastEchoes():find("Taking step", 1, true))
+        end)
+
         -- The one recorded route that starts outside the town-3 chain, and the
         -- reason the start check has to fingerprint: both towns have a room
         -- called "north plaza", and walking sixty wilderness steps from the
@@ -19477,6 +19489,37 @@ describe("live-navigate", function()
         local said = table.concat(helper.echoCalls, " ")
         assert.is_truthy(said:find("e e n", 1, true))
         assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    -- Counting the walk out loud. A written route's steps can be read in
+    -- ta_nav.lua; one of these exists only for the length of the walk, so
+    -- without this line there is no way to tell step 3 of 50 from step 40.
+    describe("counting the steps out loud", function()
+
+        local function startWalk()
+            stubGraph({ { id = 4 } })
+            taPackage.hereState = "known"
+            taPackage.here = 1
+            helper.simulateAlias("live-navigate somewhere")
+        end
+
+        it("announces the first step as it goes out", function()
+            startWalk()
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("Taking step 1/3: e", 1, true))
+            assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("counts on as the walk advances", function()
+            startWalk()
+            helper.simulateLine("You're in the second room.")
+            helper.simulateLine("There is nobody here.")
+            helper.simulateLine("There is nothing on the floor.")
+            helper.fireTimers()
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("Taking step 2/3: e", 1, true))
+        end)
+
     end)
 
 end)
