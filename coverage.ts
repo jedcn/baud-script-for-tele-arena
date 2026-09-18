@@ -242,6 +242,11 @@ export function renderCoverage(d: Drawing, mapped: Set<string>): string[] {
  * Which shrine drawing goes with which area, and the room that sits on which box.
  * Add a line per area as each is mapped; the shrine's six stoneworks drawings are
  * stoneworks-1..6.
+ *
+ * Registering an area is what makes `just coverage <slug>` work, and that command
+ * is for a walk in PROGRESS -- it exists to say how much is left. So an entry here
+ * is not a claim that the area is finished or that it agrees with its drawing.
+ * COMPLETE, in coverage.test.ts, is where that claim lives.
  */
 export const SHRINE_MAPS: Record<string,
   { file: string; originBox: string; originRoom: string }> = {
@@ -271,6 +276,16 @@ export const SHRINE_MAPS: Record<string,
     file: 'map/shrine/town-4.txt',
     originBox: 'W',                      // Weapon Shop ("advanced weapons!")
     originRoom: 'weapon-shop-3',
+  },
+  // The valley west of the deep forest, still being walked. Its page has exactly
+  // one labelled box, [v]: a single north connector over a down exit, which is
+  // valley-14 and nothing else -- `d` to the caverns, `n` to valley-13. Anchoring
+  // there puts both of the area's ways out on the captions the shrine drew for
+  // them, which is the confirmation that the box is the right one.
+  valley: {
+    file: 'map/shrine/valley.txt',
+    originBox: 'v',                      // down to the Complex of Natural Caverns
+    originRoom: 'valley-14',
   },
 };
 

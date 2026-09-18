@@ -907,27 +907,78 @@ Key:
 ### The Valley
 
 ```
-                                        [ ]--[ ]   se to The Deep Forest
-                                       /
-                                      /
-                    [ ]--[ ]       [ ]             nw to unexplored
-                   /        \     /
-                  /          \   /
+                                                                 [ ]        ne to The Hewn Granite Corridors
+                                                                /
+                                                               /
+                                                       [ ]--[ ]
+                                                        |
+                                                        |
+                                   [ ]--[ ]            [ ]                  se to unexplored
+                                  /        \          /
+                                 /          \        /
+                         [ ]--[ ]            [ ]--[ ]                       s to unexplored   sw to unexplored
+                        /
+                       /
+               [ ]--[ ]
+              /
+             /
+          [ ]
+           |
+           |
+          [ ]
+         /
+        /
+     [ ]
+        \
+         \
+          [ ]
+           |
+           |
+          [ ]
+             \
+              \
+               [ ]
+                  \
+                   \
+                    [ ]
+                     |
+                     |
+                    [ ]
+                       \
+                        \
+                         [ ]       [ ]                                      se to unexplored
+                            \     / |
+                             \   /  |
+                              [ ]  [ ]
+                                    |
+                                    |
+          [ ]                      [ ]
+             \                    /
+              \                  /
                [ ]            [ ]
                 |              |
                 |              |
-     [ ]       [ ]            [ ]                  nw to unexplored
-    /   \     /
-   /     \   /
-[ ]       [ ]
- |
- |
-[ ]
-   \
-    \
-     [ ]
-      |
-      |
-     [ v]                                          down to The Complex of Natural Caverns
+               [ ]--[ ]       [ ]--[ ]--[ ]                      [ ]--[ ]   se to The Deep Forest
+              /                            \                    /
+             /                              \                  /
+     [ ]--[ ]                                [ ]--[ ]       [ ]
+    /      |                                /        \     /
+   /       |                               /          \   /
+[ ]       [ ]       [ ]--[ ]            [ ]            [ ]
+             \     /        \            |              |
+              \   /          \           |              |
+               [ ]            [ ]       [ ]            [ ]
+                             /   \     /
+                            /     \   /
+                         [ ]       [ ]
+                          |
+                          |
+                         [ ]
+                            \
+                             \
+                              [ ]
+                               |
+                               |
+                              [ v]                                          down to The Complex of Natural Caverns
 ```
 

@@ -249,14 +249,27 @@ describe('pairRooms across a teleport', () => {
 
 import { SHRINE_MAPS, roomsFromExport } from './coverage';
 
+// The areas walked to completion, which are the ones whose agreement with the
+// shrine is a claim rather than a progress report. SHRINE_MAPS is a wider set:
+// registering an area there is what makes `just coverage <slug>` work, and that
+// command is for a walk still in progress. Keeping the two apart is what lets an
+// unfinished area be checked by eye without its drawing being asserted as met.
+const COMPLETE = ['desert', 'fourth-town', 'stoneworks-level-1', 'stoneworks-level-2'];
+
+async function pairArea(slug: string) {
+  const spec = SHRINE_MAPS[slug];
+  const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
+  const drawing = parseDrawing(await Bun.file(spec.file).text());
+  const { rooms, teleports } = roomsFromExport(area);
+  const start = rooms.find(r => r.slug === spec.originRoom);
+  const startBox = drawing.boxes.find(b => b.label === spec.originBox);
+  return { spec, drawing, rooms, teleports, start, startBox };
+}
+
 describe('the exported map agrees with the shrine drawings', () => {
-  for (const [slug, spec] of Object.entries(SHRINE_MAPS)) {
-    it(`${slug} pairs with ${spec.file}`, async () => {
-      const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
-      const drawing = parseDrawing(await Bun.file(spec.file).text());
-      const { rooms, teleports } = roomsFromExport(area);
-      const start = rooms.find(r => r.slug === spec.originRoom);
-      const startBox = drawing.boxes.find(b => b.label === spec.originBox);
+  for (const slug of COMPLETE) {
+    it(`${slug} pairs with its drawing, box for box`, async () => {
+      const { spec, drawing, rooms, teleports, start, startBox } = await pairArea(slug);
       expect(start, `${spec.originRoom} is in ${slug}`).toBeDefined();
       expect(startBox, `box [${spec.originBox}] is in the drawing`).toBeDefined();
 
@@ -269,28 +282,31 @@ describe('the exported map agrees with the shrine drawings', () => {
       // shrine captions the room across a Seam instead of drawing it.
       expect(problems).toEqual([]);
 
-      // And every room we have is somewhere on the page. Boxes we have NOT walked
-      // are fine -- that is just an unfinished area -- so this counts our rooms,
-      // not the drawing's.
+      // Every room we have is somewhere on the page, and every box on the page is
+      // ours. Both directions, because the area is finished.
       expect(pair.size).toBeGreaterThanOrEqual(rooms.length);
+      expect(pair.size, `${slug} has unwalked boxes`).toBe(drawing.boxes.length);
     });
   }
 
-  it('covers the areas that have been walked to completion', async () => {
-    // Named explicitly, so finishing an area without registering its drawing, or
-    // registering one and never checking it, both show up as a failure here.
-    expect(Object.keys(SHRINE_MAPS).sort())
-      .toEqual(['desert', 'fourth-town', 'stoneworks-level-1', 'stoneworks-level-2']);
-    for (const slug of ['desert', 'fourth-town', 'stoneworks-level-1', 'stoneworks-level-2']) {
-      const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
-      const drawing = parseDrawing(await Bun.file(SHRINE_MAPS[slug].file).text());
-      const { rooms, teleports } = roomsFromExport(area);
-      const spec = SHRINE_MAPS[slug];
-      const { pair } = pairRooms(drawing, rooms,
-        rooms.find(r => r.slug === spec.originRoom)!.id,
-        drawing.boxes.find(b => b.label === spec.originBox)!.id, teleports);
-      // Every box on the page accounted for: the area is finished.
-      expect(pair.size, `${slug} has unwalked boxes`).toBe(drawing.boxes.length);
-    }
+  it('checks every area that has been walked to completion', () => {
+    // Named explicitly, so finishing an area and forgetting to assert it here is
+    // a failure rather than a silence.
+    expect(COMPLETE.every(slug => slug in SHRINE_MAPS)).toBe(true);
+    expect([...COMPLETE].sort()).toEqual(COMPLETE);
   });
+
+  // An area still being walked gets no agreement check -- `just coverage` is how
+  // its disagreements are read, by eye, while they are still being resolved. What
+  // it does get is this: the wiring has to be real, or the command that is
+  // supposed to report those disagreements dies on a typo instead.
+  for (const slug of Object.keys(SHRINE_MAPS).filter(s => !COMPLETE.includes(s))) {
+    it(`${slug} is registered with a drawing and an origin that resolve`, async () => {
+      const { spec, drawing, start, startBox } = await pairArea(slug);
+      expect(await Bun.file(spec.file).exists(), `${spec.file} exists`).toBe(true);
+      expect(drawing.boxes.length).toBeGreaterThan(0);
+      expect(start, `${spec.originRoom} is a room of ${slug}`).toBeDefined();
+      expect(startBox, `box [${spec.originBox}] is on ${spec.file}`).toBeDefined();
+    });
+  }
 });

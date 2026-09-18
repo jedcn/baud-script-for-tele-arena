@@ -113,7 +113,7 @@
           "to": "valley/valley-5"
         },
         "nw": {
-          "to": null
+          "to": "valley/valley-26"
         },
         "sw": {
           "to": "valley/valley-7"
@@ -165,11 +165,409 @@
       "exits": {
         "ne": {
           "to": "valley/valley-8"
+        },
+        "nw": {
+          "to": "valley/valley-10"
         }
       },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast and northwest.",
       "layout": {
         "x": -29,
         "y": 17
+      }
+    },
+    {
+      "id": "valley/valley-10",
+      "name": "valley",
+      "exits": {
+        "nw": {
+          "to": "valley/valley-15"
+        },
+        "se": {
+          "to": "valley/valley-9"
+        },
+        "sw": {
+          "to": "valley/valley-11"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the southeast, southwest, and northwest.",
+      "layout": {
+        "x": -30,
+        "y": 18
+      }
+    },
+    {
+      "id": "valley/valley-11",
+      "name": "valley",
+      "exits": {
+        "ne": {
+          "to": "valley/valley-10"
+        },
+        "s": {
+          "to": "valley/valley-12"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast and south.",
+      "layout": {
+        "x": -31,
+        "y": 17
+      }
+    },
+    {
+      "id": "valley/valley-12",
+      "name": "valley",
+      "exits": {
+        "n": {
+          "to": "valley/valley-11"
+        },
+        "se": {
+          "to": "valley/valley-13"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north and southeast.",
+      "layout": {
+        "x": -31,
+        "y": 16
+      }
+    },
+    {
+      "id": "valley/valley-13",
+      "name": "valley",
+      "exits": {
+        "nw": {
+          "to": "valley/valley-12"
+        },
+        "s": {
+          "to": "valley/valley-14"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the south and northwest.",
+      "layout": {
+        "x": -30,
+        "y": 15
+      }
+    },
+    {
+      "id": "valley/valley-14",
+      "name": "valley",
+      "exits": {
+        "d": {
+          "to": "complex-caverns/complex-of-natural-caverns"
+        },
+        "n": {
+          "to": "valley/valley-13"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north, or downward into a natural cavern.",
+      "layout": {
+        "x": -30,
+        "y": 14
+      }
+    },
+    {
+      "id": "valley/valley-15",
+      "name": "valley",
+      "exits": {
+        "se": {
+          "to": "valley/valley-10"
+        },
+        "w": {
+          "to": "valley/valley-16"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the southeast and west.",
+      "layout": {
+        "x": -31,
+        "y": 19
+      }
+    },
+    {
+      "id": "valley/valley-16",
+      "name": "valley",
+      "exits": {
+        "e": {
+          "to": "valley/valley-15"
+        },
+        "sw": {
+          "to": "valley/valley-17"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the east and southwest.",
+      "layout": {
+        "x": -32,
+        "y": 19
+      }
+    },
+    {
+      "id": "valley/valley-17",
+      "name": "valley",
+      "exits": {
+        "ne": {
+          "to": "valley/valley-16"
+        },
+        "nw": {
+          "to": "valley/valley-18"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast and northwest.",
+      "layout": {
+        "x": -33,
+        "y": 18
+      }
+    },
+    {
+      "id": "valley/valley-18",
+      "name": "valley",
+      "exits": {
+        "n": {
+          "to": "valley/valley-19"
+        },
+        "se": {
+          "to": "valley/valley-17"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north and southeast.",
+      "layout": {
+        "x": -34,
+        "y": 19
+      }
+    },
+    {
+      "id": "valley/valley-19",
+      "name": "valley",
+      "exits": {
+        "ne": {
+          "to": "valley/valley-22"
+        },
+        "s": {
+          "to": "valley/valley-18"
+        },
+        "w": {
+          "to": "valley/valley-20"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast, south, and west.",
+      "layout": {
+        "x": -34,
+        "y": 20
+      }
+    },
+    {
+      "id": "valley/valley-20",
+      "name": "valley",
+      "exits": {
+        "e": {
+          "to": "valley/valley-19"
+        },
+        "sw": {
+          "to": "valley/valley-21"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the east and southwest.",
+      "layout": {
+        "x": -35,
+        "y": 20
+      }
+    },
+    {
+      "id": "valley/valley-21",
+      "name": "valley",
+      "exits": {
+        "ne": {
+          "to": "valley/valley-20"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast.",
+      "layout": {
+        "x": -36,
+        "y": 19
+      }
+    },
+    {
+      "id": "valley/valley-22",
+      "name": "valley",
+      "exits": {
+        "e": {
+          "to": "valley/valley-23"
+        },
+        "n": {
+          "to": "valley/valley-24"
+        },
+        "sw": {
+          "to": "valley/valley-19"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north, east, and southwest.",
+      "layout": {
+        "x": -33,
+        "y": 21
+      }
+    },
+    {
+      "id": "valley/valley-23",
+      "name": "valley",
+      "exits": {
+        "w": {
+          "to": "valley/valley-22"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the west.",
+      "layout": {
+        "x": -32,
+        "y": 21
+      }
+    },
+    {
+      "id": "valley/valley-24",
+      "name": "valley",
+      "exits": {
+        "nw": {
+          "to": "valley/valley-25"
+        },
+        "s": {
+          "to": "valley/valley-22"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the south and northwest.",
+      "layout": {
+        "x": -33,
+        "y": 22
+      }
+    },
+    {
+      "id": "valley/valley-25",
+      "name": "valley",
+      "exits": {
+        "se": {
+          "to": "valley/valley-24"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the southeast.",
+      "layout": {
+        "x": -34,
+        "y": 23
+      }
+    },
+    {
+      "id": "valley/valley-26",
+      "name": "valley",
+      "exits": {
+        "se": {
+          "to": "valley/valley-6"
+        },
+        "w": {
+          "to": "valley/valley-27"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the southeast and west.",
+      "layout": {
+        "x": -28,
+        "y": 21
+      }
+    },
+    {
+      "id": "valley/valley-27",
+      "name": "valley",
+      "exits": {
+        "e": {
+          "to": "valley/valley-26"
+        },
+        "w": {
+          "to": "valley/valley-28"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the east and west.",
+      "layout": {
+        "x": -29,
+        "y": 21
+      }
+    },
+    {
+      "id": "valley/valley-28",
+      "name": "valley",
+      "exits": {
+        "e": {
+          "to": "valley/valley-27"
+        },
+        "n": {
+          "to": "valley/valley-29"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north and east.",
+      "layout": {
+        "x": -30,
+        "y": 21
+      }
+    },
+    {
+      "id": "valley/valley-29",
+      "name": "valley",
+      "exits": {
+        "ne": {
+          "to": "valley/valley-30"
+        },
+        "s": {
+          "to": "valley/valley-28"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the northeast and south.",
+      "layout": {
+        "x": -30,
+        "y": 22
+      }
+    },
+    {
+      "id": "valley/valley-30",
+      "name": "valley",
+      "exits": {
+        "n": {
+          "to": "valley/valley-31"
+        },
+        "sw": {
+          "to": "valley/valley-29"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north and southwest.",
+      "layout": {
+        "x": -29,
+        "y": 23
+      }
+    },
+    {
+      "id": "valley/valley-31",
+      "name": "valley",
+      "exits": {
+        "n": {
+          "to": "valley/valley-32"
+        },
+        "s": {
+          "to": "valley/valley-30"
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the north and south.",
+      "layout": {
+        "x": -29,
+        "y": 24
+      }
+    },
+    {
+      "id": "valley/valley-32",
+      "name": "valley",
+      "exits": {
+        "s": {
+          "to": "valley/valley-31"
+        },
+        "se": {
+          "to": null
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You are deep within a lush jungle valley choked with huge trees and thick undergrowth. Trees and vegatation block exit in all directions except to the southeast, south, and southwest.",
+      "layout": {
+        "x": -29,
+        "y": 25
       }
     }
   ]

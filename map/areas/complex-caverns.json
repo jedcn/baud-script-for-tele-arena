@@ -1,0 +1,24 @@
+{
+  "area": "complex-caverns",
+  "name": "The Complex of Natural Caverns",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "complex-caverns/complex-of-natural-caverns",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": null
+        },
+        "u": {
+          "to": "valley/valley-14"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northwest or up a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -30,
+        "y": 14
+      }
+    }
+  ]
+}
