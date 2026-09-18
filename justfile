@@ -91,6 +91,15 @@ report:
 # Placement comes from map.ts, the same pass that draws MAP.md, so the two never
 # disagree about the shape of a level.
 draw-map-as-html:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    # Refresh the export first. The page itself still reads only the checked-in
+    # JSON -- that is the point of it, and site.test.ts is what proves it -- but a
+    # walk moves the database on and leaves that JSON behind, so on 2026-09-17 a
+    # session that mapped 17 new rooms drew a map with none of them on it and
+    # nothing said why. Skipped where there is no database to refresh from (the
+    # VPS), because there the checked-in JSON is already the whole story.
+    [ -f tele-arena.db ] && bun export.ts
     bun site.ts
     bun test site.test.ts
     open map.html
