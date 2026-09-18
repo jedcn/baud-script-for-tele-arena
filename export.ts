@@ -152,4 +152,18 @@ if (import.meta.main) {
     console.log(`  ${a.slug.padEnd(24)} ${area.rooms.length} rooms`);
   }
   await Bun.write('map/index.json', JSON.stringify({ areas: index }, null, 2) + '\n');
+
+  // Where each character was last seen, for the "you are here" mark on the map.
+  // Its own file, and an untracked one, because this is not a map fact: it
+  // changes with every step, so folding it into index.json would put a diff of
+  // somebody's whereabouts in front of every commit. A machine without it (a
+  // fresh clone, the VPS) simply draws no mark.
+  const players = db.prepare(
+    `SELECT p.player, p.room_id, p.updated_at FROM player_location p
+      WHERE p.room_id IS NOT NULL ORDER BY p.player`).all() as Row[];
+  const located = players
+    .filter(p => idToRoomId.has(p.room_id))
+    .map(p => ({ player: p.player, room: idToRoomId.get(p.room_id), seen: p.updated_at }));
+  await Bun.write('map/players.json', JSON.stringify({ players: located }, null, 2) + '\n');
+  console.log(`  ${'players'.padEnd(24)} ${located.length} located`);
 }

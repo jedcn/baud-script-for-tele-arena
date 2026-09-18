@@ -129,6 +129,8 @@ export function boxLabel(room: Room): string {
  */
 export function renderLevel(
   area: Area, nameOf: (areaSlug: string) => string,
+  /** room id -> characters last seen standing there, for the "you are here" mark. */
+  playersByRoom: Map<string, string[]> = new Map(),
 ): LevelSvg {
   const ids = new Map(area.rooms.map((r, i) => [r.id, i + 1]));
   const gridRooms: GridRoom[] = area.rooms.map((r, i) => ({ id: i + 1, slug: r.id, name: r.name }));
@@ -245,7 +247,10 @@ export function renderLevel(
     if (room.devices?.length) { classes.push('device'); stats.devices += room.devices.length; }
     if (SERVICES[room.name]) classes.push('service');
     if (room.id === origin) classes.push('origin');
+    const here = playersByRoom.get(room.id);
+    if (here?.length) classes.push('here');
     const bits = [room.id, room.name];
+    if (here?.length) bits.push(`you are here: ${here.join(', ')}`);
     if (room.trap) bits.push(`trap: ${room.trap.type}`);
     for (const d of room.devices ?? []) bits.push(`\`${d.command}\` (${d.effect})`);
     const [x, y] = home[room.id];
@@ -260,6 +265,13 @@ export function renderLevel(
         ? `<circle class="trap-dot" cx="${-BOX_W / 2 + 5}" cy="${-BOX_H / 2 + 5}" r="3.5"/>` : '')
       + (room.devices?.length
         ? `<circle class="device-dot" cx="${BOX_W / 2 - 5}" cy="${-BOX_H / 2 + 5}" r="3.5"/>` : '')
+      + (here?.length
+        ? `<rect class="here-ring" x="${-BOX_W / 2 - 4}" y="${-BOX_H / 2 - 4}"`
+          + ` width="${BOX_W + 8}" height="${BOX_H + 8}" rx="8"/>`
+          // +14, not +16: PAD is 34, so a marked room on the bottom row has
+          // exactly 34px below its centre, and a 10px label with descenders
+          // needs 17 of them. Two pixels of headroom rather than none.
+          + `<text class="here-who" x="0" y="${BOX_H / 2 + 14}">${esc(here.join(', '))}</text>` : '')
       + (own.get(room.id) ?? []).join('')
       + `</g>`);
   }
@@ -294,6 +306,9 @@ const LEGEND: [string, string][] = [
   ['<svg viewBox="0 0 20 14"><rect class="box trapped" x="1" y="1" width="18" height="12" rx="3"/>'
     + '<circle class="trap-dot" cx="4" cy="4" r="3"/></svg>',
     'a Trap has sprung here'],
+  ['<svg viewBox="0 0 20 14"><rect class="box" x="3" y="3" width="14" height="8" rx="2"/>'
+    + '<rect class="here-ring" x="1" y="1" width="18" height="12" rx="4"/></svg>',
+    'a character stands here — where the map last saw them, not live'],
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/></svg>',
     'a walked exit, both ways'],
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/>'
@@ -387,6 +402,13 @@ button.ghost[disabled] { opacity: 0.45; cursor: default; }
 .door-mark { fill: var(--bg); stroke: var(--red); stroke-width: 1.5px; }
 .seal-mark { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5px; }
 .trap-dot { fill: var(--red); }
+/* A ring OUTSIDE the box, never a fill: a room you are standing in may also be a
+   service, a trap or a Device, and each of those already owns the box itself. */
+.here-ring { fill: none; stroke: var(--amber); stroke-width: 2px;
+  stroke-dasharray: 5 3; }
+.here-who { fill: var(--amber); font-size: 10px; font-weight: 700;
+  text-anchor: middle; paint-order: stroke; stroke: var(--bg);
+  stroke-width: 3px; }
 .device-dot { fill: var(--amber); }
 .vbadge { fill: var(--muted); font-size: 10px; font-family: inherit; }
 @media (max-width: 860px) {
@@ -641,7 +663,11 @@ function jsonForScript(value: unknown): string {
     .replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 
-export function buildPage(areas: Area[]): string {
+export function buildPage(
+  areas: Area[],
+  /** Characters last seen per room id; empty when map/players.json is absent. */
+  playersByRoom: Map<string, string[]> = new Map(),
+): string {
   const bySlug = new Map(areas.map(a => [a.area, a]));
   const nameOf = (slug: string) => bySlug.get(slug)?.name ?? slug;
   const groups = groupAreas(areas.map(a => ({ area: a.area, name: a.name })));
@@ -674,7 +700,7 @@ export function buildPage(areas: Area[]): string {
   const panes: string[] = [];
   for (const g of groups) {
     for (const ref of g.levels) {
-      const level = renderLevel(bySlug.get(ref.slug)!, nameOf);
+      const level = renderLevel(bySlug.get(ref.slug)!, nameOf, playersByRoom);
       levels[ref.slug] = level.stats;
       Object.assign(home, level.home);
       panes.push(`<div class="canvas" data-level="${esc(ref.slug)}" hidden>${level.svg}</div>`);
@@ -741,11 +767,34 @@ export async function readAreas(dir = 'map'): Promise<Area[]> {
   return out;
 }
 
+/**
+ * Characters last seen per room, from map/players.json. That file is written by
+ * `bun export.ts` and is untracked, so it is routinely absent -- a fresh clone,
+ * the VPS, anyone who has not exported. Absent or malformed, the map simply
+ * draws no mark, which is why this swallows rather than throws.
+ */
+export async function readPlayers(dir = 'map'): Promise<Map<string, string[]>> {
+  const byRoom = new Map<string, string[]>();
+  try {
+    const raw = JSON.parse(await Bun.file(`${dir}/players.json`).text()) as
+      { players?: { player: string; room: string }[] };
+    for (const p of raw.players ?? []) {
+      if (!p?.room || !p?.player) continue;
+      if (!byRoom.has(p.room)) byRoom.set(p.room, []);
+      byRoom.get(p.room)!.push(p.player);
+    }
+  } catch { /* no file, or not JSON: no marks */ }
+  return byRoom;
+}
+
 if (import.meta.main) {
   const areas = await readAreas();
-  const html = buildPage(areas);
+  const players = await readPlayers();
+  const html = buildPage(areas, players);
   await Bun.write('map.html', html);
   const rooms = areas.reduce((n, a) => n + a.rooms.length, 0);
+  const marked = [...players.values()].reduce((n, v) => n + v.length, 0);
   console.log(`site: wrote map.html — ${areas.length} areas, ${rooms} rooms,`
+    + ` ${marked} character${marked === 1 ? '' : 's'} marked,`
     + ` ${(html.length / 1024).toFixed(0)}KB`);
 }

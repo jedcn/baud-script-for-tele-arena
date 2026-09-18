@@ -6,3 +6,4 @@ tele-arena.db-wal
 tele-arena.db.bak-*
 report.html
 map.html
+map/players.json

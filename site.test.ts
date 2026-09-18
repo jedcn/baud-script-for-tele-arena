@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, renderLevel, splitName }
+import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, readPlayers, renderLevel, splitName }
   from './site';
 import type { Area } from './export';
 
@@ -305,6 +305,65 @@ function runPage(html: string, hash = '') {
 
   return { doc, area, level, stats, panel, reset, panes, boxes, edges, store, dragBox, boxFor };
 }
+
+describe('the "you are here" mark', () => {
+  const HERE = new Map([['test-level-1/corridor-1', ['Tojolias']]]);
+
+  it('rings the room a character stands in, and names them', () => {
+    const svg = renderLevel(MINI, NAME_OF, HERE).svg;
+    expect(svg).toContain('here-ring');
+    expect(svg).toContain('>Tojolias<');
+  });
+
+  it('marks that room and no other', () => {
+    const svg = renderLevel(MINI, NAME_OF, HERE).svg;
+    expect(svg.match(/here-ring/g)).toHaveLength(1);
+  });
+
+  // The room keeps whatever else it was. corridor-1 is trapped, and a fill would
+  // have hidden that, which is why the mark is a ring outside the box.
+  it('does not displace the marks the room already carried', () => {
+    const svg = renderLevel(MINI, NAME_OF, HERE).svg;
+    expect(svg).toContain('trap-dot');
+    expect(svg).toContain('class="box trapped here"');
+  });
+
+  it('draws nothing at all when nobody is located', () => {
+    const svg = renderLevel(MINI, NAME_OF).svg;
+    expect(svg).not.toContain('here-ring');
+  });
+
+  it('names the character in the room tooltip too', () => {
+    const svg = renderLevel(MINI, NAME_OF, HERE).svg;
+    expect(svg).toContain('you are here: Tojolias');
+  });
+
+  it('lists several characters sharing a room', () => {
+    const svg = renderLevel(MINI, NAME_OF,
+      new Map([['test-level-1/hall', ['Kerhak', 'Teekywiki']]])).svg;
+    expect(svg).toContain('you are here: Kerhak, Teekywiki');
+  });
+
+  // map/players.json is untracked and written only by `bun export.ts`, so a fresh
+  // clone and the VPS both have none. That must draw a plain map, not fail.
+  it('reads no players from a directory without the file', async () => {
+    expect((await readPlayers('map/does-not-exist')).size).toBe(0);
+  });
+
+  it('reads the players file when it is there', async () => {
+    const dir = `/tmp/ta-players-${Date.now()}`;
+    await Bun.write(`${dir}/players.json`, JSON.stringify(
+      { players: [{ player: 'Tojolias', room: 'deep-forest/deep-forest-1' }] }));
+    const byRoom = await readPlayers(dir);
+    expect(byRoom.get('deep-forest/deep-forest-1')).toEqual(['Tojolias']);
+  });
+
+  it('ignores a malformed entry rather than throwing', async () => {
+    const dir = `/tmp/ta-players-bad-${Date.now()}`;
+    await Bun.write(`${dir}/players.json`, '{"players":[{"player":"NoRoom"},null]}');
+    expect((await readPlayers(dir)).size).toBe(0);
+  });
+});
 
 describe('map.html', () => {
   const areasP = readAreas();
