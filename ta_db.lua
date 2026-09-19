@@ -766,17 +766,37 @@ end
 -- what keeps two distinct caves that share a fingerprint from collapsing once
 -- coordinates are known; when `coord` is nil (nothing to dead-reckon from) the
 -- guard is inert and we fall back to name+exit-set alone.
+--
+-- On nil it ALSO returns the candidates it rejected on the coordinate alone --
+-- same name, same exit-set, different stored position. That veto is the only
+-- thing standing between a re-walk and a duplicate, and it is silent: on
+-- 2026-09-19 it rejected a candidate at the first mint of the session over a
+-- drift of (1,1), and the walk went on to mint 81 rooms, 35 of them copies of
+-- rooms already on the map (logs/session-pelayo-2026-09-19T12-25-56.log).
+-- findLoopClosure already hands its undecidable candidates back for the same
+-- reason; giving up quietly is how a duplicate appears with nothing in the log.
 function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
     end
-    local match
+    local match, vetoed = nil, {}
     for _, id in ipairs(TaDb.roomIdsByName(name, areaId)) do
         if id ~= excludeId then
             local cand = coord and TaDb.roomCoord(id)
             if cand and (cand.x ~= coord.x or cand.y ~= coord.y or cand.z ~= coord.z) then
-                -- Different coordinate: provably not this room. Skip.
+                -- Different coordinate: provably not this room. Skip -- but only
+                -- after checking whether it would otherwise have matched, because
+                -- that is exactly the case worth reporting.
+                local have = TaDb.roomExitDirections(id)
+                local n, ok = 0, true
+                for dir in pairs(have) do
+                    n = n + 1
+                    if not want[dir] then ok = false; break end
+                end
+                if ok and n == wantCount then
+                    vetoed[#vetoed + 1] = { id = id, coord = cand }
+                end
                 goto continue
             end
             local have = TaDb.roomExitDirections(id)
@@ -786,13 +806,13 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
                 if not want[dir] then ok = false; break end
             end
             if ok and haveCount == wantCount then
-                if match then return nil end  -- ambiguous: >1 match
+                if match then return nil, vetoed end  -- ambiguous: >1 match
                 match = id
             end
         end
         ::continue::
     end
-    return match
+    return match, vetoed
 end
 
 -- Topological loop closure, for when coordinates have drifted too far to trust

@@ -2252,6 +2252,43 @@ describe("ta_db", function()
             assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
         end)
 
+        -- The veto is the only thing between a re-walk and a duplicate, and it
+        -- used to fire silently. On 2026-09-19 it rejected a candidate over a
+        -- drift of (1,1) at the first mint of the session, and the walk went on
+        -- to mint 81 rooms, 35 of them copies.
+        it("hands back the candidate it rejected on the coordinate alone", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            local match, vetoed =
+                TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 6, y = 6, z = 0 })
+            assert.is_nil(match)
+            assert.are.equal(1, #vetoed)
+            assert.are.equal(1, vetoed[1].id)
+            assert.are.same({ x = 5, y = 5, z = 0 }, vetoed[1].coord)
+        end)
+
+        -- A room rejected on its coordinate that would NOT have matched anyway is
+        -- not a near miss and must not be reported as one, or the warning cries
+        -- wolf on every cave in the area.
+        it("does not hand back a coordinate miss that also fails the exit-set", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s", "e" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            local match, vetoed =
+                TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 6, y = 6, z = 0 })
+            assert.is_nil(match)
+            assert.are.equal(0, #vetoed)
+        end)
+
     end)
 
     describe("findLoopClosure", function()
@@ -4329,6 +4366,61 @@ describe("World map triggers", function()
                 assert.is_truthy(said:find("#1", 1, true))
                 assert.is_truthy(said:find("#2", 1, true))
                 assert.is_truthy(said:find("merge it by hand", 1, true))
+            end)
+
+        it("says so when it mints over a room the coordinate veto rejected",
+            function()
+                -- The Complex of Natural Caverns, 2026-09-19. The very first mint
+                -- of the session had a room of the same name and exit-set already
+                -- on the map, rejected on a coordinate drift of (1,1). Nothing was
+                -- said, and the walk minted 81 rooms, 35 of them copies, before
+                -- anyone noticed. findRoomByFingerprint is the only matcher that
+                -- can see into fully-walked ground -- findLoopClosure needs the
+                -- return door to be an unwalked stub, and there it never is -- so
+                -- when its veto fires there is nothing else left to catch this
+                -- (logs/session-pelayo-2026-09-19T12-25-56.log).
+                taPackage.currentRoomId = 9
+                taPackage.currentRoom = "complex of natural caverns"
+                taPackage.currentRoomProvisional = true
+                taPackage.currentEntryDir = "n"           -- return door is s
+                taPackage.coord = { x = -28, y = 27, z = -3 }
+                helper.mockDbRows = function(sql, params)
+                    if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                        return { { id = 1 }, { id = 9 } }
+                    elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id",
+                        1, true) then
+                        if params[1] == 1 then
+                            return { { direction = "ne" }, { direction = "s" },
+                                     { direction = "nw" } }
+                        end
+                        return {}
+                    end
+                    return {}
+                end
+                helper.mockDbOneRow = function(sql)
+                    if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                        return { x = -27, y = 26, z = -3 }   -- drifted by (1,1)
+                    elseif string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                        -- The candidate's return door already leads somewhere.
+                        -- This is what makes the case the real one: in ground that
+                        -- is already walked every return door does, so
+                        -- findLoopClosure refuses and the coordinate veto is the
+                        -- last thing between this walk and a parallel copy.
+                        return { to_id = 77 }
+                    elseif string.find(sql, "SELECT r.slug AS slug", 1, true) then
+                        return { slug = "complex-of-natural-caverns-38",
+                                 area = "complex-caverns" }
+                    end
+                    return nil
+                end
+                helper.simulateLine("Exits: ne,s,nw.")
+                assert.are.equal(9, taPackage.currentRoomId)   -- still minted
+                local said = table.concat(helper.echoCalls, "\n")
+                assert.is_truthy(said:find("rejected on coordinates alone", 1, true), said)
+                assert.is_truthy(said:find("complex-of-natural-caverns-38", 1, true), said)
+                assert.is_truthy(said:find("(-27,26,-3)", 1, true), said)
+                assert.is_truthy(said:find("(-28,27,-3)", 1, true), said)
+                assert.is_truthy(said:find("will be a duplicate too", 1, true), said)
             end)
 
         -- After a Teleport there is no coordinate, so a fingerprint match is just

@@ -1858,7 +1858,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
-        local match = taPackage.db.findRoomByFingerprint(
+        local match, coordVetoed = taPackage.db.findRoomByFingerprint(
             taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
             taPackage.currentAreaId)
         taPackage.mapdbg("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
@@ -1914,6 +1914,33 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                     acrossSeam = true
                 end
             end
+        end
+        -- Nothing matched, and we are about to keep a freshly minted room -- but
+        -- a room of this name and exit-set IS on the map and was rejected on its
+        -- stored coordinate alone. Say so. These rooms never sat on a grid, so
+        -- the reckoning drifts, and once it does findRoomByFingerprint is blind
+        -- for good while findLoopClosure cannot cover for it (it needs the return
+        -- door to be an unwalked stub, and in walked ground it never is). That
+        -- combination re-walked the Complex of Natural Caverns into a parallel
+        -- copy on 2026-09-19 with nothing in the log to notice until 81 rooms
+        -- later. This line is what makes it noticeable on the FIRST one.
+        if type(match) ~= "number" and coordVetoed and #coordVetoed > 0 then
+            local parts = {}
+            for _, v in ipairs(coordVetoed) do
+                parts[#parts + 1] = (taPackage.db.roomRef(v.id) or ("#" .. tostring(v.id)))
+                    .. string.format(" (%d,%d,%d)", v.coord.x, v.coord.y, v.coord.z)
+            end
+            echo("[map] minting " .. (taPackage.db.roomRef(taPackage.currentRoomId)
+                    or ("#" .. tostring(taPackage.currentRoomId)))
+                .. ", but " .. #coordVetoed .. " room"
+                .. (#coordVetoed > 1 and "s match" or " matches")
+                .. " this name and exit-set and "
+                .. (#coordVetoed > 1 and "were" or "was")
+                .. " rejected on coordinates alone: " .. table.concat(parts, ", ")
+                .. string.format(" vs reckoned (%d,%d,%d)",
+                    taPackage.coord.x, taPackage.coord.y, taPackage.coord.z))
+            echo("[map]   If this is that room, stop now and `map-here` it -- every"
+                .. " room walked from here will be a duplicate too.")
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then
