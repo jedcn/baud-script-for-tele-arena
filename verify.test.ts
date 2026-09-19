@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
          routeReferences, coordinates, orphanExits, proseAgreement, proseDirections,
-         type Room, type Exit } from './verify';
+         drawnDirections, type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -261,5 +261,54 @@ describe('orphanExits', () => {
     const f = orphanExits(new Set([1]), [{ from_id: 673, direction: 'se', to_id: null }]);
     expect(f.ok).toBe(false);
     expect(f.detail).toContain('673 se');
+  });
+});
+
+describe('drawnDirections', () => {
+  it('passes a graph the grid can hold exactly', () => {
+    // a --e--> b --n--> c, and nothing else to contradict it.
+    const f = drawnDirections(
+      [room(1, 'a'), room(2, 'b'), room(3, 'c')],
+      [...pair(1, 'e', 2, 'w'), ...pair(2, 'n', 3, 's')], 'a');
+    expect(f.ok).toBe(true);
+    expect(f.detail).toContain('4 compass exits');
+  });
+
+  // The deep-forest-149 case in miniature: a triangle whose three edges cannot
+  // all be true on a square grid. a is east of b AND b is east of c, so c must
+  // be two cells west of a -- but a also says c is due north. Something has to
+  // give, and whatever gives, a line ends up pointing the wrong way.
+  it('reports a loop that does not close, and does not fail for it', () => {
+    const f = drawnDirections(
+      [room(1, 'a'), room(2, 'b'), room(3, 'c')],
+      [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w'), ...pair(1, 'n', 3, 's')], 'a');
+    expect(f.ok).toBe(true);                       // not a defect: the world is like this
+    expect(f.detail).toContain('the loop does not close');
+    expect(f.detail).toContain('b e c');
+  });
+
+  // The other cause, and the one that IS a defect: the edge was representable
+  // and the layout broke it anyway. `a --d--> b` has no compass direction, so b
+  // is parked in the first free cell (south-east of a) and b's whole region is
+  // laid out from there -- straight into the region a already occupies. `b --n-->
+  // c` wants the cell x is standing in, so c is nudged aside and the line ends up
+  // pointing north-west. Nothing about b-and-c is unrepresentable; the grid just
+  // gave that cell away first.
+  it('fails when the layout breaks an edge it could have drawn', () => {
+    const f = drawnDirections(
+      [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')],
+      [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'n', 4, 's')], 'a');
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('broken by the layout');
+    expect(f.detail).toContain('b n c (drawn nw)');
+    expect(f.detail).not.toContain('the loop does not close');
+  });
+
+  it('names the direction the line actually points', () => {
+    const f = drawnDirections(
+      [room(1, 'a'), room(2, 'b'), room(3, 'c')],
+      [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w'), ...pair(1, 'n', 3, 's')], 'a');
+    // c lands north-west of b, so `b --e--> c` is drawn pointing nw.
+    expect(f.detail).toContain('(drawn nw)');
   });
 });

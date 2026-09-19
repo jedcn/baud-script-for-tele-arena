@@ -6,6 +6,8 @@
 // unwalked frontiers, one-directional exits, horizontal moves that change
 // level, and rooms that exist but never get drawn.
 
+import { placeRooms, skewedEdges } from './map';
+
 export type Room = { id: number; slug: string; description: string | null;
                      x?: number | null; y?: number | null };
 export type Exit = { from_id: number; direction: string; to_id: number | null };
@@ -127,6 +129,64 @@ export function coordinates(rooms: Room[], allExits: Exit[],
     ok: bad.length === 0,
     detail: bad.length === 0 ? 'every edge lands where its direction says'
       : `${bad.length} disagree (loop closure will mint duplicates here): ` + bad.join(', '),
+  };
+}
+
+/**
+ * Whether the drawings point their lines the way the game says.
+ *
+ * Both renderers place rooms by dead reckoning and then draw each connector
+ * from the GEOMETRY of where the two ends landed, never from the exit's own
+ * direction. So a line can point somewhere the exit does not go, and until this
+ * check existed nothing anywhere said so -- `deep-forest-149 --sw-->
+ * deep-forest-150` was drawn pointing due north, and only a reader who knew the
+ * area noticed.
+ *
+ * Two causes, and only one of them is a defect:
+ *
+ *   - INHERENT. The loop that edge closes does not close: walk it the long way
+ *     round and you arrive somewhere else. No grid can honour every edge then,
+ *     because the shape being asked for does not exist in two dimensions. This
+ *     is the world being non-Euclidean, which CLAUDE.md notes is by design, so
+ *     it is reported and not failed. `site.ts` marks these lines on the page.
+ *   - LAYOUT. The edge was perfectly representable and the layout broke it
+ *     anyway, by nudging one end aside when a collision put two rooms on one
+ *     cell. That is a bug in `placeRooms`, so it fails.
+ */
+export function drawnDirections(
+  rooms: Room[], exits: Exit[], origin: string,
+): Finding {
+  const mine = new Set(rooms.map(r => r.id));
+  const by = new Map(rooms.map(r => [r.id, r.slug]));
+  const grid = rooms.map(r => ({ id: r.id, slug: r.slug, name: '' }));
+  const drawable = exits.filter(
+    e => e.to_id != null && mine.has(e.to_id) && OFFSET[e.direction]);
+  let skewed;
+  try {
+    const { pos } = placeRooms({ rooms: grid, exits, origin });
+    skewed = skewedEdges(grid, exits, pos);
+  } catch (e) {
+    // Unplaceable rooms are the `every room can be drawn` check's business.
+    return { check: 'lines point where the exits go', ok: true,
+             detail: `not checked: ${(e as Error).message}` };
+  }
+  const say = (s: typeof skewed[number]) =>
+    `${by.get(s.from_id)} ${s.direction} ${by.get(s.to_id)} (drawn ${s.drawn})`;
+  const inherent = skewed.filter(s => s.inherent);
+  const layout = skewed.filter(s => !s.inherent);
+  const notes: string[] = [];
+  if (layout.length) notes.push(
+    `${layout.length} broken by the layout, and fixable: ` + layout.map(say).join(', '));
+  if (inherent.length) notes.push(
+    `${inherent.length} cannot be drawn right at all — the loop does not close: `
+    + inherent.map(say).join(', '));
+  return {
+    check: 'lines point where the exits go',
+    ok: layout.length === 0,
+    detail: notes.length === 0
+      ? `all ${drawable.length} compass exits within the area are drawn in`
+        + ' their own direction'
+      : notes.join('; '),
   };
 }
 
@@ -295,7 +355,11 @@ export function report(findings: Finding[]): string {
 if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
   const { existsSync } = await import('node:fs');
-  const { renderArea } = await import('./map');
+  const { renderArea, DRAWN } = await import('./map');
+  const drawnOrigin = (slug: string, rooms: Room[]) => {
+    const want = DRAWN.find(d => d.slug === slug)?.origin;
+    return want && rooms.some(r => r.slug === want) ? want : rooms[0].slug;
+  };
 
   if (!existsSync('tele-arena.db')) {
     console.error('verify: no tele-arena.db here — nothing to check.');
@@ -328,6 +392,11 @@ if (import.meta.main) {
       levelConsistency(rooms, allExits, z),
       descriptions(rooms),
       proseAgreement(rooms, exits),
+      // The same origin `site.ts` draws from, not just the lowest id: the origin
+      // decides which path reaches a room FIRST, and first-come-wins is exactly
+      // what produces the skew, so a different origin would report a different
+      // set of bad lines than the page actually draws.
+      drawnDirections(rooms, exits, drawnOrigin(slug, rooms)),
     ];
     // The drawing is a check too: renderArea throws if a room cannot be placed
     // or if fewer boxes come out than rooms went in.

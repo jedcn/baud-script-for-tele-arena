@@ -208,6 +208,134 @@ export function placeRooms(opts: {
   return { pos, rooms, exits };
 }
 
+// Grid displacement back to a direction name, for saying what a line ACTUALLY
+// points at.
+const DIR_OF = new Map(Object.entries(OFF).map(([d, [c, r]]) => [`${c},${r}`, d]));
+
+/**
+ * Dead-reckon every room with NO collision handling, one compass-connected
+ * slab at a time.
+ *
+ * A slab is a set of rooms joined by compass edges, and it is the unit the grid
+ * can place rigidly: within one slab every edge has a true offset, so the whole
+ * thing has exactly one shape (up to translation). `u`/`d` carry no offset, so
+ * they are what separates one slab from the next -- the deep forest is seven
+ * slabs, its floor and its platforms alternating.
+ *
+ * The result is the shape the data ASKS for, which is not always a shape that
+ * exists: where a loop misses, two rooms land on one cell and an edge points the
+ * wrong way. That is the point of computing it. `placeRooms` cannot tell you
+ * this, because it resolves every such conflict silently.
+ */
+function idealCoords(rooms: Room[], exits: Exit[]): Map<number, Pos> {
+  const ids = new Set(rooms.map(r => r.id));
+  const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
+  const sorted = [...rooms].sort((a, b) => a.id - b.id);
+  const edges = [...exits].sort(
+    (a, b) => a.from_id - b.from_id || a.direction.localeCompare(b.direction));
+
+  const slabOf = new Map<number, number>();
+  const neighbours = new Map<number, Set<number>>();
+  for (const e of edges) {
+    if (!internal(e) || !OFF[e.direction]) continue;
+    if (!neighbours.has(e.from_id)) neighbours.set(e.from_id, new Set());
+    if (!neighbours.has(e.to_id!)) neighbours.set(e.to_id!, new Set());
+    neighbours.get(e.from_id)!.add(e.to_id!);
+    neighbours.get(e.to_id!)!.add(e.from_id);
+  }
+  let slabs = 0;
+  for (const r of sorted) {
+    if (slabOf.has(r.id)) continue;
+    const index = slabs++;
+    const stack = [r.id];
+    slabOf.set(r.id, index);
+    while (stack.length) {
+      const cur = stack.pop()!;
+      for (const n of neighbours.get(cur) ?? []) {
+        if (slabOf.has(n)) continue;
+        slabOf.set(n, index);
+        stack.push(n);
+      }
+    }
+  }
+
+  const at = new Map<number, Pos>();
+  for (let slab = 0; slab < slabs; slab++) {
+    const seed = sorted.find(r => slabOf.get(r.id) === slab)!;
+    at.set(seed.id, { c: 0, r: 0 });
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (const e of edges) {
+        if (slabOf.get(e.from_id) !== slab) continue;
+        const from = at.get(e.from_id);
+        if (!from || !internal(e) || at.has(e.to_id!)) continue;
+        const o = OFF[e.direction];
+        if (!o) continue;
+        at.set(e.to_id!, { c: from.c + o[0], r: from.r + o[1] });
+        moved = true;
+      }
+    }
+  }
+  return at;
+}
+
+/** An edge the drawing points somewhere other than where the game says. */
+export type Skew = {
+  from_id: number;
+  to_id: number;
+  /** The direction the game reports for this exit. */
+  direction: string;
+  /** The direction the line actually points, read off the placed cells. */
+  drawn: string;
+  /**
+   * True when no grid could have drawn it right: the loop this edge closes
+   * misses, so the data is asking for a shape that does not exist in two
+   * dimensions. False means the layout broke a representable edge on its own --
+   * a collision nudge moved one end -- which is a bug rather than a fact about
+   * the world.
+   */
+  inherent: boolean;
+};
+
+/**
+ * Every edge whose drawn direction is not the one the game reports.
+ *
+ * Both renderers draw a connector from the GEOMETRY of where the two rooms
+ * landed, not from the exit's direction -- deliberately, because `u`/`d` have no
+ * direction to draw along. The cost is that a compass edge silently lies
+ * whenever placement could not honour it, and nothing said so: `deep-forest-149
+ * --sw--> deep-forest-150` was drawn pointing due north for months.
+ *
+ * Placement is first-come-wins (see `placeRooms`), so the first path to reach a
+ * room fixes its cell and every later edge into it is merely drawn. This is what
+ * tells the two causes apart, which matters because only one of them is fixable.
+ */
+export function skewedEdges(
+  rooms: Room[], exits: Exit[], pos: Map<number, Pos>,
+): Skew[] {
+  const ids = new Set(rooms.map(r => r.id));
+  const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
+  const ideal = idealCoords(rooms, exits);
+  const out: Skew[] = [];
+  for (const e of [...exits].sort(
+    (a, b) => a.from_id - b.from_id || a.direction.localeCompare(b.direction))) {
+    const want = OFF[e.direction];
+    if (!want || !internal(e)) continue;
+    const a = pos.get(e.from_id), b = pos.get(e.to_id!);
+    if (!a || !b) continue;
+    const dc = Math.sign(b.c - a.c), dr = Math.sign(b.r - a.r);
+    if (dc === want[0] && dr === want[1]) continue;
+    const ia = ideal.get(e.from_id)!, ib = ideal.get(e.to_id!)!;
+    out.push({
+      from_id: e.from_id, to_id: e.to_id!, direction: e.direction,
+      drawn: DIR_OF.get(`${dc},${dr}`) ?? 'the same cell',
+      inherent: ib.c - ia.c !== want[0] || ib.r - ia.r !== want[1],
+    });
+  }
+  return out;
+}
+
 /**
  * Place every room on an integer grid, then paint boxes, connectors and
  * off-map labels into a character buffer. Returns the map lines and the key.

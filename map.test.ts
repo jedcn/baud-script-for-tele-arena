@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { renderArea, buildMarkdown, type Room, type Exit } from './map';
+import { renderArea, buildMarkdown, placeRooms, skewedEdges, type Room, type Exit } from './map';
 
 // Fixtures are plain data, never the live DB: tele-arena.db is absent on the
 // VPS, and these are also the three bugs that cost rooms silently, so they need
@@ -185,5 +185,52 @@ describe('buildMarkdown', () => {
     expect(md).toContain('- `t` — Temple');
     expect(md.match(/```/g)).toHaveLength(4);   // one fence pair per area
     expect(md.endsWith('\n')).toBe(true);
+  });
+});
+
+describe('skewedEdges', () => {
+  const skew = (rooms: Room[], exits: Exit[], origin: string) =>
+    skewedEdges(rooms, exits, placeRooms({ rooms, exits, origin }).pos);
+
+  it('finds nothing in a graph the grid holds exactly', () => {
+    const rooms = [room(1, 'a'), room(2, 'b'), room(3, 'c')];
+    expect(skew(rooms, [...pair(1, 'e', 2, 'w'), ...pair(2, 'n', 3, 's')], 'a')).toEqual([]);
+  });
+
+  // A triangle that asks for a shape two dimensions do not have: c is two cells
+  // west of a by way of b, and also due north of a. The grid picks one; whichever
+  // it picks, some line points somewhere the exit does not go.
+  it('marks an edge inherent when the loop it closes misses', () => {
+    const rooms = [room(1, 'a'), room(2, 'b'), room(3, 'c')];
+    const got = skew(rooms,
+      [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w'), ...pair(1, 'n', 3, 's')], 'a');
+    expect(got.map(s => [s.from_id, s.direction, s.to_id, s.drawn, s.inherent]))
+      .toEqual([[2, 'e', 3, 'nw', true], [3, 'w', 2, 'se', true]]);
+  });
+
+  // The same drawing fault from the other cause. `a --d--> b` carries no compass
+  // offset, so b is parked in a free cell and everything beyond it is laid out
+  // from there -- over the top of a's own region. `b --n--> c` then finds x in the
+  // cell it wants and c is shoved aside. b and c alone fit the grid perfectly, so
+  // this one is the layout's doing and could be fixed.
+  it('marks an edge NOT inherent when only the layout broke it', () => {
+    const rooms = [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')];
+    const got = skew(rooms,
+      [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'n', 4, 's')], 'a');
+    expect(got.map(s => [s.from_id, s.direction, s.to_id, s.drawn, s.inherent]))
+      .toEqual([[3, 'n', 4, 'nw', false], [4, 's', 3, 'se', false]]);
+  });
+
+  // u/d are drawn as a badge rather than a line precisely because they have no
+  // direction to point, so they can never be skewed and must not be reported.
+  it('ignores vertical exits', () => {
+    const rooms = [room(1, 'a'), room(2, 'b')];
+    expect(skew(rooms, pair(1, 'd', 2, 'u'), 'a')).toEqual([]);
+  });
+
+  it('ignores an exit that leaves the area or was never walked', () => {
+    const rooms = [room(1, 'a')];
+    expect(skew(rooms, [{ from_id: 1, direction: 'n', to_id: null },
+                        { from_id: 1, direction: 's', to_id: 99 }], 'a')).toEqual([]);
   });
 });
