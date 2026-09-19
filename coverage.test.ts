@@ -266,11 +266,16 @@ async function pairArea(slug: string) {
   return { spec, drawing, rooms, teleports, start, startBox };
 }
 
-// The valley is walked out -- no frontiers anywhere in it -- and the pairing
-// still leaves six boxes unclaimed, because pairRooms is a BFS through our exits
-// and one direction it cannot follow strands everything behind it. That shape,
-// "nothing left to walk and boxes still unpaired", is what the CLI now explains
-// rather than reporting as missing rooms.
+// The valley is walked out and the pairing still leaves six boxes unclaimed,
+// because pairRooms is a BFS through our exits and one direction it cannot follow
+// strands everything behind it. That shape, "nothing left to walk and boxes still
+// unpaired", is what the CLI now explains rather than reporting as missing rooms.
+//
+// "Walked out" means no frontier into unwalked VALLEY. valley-14's `d` is a stub
+// again since the caverns were wiped to be re-walked, and it has to be: the exit
+// is really there, and dropping it would lose the only way in. It leads out of the
+// area, so it explains no unpaired valley box -- which is why it is named here
+// rather than allowed to hide behind an empty list.
 describe('a stalled pairing is not the same as an unwalked area', () => {
   it('leaves boxes unpaired behind a disagreement, with no frontier to blame', async () => {
     const area = JSON.parse(await Bun.file('map/areas/valley.json').text());
@@ -280,10 +285,10 @@ describe('a stalled pairing is not the same as an unwalked area', () => {
     const box = drawing.boxes.find(b => b.label === SHRINE_MAPS.valley.originBox)!;
     const { pair, problems } = pairRooms(drawing, rooms, start.id, box.id, teleports);
 
-    // Every exit of ours leads somewhere: the area has no frontier left.
+    // Every exit of ours leads somewhere, bar the one way down out of the area.
     const stubs = rooms.flatMap(r =>
       Object.entries(r.exits).filter(([, to]) => to == null).map(([d]) => `${r.slug} ${d}`));
-    expect(stubs).toEqual([]);
+    expect(stubs).toEqual(['valley-14 d']);
 
     // And yet the pairing does not reach every box, which is the pairing's limit
     // and not a gap in the map.
@@ -328,11 +333,24 @@ describe('the exported map agrees with the shrine drawings', () => {
   // supposed to report those disagreements dies on a typo instead.
   for (const slug of Object.keys(SHRINE_MAPS).filter(s => !COMPLETE.includes(s))) {
     it(`${slug} is registered with a drawing and an origin that resolve`, async () => {
-      const { spec, drawing, start, startBox } = await pairArea(slug);
+      const spec = SHRINE_MAPS[slug];
       expect(await Bun.file(spec.file).exists(), `${spec.file} exists`).toBe(true);
+      const drawing = parseDrawing(await Bun.file(spec.file).text());
       expect(drawing.boxes.length).toBeGreaterThan(0);
-      expect(start, `${spec.originRoom} is a room of ${slug}`).toBeDefined();
-      expect(startBox, `box [${spec.originBox}] is on ${spec.file}`).toBeDefined();
+      expect(drawing.boxes.find(b => b.label === spec.originBox),
+        `box [${spec.originBox}] is on ${spec.file}`).toBeDefined();
+
+      // An area can be registered before it has any rooms -- that is the state
+      // complex-caverns is in after being wiped to be re-walked, and registering
+      // it is what makes `just coverage` usable DURING that walk (the CLI reads
+      // the live database, not this export). So the origin room is checked only
+      // once there is an export to check it against; the drawing half above is
+      // what catches a typo in the wiring either way.
+      const file = Bun.file(`map/areas/${slug}.json`);
+      if (!(await file.exists())) return;
+      const { rooms } = roomsFromExport(JSON.parse(await file.text()));
+      expect(rooms.find(r => r.slug === spec.originRoom),
+        `${spec.originRoom} is a room of ${slug}`).toBeDefined();
     });
   }
 });
