@@ -9,7 +9,7 @@
     {
       "area": "complex-caverns",
       "name": "The Complex of Natural Caverns",
-      "rooms": 9,
+      "rooms": 98,
       "file": "areas/complex-caverns.json"
     },
     {
