@@ -152,6 +152,24 @@ export type Room = { id: number; slug: string; exits: Record<string, number | nu
  * box already taken is reported rather than reused, since that means the two
  * graphs disagree about shape.
  */
+// The eight compass points in order, and the two either side of one. The shrine's
+// drawings are hand-made: a corridor that runs west gets drawn on the diagonal
+// when the page is tight, and a diagonal gets straightened when it is not. What
+// they are reliable about is WHICH ROOM IS NEXT TO WHICH -- adjacency survives the
+// draughtsman, exact bearing does not.
+//
+// So when our exit has no connector in the drawing, the box 45 degrees either side
+// is tried before giving up. Only when exactly one such box is free, and every one
+// is reported, because a skew is still a disagreement -- it is just one that should
+// not strand the rest of the level behind it. Before this, one bad connector one
+// step out of the entrance left 22 walked rooms reading as unwalked
+// (the Complex of Natural Caverns, 2026-09-19).
+const COMPASS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+function eitherSide(dir: string): string[] {
+  const i = COMPASS.indexOf(dir);
+  return i < 0 ? [] : [COMPASS[(i + 7) % 8], COMPASS[(i + 1) % 8]];
+}
+
 export function pairRooms(
   d: Drawing, rooms: Room[], startRoomId: number, startBoxId: string,
   // room id -> room id, from devices with effect='teleport'. Without these the
@@ -180,6 +198,13 @@ export function pairRooms(
   // disagreement still holds: the room has the exits it has, whoever is on the
   // other side of them.
   const drawn: string[] = [];
+  // Exits we followed 45 degrees off what the drawing shows (see eitherSide).
+  const skewed: string[] = [];
+  // Every drawing connector the walk actually used, both orientations. `drawn`
+  // reports connectors we did NOT use, and a skewed edge is used -- so without
+  // this each skew is reported a second time from its far end, wearing the
+  // reverse bearing and looking like a separate disagreement.
+  const used = new Set<string>();
   const queue = [startRoomId];
   while (queue.length) {
     const id = queue.shift()!;
@@ -188,7 +213,16 @@ export function pairRooms(
     for (const dir of Object.keys(mine)) {
       const to = mine[dir];
       if (to == null) continue;
-      const beyond = theirs[dir];
+      let beyond = theirs[dir];
+      if (!beyond && byId.has(to)) {
+        // Not drawn in that exact direction. Try 45 degrees either side, and take
+        // it only if exactly one of those is a box nothing else has claimed.
+        const sides = eitherSide(dir).filter(x => theirs[x] && !taken.has(theirs[x]));
+        if (sides.length === 1) {
+          beyond = theirs[sides[0]];
+          skewed.push(`${byId.get(id)!.slug} ${dir} is drawn ${sides[0]}`);
+        }
+      }
       if (!beyond) {
         if (!byId.has(to)) leaves.push(`${byId.get(id)!.slug} ${dir} (out of this area)`);
         else problems.push(`${byId.get(id)!.slug} --${dir}--> exists for us, not in the drawing`);
@@ -206,6 +240,7 @@ export function pairRooms(
       // its box is stoneworks-level-1's riddle chamber, and before this the walk
       // queued a room it had no record of and died on it.
       pair.set(to, beyond); taken.add(beyond);
+      used.add(`${boxId}|${beyond}`); used.add(`${beyond}|${boxId}`);
       if (byId.has(to)) queue.push(to);
     }
     // Then the Teleport, if this room has one and the legend says where its box
@@ -227,6 +262,7 @@ export function pairRooms(
     let ours: number | undefined;
     for (const [roomId, boxId] of pair) if (boxId === from) { ours = roomId; break; }
     if (ours == null) continue;
+    if (used.has(k)) continue;   // we walked this connector, exact or skewed
     const room = byId.get(ours);
     if (!room || dir in room.exits) continue;
     let far: number | undefined;
@@ -235,7 +271,7 @@ export function pairRooms(
     drawn.push(`${room.slug} is drawn with ${dir} to ${where}`
       + `, but the game gives it ${Object.keys(room.exits).sort().join(',')}`);
   }
-  return { pair, problems, leaves, drawn };
+  return { pair, problems, leaves, drawn, skewed };
 }
 
 /**
@@ -413,11 +449,18 @@ if (import.meta.main) {
     teleports.set(t.room_id, t.dest_room_id);
   }
 
-  const { pair, problems, leaves, drawn } = pairRooms(
+  const { pair, problems, leaves, drawn, skewed } = pairRooms(
     drawing, rooms, start.id, startBox.id, teleports);
   const mapped = new Set(pair.values());
 
-  console.log(`\n${slug} — ${pair.size} of ${drawing.boxes.length} rooms in the drawing\n`);
+  // Both numbers, always. "6 of 97" on its own reads as "you have walked six
+  // rooms", and on 2026-09-19 it said that about a level with 22 rooms walked --
+  // the pairing had stalled, and every figure below it was scoped to the six it
+  // had placed. How much is walked and how much the drawing can be matched to are
+  // different questions and the header now asks both.
+  const placed = [...pair.keys()].filter(id => roomById.has(id)).length;
+  console.log(`\n${slug} — ${rooms.length} rooms walked; `
+    + `${placed} of them placed on the drawing, which has ${drawing.boxes.length} boxes\n`);
   for (const line of renderCoverage(drawing, mapped)) console.log(line);
   console.log('\n  [#] walked    [.] not yet    [X1] landmark walked    (X1) landmark not yet\n');
 
@@ -428,9 +471,19 @@ if (import.meta.main) {
   const boxToRoom = new Map<string, number>();
   for (const [rid, bid] of pair) boxToRoom.set(bid, rid);
   const closes: string[] = [], opens: string[] = [], offMap: string[] = [];
+  // Frontiers in rooms the pairing could not place. These used to be dropped
+  // entirely -- the loop skipped an unplaced room -- so a level with frontiers all
+  // over it reported "no frontiers, nothing left to walk here". That is the
+  // opposite of the truth and it is the line a walker acts on.
+  const unplaced: string[] = [];
   for (const r of rooms) {
     const bid = pair.get(r.id);
-    if (!bid) continue;
+    if (!bid) {
+      for (const dir of Object.keys(r.exits)) {
+        if (r.exits[dir] == null) unplaced.push(`${r.slug} ${dir}`);
+      }
+      continue;
+    }
     const theirs = drawingExits(drawing, bid);
     for (const dir of Object.keys(r.exits)) {
       if (r.exits[dir] != null) continue;
@@ -450,6 +503,8 @@ if (import.meta.main) {
   say('unwalked links between rooms we already have — walking one closes a loop', closes);
   say('unwalked exits the drawing does not show (a label, or off this map)', offMap);
   say('walked exits that leave the area — the drawing captions these', leaves);
+  say('frontiers in rooms the drawing could not be matched to — still yours to walk', unplaced);
+  say('exits followed 45° off what the drawing shows — its bearing, not its adjacency', skewed);
   say('lines the drawing has that we do not — the drawing is wrong, or we are', drawn);
 
   const unpaired = drawing.boxes.filter(b => !mapped.has(b.id));
@@ -463,7 +518,7 @@ if (import.meta.main) {
   // therefore describing a pairing failure, not missing rooms, and on the valley
   // it left six boxes listed that map.html was drawing all along. Say so, rather
   // than leave the reader to reconcile two lines that contradict each other.
-  if (unpaired.length && !opens.length && !closes.length) {
+  if (unpaired.length && !opens.length && !closes.length && !unplaced.length) {
     console.log(`\n  ^ but there is nothing left to walk here: no frontiers, and no`);
     console.log(`    unwalked link between rooms we have. The pairing stopped early`);
     console.log(problems.length

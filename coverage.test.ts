@@ -306,7 +306,7 @@ describe('the exported map agrees with the shrine drawings', () => {
       expect(start, `${spec.originRoom} is in ${slug}`).toBeDefined();
       expect(startBox, `box [${spec.originBox}] is in the drawing`).toBeDefined();
 
-      const { pair, problems, drawn } = pairRooms(
+      const { pair, problems, drawn, skewed } = pairRooms(
         drawing, rooms, start!.id, startBox!.id, teleports);
 
       // A room of ours whose exits the drawing does not have is either a wrong
@@ -320,6 +320,11 @@ describe('the exported map agrees with the shrine drawings', () => {
       // picture and nowhere in its report. A finished area has to agree both ways
       // or "agrees with the drawing" means only half of what it sounds like.
       expect(drawn).toEqual([]);
+
+      // The 45-degree fallback is for drawings that are skewed. On a drawing that
+      // is right it must never fire, or it would quietly paper over a real
+      // disagreement by pairing through the box next door.
+      expect(skewed, `${slug} needed the bearing slack`).toEqual([]);
 
       // Every room we have is somewhere on the page, and every box on the page is
       // ours. Both directions, because the area is finished.
