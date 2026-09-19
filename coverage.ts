@@ -287,6 +287,21 @@ export const SHRINE_MAPS: Record<string,
     originBox: 'v',                      // down to the Complex of Natural Caverns
     originRoom: 'valley-14',
   },
+  // Down from valley-14. The shrine draws this cave system as FOUR pages, joined
+  // by numbered up/down boxes -- complexcaverns1..4 -- and the walk so far is all
+  // on page 1: the three `d` exits off it are still frontiers, so nothing has yet
+  // been walked onto 2, 3 or 4. Only page 1 is registered here because only page 1
+  // has an area to pair with; when a `d` is walked, the room it lands in belongs to
+  // a NEW area (`map-area complex-caverns-level-2`), which gets its own entry.
+  //
+  // Caverns 1 carries exactly one [^], captioned "Up to Valley", and exactly one
+  // room of ours has a `u` leading out of the area -- so the two identify each
+  // other, which is the confirmation the box is the right one.
+  'complex-caverns': {
+    file: 'map/shrine/complex-caverns-1.txt',
+    originBox: '^',                      // up to the Valley
+    originRoom: 'complex-of-natural-caverns',
+  },
 };
 
 /**
