@@ -775,6 +775,13 @@ end
 -- rooms already on the map (logs/session-pelayo-2026-09-19T12-25-56.log).
 -- findLoopClosure already hands its undecidable candidates back for the same
 -- reason; giving up quietly is how a duplicate appears with nothing in the log.
+-- How far off a rejected candidate may be and still be worth reporting, measured
+-- as the larger of the two axis distances so a diagonal counts as one move -- the
+-- unit the walk moves in. Two cells: the drift that actually mints duplicates is
+-- one lap of a non-Euclidean loop, and the loops here are off by about a cell a
+-- lap. It is a reporting threshold only; the veto itself is unchanged.
+local COORD_NEAR_MISS = 2
+
 function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
@@ -794,7 +801,25 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
                     n = n + 1
                     if not want[dir] then ok = false; break end
                 end
-                if ok and n == wantCount then
+                -- ...but only when it is NEAR. The veto rejects every candidate
+                -- with a different coordinate, however far off, and in a cave
+                -- where eight rooms share [nw,se] and one generic description
+                -- there is nearly always some same-fingerprint room somewhere.
+                -- Unfiltered this fired 54 times in one session, every one a
+                -- false alarm, which is worse than silence: a warning that cries
+                -- wolf is one you learn to walk past
+                -- (logs/session-pelayo-2026-09-19T13-58-35.log).
+                --
+                -- What makes a near miss worth reporting is that dead reckoning
+                -- DRIFTS -- this world's loops do not close in coordinate space,
+                -- so a room can be a cell or two off its true position and still
+                -- be the room you are standing in. A room seventeen cells away is
+                -- not that; it is a different cave that looks the same. The
+                -- duplicate this warning exists for was off by (1,1).
+                local dx = math.abs(cand.x - coord.x)
+                local dy = math.abs(cand.y - coord.y)
+                if ok and n == wantCount and cand.z == coord.z
+                    and math.max(dx, dy) <= COORD_NEAR_MISS then
                     vetoed[#vetoed + 1] = { id = id, coord = cand }
                 end
                 goto continue

@@ -2272,6 +2272,41 @@ describe("ta_db", function()
             assert.are.same({ x = 5, y = 5, z = 0 }, vetoed[1].coord)
         end)
 
+        -- Distance is the whole point of the filter. Unfiltered the warning fired
+        -- 54 times in one session, every one a false alarm, the nearest candidate
+        -- as much as seventeen cells away -- a different cave that happens to
+        -- share [nw,se] and one generic description. Drift mints duplicates at
+        -- about a cell a lap, so two cells is the reporting distance.
+        it("ignores a rejected candidate too far away to be drift", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            local match, vetoed =
+                TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 12, y = 5, z = 0 })
+            assert.is_nil(match)
+            assert.are.equal(0, #vetoed)
+        end)
+
+        -- A candidate on another floor is not drift either, however close it looks
+        -- once z is dropped: these areas stack, and the room below you is a room.
+        it("ignores a rejected candidate on another floor", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = -1 }
+                end
+                return nil
+            end
+            local match, vetoed =
+                TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 5, y = 5, z = 0 })
+            assert.is_nil(match)
+            assert.are.equal(0, #vetoed)
+        end)
+
         -- A room rejected on its coordinate that would NOT have matched anyway is
         -- not a near miss and must not be reported as one, or the warning cries
         -- wolf on every cave in the area.
