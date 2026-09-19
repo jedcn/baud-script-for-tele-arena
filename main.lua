@@ -947,15 +947,44 @@ createTrigger("^look (.+)$", function(matches)
     startLook(matches[2])
 end, { type = "regex" })
 
--- Bare "look" or "l" (no target) = room description
-createTrigger("^look$", function()
+-- Open a room-description capture, remembering WHICH ROOM it is a description
+-- of. The room is fixed here, at the `look`, and not at the `Exits:` line that
+-- ends the capture -- those can be fifty rooms apart. On 2026-09-18 a capture
+-- opened in the Complex of Natural Caverns and wrote its prose onto
+-- deep-forest-13, because deep-forest-13 was what `currentRoomId` still held
+-- (logs/session-pelayo-2026-09-18T14-37-39.log). A description is about the
+-- place you were standing when you looked; nothing later can change that.
+--
+-- taPackage fields rather than locals: ta_nav.lua is a separate chunk with its
+-- own 200-local budget and navSend has to be able to call the abandon.
+function taPackage.startRoomDescCapture()
     taPackage.monsterDb.state = "accumulating_room"
     taPackage.monsterDb.accumulatedLines = {}
+    taPackage.monsterDb.descRoomId = taPackage.currentRoomId
+end
+
+-- Drop a capture without writing it. Every move calls this -- typed or sent by a
+-- walk -- because once you have moved, the next `Exits:` describes somewhere
+-- else, so there is no honest room left to file the half-read description under.
+--
+-- It also re-arms the room-entry triggers, which `accumulating_room` suppresses
+-- (a room line during a look is the look talking, not an arrival). That makes a
+-- capture that never ends worse than a lost description: it quietly stops the
+-- mapper seeing arrivals at all, for the rest of the session.
+function taPackage.abandonRoomDescCapture()
+    if taPackage.monsterDb.state ~= "accumulating_room" then return end
+    taPackage.monsterDb.state = "idle"
+    taPackage.monsterDb.accumulatedLines = {}
+    taPackage.monsterDb.descRoomId = nil
+end
+
+-- Bare "look" or "l" (no target) = room description
+createTrigger("^look$", function()
+    taPackage.startRoomDescCapture()
 end, { type = "regex" })
 
 createTrigger("^l$", function()
-    taPackage.monsterDb.state = "accumulating_room"
-    taPackage.monsterDb.accumulatedLines = {}
+    taPackage.startRoomDescCapture()
 end, { type = "regex" })
 
 -- `look <dir>` / `l <dir>` peeks at the adjacent room; its reply opens with
@@ -1052,6 +1081,41 @@ local function isRoomDescTerminator(line)
         or string.match(line, "^Sorry,")
 end
 
+-- Lines that arrive inside a look but are not part of it: something that
+-- HAPPENED while the description was being read. A room with four characters and
+-- a minotaur in it prints a lot of them, and eighteen of the caverns rooms
+-- walked on 2026-09-18 have them welded into their prose.
+--
+-- Each shape is checked against the whole line and against the real
+-- descriptions already in the database, because a look wraps at 78 columns and a
+-- continuation line can start anywhere:
+--   * ends in "!" -- every combat line, dodge and spell does; of 1000-odd stored
+--     descriptions exactly one contains an "!", and that one is the corrupted
+--     deep-forest-13.
+--   * the arrival and departure broadcasts.
+--   * the brief's own occupant and floor lines, anchored the way the arena
+--     roster anchors them (" is here." / " are here." / "... on the floor."),
+--     which is what keeps prose ending in "...took place here." out of this.
+local function isRoomDescNoise(line)
+    return line:match("!$")
+        or line:match(" has just arrived")
+        or line:match(" just left")
+        or line:match(" is here%.$")
+        or line:match(" are here%.$")
+        -- The monster line and "There is nobody here." need their own shape: both
+        -- end in "<something> here." rather than " is here.", which is exactly
+        -- why the arena roster's two triggers cannot match them either.
+        or line:match("^There is .+ here%.$")
+        or line:match("^There .+ on the floor%.$")
+end
+
+-- A look is a paragraph, not a transcript. The longest real description in the
+-- database is a little over 60 lines unwrapped; well past that, the `Exits:`
+-- that should have closed this capture is not coming, and the useful thing is to
+-- let go rather than keep swallowing -- an open capture blinds the room-entry
+-- triggers (see abandonRoomDescCapture).
+local ROOM_DESC_MAX_LINES = 80
+
 local function cleanRoomDesc(desc)
     -- Strip "look " or "l " prefix if the echo got accumulated
     desc = desc:gsub("^look%s+", ""):gsub("^l%s+", "")
@@ -1068,14 +1132,20 @@ createTrigger("^(.+)$", function(matches)
         if line == "look" or line == "l" or line == "ex" then return end
         if isRoomDescTerminator(line) then
             local lines = taPackage.monsterDb.accumulatedLines
-            if #lines > 0 and taPackage.currentRoomId then
+            local roomId = taPackage.monsterDb.descRoomId
+            if #lines > 0 and roomId then
                 local desc = cleanRoomDesc(table.concat(lines, " "))
                 if #desc > 0 then
-                    taPackage.db.setRoomDescription(taPackage.currentRoomId, desc)
+                    taPackage.db.setRoomDescription(roomId, desc)
                 end
             end
-            taPackage.monsterDb.state = "idle"
-            taPackage.monsterDb.accumulatedLines = {}
+            taPackage.abandonRoomDescCapture()
+        elseif isRoomDescNoise(line) then
+            -- Dropped, but the capture stays open: the look's own prose is still
+            -- coming, and the `Exits:` that ends it has not arrived.
+            return
+        elseif #taPackage.monsterDb.accumulatedLines >= ROOM_DESC_MAX_LINES then
+            taPackage.abandonRoomDescCapture()
         else
             table.insert(taPackage.monsterDb.accumulatedLines, line)
         end
@@ -1629,10 +1699,7 @@ for _, dir in ipairs(moveDirections) do
         -- never saw the `Exits:` line that ends its capture. Both would otherwise
         -- swallow the brief we are about to walk into.
         taPackage.suppressRoomEntry = nil
-        if taPackage.monsterDb.state == "accumulating_room" then
-            taPackage.monsterDb.state = "idle"
-            taPackage.monsterDb.accumulatedLines = {}
-        end
+        taPackage.abandonRoomDescCapture()
         taPackage.pushPendingDir(dir)
         taPackage.prevRoom = taPackage.currentRoom
         taPackage.prevRoomId = taPackage.currentRoomId

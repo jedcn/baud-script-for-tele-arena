@@ -3304,6 +3304,80 @@ describe("World map triggers", function()
             assert.is_nil(taPackage.suppressRoomEntry)
         end)
 
+        -- A description is about the room you were standing in when you looked.
+        -- Resolving that at the `Exits:` line instead put the Complex of Natural
+        -- Caverns' prose onto deep-forest-13 on 2026-09-18, fifty rooms away
+        -- (logs/session-pelayo-2026-09-18T14-37-39.log).
+        it("files a description under the room the look was sent from", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in a stone passage.")
+            helper.simulateLine("look")
+            helper.clearDbCalls()
+            helper.simulateLine("You are standing in a stone passage running north.")
+            taPackage.currentRoomId = 99                 -- we have moved on since
+            helper.simulateLine("Exits: n,s.")
+            local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+            assert.is_not_nil(desc)
+            assert.are.equal(1, desc.params[2])
+        end)
+
+        -- A walk is a move like any other, but it sends its steps straight
+        -- through navSend rather than through the direction aliases -- which is
+        -- how a capture opened by `map-here` survived a fifty-step live-navigate.
+        it("a walk's own step abandons a look capture left open", function()
+            taPackage.monsterDb.state = "accumulating_room"
+            taPackage.hereState = "known"
+            taPackage.here = 1
+            helper.mockDbRows = function(sql)
+                if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                    return { { from_id = 1, direction = "e", to_id = 2 } }
+                elseif string.find(sql, "SELECT r.id FROM rooms r JOIN areas a", 1, true) then
+                    return { { id = 2 } }
+                end
+                return {}
+            end
+            helper.simulateAlias("live-navigate somewhere")
+            assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
+            assert.are.equal("idle", taPackage.monsterDb.state)
+        end)
+
+        -- Eighteen of the caverns rooms walked on 2026-09-18 have a minotaur
+        -- fight welded into their prose: four characters and a monster print a
+        -- lot of lines between the `look` and its `Exits:`.
+        it("keeps arrivals, combat and the brief's own lines out of a description", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in a cavern.")
+            helper.simulateLine("look")
+            helper.clearDbCalls()
+            helper.simulateLine("Kerhak has just arrived from the north.")
+            helper.simulateLine("You are standing in a surprisingly orderly complex of caverns.")
+            helper.simulateLine("The minotaur chieftain attacked Kerhak with his greatsword!")
+            helper.simulateLine("There is a minotaur chieftain here.")
+            helper.simulateLine("Tojolias and Teekywiki are here.")
+            helper.simulateLine("There is nothing on the floor.")
+            helper.simulateLine("You may exit to the northwest.")
+            helper.simulateLine("Exits: nw.")
+            local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+            assert.are.equal(
+                "You are standing in a surprisingly orderly complex of caverns."
+                    .. " You may exit to the northwest.",
+                desc.params[1])
+        end)
+
+        -- An open capture suppresses the room-entry triggers, so one that never
+        -- ends does not just lose a description -- it stops the mapper seeing
+        -- arrivals at all. Past any plausible description, let go.
+        it("abandons a capture that runs past any plausible description", function()
+            stubDiscover(1)
+            helper.simulateLine("You're in a cavern.")
+            helper.simulateLine("look")
+            helper.clearDbCalls()
+            for i = 1, 90 do helper.simulateLine("filler line " .. i) end
+            assert.are.equal("idle", taPackage.monsterDb.state)
+            helper.simulateLine("Exits: nw.")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET description"))
+        end)
+
         it("stamps the origin coordinate on a cold-start room", function()
             stubDiscover(1)  -- no pendingDirection: nothing to dead-reckon from
             helper.simulateLine("You're in a cave.")

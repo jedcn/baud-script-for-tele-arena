@@ -1647,6 +1647,11 @@ end
 
 local function navSend(dir)
     taPackage.suppressRoomEntry = nil
+    -- The same abandon the typed direction aliases do. Without it a walk is the
+    -- one kind of move that leaves a half-read description open: `map-here X`
+    -- then `live-navigate` left a capture running for fifty steps on
+    -- 2026-09-18, and it ended up filed under X.
+    taPackage.abandonRoomDescCapture()
     taPackage.pendingDirection = nil
     -- When this went out, which is what the dark watchdog compares against.
     local j = taPackage.navigate
