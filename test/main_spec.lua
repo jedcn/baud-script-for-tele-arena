@@ -4088,6 +4088,23 @@ describe("World map triggers", function()
             assert.is_false(taPackage.currentRoomProvisional)
         end)
 
+        -- The duplicate warning ends "stop now and `map-here` it" and then names
+        -- the room the way the map names rooms everywhere else -- area and slug.
+        -- Typing that back answered "no room with slug", so the one command the
+        -- warning exists to prompt was the one thing it made impossible. The
+        -- walker ran map-off instead and the duplicate is still in the map
+        -- (logs/session-pelayo-2026-09-19T15-01-29.log).
+        it("takes the area/room form the rest of the map prints", function()
+            taPackage.mapping = false
+            helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
+            helper.simulateAlias("map-here complex-caverns/cave-11")
+            assert.is_true(taPackage.mapping)
+            assert.are.equal(91, taPackage.currentRoomId)
+            local q = helper.findDbCall("queryOne", "FROM rooms WHERE slug")
+            assert.is_not_nil(q)
+            assert.are.equal("cave-11", q.params[1])   -- the area was stripped
+        end)
+
         it("stamps the player's location at the anchor room", function()
             taPackage.character.name = "Pelayo"
             helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }

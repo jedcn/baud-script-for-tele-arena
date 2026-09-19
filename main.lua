@@ -2146,6 +2146,15 @@ end, { type = "regex" })
 -- the right place. Use the unique slug (shown in the report / `map-list-areas`).
 createAlias("^map-here (.+)$", function(matches)
     local slug = matches[2]:match("^%s*(.-)%s*$")
+    -- Accept the `area/room` form as well as the bare slug, because that is how
+    -- the map prints a room everywhere else -- roomRef, the coverage report,
+    -- live-navigate, and the duplicate warning, which ends "stop now and
+    -- `map-here` it" and then names the room as `complex-caverns/...`. Copying
+    -- that name back in answered "no room with slug", so the one command the
+    -- warning exists to prompt was the one thing it made impossible. The walker
+    -- gave up and ran map-off, and the duplicate is still in the map
+    -- (logs/session-pelayo-2026-09-19T15-01-29.log, line 1274).
+    slug = slug:match("[^/]+$") or slug
     local room = taPackage.db.roomBySlug(slug)
     if not room then
         echo("[map] no room with slug: " .. slug)
