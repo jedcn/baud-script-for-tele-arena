@@ -123,7 +123,20 @@ describe('renderLevel', () => {
     // is indistinguishable from one we never recorded. (No real area has a
     // double connection today -- this fixture is the guard against a dedup that
     // keys on the two rooms alone.)
-    expect(svg.match(/class="edge"/g)!.length).toBe(3);
+    //
+    // Matched on the class PREFIX: a line can also carry `skew`, and this
+    // fixture has one. hall reaches vault both `w` and `s`, which is a shape no
+    // grid holds, so whichever line loses is drawn pointing somewhere else.
+    expect(svg.match(/class="edge[ "]/g)!.length).toBe(3);
+  });
+
+  // The two ways a line can lie about its direction, and why the page says so:
+  // a reader cannot tell a wrongly-angled line from an ordinary one, and this is
+  // the map people navigate from.
+  it('marks a line that does not point the way its exit goes', () => {
+    expect(stats.skewed).toBe(1);
+    expect(svg).toContain('class="edge skew"');
+    expect(svg).toContain('but this line points');
   });
 
   it('marks an unwalked exit as a stub with an open end', () => {

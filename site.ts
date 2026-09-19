@@ -14,7 +14,8 @@
 //
 // Dark only, matching report.html, because they are read side by side.
 
-import { placeRooms, SERVICES, DRAWN, type Room as GridRoom, type Exit as GridExit } from './map';
+import { placeRooms, skewedEdges, SERVICES, DRAWN, type Room as GridRoom,
+         type Exit as GridExit } from './map';
 import type { Area, Room, Exit } from './export';
 
 // Pixels per grid cell, and the box drawn in it. Wide enough that a diagonal
@@ -77,6 +78,8 @@ export function groupAreas(areas: { area: string; name: string }[]): Group[] {
 export type LevelStats = {
   rooms: number; frontiers: number; devices: number; traps: number;
   doors: number; seals: number; leaving: number;
+  /** Lines that do not point the way their exit goes. See `skewedEdges`. */
+  skewed: number;
 };
 export type LevelSvg = {
   svg: string; stats: LevelStats; width: number; height: number;
@@ -147,6 +150,20 @@ export function renderLevel(
     ? `${area.area}/${drawn.origin}` : area.rooms[0].id;
   const { pos } = placeRooms({ rooms: gridRooms, exits: gridExits, origin });
 
+  // Which lines are about to point somewhere their exit does not go.
+  //
+  // An edge is drawn between the two boxes' centres, so its angle is a
+  // consequence of placement and nothing else. Most of the time that agrees with
+  // the direction; where it cannot, the line is marked rather than left to read
+  // as a plain exit, because a reader has no way to tell the difference and this
+  // page is the map people actually navigate from. `deep-forest-149 --sw-->
+  // deep-forest-150` points due north and looked entirely ordinary.
+  const slugOf = new Map([...ids].map(([slug, n]) => [n, slug]));
+  const skewed = new Map<string, { drawn: string; inherent: boolean }>();
+  for (const s of skewedEdges(gridRooms, gridExits, pos))
+    skewed.set(`${slugOf.get(s.from_id)}|${s.direction}`,
+               { drawn: s.drawn, inherent: s.inherent });
+
   const cells = [...pos.values()];
   const minC = Math.min(...cells.map(p => p.c)), maxC = Math.max(...cells.map(p => p.c));
   const minR = Math.min(...cells.map(p => p.r)), maxR = Math.max(...cells.map(p => p.r));
@@ -161,7 +178,7 @@ export function renderLevel(
 
   const stats: LevelStats = {
     rooms: area.rooms.length, frontiers: 0, devices: 0, traps: 0,
-    doors: 0, seals: 0, leaving: 0,
+    doors: 0, seals: 0, leaving: 0, skewed: 0,
   };
   const edges: string[] = [], gates: string[] = [], boxes: string[] = [];
   const own = new Map<string, string[]>();          // room id -> its own stubs/badges
@@ -230,8 +247,24 @@ export function renderLevel(
       seen.add(key);
       const [ax, ay] = home[pair[0]], [bx, by] = home[pair[1]];
       const anchors = ` data-a="${esc(pair[0])}" data-b="${esc(pair[1])}"`;
-      edges.push(`<line class="edge"${anchors} x1="${ax}" y1="${ay}"`
-        + ` x2="${bx}" y2="${by}"><title>${esc(title)}</title></line>`);
+      // One line stands for both directions, so ask about both: whichever of the
+      // two the skew was recorded against, the line is the same stroke.
+      const bad = skewed.get(`${room.id}|${dir}`)
+        ?? (ex.to != null ? skewed.get(`${ex.to}|${REVERSE[dir] ?? dir}`) : undefined);
+      let lineTitle = title;
+      if (bad) {
+        stats.skewed++;
+        lineTitle = `${title} — but this line points ${bad.drawn}. `
+          + (bad.inherent
+            // Nothing to fix. Saying so is the point: otherwise a reader who
+            // spots it goes looking for a bad exit that is not there.
+            ? 'The loop this exit closes does not close, so no flat map can draw'
+              + ' it in its own direction. The exit is right; the picture cannot be.'
+            : 'The layout had to move a room out of a cell another room had'
+              + ' already taken, and this line came with it.');
+      }
+      edges.push(`<line class="edge${bad ? ' skew' : ''}"${anchors} x1="${ax}" y1="${ay}"`
+        + ` x2="${bx}" y2="${by}"><title>${esc(lineTitle)}</title></line>`);
       if (gate) {
         if (gate === 'seal') stats.seals++; else stats.doors++;
         gates.push(`<g class="gate"${anchors}`
@@ -311,6 +344,9 @@ const LEGEND: [string, string][] = [
     'a character stands here — where the map last saw them, not live'],
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/></svg>',
     'a walked exit, both ways'],
+  ['<svg viewBox="0 0 20 14"><line class="edge skew" x1="1" y1="7" x2="19" y2="7"/></svg>',
+    'a walked exit whose line points the wrong way — hover it for which way it'
+    + ' really goes, and why the map cannot draw it'],
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/>'
     + '<rect class="door-mark" x="6" y="3" width="8" height="8"/></svg>',
     'a Door: hover it for the material and the key'],
@@ -398,6 +434,11 @@ button.ghost[disabled] { opacity: 0.45; cursor: default; }
 .stub { stroke: #55606d; stroke-width: 1.6px; stroke-dasharray: 3 3; }
 .frontier { fill: var(--bg); stroke: var(--green); stroke-width: 1.6px; }
 .away { stroke: var(--blue); stroke-width: 1.6px; stroke-dasharray: 4 3; }
+/* A line whose angle is not the direction of the exit it stands for. Amber and
+   dashed rather than a colour of its own: it is a caveat on an ordinary exit,
+   not a different kind of exit, and it has to stay legible under the door and
+   seal marks that may sit on top of it. */
+.edge.skew { stroke: var(--amber); stroke-dasharray: 5 3; }
 .away-label { fill: var(--blue); font-size: 9.5px; font-family: inherit; }
 .door-mark { fill: var(--bg); stroke: var(--red); stroke-width: 1.5px; }
 .seal-mark { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5px; }
@@ -514,7 +555,8 @@ function show(slug) {
     + (s.devices ? ' · <b>' + s.devices + '</b> devices' : '')
     + (s.traps ? ' · <b>' + s.traps + '</b> traps' : '')
     + (s.doors ? ' · <b>' + s.doors + '</b> doors' : '')
-    + (s.seals ? ' · <b>' + s.seals + '</b> seals' : '');
+    + (s.seals ? ' · <b>' + s.seals + '</b> seals' : '')
+    + (s.skewed ? ' · <b>' + s.skewed + '</b> lines point the wrong way' : '');
   if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
   shown = slug;
   index();
