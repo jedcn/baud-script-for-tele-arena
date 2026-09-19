@@ -168,6 +168,18 @@ export function pairRooms(
   // rather than a box ("Down to Sewers", "[S] Stoneworks"), so an exit leading out
   // has no connector to match and is not a disagreement -- it is the area ending.
   const leaves: string[] = [];
+  // The other direction, which nothing used to check: a connector the DRAWING
+  // gives a paired box where the game gives that room no such exit. `problems`
+  // only ever reads our exits against the drawing, so a line the shrine draws and
+  // we do not have was rendered on the page and reported nowhere -- which is how
+  // an east exit out of complex-of-natural-caverns-5 sat on the coverage picture,
+  // contradicting map.html, until someone put the two side by side.
+  //
+  // Only PAIRED boxes are judged, because only there do we know the room's whole
+  // exit-set from `ex`. Where the far end is a box we have not walked the
+  // disagreement still holds: the room has the exits it has, whoever is on the
+  // other side of them.
+  const drawn: string[] = [];
   const queue = [startRoomId];
   while (queue.length) {
     const id = queue.shift()!;
@@ -210,7 +222,20 @@ export function pairRooms(
       }
     }
   }
-  return { pair, problems, leaves };
+  for (const [k, dir] of d.edges) {
+    const [from, to] = k.split('|');
+    let ours: number | undefined;
+    for (const [roomId, boxId] of pair) if (boxId === from) { ours = roomId; break; }
+    if (ours == null) continue;
+    const room = byId.get(ours);
+    if (!room || dir in room.exits) continue;
+    let far: number | undefined;
+    for (const [roomId, boxId] of pair) if (boxId === to) { far = roomId; break; }
+    const where = far != null ? byId.get(far)?.slug ?? `#${far}` : 'a box we have not walked';
+    drawn.push(`${room.slug} is drawn with ${dir} to ${where}`
+      + `, but the game gives it ${Object.keys(room.exits).sort().join(',')}`);
+  }
+  return { pair, problems, leaves, drawn };
 }
 
 /**
@@ -388,7 +413,7 @@ if (import.meta.main) {
     teleports.set(t.room_id, t.dest_room_id);
   }
 
-  const { pair, problems, leaves } = pairRooms(
+  const { pair, problems, leaves, drawn } = pairRooms(
     drawing, rooms, start.id, startBox.id, teleports);
   const mapped = new Set(pair.values());
 
@@ -425,6 +450,7 @@ if (import.meta.main) {
   say('unwalked links between rooms we already have — walking one closes a loop', closes);
   say('unwalked exits the drawing does not show (a label, or off this map)', offMap);
   say('walked exits that leave the area — the drawing captions these', leaves);
+  say('lines the drawing has that we do not — the drawing is wrong, or we are', drawn);
 
   const unpaired = drawing.boxes.filter(b => !mapped.has(b.id));
   console.log(`\nboxes not yet ours (${unpaired.length})`);

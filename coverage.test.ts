@@ -306,7 +306,7 @@ describe('the exported map agrees with the shrine drawings', () => {
       expect(start, `${spec.originRoom} is in ${slug}`).toBeDefined();
       expect(startBox, `box [${spec.originBox}] is in the drawing`).toBeDefined();
 
-      const { pair, problems } = pairRooms(
+      const { pair, problems, drawn } = pairRooms(
         drawing, rooms, start!.id, startBox!.id, teleports);
 
       // A room of ours whose exits the drawing does not have is either a wrong
@@ -314,6 +314,12 @@ describe('the exported map agrees with the shrine drawings', () => {
       // that LEAVES the area is neither, and pairRooms separates those out: the
       // shrine captions the room across a Seam instead of drawing it.
       expect(problems).toEqual([]);
+
+      // And the other direction, which went unchecked until an east exit the
+      // shrine draws out of complex-of-natural-caverns-5 turned up on the coverage
+      // picture and nowhere in its report. A finished area has to agree both ways
+      // or "agrees with the drawing" means only half of what it sounds like.
+      expect(drawn).toEqual([]);
 
       // Every room we have is somewhere on the page, and every box on the page is
       // ours. Both directions, because the area is finished.
