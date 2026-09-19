@@ -7,6 +7,12 @@
       "file": "areas/cellars.json"
     },
     {
+      "area": "complex-caverns",
+      "name": "The Complex of Natural Caverns",
+      "rooms": 9,
+      "file": "areas/complex-caverns.json"
+    },
+    {
       "area": "deep-forest",
       "name": "The Deep Forest",
       "rooms": 200,

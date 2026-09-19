@@ -252,7 +252,7 @@
       "name": "valley",
       "exits": {
         "d": {
-          "to": null
+          "to": "complex-caverns/complex-of-natural-caverns"
         },
         "n": {
           "to": "valley/valley-13"

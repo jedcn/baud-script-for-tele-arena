@@ -271,11 +271,13 @@ async function pairArea(slug: string) {
 // strands everything behind it. That shape, "nothing left to walk and boxes still
 // unpaired", is what the CLI now explains rather than reporting as missing rooms.
 //
-// "Walked out" means no frontier into unwalked VALLEY. valley-14's `d` is a stub
-// again since the caverns were wiped to be re-walked, and it has to be: the exit
-// is really there, and dropping it would lose the only way in. It leads out of the
-// area, so it explains no unpaired valley box -- which is why it is named here
-// rather than allowed to hide behind an empty list.
+// "Walked out" means no frontier into unwalked VALLEY. valley-14's `d` is the one
+// exception and swings either way: it is a stub whenever the Complex of Natural
+// Caverns below is unwalked, and walked again once someone goes down. Asserting
+// an empty list therefore breaks every time the caverns are wiped, and asserting
+// the stub breaks when they are re-walked. Neither is the claim being made here,
+// which is about exits into unwalked VALLEY -- so that one seam exit is excluded
+// by name and everything else still has to lead somewhere.
 describe('a stalled pairing is not the same as an unwalked area', () => {
   it('leaves boxes unpaired behind a disagreement, with no frontier to blame', async () => {
     const area = JSON.parse(await Bun.file('map/areas/valley.json').text());
@@ -288,7 +290,7 @@ describe('a stalled pairing is not the same as an unwalked area', () => {
     // Every exit of ours leads somewhere, bar the one way down out of the area.
     const stubs = rooms.flatMap(r =>
       Object.entries(r.exits).filter(([, to]) => to == null).map(([d]) => `${r.slug} ${d}`));
-    expect(stubs).toEqual(['valley-14 d']);
+    expect(stubs.filter(s => s !== 'valley-14 d')).toEqual([]);
 
     // And yet the pairing does not reach every box, which is the pairing's limit
     // and not a gap in the map.

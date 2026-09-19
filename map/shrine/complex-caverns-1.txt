@@ -1,6 +1,24 @@
 # Complex Caverns 1
 # https://tele-arena.tumblr.com/complexcaverns1
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: the room one step north-west of the Valley staircase
+# is drawn here with two exits, where the shrine draws three. The game answers
+# `ex` in that room with "Exits: se,w" -- twice, on 2026-09-18 and again on the
+# re-walk of 2026-09-19 (logs/session-pelayo-2026-09-18T14-37-39.log). The
+# shrine gives it a north-west connector it does not have, and draws its other
+# exit as south-west where the game says west. So that box's neighbour is moved
+# up one row and linked west, and its own onward exits fall out as south-west
+# and north-west, which is what we walked.
+#
+# This is a PARTIAL correction. It takes the pairing from 2 boxes to 6, and the
+# two disagreements it then exposes are the same error again, one and two rooms
+# further out: we have a west exit where this drawing has something else, at the
+# rooms the walk currently ends on. The whole corner looks skewed rather than
+# wrong in one place, and 9 walked rooms is not enough to redraw it honestly --
+# finish the area and correct the rest against real coverage.
+#
+# `just scrape-shrine-maps` will revert this -- re-apply it.
 
 [ ]         [ ]     [ ]     [ ]         [ ]     [ ]-[ ]     [ ] 
  |         /   \   /           \         |             \   / 
@@ -33,7 +51,7 @@
     [ ]                     [ ]                     [ ]     [ ]? 
    /   \                       \                   /         ? 
 [ ]     [ ]-[ ]-[ ]             [ ]             [ ] 
- |                 \               \           / 
-[ ]                 [ ]  Up to      [ ]     [ ]         [ ] 
-   \               /   \ Valley        \   /   \       /   \ 
-    [ ]     [ ]-[ ]     [^]             [ ]     [ ]-[ ]     [ ]
+ |             \                   \           / 
+[ ]             [ ]-[ ]  Up to      [ ]     [ ]         [ ] 
+   \           /       \ Valley        \   /   \       /   \ 
+    [ ]     [ ]         [^]             [ ]     [ ]-[ ]     [ ]
