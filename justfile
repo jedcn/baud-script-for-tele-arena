@@ -130,6 +130,13 @@ scrape-shrine-maps:
 # edges, moves that change depth impossibly (which is how a teleport recorded as
 # an ordinary exit gives itself away), missing descriptions, and that every room
 # can actually be drawn.
+#
+# And two checks that read the map against the GAME rather than against itself,
+# out of every session log in ./logs and the archive: a room id the game showed
+# two different exit-sets (two real rooms recorded as one), and a room whose map
+# exits are not the ones in its own last `ex` reply. Everything else here is
+# self-consistent when the map is conflated, which is how the Complex of Natural
+# Caverns passed every check while three of its rooms each stood for two.
 verify-area slug="":
     bun verify.ts {{slug}}
 

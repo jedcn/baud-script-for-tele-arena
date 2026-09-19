@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
          routeReferences, coordinates, orphanExits, proseAgreement, proseDirections,
-         drawnDirections, type Room, type Exit } from './verify';
+         drawnDirections, observedExits, oneRoomTwoShapes, exitsMatchTheGame,
+         logInstant, afterRoomExisted, type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -309,5 +310,135 @@ describe('drawnDirections', () => {
       [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w'), ...pair(1, 'n', 3, 's')], 'a');
     // c lands north-west of b, so `b --e--> c` is drawn pointing nw.
     expect(f.detail).toContain('(drawn nw)');
+  });
+});
+
+
+// Reading the game's own words back out of a session log. Every other check in
+// verify.ts compares the map with itself, and a conflation -- two real rooms
+// recorded as one -- is perfectly self-consistent, so nothing else can see it.
+describe('what the game said the exits were', () => {
+  const log = (...lines: string[]) => lines.join('\n');
+
+  it('pairs an Exits line with the room the mapper believed it was in', () => {
+    const obs = observedExits(log(
+      'You\'re in a cave.',
+      'Exits: ne,se,nw.',
+      '[mapdbg] Exits trigger: mapping=true currentRoomId=1885 (number)',
+    ), 'a.log');
+    expect(obs).toEqual([{ roomId: 1885, exits: ['ne', 'se', 'nw'], file: 'a.log', line: 2 }]);
+  });
+
+  // With mapping off, currentRoomId is whatever the last session left behind and
+  // the character has been walked around by hand since. It is not a sighting.
+  it('ignores a probe taken while mapping was off', () => {
+    const obs = observedExits(log(
+      'Exits: n,s.',
+      '[mapdbg] Exits trigger: mapping=false currentRoomId=12 (number)',
+    ), 'a.log');
+    expect(obs).toEqual([]);
+  });
+
+  it('does not carry one Exits line forward to a second room', () => {
+    const obs = observedExits(log(
+      'Exits: n,s.',
+      '[mapdbg] Exits trigger: mapping=true currentRoomId=1 (number)',
+      '[mapdbg] Exits trigger: mapping=true currentRoomId=2 (number)',
+    ), 'a.log');
+    expect(obs.map(o => o.roomId)).toEqual([1]);
+  });
+});
+
+describe('oneRoomTwoShapes', () => {
+  it('passes when every room is always seen the same way', () => {
+    const f = oneRoomTwoShapes([
+      { roomId: 1, exits: ['n', 's'], file: 'a.log', line: 1 },
+      { roomId: 1, exits: ['s', 'n'], file: 'b.log', line: 1 },
+    ]);
+    expect(f.ok).toBe(true);
+  });
+
+  // The Complex of Natural Caverns: #1885 read {nw,se,sw} early in a session and
+  // {ne,nw,se} later in the same one. Exits do not change, so the map was calling
+  // two rooms by one id -- and reciprocity, frontiers and the drawing all passed.
+  it('catches one id the game showed two shapes', () => {
+    const f = oneRoomTwoShapes([
+      { roomId: 1885, exits: ['nw', 'se', 'sw'], file: 's.log', line: 399 },
+      { roomId: 1885, exits: ['ne', 'nw', 'se'], file: 's.log', line: 489 },
+    ]);
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('#1885');
+    expect(f.detail).toContain('s.log:399');
+    expect(f.detail).toContain('s.log:489');
+  });
+});
+
+describe('exitsMatchTheGame', () => {
+  const obs = (roomId: number, exits: string[], file = 'a.log') =>
+    ({ roomId, exits, file, line: 1 });
+
+  it('passes when the map has exactly what the game listed', () => {
+    const f = exitsMatchTheGame(pair(1, 'n', 2, 's'), [obs(1, ['n']), obs(2, ['s'])]);
+    expect(f.ok).toBe(true);
+  });
+
+  it('names an exit the map has that no Exits line ever gave it', () => {
+    const f = exitsMatchTheGame(
+      [...pair(1, 'n', 2, 's'), { from_id: 1, direction: 'ne', to_id: 2 }], [obs(1, ['n'])]);
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('ne is in no Exits: line');
+  });
+
+  it('names an exit the game listed that the map never recorded', () => {
+    const f = exitsMatchTheGame(pair(1, 'n', 2, 's'), [obs(1, ['n', 'se'])]);
+    expect(f.ok).toBe(false);
+    expect(f.detail).toContain('se never recorded');
+  });
+
+  // `passage` is how the map records a way through the game does not name that
+  // way, so it can never be in an `ex` reply. Comparing it against one reported a
+  // phantom on first-town's docks every single run.
+  it('does not call a non-compass edge a phantom', () => {
+    const f = exitsMatchTheGame(
+      [{ from_id: 1, direction: 'passage', to_id: 2 }, { from_id: 1, direction: 's', to_id: 3 }],
+      [obs(1, ['s'])]);
+    expect(f.ok).toBe(true);
+  });
+
+  // Log names are timestamps. An old disagreement may describe a map that has
+  // since been repaired; what matters is whether it still disagrees with the last
+  // thing the game said.
+  it('judges the map against the latest sighting, not the first', () => {
+    const f = exitsMatchTheGame(pair(1, 'n', 2, 's'), [
+      obs(1, ['n', 'se'], 'session-x-2026-09-01T10-00-00.log'),
+      obs(1, ['n'], 'session-x-2026-09-19T10-00-00.log'),
+    ]);
+    expect(f.ok).toBe(true);
+  });
+});
+
+describe('afterRoomExisted', () => {
+  it('reads the instant out of a log name', () => {
+    expect(logInstant('session-pelayo-2026-09-19T15-01-29.log')).toBe('2026-09-19T15:01:29');
+    expect(logInstant('notes.txt')).toBeNull();
+  });
+
+  // A room id in a log means whatever the rooms table meant by it that day, and
+  // this map has been rebuilt under the ids it uses now. Unfiltered, twelve of
+  // first-town's thirteen rooms "changed shape" on the strength of logs from the
+  // day before those ids were minted.
+  it('drops a sighting from before the room was first visited', () => {
+    const born = new Map([[1, '2026-07-05T08:41:01']]);
+    const kept = afterRoomExisted([
+      { roomId: 1, exits: ['sw', 'u'], file: 'session-j-2026-07-04T20-58-57.log', line: 1 },
+      { roomId: 1, exits: ['e', 'n'], file: 'session-j-2026-07-06T20-58-57.log', line: 1 },
+    ], born);
+    expect(kept.map(o => o.file)).toEqual(['session-j-2026-07-06T20-58-57.log']);
+  });
+
+  it('drops a sighting of a room the map no longer has', () => {
+    expect(afterRoomExisted(
+      [{ roomId: 99, exits: ['n'], file: 'session-j-2026-09-19T10-00-00.log', line: 1 }],
+      new Map())).toEqual([]);
   });
 });

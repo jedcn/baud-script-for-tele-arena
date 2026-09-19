@@ -7,6 +7,7 @@
 // level, and rooms that exist but never get drawn.
 
 import { placeRooms, skewedEdges } from './map';
+import { clean } from './log';
 
 export type Room = { id: number; slug: string; description: string | null;
                      x?: number | null; y?: number | null };
@@ -18,6 +19,146 @@ const REVERSE: Record<string, string> = {
   u: 'd', d: 'u', passage: 'passage',
 };
 const DZ: Record<string, number> = { u: 1, d: -1 };
+
+/**
+ * What the GAME said a room's exits were, read back out of the session logs.
+ *
+ * Every other check in this file reads the map against itself -- reciprocity,
+ * frontiers, depth, whether it can be drawn -- and a map can be wrong in a way
+ * that is perfectly self-consistent. A conflation is exactly that: two real rooms
+ * recorded as one. Every test here passed on the Complex of Natural Caverns while
+ * `-87` and `-90` were each standing in for more than one room, because the map
+ * agreed with itself about a shape the cave does not have.
+ *
+ * The evidence that catches it has been in every log all along. Each time the
+ * mapper probes a room it prints the id it believes it is in, right after the
+ * game's own `Exits:` reply:
+ *
+ *     Exits: ne,se,nw.
+ *     [mapdbg] Exits trigger: mapping=true currentRoomId=1885 (number)
+ *
+ * Only `mapping=true` counts. With mapping off `currentRoomId` is whatever the
+ * last session left behind and means nothing.
+ */
+export type Observation = { roomId: number; exits: string[]; file: string; line: number };
+
+export function observedExits(text: string, file = ''): Observation[] {
+  const out: Observation[] = [];
+  let pending: { exits: string[]; line: number } | null = null;
+  text.split('\n').forEach((raw, i) => {
+    const line = raw.trim();
+    const ex = /^Exits: ([a-z,]+)\.$/.exec(line);
+    if (ex) { pending = { exits: ex[1].split(','), line: i + 1 }; return; }
+    const trig = /Exits trigger: mapping=true currentRoomId=(\d+)/.exec(line);
+    if (trig && pending) {
+      out.push({ roomId: Number(trig[1]), exits: pending.exits, file, line: pending.line });
+      pending = null;
+    }
+  });
+  return out;
+}
+
+const setOf = (xs: string[]) => [...new Set(xs)].sort().join(',');
+
+/**
+ * When a session log was written, from its name, as the ISO instant the rooms
+ * table stores. `session-pelayo-2026-09-19T15-01-29.log`.
+ */
+export function logInstant(file: string): string | null {
+  const m = /(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})/.exec(file);
+  return m ? `${m[1]}T${m[2]}:${m[3]}:${m[4]}` : null;
+}
+
+/**
+ * Drop sightings from before the room existed. A room id in a log means whatever
+ * the rooms table meant by it THAT DAY, and this map has been rebuilt under the
+ * ids it uses now -- rooms_legacy is still sitting beside it. Unfiltered, twelve
+ * of first-town's thirteen rooms "changed shape", all on the strength of logs
+ * from the day before those ids were minted.
+ *
+ * `first_visited` makes the cut exact rather than a guessed cutoff date.
+ */
+export function afterRoomExisted(
+  obs: Observation[], firstVisited: Map<number, string>,
+): Observation[] {
+  return obs.filter(o => {
+    const born = firstVisited.get(o.roomId);
+    const when = logInstant(o.file);
+    return born != null && when != null && when >= born;
+  });
+}
+
+// `Exits:` lists compass and vertical moves and nothing else. A `passage` edge is
+// how the map records a way through that the game does not name that way -- it can
+// never appear in an `ex` reply, so comparing it against one always "finds" a
+// phantom. Same for any future non-compass edge.
+const COMPASS_EXITS = new Set(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'u', 'd']);
+
+/**
+ * One room id, seen by the game with two different exit-sets. Exits do not change,
+ * so this is the map claiming one room where the cave has two -- and it needs no
+ * database at all to say so, which is why it is the first thing reported.
+ */
+export function oneRoomTwoShapes(obs: Observation[]): Finding {
+  const byRoom = new Map<number, Map<string, Observation>>();
+  for (const o of obs) {
+    if (!byRoom.has(o.roomId)) byRoom.set(o.roomId, new Map());
+    byRoom.get(o.roomId)!.set(setOf(o.exits), o);
+  }
+  const bad = [...byRoom].filter(([, shapes]) => shapes.size > 1);
+  return {
+    check: 'each room has one shape',
+    ok: bad.length === 0,
+    detail: bad.length === 0
+      ? `${byRoom.size} rooms probed, none seen with two different exit-sets`
+      : bad.map(([id, shapes]) => `#${id} seen as ` +
+          [...shapes].map(([k, o]) => `{${k}} (${o.file}:${o.line})`).join(' and ')).join('\n')
+        + '\n  (a shape seen only in an old log may describe a map since repaired;'
+        + ' the file names are dated)',
+  };
+}
+
+/**
+ * The map against the game, room by room. An exit the map has that the game never
+ * listed is a phantom -- usually the reciprocal of a move recorded into a room the
+ * mapper was not actually standing in. The other direction, an exit the game lists
+ * that the map lacks, means a frontier was dropped.
+ */
+export function exitsMatchTheGame(exits: Exit[], obs: Observation[]): Finding {
+  const have = new Map<number, Set<string>>();
+  for (const e of exits) {
+    if (!COMPASS_EXITS.has(e.direction)) continue;
+    if (!have.has(e.from_id)) have.set(e.from_id, new Set());
+    have.get(e.from_id)!.add(e.direction);
+  }
+  // The LATEST sighting of each room, not the first. Log names are timestamps, so
+  // they sort chronologically. An old disagreement may describe a map that has
+  // since been repaired; the question worth asking is whether the map still
+  // disagrees with the last thing the game said.
+  const latest = new Map<number, Observation>();
+  for (const o of [...obs].sort((a, b) => a.file.localeCompare(b.file))) latest.set(o.roomId, o);
+  const problems: string[] = [];
+  const seen = new Set<number>();
+  for (const o of latest.values()) {
+    if (!have.has(o.roomId)) continue;
+    seen.add(o.roomId);
+    const mine = have.get(o.roomId)!, theirs = new Set(o.exits);
+    const phantom = [...mine].filter(d => !theirs.has(d)).sort();
+    const missing = [...theirs].filter(d => !mine.has(d)).sort();
+    if (phantom.length || missing.length) {
+      problems.push(`#${o.roomId}: game said {${setOf(o.exits)}}, map has {${[...mine].sort().join(',')}}`
+        + (phantom.length ? ` -- ${phantom.join(',')} is in no Exits: line` : '')
+        + (missing.length ? ` -- ${missing.join(',')} never recorded` : ''));
+    }
+  }
+  return {
+    check: "the map's exits are the game's exits",
+    ok: problems.length === 0,
+    detail: problems.length === 0
+      ? `${seen.size} rooms checked against the last \`ex\` reply each gave`
+      : problems.join('\n'),
+  };
+}
 
 /** Exits the game listed that nobody has stepped through yet. */
 export function frontiers(rooms: Room[], exits: Exit[]): Finding {
@@ -354,7 +495,7 @@ export function report(findings: Finding[]): string {
 
 if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
-  const { existsSync } = await import('node:fs');
+  const { existsSync, readdirSync, readFileSync } = await import('node:fs');
   const { renderArea, DRAWN } = await import('./map');
   const drawnOrigin = (slug: string, rooms: Room[]) => {
     const want = DRAWN.find(d => d.slug === slug)?.origin;
@@ -372,6 +513,22 @@ if (import.meta.main) {
     : (db.prepare('SELECT slug FROM areas ORDER BY slug').all() as any[]).map(r => r.slug);
 
   const allExits = db.prepare('SELECT from_id, direction, to_id FROM room_exits').all() as Exit[];
+  const born = new Map<number, string>(
+    (db.prepare('SELECT id, first_visited FROM rooms').all() as any[])
+      .map(r => [r.id, r.first_visited]));
+
+  // Every session log we still have, current and archived. These are the game's
+  // own words about the rooms, and the only evidence in the project that does not
+  // come from the map itself.
+  const observations: Observation[] = [];
+  for (const dir of ['logs', '../tele-arena-archived-session-logs']) {
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.log')) continue;
+      const path = `${dir}/${name}`;
+      observations.push(...observedExits(clean(readFileSync(path, 'latin1')), name));
+    }
+  }
   const anchor = (db.prepare("SELECT id FROM rooms WHERE slug='north-plaza'").get() as any)?.id;
   const z = anchor == null ? new Map<number, number>() : depths(allExits, anchor);
 
@@ -397,6 +554,10 @@ if (import.meta.main) {
       // what produces the skew, so a different origin would report a different
       // set of bad lines than the page actually draws.
       drawnDirections(rooms, exits, drawnOrigin(slug, rooms)),
+      // Against the game rather than against ourselves. Last, because when it
+      // fails the checks above are all still passing and that is the point.
+      oneRoomTwoShapes(afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born)),
+      exitsMatchTheGame(exits, afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born)),
     ];
     // The drawing is a check too: renderArea throws if a room cannot be placed
     // or if fewer boxes come out than rooms went in.
