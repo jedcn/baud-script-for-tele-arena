@@ -1930,7 +1930,12 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                 parts[#parts + 1] = (taPackage.db.roomRef(v.id) or ("#" .. tostring(v.id)))
                     .. string.format(" (%d,%d,%d)", v.coord.x, v.coord.y, v.coord.z)
             end
-            echo("[map] minting " .. (taPackage.db.roomRef(taPackage.currentRoomId)
+            -- Red, and still in the session log: baud's cecho used to draw
+            -- without logging, which is why everything that matters here was
+            -- written in plain echo. It logs now (baud, App.tsx), and this line
+            -- has to be BOTH -- it is the one a walker must notice on screen, and
+            -- the one whose false-alarm rate gets measured off the log afterwards.
+            cecho("red", "[map] minting " .. (taPackage.db.roomRef(taPackage.currentRoomId)
                     or ("#" .. tostring(taPackage.currentRoomId)))
                 .. ", but " .. #coordVetoed .. " room"
                 .. (#coordVetoed > 1 and "s match" or " matches")
@@ -1939,8 +1944,8 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                 .. " rejected on coordinates alone: " .. table.concat(parts, ", ")
                 .. string.format(" vs reckoned (%d,%d,%d)",
                     taPackage.coord.x, taPackage.coord.y, taPackage.coord.z))
-            echo("[map]   If this is that room, stop now and `map-here` it -- every"
-                .. " room walked from here will be a duplicate too.")
+            cecho("red", "[map]   If this is that room, stop now and `map-here` it"
+                .. " -- every room walked from here will be a duplicate too.")
         end
         -- Guard on a real numeric id: never concatenate/merge a js_null or nil.
         if type(match) == "number" then
