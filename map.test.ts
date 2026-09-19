@@ -208,17 +208,17 @@ describe('skewedEdges', () => {
       .toEqual([[2, 'e', 3, 'nw', true], [3, 'w', 2, 'se', true]]);
   });
 
-  // The same drawing fault from the other cause. `a --d--> b` carries no compass
-  // offset, so b is parked in a free cell and everything beyond it is laid out
-  // from there -- over the top of a's own region. `b --n--> c` then finds x in the
-  // cell it wants and c is shoved aside. b and c alone fit the grid perfectly, so
-  // this one is the layout's doing and could be fixed.
-  it('marks an edge NOT inherent when only the layout broke it', () => {
-    const rooms = [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')];
-    const got = skew(rooms,
-      [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'n', 4, 's')], 'a');
-    expect(got.map(s => [s.from_id, s.direction, s.to_id, s.drawn, s.inherent]))
-      .toEqual([[3, 'n', 4, 'nw', false], [4, 's', 3, 'se', false]]);
+  // The other cause, pinned on `pos` directly rather than through `placeRooms`:
+  // whether the classifier can tell the two apart must not depend on whether the
+  // layout happens to make that mistake today. a --n--> b is perfectly
+  // representable, so a drawing that puts b north-EAST of a is nobody's fault
+  // but the drawing's.
+  it('marks an edge NOT inherent when the data could have been drawn right', () => {
+    const rooms = [room(1, 'a'), room(2, 'b')];
+    const exits = pair(1, 'n', 2, 's');
+    const pos = new Map([[1, { c: 0, r: 0 }], [2, { c: 1, r: -1 }]]);
+    expect(skewedEdges(rooms, exits, pos).map(s => [s.direction, s.drawn, s.inherent]))
+      .toEqual([['n', 'ne', false], ['s', 'sw', false]]);
   });
 
   // u/d are drawn as a badge rather than a line precisely because they have no
@@ -232,5 +232,40 @@ describe('skewedEdges', () => {
     const rooms = [room(1, 'a')];
     expect(skew(rooms, [{ from_id: 1, direction: 'n', to_id: null },
                         { from_id: 1, direction: 's', to_id: 99 }], 'a')).toEqual([]);
+  });
+});
+
+// A nudge happens when two rooms dead-reckon to one cell. Where it puts the
+// loser decides which way its lines then point, and for a long time it put it
+// wherever a raster scan reached first -- (-1,-1), north-west, with no notion of
+// the direction at all.
+describe('placeRooms nudges by bearing', () => {
+  it('keeps a bumped room on the right side of the room that placed it', () => {
+    // x is east of a. b hangs below on a stair, so it is parked rather than
+    // placed by a compass edge -- and its region is then laid out from there,
+    // straight into a's. `b --n--> c` wants the cell x is standing in.
+    const rooms = [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')];
+    const exits = [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'n', 4, 's')];
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    const b = pos.get(3)!, c = pos.get(4)!;
+    expect(c.c).toBe(b.c);                        // still due north, not north-west
+    expect(c.r).toBeLessThan(b.r);
+    expect(skewedEdges(rooms, exits, pos)).toEqual([]);
+  });
+
+  // The cell a room is nudged into has to answer to every neighbour it already
+  // has, not just the exit that placed it. Honouring only that one is what left
+  // desert-27 and town-sewers-167 pointing the wrong way from a second
+  // neighbour that was already on the grid.
+  it('weighs every neighbour already placed, not just the exit that placed it', () => {
+    // a--e-->x; a--d-->b parks b; b--n-->c is blocked by x, and c also has to sit
+    // west of d, which b--e-->d has already put down.
+    const rooms = [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c'), room(5, 'd')];
+    const exits = [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'),
+                   ...pair(3, 'e', 5, 'w'), ...pair(3, 'n', 4, 's'), ...pair(4, 'e', 5, 'w')];
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    const skew = skewedEdges(rooms, exits, pos);
+    // Whatever it picks, it must not break an exit that the grid can hold.
+    expect(skew.filter(s => !s.inherent)).toEqual([]);
   });
 });

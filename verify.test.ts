@@ -287,21 +287,20 @@ describe('drawnDirections', () => {
     expect(f.detail).toContain('b e c');
   });
 
-  // The other cause, and the one that IS a defect: the edge was representable
-  // and the layout broke it anyway. `a --d--> b` has no compass direction, so b
-  // is parked in the first free cell (south-east of a) and b's whole region is
+  // The regression that the bearing-ranked nudge bought. `a --d--> b` has no
+  // compass direction, so b is parked in the first free cell and b's region is
   // laid out from there -- straight into the region a already occupies. `b --n-->
-  // c` wants the cell x is standing in, so c is nudged aside and the line ends up
-  // pointing north-west. Nothing about b-and-c is unrepresentable; the grid just
-  // gave that cell away first.
-  it('fails when the layout breaks an edge it could have drawn', () => {
+  // c` wants the cell x is standing in, and c has to go somewhere else.
+  //
+  // Where it went used to be whatever a raster scan reached first, which put c
+  // north-WEST of b and drew a line saying so. Nothing about b-and-c is
+  // unrepresentable; the grid just gave that cell away and then chose badly.
+  it('does not break an edge the grid can hold when it has to nudge', () => {
     const f = drawnDirections(
       [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')],
       [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'n', 4, 's')], 'a');
-    expect(f.ok).toBe(false);
-    expect(f.detail).toContain('broken by the layout');
-    expect(f.detail).toContain('b n c (drawn nw)');
-    expect(f.detail).not.toContain('the loop does not close');
+    expect(f.ok).toBe(true);
+    expect(f.detail).not.toContain('the layout');
   });
 
   it('names the direction the line actually points', () => {

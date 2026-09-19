@@ -88,6 +88,22 @@ export function placeRooms(opts: {
 
   const internal = (e: Exit) => e.to_id != null && ids.has(e.to_id);
 
+  // The shape the data ASKS for, which is not always a shape that exists. It is
+  // consulted only when a nudge has to choose which neighbour to disappoint:
+  // an edge this already violates lies on a loop that does not close, so no cell
+  // anywhere will draw it right and there is nothing to be gained by moving a
+  // room to chase it. Letting those edges pull is what made the nudge sacrifice
+  // a perfectly drawable exit to satisfy an undrawable one.
+  const ideal = idealCoords(rooms, exits);
+  const hopeless = new Set<string>();
+  for (const e of exits) {
+    const o = OFF[e.direction];
+    if (!o || !internal(e)) continue;
+    const a = ideal.get(e.from_id)!, b = ideal.get(e.to_id!)!;
+    if (b.c - a.c !== o[0] || b.r - a.r !== o[1])
+      hopeless.add(`${e.from_id}|${e.direction}|${e.to_id}`);
+  }
+
   // Split into connected components first. A room can be unreachable from the
   // origin without the map being wrong -- `pit` on dungeon level three is
   // entered only by falling through a trap door from level two -- and laying
@@ -146,17 +162,99 @@ export function placeRooms(opts: {
     // vertical, then compass again, until neither can move.
     const taken = (c: number, r: number) =>
       [...local.values()].some(p => p.c === c && p.r === r);
-    // The wanted cell if it is free, else the nearest free one, searched in
-    // rings so the room stays as close to its true direction as possible.
-    const free = (_m: Map<number, Pos>, c: number, r: number): Pos => {
-      if (!taken(c, r)) return { c, r };
-      for (let ring = 1; ring < 40; ring++)
+    // The wanted cell if it is free, else the best free one near it.
+    //
+    // "Best" is not "nearest". What a reader takes from this drawing is which
+    // way a room lies from its neighbour, and both renderers draw that line
+    // from the two cells alone -- so a nudge that keeps the room roughly close
+    // but puts it on the wrong side of a neighbour produces a line that points
+    // somewhere the exit does not go, silently. This used to scan rings in
+    // raster order from (-1,-1), which has no notion of direction at all: 18 of
+    // the 21 nudges across the map displaced WEST and 8 of them exactly
+    // north-west, and that alone accounted for 34 of the 76 wrongly-drawn lines
+    // (`skewedEdges`, and verify.ts's `lines point where the exits go`).
+    //
+    // So candidates are ranked rather than enumerated, and ranked against EVERY
+    // neighbour already on the grid, not just the edge that happened to arrive
+    // first. Honouring only that one edge is what left desert-27 and
+    // town-sewers-167 wrong after the bearing was introduced: both were nudged
+    // to a cell that read correctly from the room that placed them and wrongly
+    // from another neighbour they already had. A room has one cell and several
+    // bearings to satisfy, so the cell has to answer to all of them.
+    //
+    // The search gives up after LOOK rings. A room dragged far away to save one
+    // bearing wrecks the others and sprawls the level besides.
+    const LOOK = 3;
+    // "From `at`, this room must lie in direction `o`." Both ends of the edge
+    // are recorded the same way, so an exit pointing either way constrains.
+    type Pull = { at: Pos; o: [number, number]; winnable: boolean };
+    const pulls = (id: number): Pull[] => {
+      const out: Pull[] = [];
+      for (const e of relevant) {
+        if (!internal(e)) continue;
+        const o = OFF[e.direction];
+        if (!o) continue;
+        const winnable = !hopeless.has(`${e.from_id}|${e.direction}|${e.to_id}`);
+        if (e.to_id === id) {
+          const at = local.get(e.from_id);
+          if (at) out.push({ at, o, winnable });
+        } else if (e.from_id === id) {
+          const at = local.get(e.to_id!);
+          if (at) out.push({ at, o: [-o[0], -o[1]], winnable });
+        }
+      }
+      return out;
+    };
+    const keepsSign = (p: Pos, q: Pull) =>
+      Math.sign(p.c - q.at.c) === q.o[0] && Math.sign(p.r - q.at.r) === q.o[1];
+    // Cosine of the angle between the bearing a cell actually has from `at` and
+    // the bearing the exit claims. 1 is dead on, -1 is the opposite way.
+    const bearing = (p: Pos, q: Pull) => {
+      const vc = p.c - q.at.c, vr = p.r - q.at.r;
+      const len = Math.hypot(vc, vr) * Math.hypot(q.o[0], q.o[1]);
+      return len === 0 ? -1 : (vc * q.o[0] + vr * q.o[1]) / len;
+    };
+    const free = (id: number, want: Pos): Pos => {
+      if (!taken(want.c, want.r)) return want;
+      const must = pulls(id);
+      // Ranked in three tiers, then by the cell's own coordinates so the choice
+      // is a pure function of the graph and a re-run is byte-identical.
+      //
+      // Winnable exits come first and are never traded for an unwinnable one:
+      // an exit already doomed by a loop that does not close will be drawn wrong
+      // from every cell on the grid, so letting it pull is how a perfectly
+      // drawable neighbour ends up sacrificed to it. They still rank SECOND
+      // rather than not at all -- where two cells serve the winnable exits
+      // equally, the one that also happens to suit a doomed exit is free, and
+      // taking it draws eight fewer wrong lines across the map.
+      const rank = (p: Pos): [number, number, number] => [
+        must.filter(q => q.winnable && keepsSign(p, q)).length,
+        must.filter(q => !q.winnable && keepsSign(p, q)).length,
+        must.reduce((n, q) => n + bearing(p, q), 0),
+      ];
+      const better = (a: Pos, b: Pos) => {
+        const x = rank(a), y = rank(b);
+        for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] > y[i];
+        return a.c !== b.c ? a.c < b.c : a.r < b.r;
+      };
+      let best: Pos | null = null;
+      for (let ring = 1; ring < 40; ring++) {
+        const open: Pos[] = [];
         for (let dc = -ring; dc <= ring; dc++)
           for (let dr = -ring; dr <= ring; dr++) {
             if (Math.max(Math.abs(dc), Math.abs(dr)) !== ring) continue;
-            if (!taken(c + dc, r + dr)) return { c: c + dc, r: r + dr };
+            if (!taken(want.c + dc, want.r + dr))
+              open.push({ c: want.c + dc, r: want.r + dr });
           }
-      return { c, r };
+        let here: Pos | null = null;
+        for (const p of open) if (!here || better(p, here)) here = p;
+        if (here && (!best || better(here, best))) best = here;
+        // A cell that answers every neighbour is as good as it gets, and the
+        // nearest ring to offer one wins -- no reason to keep walking outward.
+        if (best && rank(best)[0] + rank(best)[1] === must.length) break;
+        if (ring >= LOOK) break;
+      }
+      return best ?? want;
     };
     for (;;) {
       let moved = true;
@@ -172,7 +270,7 @@ export function placeRooms(opts: {
           // by design in the data. Whoever gets there second must be nudged to
           // the nearest free cell or it silently overwrites the first and the
           // room vanishes from the drawing (35 stoneworks rooms did).
-          local.set(e.to_id!, free(local, from.c + o[0], from.r + o[1]));
+          local.set(e.to_id!, free(e.to_id!, { c: from.c + o[0], r: from.r + o[1] }));
           moved = true;
         }
       }

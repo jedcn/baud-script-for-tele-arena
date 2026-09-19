@@ -176,7 +176,7 @@ export function drawnDirections(
   const layout = skewed.filter(s => !s.inherent);
   const notes: string[] = [];
   if (layout.length) notes.push(
-    `${layout.length} broken by the layout, and fixable: ` + layout.map(say).join(', '));
+    `${layout.length} the layout moved off a cell the data agrees on: ` + layout.map(say).join(', '));
   if (inherent.length) notes.push(
     `${inherent.length} cannot be drawn right at all — the loop does not close: `
     + inherent.map(say).join(', '));
