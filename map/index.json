@@ -19,6 +19,12 @@
       "file": "areas/complex-caverns-level-2.json"
     },
     {
+      "area": "complex-caverns-level-4",
+      "name": "The Complex of Natural Caverns, Level 4",
+      "rooms": 40,
+      "file": "areas/complex-caverns-level-4.json"
+    },
+    {
       "area": "deep-forest",
       "name": "The Deep Forest",
       "rooms": 200,
