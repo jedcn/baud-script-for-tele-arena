@@ -485,9 +485,30 @@ function loadSaved(slug) {
     var raw = localStorage.getItem(storeKey(slug));
     if (!raw) return;
     var saved = JSON.parse(raw);
-    for (var id in saved) if (pos[id]) pos[id] = saved[id];
+    for (var id in saved) if (pos[id]) pos[id] = inside(id, saved[id]);
   } catch (e) { /* no storage, or nonsense in it */ }
 }
+// A room pushed past the edge of its level is CLIPPED by the SVG, not merely
+// moved: the box stops being drawn, so there is nothing left to click, to drag
+// back or to reach with the arrow keys -- all that shows is the line to it
+// running off the pane with nothing on the end. The only way back used to be
+// "Reset this level", which throws away the whole arrangement to rescue one
+// room. So a position is held inside the level's own viewBox, on load as well
+// as while moving: an arrangement saved before this existed repairs itself on
+// the next visit, with every other room left where the reader put it.
+var EDGE = 21;                        // half a box, so an edge room stays whole
+
+function inside(id, p) {
+  // The viewBox is asked of the room's own box, the same way a drag asks for
+  // the scale -- the page has no table of level sizes, and the box is already
+  // in hand here.
+  var el = (ownEls[id] || [])[0], svg = el ? closestOf(el, 'svg') : null;
+  var vb = svg ? (svg.getAttribute('viewBox') || '').split(/[\\s,]+/) : null;
+  if (!vb || !(Number(vb[2]) > 0) || !(Number(vb[3]) > 0)) return p;
+  return [Math.max(EDGE, Math.min(p[0], Number(vb[2]) - EDGE)),
+          Math.max(EDGE, Math.min(p[1], Number(vb[3]) - EDGE))];
+}
+
 function save(slug) {
   var out = {};
   for (var id in pos) if (levelOf(id) === slug) out[id] = pos[id];
@@ -643,7 +664,7 @@ document.addEventListener('pointermove', function (e) {
   drag.x = e.clientX; drag.y = e.clientY;
   drag.travelled += Math.abs(dx) + Math.abs(dy);
   var p = pos[drag.id];
-  pos[drag.id] = [p[0] + dx, p[1] + dy];
+  pos[drag.id] = inside(drag.id, [p[0] + dx, p[1] + dy]);
   place(drag.id);
 });
 
@@ -666,7 +687,7 @@ document.addEventListener('keydown', function (e) {
   var step = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
   if (!step) return;
   var far = e.shiftKey ? 10 : 2;
-  pos[id] = [pos[id][0] + step[0] * far, pos[id][1] + step[1] * far];
+  pos[id] = inside(id, [pos[id][0] + step[0] * far, pos[id][1] + step[1] * far]);
   place(id);
   if (shown) save(shown);
   if (e.preventDefault) e.preventDefault();

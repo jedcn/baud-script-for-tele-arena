@@ -254,7 +254,7 @@ class El {
  * edge per pair of rooms the page says are joined, so the drag code moves the
  * same things a browser would move.
  */
-function runPage(html: string, hash = '') {
+function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   const src = html.match(/<script>([\s\S]*?)<\/script>/)![1];
   // Room ids and level slugs come from the page's own payload rather than from
   // its markup: the inline script contains the literal `data-id="` as part of a
@@ -298,7 +298,7 @@ function runPage(html: string, hash = '') {
   };
   const loc: any = { hash };
   const hist: any = { replaceState(_s: unknown, _t: string, url: string) { loc.hash = url; } };
-  const store: Record<string, string> = {};
+  const store: Record<string, string> = { ...seed };
   const storage = {
     getItem: (k: string) => store[k] ?? null,
     setItem: (k: string, v: string) => { store[k] = v; },
@@ -477,6 +477,41 @@ describe('map.html', () => {
     reset.listeners.click[0]();
     expect(box.attrs['transform']).toBe(home);
     expect(store['ta-map-layout:stoneworks-level-2']).toBeUndefined();
+  });
+
+  it('will not let a room be pushed off the edge of the drawing', async () => {
+    // A box outside the viewBox is clipped away: nothing left to click, and the
+    // only line to it runs off the pane. The stub svg is 1000x800.
+    const { dragBox, boxFor, doc } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const box = boxFor('stoneworks-level-2');
+    dragBox(box, 5000, 4000);
+    const [x, y] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x).toBeLessThanOrEqual(1000);
+    expect(y).toBeLessThanOrEqual(800);
+    for (let i = 0; i < 200; i++) {
+      doc._l.keydown({ key: 'ArrowRight', shiftKey: true, target: box, preventDefault() {} });
+    }
+    const [x2] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x2).toBeLessThanOrEqual(1000);
+  });
+
+  it('pulls a stray room back in without disturbing the rest of the arrangement', async () => {
+    // The repair an arrangement saved before the clamp existed needs: one room
+    // off the map, every other room left exactly where the reader put it.
+    const html = buildPage(await areasP);
+    const probe = runPage(html, '#stoneworks-level-2');
+    const lost = probe.boxFor('stoneworks-level-2').attrs['data-id'];
+    const kept = probe.boxes.filter(b => b.attrs['data-id'] !== lost
+      && b.attrs['data-id'].startsWith('stoneworks-level-2/'))[0].attrs['data-id'];
+    const saved = { [lost]: [4000, 3000], [kept]: [300, 200] };
+    const { boxes } = runPage(html, '#stoneworks-level-2',
+      { 'ta-map-layout:stoneworks-level-2': JSON.stringify(saved) });
+    const at = (id: string) => boxes.find(b => b.attrs['data-id'] === id)!
+      .attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    const [x, y] = at(lost);
+    expect(x).toBeLessThanOrEqual(1000);
+    expect(y).toBeLessThanOrEqual(800);
+    expect(at(kept)).toEqual([300, 200]);
   });
 
   it('nudges the room under the keyboard, without touching any other', async () => {
