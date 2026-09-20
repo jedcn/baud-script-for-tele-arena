@@ -106,6 +106,65 @@ describe('boxLabel', () => {
   });
 });
 
+// A one-way triangle, the shape the Complex of Natural Caverns really has at
+// caverns-87/90/88: nw from A lands on B, whose se goes on to C rather than
+// back, and C's nw closes it at A. Its own fixture, because MINI's line and
+// badge counts are pinned above and a one-way exit there would move them.
+const ONEWAY: Area = {
+  area: 'cave-level-1', name: 'Cave, Level 1', src: 'test',
+  rooms: [
+    { id: 'cave-level-1/a', name: 'cave', exits: { nw: { to: 'cave-level-1/b' },
+                                                   se: { to: 'cave-level-1/c' } } },
+    { id: 'cave-level-1/b', name: 'cave', exits: { se: { to: 'cave-level-1/c' } } },
+    { id: 'cave-level-1/c', name: 'cave', exits: { nw: { to: 'cave-level-1/a' } } },
+  ],
+};
+
+describe('a connection you can only cross one way', () => {
+  const { svg, stats } = renderLevel(ONEWAY, NAME_OF);
+
+  it('marks the two one-way crossings and not the reciprocal one', () => {
+    // a--nw-->b has no way back (b's se goes to c), and b--se-->c has none
+    // (c's nw goes to a). a--se-->c and c--nw-->a are each other's reverse, so
+    // that line carries no arrow.
+    expect(stats.oneWay).toBe(2);
+    expect(svg.match(/class="arrow"/g)!.length).toBe(2);
+  });
+
+  it('runs the line from source to destination, so the arrow aims itself', () => {
+    // The anchors are what the page drags from AND what the arrow reads its
+    // angle out of, so on a one-way line they are source-first rather than
+    // sorted. Sorted order is equally correct for a line; only an arrow cares.
+    const arrows = [...svg.matchAll(/<path class="arrow" data-a="([^"]+)" data-b="([^"]+)"/g)]
+      .map(m => [m[1], m[2]]);
+    expect(arrows).toContainEqual(['cave-level-1/a', 'cave-level-1/b']);
+    expect(arrows).toContainEqual(['cave-level-1/b', 'cave-level-1/c']);
+  });
+
+  it('says which way, and that there is no way back', () => {
+    expect(svg).toContain('ONE WAY: there is no se back from there');
+  });
+
+  it('is drawn turned along the line it sits on', () => {
+    expect(svg).toMatch(/class="arrow"[^>]*transform="translate\([^)]*\) rotate\(-?[\d.]+\)"/);
+  });
+
+  it('does not call a connection one-way while the way back is still unwalked', () => {
+    // MINI's vault leaves `s` to the hall, and the hall's `n` is a FRONTIER --
+    // it may well lead back. An arrow there would assert something unwalked,
+    // and would have to be retracted the day someone walks it. Absent, or
+    // leading somewhere else, is the claim; unwalked is not evidence.
+    const hall = MINI.rooms[0];
+    expect(hall.exits.n).toEqual({ to: null });
+    expect(renderLevel(MINI, NAME_OF).stats.oneWay).toBe(0);
+  });
+
+  it('leaves an ordinary reciprocal level unmarked', () => {
+    expect(renderLevel(MINI, NAME_OF).stats.oneWay).toBe(0);
+    expect(renderLevel(MINI, NAME_OF).svg).not.toContain('class="arrow"');
+  });
+});
+
 describe('renderLevel', () => {
   const { svg, stats } = renderLevel(MINI, NAME_OF);
 
@@ -300,6 +359,11 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   });
   const edges = pairs.map(([a, b]) =>
     new El('line', { 'data-a': a, 'data-b': b, x1: '0', y1: '0', x2: '0', y2: '0' }));
+  // One-way arrows are spanning elements too, and the only ones that have to be
+  // re-AIMED on a drag rather than just moved.
+  const arrows = [...html.matchAll(/<path class="arrow" data-a="([^"]+)" data-b="([^"]+)"/g)]
+    .map(m => new El('path', { 'data-a': m[1], 'data-b': m[2], 'data-rot': '',
+                               transform: '' }, ['arrow']));
   const area = new El('select'), level = new El('select');
   const stats = new El('div'), panel = new El('div'), reset = new El('button');
   const byId: Record<string, El> = { area, level, stats, panel, reset };
@@ -311,7 +375,7 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
     _l: {} as Record<string, Function>,
     querySelectorAll(sel: string) {
       if (sel === '[data-level]') return panes;
-      if (sel === '[data-a]') return [...boxes, ...edges];
+      if (sel === '[data-a]') return [...boxes, ...edges, ...arrows];
       if (sel === '.box.sel') return boxes.filter(b => b.classes.has('sel'));
       const m = sel.match(/^\[data-id="(.*)"\]$/);
       if (m) return boxes.filter(b => b.attrs['data-id'] === m[1]);
@@ -338,7 +402,8 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   const boxFor = (slug: string) =>
     boxes.find(b => b.attrs['data-id'].startsWith(slug + '/'))!;
 
-  return { doc, area, level, stats, panel, reset, panes, boxes, edges, store, dragBox, boxFor };
+  return { doc, area, level, stats, panel, reset, panes, boxes, edges, arrows, store,
+           dragBox, boxFor };
 }
 
 describe('the "you are here" mark', () => {
@@ -534,6 +599,23 @@ describe('map.html', () => {
     expect(x).toBeLessThanOrEqual(1000);
     expect(y).toBeLessThanOrEqual(800);
     expect(at(kept)).toEqual([300, 200]);
+  });
+
+  it('re-aims a one-way arrow when either end is dragged', async () => {
+    // The arrow reads its angle from where the two rooms are NOW. Left alone it
+    // keeps pointing at wherever the room used to be, which is worse than
+    // drawing no arrow at all. The caverns' 87->90 is the live case.
+    const { arrows, boxes, dragBox } = runPage(
+      buildPage(await areasP), '#complex-caverns-level-1');
+    expect(arrows.length).toBeGreaterThan(0);
+    const arrow = arrows[0];
+    const before = arrow.attrs['transform'];
+    expect(before).toMatch(/rotate\(-?[\d.]+\)/);
+    const source = boxes.find(b => b.attrs['data-id'] === arrow.attrs['data-a'])!;
+    dragBox(source, 0, 300);
+    const after = arrow.attrs['transform'];
+    expect(after).toMatch(/rotate\(-?[\d.]+\)/);
+    expect(after).not.toBe(before);
   });
 
   it('nudges the room under the keyboard, without touching any other', async () => {

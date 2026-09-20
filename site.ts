@@ -80,6 +80,8 @@ export type LevelStats = {
   doors: number; seals: number; leaving: number;
   /** Lines that do not point the way their exit goes. See `skewedEdges`. */
   skewed: number;
+  /** Connections you can only cross one way. See the arrow in `renderLevel`. */
+  oneWay: number;
 };
 export type LevelSvg = {
   svg: string; stats: LevelStats; width: number; height: number;
@@ -178,8 +180,9 @@ export function renderLevel(
 
   const stats: LevelStats = {
     rooms: area.rooms.length, frontiers: 0, devices: 0, traps: 0,
-    doors: 0, seals: 0, leaving: 0, skewed: 0,
+    doors: 0, seals: 0, leaving: 0, skewed: 0, oneWay: 0,
   };
+  const byId = new Map(area.rooms.map(r => [r.id, r]));
   const edges: string[] = [], gates: string[] = [], boxes: string[] = [];
   const own = new Map<string, string[]>();          // room id -> its own stubs/badges
   const part = (roomId: string, svg: string) => {
@@ -250,8 +253,29 @@ export function renderLevel(
       const key = pair.join('|') + ':' + [dir, REVERSE[dir] ?? dir].sort().join('-');
       if (seen.has(key)) continue;
       seen.add(key);
-      const [ax, ay] = home[pair[0]], [bx, by] = home[pair[1]];
-      const anchors = ` data-a="${esc(pair[0])}" data-b="${esc(pair[1])}"`;
+
+      // Does the far side lead back? An exit whose reverse is missing, or leads
+      // somewhere else entirely, is a connection you can only cross one way --
+      // and nothing else on the page can say so, because one line stands for
+      // both directions and a line has no direction. The Complex of Natural
+      // Caverns has the only two in the world: `-87 nw` lands on `-90`, whose
+      // `se` goes on to `-88` rather than back, and `-88`'s `nw` closes the
+      // triangle at `-87`. Two `nw` and one `se` brings you home. It is the
+      // cave, not a defect -- walked with mapping off and `ex` called in every
+      // room (commit 9aeef4d).
+      //
+      // A reverse that EXISTS but is unwalked (`to: null`) is not evidence of
+      // anything: it is a frontier, and it may well lead back here. Claiming
+      // one-way there would put an arrow on every half-walked area in the world
+      // and retract it later. Absent, or leading somewhere else, is the claim.
+      const back = byId.get(ex.to)?.exits[REVERSE[dir] ?? dir] as Exit | undefined;
+      const oneWay = !back ? true : back.to === null ? false : back.to !== room.id;
+      // Anchored source-first when one-way, so the line runs the way you travel
+      // and the arrow on it needs no other information to aim itself. Both
+      // orders are equally correct for a line; only an arrow cares.
+      const [aId, bId] = oneWay ? [room.id, ex.to] : pair;
+      const [ax, ay] = home[aId], [bx, by] = home[bId];
+      const anchors = ` data-a="${esc(aId)}" data-b="${esc(bId)}"`;
       // One line stands for both directions, so ask about both: whichever of the
       // two the skew was recorded against, the line is the same stroke.
       // A stair's line has no angle to be wrong about, so it is never skewed.
@@ -272,6 +296,18 @@ export function renderLevel(
       edges.push(`<line class="edge${vert ? ' vert' : ''}${bad ? ' skew' : ''}"${anchors}`
         + ` x1="${ax}" y1="${ay}"`
         + ` x2="${bx}" y2="${by}"><title>${esc(lineTitle)}</title></line>`);
+      if (oneWay) {
+        stats.oneWay++;
+        // `data-rot` is what tells the page to re-aim this on a drag: the gate
+        // marks are translated to the midpoint and nothing more, and an arrow
+        // that kept its old angle after a room moved would point at nothing.
+        gates.push(`<path class="arrow"${anchors} data-rot=""`
+          + ` transform="translate(${(ax + bx) / 2},${(ay + by) / 2})`
+          + ` rotate(${(Math.atan2(by - ay, bx - ax) * 180 / Math.PI).toFixed(2)})"`
+          + ` d="M-5,-4.5 L6,0 L-5,4.5 Z"><title>`
+          + esc(`${dir} to ${ex.to} — ONE WAY: there is no ${REVERSE[dir] ?? dir}`
+            + ` back from there`) + `</title></path>`);
+      }
       if (gate) {
         if (gate === 'seal') stats.seals++; else stats.doors++;
         gates.push(`<g class="gate"${anchors}`
@@ -351,6 +387,9 @@ const LEGEND: [string, string][] = [
     'a character stands here — where the map last saw them, not live'],
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/></svg>',
     'a walked exit, both ways'],
+  ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/>'
+    + '<path class="arrow" d="M-5,-4.5 L6,0 L-5,4.5 Z" transform="translate(11,7)"/></svg>',
+    'a connection you can only cross the way the arrow points'],
   ['<svg viewBox="0 0 20 14"><line class="edge skew" x1="1" y1="7" x2="19" y2="7"/></svg>',
     'a walked exit whose line points the wrong way — hover it for which way it'
     + ' really goes, and why the map cannot draw it'],
@@ -454,6 +493,11 @@ button.ghost[disabled] { opacity: 0.45; cursor: default; }
    the circle and on the origin box, and a third meaning for it would be one
    too many. */
 .edge.vert { stroke: var(--purple); stroke-dasharray: 6 4; }
+/* The arrowhead on a connection that only goes one way. Filled in the text
+   colour rather than a colour of its own: it is not a new kind of exit, it is
+   the one thing a line cannot say about itself, and there are exactly two in
+   the world. Outlined in the background so it stays legible over the line. */
+.arrow { fill: var(--text); stroke: var(--bg); stroke-width: 1px; }
 .away-label { fill: var(--blue); font-size: 9.5px; font-family: inherit; }
 .door-mark { fill: var(--bg); stroke: var(--red); stroke-width: 1.5px; }
 .seal-mark { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5px; }
@@ -557,8 +601,14 @@ function place(id) {
       el.setAttribute('x1', a[0]); el.setAttribute('y1', a[1]);
       el.setAttribute('x2', b[0]); el.setAttribute('y2', b[1]);
     } else {
-      el.setAttribute('transform',
-        'translate(' + (a[0] + b[0]) / 2 + ',' + (a[1] + b[1]) / 2 + ')');
+      // Translated to the midpoint, and -- for a one-way arrow -- turned to face
+      // the way the line now runs. Without this a dragged room leaves the arrow
+      // aimed wherever the room used to be, which is worse than no arrow.
+      var t = 'translate(' + (a[0] + b[0]) / 2 + ',' + (a[1] + b[1]) / 2 + ')';
+      if (el.getAttribute('data-rot') !== null) {
+        t += ' rotate(' + (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI) + ')';
+      }
+      el.setAttribute('transform', t);
     }
   });
 }
@@ -592,7 +642,8 @@ function show(slug) {
     + (s.traps ? ' · <b>' + s.traps + '</b> traps' : '')
     + (s.doors ? ' · <b>' + s.doors + '</b> doors' : '')
     + (s.seals ? ' · <b>' + s.seals + '</b> seals' : '')
-    + (s.skewed ? ' · <b>' + s.skewed + '</b> lines point the wrong way' : '');
+    + (s.skewed ? ' · <b>' + s.skewed + '</b> lines point the wrong way' : '')
+    + (s.oneWay ? ' · <b>' + s.oneWay + '</b> one way' : '');
   if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
   shown = slug;
   index();
