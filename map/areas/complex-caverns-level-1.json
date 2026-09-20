@@ -1669,7 +1669,7 @@
       "name": "complex of natural caverns",
       "exits": {
         "d": {
-          "to": null
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-191"
         },
         "ne": {
           "to": "complex-caverns-level-1/complex-of-natural-caverns-96"
