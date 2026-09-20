@@ -608,8 +608,8 @@ export const DRAWN = [
   // West out of the forest. The origin is the room you arrive in, which is the
   // only landmark it has while the walk is young.
   { slug: 'valley', title: 'The Valley', origin: 'valley' },
-  // Two areas opened off the valley and each has one room walked so far: down to
-  // the caverns from valley-14, north-east to the corridors from valley-54.
+  // Two areas opened off the valley: down to the caverns from valley-14, and
+  // north-east to the corridors from valley-54 (still one room).
   // The title carries the level, because site.ts groups the Area select on the
   // NAME -- "<Area>, Level <N>" -- and an area whose name omits it lands in the
   // Level select as a dash. Level 1 read "-" beside level 2's "Level 2" until
@@ -618,6 +618,13 @@ export const DRAWN = [
     origin: 'complex-of-natural-caverns' },
   { slug: 'complex-caverns-level-2', title: 'The Complex of Natural Caverns, Level 2',
     origin: 'complex-of-natural-caverns-98' },
+  // Level 4 before level 3, because the shrine's pages are what the levels are
+  // named after and caverns-94's `d` lands on page 4. Nothing has been walked
+  // onto page 3 yet -- that is caverns-97's `d`, the last unwalked staircase on
+  // level 1 -- so there is no level-3 area to sit between these two. The Level
+  // select sorts on the number, so the gap shows as 1, 2, 4 and reads correctly.
+  { slug: 'complex-caverns-level-4', title: 'The Complex of Natural Caverns, Level 4',
+    origin: 'complex-of-natural-caverns-151' },
   { slug: 'hewn-granite-corridors', title: 'The Hewn Granite Corridors',
     origin: 'hewn-granite-corridor' },
 ];
