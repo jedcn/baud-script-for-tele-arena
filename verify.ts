@@ -77,14 +77,25 @@ export function logInstant(file: string): string | null {
  * from the day before those ids were minted.
  *
  * `first_visited` makes the cut exact rather than a guessed cutoff date.
+ *
+ * A log covers a RANGE, and the comparison is against its END. The name gives
+ * only the moment the session started, and a room minted an hour into a session
+ * is `first_visited` later than that -- so comparing against the start threw away
+ * every sighting of every room the session itself discovered, which is the
+ * session most worth checking. 62 probes from the walk of 2026-09-19T20:20 were
+ * dropped that way and the check reported "0 rooms probed" as a pass.
+ *
+ * `ends` is the log's last-modified time. Where it is unknown the start stands in,
+ * which is the old behaviour and still correct for the case this exists for:
+ * first-town's logs finished the evening before its room ids were minted.
  */
 export function afterRoomExisted(
-  obs: Observation[], firstVisited: Map<number, string>,
+  obs: Observation[], firstVisited: Map<number, string>, ends?: Map<string, string>,
 ): Observation[] {
   return obs.filter(o => {
     const born = firstVisited.get(o.roomId);
-    const when = logInstant(o.file);
-    return born != null && when != null && when >= born;
+    const until = ends?.get(o.file) ?? logInstant(o.file);
+    return born != null && until != null && until >= born;
   });
 }
 
@@ -534,7 +545,7 @@ export function report(findings: Finding[]): string {
 
 if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
-  const { existsSync, readdirSync, readFileSync } = await import('node:fs');
+  const { existsSync, readdirSync, readFileSync, statSync } = await import('node:fs');
   const { renderArea, DRAWN } = await import('./map');
   const drawnOrigin = (slug: string, rooms: Room[]) => {
     const want = DRAWN.find(d => d.slug === slug)?.origin;
@@ -560,12 +571,16 @@ if (import.meta.main) {
   // own words about the rooms, and the only evidence in the project that does not
   // come from the map itself.
   const observations: Observation[] = [];
+  const logEnds = new Map<string, string>();
   for (const dir of ['logs', '../tele-arena-archived-session-logs']) {
     if (!existsSync(dir)) continue;
     for (const name of readdirSync(dir)) {
       if (!name.endsWith('.log')) continue;
       const path = `${dir}/${name}`;
       observations.push(...observedExits(clean(readFileSync(path, 'latin1')), name));
+      // When the session finished, so a room it minted itself is not excluded
+      // from it. Logs are append-only and never edited, so mtime is the end.
+      logEnds.set(name, statSync(path).mtime.toISOString().slice(0, 19));
     }
   }
   const anchor = (db.prepare("SELECT id FROM rooms WHERE slug='north-plaza'").get() as any)?.id;
@@ -596,8 +611,8 @@ if (import.meta.main) {
       // Against the game rather than against ourselves. Last, because when it
       // fails the checks above are all still passing and that is the point.
       oneRoomTwoShapes(sinceTheMapLastAgreed(
-        afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born), exits)),
-      exitsMatchTheGame(exits, afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born)),
+        afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born, logEnds), exits)),
+      exitsMatchTheGame(exits, afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born, logEnds)),
     ];
     // The drawing is a check too: renderArea throws if a room cannot be placed
     // or if fewer boxes come out than rooms went in.

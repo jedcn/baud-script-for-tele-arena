@@ -437,6 +437,29 @@ describe('afterRoomExisted', () => {
     expect(kept.map(o => o.file)).toEqual(['session-j-2026-07-06T20-58-57.log']);
   });
 
+  // A log covers a range, and the cut is against its END. A room minted an hour
+  // into a session is first_visited later than the session's name, so comparing
+  // against the start threw away every sighting of every room the session itself
+  // discovered -- 62 of them on 2026-09-19T20:20, reported as "0 rooms probed".
+  it('keeps a sighting of a room the session itself discovered', () => {
+    const file = 'session-p-2026-09-19T20-20-08.log';
+    const kept = afterRoomExisted(
+      [{ roomId: 1, exits: ['n'], file, line: 1 }],
+      new Map([[1, '2026-09-19T20:27:41']]),           // minted mid-session
+      new Map([[file, '2026-09-19T21:02:00']]),        // and the log ran on past it
+    );
+    expect(kept).toHaveLength(1);
+  });
+
+  it('still drops a log that ended before the room existed', () => {
+    const file = 'session-j-2026-07-04T20-58-57.log';
+    expect(afterRoomExisted(
+      [{ roomId: 1, exits: ['n'], file, line: 1 }],
+      new Map([[1, '2026-07-05T08:41:01']]),
+      new Map([[file, '2026-07-04T23:10:00']]),
+    )).toEqual([]);
+  });
+
   it('drops a sighting of a room the map no longer has', () => {
     expect(afterRoomExisted(
       [{ roomId: 99, exits: ['n'], file: 'session-j-2026-09-19T10-00-00.log', line: 1 }],
