@@ -610,8 +610,14 @@ export const DRAWN = [
   { slug: 'valley', title: 'The Valley', origin: 'valley' },
   // Two areas opened off the valley and each has one room walked so far: down to
   // the caverns from valley-14, north-east to the corridors from valley-54.
-  { slug: 'complex-caverns-level-1', title: 'The Complex of Natural Caverns',
+  // The title carries the level, because site.ts groups the Area select on the
+  // NAME -- "<Area>, Level <N>" -- and an area whose name omits it lands in the
+  // Level select as a dash. Level 1 read "-" beside level 2's "Level 2" until
+  // this said so.
+  { slug: 'complex-caverns-level-1', title: 'The Complex of Natural Caverns, Level 1',
     origin: 'complex-of-natural-caverns' },
+  { slug: 'complex-caverns-level-2', title: 'The Complex of Natural Caverns, Level 2',
+    origin: 'complex-of-natural-caverns-98' },
   { slug: 'hewn-granite-corridors', title: 'The Hewn Granite Corridors',
     origin: 'hewn-granite-corridor' },
 ];

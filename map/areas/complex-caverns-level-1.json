@@ -1,6 +1,6 @@
 {
   "area": "complex-caverns-level-1",
-  "name": "The Complex of Natural Caverns",
+  "name": "The Complex of Natural Caverns, Level 1",
   "src": "db-export",
   "rooms": [
     {
@@ -963,7 +963,7 @@
       "name": "complex of natural caverns",
       "exits": {
         "d": {
-          "to": "complex-caverns-level-1/complex-of-natural-caverns-98"
+          "to": "complex-caverns-level-2/complex-of-natural-caverns-98"
         },
         "n": {
           "to": "complex-caverns-level-1/complex-of-natural-caverns-55"
@@ -1679,23 +1679,6 @@
       "layout": {
         "x": -32,
         "y": 22
-      }
-    },
-    {
-      "id": "complex-caverns-level-1/complex-of-natural-caverns-98",
-      "name": "complex of natural caverns",
-      "exits": {
-        "nw": {
-          "to": null
-        },
-        "u": {
-          "to": "complex-caverns-level-1/complex-of-natural-caverns-56"
-        }
-      },
-      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northwest or up a smooth staircase apparently formed by the flow of some long dried underground stream.",
-      "layout": {
-        "x": -27,
-        "y": 25
       }
     }
   ]

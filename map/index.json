@@ -8,9 +8,15 @@
     },
     {
       "area": "complex-caverns-level-1",
-      "name": "The Complex of Natural Caverns",
-      "rooms": 99,
+      "name": "The Complex of Natural Caverns, Level 1",
+      "rooms": 98,
       "file": "areas/complex-caverns-level-1.json"
+    },
+    {
+      "area": "complex-caverns-level-2",
+      "name": "The Complex of Natural Caverns, Level 2",
+      "rooms": 43,
+      "file": "areas/complex-caverns-level-2.json"
     },
     {
       "area": "deep-forest",
