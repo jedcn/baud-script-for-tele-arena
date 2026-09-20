@@ -413,6 +413,21 @@ const PROSE_FORMS = [
   // passage, the caves say tunnel, the wilderness says path or trail, and a
   // storage room says room.
   /(?:corridor|passage|tunnel|path|trail|room) (?:runs|continues) to the ([^.]+)\./,
+  // The caverns, both levels: "You may exit to the north or to the south.",
+  // "You may exit to the northeast or the southeast.", and with a staircase in
+  // the list, "You may exit to the north or up a smooth staircase apparently
+  // formed by...", where only the compass word is read and the stair is left to
+  // the u/d exclusion below. 120 rooms across the two levels used this form and
+  // not one of them was being checked, in the one area of the map that has
+  // actually been damaged by conflation.
+  /[Yy]ou may exit to the ([^.]+)\./,
+  // "The only exit is to the north." -- an absolute claim, unlike the chamber's
+  // "only VISIBLE exit", which stays out for the reason given above. Anchored to
+  // the start of a sentence for the same reason: the third dungeon's enormous
+  // natural cavern says "From what you can see, the only exit is to the west",
+  // and it has an `n` as well. The hedge is the game being honest about a dark
+  // room, not the map being wrong.
+  /(?:^|\. )[Tt]he only exit is to the ([^.]+)\./,
 ];
 
 // A way out that is a LANDMARK gets a sentence of its own, outside the list of

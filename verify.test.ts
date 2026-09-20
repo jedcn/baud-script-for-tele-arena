@@ -108,6 +108,40 @@ describe('proseDirections', () => {
       + ' archway leads out into the desert to the south.')).toEqual(['e', 's']);
   });
 
+  it('reads the caverns form, in each of its list shapes', () => {
+    // 120 rooms across the two cavern levels use this and were checked by
+    // nothing at all -- in the one area of the map conflation has actually
+    // damaged. The separators vary and the last one may or may not repeat the
+    // "to": all four shapes are in complex-caverns-level-2 today.
+    const boiler = 'You are standing in a surprisingly orderly complex of natural'
+      + ' caverns which form wide passageways and large, spacious chambers. ';
+    expect(proseDirections(boiler + 'You may exit to the north or to the south.'))
+      .toEqual(['n', 's']);
+    expect(proseDirections(boiler + 'You may exit to the northeast or the southeast.'))
+      .toEqual(['ne', 'se']);
+    expect(proseDirections(boiler + 'You may exit to the north, west, or to the southeast.'))
+      .toEqual(['n', 'se', 'w']);
+    expect(proseDirections(boiler + 'The only exit is to the southwest.')).toEqual(['sw']);
+  });
+
+  it('reads the compass word out of the caverns stair sentence and leaves the stair', () => {
+    // "up a smooth staircase" is a `u` exit, and `u`/`d` are excluded from the
+    // comparison -- so the sentence must yield the compass direction alone
+    // rather than declining, or the room goes unchecked.
+    expect(proseDirections('You may exit to the north or up a smooth staircase'
+      + ' apparently formed by the flow of some long dried underground stream.'))
+      .toEqual(['n']);
+  });
+
+  it('declines a hedged "only exit" the way it declines the chamber form', () => {
+    // first-dungeon-level-3's enormous natural cavern: "From what you can see,
+    // the only exit is to the west" -- and it has an `n` as well. The hedge is
+    // the game being honest about a dark room, not the map being wrong, so the
+    // claim is read only when it opens a sentence.
+    expect(proseDirections('You peer into the darkness between natural formations.'
+      + ' From what you can see, the only exit is to the west.')).toBeNull();
+  });
+
   it('declines the chamber form rather than guessing', () => {
     // "The only visible exit is east" is a claim about VISIBILITY. Stoneworks
     // level 1's mist room has a real `n` exit the prose cannot see, so reading
