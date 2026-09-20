@@ -623,6 +623,8 @@ export const DRAWN = [
   // onto page 3 yet -- that is caverns-97's `d`, the last unwalked staircase on
   // level 1 -- so there is no level-3 area to sit between these two. The Level
   // select sorts on the number, so the gap shows as 1, 2, 4 and reads correctly.
+  { slug: 'complex-caverns-level-3', title: 'The Complex of Natural Caverns, Level 3',
+    origin: 'complex-of-natural-caverns-191' },
   { slug: 'complex-caverns-level-4', title: 'The Complex of Natural Caverns, Level 4',
     origin: 'complex-of-natural-caverns-151' },
   { slug: 'hewn-granite-corridors', title: 'The Hewn Granite Corridors',
