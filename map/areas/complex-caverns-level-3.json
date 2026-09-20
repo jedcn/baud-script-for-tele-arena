@@ -538,7 +538,7 @@
       "name": "complex of natural caverns",
       "exits": {
         "d": {
-          "to": null
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-231"
         },
         "s": {
           "to": "complex-caverns-level-3/complex-of-natural-caverns-221"
@@ -687,6 +687,1321 @@
       "layout": {
         "x": -32,
         "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-231",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-232"
+        },
+        "u": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-222"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast, or up a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -28,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-232",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-231"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-233"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southwest or to the northwest.",
+      "layout": {
+        "x": -27,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-233",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-232"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-234"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or to the west.",
+      "layout": {
+        "x": -28,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-234",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-233"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-235"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the northwest.",
+      "layout": {
+        "x": -29,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-235",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-236"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-234"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southeast.",
+      "layout": {
+        "x": -30,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-236",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-237"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-235"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the south or to the northwest.",
+      "layout": {
+        "x": -30,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-237",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-236"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-238"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or west.",
+      "layout": {
+        "x": -31,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-238",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-237"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-239"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the southwest.",
+      "layout": {
+        "x": -32,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-239",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-238"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-240"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the south.",
+      "layout": {
+        "x": -33,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-240",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-239"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-241"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the south.",
+      "layout": {
+        "x": -33,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-241",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-240"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-242"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southeast.",
+      "layout": {
+        "x": -33,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-242",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-241"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-243"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the south or to the northwest.",
+      "layout": {
+        "x": -32,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-243",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-244"
+        },
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-242"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the east.",
+      "layout": {
+        "x": -32,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-244",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-245"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-243"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -31,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-245",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-246"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-244"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -30,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-246",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-247"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-245"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -29,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-247",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-248"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-246"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -28,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-248",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-249"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-247"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -27,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-249",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-250"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-248"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -26,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-250",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-251"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-249"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -25,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-251",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-252"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-250"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -24,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-252",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-253"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-251"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the west.",
+      "layout": {
+        "x": -23,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-253",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-254"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-252"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the south.",
+      "layout": {
+        "x": -23,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-254",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-255"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-253"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southwest.",
+      "layout": {
+        "x": -22,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-255",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-256"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-254"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the south.",
+      "layout": {
+        "x": -22,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-256",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-257"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-255"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the south or to the northwest.",
+      "layout": {
+        "x": -22,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-257",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-256"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-258"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or to the southwest.",
+      "layout": {
+        "x": -23,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-258",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-257"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-259"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the south.",
+      "layout": {
+        "x": -24,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-259",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-258"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-260"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southwest.",
+      "layout": {
+        "x": -24,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-260",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-259"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-261"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or to the west.",
+      "layout": {
+        "x": -25,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-261",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-260"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-262"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the northwest.",
+      "layout": {
+        "x": -26,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-262",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-263"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-261"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -27,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-263",
+      "name": "complex of natural caverns",
+      "exits": {
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-262"
+        },
+        "u": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-264"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southwest or up a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -26,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-264",
+      "name": "complex of natural caverns",
+      "exits": {
+        "d": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-263"
+        },
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-280"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-266"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-265"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east, southeast, south, or down a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -26,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-265",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-264"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. The only exit is to the northwest.",
+      "layout": {
+        "x": -25,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-266",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-264"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-267"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southwest.",
+      "layout": {
+        "x": -26,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-267",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-266"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-268"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -27,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-268",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-267"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-269"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southwest or to the northwest.",
+      "layout": {
+        "x": -26,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-269",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-268"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-270"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -27,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-270",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-271"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-269"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the northwest.",
+      "layout": {
+        "x": -26,
+        "y": 18
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-271",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-272"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-270"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or to the west.",
+      "layout": {
+        "x": -25,
+        "y": 18
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-272",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-273"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-271"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the southwest.",
+      "layout": {
+        "x": -24,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-273",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-275"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-274"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-272"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north, southeast, or to the west.",
+      "layout": {
+        "x": -23,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-274",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-273"
+        },
+        "u": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-281"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northwest or up a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -22,
+        "y": 18
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-275",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-276"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-273"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the south.",
+      "layout": {
+        "x": -23,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-276",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-277"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-275"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the southwest.",
+      "layout": {
+        "x": -22,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-277",
+      "name": "complex of natural caverns",
+      "exits": {
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-278"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-276"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north or to the south.",
+      "layout": {
+        "x": -22,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-278",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-279"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-277"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the south or to the northwest.",
+      "layout": {
+        "x": -22,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-279",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-278"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-280"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or west.",
+      "layout": {
+        "x": -23,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-280",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-279"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-264"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -24,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-281",
+      "name": "complex of natural caverns",
+      "exits": {
+        "d": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-274"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-282"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northwest or down a smooth staircase apparently formed by the flow of some long dried underground stream.",
+      "layout": {
+        "x": -22,
+        "y": 18
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-282",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-283"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-281"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -23,
+        "y": 19
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-283",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-284"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-282"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the southwest.",
+      "layout": {
+        "x": -22,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-284",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-285"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-283"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or to the west.",
+      "layout": {
+        "x": -21,
+        "y": 20
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-285",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-286"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-284"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southwest or to the northwest.",
+      "layout": {
+        "x": -20,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-286",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-298"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-285"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-287"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast, southeast, or to the west.",
+      "layout": {
+        "x": -21,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-287",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-286"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-288"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -22,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-288",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-287"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-289"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the southwest.",
+      "layout": {
+        "x": -23,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-289",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-288"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-290"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the northwest.",
+      "layout": {
+        "x": -24,
+        "y": 21
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-290",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-289"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-291"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or west.",
+      "layout": {
+        "x": -25,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-291",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-290"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-292"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or west.",
+      "layout": {
+        "x": -26,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-292",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-291"
+        },
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-293"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the northwest.",
+      "layout": {
+        "x": -27,
+        "y": 22
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-293",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-294"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-292"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or to the northwest.",
+      "layout": {
+        "x": -28,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-294",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-295"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-293"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or to the northwest.",
+      "layout": {
+        "x": -29,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-295",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-296"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-294"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -30,
+        "y": 25
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-296",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-297"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-295"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or to the southwest.",
+      "layout": {
+        "x": -29,
+        "y": 26
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-297",
+      "name": "complex of natural caverns",
+      "exits": {
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-296"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. The only exit is to the southwest.",
+      "layout": {
+        "x": -28,
+        "y": 27
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-298",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-299"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-286"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southwest or to the northwest.",
+      "layout": {
+        "x": -20,
+        "y": 23
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-299",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-300"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-298"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or to the northwest.",
+      "layout": {
+        "x": -21,
+        "y": 24
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-300",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-301"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-299"
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast, southwest, or the northwest.",
+      "layout": {
+        "x": -22,
+        "y": 25
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-301",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-302"
+        },
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-300"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the southeast.",
+      "layout": {
+        "x": -23,
+        "y": 26
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-302",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-303"
+        },
+        "n": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-305"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-301"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the north, east, or to the southwest.",
+      "layout": {
+        "x": -22,
+        "y": 27
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-303",
+      "name": "complex of natural caverns",
+      "exits": {
+        "se": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-304"
+        },
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-302"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the southeast or west.",
+      "layout": {
+        "x": -21,
+        "y": 27
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-304",
+      "name": "complex of natural caverns",
+      "exits": {
+        "nw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-303"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. The only exit is to the northwest.",
+      "layout": {
+        "x": -20,
+        "y": 26
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-305",
+      "name": "complex of natural caverns",
+      "exits": {
+        "ne": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-306"
+        },
+        "s": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-302"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the northeast or the south.",
+      "layout": {
+        "x": -22,
+        "y": 28
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-306",
+      "name": "complex of natural caverns",
+      "exits": {
+        "e": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-307"
+        },
+        "sw": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-305"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. You may exit to the east or the southwest.",
+      "layout": {
+        "x": -21,
+        "y": 29
+      }
+    },
+    {
+      "id": "complex-caverns-level-3/complex-of-natural-caverns-307",
+      "name": "complex of natural caverns",
+      "exits": {
+        "w": {
+          "to": "complex-caverns-level-3/complex-of-natural-caverns-306"
+        }
+      },
+      "description": "You are standing in a surprisingly orderly complex of natural caverns which form wide passageways and large, spacious chambers with few stalagtites or stalagmites blocking open areas. The floor here is unnaturally smooth and level despite the apparent origin of these caverns. The only exit is to the west.",
+      "layout": {
+        "x": -20,
+        "y": 29
       }
     }
   ]
