@@ -95,6 +95,45 @@ export function afterRoomExisted(
 const COMPASS_EXITS = new Set(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'u', 'd']);
 
 /**
+ * Sightings from after the map last agreed with the game about a room.
+ *
+ * A conflation stays reported forever otherwise, and a check that always fails is
+ * one you stop reading -- the same way a warning that cries wolf is one you learn
+ * to walk past. #1882 was seen as {ne,nw,se} and as {nw,se} across two sessions
+ * on 2026-09-19 while the map had a wrong edge; the edge was repaired and a clean
+ * walk read it as {ne,nw,se} twice, and the old shapes went on failing regardless.
+ *
+ * So: find the newest sighting of a room whose exit-set matches the map, and drop
+ * everything from logs older than that one. If the map is right now, the earlier
+ * disagreements were about a map that no longer exists. If it is still wrong,
+ * nothing agrees, nothing is dropped, and every shape is still reported.
+ *
+ * The cut is by FILE, not by line, so a session that drifted MID-WALK survives
+ * whole if it is also the session that last agreed -- both shapes are kept and
+ * the check still fails. A later clean walk does retire an older session's drift,
+ * and that is the point: the drift was caused by the map that has since been
+ * repaired, and walking the corner correctly is the evidence of the repair.
+ */
+export function sinceTheMapLastAgreed(obs: Observation[], exits: Exit[]): Observation[] {
+  const have = new Map<number, string>();
+  for (const e of exits) {
+    if (!COMPASS_EXITS.has(e.direction)) continue;
+    have.set(e.from_id, have.has(e.from_id) ? `${have.get(e.from_id)},${e.direction}` : e.direction);
+  }
+  const mapShape = new Map([...have].map(([id, ds]) => [id, setOf(ds.split(','))]));
+  const agreedAt = new Map<number, string>();
+  for (const o of obs) {
+    if (mapShape.get(o.roomId) !== setOf(o.exits)) continue;
+    const prev = agreedAt.get(o.roomId);
+    if (prev == null || o.file > prev) agreedAt.set(o.roomId, o.file);
+  }
+  return obs.filter(o => {
+    const cut = agreedAt.get(o.roomId);
+    return cut == null || o.file >= cut;
+  });
+}
+
+/**
  * One room id, seen by the game with two different exit-sets. Exits do not change,
  * so this is the map claiming one room where the cave has two -- and it needs no
  * database at all to say so, which is why it is the first thing reported.
@@ -556,7 +595,8 @@ if (import.meta.main) {
       drawnDirections(rooms, exits, drawnOrigin(slug, rooms)),
       // Against the game rather than against ourselves. Last, because when it
       // fails the checks above are all still passing and that is the point.
-      oneRoomTwoShapes(afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born)),
+      oneRoomTwoShapes(sinceTheMapLastAgreed(
+        afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born), exits)),
       exitsMatchTheGame(exits, afterRoomExisted(observations.filter(o => mine.has(o.roomId)), born)),
     ];
     // The drawing is a check too: renderArea throws if a room cannot be placed

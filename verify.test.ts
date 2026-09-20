@@ -2,7 +2,8 @@ import { describe, expect, it } from 'bun:test';
 import { frontiers, reciprocity, depths, levelConsistency, descriptions, report,
          routeReferences, coordinates, orphanExits, proseAgreement, proseDirections,
          drawnDirections, observedExits, oneRoomTwoShapes, exitsMatchTheGame,
-         logInstant, afterRoomExisted, type Room, type Exit } from './verify';
+         logInstant, afterRoomExisted, sinceTheMapLastAgreed,
+         type Room, type Exit } from './verify';
 
 // Fixtures, never the live DB: tele-arena.db is absent on the VPS, and a check
 // has to be pinned to a graph whose defects are known.
@@ -440,5 +441,80 @@ describe('afterRoomExisted', () => {
     expect(afterRoomExisted(
       [{ roomId: 99, exits: ['n'], file: 'session-j-2026-09-19T10-00-00.log', line: 1 }],
       new Map())).toEqual([]);
+  });
+});
+
+
+describe('sinceTheMapLastAgreed', () => {
+  const obs = (roomId: number, exits: string[], file: string) =>
+    ({ roomId, exits, file, line: 1 });
+  const old = 'session-p-2026-09-19T15-01-29.log';
+  const mid = 'session-p-2026-09-19T16-35-27.log';
+  const fresh = 'session-p-2026-09-19T20-06-58.log';
+
+  // The Complex of Natural Caverns after the -90 edge was repaired: #1882 had
+  // been seen as two shapes across two drifting sessions, then read correctly
+  // twice by a clean walk. Without this the old shapes fail the check forever,
+  // and a check that always fails is one you stop reading.
+  it('drops shapes from before the map last matched the game', () => {
+    const kept = sinceTheMapLastAgreed([
+      obs(1, ['ne', 'nw', 'se'], old),
+      obs(1, ['nw', 'se'], mid),
+      obs(1, ['ne', 'nw', 'se'], fresh),
+    ], [
+      { from_id: 1, direction: 'ne', to_id: 2 },
+      { from_id: 1, direction: 'nw', to_id: 3 },
+      { from_id: 1, direction: 'se', to_id: 4 },
+    ]);
+    expect(kept.map(o => o.file)).toEqual([fresh]);
+    expect(oneRoomTwoShapes(kept).ok).toBe(true);
+  });
+
+  // The cut is by file, so the session that last agreed survives WHOLE. A mapper
+  // that drifted mid-walk in that session is still reported -- both of its shapes
+  // are kept -- rather than being half-explained by its own good reading.
+  it('keeps both shapes when the agreeing session is the one that drifted', () => {
+    const kept = sinceTheMapLastAgreed([
+      obs(1, ['nw', 'se'], old),
+      obs(1, ['ne', 'nw', 'se'], mid),
+      obs(1, ['nw', 'se'], mid),
+    ], [
+      { from_id: 1, direction: 'ne', to_id: 2 },
+      { from_id: 1, direction: 'nw', to_id: 3 },
+      { from_id: 1, direction: 'se', to_id: 4 },
+    ]);
+    expect(kept.map(o => o.file)).toEqual([mid, mid]);
+    expect(oneRoomTwoShapes(kept).ok).toBe(false);
+  });
+
+  // But a LATER clean walk does retire an older session's drift, and should: the
+  // drift was caused by a map that has since been repaired, and walking the
+  // corner correctly is exactly the evidence that it was.
+  it('retires an older session\'s drift once a later walk agrees', () => {
+    const kept = sinceTheMapLastAgreed([
+      obs(1, ['ne', 'nw', 'se'], mid),
+      obs(1, ['nw', 'se'], mid),
+      obs(1, ['ne', 'nw', 'se'], fresh),
+    ], [
+      { from_id: 1, direction: 'ne', to_id: 2 },
+      { from_id: 1, direction: 'nw', to_id: 3 },
+      { from_id: 1, direction: 'se', to_id: 4 },
+    ]);
+    expect(kept.map(o => o.file)).toEqual([fresh]);
+    expect(oneRoomTwoShapes(kept).ok).toBe(true);
+  });
+
+  // Still broken means still reported: with nothing agreeing there is no cut, so
+  // every sighting survives and the check fails with all of them named.
+  it('drops nothing while the map agrees with no sighting at all', () => {
+    const all = [obs(1, ['n'], old), obs(1, ['s'], fresh)];
+    const kept = sinceTheMapLastAgreed(all, [{ from_id: 1, direction: 'e', to_id: 2 }]);
+    expect(kept).toEqual(all);
+    expect(oneRoomTwoShapes(kept).ok).toBe(false);
+  });
+
+  it('leaves a room the map has never heard of alone', () => {
+    const all = [obs(77, ['n'], fresh)];
+    expect(sinceTheMapLastAgreed(all, [])).toEqual(all);
   });
 });
