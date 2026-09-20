@@ -124,10 +124,32 @@ describe('renderLevel', () => {
     // double connection today -- this fixture is the guard against a dedup that
     // keys on the two rooms alone.)
     //
-    // Matched on the class PREFIX: a line can also carry `skew`, and this
-    // fixture has one. hall reaches vault both `w` and `s`, which is a shape no
-    // grid holds, so whichever line loses is drawn pointing somewhere else.
-    expect(svg.match(/class="edge[ "]/g)!.length).toBe(3);
+    // Matched on the class PREFIX: a line can also carry `skew` or `vert`, and
+    // this fixture has one of each. hall reaches vault both `w` and `s`, which
+    // is a shape no grid holds, so whichever line loses is drawn pointing
+    // somewhere else; corridor and vault are joined by a stair.
+    expect(svg.match(/class="edge[ "]/g)!.length).toBe(4);
+    expect(svg.match(/class="edge vert"/g)!.length).toBe(1);
+  });
+
+  it('draws the stair between two rooms on the same level, and says nothing about its angle', () => {
+    // The badge says WHICH WAY (u/d); only the line says which room, and
+    // without it a level joined to itself only by stairs reads as two separate
+    // drawings. The angle of that line means nothing -- the rooms are above and
+    // below one another -- so it is dashed, and it is never counted as skewed.
+    const line = svg.match(/<line class="edge vert"[^>]*>(?:<title>([^<]*)<)?/)!;
+    expect(line[0]).toContain('data-a="test-level-1/corridor-1"');
+    expect(line[0]).toContain('data-b="test-level-1/vault"');
+    expect(line[1]).toBe('u to test-level-1/vault');
+    // Both boxes keep their badge: the line alone cannot say which end is up.
+    expect(svg.match(/class="vbadge"/g)!.length).toBe(2);
+  });
+
+  it('does not draw a stair to a room on another level', () => {
+    // `d` out of the level is a labelled stub, not a line to a box that is not
+    // in this drawing at all. hall's `d` leaves for test-level-2.
+    expect(svg).toContain('class="away"');
+    expect(svg).not.toContain('data-b="test-level-2/landing"');
   });
 
   // The two ways a line can lie about its direction, and why the page says so:
@@ -262,7 +284,7 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   const data = JSON.parse(src.match(/var DATA = (\{[\s\S]*?\});\n/)![1]);
   const levelSlugs = Object.keys(data.levels);
   const roomIds = Object.keys(data.home);
-  const pairs = [...html.matchAll(/<line class="edge" data-a="([^"]+)" data-b="([^"]+)"/g)]
+  const pairs = [...html.matchAll(/<line class="edge[^"]*" data-a="([^"]+)" data-b="([^"]+)"/g)]
     .map(m => [m[1], m[2]] as [string, string]);
 
   const panes = levelSlugs.map(slug => {
@@ -550,8 +572,8 @@ describe('map.html', () => {
   it('names a legend entry for every mark it draws', async () => {
     const html = buildPage(await areasP);
     const legend = html.slice(html.indexOf('<h2>Legend</h2>'));
-    for (const cls of ['edge', 'stub', 'frontier', 'away', 'door-mark', 'seal-mark',
-                       'device-dot', 'trap-dot', 'vbadge']) {
+    for (const cls of ['edge', 'edge vert', 'stub', 'frontier', 'away', 'door-mark',
+                       'seal-mark', 'device-dot', 'trap-dot', 'vbadge']) {
       expect(legend).toContain(`class="${cls}`);
     }
   });

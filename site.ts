@@ -223,14 +223,19 @@ export function renderLevel(
         continue;
       }
 
-      // u/d carry no direction on a flat drawing, so they get a badge on the box
-      // rather than a line that would lie about which way the room lies.
-      if (dir === 'u' || dir === 'd') {
+      // u/d carry no compass direction, so the badge on the box is what says
+      // which WAY the stair goes -- a plain line would lie about where the room
+      // lies. The line drawn below says which ROOM it goes to, which the badge
+      // cannot: without it a staircase is invisible, and a level joined to
+      // itself only by stairs reads as two drawings that have nothing to do
+      // with each other. complex-caverns-level-2 is two such halves, joined at
+      // caverns-116/117 and nowhere else.
+      const vert = dir === 'u' || dir === 'd';
+      if (vert) {
         const up = dir === 'u';
         part(room.id, `<text class="vbadge" x="${BOX_W / 2 - 5}"`
           + ` y="${up ? -BOX_H / 2 + 9 : BOX_H / 2 - 2}">${up ? '▲' : '▼'}`
           + `<title>${esc(dir)} to ${esc(ex.to)}</title></text>`);
-        continue;
       }
 
       // One line per CONNECTION, not per direction: `hall --e--> corridor` and
@@ -249,9 +254,10 @@ export function renderLevel(
       const anchors = ` data-a="${esc(pair[0])}" data-b="${esc(pair[1])}"`;
       // One line stands for both directions, so ask about both: whichever of the
       // two the skew was recorded against, the line is the same stroke.
-      const bad = skewed.get(`${room.id}|${dir}`)
-        ?? (ex.to != null ? skewed.get(`${ex.to}|${REVERSE[dir] ?? dir}`) : undefined);
-      let lineTitle = title;
+      // A stair's line has no angle to be wrong about, so it is never skewed.
+      const bad = vert ? undefined : (skewed.get(`${room.id}|${dir}`)
+        ?? (ex.to != null ? skewed.get(`${ex.to}|${REVERSE[dir] ?? dir}`) : undefined));
+      let lineTitle = vert && !gate ? `${dir} to ${ex.to}` : title;
       if (bad) {
         stats.skewed++;
         lineTitle = `${title} — but this line points ${bad.drawn}. `
@@ -263,7 +269,8 @@ export function renderLevel(
             : 'The layout had to move a room out of a cell another room had'
               + ' already taken, and this line came with it.');
       }
-      edges.push(`<line class="edge${bad ? ' skew' : ''}"${anchors} x1="${ax}" y1="${ay}"`
+      edges.push(`<line class="edge${vert ? ' vert' : ''}${bad ? ' skew' : ''}"${anchors}`
+        + ` x1="${ax}" y1="${ay}"`
         + ` x2="${bx}" y2="${by}"><title>${esc(lineTitle)}</title></line>`);
       if (gate) {
         if (gate === 'seal') stats.seals++; else stats.doors++;
@@ -362,13 +369,15 @@ const LEGEND: [string, string][] = [
   ['<svg viewBox="0 0 20 14"><rect class="box" x="1" y="1" width="18" height="12" rx="3"/>'
     + '<text class="vbadge" x="13" y="7">▲</text></svg>',
     'stairs up (▲) or down (▼) — no compass direction to draw'],
+  ['<svg viewBox="0 0 20 14"><line class="edge vert" x1="1" y1="7" x2="19" y2="7"/></svg>',
+    'the stairs themselves: which room the ▲/▼ leads to, on this level'],
 ];
 
 const CSS = `
 :root {
   --bg: #0d1117; --surface: #161b22; --raised: #21262d; --border: #30363d;
   --text: #e6edf3; --muted: #8b949e; --blue: #58a6ff; --amber: #e3b341;
-  --red: #f85149; --green: #3fb950;
+  --red: #f85149; --green: #3fb950; --purple: #bc8cff;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }   /* a level pane must stay hidden inside a flex row */
@@ -439,6 +448,12 @@ button.ghost[disabled] { opacity: 0.45; cursor: default; }
    not a different kind of exit, and it has to stay legible under the door and
    seal marks that may sit on top of it. */
 .edge.skew { stroke: var(--amber); stroke-dasharray: 5 3; }
+/* A staircase between two rooms on this level. Dashed because its angle carries
+   no meaning at all -- the rooms are above and below one another, not beside --
+   and purple rather than green because green already says "frontier" here, on
+   the circle and on the origin box, and a third meaning for it would be one
+   too many. */
+.edge.vert { stroke: var(--purple); stroke-dasharray: 6 4; }
 .away-label { fill: var(--blue); font-size: 9.5px; font-family: inherit; }
 .door-mark { fill: var(--bg); stroke: var(--red); stroke-width: 1.5px; }
 .seal-mark { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5px; }
