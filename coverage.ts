@@ -358,7 +358,10 @@ export const SHRINE_MAPS: Record<string,
   // Caverns 1 carries exactly one [^], captioned "Up to Valley", and exactly one
   // room of ours has a `u` leading out of the area -- so the two identify each
   // other, which is the confirmation the box is the right one.
-  'complex-caverns': {
+  // Named level-1 to match sewers-level-1 and stoneworks-level-2, and to keep the
+  // AREA slug clearly apart from the DRAWING slugs in scrape.ts, which are
+  // complex-caverns-1..4 and are pages of the shrine rather than areas of ours.
+  'complex-caverns-level-1': {
     file: 'map/shrine/complex-caverns-1.txt',
     originBox: '^',                      // up to the Valley
     originRoom: 'complex-of-natural-caverns',
