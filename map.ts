@@ -110,9 +110,24 @@ export function placeRooms(opts: {
   // out from a single root would place every such room nowhere, i.e. drop it
   // from the drawing with no error. Each component is laid out on its own and
   // the components are then tiled side by side, the way report.ts does it.
+  //
+  // The cut is made at the STAIRS: `u`/`d` join two rooms that are above and
+  // below one another, and a flat grid has no cell for that, so the room on the
+  // far side gets parked in whatever cell happens to be free next door. Every
+  // room laid out from there inherits the lie, and a whole region ends up
+  // rotated or folded through the region it hangs off -- which is where the
+  // wrongly-drawn lines come from. Cutting there instead lays each flat region
+  // out on its own, in its own coordinates, and the ^/v badges plus the stair
+  // line carry the join. That is also how the shrine draws these caves: page 3
+  // is five separate clusters joined by numbered up/down boxes, and cutting at
+  // its four internal stairs reproduces exactly those five.
+  //
+  // A stair between two rooms the compass ALSO joins changes nothing: the
+  // region stays one component, because the cut only removes an edge the flat
+  // exits already duplicate.
   const neighbours = new Map<number, Set<number>>();
   for (const e of exits) {
-    if (!internal(e)) continue;
+    if (!internal(e) || !OFF[e.direction]) continue;
     if (!neighbours.has(e.from_id)) neighbours.set(e.from_id, new Set());
     if (!neighbours.has(e.to_id!)) neighbours.set(e.to_id!, new Set());
     neighbours.get(e.from_id)!.add(e.to_id!);
@@ -138,13 +153,19 @@ export function placeRooms(opts: {
   }
 
   const pos = new Map<number, Pos>();
-  let cursor = 0;                       // left edge of the next component
   const GAP = 2;
+  // Each component is laid out in its own coordinates first and packed
+  // afterwards, because where a cluster goes depends on how big the others are.
+  const laid: { members: Map<number, Pos>; w: number; h: number }[] = [];
   roots.forEach((root, index) => {
     const members = rooms.filter(r => componentOf.get(r.id) === index).map(r => r.id);
     const inComponent = new Set(members);
     const local = new Map<number, Pos>([[root, { c: 0, r: 0 }]]);
-    const relevant = exits.filter(e => inComponent.has(e.from_id));
+    // Both ends, not just the source: a stair out of this region now leads to a
+    // room in ANOTHER component, and the vertical pass below would otherwise
+    // place it here as well as in its own layout -- the same room in two cells.
+    const relevant = exits.filter(e => inComponent.has(e.from_id)
+      && (!internal(e) || inComponent.has(e.to_id!)));
 
     // Placement alternates two passes until nothing more can be placed.
     //
@@ -294,9 +315,59 @@ export function placeRooms(opts: {
     }
 
     const cols = [...local.values()].map(p => p.c);
-    const lo = Math.min(...cols), hi = Math.max(...cols);
-    for (const [id, p] of local) pos.set(id, { c: p.c - lo + cursor, r: p.r });
-    cursor += (hi - lo) + 1 + GAP;
+    const rws = [...local.values()].map(p => p.r);
+    const loC = Math.min(...cols), loR = Math.min(...rws);
+    const normalised = new Map<number, Pos>();
+    for (const [id, p] of local) normalised.set(id, { c: p.c - loC, r: p.r - loR });
+    laid.push({ members: normalised,
+                w: Math.max(...cols) - loC + 1, h: Math.max(...rws) - loR + 1 });
+  });
+
+  // Pack the clusters into ROWS rather than one long strip. Cutting at the
+  // stairs turns a level into several clusters -- the caverns' level 3 into
+  // five -- and tiling those side by side gave a drawing 54 cells wide and 17
+  // tall, which reads as a strip of unrelated fragments and, in MAP.md, wraps
+  // in a terminal. Shelf-packed to roughly square, they read as one map with
+  // parts, which is how the shrine draws them and how they were laid out by
+  // hand.
+  //
+  // Next-fit in component order, not by size: the origin's cluster stays first
+  // and the rest keep the order the walk discovered them in, so the packing is
+  // a pure function of the graph and a re-run is byte-identical.
+  // The width to wrap at is SEARCHED rather than guessed. Clusters are few and
+  // wide, so a greedy shelf takes whatever the first guess allows: every budget
+  // between 20 and 28 packs the caverns' five the same way, into a column 20
+  // wide and 32 tall, when 40 by 23 was available the whole time. Trying each
+  // possible width and keeping the squarest-but-landscape result costs nothing
+  // at this size and answers for every level instead of for the one that was
+  // measured.
+  const widest = Math.max(...laid.map(l => l.w));
+  const fullWidth = laid.reduce((n, l) => n + l.w + GAP, -GAP);
+  const shelve = (budget: number) => {
+    const at: Pos[] = [];
+    let c = 0, r = 0, shelf = 0, w = 0;
+    for (const l of laid) {
+      if (c > 0 && c + l.w > budget) { r += shelf + GAP; c = 0; shelf = 0; }
+      at.push({ c, r });
+      c += l.w + GAP;
+      shelf = Math.max(shelf, l.h);
+      w = Math.max(w, c - GAP);
+    }
+    return { at, w, h: r + shelf };
+  };
+  // Landscape, because that is the shape of a browser window and of a page of
+  // MAP.md. Scored on the LOG of the ratio so that twice too wide and twice too
+  // tall count the same, and ties go to the narrower drawing.
+  const WANT = 1.6;
+  let best = shelve(widest);
+  for (let b = widest + 1; b <= fullWidth; b++) {
+    const box = shelve(b);
+    const score = (x: { w: number; h: number }) => Math.abs(Math.log(x.w / x.h / WANT));
+    if (score(box) < score(best)) best = box;
+  }
+  laid.forEach((l, i) => {
+    for (const [id, p] of l.members)
+      pos.set(id, { c: p.c + best.at[i].c, r: p.r + best.at[i].r });
   });
 
   const unplaced = rooms.filter(r => !pos.has(r.id));

@@ -38,7 +38,14 @@ describe('renderArea', () => {
     const text = lines.join('\n');
     expect(text).toContain('[V^]');   // the vault, with its up badge
     expect(text).toContain('[Gv]');   // the hall, with its down badge
-    expect(text).toMatch(/[\\|\/]/);  // and a connector joining them
+    // And a connector joining them -- any run will do. This used to insist on a
+    // vertical or diagonal one, which was a fact about where the vault got
+    // PARKED: a stair had no cell of its own, so the room on the far side went
+    // into a free cell next door. The layout now cuts at the stairs, so these
+    // two are separate clusters tiled side by side and the run between them is
+    // horizontal. What the regression is actually about -- that a room reachable
+    // only by `u`/`d` is neither dropped nor left floating -- is unchanged.
+    expect(text).toMatch(/[-\\|\/]/);
   });
 
   // Regression: placing a vertical neighbour at a fixed offset dropped the
@@ -239,6 +246,71 @@ describe('skewedEdges', () => {
 // loser decides which way its lines then point, and for a long time it put it
 // wherever a raster scan reached first -- (-1,-1), north-west, with no notion of
 // the direction at all.
+describe('placeRooms cuts a level at its stairs', () => {
+  // A stair joins two rooms that are above and below one another, which a flat
+  // grid has no cell for. Laying the far side out in the same coordinates as
+  // the near side folds one region through the other; cutting there gives each
+  // flat region its own coordinates, and the ^/v badges carry the join. This is
+  // how the shrine draws these caves -- caverns page 3 is five clusters joined
+  // by numbered up/down boxes.
+  it('lays a region reached only by a stair out in its own coordinates', () => {
+    // Two corridors running east, joined ONLY by a stair from a to b. Laid out
+    // together, b's region starts wherever b was parked -- diagonally next to a
+    // -- and `b --e--> c` then collides with `a --e--> x`.
+    const rooms = [room(1, 'a'), room(2, 'x'), room(3, 'b'), room(4, 'c')];
+    const exits = [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'e', 4, 'w')];
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    const a = pos.get(1)!, x = pos.get(2)!, b = pos.get(3)!, c = pos.get(4)!;
+    // Each cluster is internally true: x due east of a, c due east of b.
+    expect([x.c - a.c, x.r - a.r]).toEqual([1, 0]);
+    expect([c.c - b.c, c.r - b.r]).toEqual([1, 0]);
+    // And the stair is not drawn as a direction at all, so it cannot be skewed.
+    expect(skewedEdges(rooms, exits, pos)).toEqual([]);
+  });
+
+  it('leaves a level whose regions the compass already joins exactly as it was', () => {
+    // A stair BETWEEN two rooms a compass path also connects removes nothing:
+    // the region is still one component, so the drawing is unchanged. This is
+    // what keeps the change to the levels that actually needed it.
+    const rooms = [room(1, 'a'), room(2, 'b'), room(3, 'c')];
+    const flat = [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w')];
+    const withStair = [...flat, ...pair(1, 'd', 3, 'u')];
+    const before = placeRooms({ rooms, exits: flat, origin: 'a' }).pos;
+    const after = placeRooms({ rooms, exits: withStair, origin: 'a' }).pos;
+    expect([...after.entries()]).toEqual([...before.entries()]);
+  });
+
+  it('packs the clusters into rows rather than one long strip', () => {
+    // Five clusters of four rooms each, joined in a chain of stairs. Tiled side
+    // by side that is 20-odd cells wide and 2 tall; the packing wraps it.
+    const rooms = [], exits = [];
+    for (let k = 0; k < 5; k++) {
+      const base = k * 4;
+      for (let i = 0; i < 4; i++) rooms.push(room(base + i + 1, `r${base + i + 1}`));
+      for (let i = 0; i < 3; i++) exits.push(...pair(base + i + 1, 'e', base + i + 2, 'w'));
+      if (k) exits.push(...pair(base - 3, 'd', base + 1, 'u'));
+    }
+    const { pos } = placeRooms({ rooms, exits, origin: 'r1' });
+    const cs = [...pos.values()];
+    const w = Math.max(...cs.map(p => p.c)) - Math.min(...cs.map(p => p.c)) + 1;
+    const h = Math.max(...cs.map(p => p.r)) - Math.min(...cs.map(p => p.r)) + 1;
+    expect(h).toBeGreaterThan(1);               // wrapped onto more than one row
+    expect(w).toBeLessThan(4 * 5 + 2 * 4);      // narrower than a single strip
+    expect(pos.size).toBe(20);                  // and nothing was dropped
+  });
+
+  it('is a pure function of the graph, packing included', () => {
+    // Re-running must produce a byte-identical file, so the wrap width is
+    // searched deterministically rather than by trying to be clever.
+    const rooms = [room(1, 'a'), room(2, 'b'), room(3, 'c'), room(4, 'd')];
+    const exits = [...pair(1, 'e', 2, 'w'), ...pair(1, 'd', 3, 'u'), ...pair(3, 'e', 4, 'w')];
+    const once = placeRooms({ rooms, exits, origin: 'a' }).pos;
+    const twice = placeRooms({ rooms: [...rooms].reverse(), exits: [...exits].reverse(),
+                               origin: 'a' }).pos;
+    expect([...twice.entries()].sort()).toEqual([...once.entries()].sort());
+  });
+});
+
 describe('placeRooms nudges by bearing', () => {
   it('keeps a bumped room on the right side of the room that placed it', () => {
     // x is east of a. b hangs below on a stair, so it is parked rather than
