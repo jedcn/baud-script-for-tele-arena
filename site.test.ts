@@ -165,6 +165,50 @@ describe('a connection you can only cross one way', () => {
   });
 });
 
+describe('a Device that teleports', () => {
+  // Two rooms no compass exit joins, and a stone that moves you between them --
+  // the shape of stonework-corridor-20 -> 43, where the teleport is the only
+  // way onto the strip at all.
+  const PORT: Area = {
+    area: 'works-level-1', name: 'Works, Level 1', src: 'test',
+    rooms: [
+      { id: 'works-level-1/near', name: 'corridor', exits: { e: { to: 'works-level-1/mid' } },
+        devices: [{ command: 'push stone', effect: 'teleport', dest: 'works-level-1/far' }] },
+      { id: 'works-level-1/mid', name: 'corridor', exits: { w: { to: 'works-level-1/near' } } },
+      { id: 'works-level-1/far', name: 'corridor', exits: {},
+        devices: [{ command: 'pull lever', effect: 'trap',
+                    trapRoom: 'works-level-1/mid' }] },
+    ],
+  };
+  const { svg, stats } = renderLevel(PORT, NAME_OF);
+
+  it('joins the two rooms, pointing the way the Device takes you', () => {
+    expect(stats.teleports).toBe(1);
+    const line = svg.match(/<line class="edge port"[^>]*>/)![0];
+    expect(line).toContain('data-a="works-level-1/near"');
+    expect(line).toContain('data-b="works-level-1/far"');
+    const arrow = svg.match(/<path class="arrow port"[^>]*>/)![0];
+    expect(arrow).toContain('data-a="works-level-1/near"');
+    expect(arrow).toContain('data-b="works-level-1/far"');
+    expect(arrow).toMatch(/rotate\(-?[\d.]+\)/);
+  });
+
+  it('names the command, because you cannot walk this one', () => {
+    expect(svg).toContain('push stone` here puts you in works-level-1/far');
+  });
+
+  it('draws no line for a Device that is not a teleport', () => {
+    // `pull lever` reaches another room too -- it disarms a trap there -- and a
+    // line would say you can get there that way. stonework-corridor-42's `push
+    // stone` is the live case: the same verb as the teleport, a remote SEAL.
+    expect(svg.match(/class="edge port"/g)!.length).toBe(1);
+  });
+
+  it('keeps the device dot, which is what says the room has one', () => {
+    expect(svg.match(/class="device-dot"/g)!.length).toBe(2);
+  });
+});
+
 describe('renderLevel', () => {
   const { svg, stats } = renderLevel(MINI, NAME_OF);
 

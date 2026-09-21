@@ -82,6 +82,8 @@ export type LevelStats = {
   skewed: number;
   /** Connections you can only cross one way. See the arrow in `renderLevel`. */
   oneWay: number;
+  /** Devices that put you in another room on this level. */
+  teleports: number;
 };
 export type LevelSvg = {
   svg: string; stats: LevelStats; width: number; height: number;
@@ -180,7 +182,7 @@ export function renderLevel(
 
   const stats: LevelStats = {
     rooms: area.rooms.length, frontiers: 0, devices: 0, traps: 0,
-    doors: 0, seals: 0, leaving: 0, skewed: 0, oneWay: 0,
+    doors: 0, seals: 0, leaving: 0, skewed: 0, oneWay: 0, teleports: 0,
   };
   const byId = new Map(area.rooms.map(r => [r.id, r]));
   const edges: string[] = [], gates: string[] = [], boxes: string[] = [];
@@ -301,12 +303,9 @@ export function renderLevel(
         // `data-rot` is what tells the page to re-aim this on a drag: the gate
         // marks are translated to the midpoint and nothing more, and an arrow
         // that kept its old angle after a room moved would point at nothing.
-        gates.push(`<path class="arrow"${anchors} data-rot=""`
-          + ` transform="translate(${(ax + bx) / 2},${(ay + by) / 2})`
-          + ` rotate(${(Math.atan2(by - ay, bx - ax) * 180 / Math.PI).toFixed(2)})"`
-          + ` d="M-5,-4.5 L6,0 L-5,4.5 Z"><title>`
-          + esc(`${dir} to ${ex.to} — ONE WAY: there is no ${REVERSE[dir] ?? dir}`
-            + ` back from there`) + `</title></path>`);
+        gates.push(arrowMark(ax, ay, bx, by, anchors,
+          `${dir} to ${ex.to} — ONE WAY: there is no ${REVERSE[dir] ?? dir}`
+          + ` back from there`));
       }
       if (gate) {
         if (gate === 'seal') stats.seals++; else stats.doors++;
@@ -314,6 +313,34 @@ export function renderLevel(
           + ` transform="translate(${(ax + bx) / 2},${(ay + by) / 2})">`
           + gateMark(gate, 0, 0, title) + `</g>`);
       }
+    }
+  }
+
+  // A Device that teleports is a connection the exit graph does not have, and
+  // the most consequential one on the map: `push stone` at stonework-corridor-20
+  // is the ONLY way onto the [S3] strip, which no compass exit reaches at all.
+  // Drawn, the strip is joined to the level; undrawn it floats, and the page
+  // gives a reader no reason to think it is reachable.
+  //
+  // It gets the same arrow the one-way exits get, because that is what it is: a
+  // crossing that goes one way only. Dotted rather than dashed, and in a colour
+  // of its own, because it is not an exit -- you cannot walk it, you have to
+  // work the Device.
+  //
+  // The destination has to be on this level to have a box to point at. Nothing
+  // in the world teleports off its own level today; one that did would still
+  // show as a device dot and in the panel, which is where a reader looks for
+  // what a Device does.
+  for (const room of area.rooms) {
+    for (const d of room.devices ?? []) {
+      if (d.effect !== 'teleport' || !d.dest || !ids.has(d.dest)) continue;
+      stats.teleports++;
+      const [ax, ay] = home[room.id], [bx, by] = home[d.dest];
+      const anchors = ` data-a="${esc(room.id)}" data-b="${esc(d.dest)}"`;
+      const title = `\`${d.command}\` here puts you in ${d.dest}`;
+      edges.push(`<line class="edge port"${anchors} x1="${ax}" y1="${ay}"`
+        + ` x2="${bx}" y2="${by}"><title>${esc(title)}</title></line>`);
+      gates.push(arrowMark(ax, ay, bx, by, anchors, title, ' port'));
     }
   }
 
@@ -360,6 +387,20 @@ export function renderLevel(
   return { svg, stats, width, height, home };
 }
 
+/**
+ * The arrowhead that says a crossing goes one way: a one-directional exit, or a
+ * Device that teleports. Sits at the midpoint and is turned to face along the
+ * line, which is why it carries `data-rot` -- the page re-aims it on a drag,
+ * and an arrow left at its old angle points at nothing.
+ */
+function arrowMark(ax: number, ay: number, bx: number, by: number,
+                   anchors: string, title: string, extra = ''): string {
+  return `<path class="arrow${extra}"${anchors} data-rot=""`
+    + ` transform="translate(${(ax + bx) / 2},${(ay + by) / 2})`
+    + ` rotate(${(Math.atan2(by - ay, bx - ax) * 180 / Math.PI).toFixed(2)})"`
+    + ` d="M-5,-4.5 L6,0 L-5,4.5 Z"><title>${esc(title)}</title></path>`;
+}
+
 function gateMark(kind: 'door' | 'seal', x: number, y: number, title: string): string {
   const cls = kind === 'seal' ? 'seal-mark' : 'door-mark';
   return `<rect class="${cls}" x="${x - 4}" y="${y - 4}" width="8" height="8"`
@@ -390,6 +431,9 @@ const LEGEND: [string, string][] = [
   ['<svg viewBox="0 0 20 14"><line class="edge" x1="1" y1="7" x2="19" y2="7"/>'
     + '<path class="arrow" d="M-5,-4.5 L6,0 L-5,4.5 Z" transform="translate(11,7)"/></svg>',
     'a connection you can only cross the way the arrow points'],
+  ['<svg viewBox="0 0 20 14"><line class="edge port" x1="1" y1="7" x2="19" y2="7"/>'
+    + '<path class="arrow port" d="M-5,-4.5 L6,0 L-5,4.5 Z" transform="translate(11,7)"/></svg>',
+    'a Device that teleports: work it and you are at the arrow'],
   ['<svg viewBox="0 0 20 14"><line class="edge skew" x1="1" y1="7" x2="19" y2="7"/></svg>',
     'a walked exit whose line points the wrong way — hover it for which way it'
     + ' really goes, and why the map cannot draw it'],
@@ -416,7 +460,7 @@ const CSS = `
 :root {
   --bg: #0d1117; --surface: #161b22; --raised: #21262d; --border: #30363d;
   --text: #e6edf3; --muted: #8b949e; --blue: #58a6ff; --amber: #e3b341;
-  --red: #f85149; --green: #3fb950; --purple: #bc8cff;
+  --red: #f85149; --green: #3fb950; --purple: #bc8cff; --cyan: #39c5cf;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }   /* a level pane must stay hidden inside a flex row */
@@ -498,6 +542,12 @@ button.ghost[disabled] { opacity: 0.45; cursor: default; }
    the one thing a line cannot say about itself, and there are exactly two in
    the world. Outlined in the background so it stays legible over the line. */
 .arrow { fill: var(--text); stroke: var(--bg); stroke-width: 1px; }
+/* A Device that teleports. Dotted, not dashed, and cyan: it is not an exit and
+   cannot be walked, so it should not read as one at a glance -- you have to
+   work the Device to cross it. The arrow matches the line rather than the
+   text, so the two read as one mark. */
+.edge.port { stroke: var(--cyan); stroke-dasharray: 2 5; }
+.arrow.port { fill: var(--cyan); }
 .away-label { fill: var(--blue); font-size: 9.5px; font-family: inherit; }
 .door-mark { fill: var(--bg); stroke: var(--red); stroke-width: 1.5px; }
 .seal-mark { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5px; }
@@ -643,7 +693,8 @@ function show(slug) {
     + (s.doors ? ' · <b>' + s.doors + '</b> doors' : '')
     + (s.seals ? ' · <b>' + s.seals + '</b> seals' : '')
     + (s.skewed ? ' · <b>' + s.skewed + '</b> lines point the wrong way' : '')
-    + (s.oneWay ? ' · <b>' + s.oneWay + '</b> one way' : '');
+    + (s.oneWay ? ' · <b>' + s.oneWay + '</b> one way' : '')
+    + (s.teleports ? ' · <b>' + s.teleports + '</b> teleports' : '');
   if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
   shown = slug;
   index();
