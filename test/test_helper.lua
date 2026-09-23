@@ -177,8 +177,12 @@ end
 
 function setStatus(fn) end
 
+-- baud runs outbound triggers on a script's send() exactly as on typed input
+-- (App.tsx), so a trigger watching the wire sees both. The mock does the same,
+-- or a test can't tell a script-sent command from one nobody sent.
 function send(text)
     table.insert(M.sendCalls, text)
+    M.simulateOutbound(text)
 end
 
 -- baud's runCommand: the line takes the path typed input takes, so an alias
