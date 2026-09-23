@@ -674,6 +674,10 @@ export const DRAWN = [
   { slug: 'ruined-town', title: 'The Ruined Town', origin: 'ruined-plaza' },
   // North off the mountains, through cave-201 -- the "[*] to Orc Caves" box.
   { slug: 'orc-caves', title: 'The Orc Caves', origin: 'cave-201' },
+  // East off mountains-33. On no shrine page -- the game we play is newer than
+  // the shrine's maps -- so there is no drawing to check it against, and it is
+  // named for its first room until the walk shows where it goes.
+  { slug: 'mountain-road', title: 'The Mountain Road', origin: 'mountain-road' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

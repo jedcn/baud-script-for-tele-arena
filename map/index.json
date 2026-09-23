@@ -85,9 +85,15 @@
       "file": "areas/hewn-granite-corridors.json"
     },
     {
+      "area": "mountain-road",
+      "name": "The Mountain Road",
+      "rooms": 3,
+      "file": "areas/mountain-road.json"
+    },
+    {
       "area": "mountains",
       "name": "The Mountains",
-      "rooms": 54,
+      "rooms": 51,
       "file": "areas/mountains.json"
     },
     {

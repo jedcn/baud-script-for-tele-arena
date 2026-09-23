@@ -18,16 +18,17 @@
 14. [The Swamp](#the-swamp)
 15. [The Ruined Town](#the-ruined-town)
 16. [The Orc Caves](#the-orc-caves)
-17. [The Cellars](#the-cellars)
-18. [Third Town](#third-town)
-19. [Fourth Town](#fourth-town)
-20. [The Deep Forest](#the-deep-forest)
-21. [The Valley](#the-valley)
-22. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-23. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-24. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-25. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-26. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+17. [The Mountain Road](#the-mountain-road)
+18. [The Cellars](#the-cellars)
+19. [Third Town](#third-town)
+20. [Fourth Town](#fourth-town)
+21. [The Deep Forest](#the-deep-forest)
+22. [The Valley](#the-valley)
+23. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+24. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+25. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+26. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+27. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -606,10 +607,10 @@ Key:
                          [ ]                                     [ ]
                         /                                         |
                        /                                          |
-               [ ]--[ ]                           [ ]            [ ]                 [ ]             n to unexplored
-              /                                    |            /   \               /
-             /                                     |           /     \             /
-          [ ]                                     [ ]       [ ]       [ ]--[ ]--[ ]
+               [ ]--[ ]                           [ ]            [ ]
+              /                                    |            /   \
+             /                                     |           /     \
+          [ ]                                     [ ]       [ ]       [ ]                            e to The Mountain Road
              \                                       \     /
               \                                       \   /
                [ ]                                     [ ]
@@ -814,6 +815,15 @@ Key:
  |
  |
 [ ]   s to The Mountains
+```
+
+### The Mountain Road
+
+```
+          [ ]   n to unexplored
+         /
+        /
+[ ]--[ ]        w to The Mountains
 ```
 
 ### The Cellars
