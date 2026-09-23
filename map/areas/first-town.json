@@ -149,7 +149,7 @@
           "to": "first-town/magic-shop"
         },
         "sw": {
-          "to": "mountains/mountains"
+          "to": "mountains/town-gates"
         },
         "w": {
           "to": "first-town/armor-shop"

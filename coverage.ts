@@ -366,16 +366,14 @@ export const SHRINE_MAPS: Record<string,
     originBox: '^',                      // up to the Valley
     originRoom: 'complex-of-natural-caverns',
   },
-  // South of the first town. The shrine labels no box on the walked side of this
-  // page, so the drawing carries an [m] we added (see its header). It is the box
-  // one step south-west of the one beside "Town 1" -- because that box, the room
-  // outside the town gates, is the one we never recorded: south-plaza's `sw` jumps
-  // straight to `mountains`, so coverage shows the gate box as walked when it is
-  // really south-plaza standing in for it.
+  // South-west of the first town. The shrine labels no box on the walked side of
+  // this page, so the drawing carries a [g] we added (see its header): the box
+  // beside "Town 1", which is town-gates -- the room the July walk could not read
+  // the name of, and so skipped, until it was walked on 2026-09-22.
   mountains: {
     file: 'map/shrine/mountains.txt',
-    originBox: 'm',
-    originRoom: 'mountains',
+    originBox: 'g',
+    originRoom: 'town-gates',
   },
 };
 

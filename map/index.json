@@ -81,7 +81,7 @@
     {
       "area": "mountains",
       "name": "The Mountains",
-      "rooms": 74,
+      "rooms": 75,
       "file": "areas/mountains.json"
     },
     {

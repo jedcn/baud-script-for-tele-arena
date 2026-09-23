@@ -8,13 +8,13 @@
       "name": "mountains",
       "exits": {
         "ne": {
-          "to": "first-town/south-plaza"
+          "to": "mountains/town-gates"
         },
         "s": {
           "to": "mountains/mountains-1"
         }
       },
-      "description": "Pelayo has just arrived from the northeast. You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and south.",
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and south.",
       "layout": {
         "x": 0,
         "y": 0
@@ -1298,6 +1298,29 @@
       "layout": {
         "x": 23,
         "y": -1
+      }
+    },
+    {
+      "id": "mountains/town-gates",
+      "name": "town gates",
+      "exits": {
+        "ne": {
+          "to": "first-town/south-plaza"
+        },
+        "nw": {
+          "to": null
+        },
+        "se": {
+          "to": null
+        },
+        "sw": {
+          "to": "mountains/mountains"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. From time to time an ominous dark shape soars overhead. The town gates lie to the northeast. Other exits are to the northwest, southeast, and southwest.",
+      "layout": {
+        "x": 1,
+        "y": 1
       }
     }
   ]
