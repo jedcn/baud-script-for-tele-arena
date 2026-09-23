@@ -585,6 +585,9 @@ createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
     -- one place, rather than by whichever script happened to look first.
     taPackage.died = nil
     taPackage.diedAt = nil
+    -- In the game rather than at the BBS, where "x" means something else. See
+    -- the hand-typed "x" retry.
+    taPackage.inGame = true
     send("st")
     send("i")
 end, { type = "regex" })
@@ -4880,7 +4883,11 @@ end
 -- avoid. So re-send "x" every 2s until the game confirms with "Exiting
 -- Tele-Arena...". A generation guard cancels an older loop if a new exit (or a
 -- restarted run) supersedes it.
-local function exitGameWithRetry()
+--
+-- `firstDelayMs` holds back the first "x" -- for a caller whose own "x" is
+-- already on the wire, where an immediate second one would land at the BBS
+-- prompt if the first had worked.
+local function exitGameWithRetry(firstDelayMs)
     local gen = (taPackage.exitGameGen or 0) + 1
     taPackage.exitGameGen = gen
     taPackage.exitGamePending = true
@@ -4889,7 +4896,11 @@ local function exitGameWithRetry()
         send("x")
         createTimer(2000, tryExit, { repeating = false })
     end
-    tryExit()
+    if firstDelayMs then
+        createTimer(firstDelayMs, tryExit, { repeating = false })
+    else
+        tryExit()
+    end
 end
 taPackage.exitGameWithRetry = exitGameWithRetry
 
@@ -4960,6 +4971,34 @@ taPackage.arenaEmergencyExit = arenaEmergencyExit
 -- damage. Clear the pending flag so exitGameWithRetry's retry loop stops.
 createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     taPackage.exitGamePending = false
+    taPackage.inGame = false
+end, { type = "regex" })
+
+-- The BBS main menu means we are not in the game, however we got here. The
+-- "Exiting Tele-Arena..." line covers a clean exit; this covers a dropped
+-- connection, which leaves the flag set until the next login reaches the menu.
+createTrigger("^Make your selection", function()
+    taPackage.inGame = false
+end, { type = "regex" })
+
+-- A hand-typed "x" gets the same retry a script's exit does. "x" counts as a
+-- move, so it is refused while the physical cooldown runs ("Sorry, you'll have
+-- to rest a while before you can move.") -- and a refused "x" looks, to someone
+-- about to walk away, exactly like a prompt that worked. That is how tojolias
+-- died in session-tojolias-2026-09-22T22-49-21.log: "x" at line 376, refused,
+-- "x" again, refused, `st`, and nothing more; 53 minutes later 1,978 damage from
+-- a teammate's summons and a last thirst tick had killed a 2,050 HP knight.
+--
+-- The typed "x" is already sent, so the loop starts with a follow-up 2s later,
+-- which "Exiting Tele-Arena..." cancels if the first one worked.
+--
+-- Only in the game: at the BBS "x" is the menu's exit, and a loop re-sending it
+-- there would never see the "Exiting Tele-Arena..." that ends it. The pending
+-- check is what stops exitGameWithRetry's own "x" (which baud runs through
+-- outbound triggers too) from restarting the loop every 2s.
+createOutboundTrigger("^x$", function()
+    if not taPackage.inGame or taPackage.exitGamePending then return end
+    exitGameWithRetry(2000)
 end, { type = "regex" })
 
 

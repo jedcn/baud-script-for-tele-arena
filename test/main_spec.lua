@@ -782,6 +782,86 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    -- tojolias typed "x" in the arena, was refused ("rest a while"), typed it
+    -- again, was refused again, and walked away; a teammate's summons killed
+    -- the character over the next 53 minutes. A hand-typed "x" now retries
+    -- until the game lets us out.
+    describe("hand-typed x", function()
+
+        local REFUSED = "Sorry, you'll have to rest a while before you can move."
+
+        local function countX()
+            local n = 0
+            for _, text in ipairs(helper.sendCalls) do
+                if text == "x" then n = n + 1 end
+            end
+            return n
+        end
+
+        before_each(function()
+            helper.simulateLine("Entering Tele-Arena...")
+        end)
+
+        it("re-sends x after a refusal", function()
+            helper.simulateOutbound("x")
+            helper.simulateLine(REFUSED)
+            helper.fireTimers(2000)
+            assert.are.equal(1, countX())
+            assert.is_true(taPackage.exitGamePending)
+        end)
+
+        -- The typed "x" is already on the wire; a second one straight away
+        -- would land at the BBS prompt if the first had worked.
+        it("does not send a second x straight away", function()
+            helper.simulateOutbound("x")
+            assert.are.equal(0, countX())
+        end)
+
+        it("keeps going, one x per retry, until the game confirms", function()
+            helper.simulateOutbound("x")
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.are.equal(3, countX())
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.are.equal(3, countX())
+        end)
+
+        it("sends nothing more when the first x worked", function()
+            helper.simulateOutbound("x")
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.fireTimers(2000)
+            assert.are.equal(0, countX())
+        end)
+
+        -- At the BBS "x" is the menu's own exit, and nothing there would ever
+        -- say "Exiting Tele-Arena..." to stop the loop.
+        it("does nothing at the BBS after leaving the game", function()
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.simulateOutbound("x")
+            helper.fireTimers(2000)
+            assert.are.equal(0, countX())
+        end)
+
+        it("does nothing at the BBS menu after a dropped connection", function()
+            helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+            helper.simulateOutbound("x")
+            helper.fireTimers(2000)
+            assert.are.equal(0, countX())
+        end)
+
+        it("does nothing before entering the game", function()
+            helper.resetAll()
+            dofile("main.lua")
+            helper.simulateOutbound("x")
+            helper.fireTimers(2000)
+            assert.are.equal(0, countX())
+        end)
+
+    end)
+
     describe("death detection", function()
 
         local KILLED = "As the final blow strikes your body you fall unconscious."
