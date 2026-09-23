@@ -44,6 +44,28 @@ describe('parseDrawing', () => {
     expect(drawingExits(d, south).n).toBe(start.id);
   });
 
+  // The swamp draws the Swordswoman's way north-east as a `/` that climbs four
+  // rows but slides two columns a row, because the box it reaches sits too far
+  // over for a 45-degree line. Followed one column at a time the run broke into
+  // pieces that joined nothing, and the one connector the room had was lost.
+  it('follows a diagonal drawn two columns to a row', () => {
+    const d = parseDrawing([
+      '        [ ]   [ ]',
+      '       /        \\',
+      '     /            \\',
+      '   /                \\',
+      '[ ]                  [ ]',
+    ].join('\n'));
+    const [top, topR, bottom, bottomR] = [
+      d.boxes.find(b => b.r === 0 && b.c0 === 8)!, d.boxes.find(b => b.r === 0 && b.c0 === 14)!,
+      d.boxes.find(b => b.r === 4 && b.c0 === 0)!, d.boxes.find(b => b.r === 4 && b.c0 === 21)!,
+    ];
+    expect(drawingExits(d, top.id).sw).toBe(bottom.id);
+    expect(drawingExits(d, bottom.id).ne).toBe(top.id);
+    expect(drawingExits(d, topR.id).se).toBe(bottomR.id);
+    expect(d.edges.size).toBe(4);   // those two lines, both ways, and nothing else
+  });
+
   it('reads a diagonal as southeast, and gives it a reverse', () => {
     const d = parseDrawing(MINI);
     const a = d.boxes.find(b => b.r === 0 && b.label === '')!;

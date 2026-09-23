@@ -83,6 +83,19 @@ export function parseDrawing(text: string): Drawing {
     while (at(rr + dr, cc + dc) === ch) { rr += dr; cc += dc; }
     return [rr, cc];
   };
+  // A diagonal may slide two columns a row where the box it reaches sits too far
+  // over for 45 degrees -- the swamp's Swordswoman climbs to her north-east
+  // neighbour that way. Follow one column if it is there, else two.
+  const diagStep = (r: number, c: number, dc: number, ch: string): number | null =>
+    at(r + 1, c + dc) === ch ? c + dc : at(r + 1, c + 2 * dc) === ch ? c + 2 * dc : null;
+  const diagEnd = (r: number, c: number, dc: number, ch: string): [number, number] => {
+    let rr = r, cc = c, next: number | null;
+    while ((next = diagStep(rr, cc, dc, ch)) != null) { rr += 1; cc = next; }
+    return [rr, cc];
+  };
+  // Is (r, c) the continuation of a diagonal begun on the row above?
+  const diagContinues = (r: number, c: number, dc: number, ch: string) =>
+    [c - dc, c - 2 * dc].some(p => at(r - 1, p) === ch && diagStep(r - 1, p, dc, ch) === c);
   for (let r = 0; r < g.length; r++) for (let c = 0; c < W; c++) {
     const ch = at(r, c);
     if (ch === '-') {
@@ -103,12 +116,12 @@ export function parseDrawing(text: string): Drawing {
       };
       add(pick(r - 1), pick(rB + 1), 's');
     } else if (ch === '\\') {
-      if (at(r - 1, c - 1) === '\\') continue;
-      const [rB, cB] = runEnd(r, c, 1, 1, '\\');
+      if (diagContinues(r, c, 1, '\\')) continue;
+      const [rB, cB] = diagEnd(r, c, 1, '\\');
       add(near(r - 1, c, 'L'), near(rB + 1, cB, 'R'), 'se');
     } else if (ch === '/') {
-      if (at(r - 1, c + 1) === '/') continue;
-      const [rB, cB] = runEnd(r, c, 1, -1, '/');
+      if (diagContinues(r, c, -1, '/')) continue;
+      const [rB, cB] = diagEnd(r, c, -1, '/');
       add(near(r - 1, c, 'R'), near(rB + 1, cB, 'L'), 'sw');
     }
   }
