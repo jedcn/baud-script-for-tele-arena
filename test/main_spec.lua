@@ -4475,6 +4475,81 @@ describe("World map triggers", function()
                 assert.is_truthy(said:find("will be a duplicate too", 1, true), said)
             end)
 
+        -- The Orc Caves, 2026-09-22. A chance match glued the walk onto July's
+        -- caves under the ruined town, and from then on every move followed
+        -- July's edges, because every cave is called "cave". The game said so at
+        -- the third room: `ex` answered ne,s where the room the mapper believed
+        -- it stood in has nw,s. The handler simply added `ne` to that room and
+        -- walked on, filing four more rooms under the wrong area
+        -- (logs/session-teekywiki-2026-09-22T21-20-30.log).
+        --
+        -- `ex` lists every exit a room has -- sealed ones and u/d included -- so
+        -- a stored exit it leaves out means this is not the room we think it is.
+        describe("a known room whose `ex` leaves out an exit we have for it", function()
+            local function knownRoom(stored)
+                taPackage.currentRoomId = 972
+                taPackage.currentRoom = "cave"
+                taPackage.currentRoomProvisional = false
+                helper.mockDbRows = function(sql, params)
+                    if string.find(sql, "SELECT direction FROM room_exits WHERE from_id",
+                        1, true) and params[1] == 972 then
+                        local rows = {}
+                        for _, d in ipairs(stored) do rows[#rows + 1] = { direction = d } end
+                        return rows
+                    end
+                    return {}
+                end
+                helper.mockDbOneRow = function(sql)
+                    if string.find(sql, "SELECT r.slug AS slug", 1, true) then
+                        return { slug = "cave-165", area = "cellars" }
+                    end
+                    return nil
+                end
+            end
+            local function wroteExit(dir)
+                for _, c in ipairs(helper.dbCalls) do
+                    if c.method == "execute" and c.sql:find("INSERT OR IGNORE INTO room_exits", 1, true)
+                        and c.params[1] == 972 and c.params[2] == dir then
+                        return true
+                    end
+                end
+                return false
+            end
+
+            it("stops mapping instead of writing the game's exits onto it", function()
+                knownRoom({ "nw", "s" })
+                helper.simulateLine("Exits: ne,s.")
+                assert.is_false(taPackage.mapping)
+                assert.is_false(wroteExit("ne"), "seeded ne onto a room that is not this one")
+                local said = table.concat(helper.echoCalls, "\n")
+                assert.is_truthy(said:find("cellars/cave-165", 1, true), said)
+                assert.is_truthy(said:find("nw", 1, true), said)
+                assert.is_truthy(said:find("map-here", 1, true), said)
+                assert.are.equal("lost", taPackage.hereState)
+            end)
+
+            it("carries on when `ex` only adds exits we had not recorded", function()
+                -- Older walks did not always seed stubs, so a room can have fewer
+                -- exits on the map than in the game. That is a gap, not a
+                -- contradiction.
+                knownRoom({ "n", "s" })
+                helper.simulateLine("Exits: n,s,e.")
+                assert.is_true(taPackage.mapping)
+                assert.is_true(wroteExit("e"))
+            end)
+
+            it("does not judge a room minted on this move", function()
+                -- A new room's only stored exit is the back-link the mapper
+                -- assumed, and a bent passage makes that assumption wrong
+                -- (cave-238 ne -> cave-239, whose way back is s). That is a
+                -- different problem from being lost, and not this check's to stop.
+                knownRoom({ "sw" })
+                taPackage.currentRoomProvisional = true
+                helper.simulateLine("Exits: n,s.")
+                assert.is_true(taPackage.mapping)
+            end)
+        end)
+
         -- After a Teleport there is no coordinate, so a fingerprint match is just
         -- name plus exit-set. On 2026-09-13 that merged a room three teleports into
         -- the Stoneworks onto [!] -- correctly, by luck -- and two rooms earlier it

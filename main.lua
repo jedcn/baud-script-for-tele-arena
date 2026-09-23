@@ -1854,6 +1854,43 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         taPackage.pendingClosure = nil
     end
 
+    -- Are we where we think we are? `ex` lists every exit a room has (sealed ones
+    -- and u/d too), so a stored exit it leaves out means this is some OTHER room
+    -- -- or the map gave this one an exit it does not have. Either way nothing
+    -- below may be written onto it, so stop mapping and say why.
+    --
+    -- Only for a room we believe we know. A room minted on this move holds just
+    -- the back-link the mapper assumed, which a bent passage makes wrong without
+    -- anyone being lost.
+    --
+    -- The Orc Caves, 2026-09-22: a chance Seam match put the walk on July's caves
+    -- under the ruined town. Three rooms in, `ex` said ne,s where the room we
+    -- "were" in has nw,s, and the mapper added `ne` to it and walked on
+    -- (logs/session-teekywiki-2026-09-22T21-20-30.log).
+    if not taPackage.currentRoomProvisional then
+        local listed = {}
+        for _, dir in ipairs(dirs) do listed[dir] = true end
+        local missing = {}
+        for dir in pairs(taPackage.db.roomExitDirections(taPackage.currentRoomId)) do
+            if not listed[dir] then missing[#missing + 1] = dir end
+        end
+        if #missing > 0 then
+            table.sort(missing)
+            local ref = taPackage.db.roomRef(taPackage.currentRoomId)
+                or ("#" .. tostring(taPackage.currentRoomId))
+            taPackage.mapping = false
+            taPackage.loseHere("the map has " .. ref .. " with "
+                .. table.concat(missing, ",") .. ", which this room does not")
+            cecho("red", "[map] mapping OFF: `ex` says " .. table.concat(dirs, ",")
+                .. ", but " .. ref .. " has " .. table.concat(missing, ",")
+                .. " too -- so this is not " .. ref .. ", or the map gave it an exit"
+                .. " it does not have. Nothing was written.")
+            cecho("red", "[map]   `map-print-room-slug` to find where you are, then"
+                .. " `map-here <slug>` to carry on.")
+            return
+        end
+    end
+
     if taPackage.currentRoomProvisional then
         taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
