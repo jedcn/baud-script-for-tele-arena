@@ -66,6 +66,22 @@ describe('parseDrawing', () => {
     expect(d.edges.size).toBe(4);   // those two lines, both ways, and nothing else
   });
 
+  // The shrine draws the ruined town at the bottom of the swamp's page, and we
+  // file the two as separate areas. A region says which part of a page is an
+  // area's own; everything else is blanked before parsing, so neither area's
+  // report counts the other's boxes as its own unwalked ground.
+  it('parses only the region an area owns, or only what lies outside it', () => {
+    const top = { rows: [0, 0] as [number, number], cols: [0, 20] as [number, number] };
+    const inside = parseDrawing(MINI, { ...top, keep: 'inside' });
+    expect(inside.boxes.map(b => b.label)).toEqual(['@', '']);
+    expect(inside.edges.size).toBe(2);             // @ east to A, both ways
+
+    const outside = parseDrawing(MINI, { ...top, keep: 'outside' });
+    expect(outside.boxes.map(b => b.label)).toEqual(['C', '']);
+    // Both of their lines led into the top row, which is gone.
+    expect(outside.edges.size).toBe(0);
+  });
+
   it('reads a diagonal as southeast, and gives it a reverse', () => {
     const d = parseDrawing(MINI);
     const a = d.boxes.find(b => b.r === 0 && b.label === '')!;
@@ -300,7 +316,7 @@ const COMPLETE = ['desert', 'fourth-town', 'mountains', 'stoneworks-level-1', 's
 async function pairArea(slug: string) {
   const spec = SHRINE_MAPS[slug];
   const area = JSON.parse(await Bun.file(`map/areas/${slug}.json`).text());
-  const drawing = parseDrawing(await Bun.file(spec.file).text());
+  const drawing = parseDrawing(await Bun.file(spec.file).text(), spec.region);
   const { rooms, teleports } = roomsFromExport(area);
   const start = rooms.find(r => r.slug === spec.originRoom);
   const startBox = drawing.boxes.find(b => b.label === spec.originBox);
@@ -337,6 +353,18 @@ describe('a stalled pairing is not the same as an unwalked area', () => {
     // and not a gap in the map.
     expect(problems.length).toBeGreaterThan(0);
     expect(pair.size).toBeLessThan(drawing.boxes.length);
+  });
+});
+
+describe('areas that share a shrine page', () => {
+  it('split the swamp page between the swamp and the ruined town, box for box', async () => {
+    const text = await Bun.file('map/shrine/swamp.txt').text();
+    const whole = parseDrawing(text).boxes.map(b => b.id);
+    const swamp = parseDrawing(text, SHRINE_MAPS.swamp.region).boxes.map(b => b.id);
+    const town = parseDrawing(text, SHRINE_MAPS['ruined-town'].region).boxes.map(b => b.id);
+    expect(town.length).toBe(20);
+    expect(town.filter(id => swamp.includes(id))).toEqual([]);
+    expect([...swamp, ...town].sort()).toEqual([...whole].sort());
   });
 });
 
@@ -389,7 +417,7 @@ describe('the exported map agrees with the shrine drawings', () => {
     it(`${slug} is registered with a drawing and an origin that resolve`, async () => {
       const spec = SHRINE_MAPS[slug];
       expect(await Bun.file(spec.file).exists(), `${spec.file} exists`).toBe(true);
-      const drawing = parseDrawing(await Bun.file(spec.file).text());
+      const drawing = parseDrawing(await Bun.file(spec.file).text(), spec.region);
       expect(drawing.boxes.length).toBeGreaterThan(0);
       expect(drawing.boxes.find(b => b.label === spec.originBox),
         `box [${spec.originBox}] is on ${spec.file}`).toBeDefined();

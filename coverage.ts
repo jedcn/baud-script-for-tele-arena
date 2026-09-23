@@ -35,8 +35,15 @@ const REVERSE: Record<string, string> = {
 // in the right horizontal half-plane, within a tolerance.
 const TOL = 6;
 
+/**
+ * The part of a page an area owns, when one page draws two areas. Rows and
+ * columns are inclusive and count the drawing's grid -- the lines left once the
+ * `#` header is dropped. `keep` says which side of the rectangle is this area's.
+ */
+export type Region = { rows: [number, number]; cols: [number, number]; keep: 'inside' | 'outside' };
+
 /** Parse a shrine drawing into boxes and the edges between them. */
-export function parseDrawing(text: string): Drawing {
+export function parseDrawing(text: string, region?: Region): Drawing {
   const all = text.split('\n').filter(l => !l.startsWith('#'));
   // The legend begins at the first "X = ..." line; everything above it is the map.
   const end = all.findIndex(l => /^\s*\S{1,4}\s=\s/.test(l));
@@ -49,7 +56,16 @@ export function parseDrawing(text: string): Drawing {
     if (m) legend.set(m[1], m[2]);
   }
   const W = Math.max(...grid.map(l => l.length)) + 8;
-  const g = grid.map(l => l.padEnd(W, ' '));
+  // Blank whatever lies outside this area's region before reading anything, so
+  // the other area's boxes and connectors simply are not on the page.
+  const owned = (r: number, c: number) => {
+    if (!region) return true;
+    const within = r >= region.rows[0] && r <= region.rows[1]
+      && c >= region.cols[0] && c <= region.cols[1];
+    return within === (region.keep === 'inside');
+  };
+  const g = grid.map((l, r) => [...l.padEnd(W, ' ')]
+    .map((ch, c) => owned(r, c) ? ch : ' ').join(''));
   const at = (r: number, c: number) => (r >= 0 && r < g.length && c >= 0 && c < W) ? g[r][c] : ' ';
 
   const boxes: Box[] = [];
@@ -328,10 +344,17 @@ export function renderCoverage(d: Drawing, mapped: Set<string>): string[] {
  * is not a claim that the area is finished or that it agrees with its drawing.
  * COMPLETE, in coverage.test.ts, is where that claim lives.
  */
+// The swamp's page draws the ruined town in its bottom-left corner. The town
+// has all 20 boxes in here; the Warlock's column, the temple's key text beside
+// it and the swamp's [a] with its "Ruined Town" caption (row 48) are outside.
+const RUINED_TOWN_ON_SWAMP_PAGE = { rows: [49, 61] as [number, number], cols: [0, 41] as [number, number] };
+
 export const SHRINE_MAPS: Record<string,
   { file: string; originBox: string; originRoom: string;
     // More ways in, each anchored the same way. See pairRooms' moreStarts.
-    moreOrigins?: { box: string; room: string }[] }> = {
+    moreOrigins?: { box: string; room: string }[];
+    // Only part of the page is this area's. See Region.
+    region?: Region }> = {
 
   'stoneworks-level-1': {
     file: 'map/shrine/stoneworks-1.txt',
@@ -419,6 +442,16 @@ export const SHRINE_MAPS: Record<string,
     originBox: 'a',
     originRoom: 'swamp',
     moreOrigins: [{ box: 'b', room: 'swamp-30' }],
+    region: { ...RUINED_TOWN_ON_SWAMP_PAGE, keep: 'outside' },
+  },
+  // Up the swamp's north-east trail, drawn at the bottom of the swamp's page and
+  // filed as its own area. The shrine labels the temple [Tv] -- T for the Ancient
+  // Temple, v for its way down to the cellars -- so it anchors without an edit.
+  'ruined-town': {
+    file: 'map/shrine/swamp.txt',
+    originBox: 'Tv',
+    originRoom: 'ancient-temple',
+    region: { ...RUINED_TOWN_ON_SWAMP_PAGE, keep: 'inside' },
   },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
@@ -479,7 +512,7 @@ if (import.meta.main) {
     process.exit(1);
   }
 
-  const drawing = parseDrawing(await Bun.file(spec.file).text());
+  const drawing = parseDrawing(await Bun.file(spec.file).text(), spec.region);
   // A plain read-write handle, never mode=ro: baud keeps the DB in WAL mode and a
   // read-only connection cannot attach the -wal file, so it returns stale data.
   const db = new Database('tele-arena.db');
