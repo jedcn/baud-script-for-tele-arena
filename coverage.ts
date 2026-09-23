@@ -188,12 +188,18 @@ export function pairRooms(
   // room id -> room id, from devices with effect='teleport'. Without these the
   // walk stops at every Teleport, because the drawing has no edge to follow.
   teleports: Map<number, number> = new Map(),
+  // Further [room, box] anchors, for an area with more than one way in. The walk
+  // below only reaches what our exits connect, so a branch entered by a second
+  // door stays unplaced until something joins it to the first -- which is the
+  // whole time you are walking it (the swamp, 2026-09-22).
+  moreStarts: [number, string][] = [],
 ) {
   const links = teleportLinks(d);
   const boxByLabel = new Map(d.boxes.filter(b => b.label).map(b => [b.label, b.id]));
   const byId = new Map(rooms.map(r => [r.id, r]));
-  const pair = new Map<number, string>([[startRoomId, startBoxId]]);
-  const taken = new Set<string>([startBoxId]);
+  const starts: [number, string][] = [[startRoomId, startBoxId], ...moreStarts];
+  const pair = new Map<number, string>(starts);
+  const taken = new Set<string>(starts.map(([, b]) => b));
   const problems: string[] = [];
   // Ways out of the area. The shrine draws the room across a Seam as a caption
   // rather than a box ("Down to Sewers", "[S] Stoneworks"), so an exit leading out
@@ -218,7 +224,7 @@ export function pairRooms(
   // this each skew is reported a second time from its far end, wearing the
   // reverse bearing and looking like a separate disagreement.
   const used = new Set<string>();
-  const queue = [startRoomId];
+  const queue = starts.map(([r]) => r);
   while (queue.length) {
     const id = queue.shift()!;
     const boxId = pair.get(id)!;
@@ -323,7 +329,9 @@ export function renderCoverage(d: Drawing, mapped: Set<string>): string[] {
  * COMPLETE, in coverage.test.ts, is where that claim lives.
  */
 export const SHRINE_MAPS: Record<string,
-  { file: string; originBox: string; originRoom: string }> = {
+  { file: string; originBox: string; originRoom: string;
+    // More ways in, each anchored the same way. See pairRooms' moreStarts.
+    moreOrigins?: { box: string; room: string }[] }> = {
 
   'stoneworks-level-1': {
     file: 'map/shrine/stoneworks-1.txt',
@@ -400,6 +408,17 @@ export const SHRINE_MAPS: Record<string,
     file: 'map/shrine/forest.txt',
     originBox: 'm',
     originRoom: 'forest',
+  },
+  // East off the forest, by two ways in, both labelled on the drawing (see its
+  // header). [a] is the room we call `swamp`, off forest-27, walked in July;
+  // [b] is swamp-30, off forest-39, walked 2026-09-22 -- anchored separately
+  // because until a walk joins the two branches, nothing leads from one to the
+  // other. The ruined town is drawn on this page too, but is its own area.
+  swamp: {
+    file: 'map/shrine/swamp.txt',
+    originBox: 'a',
+    originRoom: 'swamp',
+    moreOrigins: [{ box: 'b', room: 'swamp-30' }],
   },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
@@ -492,8 +511,18 @@ if (import.meta.main) {
     teleports.set(t.room_id, t.dest_room_id);
   }
 
+  // The other ways in. One not walked yet is simply left out -- it will be
+  // reached from the first, or anchored once it exists.
+  const moreStarts: [number, string][] = [];
+  for (const o of spec.moreOrigins ?? []) {
+    const room = rooms.find(r => r.slug === o.room);
+    const box = drawing.boxes.find(b => b.label === o.box);
+    if (!box) { console.error(`coverage: no box '${o.box}' on ${spec.file}`); process.exit(1); }
+    if (room) moreStarts.push([room.id, box.id]);
+  }
+
   const { pair, problems, leaves, drawn, skewed } = pairRooms(
-    drawing, rooms, start.id, startBox.id, teleports);
+    drawing, rooms, start.id, startBox.id, teleports, moreStarts);
   const mapped = new Set(pair.values());
 
   // Both numbers, always. "6 of 97" on its own reads as "you have walked six

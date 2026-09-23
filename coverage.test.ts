@@ -90,6 +90,25 @@ describe('pairRooms', () => {
     expect(pair.get(2)).toBe(aBox.id);
   });
 
+  // The swamp has two ways in from the forest, and on 2026-09-22 a walk came in
+  // by the second one while nothing yet joined it to the first. The pairing is a
+  // walk from one anchor, so a branch it cannot reach reads as rooms it cannot
+  // place -- however well they match -- until the loop is closed.
+  it('pairs a branch it cannot walk to from a second anchor', () => {
+    const cBox = d.boxes.find(b => b.label === 'C')!;
+    const rooms: Room[] = [
+      { id: 1, slug: 'start', exits: { e: null, s: null } },
+      { id: 3, slug: 'c', exits: { nw: 4 } },
+      { id: 4, slug: 'a', exits: { se: 3, w: null } },
+    ];
+    expect(pairRooms(d, rooms, 1, startBox.id).pair.has(4)).toBe(false);
+
+    const { pair, problems } = pairRooms(d, rooms, 1, startBox.id, new Map(), [[3, cBox.id]]);
+    expect(problems).toEqual([]);
+    expect(pair.get(3)).toBe(cBox.id);
+    expect(pair.get(4)).toBe(aBox.id);
+  });
+
   it('reports an exit we have that the drawing does not', () => {
     const rooms: Room[] = [
       { id: 1, slug: 'start', exits: { e: 2, u: 2 } },
@@ -374,6 +393,10 @@ describe('the exported map agrees with the shrine drawings', () => {
       expect(drawing.boxes.length).toBeGreaterThan(0);
       expect(drawing.boxes.find(b => b.label === spec.originBox),
         `box [${spec.originBox}] is on ${spec.file}`).toBeDefined();
+      for (const o of spec.moreOrigins ?? []) {
+        expect(drawing.boxes.find(b => b.label === o.box),
+          `box [${o.box}] is on ${spec.file}`).toBeDefined();
+      }
 
       // An area can be registered before it has any rooms -- that is the state
       // complex-caverns is in after being wiped to be re-walked, and registering

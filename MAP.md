@@ -676,19 +676,19 @@ Key:
      [ ]
         \
          \
-          [ ]
-             \
-              \
-               [ ]
-                  \
-                   \
+          [ ]                                     [ ]--[ ]   e to The Swamp
+             \                                   /
+              \                                 /
+               [ ]                           [ ]
+                  \                           |
+                   \                          |
+                    [ ]                      [ ]
+                   /                        /
+                  /                        /
+               [ ]       [ ]--[ ]--[ ]--[ ]
+                  \     /
+                   \   /
                     [ ]
-                   /
-                  /
-               [ ]
-                  \
-                   \
-                    [ ]                                      ne to unexplored
                        \
                         \
                          [ ]
@@ -724,22 +724,22 @@ Key:
 ### The Swamp
 
 ```
-                                                                                               [ ]   n to The Ruined Town
-                                                                                                |
-                                                                                                |
-                                                                                               [ ]
-                                                                                              /
-                                                                                             /
-                                                                                          [ ]
-                                                                                         /
-                                                                                        /
-                                                                                     [ ]
-                                                                                    /
-                                                                                   /
-                                                                                [ ]                  w to unexplored
-                                                                                   \
-                                                                                    \
-                                                                                     [ ]
+                                                                                               [ ]            [ ]             n to The Ruined Town   w to The Forest
+                                                                                                |                \
+                                                                                                |                 \
+                                                                                               [ ]                 [ ]
+                                                                                              /                     |
+                                                                                             /                      |
+                                                                                          [ ]                      [ ]
+                                                                                         /                        /
+                                                                                        /                        /
+                                                                                     [ ]                      [ ]
+                                                                                    /                            \
+                                                                                   /                              \
+                                                                                [ ]                                [ ]        w to unexplored
+                                                                                   \                                  \
+                                                                                    \                                  \
+                                                                                     [ ]                                [ ]   ne to unexplored
                                                                                     /
                                                                                    /
                                                                       [ ]       [ ]
@@ -748,10 +748,10 @@ Key:
                                                             [ ]--[ ]       [ ]
                                                            /
                                                           /
-                                                       [ ]                                           nw to unexplored
+                                                       [ ]                                                                    nw to unexplored
                                                           \
                                                            \
-                                                            [ ]--[ ]                                 e to unexplored
+                                                            [ ]--[ ]                                                          e to unexplored
                                                                   |
                                                                   |
                                                                  [ ]
@@ -766,16 +766,16 @@ Key:
                                                        [ ]
                                                         |
                                                         |
-                                                       [ ]                                           e to unexplored
+                                                       [ ]                                                                    e to unexplored
                                                         |
                                                         |
-                                                       [ ]                                           w to unexplored
+                                                       [ ]                                                                    w to unexplored
                                                         |
                                                         |
                                                        [ ]
                                                       /
                                                      /
-                              [ ]--[ ]--[ ]--[ ]--[ ]                                                nw to unexplored   e to unexplored
+                              [ ]--[ ]--[ ]--[ ]--[ ]                                                                         nw to unexplored   e to unexplored
                              /
                             /
                          [ ]
@@ -790,7 +790,7 @@ Key:
      [ ]
     /
    /
-[ ]                                                                                                  w to The Forest
+[ ]                                                                                                                           w to The Forest
 ```
 
 ### The Ruined Town
