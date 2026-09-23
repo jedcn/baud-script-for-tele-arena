@@ -6,7 +6,17 @@
 # `just coverage swamp` can anchor on each. [a] is the lower one, the room we
 # call `swamp` (w to forest-27, ne), walked in July; [b] is the upper one,
 # swamp-30 (w to forest-39, se), walked 2026-09-22. Same width as `[ ]`, so
-# nothing else moves. `just scrape-shrine-maps` will revert this -- re-apply it.
+# nothing else moves.
+#
+# And one box removed. The diagonal south-east from the Giant Slug [c] drew a
+# nw,se room the game does not have: walking it on 2026-09-22 went swamp-58 (s,w)
+# -> clearing-7 (n,se), where the three giant slugs were -> swamp-59 (nw,se) ->
+# swamp-60 (nw,sw), one room short of the page, with every move logged
+# (logs/session-teekywiki-2026-09-22T21-58-50.log, lines 761-836). The box under
+# the [c] is now a continuation of the `\`. The slugs themselves stand one box
+# above the [c], in clearing-7.
+#
+# `just scrape-shrine-maps` will revert all of this -- re-apply it.
 
                                                                       ^   | 
                                                                       |  [ ] 
@@ -49,7 +59,7 @@
                   /               Swordswoman(2)                       \ 
                [ ]                                       Giant Slug(3) [c] 
               /                                                          \ 
-       [ ]-[c]                                                           [ ] 
+       [ ]-[c]                                                            \  
        /   Alligator(2)                                                    \ 
      [ ]                                                                   [ ] 
      /                                                                     / 

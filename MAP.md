@@ -724,73 +724,76 @@ Key:
 ### The Swamp
 
 ```
-                                                                                               [ ]            [ ]                                           n to The Ruined Town   w to The Forest
-                                                                                                |                \
-                                                                                                |                 \
-                                                                                               [ ]                 [ ]
-                                                                                              /                     |
-                                                                                             /                      |
-                                                                                          [ ]                      [ ]
-                                                                                         /                        /
-                                                                                        /                        /
-                                                                                     [ ]                      [ ]                 [ ]                       n to unexplored
-                                                                                    /                            \               /   \
-                                                                                   /                              \             /     \
-                                                                                [ ]                                [ ]       [ ]       [ ]--[ ]             w to unexplored
-                                                                                   \                                  \     /                  \
-                                                                                    \                                  \   /                    \
-                                                                                     [ ]                                [ ]                      [ ]        e to unexplored
-                                                                                    /                                                             |
-                                                                                   /                                                              |
-                                                                      [ ]       [ ]                                                              [ ]
-                                                                     /   \     /                                                                    \
-                                                                    /     \   /                                                                      \
-                                                            [ ]--[ ]       [ ]                                                                        [ ]   e to unexplored
-                                                           /                                                                                         /
-                                                          /                                                                                         /
-                                                       [ ]                                                                                       [ ]        nw to unexplored
-                                                          \                                                                                     /
-                                                           \                                                                                   /
-                                                            [ ]--[ ]                                                                        [ ]             e to unexplored   sw to unexplored
-                                                                  |
-                                                                  |
-                                                                 [ ]
-                                                                /
-                                                               /
-                                                            [ ]
-                                                           /
-                                                          /
-                                                       [ ]
-                                                        |
-                                                        |
-                                                       [ ]
-                                                        |
-                                                        |
-                                                       [ ]                                                                                                  e to unexplored
-                                                        |
-                                                        |
-                                                       [ ]                                                                                                  w to unexplored
-                                                        |
-                                                        |
-                                                       [ ]
-                                                      /
-                                                     /
-                              [ ]--[ ]--[ ]--[ ]--[ ]                                                                                                       nw to unexplored   e to unexplored
-                             /
-                            /
-                         [ ]
-                        /
-                       /
-               [ ]--[ ]
-              /
-             /
-          [ ]
-         /
-        /
-     [ ]
-    /
-   /
-[ ]                                                                                                                                                         w to The Forest
+                                                                                                         [ ]        n to The Ruined Town
+                                                                                                          |
+                                                                                                          |
+                                                                                                         [ ]
+                                                                                                        /
+                                                                                                       /
+                                                                                                    [ ]
+                                                                                                   /
+                                                                                                  /
+                                                                                               [ ]
+                                                                                              /
+                                                                                             /
+                                                                                          [ ]                       w to unexplored
+                                                                                             \
+                                                                                              \
+                                                                                               [ ]
+                                                                                              /
+                                                                                             /
+                                                                                [ ]       [ ]
+                                                                               /   \     /
+                                                                              /     \   /
+[ ]                                                                   [ ]--[ ]       [ ]                            w to The Forest
+   \                                                                 /
+    \                                                               /
+     [ ]                                                         [ ]                                                nw to unexplored
+      |                                                             \
+      |                                                              \
+     [ ]                                                              [ ]--[ ]                                      e to unexplored
+    /                                                                       |
+   /                                                                        |
+[ ]                 [ ]                                                    [ ]                                      n to unexplored
+   \               /   \                                                  /
+    \             /     \                                                /
+     [ ]       [ ]       [ ]--[ ]                                     [ ]
+        \     /                  \                                   /
+         \   /                    \                                 /
+          [ ]                      [ ]                           [ ]                                                e to unexplored
+                                    |                             |
+                                    |                             |
+                                   [ ]            [ ]            [ ]       [ ]--[ ]                                 e to unexplored
+                                      \          /   \            |       /      |
+                                       \        /     \           |      /       |
+                                        [ ]--[ ]       [ ]       [ ]--[ ]       [ ]
+                                       /                  \       |            /   \
+                                      /                    \      |           /     \
+                                   [ ]                      [ ]--[ ]       [ ]       [ ]
+                                  /                               |       /             \
+                                 /                                |      /               \
+                              [ ]                                [ ]  [ ]                 [ ]--[ ]--[ ]             sw to unexplored
+                                                                /     /                              |
+                                                               /     /                               |
+                                        [ ]--[ ]--[ ]--[ ]--[ ]--[ ] /                              [ ]             nw to unexplored
+                                       /                          | /                                  \
+                                      /                           |/                                    \
+                                   [ ]                           [ ]                                     [ ]
+                                  /                                                                         \
+                                 /                                                                           \
+                         [ ]--[ ]                                                                             [ ]
+                        /                                                                                    /
+                       /                                                                                    /
+                    [ ]                                                                                  [ ]
+                   /                                                                                    /
+                  /                                                                                    /
+               [ ]                                                                             [ ]--[ ]
+              /                                                                               /
+             /                                                                               /
+          [ ]                                                                             [ ]                       w to The Forest
+                                                                                           |
+                                                                                           |
+                                                                                          [ ]
 ```
 
 ### The Ruined Town
