@@ -147,10 +147,10 @@
           "to": "first-town/south-plaza"
         },
         "nw": {
-          "to": null
+          "to": "mountains/mountains-3"
         },
         "se": {
-          "to": null
+          "to": "mountains/mountains-11"
         },
         "sw": {
           "to": "mountains/mountains"
@@ -160,6 +160,771 @@
       "layout": {
         "x": 1,
         "y": 1
+      }
+    },
+    {
+      "id": "mountains/mountains-3",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains-4"
+        },
+        "se": {
+          "to": "mountains/town-gates"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north and southeast.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "mountains/mountains-4",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-5"
+        },
+        "s": {
+          "to": "mountains/mountains-3"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the south and northwest.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "mountains/mountains-5",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains-6"
+        },
+        "se": {
+          "to": "mountains/mountains-4"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north and southeast.",
+      "layout": {
+        "x": -1,
+        "y": 4
+      }
+    },
+    {
+      "id": "mountains/mountains-6",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-7"
+        },
+        "s": {
+          "to": "mountains/mountains-5"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the south and northwest.",
+      "layout": {
+        "x": -1,
+        "y": 5
+      }
+    },
+    {
+      "id": "mountains/mountains-7",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-8"
+        },
+        "se": {
+          "to": "mountains/mountains-6"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": -2,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountains-8",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountains-9"
+        },
+        "sw": {
+          "to": "mountains/mountains-7"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and southwest.",
+      "layout": {
+        "x": -1,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountains/mountains-9",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-10"
+        },
+        "w": {
+          "to": "mountains/mountains-8"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the west and northeast.",
+      "layout": {
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountains/mountains-10",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/cave-194"
+        },
+        "sw": {
+          "to": "mountains/mountains-9"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The entrance to a dark cave lies to the north. The only other exit is to the southwest.",
+      "layout": {
+        "x": 1,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountains/cave-194",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "mountains/cave-195"
+        },
+        "s": {
+          "to": "mountains/mountains-10"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south. There is light to the south.",
+      "layout": {
+        "x": 1,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountains/cave-195",
+      "name": "cave",
+      "exits": {
+        "nw": {
+          "to": "mountains/large-cave-2"
+        },
+        "s": {
+          "to": "mountains/cave-194"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northwest and south.",
+      "layout": {
+        "x": 1,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountains/large-cave-2",
+      "name": "large cave",
+      "exits": {
+        "se": {
+          "to": "mountains/cave-195"
+        }
+      },
+      "description": "This cave is very large and smells slightly of offal. It has the look of the den of some wild beast. The floor of the cave is covered with straw and other litter. The only exit is to the southeast.",
+      "layout": {
+        "x": 0,
+        "y": 11
+      }
+    },
+    {
+      "id": "mountains/mountains-11",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountains-12"
+        },
+        "nw": {
+          "to": "mountains/town-gates"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and northwest.",
+      "layout": {
+        "x": 2,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-12",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountains-13"
+        },
+        "w": {
+          "to": "mountains/mountains-11"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and west.",
+      "layout": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-13",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-14"
+        },
+        "w": {
+          "to": "mountains/mountains-12"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the west and northeast.",
+      "layout": {
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-14",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountains-15"
+        },
+        "sw": {
+          "to": "mountains/mountains-13"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and southwest.",
+      "layout": {
+        "x": 5,
+        "y": 1
+      }
+    },
+    {
+      "id": "mountains/mountains-15",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-24"
+        },
+        "se": {
+          "to": "mountains/mountains-16"
+        },
+        "w": {
+          "to": "mountains/mountains-14"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the west, northeast, and southeast.",
+      "layout": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "id": "mountains/mountains-16",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-15"
+        },
+        "se": {
+          "to": "mountains/mountains-17"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northwest and southeast.",
+      "layout": {
+        "x": 7,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-17",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-19"
+        },
+        "nw": {
+          "to": "mountains/mountains-16"
+        },
+        "sw": {
+          "to": "mountains/mountains-18"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast, northwest, and southwest.",
+      "layout": {
+        "x": 8,
+        "y": -1
+      }
+    },
+    {
+      "id": "mountains/mountains-18",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-17"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The only exit is to the northeast.",
+      "layout": {
+        "x": 7,
+        "y": -2
+      }
+    },
+    {
+      "id": "mountains/mountains-19",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountains-20"
+        },
+        "sw": {
+          "to": "mountains/mountains-17"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and southwest.",
+      "layout": {
+        "x": 9,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-20",
+      "name": "mountains",
+      "exits": {
+        "se": {
+          "to": "mountains/mountains-21"
+        },
+        "w": {
+          "to": "mountains/mountains-19"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the southeast and west.",
+      "layout": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/mountains-21",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-20"
+        },
+        "se": {
+          "to": "mountains/mountains-22"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northwest and southeast.",
+      "layout": {
+        "x": 11,
+        "y": -1
+      }
+    },
+    {
+      "id": "mountains/mountains-22",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-23"
+        },
+        "nw": {
+          "to": "mountains/mountains-21"
+        },
+        "sw": {
+          "to": "mountains/cave-197"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The entrance to a dark cave lies to the southwest. The only other exits are to the northeast and northwest.",
+      "layout": {
+        "x": 12,
+        "y": -2
+      }
+    },
+    {
+      "id": "mountains/mountains-23",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/cave-196"
+        },
+        "sw": {
+          "to": "mountains/mountains-22"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The entrance to a dark cave lies to the northeast. The only other exit is to the southwest.",
+      "layout": {
+        "x": 13,
+        "y": -1
+      }
+    },
+    {
+      "id": "mountains/cave-196",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "mountains/filthy-cave-1"
+        },
+        "sw": {
+          "to": "mountains/mountains-23"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and southwest. There is light to the southwest.",
+      "layout": {
+        "x": 14,
+        "y": 0
+      }
+    },
+    {
+      "id": "mountains/filthy-cave-1",
+      "name": "filthy cave",
+      "exits": {
+        "nw": {
+          "to": "mountains/cave-196"
+        }
+      },
+      "description": "This cave is large and smells strongly of animal dung. It looks as if it might be home to some wild animal. This cave is filthy and littered with the broken skeletons of many small animals. The only exit is to the northwest.",
+      "layout": {
+        "x": 15,
+        "y": -1
+      }
+    },
+    {
+      "id": "mountains/cave-197",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-22"
+        },
+        "w": {
+          "to": "mountains/cave-198"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west. There is light to the northeast.",
+      "layout": {
+        "x": 11,
+        "y": -3
+      }
+    },
+    {
+      "id": "mountains/cave-198",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "mountains/cave-197"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the east.",
+      "layout": {
+        "x": 10,
+        "y": -3
+      }
+    },
+    {
+      "id": "mountains/mountains-24",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-25"
+        },
+        "sw": {
+          "to": "mountains/mountains-15"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 7,
+        "y": 2
+      }
+    },
+    {
+      "id": "mountains/mountains-25",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains-26"
+        },
+        "sw": {
+          "to": "mountains/mountains-24"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north and southwest.",
+      "layout": {
+        "x": 8,
+        "y": 3
+      }
+    },
+    {
+      "id": "mountains/mountains-26",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/mountains-27"
+        },
+        "s": {
+          "to": "mountains/mountains-25"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the south and northwest.",
+      "layout": {
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "id": "mountains/mountains-27",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-31"
+        },
+        "nw": {
+          "to": "mountains/mountains-28"
+        },
+        "se": {
+          "to": "mountains/mountains-26"
+        },
+        "sw": {
+          "to": "mountains/mountains-30"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast, northwest, southeast, and southwest.",
+      "layout": {
+        "x": 7,
+        "y": 5
+      }
+    },
+    {
+      "id": "mountains/mountains-28",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains-29"
+        },
+        "se": {
+          "to": "mountains/mountains-27"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north and southeast.",
+      "layout": {
+        "x": 6,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountains-29",
+      "name": "mountains",
+      "exits": {
+        "s": {
+          "to": "mountains/mountains-28"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The only exit is to the south.",
+      "layout": {
+        "x": 6,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountains/mountains-30",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-27"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The only exit is to the northeast.",
+      "layout": {
+        "x": 6,
+        "y": 4
+      }
+    },
+    {
+      "id": "mountains/mountains-31",
+      "name": "mountains",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountains-32"
+        },
+        "sw": {
+          "to": "mountains/mountains-27"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 8,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountains-32",
+      "name": "mountains",
+      "exits": {
+        "n": {
+          "to": "mountains/mountains-34"
+        },
+        "se": {
+          "to": "mountains/mountains-33"
+        },
+        "sw": {
+          "to": "mountains/mountains-31"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the north, southeast, and southwest.",
+      "layout": {
+        "x": 9,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountains/mountains-33",
+      "name": "mountains",
+      "exits": {
+        "e": {
+          "to": "mountains/mountain-road"
+        },
+        "nw": {
+          "to": "mountains/mountains-32"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The exits are to the east and northwest.",
+      "layout": {
+        "x": 10,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountain-road",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountains/mountain-road-1"
+        },
+        "w": {
+          "to": "mountains/mountains-33"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. To the west, the road ends at a cliff, most likely the result of an avalanche.  Exits are to the west and east.",
+      "layout": {
+        "x": 11,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountain-road-1",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountains/mountain-road-2"
+        },
+        "w": {
+          "to": "mountains/mountain-road"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and northeast.",
+      "layout": {
+        "x": 12,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountains/mountain-road-2",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "sw": {
+          "to": "mountains/mountain-road-1"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 13,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountains/mountains-34",
+      "name": "mountains",
+      "exits": {
+        "nw": {
+          "to": "mountains/cave-199"
+        },
+        "s": {
+          "to": "mountains/mountains-32"
+        }
+      },
+      "description": "You are standing on a rocky path between high, impassible mountains. Other than the sounds of the wind and an occasional bird cry, nothing breaks the silence of this desolate landscape. The entrance to a dark cave lies to the northwest. The only other exit is to the south.",
+      "layout": {
+        "x": 9,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountains/cave-199",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "orc-caves/cave-201"
+        },
+        "nw": {
+          "to": "mountains/cave-200"
+        },
+        "se": {
+          "to": "mountains/mountains-34"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north, northwest, and southeast.",
+      "layout": {
+        "x": 8,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountains/cave-200",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "mountains/clean-cave"
+        },
+        "se": {
+          "to": "mountains/cave-199"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southeast.",
+      "layout": {
+        "x": 7,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountains/clean-cave",
+      "name": "clean cave",
+      "exits": {
+        "s": {
+          "to": "mountains/cave-200"
+        }
+      },
+      "description": "This cave is very clean and well kept. It has the look and feel of the den of a sorceror. The floor of the cave has no trace of dirt or other litter. There are several items of furniture, all somewhat large and very sturdy looking. The only exit is to the south.",
+      "layout": {
+        "x": 7,
+        "y": 11
       }
     }
   ]

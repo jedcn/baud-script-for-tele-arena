@@ -17,16 +17,17 @@
 13. [The Forest](#the-forest)
 14. [The Swamp](#the-swamp)
 15. [The Ruined Town](#the-ruined-town)
-16. [The Cellars](#the-cellars)
-17. [Third Town](#third-town)
-18. [Fourth Town](#fourth-town)
-19. [The Deep Forest](#the-deep-forest)
-20. [The Valley](#the-valley)
-21. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-22. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-23. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-24. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-25. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+16. [The Orc Caves](#the-orc-caves)
+17. [The Cellars](#the-cellars)
+18. [Third Town](#third-town)
+19. [Fourth Town](#fourth-town)
+20. [The Deep Forest](#the-deep-forest)
+21. [The Valley](#the-valley)
+22. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+23. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+24. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+25. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+26. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -593,22 +594,52 @@ Key:
 ### The Mountains
 
 ```
-                         [ ]   ne to first-town   nw to unexplored   se to unexplored
-                        /
-                       /
-                    [ ]
-                     |
-                     |
-                    [ ]
+                    [ ]                                [ ]
+                       \                                |
+                        \                               |
+                         [ ]                           [ ]
+                          |                               \
+                          |                                \
+                         [ ]                                [ ]                                      n to The Orc Caves
+                          |                                    \
+                          |                                     \
+                         [ ]                                     [ ]
+                        /                                         |
+                       /                                          |
+               [ ]--[ ]                           [ ]            [ ]                 [ ]             n to unexplored
+              /                                    |            /   \               /
+             /                                     |           /     \             /
+          [ ]                                     [ ]       [ ]       [ ]--[ ]--[ ]
+             \                                       \     /
+              \                                       \   /
+               [ ]                                     [ ]
+                |                                     /   \
+                |                                    /     \
+               [ ]                                [ ]       [ ]
+                  \                                          |
+                   \                                         |
+                    [ ]                                     [ ]
+                     |                                     /
+                     |                                    /
+                    [ ]                                [ ]
+                       \                              /
+                        \                            /
+                         [ ]                 [ ]--[ ]                                                ne to first-town
+                        /   \               /        \
+                       /     \             /          \
+                    [ ]       [ ]--[ ]--[ ]            [ ]       [ ]--[ ]                 [ ]
+                     |                                    \     /        \               /   \
+                     |                                     \   /          \             /     \
+                    [ ]                                     [ ]            [ ]       [ ]       [ ]
+                   /                                       /                  \     /
+                  /                                       /                    \   /
+               [ ]                                     [ ]                      [ ]
+                  \                                                            /
+                   \                                                          /
+                    [ ]                                               [ ]--[ ]
                    /
                   /
-               [ ]
-                  \
-                   \
-                    [ ]
-                   /
-                  /
-[ ]--[ ]       [ ]             w to The Forest
+[ ]--[ ]       [ ]                                                                                   w to The Forest
         \     /
          \   /
           [ ]
@@ -774,6 +805,15 @@ Key:
  |
  |
 [ ]    s to The Swamp
+```
+
+### The Orc Caves
+
+```
+[ ]   ne to unexplored
+ |
+ |
+[ ]   s to The Mountains
 ```
 
 ### The Cellars

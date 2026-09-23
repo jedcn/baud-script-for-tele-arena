@@ -87,8 +87,14 @@
     {
       "area": "mountains",
       "name": "The Mountains",
-      "rooms": 9,
+      "rooms": 54,
       "file": "areas/mountains.json"
+    },
+    {
+      "area": "orc-caves",
+      "name": "The Orc Caves",
+      "rooms": 2,
+      "file": "areas/orc-caves.json"
     },
     {
       "area": "ruined-town",

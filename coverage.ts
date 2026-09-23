@@ -375,6 +375,16 @@ export const SHRINE_MAPS: Record<string,
     originBox: 'g',
     originRoom: 'town-gates',
   },
+  // North off the mountains. Both pages draw the room between them: the mountains
+  // as "[*] to Orc Caves", this page as its bottom box over "to Mountains". It is
+  // filed here, the way the desert's [S] is filed under the stoneworks, so each
+  // page reads the other side as the area ending. The bottom box carries a [*] we
+  // added (see the drawing's header).
+  'orc-caves': {
+    file: 'map/shrine/orc-caves.txt',
+    originBox: '*',
+    originRoom: 'cave-201',
+  },
 };
 
 /**

@@ -1,6 +1,11 @@
 # Orc Caves
 # https://tele-arena.tumblr.com/orccaves
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: the bottom box is labelled [*], matching the mountains
+# page's "[*] to Orc Caves" -- both pages draw this one room (cave-201), so
+# `just coverage orc-caves` has an anchor. Same width as `[ ]`, so nothing else
+# moves. `just scrape-shrine-maps` will revert this -- re-apply it.
 
              7 female orcs 
                         [c]-[ ]-[c] 2 orc subchiefs, 2 shaman, 1 orc chieftan 
@@ -33,6 +38,6 @@
                                / 
                             [ ] 
                              | 
-                            [ ] 
+                            [*] 
                              | 
                        to Mountains

@@ -672,6 +672,8 @@ export const DRAWN = [
   { slug: 'forest', title: 'The Forest', origin: 'forest' },
   { slug: 'swamp', title: 'The Swamp', origin: 'swamp' },
   { slug: 'ruined-town', title: 'The Ruined Town', origin: 'ruined-plaza' },
+  // North off the mountains, through cave-201 -- the "[*] to Orc Caves" box.
+  { slug: 'orc-caves', title: 'The Orc Caves', origin: 'cave-201' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it
