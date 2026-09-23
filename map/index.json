@@ -153,7 +153,7 @@
     {
       "area": "swamp",
       "name": "The Swamp",
-      "rooms": 38,
+      "rooms": 47,
       "file": "areas/swamp.json"
     },
     {
