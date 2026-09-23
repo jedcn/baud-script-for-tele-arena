@@ -380,6 +380,14 @@ export const SHRINE_MAPS: Record<string,
   // filed here, the way the desert's [S] is filed under the stoneworks, so each
   // page reads the other side as the area ending. The bottom box carries a [*] we
   // added (see the drawing's header).
+  // West off the mountains' caves. The page labels only encounters, so the
+  // drawing carries an [m] we added (see its header) on the box whose east arrow
+  // is "Mountains -->": the room we call `forest`.
+  forest: {
+    file: 'map/shrine/forest.txt',
+    originBox: 'm',
+    originRoom: 'forest',
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',

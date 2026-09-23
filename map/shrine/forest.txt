@@ -1,8 +1,14 @@
 # Forest
 # https://tele-arena.tumblr.com/forest
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: the top-right box, whose east arrow is "Mountains -->",
+# is labelled [m] -- the room we call `forest` (exits e to the mountains, sw) --
+# so `just coverage forest` has an anchor. The shrine labels only encounters on
+# this page, and none is walked. Same width as `[ ]`, so nothing else moves.
+# `just scrape-shrine-maps` will revert this -- re-apply it.
 
-                                        [ ]-> 
+                                        [m]-> 
                                        / 
                                     [ ]          Mountains --> 
                                      | 
