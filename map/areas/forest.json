@@ -289,7 +289,7 @@
           "to": "forest/forest-15"
         },
         "sw": {
-          "to": null
+          "to": "forest/forest-40"
         }
       },
       "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. Paths lead off to the northeast, southeast, and southwest.",
@@ -653,6 +653,369 @@
       "layout": {
         "x": 3,
         "y": -13
+      }
+    },
+    {
+      "id": "forest/forest-40",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "forest/clearing-1"
+        },
+        "sw": {
+          "to": "forest/forest-41"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southwest.",
+      "layout": {
+        "x": -6,
+        "y": -21
+      }
+    },
+    {
+      "id": "forest/forest-41",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "forest/forest-40"
+        },
+        "nw": {
+          "to": "forest/forest-42"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and northwest.",
+      "layout": {
+        "x": -7,
+        "y": -22
+      }
+    },
+    {
+      "id": "forest/forest-42",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "forest/forest-43"
+        },
+        "se": {
+          "to": "forest/forest-41"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and southeast.",
+      "layout": {
+        "x": -8,
+        "y": -21
+      }
+    },
+    {
+      "id": "forest/forest-43",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-44"
+        },
+        "s": {
+          "to": "forest/forest-42"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and south.",
+      "layout": {
+        "x": -8,
+        "y": -20
+      }
+    },
+    {
+      "id": "forest/forest-44",
+      "name": "forest",
+      "exits": {
+        "se": {
+          "to": "forest/forest-43"
+        },
+        "w": {
+          "to": "forest/clearing-10"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the west and southeast.",
+      "layout": {
+        "x": -9,
+        "y": -19
+      }
+    },
+    {
+      "id": "forest/clearing-10",
+      "name": "clearing",
+      "exits": {
+        "e": {
+          "to": "forest/forest-44"
+        },
+        "n": {
+          "to": "forest/forest-45"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. Paths lead off to the north, east, and west.",
+      "layout": {
+        "x": -10,
+        "y": -19
+      }
+    },
+    {
+      "id": "forest/forest-45",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "forest/forest-46"
+        },
+        "s": {
+          "to": "forest/clearing-10"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and south.",
+      "layout": {
+        "x": -10,
+        "y": -18
+      }
+    },
+    {
+      "id": "forest/forest-46",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": null
+        },
+        "nw": {
+          "to": "forest/forest-47"
+        },
+        "s": {
+          "to": "forest/forest-45"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and south.",
+      "layout": {
+        "x": -10,
+        "y": -17
+      }
+    },
+    {
+      "id": "forest/forest-47",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-48"
+        },
+        "se": {
+          "to": "forest/forest-46"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -11,
+        "y": -16
+      }
+    },
+    {
+      "id": "forest/forest-48",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-49"
+        },
+        "se": {
+          "to": "forest/forest-47"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -12,
+        "y": -15
+      }
+    },
+    {
+      "id": "forest/forest-49",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "forest/forest-50"
+        },
+        "se": {
+          "to": "forest/forest-48"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north, west, and southeast.",
+      "layout": {
+        "x": -13,
+        "y": -14
+      }
+    },
+    {
+      "id": "forest/forest-50",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-51"
+        },
+        "s": {
+          "to": "forest/forest-49"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and south.",
+      "layout": {
+        "x": -13,
+        "y": -13
+      }
+    },
+    {
+      "id": "forest/forest-51",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-52"
+        },
+        "se": {
+          "to": "forest/forest-50"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southeast.",
+      "layout": {
+        "x": -14,
+        "y": -12
+      }
+    },
+    {
+      "id": "forest/forest-52",
+      "name": "forest",
+      "exits": {
+        "ne": {
+          "to": "forest/forest-53"
+        },
+        "se": {
+          "to": "forest/forest-51"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and southeast.",
+      "layout": {
+        "x": -15,
+        "y": -11
+      }
+    },
+    {
+      "id": "forest/forest-53",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-54"
+        },
+        "sw": {
+          "to": "forest/forest-52"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and southwest.",
+      "layout": {
+        "x": -14,
+        "y": -10
+      }
+    },
+    {
+      "id": "forest/forest-54",
+      "name": "forest",
+      "exits": {
+        "se": {
+          "to": "forest/forest-53"
+        },
+        "w": {
+          "to": "forest/forest-55"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the west and southeast.",
+      "layout": {
+        "x": -15,
+        "y": -9
+      }
+    },
+    {
+      "id": "forest/forest-55",
+      "name": "forest",
+      "exits": {
+        "e": {
+          "to": "forest/forest-54"
+        },
+        "w": {
+          "to": "forest/clearing-11"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and west.",
+      "layout": {
+        "x": -16,
+        "y": -9
+      }
+    },
+    {
+      "id": "forest/clearing-11",
+      "name": "clearing",
+      "exits": {
+        "e": {
+          "to": "forest/forest-55"
+        },
+        "n": {
+          "to": "forest/forest-56"
+        }
+      },
+      "description": "You are standing in a clearing in the forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. Paths lead off to the north and east.",
+      "layout": {
+        "x": -17,
+        "y": -9
+      }
+    },
+    {
+      "id": "forest/forest-56",
+      "name": "forest",
+      "exits": {
+        "nw": {
+          "to": "forest/forest-57"
+        },
+        "s": {
+          "to": "forest/clearing-11"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and south.",
+      "layout": {
+        "x": -17,
+        "y": -8
+      }
+    },
+    {
+      "id": "forest/forest-57",
+      "name": "forest",
+      "exits": {
+        "n": {
+          "to": "forest/forest-58"
+        },
+        "se": {
+          "to": "forest/forest-56"
+        }
+      },
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the north and southeast.",
+      "layout": {
+        "x": -18,
+        "y": -7
+      }
+    },
+    {
+      "id": "forest/forest-58",
+      "name": "forest",
+      "exits": {
+        "s": {
+          "to": "forest/forest-57"
+        }
+      },
+      "description": "You are standing at the end of a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path leads off to the south.",
+      "layout": {
+        "x": -18,
+        "y": -6
       }
     }
   ]
