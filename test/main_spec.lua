@@ -862,6 +862,128 @@ describe("Tele-Arena triggers", function()
 
     end)
 
+    -- The abandonment check counts silence and a busy arena never gives it
+    -- any. This counts what we SEND: 15 minutes of nothing going out means
+    -- nobody is driving, whatever the server is saying.
+    describe("idle exit", function()
+
+        local MINUTE = 60 * 1000
+
+        -- Let `minutes` pass one at a time, running the per-minute check and,
+        -- before it, whatever `during` does in that minute.
+        local function pass(minutes, during)
+            for i = 1, minutes do
+                helper.advanceMs(MINUTE)
+                if during then during(i) end
+                helper.fireTimers(MINUTE)
+            end
+        end
+
+        local function exited()
+            return tableContains(helper.sendCalls, "x")
+        end
+
+        -- Everything that happened around tojolias while nobody was there.
+        local function busyArena()
+            helper.simulateLine("Kerhak just rang the great gong!")
+            helper.simulateLine("An apollyon dragon appears in a puff of reddish smoke!")
+            helper.simulateLine("The flame giant exhaled a blast of flame at you for 357 damage!")
+            helper.simulateLine("You're thirsty.")
+            helper.simulateLine("Kerhak just attacked the flame giant with an Ecliptic Glaive!")
+        end
+
+        before_each(function()
+            helper.simulateLine("Entering Tele-Arena...")
+        end)
+
+        it("leaves after 15 minutes with nothing sent, however busy the room", function()
+            pass(15, busyArena)
+            assert.is_true(exited())
+            assert.is_true(taPackage.exitGamePending)
+        end)
+
+        it("stays at 14 minutes", function()
+            pass(14, busyArena)
+            assert.is_false(exited())
+        end)
+
+        it("starts over when a command is typed", function()
+            pass(10, function(i)
+                if i == 10 then helper.simulateOutbound("st") end
+            end)
+            pass(14)
+            assert.is_false(exited())
+            pass(1)
+            assert.is_true(exited())
+        end)
+
+        it("counts a script's command as activity", function()
+            pass(10, function(i)
+                if i == 10 then send("a flame") end
+            end)
+            pass(14)
+            assert.is_false(exited())
+        end)
+
+        -- Tavern mode is meant to be left alone, and its only traffic is a
+        -- `st` every 10 minutes. That has to be enough.
+        it("stays put under tavern mode's 10-minute heartbeat", function()
+            pass(120, function(i)
+                if i % 10 == 0 then send("st") end
+            end)
+            assert.is_false(exited())
+        end)
+
+        it("stops every running script first", function()
+            taPackage.killActive = true
+            taPackage.tavernMode = true
+            pass(15)
+            assert.is_falsy(taPackage.killActive)
+            assert.is_falsy(taPackage.tavernMode)
+            assert.is_true(exited())
+        end)
+
+        it("says so in the log and notifies", function()
+            pass(15)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("[idle] No commands sent for 15 minutes", 1, true) then
+                    said = true
+                end
+            end
+            assert.is_true(said)
+            assert.is_true(#helper.httpRequestCalls > 0)
+        end)
+
+        -- It is a safety net, not a script: "stop everything and walk away"
+        -- is the case it exists for.
+        it("is not disarmed by stop-all-scripts", function()
+            runCommand("stop-all-scripts")
+            pass(15)
+            assert.is_true(exited())
+        end)
+
+        it("stops watching once we have left the game", function()
+            helper.simulateLine("Exiting Tele-Arena...")
+            pass(30)
+            assert.is_false(exited())
+        end)
+
+        it("stops watching at the BBS menu after a dropped connection", function()
+            helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X")
+            pass(30)
+            assert.is_false(exited())
+        end)
+
+        it("does not watch before entering the game", function()
+            helper.resetAll()
+            dofile("main.lua")
+            pass(30)
+            assert.is_false(exited())
+        end)
+
+    end)
+
     describe("death detection", function()
 
         local KILLED = "As the final blow strikes your body you fall unconscious."

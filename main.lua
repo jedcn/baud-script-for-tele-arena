@@ -5082,6 +5082,67 @@ createTrigger("^(.+)$", function(matches)
 end, { type = "regex" })
 
 -- =========================================================================
+-- Idle exit
+-- =========================================================================
+--
+-- The backstop for when the check above can't see anything. Its "nothing in
+-- between" test counts silence, and a character left in a busy arena never
+-- gets any: in session-tojolias-2026-09-22T22-49-21.log all 37 thirst ticks
+-- were separated by a teammate's fighting, and the monsters he summoned did
+-- 1,978 damage to the bystander while it sat there. Thirst only landed the
+-- last point. So this watches the other direction: if nothing has been SENT
+-- for IDLE_EXIT_MS -- no typed command, no script command -- nobody is driving,
+-- and we leave, whatever is doing the damage.
+--
+-- Every command reaches the outbound trigger below, whether a script sent it
+-- or it was typed (baud runs outbound triggers on send() too). A typed alias
+-- that sends nothing does not, which doesn't matter: nearly every alias sends
+-- something, and a 15-minute window only needs one command.
+--
+-- 15 minutes because the quietest script that is working as intended is tavern
+-- mode, whose only traffic is a `st` every 10 minutes (TAVERN_STATUS_POLL_MS).
+-- A shorter limit needs a more frequent heartbeat there. The arena makes a
+-- short one worth having: at 15 minutes tojolias had lost about 1,500 of
+-- 2,050 HP.
+--
+-- Armed on entering the game and checked every minute, and ended by
+-- taPackage.inGame going false. It is not a script: stop-all-scripts
+-- deliberately leaves it running, since "stop everything and walk away" is
+-- exactly what it is for.
+taPackage.IDLE_EXIT_MS = 15 * 60 * 1000
+taPackage.IDLE_CHECK_MS = 60 * 1000
+
+createOutboundTrigger("^(.*)$", function()
+    taPackage.lastSentAt = nowMillis()
+end, { type = "regex" })
+
+function taPackage.checkIdle(gen)
+    if not taPackage.inGame or taPackage.idleWatchGen ~= gen then return end
+    local idle = nowMillis() - (taPackage.lastSentAt or nowMillis())
+    if idle >= taPackage.IDLE_EXIT_MS and not taPackage.exitGamePending then
+        local minutes = math.floor(idle / 60000)
+        echo("[idle] No commands sent for " .. minutes .. " minutes"
+            .. " — leaving the game (x).")
+        sendNtfy("Idle", (taPackage.character.name or "The character")
+            .. " sent no commands for " .. minutes .. " minutes"
+            .. " and left the game with x.")
+        -- Same order as the abandonment check above.
+        if runCommand then runCommand("stop-all-scripts") end
+        exitGameWithRetry()
+    end
+    createTimer(taPackage.IDLE_CHECK_MS, function() taPackage.checkIdle(gen) end,
+        { repeating = false })
+end
+
+createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
+    taPackage.lastSentAt = nowMillis()
+    taPackage.idleWatchGen = (taPackage.idleWatchGen or 0) + 1
+    local gen = taPackage.idleWatchGen
+    createTimer(taPackage.IDLE_CHECK_MS, function() taPackage.checkIdle(gen) end,
+        { repeating = false })
+end, { type = "regex" })
+
+-- =========================================================================
 -- Death
 -- =========================================================================
 --
