@@ -25,7 +25,7 @@
       "name": "cave",
       "exits": {
         "ne": {
-          "to": null
+          "to": "orc-caves/cave-207"
         },
         "s": {
           "to": "orc-caves/cave-201"
@@ -35,6 +35,125 @@
       "layout": {
         "x": 8,
         "y": 11
+      }
+    },
+    {
+      "id": "orc-caves/cave-203",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "orc-caves/cave-204"
+        },
+        "sw": {
+          "to": "orc-caves/cave-209"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and southwest.",
+      "layout": {
+        "x": 11,
+        "y": 15
+      }
+    },
+    {
+      "id": "orc-caves/cave-204",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "orc-caves/cave-205"
+        },
+        "w": {
+          "to": "orc-caves/cave-203"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and west.",
+      "layout": {
+        "x": 12,
+        "y": 15
+      }
+    },
+    {
+      "id": "orc-caves/cave-205",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "orc-caves/cave-206"
+        },
+        "sw": {
+          "to": "orc-caves/cave-204"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 13,
+        "y": 16
+      }
+    },
+    {
+      "id": "orc-caves/cave-206",
+      "name": "cave",
+      "exits": {
+        "s": {
+          "to": "orc-caves/cave-205"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the south.",
+      "layout": {
+        "x": 13,
+        "y": 17
+      }
+    },
+    {
+      "id": "orc-caves/cave-207",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "orc-caves/cave-208"
+        },
+        "nw": {
+          "to": null
+        },
+        "sw": {
+          "to": "orc-caves/cave-202"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast, southwest, and northwest.",
+      "layout": {
+        "x": 9,
+        "y": 12
+      }
+    },
+    {
+      "id": "orc-caves/cave-208",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "orc-caves/cave-209"
+        },
+        "sw": {
+          "to": "orc-caves/cave-207"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": 10,
+        "y": 13
+      }
+    },
+    {
+      "id": "orc-caves/cave-209",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "orc-caves/cave-203"
+        },
+        "s": {
+          "to": "orc-caves/cave-208"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": 10,
+        "y": 14
       }
     }
   ]

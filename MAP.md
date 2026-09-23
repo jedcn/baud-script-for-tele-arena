@@ -811,10 +811,28 @@ Key:
 ### The Orc Caves
 
 ```
-[ ]   ne to unexplored
+                         [ ]
+                          |
+                          |
+                         [ ]
+                        /
+                       /
+               [ ]--[ ]
+              /
+             /
+          [ ]
+           |
+           |
+          [ ]
+         /
+        /
+     [ ]                       nw to unexplored
+    /
+   /
+[ ]
  |
  |
-[ ]   s to The Mountains
+[ ]                            s to The Mountains
 ```
 
 ### The Mountain Road

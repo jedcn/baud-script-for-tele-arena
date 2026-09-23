@@ -99,7 +99,7 @@
     {
       "area": "orc-caves",
       "name": "The Orc Caves",
-      "rooms": 2,
+      "rooms": 9,
       "file": "areas/orc-caves.json"
     },
     {
