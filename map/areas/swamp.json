@@ -82,7 +82,7 @@
           "to": "swamp/swamp-3"
         }
       },
-      "description": "Pelayo has just arrived from the west. You are standing in a clearing in the swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. Trails lead off to the west and northeast.",
+      "description": "You are standing in a clearing in the swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. Trails lead off to the west and northeast.",
       "layout": {
         "x": 8,
         "y": -24
@@ -113,7 +113,7 @@
           "to": "swamp/swamp-6"
         },
         "nw": {
-          "to": null
+          "to": "swamp/swamp-91"
         },
         "sw": {
           "to": "swamp/swamp-4"
@@ -326,7 +326,7 @@
       "name": "swamp",
       "exits": {
         "e": {
-          "to": null
+          "to": "swamp/swamp-71"
         },
         "s": {
           "to": "swamp/swamp-15"
@@ -366,7 +366,7 @@
           "to": "swamp/swamp-19"
         },
         "nw": {
-          "to": null
+          "to": "swamp/swamp-78"
         },
         "se": {
           "to": "swamp/swamp-17"
@@ -491,7 +491,7 @@
           "to": "swamp/swamp-24"
         },
         "w": {
-          "to": null
+          "to": "swamp/swamp-83"
         }
       },
       "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west, northeast, and southeast.",
@@ -528,7 +528,7 @@
           "to": "swamp/swamp-26"
         }
       },
-      "description": "Pelayo has just arrived from the southwest. You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
       "layout": {
         "x": 22,
         "y": -7
@@ -692,7 +692,7 @@
       "name": "clearing",
       "exits": {
         "n": {
-          "to": null
+          "to": "swamp/swamp-90"
         },
         "se": {
           "to": "swamp/swamp-37"
@@ -746,7 +746,7 @@
       "name": "swamp",
       "exits": {
         "e": {
-          "to": null
+          "to": "swamp/swamp-72"
         },
         "nw": {
           "to": "swamp/swamp-38"
@@ -823,7 +823,7 @@
           "to": "swamp/swamp-42"
         },
         "sw": {
-          "to": null
+          "to": "swamp/swamp-91"
         }
       },
       "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
@@ -939,7 +939,7 @@
       "name": "clearing",
       "exits": {
         "e": {
-          "to": null
+          "to": "swamp/swamp-65"
         },
         "s": {
           "to": "swamp/swamp-50"
@@ -1241,6 +1241,488 @@
       "layout": {
         "x": 20,
         "y": -28
+      }
+    },
+    {
+      "id": "swamp/swamp-65",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-66"
+        },
+        "w": {
+          "to": "swamp/clearing-6"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and northeast.",
+      "layout": {
+        "x": 19,
+        "y": -18
+      }
+    },
+    {
+      "id": "swamp/swamp-66",
+      "name": "swamp",
+      "exits": {
+        "n": {
+          "to": "swamp/swamp-67"
+        },
+        "sw": {
+          "to": "swamp/swamp-65"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north and southwest.",
+      "layout": {
+        "x": 20,
+        "y": -17
+      }
+    },
+    {
+      "id": "swamp/swamp-67",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "swamp/swamp-68"
+        },
+        "s": {
+          "to": "swamp/swamp-66"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the south and northwest.",
+      "layout": {
+        "x": 20,
+        "y": -16
+      }
+    },
+    {
+      "id": "swamp/swamp-68",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "swamp/swamp-69"
+        },
+        "se": {
+          "to": "swamp/swamp-67"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 19,
+        "y": -15
+      }
+    },
+    {
+      "id": "swamp/swamp-69",
+      "name": "swamp",
+      "exits": {
+        "se": {
+          "to": "swamp/swamp-68"
+        },
+        "w": {
+          "to": "swamp/swamp-70"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and southeast.",
+      "layout": {
+        "x": 18,
+        "y": -14
+      }
+    },
+    {
+      "id": "swamp/swamp-70",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/swamp-69"
+        },
+        "w": {
+          "to": "swamp/swamp-71"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and west.",
+      "layout": {
+        "x": 17,
+        "y": -14
+      }
+    },
+    {
+      "id": "swamp/swamp-71",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/swamp-70"
+        },
+        "w": {
+          "to": "swamp/swamp-16"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and west.",
+      "layout": {
+        "x": 16,
+        "y": -14
+      }
+    },
+    {
+      "id": "swamp/swamp-72",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-73"
+        },
+        "w": {
+          "to": "swamp/swamp-39"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and northeast.",
+      "layout": {
+        "x": 12,
+        "y": -18
+      }
+    },
+    {
+      "id": "swamp/swamp-73",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-74"
+        },
+        "sw": {
+          "to": "swamp/swamp-72"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 13,
+        "y": -17
+      }
+    },
+    {
+      "id": "swamp/swamp-74",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "swamp/swamp-75"
+        },
+        "sw": {
+          "to": "swamp/swamp-73"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and southwest.",
+      "layout": {
+        "x": 14,
+        "y": -16
+      }
+    },
+    {
+      "id": "swamp/swamp-75",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-76"
+        },
+        "se": {
+          "to": "swamp/swamp-74"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southeast.",
+      "layout": {
+        "x": 13,
+        "y": -15
+      }
+    },
+    {
+      "id": "swamp/swamp-76",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-77"
+        },
+        "sw": {
+          "to": "swamp/swamp-75"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 14,
+        "y": -14
+      }
+    },
+    {
+      "id": "swamp/swamp-77",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/swamp-78"
+        },
+        "n": {
+          "to": "swamp/clearing-9"
+        },
+        "sw": {
+          "to": "swamp/swamp-76"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the north, east, and southwest.",
+      "layout": {
+        "x": 15,
+        "y": -13
+      }
+    },
+    {
+      "id": "swamp/swamp-78",
+      "name": "swamp",
+      "exits": {
+        "se": {
+          "to": "swamp/swamp-18"
+        },
+        "w": {
+          "to": "swamp/swamp-77"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and southeast.",
+      "layout": {
+        "x": 16,
+        "y": -13
+      }
+    },
+    {
+      "id": "swamp/clearing-9",
+      "name": "clearing",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-79"
+        },
+        "s": {
+          "to": "swamp/swamp-77"
+        },
+        "w": {
+          "to": "swamp/swamp-84"
+        }
+      },
+      "description": "You are standing in a clearing in the swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. Trails lead off to the south, west, and northeast.",
+      "layout": {
+        "x": 15,
+        "y": -12
+      }
+    },
+    {
+      "id": "swamp/swamp-79",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-80"
+        },
+        "sw": {
+          "to": "swamp/clearing-9"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 16,
+        "y": -11
+      }
+    },
+    {
+      "id": "swamp/swamp-80",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/swamp-81"
+        },
+        "sw": {
+          "to": "swamp/swamp-79"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and southwest.",
+      "layout": {
+        "x": 17,
+        "y": -10
+      }
+    },
+    {
+      "id": "swamp/swamp-81",
+      "name": "swamp",
+      "exits": {
+        "se": {
+          "to": "swamp/swamp-82"
+        },
+        "w": {
+          "to": "swamp/swamp-80"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the west and southeast.",
+      "layout": {
+        "x": 18,
+        "y": -10
+      }
+    },
+    {
+      "id": "swamp/swamp-82",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "swamp/swamp-81"
+        },
+        "se": {
+          "to": "swamp/swamp-83"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 19,
+        "y": -11
+      }
+    },
+    {
+      "id": "swamp/swamp-83",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/swamp-25"
+        },
+        "nw": {
+          "to": "swamp/swamp-82"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and northwest.",
+      "layout": {
+        "x": 20,
+        "y": -12
+      }
+    },
+    {
+      "id": "swamp/swamp-84",
+      "name": "swamp",
+      "exits": {
+        "e": {
+          "to": "swamp/clearing-9"
+        },
+        "nw": {
+          "to": "swamp/swamp-85"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the east and northwest.",
+      "layout": {
+        "x": 14,
+        "y": -12
+      }
+    },
+    {
+      "id": "swamp/swamp-85",
+      "name": "swamp",
+      "exits": {
+        "nw": {
+          "to": "swamp/swamp-86"
+        },
+        "se": {
+          "to": "swamp/swamp-84"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 13,
+        "y": -11
+      }
+    },
+    {
+      "id": "swamp/swamp-86",
+      "name": "swamp",
+      "exits": {
+        "se": {
+          "to": "swamp/swamp-85"
+        },
+        "sw": {
+          "to": "swamp/swamp-87"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the southeast and southwest.",
+      "layout": {
+        "x": 12,
+        "y": -10
+      }
+    },
+    {
+      "id": "swamp/swamp-87",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-86"
+        },
+        "sw": {
+          "to": "swamp/swamp-88"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 11,
+        "y": -11
+      }
+    },
+    {
+      "id": "swamp/swamp-88",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-87"
+        },
+        "sw": {
+          "to": "swamp/swamp-89"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 10,
+        "y": -12
+      }
+    },
+    {
+      "id": "swamp/swamp-89",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-88"
+        },
+        "sw": {
+          "to": "swamp/swamp-90"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -13
+      }
+    },
+    {
+      "id": "swamp/swamp-90",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-89"
+        },
+        "s": {
+          "to": "swamp/clearing-5"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the south and northeast.",
+      "layout": {
+        "x": 8,
+        "y": -14
+      }
+    },
+    {
+      "id": "swamp/swamp-91",
+      "name": "swamp",
+      "exits": {
+        "ne": {
+          "to": "swamp/swamp-43"
+        },
+        "se": {
+          "to": "swamp/swamp-5"
+        }
+      },
+      "description": "You are standing on a trail in a dismal swamp. The ground here is soft and damp, and there are many places where stagnant water lies in small pools on the ground. The sounds of insects buzzing about breaks the eerie silence that pervades this forboding place. The trail continues to the northeast and southeast.",
+      "layout": {
+        "x": 9,
+        "y": -23
       }
     }
   ]

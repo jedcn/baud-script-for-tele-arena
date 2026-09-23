@@ -309,7 +309,7 @@
           "to": "forest/clearing-1"
         }
       },
-      "description": "Pelayo has just arrived from the northwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and northwest.",
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northeast and northwest.",
       "layout": {
         "x": -4,
         "y": -21
@@ -326,7 +326,7 @@
           "to": "forest/forest-15"
         }
       },
-      "description": "Pelayo has just arrived from the southwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the southeast and southwest.",
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the southeast and southwest.",
       "layout": {
         "x": -3,
         "y": -20
@@ -343,7 +343,7 @@
           "to": "forest/forest-16"
         }
       },
-      "description": "Pelayo has just arrived from the northwest. You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and northwest.",
+      "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the east and northwest.",
       "layout": {
         "x": -2,
         "y": -21

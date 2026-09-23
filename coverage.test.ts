@@ -311,7 +311,7 @@ import { SHRINE_MAPS, roomsFromExport } from './coverage';
 // registering an area there is what makes `just coverage <slug>` work, and that
 // command is for a walk still in progress. Keeping the two apart is what lets an
 // unfinished area be checked by eye without its drawing being asserted as met.
-const COMPLETE = ['desert', 'fourth-town', 'mountains', 'stoneworks-level-1', 'stoneworks-level-2'];
+const COMPLETE = ['desert', 'fourth-town', 'mountains', 'stoneworks-level-1', 'stoneworks-level-2', 'swamp'];
 
 async function pairArea(slug: string) {
   const spec = SHRINE_MAPS[slug];
@@ -320,7 +320,13 @@ async function pairArea(slug: string) {
   const { rooms, teleports } = roomsFromExport(area);
   const start = rooms.find(r => r.slug === spec.originRoom);
   const startBox = drawing.boxes.find(b => b.label === spec.originBox);
-  return { spec, drawing, rooms, teleports, start, startBox };
+  // The other ways in, exactly as the CLI resolves them. A finished area has
+  // walked them all, so each must resolve.
+  const moreStarts = (spec.moreOrigins ?? []).map(o => [
+    rooms.find(r => r.slug === o.room)!.id,
+    drawing.boxes.find(b => b.label === o.box)!.id,
+  ] as [number, string]);
+  return { spec, drawing, rooms, teleports, start, startBox, moreStarts };
 }
 
 // The valley is walked out and the pairing still leaves six boxes unclaimed,
@@ -371,12 +377,12 @@ describe('areas that share a shrine page', () => {
 describe('the exported map agrees with the shrine drawings', () => {
   for (const slug of COMPLETE) {
     it(`${slug} pairs with its drawing, box for box`, async () => {
-      const { spec, drawing, rooms, teleports, start, startBox } = await pairArea(slug);
+      const { spec, drawing, rooms, teleports, start, startBox, moreStarts } = await pairArea(slug);
       expect(start, `${spec.originRoom} is in ${slug}`).toBeDefined();
       expect(startBox, `box [${spec.originBox}] is in the drawing`).toBeDefined();
 
       const { pair, problems, drawn, skewed } = pairRooms(
-        drawing, rooms, start!.id, startBox!.id, teleports);
+        drawing, rooms, start!.id, startBox!.id, teleports, moreStarts);
 
       // A room of ours whose exits the drawing does not have is either a wrong
       // edge or a room paired to the wrong box -- both worth failing over. An exit
