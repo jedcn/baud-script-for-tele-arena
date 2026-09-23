@@ -1,0 +1,87 @@
+{
+  "area": "ruined-town",
+  "name": "The Ruined Town",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "ruined-town/path-10",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "ruined-town/path-11"
+        },
+        "s": {
+          "to": "swamp/swamp-29"
+        }
+      },
+      "description": "You are standing on an overgrown path which leads out of the swamp and into what appears to be the ruins of a forgotten town to the north. The swamp's insect population is strangely quiet in this area. The path leads off to the north and the swamp lies to the south.",
+      "layout": {
+        "x": 23,
+        "y": -4
+      }
+    },
+    {
+      "id": "ruined-town/path-11",
+      "name": "path",
+      "exits": {
+        "n": {
+          "to": "ruined-town/ruined-plaza"
+        },
+        "s": {
+          "to": "ruined-town/path-10"
+        }
+      },
+      "description": "You are standing on an overgrown path which leads out of the swamp and into what appears to be the ruins of a forgotten town to the north. The swamp's insect population is strangely quiet in this area. The path leads off to the south and the town gates stand ajar to the north.",
+      "layout": {
+        "x": 23,
+        "y": -3
+      }
+    },
+    {
+      "id": "ruined-town/ruined-plaza",
+      "name": "ruined plaza",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "n": {
+          "to": "ruined-town/ancient-temple"
+        },
+        "ne": {
+          "to": null
+        },
+        "nw": {
+          "to": null
+        },
+        "s": {
+          "to": "ruined-town/path-11"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in the center of a ruined plaza which has succumbed to decay and the plantlife of the swamp. To the north is the entrance to a rather impressive temple which has stood the test of time well. The stonework and architecture are of a design you do not recognize. Ruined streets lead east, west, northeast, northwest, and south out through the open town gates.",
+      "layout": {
+        "x": 23,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ancient-temple",
+      "name": "ancient temple",
+      "exits": {
+        "d": {
+          "to": "cellars/cellar"
+        },
+        "s": {
+          "to": "ruined-town/ruined-plaza"
+        }
+      },
+      "description": "You are standing in an ancient temple dedicated to some forgotten deity. Althoqgh it is in good condition, nothing of value remains to be seen. The main exit lies to the south into the plaza, and a stone staircase near the north wall leads downward.",
+      "layout": {
+        "x": 23,
+        "y": -1
+      }
+    }
+  ]
+}

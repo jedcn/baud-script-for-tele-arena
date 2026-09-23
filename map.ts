@@ -663,8 +663,15 @@ export const DRAWN = [
   { slug: 'sewers-level-1', title: 'Sewers, Level 1', origin: 'town-sewers' },
   { slug: 'sewers-level-2', title: 'Sewers, Level 2', origin: 'town-sewers-63' },
   { slug: 'sewers-level-3', title: 'Sewers, Level 3', origin: 'town-sewers-118' },
-  // The wilderness south-west of the first town, and what lies under it.
-  { slug: 'mountains', title: 'The Mountains', origin: 'mountains' },
+  // The wilderness south-west of the first town, and what lies under it: out
+  // through the town gates into the mountains, west into the forest, east into
+  // the swamp, north to the ruined town, down its temple to the cellars. One
+  // area until 2026-09-22, because it was walked in one go; the shrine draws it
+  // as three pages (mountains, forest, swamp), which is how it is split now.
+  { slug: 'mountains', title: 'The Mountains', origin: 'town-gates' },
+  { slug: 'forest', title: 'The Forest', origin: 'forest' },
+  { slug: 'swamp', title: 'The Swamp', origin: 'swamp' },
+  { slug: 'ruined-town', title: 'The Ruined Town', origin: 'ruined-plaza' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it
