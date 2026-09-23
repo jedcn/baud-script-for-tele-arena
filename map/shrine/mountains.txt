@@ -1,6 +1,12 @@
 # Mountains
 # https://tele-arena.tumblr.com/mountains
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: one box is labelled [m], the room we call `mountains`
+# (south of the gate, exits ne and s), so `just coverage mountains` has an anchor.
+# The shrine labels nothing on this side of the page, and the four boxes it does
+# label are all unwalked. Same width as `[ ]`, so nothing else moves.
+# `just scrape-shrine-maps` will revert this -- re-apply it.
 
                     [c] Griffon                 [c] Ogre Mage 
                        \                         | 
@@ -24,7 +30,7 @@
                        \   /                   / 
                         [ ]             [ ]-[ ] 
                        /   \           /       \ 
-                    [ ]     [ ]-[ ]-[ ]        [ ]   [ ]-[ ]          [ ] 
+                    [m]     [ ]-[ ]-[ ]        [ ]   [ ]-[ ]          [ ] 
                      |                           \  /      \         /   \ 
                     [ ]                          [ ]       [ ]    [ ]     [c] 
                    /                            /            \   / Mountain Ape 
