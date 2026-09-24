@@ -255,7 +255,7 @@
           "to": "gnoll-caves/cave-259"
         },
         "w": {
-          "to": null
+          "to": "gnoll-caves/cave-278"
         }
       },
       "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast, southeast, and west.",
@@ -326,7 +326,7 @@
           "to": "gnoll-caves/cave-261"
         },
         "sw": {
-          "to": null
+          "to": "gnoll-caves/cave-271"
         }
       },
       "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and west.",
@@ -394,7 +394,7 @@
           "to": "gnoll-caves/cave-267"
         },
         "nw": {
-          "to": null
+          "to": "gnoll-caves/cave-268"
         },
         "sw": {
           "to": "gnoll-caves/cave-265"
@@ -421,6 +421,258 @@
       "layout": {
         "x": -23,
         "y": -21
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-268",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "gnoll-caves/cave-266"
+        },
+        "w": {
+          "to": "gnoll-caves/cave-269"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": -25,
+        "y": -20
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-269",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "gnoll-caves/cave-268"
+        },
+        "w": {
+          "to": "gnoll-caves/cave-270"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and west.",
+      "layout": {
+        "x": -26,
+        "y": -20
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-270",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "gnoll-caves/cave-269"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the east.",
+      "layout": {
+        "x": -27,
+        "y": -20
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-271",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "gnoll-caves/cave-262"
+        },
+        "s": {
+          "to": "gnoll-caves/cave-272"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": -29,
+        "y": -22
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-272",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "gnoll-caves/cave-271"
+        },
+        "w": {
+          "to": "gnoll-caves/cave-273"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and west.",
+      "layout": {
+        "x": -29,
+        "y": -23
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-273",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "gnoll-caves/cave-272"
+        },
+        "nw": {
+          "to": "gnoll-caves/cave-274"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the east and northwest.",
+      "layout": {
+        "x": -30,
+        "y": -23
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-274",
+      "name": "cave",
+      "exits": {
+        "se": {
+          "to": "gnoll-caves/cave-273"
+        },
+        "w": {
+          "to": "gnoll-caves/cave-275"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the southeast and west.",
+      "layout": {
+        "x": -31,
+        "y": -22
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-275",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "gnoll-caves/cave-274"
+        },
+        "n": {
+          "to": "gnoll-caves/cave-276"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and east.",
+      "layout": {
+        "x": -32,
+        "y": -22
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-276",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "gnoll-caves/cave-277"
+        },
+        "s": {
+          "to": "gnoll-caves/cave-275"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": -32,
+        "y": -21
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-277",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "gnoll-caves/cave-278"
+        },
+        "sw": {
+          "to": "gnoll-caves/cave-276"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": -31,
+        "y": -20
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-278",
+      "name": "cave",
+      "exits": {
+        "e": {
+          "to": "gnoll-caves/cave-258"
+        },
+        "n": {
+          "to": "gnoll-caves/cave-279"
+        },
+        "s": {
+          "to": "gnoll-caves/cave-277"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north, east, and south.",
+      "layout": {
+        "x": -31,
+        "y": -19
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-279",
+      "name": "cave",
+      "exits": {
+        "ne": {
+          "to": "gnoll-caves/cave-280"
+        },
+        "s": {
+          "to": "gnoll-caves/cave-278"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the northeast and south.",
+      "layout": {
+        "x": -31,
+        "y": -18
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-280",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "gnoll-caves/cave-281"
+        },
+        "sw": {
+          "to": "gnoll-caves/cave-279"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and southwest.",
+      "layout": {
+        "x": -30,
+        "y": -17
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-281",
+      "name": "cave",
+      "exits": {
+        "n": {
+          "to": "gnoll-caves/cave-282"
+        },
+        "s": {
+          "to": "gnoll-caves/cave-280"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The exits are to the north and south.",
+      "layout": {
+        "x": -30,
+        "y": -16
+      }
+    },
+    {
+      "id": "gnoll-caves/cave-282",
+      "name": "cave",
+      "exits": {
+        "s": {
+          "to": "gnoll-caves/cave-281"
+        }
+      },
+      "description": "You're in a damp, poorly lit cave. Glowing lichens and fungi provide an eerie greenish light. The only exit is to the south.",
+      "layout": {
+        "x": -30,
+        "y": -15
       }
     }
   ]

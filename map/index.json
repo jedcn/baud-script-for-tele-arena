@@ -81,7 +81,7 @@
     {
       "area": "gnoll-caves",
       "name": "The Gnoll Caves",
-      "rooms": 24,
+      "rooms": 39,
       "file": "areas/gnoll-caves.json"
     },
     {
@@ -107,6 +107,12 @@
       "name": "The Orc Caves",
       "rooms": 44,
       "file": "areas/orc-caves.json"
+    },
+    {
+      "area": "ruined-mansion",
+      "name": "The Ruined Mansion",
+      "rooms": 3,
+      "file": "areas/ruined-mansion.json"
     },
     {
       "area": "ruined-town",

@@ -20,16 +20,17 @@
 16. [The Orc Caves](#the-orc-caves)
 17. [The Mountain Road](#the-mountain-road)
 18. [The Gnoll Caves](#the-gnoll-caves)
-19. [The Cellars](#the-cellars)
-20. [Third Town](#third-town)
-21. [Fourth Town](#fourth-town)
-22. [The Deep Forest](#the-deep-forest)
-23. [The Valley](#the-valley)
-24. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-25. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-26. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-27. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-28. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+19. [The Ruined Mansion](#the-ruined-mansion)
+20. [The Cellars](#the-cellars)
+21. [Third Town](#third-town)
+22. [Fourth Town](#fourth-town)
+23. [The Deep Forest](#the-deep-forest)
+24. [The Valley](#the-valley)
+25. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+26. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+27. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+28. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+29. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -689,7 +690,7 @@ Key:
      [ ]--[ ]                      [ ]                           [ ]       [ ]--[ ]--[ ]--[ ]
     /                                 \                             \     /
    /                                   \                             \   /
-[ ]                                     [ ]                           [ ]                                      ne to unexplored   s to The Gnoll Caves
+[ ]                                     [ ]                           [ ]                                      ne to The Ruined Mansion   s to The Gnoll Caves
                                          |                               \
                                          |                                \
                                         [ ]                                [ ]
@@ -875,28 +876,43 @@ Key:
 ### The Gnoll Caves
 
 ```
-               [ ]--[ ]       [ ]--[ ]
-              /        \     /        \
-             /          \   /          \
-          [ ]            [ ]            [ ]
-         /                               |
-        /                                |
-     [ ]                                [ ]
-    /                                      \
-   /                                        \
-[ ]                                          [ ]--[ ]--[ ]--[ ]--[ ]   n to The Forest   w to unexplored
-   \                                        /
-    \                                      /
-     [ ]--[ ]                           [ ]
-             \                          /
-              \                        /
-               [ ]                     /
-                |                     /
-                |                    /
-               [ ]--[ ]            [ ]                                 sw to unexplored   nw to unexplored
-                       \          /
-                        \        /
-                         [ ]--[ ]
+     [ ]
+      |
+      |
+     [ ]            [ ]--[ ]       [ ]--[ ]
+      |            /        \     /        \
+      |           /          \   /          \
+     [ ]       [ ]            [ ]            [ ]
+    /         /                               |
+   /         /                                |
+[ ]       [ ]                                [ ]
+ |       /                                      \
+ |      /                                        \
+[ ]--[ ]                                          [ ]--[ ]--[ ]--[ ]--[ ]   n to The Forest
+  \     \                                        /
+   \     \                                      /
+    \     [ ]--[ ]                           [ ]
+    \             \                          /
+     \             \                        /
+     [ ]            [ ]  [ ]--[ ]--[ ]      /
+    /                |                \    /
+   /                 |                 \  /
+[ ]                 [ ]--[ ]            [ ]
+ |                 /        \          /
+ |                /          \        /
+[ ]--[ ]       [ ]            [ ]--[ ]
+        \       |
+         \      |
+          [ ]--[ ]
+```
+
+### The Ruined Mansion
+
+```
+[ ]--[ ]   w to unexplored   n to unexplored
+ |
+ |
+[ ]        sw to The Forest
 ```
 
 ### The Cellars

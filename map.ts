@@ -681,6 +681,9 @@ export const DRAWN = [
   // South off the forest, through forest-64 -- the [H] under "to Forest" on the
   // shrine's page, and the forest page's Hyena [c].
   { slug: 'gnoll-caves', title: 'The Gnoll Caves', origin: 'forest-64' },
+  // North-east off forest-46, by an exit the shrine never drew: "this once
+  // majestic edifice", on no shrine page. Named by us.
+  { slug: 'ruined-mansion', title: 'The Ruined Mansion', origin: 'ruined-entry-hall' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

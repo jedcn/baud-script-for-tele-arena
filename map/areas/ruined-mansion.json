@@ -1,0 +1,61 @@
+{
+  "area": "ruined-mansion",
+  "name": "The Ruined Mansion",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "ruined-mansion/ruined-entry-hall",
+      "name": "ruined entry hall",
+      "exits": {
+        "n": {
+          "to": "ruined-mansion/ruined-hallway"
+        },
+        "sw": {
+          "to": "forest/forest-46"
+        }
+      },
+      "description": "You are standing in a ruined entry hall. The tightly fit stone tiles that make up the floor and walls here bear signs of weathering and extreme age. Passages blocked by impassible rockfalls where portions of the ceiling fell in lie to the east and west. The only accessible passageway leads to the north into darkness.",
+      "layout": {
+        "x": -9,
+        "y": -16
+      }
+    },
+    {
+      "id": "ruined-mansion/ruined-hallway",
+      "name": "ruined hallway",
+      "exits": {
+        "e": {
+          "to": "ruined-mansion/ballroom"
+        },
+        "s": {
+          "to": "ruined-mansion/ruined-entry-hall"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a ruined hallway. The tightly fit stone tiles that make up the floor and walls here bear signs of weathering and extreme age. The northern portion of this hall is blocked by an impassible rockfall where a portion of the ceiling fell in. To the west is a white misty archway, and to the east stands a massive iron bound oak door. The passageway continues to the south.",
+      "layout": {
+        "x": -9,
+        "y": -15
+      }
+    },
+    {
+      "id": "ruined-mansion/ballroom",
+      "name": "ballroom",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "w": {
+          "to": "ruined-mansion/ruined-hallway"
+        }
+      },
+      "description": "You are standing in a magnificent ballroom that has somehow survived whatever cataclysm befell the rest of this once majestic edifice. The room is decorated gayly with many beautiful paintings and other works of art as well as several huge chandeliers made of fine crystals. To the west stands a massive iron bound oak door and to the north is a blue misty archway.",
+      "layout": {
+        "x": -8,
+        "y": -15
+      }
+    }
+  ]
+}

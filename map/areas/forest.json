@@ -782,7 +782,7 @@
       "name": "forest",
       "exits": {
         "ne": {
-          "to": null
+          "to": "ruined-mansion/ruined-entry-hall"
         },
         "nw": {
           "to": "forest/forest-47"
