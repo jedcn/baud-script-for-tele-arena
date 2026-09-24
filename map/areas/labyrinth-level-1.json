@@ -598,7 +598,7 @@
           "to": "labyrinth-level-1/labyrinth-35"
         },
         "n": {
-          "to": null
+          "to": "labyrinth-level-1/labyrinth-37"
         },
         "w": {
           "to": "labyrinth-level-1/labyrinth-33"
@@ -639,6 +639,146 @@
       "layout": {
         "x": 3,
         "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-37",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-1/labyrinth-38"
+        },
+        "s": {
+          "to": "labyrinth-level-1/labyrinth-34"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are north and south.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-38",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-39"
+        },
+        "s": {
+          "to": "labyrinth-level-1/labyrinth-37"
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-41"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are east, south, and west.",
+      "layout": {
+        "x": 2,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-39",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-40"
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-38"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are east and west.",
+      "layout": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-40",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": null,
+          "door": {
+            "material": "stone",
+            "key": "unknown"
+          }
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-39"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are west and south through a huge stone doorway.",
+      "layout": {
+        "x": 4,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-41",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-38"
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-42"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are east and west.",
+      "layout": {
+        "x": 1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-42",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-41"
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-43"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are east and west.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-43",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-42"
+        },
+        "w": {
+          "to": "labyrinth-level-1/labyrinth-44"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-44",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-1/labyrinth-43"
+        }
+      },
+      "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. The only exit is to the east.",
+      "layout": {
+        "x": -2,
+        "y": 6
       }
     }
   ]
