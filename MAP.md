@@ -25,16 +25,17 @@
 21. [The Tower, Level 2](#the-tower-level-2)
 22. [The Tower, Level 3](#the-tower-level-3)
 23. [The Tower, Level 4](#the-tower-level-4)
-24. [The Cellars](#the-cellars)
-25. [Third Town](#third-town)
-26. [Fourth Town](#fourth-town)
-27. [The Deep Forest](#the-deep-forest)
-28. [The Valley](#the-valley)
-29. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-30. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-31. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-32. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-33. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+24. [The Labyrinth, Level 1](#the-labyrinth-level-1)
+25. [The Cellars](#the-cellars)
+26. [Third Town](#third-town)
+27. [Fourth Town](#fourth-town)
+28. [The Deep Forest](#the-deep-forest)
+29. [The Valley](#the-valley)
+30. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+31. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+32. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+33. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+34. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -1030,7 +1031,37 @@ Key:
           [ ]
            |
            |
-     [ ]--[ ]                  w to unexplored
+[ ]--[ ]--[ ]
+```
+
+### The Labyrinth, Level 1
+
+```
+                    [ ]
+                     |
+                     |
+          [ ]--[ ]--[ ]  [ ]   n to unexplored   w to unexplored   n to unexplored
+           |              |
+           |              |
+          [ ]--[ ]--[ ]  [ ]
+                     |    |
+                     |    |
+                    [ ]  [ ]
+                     |    |
+                     |    |
+               [ ]--[ ]  [ ]   w to unexplored
+                |         |
+                |         |
+[ ]--[ ]  [ ]--[ ]  [ ]--[ ]   n to unexplored
+ |         |    |    |    |
+ |         |    |    |    |
+[ ]  [ ]--[ ]  [ ]--[ ]  [ ]
+ |         |    |    |    |
+ |         |    |    |    |
+[ ]--[ ]--[ ]  [ ]  [ ]  [ ]
+                |         |
+                |         |
+     [ ]--[ ]--[ ]  [ ]--[ ]
 ```
 
 ### The Cellars

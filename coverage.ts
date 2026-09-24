@@ -515,6 +515,14 @@ export const SHRINE_MAPS: Record<string,
     originRoom: 'marble-hallway-28',
     region: { rows: [20, 99], cols: [30, 99], keep: 'inside' },
   },
+  // Reached from the tower's Level 4: west from marble-hallway-41 into the [L]
+  // box, where "a cloud of thick black smoke" carries you here -- a teleport, so
+  // no exit joins the two. The page labels where you land [E], "Entrance Point".
+  'labyrinth-level-1': {
+    file: 'map/shrine/labyrinth-1.txt',
+    originBox: 'E',
+    originRoom: 'labyrinth',
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',

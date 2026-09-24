@@ -266,12 +266,25 @@
           "to": "tower-level-4/marble-hallway-40"
         },
         "w": {
-          "to": null
+          "to": "tower-level-4/marble-hallway-57"
         }
       },
       "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east and west.",
       "layout": {
         "x": -12,
+        "y": -48
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-57",
+      "name": "marble hallway",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-41"
+        }
+      },
+      "layout": {
+        "x": -13,
         "y": -48
       }
     }

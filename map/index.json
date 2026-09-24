@@ -91,6 +91,12 @@
       "file": "areas/hewn-granite-corridors.json"
     },
     {
+      "area": "labyrinth-level-1",
+      "name": "The Labyrinth, Level 1",
+      "rooms": 37,
+      "file": "areas/labyrinth-level-1.json"
+    },
+    {
       "area": "mountain-road",
       "name": "The Mountain Road",
       "rooms": 3,
@@ -195,7 +201,7 @@
     {
       "area": "tower-level-4",
       "name": "The Tower, Level 4",
-      "rooms": 16,
+      "rooms": 17,
       "file": "areas/tower-level-4.json"
     },
     {
