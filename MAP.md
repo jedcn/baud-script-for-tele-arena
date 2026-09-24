@@ -22,18 +22,19 @@
 18. [The Gnoll Caves](#the-gnoll-caves)
 19. [The Ruined Mansion](#the-ruined-mansion)
 20. [The Tower, Level 1](#the-tower-level-1)
-21. [The Tower, Level 3](#the-tower-level-3)
-22. [The Tower, Level 4](#the-tower-level-4)
-23. [The Cellars](#the-cellars)
-24. [Third Town](#third-town)
-25. [Fourth Town](#fourth-town)
-26. [The Deep Forest](#the-deep-forest)
-27. [The Valley](#the-valley)
-28. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-29. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-30. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-31. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-32. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+21. [The Tower, Level 2](#the-tower-level-2)
+22. [The Tower, Level 3](#the-tower-level-3)
+23. [The Tower, Level 4](#the-tower-level-4)
+24. [The Cellars](#the-cellars)
+25. [Third Town](#third-town)
+26. [Fourth Town](#fourth-town)
+27. [The Deep Forest](#the-deep-forest)
+28. [The Valley](#the-valley)
+29. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+30. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+31. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+32. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+33. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -960,10 +961,34 @@ Key:
                [ ]
                 |
                 |
-     [ ^]-[ ]--[ ]--[ ]--[ ^]       up to unexplored   up to The Tower, Level 2
+     [ ^]-[ ]--[ ]--[ ]--[ ^]       up to The Tower, Level 2   up to The Tower, Level 2
                 |
                 |
                [ ]
+```
+
+### The Tower, Level 2
+
+```
+               [ v]                          [ ^v]   down to The Tower, Level 1   up to The Tower, Level 3   down to The Tower, Level 1
+                |
+                |
+               [ ]
+                |
+                |
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+                |
+                |
+               [ ]
+                |
+                |
+               [ ]
+                |
+                |
+               [ ]
+                |
+                |
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
 ```
 
 ### The Tower, Level 3

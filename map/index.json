@@ -183,7 +183,7 @@
     {
       "area": "tower-level-2",
       "name": "The Tower, Level 2",
-      "rooms": 1,
+      "rooms": 20,
       "file": "areas/tower-level-2.json"
     },
     {

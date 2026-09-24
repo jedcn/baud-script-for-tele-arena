@@ -266,7 +266,7 @@
       "name": "marble hallway",
       "exits": {
         "u": {
-          "to": null
+          "to": "tower-level-2/marble-hallway-42"
         },
         "w": {
           "to": "tower-level-1/marble-hallway-10"

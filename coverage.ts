@@ -479,6 +479,16 @@ export const SHRINE_MAPS: Record<string,
     originRoom: 'entrance-hall',
     region: { rows: [0, 19], cols: [0, 29], keep: 'inside' },
   },
+  // Up Level 1's east stairs (marble-hallway-11). The page's top-right quarter,
+  // anchored on its [v]. The area also holds the landing the west stairs pass
+  // through on the way to Level 3, which no page draws -- the shrine shows a
+  // stack of stair rooms as one [^] -- so one room here is never placed.
+  'tower-level-2': {
+    file: 'map/shrine/tower.txt',
+    originBox: 'v',
+    originRoom: 'marble-hallway-42',
+    region: { rows: [0, 19], cols: [30, 99], keep: 'inside' },
+  },
   // Up two flights from Level 1's west stairs, and up one more from here. The
   // page's bottom-left quarter is Level 3 and its bottom-right is Level 4; each
   // anchors on its own [v], the stairs it is reached by.
@@ -508,7 +518,7 @@ export const SHRINE_MAPS: Record<string,
  * registered above on that page, with a region of its own.
  */
 export const PAGES: Record<string, string[]> = {
-  tower: ['tower-level-1', 'tower-level-3', 'tower-level-4'],
+  tower: ['tower-level-1', 'tower-level-2', 'tower-level-3', 'tower-level-4'],
 };
 
 /**
