@@ -684,6 +684,9 @@ export const DRAWN = [
   // North-east off forest-46, by an exit the shrine never drew: "this once
   // majestic edifice", on no shrine page. Named by us.
   { slug: 'ruined-mansion', title: 'The Ruined Mansion', origin: 'ruined-entry-hall' },
+  // South off the forest (forest-87). One area per level, like the stoneworks;
+  // the title carries the level so site.ts files it under The Tower, Level 1.
+  { slug: 'tower-level-1', title: 'The Tower, Level 1', origin: 'entrance-hall' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

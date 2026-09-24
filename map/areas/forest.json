@@ -1519,7 +1519,7 @@
           "to": "forest/forest-86"
         },
         "s": {
-          "to": "tower/entrance-hall"
+          "to": "tower-level-1/entrance-hall"
         }
       },
       "description": "You are standing on a path in a dense forest. The sounds of birds and other small animals in the trees gives life to this lush green wood. The path continues to the northwest and south.",

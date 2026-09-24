@@ -175,10 +175,10 @@
       "file": "areas/third-town.json"
     },
     {
-      "area": "tower",
-      "name": "The Tower",
+      "area": "tower-level-1",
+      "name": "The Tower, Level 1",
       "rooms": 18,
-      "file": "areas/tower.json"
+      "file": "areas/tower-level-1.json"
     },
     {
       "area": "valley",
