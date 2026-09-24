@@ -52,8 +52,6 @@ export type RenderOpts = {
   areaOf?: (roomId: number) => string; // area name for an off-map destination
 };
 
-type Pos = { c: number; r: number };
-
 export type Pos = { c: number; r: number };
 
 export type Placement = {
