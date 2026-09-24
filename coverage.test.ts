@@ -82,6 +82,24 @@ describe('parseDrawing', () => {
     expect(outside.edges.size).toBe(0);
   });
 
+  // The gnoll caves climb a staircase of boxes on consecutive rows, with no row
+  // between them to draw a `/` on, so the shrine marks each step with a dot just
+  // left of the upper box. Read as nothing, the whole run was unconnected and two
+  // walked rooms could not be placed (2026-09-23).
+  it('reads a dot beside a box as a step south-west to the row below', () => {
+    const d = parseDrawing([
+      '            .[ ]-[ ]',
+      '        .[ ]',
+      ' [ ]-[ ]',
+    ].join('\n'));
+    const at = (r: number, c0: number) => d.boxes.find(b => b.r === r && b.c0 === c0)!.id;
+    expect(drawingExits(d, at(0, 13)).sw).toBe(at(1, 9));
+    expect(drawingExits(d, at(1, 9)).sw).toBe(at(2, 5));
+    expect(drawingExits(d, at(2, 5)).ne).toBe(at(1, 9));
+    // Two dotted steps and two dashes, each both ways, and nothing invented.
+    expect(d.edges.size).toBe(8);
+  });
+
   it('reads a diagonal as southeast, and gives it a reverse', () => {
     const d = parseDrawing(MINI);
     const a = d.boxes.find(b => b.r === 0 && b.label === '')!;

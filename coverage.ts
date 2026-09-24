@@ -135,6 +135,12 @@ export function parseDrawing(text: string, region?: Region): Drawing {
       if (diagContinues(r, c, 1, '\\')) continue;
       const [rB, cB] = diagEnd(r, c, 1, '\\');
       add(near(r - 1, c, 'L'), near(rB + 1, cB, 'R'), 'se');
+    } else if (ch === '.' && at(r, c + 1) === '[') {
+      // A dot just left of a box: a step south-west onto the box on the next row
+      // that ends where the dot is. The gnoll caves draw a staircase of boxes on
+      // consecutive rows this way, having no row between them for a `/`.
+      const below = (rowBoxes.get(r + 1) ?? []).find(b => Math.abs(b.c1 - (c - 1)) <= 1) ?? null;
+      add((rowBoxes.get(r) ?? []).find(b => b.c0 === c + 1) ?? null, below, 'sw');
     } else if (ch === '/') {
       if (diagContinues(r, c, -1, '/')) continue;
       const [rB, cB] = diagEnd(r, c, -1, '/');
