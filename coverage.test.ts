@@ -347,7 +347,7 @@ import { SHRINE_MAPS, PAGES, roomsFromExport } from './coverage';
 // registering an area there is what makes `just coverage <slug>` work, and that
 // command is for a walk still in progress. Keeping the two apart is what lets an
 // unfinished area be checked by eye without its drawing being asserted as met.
-const COMPLETE = ['desert', 'fourth-town', 'mountains', 'stoneworks-level-1', 'stoneworks-level-2', 'swamp', 'tower-level-1', 'tower-level-4'];
+const COMPLETE = ['desert', 'fourth-town', 'gnoll-caves', 'mountains', 'stoneworks-level-1', 'stoneworks-level-2', 'swamp', 'tower-level-1', 'tower-level-4'];
 
 async function pairArea(slug: string) {
   const spec = SHRINE_MAPS[slug];
