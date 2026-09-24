@@ -468,6 +468,17 @@ export const SHRINE_MAPS: Record<string,
     originBox: 'H',
     originRoom: 'forest-64',
   },
+  // South off the forest (forest-87). The shrine draws the tower's four levels on
+  // one page, joined only by labelled stairs, and `tower` is Level 1 -- the
+  // top-left quarter, which holds exactly its 18 boxes. The entrance under "To
+  // Forest" carries an [e] we added (see the drawing's header). The other levels,
+  // walked as their own areas, would each take their own quarter the same way.
+  tower: {
+    file: 'map/shrine/tower.txt',
+    originBox: 'e',
+    originRoom: 'entrance-hall',
+    region: { rows: [0, 19], cols: [0, 29], keep: 'inside' },
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',

@@ -69,7 +69,7 @@
     {
       "area": "forest",
       "name": "The Forest",
-      "rooms": 64,
+      "rooms": 89,
       "file": "areas/forest.json"
     },
     {
@@ -173,6 +173,12 @@
       "name": "third-town",
       "rooms": 14,
       "file": "areas/third-town.json"
+    },
+    {
+      "area": "tower",
+      "name": "The Tower",
+      "rooms": 18,
+      "file": "areas/tower.json"
     },
     {
       "area": "valley",

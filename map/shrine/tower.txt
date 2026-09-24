@@ -1,12 +1,17 @@
 # Tower
 # https://tele-arena.tumblr.com/tower
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: Level 1's first box, the one under "To Forest", is
+# labelled [e] -- entrance-hall -- so `just coverage tower` has an anchor. Same
+# width as `[ ]`, so nothing else moves. `just scrape-shrine-maps` will revert
+# this -- re-apply it.
 
                                                                    
  Level 1                        Level 2                      
  -------  To Forest             -------                           
              |                          To lvl 1             
-            [ ]                             [v]                 
+            [e]                             [v]                 
              |                               |                    
             [ ]                             [ ]                     
              |                               | 
