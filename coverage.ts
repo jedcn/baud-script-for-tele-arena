@@ -459,6 +459,15 @@ export const SHRINE_MAPS: Record<string,
     originRoom: 'ancient-temple',
     region: { ...RUINED_TOWN_ON_SWAMP_PAGE, keep: 'inside' },
   },
+  // South off the forest, from forest-63. The way in is the page's [H] under "to
+  // Forest" (H for the Hyenas), which is forest-64: n to the forest, w into the
+  // caves. The page has a second [H] further down, but boxes are found top to
+  // bottom, so 'H' is this one without editing the drawing.
+  'gnoll-caves': {
+    file: 'map/shrine/gnoll-caves.txt',
+    originBox: 'H',
+    originRoom: 'forest-64',
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',

@@ -69,7 +69,7 @@
     {
       "area": "forest",
       "name": "The Forest",
-      "rooms": 59,
+      "rooms": 64,
       "file": "areas/forest.json"
     },
     {
@@ -77,6 +77,12 @@
       "name": "fourth-town",
       "rooms": 28,
       "file": "areas/fourth-town.json"
+    },
+    {
+      "area": "gnoll-caves",
+      "name": "The Gnoll Caves",
+      "rooms": 24,
+      "file": "areas/gnoll-caves.json"
     },
     {
       "area": "hewn-granite-corridors",
