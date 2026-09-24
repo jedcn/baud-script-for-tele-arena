@@ -479,11 +479,36 @@ export const SHRINE_MAPS: Record<string,
     originRoom: 'entrance-hall',
     region: { rows: [0, 19], cols: [0, 29], keep: 'inside' },
   },
+  // Up two flights from Level 1's west stairs, and up one more from here. The
+  // page's bottom-left quarter is Level 3 and its bottom-right is Level 4; each
+  // anchors on its own [v], the stairs it is reached by.
+  'tower-level-3': {
+    file: 'map/shrine/tower.txt',
+    originBox: 'v',
+    originRoom: 'marble-hallway-14',
+    region: { rows: [20, 99], cols: [0, 29], keep: 'inside' },
+  },
+  'tower-level-4': {
+    file: 'map/shrine/tower.txt',
+    originBox: 'v',
+    originRoom: 'marble-hallway-28',
+    region: { rows: [20, 99], cols: [30, 99], keep: 'inside' },
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',
     originRoom: 'cave-201',
   },
+};
+
+/**
+ * Shrine pages that draw several of our areas, by the name you ask for the page
+ * by: `just coverage tower` shows the whole tower page with every level's walked
+ * boxes marked, then each level's own report. Every area listed must be
+ * registered above on that page, with a region of its own.
+ */
+export const PAGES: Record<string, string[]> = {
+  tower: ['tower-level-1', 'tower-level-3', 'tower-level-4'],
 };
 
 /**
@@ -528,22 +553,29 @@ if (import.meta.main) {
 
   const slug = process.argv[2];
   const spec = slug ? SHRINE[slug] : undefined;
-  if (!spec) {
+  if (!spec && !(slug && PAGES[slug])) {
     console.error(`coverage: no shrine drawing registered for '${slug ?? ''}'.`);
-    console.error(`  known: ${Object.keys(SHRINE).join(', ') || '(none)'}`);
+    console.error(`  known: ${[...Object.keys(SHRINE), ...Object.keys(PAGES)].join(', ') || '(none)'}`);
     process.exit(1);
   }
   if (!existsSync('tele-arena.db')) {
     console.error('coverage: no tele-arena.db here.');
     process.exit(1);
   }
-
-  const drawing = parseDrawing(await Bun.file(spec.file).text(), spec.region);
   // A plain read-write handle, never mode=ro: baud keeps the DB in WAL mode and a
   // read-only connection cannot attach the -wal file, so it returns stale data.
   const db = new Database('tele-arena.db');
-  const area = db.prepare('SELECT id FROM areas WHERE slug = ?').get(slug) as any;
-  if (!area) { console.error(`coverage: no area '${slug}'`); process.exit(1); }
+  const areaId = (s: string) => (db.prepare('SELECT id FROM areas WHERE slug = ?').get(s) as any)?.id;
+
+  // One area's report: its picture (unless the caller draws the page itself),
+  // then what is left to walk and where it disagrees with the drawing. Returns
+  // the lines and the boxes it walked, so a page can mark several areas at once.
+  const report = async (slug: string, picture: boolean) => {
+  const spec = SHRINE[slug];
+  const out: string[] = [];
+  const drawing = parseDrawing(await Bun.file(spec.file).text(), spec.region);
+  const area = { id: areaId(slug) };
+  if (!area.id) { console.error(`coverage: no area '${slug}'`); process.exit(1); }
 
   const rows = db.prepare(
     'SELECT id, slug FROM rooms WHERE area_id = ? ORDER BY id').all(area.id) as any[];
@@ -590,10 +622,12 @@ if (import.meta.main) {
   // had placed. How much is walked and how much the drawing can be matched to are
   // different questions and the header now asks both.
   const placed = [...pair.keys()].filter(id => roomById.has(id)).length;
-  console.log(`\n${slug} — ${rooms.length} rooms walked; `
+  out.push(`\n${slug} — ${rooms.length} rooms walked; `
     + `${placed} of them placed on the drawing, which has ${drawing.boxes.length} boxes\n`);
-  for (const line of renderCoverage(drawing, mapped)) console.log(line);
-  console.log('\n  [#] walked    [.] not yet    [X1] landmark walked    (X1) landmark not yet\n');
+  if (picture) {
+    for (const line of renderCoverage(drawing, mapped)) out.push(line);
+    out.push('\n  [#] walked    [.] not yet    [X1] landmark walked    (X1) landmark not yet\n');
+  }
 
   // Frontiers, and what the drawing says is on the other side. The distinction
   // that matters: a stub whose far side is ALREADY a room of ours adds nothing by
@@ -626,9 +660,9 @@ if (import.meta.main) {
     }
   }
   const say = (title: string, items: string[]) => {
-    console.log(`${title} (${items.length})`);
-    for (const i of items) console.log(`  ${i}`);
-    if (!items.length) console.log('  none');
+    out.push(`${title} (${items.length})`);
+    for (const i of items) out.push(`  ${i}`);
+    if (!items.length) out.push('  none');
   };
   say('frontiers into NEW rooms', opens);
   say('unwalked links between rooms we already have — walking one closes a loop', closes);
@@ -639,8 +673,8 @@ if (import.meta.main) {
   say('lines the drawing has that we do not — the drawing is wrong, or we are', drawn);
 
   const unpaired = drawing.boxes.filter(b => !mapped.has(b.id));
-  console.log(`\nboxes not yet ours (${unpaired.length})`);
-  console.log('  ' + (unpaired.map(b => b.label ? `[${b.label}]` : `r${b.r}c${b.c0}`).join('  ') || 'none'));
+  out.push(`\nboxes not yet ours (${unpaired.length})`);
+  out.push('  ' + (unpaired.map(b => b.label ? `[${b.label}]` : `r${b.r}c${b.c0}`).join('  ') || 'none'));
 
   // "Not yet ours" reads as "rooms you have not walked", and that is only true
   // while there is somewhere left to walk. pairRooms is a BFS through OUR exits,
@@ -650,20 +684,40 @@ if (import.meta.main) {
   // it left six boxes listed that map.html was drawing all along. Say so, rather
   // than leave the reader to reconcile two lines that contradict each other.
   if (unpaired.length && !opens.length && !closes.length && !unplaced.length) {
-    console.log(`\n  ^ but there is nothing left to walk here: no frontiers, and no`);
-    console.log(`    unwalked link between rooms we have. The pairing stopped early`);
-    console.log(problems.length
+    out.push(`\n  ^ but there is nothing left to walk here: no frontiers, and no`);
+    out.push(`    unwalked link between rooms we have. The pairing stopped early`);
+    out.push(problems.length
       ? `    at the ${problems.length === 1 ? 'disagreement' : 'disagreements'} below, so those boxes were never reached --`
       : `    without reaching those boxes --`);
-    console.log(`    they may well be rooms you already have. map.html draws every`);
-    console.log(`    room either way; this pairing is what cannot see them.`);
+    out.push(`    they may well be rooms you already have. map.html draws every`);
+    out.push(`    room either way; this pairing is what cannot see them.`);
   }
 
   if (problems.length) {
-    console.log(`\nDISAGREEMENTS WITH THE DRAWING (${problems.length})`);
-    for (const p of problems) console.log('  ' + p);
+    out.push(`\nDISAGREEMENTS WITH THE DRAWING (${problems.length})`);
+    for (const p of problems) out.push('  ' + p);
   } else {
-    console.log('\nno disagreements: every paired room has the exits the drawing gives its box');
+    out.push('\nno disagreements: every paired room has the exits the drawing gives its box');
   }
-  console.log();
+  out.push('');
+  return { out, mapped };
+  };
+
+  if (PAGES[slug!]) {
+    // The whole page, every level's walked boxes marked on it. Box ids are grid
+    // positions, the same whichever region a level was parsed with, so marking
+    // is a union. A level not walked yet has no area and is left out.
+    const levels = PAGES[slug!].filter(l => areaId(l));
+    const page = parseDrawing(await Bun.file(SHRINE[PAGES[slug!][0]].file).text());
+    const reports = [];
+    for (const l of levels) reports.push(await report(l, false));
+    const marked = new Set(reports.flatMap(r => [...r.mapped]));
+    console.log(`\n${slug} — ${levels.length} of ${PAGES[slug!].length} registered levels walked; `
+      + `${[...marked].filter(b => page.boxes.some(x => x.id === b)).length} of the page's ${page.boxes.length} boxes marked\n`);
+    for (const line of renderCoverage(page, marked)) console.log(line);
+    console.log('\n  [#] walked    [.] not yet    [X1] landmark walked    (X1) landmark not yet');
+    for (const r of reports) for (const line of r.out) console.log(line);
+  } else {
+    for (const line of (await report(slug!, true)).out) console.log(line);
+  }
 }

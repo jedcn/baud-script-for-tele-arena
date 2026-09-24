@@ -322,7 +322,7 @@ describe('pairRooms across a teleport', () => {
 // read the output. A walk, an export or a hand-repair that breaks it now fails
 // here instead.
 
-import { SHRINE_MAPS, roomsFromExport } from './coverage';
+import { SHRINE_MAPS, PAGES, roomsFromExport } from './coverage';
 
 // The areas walked to completion, which are the ones whose agreement with the
 // shrine is a claim rather than a progress report. SHRINE_MAPS is a wider set:
@@ -381,6 +381,27 @@ describe('a stalled pairing is not the same as an unwalked area', () => {
 });
 
 describe('areas that share a shrine page', () => {
+  // `just coverage tower` marks every level's boxes on one picture of the page,
+  // which is only right if each level is registered on that page and no box
+  // belongs to two levels.
+  for (const [page, areas] of Object.entries(PAGES)) {
+    it(`${page}: every level is on the same page, and no box is in two`, async () => {
+      const files = new Set(areas.map(a => SHRINE_MAPS[a]?.file));
+      expect(files.size).toBe(1);
+      expect([...files][0]).toBeDefined();
+      const text = await Bun.file([...files][0]!).text();
+      const seen = new Map<string, string>();
+      for (const a of areas) {
+        const boxes = parseDrawing(text, SHRINE_MAPS[a].region).boxes;
+        expect(boxes.length, `${a} owns some of the page`).toBeGreaterThan(0);
+        for (const b of boxes) {
+          expect(seen.get(b.id), `box ${b.id} is in ${a} and ${seen.get(b.id)}`).toBeUndefined();
+          seen.set(b.id, a);
+        }
+      }
+    });
+  }
+
   it('split the swamp page between the swamp and the ruined town, box for box', async () => {
     const text = await Bun.file('map/shrine/swamp.txt').text();
     const whole = parseDrawing(text).boxes.map(b => b.id);
