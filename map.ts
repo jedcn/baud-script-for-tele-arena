@@ -678,6 +678,9 @@ export const DRAWN = [
   // the shrine's maps -- so there is no drawing to check it against, and it is
   // named for its first room until the walk shows where it goes.
   { slug: 'mountain-road', title: 'The Mountain Road', origin: 'mountain-road' },
+  // South off the forest, through forest-64 -- the [H] under "to Forest" on the
+  // shrine's page, and the forest page's Hyena [c].
+  { slug: 'gnoll-caves', title: 'The Gnoll Caves', origin: 'forest-64' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it
