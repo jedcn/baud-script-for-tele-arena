@@ -80,6 +80,8 @@ export function parseDrawing(text: string, region?: Region): Drawing {
     }
   });
 
+  const inBox = (r: number, c: number) =>
+    (rowBoxes.get(r) ?? []).some(b => c >= b.c0 && c <= b.c1);
   const near = (r: number, c: number, side: 'L' | 'R'): Box | null => {
     let best: Box | null = null, bd = Infinity;
     for (const b of rowBoxes.get(r) ?? []) {
@@ -118,9 +120,18 @@ export function parseDrawing(text: string, region?: Region): Drawing {
       if (at(r, c - 1) === '-') continue;
       const [, cR] = runEnd(r, c, 0, 1, '-');
       add(near(r, c, 'L'), near(r, cR, 'R'), 'e');
-    } else if (ch === '|') {
-      if (at(r - 1, c) === '|') continue;
-      const [rB] = runEnd(r, c, 1, 0, '|');
+    } else if (ch === '|' || ch === '#') {
+      // A `#` standing in for a `|` is a locked door -- the labyrinth's "Lever at
+      // 1 unlocks door (#)". Only outside a box ([#1] is a label), and a line of
+      // nothing but `#` must sit exactly under one box's centre and over
+      // another's: the hewn granite's slanted doors and "Scroll #3" are not
+      // vertical lines, and a loose match read them as due south.
+      const door = (rr: number) => at(rr, c) === '#' && !inBox(rr, c)
+        && !/[A-Za-z0-9]/.test(at(rr, c - 1)) && !/[A-Za-z0-9]/.test(at(rr, c + 1));
+      const vert = (rr: number) => at(rr, c) === '|' || door(rr);
+      if (!vert(r) || vert(r - 1)) continue;
+      let rB = r, bar = ch === '|';
+      while (vert(rB + 1)) { rB++; if (at(rB, c) === '|') bar = true; }
       // Vertical: match on centre column, since a `|` sits under a box's middle.
       const pick = (rr: number) => {
         let best: Box | null = null, bd = Infinity;
@@ -128,7 +139,7 @@ export function parseDrawing(text: string, region?: Region): Drawing {
           const d = Math.abs(b.cc - c);
           if (d < bd) { bd = d; best = b; }
         }
-        return bd <= 2 ? best : null;
+        return bd <= (bar ? 2 : 0) ? best : null;
       };
       add(pick(r - 1), pick(rB + 1), 's');
     } else if (ch === '\\') {

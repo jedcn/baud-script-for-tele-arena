@@ -100,6 +100,24 @@ describe('parseDrawing', () => {
     expect(d.edges.size).toBe(8);
   });
 
+  // The labyrinth draws a locked door as a `#` in place of a `|` -- "Lever at 1
+  // unlocks door (#)". Read as nothing, walking through either door would show as
+  // an exit the drawing lacks. Only in a vertical line between two boxes: the
+  // same character is also prose ("Scroll #3") on the flagstones pages.
+  it('reads a # in a vertical line as a door, and # in text as nothing', () => {
+    const d = parseDrawing([
+      '[ ]  [2]      [ ]',
+      ' |    #    Scroll #8',
+      '[ ]  [ ]      [ ]',
+    ].join('\n'));
+    const at = (r: number, c0: number) => d.boxes.find(b => b.r === r && b.c0 === c0)!.id;
+    expect(drawingExits(d, at(0, 5)).s).toBe(at(2, 5));
+    expect(drawingExits(d, at(0, 0)).s).toBe(at(2, 0));
+    // The two verticals, both ways. Not the `#` of "Scroll #8", though it sits
+    // exactly between two boxes, as it does on flagstones-3.
+    expect(d.edges.size).toBe(4);
+  });
+
   it('reads a diagonal as southeast, and gives it a reverse', () => {
     const d = parseDrawing(MINI);
     const a = d.boxes.find(b => b.r === 0 && b.label === '')!;
