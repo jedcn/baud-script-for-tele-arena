@@ -303,7 +303,7 @@
           "to": "tower-level-1/marble-hallway-12"
         },
         "u": {
-          "to": null
+          "to": "tower-level-2/vaulted-chamber-3"
         }
       },
       "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east. A spiral staircase of black marble leads up.",

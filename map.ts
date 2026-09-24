@@ -687,6 +687,11 @@ export const DRAWN = [
   // South off the forest (forest-87). One area per level, like the stoneworks;
   // the title carries the level so site.ts files it under The Tower, Level 1.
   { slug: 'tower-level-1', title: 'The Tower, Level 1', origin: 'entrance-hall' },
+  // Levels 3 and 4 from the stairs they are reached by. Level 2 so far holds
+  // only the landing the west stairs pass through on the way to Level 3 (the
+  // shrine draws a stack of stair rooms as one [^]); it is added once walked.
+  { slug: 'tower-level-3', title: 'The Tower, Level 3', origin: 'marble-hallway-14' },
+  { slug: 'tower-level-4', title: 'The Tower, Level 4', origin: 'marble-hallway-28' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

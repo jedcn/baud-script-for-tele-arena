@@ -1,0 +1,24 @@
+{
+  "area": "tower-level-2",
+  "name": "The Tower, Level 2",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "tower-level-2/vaulted-chamber-3",
+      "name": "vaulted chamber",
+      "exits": {
+        "d": {
+          "to": "tower-level-1/marble-hallway-13"
+        },
+        "u": {
+          "to": "tower-level-3/marble-hallway-14"
+        }
+      },
+      "description": "You are standing in a vaulted chamber adorned with black marble columns and arches. Spiral staircases of black marble lead up and down.",
+      "layout": {
+        "x": -14,
+        "y": -41
+      }
+    }
+  ]
+}

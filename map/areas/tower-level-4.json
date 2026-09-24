@@ -1,0 +1,279 @@
+{
+  "area": "tower-level-4",
+  "name": "The Tower, Level 4",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "tower-level-4/marble-hallway-28",
+      "name": "marble hallway",
+      "exits": {
+        "d": {
+          "to": "tower-level-3/marble-hallway-27"
+        },
+        "e": {
+          "to": "tower-level-4/marble-hallway-29"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east. A spiral staircase of black marble leads down.",
+      "layout": {
+        "x": -13,
+        "y": -43
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-29",
+      "name": "marble hallway",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-30"
+        },
+        "w": {
+          "to": "tower-level-4/marble-hallway-28"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east and west.",
+      "layout": {
+        "x": -12,
+        "y": -43
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-30",
+      "name": "marble hallway",
+      "exits": {
+        "s": {
+          "to": "tower-level-4/marble-hallway-31"
+        },
+        "w": {
+          "to": "tower-level-4/marble-hallway-29"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the south and west.",
+      "layout": {
+        "x": -11,
+        "y": -43
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-31",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-30"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-32"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -11,
+        "y": -44
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-32",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-31"
+        },
+        "s": {
+          "to": "tower-level-4/vaulted-chamber-4"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -11,
+        "y": -45
+      }
+    },
+    {
+      "id": "tower-level-4/vaulted-chamber-4",
+      "name": "vaulted chamber",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-33"
+        },
+        "n": {
+          "to": "tower-level-4/marble-hallway-32"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-39"
+        }
+      },
+      "description": "You are standing in a vaulted chamber adorned with black marble columns and arches. The archways exit to the north, south, and east.",
+      "layout": {
+        "x": -11,
+        "y": -46
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-33",
+      "name": "marble hallway",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-34"
+        },
+        "w": {
+          "to": "tower-level-4/vaulted-chamber-4"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east and west.",
+      "layout": {
+        "x": -10,
+        "y": -46
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-34",
+      "name": "marble hallway",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-35"
+        },
+        "w": {
+          "to": "tower-level-4/marble-hallway-33"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east and west.",
+      "layout": {
+        "x": -9,
+        "y": -46
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-35",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-36"
+        },
+        "w": {
+          "to": "tower-level-4/marble-hallway-34"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and west.",
+      "layout": {
+        "x": -8,
+        "y": -46
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-36",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-37"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-35"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -8,
+        "y": -45
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-37",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-38"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-36"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -8,
+        "y": -44
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-38",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/vaulted-chamber-5"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-37"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -8,
+        "y": -43
+      }
+    },
+    {
+      "id": "tower-level-4/vaulted-chamber-5",
+      "name": "vaulted chamber",
+      "exits": {
+        "s": {
+          "to": "tower-level-4/marble-hallway-38"
+        }
+      },
+      "description": "You are standing in a vaulted chamber adorned with black marble columns and arches. The archway exits to the south.",
+      "layout": {
+        "x": -8,
+        "y": -42
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-39",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/vaulted-chamber-4"
+        },
+        "s": {
+          "to": "tower-level-4/marble-hallway-40"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and south.",
+      "layout": {
+        "x": -11,
+        "y": -47
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-40",
+      "name": "marble hallway",
+      "exits": {
+        "n": {
+          "to": "tower-level-4/marble-hallway-39"
+        },
+        "w": {
+          "to": "tower-level-4/marble-hallway-41"
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the north and west.",
+      "layout": {
+        "x": -11,
+        "y": -48
+      }
+    },
+    {
+      "id": "tower-level-4/marble-hallway-41",
+      "name": "marble hallway",
+      "exits": {
+        "e": {
+          "to": "tower-level-4/marble-hallway-40"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a marble hallway. The walls here are of dull black stone, while the floor is of black marble run through with swirls of silver. The hallway continues to the east and west.",
+      "layout": {
+        "x": -12,
+        "y": -48
+      }
+    }
+  ]
+}
