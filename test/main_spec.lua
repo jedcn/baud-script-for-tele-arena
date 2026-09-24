@@ -4011,6 +4011,33 @@ describe("World map triggers", function()
             assert.is_nil(taPackage.pendingDirection)
         end)
 
+        -- The ruined mansion, 2026-09-23: `w` into the white misty archway was
+        -- refused, and nothing took it off the queue. The `e` sent next arrived
+        -- in the ballroom and was matched with that stale `w`, and every move
+        -- after it paired with the one before -- down to a duplicate of forest-46
+        -- on the way out (logs/session-teekywiki-2026-09-23T20-17-57.log, 1692).
+        -- The chasm refuses with the same sentence, and the logs hold both.
+        for _, line in ipairs({
+            "A mystical force prevents your exit in that direction.",
+            "The wide chasm prevents your exit in that direction.",
+        }) do
+            it("takes a refused move off the queue: " .. line, function()
+                taPackage.pendingDirs = { "w", "e" }     -- w refused, e already sent
+                helper.simulateLine(line)
+                assert.are.same({ "e" }, taPackage.pendingDirs)
+                assert.is_nil(taPackage.pendingDirection)
+            end)
+        end
+
+        it("takes a locked door's refusal off the queue once, not twice", function()
+            -- The locked-door trigger already shifts; a general "prevents your
+            -- exit" one must not shift again for the same line.
+            taPackage.currentRoomId = 5
+            taPackage.pendingDirs = { "e", "n" }
+            helper.simulateLine("The locked iron door prevents your exit in that direction.")
+            assert.are.same({ "n" }, taPackage.pendingDirs)
+        end)
+
         it("does not mis-resolve the reprint after a trip-and-fall", function()
             -- In the magic shop (#13), 'go n' too fast -> trip -> the game reprints
             -- "You're in the magic shop." With pendingDirection cleared, this must

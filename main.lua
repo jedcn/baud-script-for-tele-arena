@@ -2084,6 +2084,18 @@ createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", 
     taPackage.pendingDirection = nil
 end, { type = "regex" })
 
+-- Everything else that "prevents your exit": the mystical force at a misty
+-- archway, the wide chasm. Refused, so take the move off the queue -- the ruined
+-- mansion walk left it on, and every arrival after it was paired with the move
+-- before (logs/session-teekywiki-2026-09-23T20-17-57.log, line 1692). A locked
+-- door says the same thing but has its own trigger above, which already shifts;
+-- shifting here as well would drop a move that is still coming.
+createTrigger("^(.+) prevents your exit in that direction\\.$", function(matches)
+    if matches[2]:match("^The locked ") then return end
+    taPackage.shiftPendingDir()
+    taPackage.pendingDirection = nil
+end, { type = "regex" })
+
 -- Moving too quickly makes the character trip instead of moving — no room
 -- change happens, but the game then reprints the current room. Clear the
 -- pending direction so that reprint is treated as a re-scan of the room we're
