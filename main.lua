@@ -1508,6 +1508,17 @@ local function handleRoomEntry(matches)
         return
     end
 
+    -- The room this move left is the room we are in NOW. Arrivals are handled in
+    -- the order moves were sent, so whatever the previous arrival settled on is
+    -- where this one departed from. The move alias records a prevRoomId too, but
+    -- at SEND time -- and a second move typed before the first arrives records the
+    -- same room twice. In the labyrinth on 2026-09-24 that looked for a `w` on the
+    -- dead end instead of the room `s` had reached, and minted a copy of every
+    -- room walked after (labyrinth-94..96).
+    if taPackage.pendingDirection and taPackage.currentRoomId then
+        taPackage.prevRoomId = taPackage.currentRoomId
+    end
+
     -- The coordinate we expect to arrive at: the room we left plus the move's
     -- grid delta. nil when we have no prior coordinate to walk from (a cold
     -- start, or a prev room that was never anchored).

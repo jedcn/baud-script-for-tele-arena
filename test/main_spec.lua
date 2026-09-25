@@ -3429,6 +3429,36 @@ describe("World map triggers", function()
             assert.are.equal(5, visit.params[1])
         end)
 
+        -- The labyrinth, 2026-09-24: from a dead end, `s` and `w` were typed
+        -- before the first arrived. Each move alias records the room it leaves
+        -- as the CURRENT room, and both were typed in the dead end -- so the `w`
+        -- arrival looked for a `w` on the dead end, found none, and minted a
+        -- copy of the room it really reached. Every move after that minted
+        -- another (labyrinth-94..96; logs/session-teekywiki-2026-09-24T21-50-14.log,
+        -- lines 4125-4195). Arrivals are handled in the order moves were sent,
+        -- so the room a move leaves is the room we are in when it arrives.
+        it("follows known edges for moves typed before the first one arrives", function()
+            taPackage.currentRoomId = 36                 -- the dead end
+            taPackage.currentRoom = "labyrinth"
+            local edges = { ["36|s"] = 35, ["35|w"] = 34 }
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    local to = edges[tostring(params[1]) .. "|" .. tostring(params[2])]
+                    return to and { to_id = to } or nil
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "labyrinth" }
+                end
+                return nil
+            end
+            helper.simulateAlias("s")
+            helper.simulateAlias("w")                    -- typed before `s` arrived
+            helper.simulateLine("You're in a labyrinth.")
+            assert.are.equal(35, taPackage.currentRoomId)
+            helper.simulateLine("You're in a labyrinth.")
+            assert.are.equal(34, taPackage.currentRoomId)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))   -- no copy minted
+        end)
+
         it("re-resolves when a known edge points at a differently-named room", function()
             -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
             -- game reprints "You're in the magic shop." The edge 13--n-->10 points
