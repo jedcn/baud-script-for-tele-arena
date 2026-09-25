@@ -1555,7 +1555,8 @@
         {
           "command": "pull lever",
           "effect": "seal",
-          "note": "Labyrinth Level 1 [1]: \"Lever at 1 unlocks door (#) to Lever at 2\". Opens the huge stone doorway labyrinth-40 s <-> labyrinth-93 n. Confirmed by the user, and by the log: pulled at line 2022, then through labyrinth-40 s into the newly minted labyrinth-93 (logs/session-teekywiki-2026-09-24T21-50-14.log, 2509-2529). The lever is in the description: \"You notice a lever in a recess in the southern wall.\" Shut, the door answers \"The locked stone door prevents your exit in that direction.\" repeats untested -- the labyrinth Level 3 lever toggles."
+          "repeats": "toggle",
+          "note": "Labyrinth Level 1 [1]: \"Lever at 1 unlocks door (#) to Lever at 2\". Opens the huge stone doorway labyrinth-40 s <-> labyrinth-93 n. Confirmed by the user, and by the log: pulled at line 2022, then through labyrinth-40 s into the newly minted labyrinth-93 (logs/session-teekywiki-2026-09-24T21-50-14.log, 2509-2529). The lever is in the description: \"You notice a lever in a recess in the southern wall.\" Shut, the door answers \"The locked stone door prevents your exit in that direction.\" Toggles, per the user (2026-09-24): pulling it again shuts the door."
         }
       ],
       "layout": {
@@ -1628,7 +1629,8 @@
         {
           "command": "pull lever",
           "effect": "seal",
-          "note": "Labyrinth Level 1 [2]: \"Lever at 2 unlocks door (#) to Stairs Down!\". Opens labyrinth-83 n <-> labyrinth-94, the [v] stairs down to Level 2. The log agrees: that door refused at line 3405, the pull at line 4468 was made in a room with only a north exit whose next n was refused (labyrinth-93 -> labyrinth-40), and labyrinth-83 n was walked afterwards (line 4962). repeats untested."
+          "repeats": "toggle",
+          "note": "Labyrinth Level 1 [2]: \"Lever at 2 unlocks door (#) to Stairs Down!\". Opens labyrinth-83 n <-> labyrinth-94, the [v] stairs down to Level 2. The log agrees: that door refused at line 3405, the pull at line 4468 was made in a room with only a north exit whose next n was refused (labyrinth-93 -> labyrinth-40), and labyrinth-83 n was walked afterwards (line 4962). Toggles, per the user (2026-09-24): pulling it again shuts the door."
         }
       ],
       "layout": {
