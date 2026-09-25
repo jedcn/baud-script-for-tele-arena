@@ -702,8 +702,11 @@
         "s": {
           "to": "labyrinth-level-1/labyrinth-93",
           "door": {
-            "material": "stone",
-            "key": "unknown"
+            "material": "stone"
+          },
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "labyrinth-level-1/labyrinth-89"
           }
         },
         "w": {
@@ -1440,8 +1443,11 @@
         "n": {
           "to": "labyrinth-level-1/labyrinth-94",
           "door": {
-            "material": "stone",
-            "key": "unknown"
+            "material": "stone"
+          },
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "labyrinth-level-1/labyrinth-93"
           }
         },
         "s": {
@@ -1545,6 +1551,13 @@
         }
       },
       "description": "You are in a labyrinthine maze of tunnels. The smooth stone walls suggest the presence of intelligent inhabitants. Light is provided by glowing stones embedded in the walls. The air is humid, and cool. You notice a lever in a recess in the southern wall. The only exit is to the north.",
+      "devices": [
+        {
+          "command": "pull lever",
+          "effect": "seal",
+          "note": "Labyrinth Level 1 [1]: \"Lever at 1 unlocks door (#) to Lever at 2\". Opens the huge stone doorway labyrinth-40 s <-> labyrinth-93 n. Confirmed by the user, and by the log: pulled at line 2022, then through labyrinth-40 s into the newly minted labyrinth-93 (logs/session-teekywiki-2026-09-24T21-50-14.log, 2509-2529). The lever is in the description: \"You notice a lever in a recess in the southern wall.\" Shut, the door answers \"The locked stone door prevents your exit in that direction.\" repeats untested -- the labyrinth Level 3 lever toggles."
+        }
+      ],
       "layout": {
         "x": -5,
         "y": -1
@@ -1603,10 +1616,21 @@
       "name": "labyrinth",
       "exits": {
         "n": {
-          "to": "labyrinth-level-1/labyrinth-40"
+          "to": "labyrinth-level-1/labyrinth-40",
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "labyrinth-level-1/labyrinth-89"
+          }
         }
       },
       "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. You notice a lever in a recess in the southern wall. The only exit is to the north.",
+      "devices": [
+        {
+          "command": "pull lever",
+          "effect": "seal",
+          "note": "Labyrinth Level 1 [2]: \"Lever at 2 unlocks door (#) to Stairs Down!\". Opens labyrinth-83 n <-> labyrinth-94, the [v] stairs down to Level 2. The log agrees: that door refused at line 3405, the pull at line 4468 was made in a room with only a north exit whose next n was refused (labyrinth-93 -> labyrinth-40), and labyrinth-83 n was walked afterwards (line 4962). repeats untested."
+        }
+      ],
       "layout": {
         "x": 4,
         "y": 5
@@ -1620,7 +1644,11 @@
           "to": null
         },
         "s": {
-          "to": "labyrinth-level-1/labyrinth-83"
+          "to": "labyrinth-level-1/labyrinth-83",
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "labyrinth-level-1/labyrinth-93"
+          }
         }
       },
       "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. You notice a lever in a recess in the southern wall. The only exit is to the north. pull lever You pulled the lever. OKAY NOW THAT I PULLED IT LET'S SEE IF THE DOOR IS LOCKED AGAIN",
