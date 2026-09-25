@@ -538,6 +538,16 @@ function TaDb.devicesInRoom(roomId)
         roomId) or {}
 end
 
+-- Where a teleport that fires on walking in goes -- the tower's [L] and the
+-- labyrinth's [T], whose Devices have no command to send and are recorded with
+-- command '(on entry)'. nil when this room has none.
+function TaDb.teleportOnEntry(roomId)
+    local row = db:queryOne(
+        "SELECT dest_room_id FROM devices WHERE room_id = ? AND effect = 'teleport'"
+        .. " AND command = '(on entry)'", roomId)
+    return row and row.dest_room_id or nil
+end
+
 -- Coordinate-based identity: the one room in `areaId` with this display name
 -- sitting at exactly (x, y, z), excluding `excludeId`. Returns its id, or nil
 -- when nothing matches or more than one does (ambiguous — don't guess). This is

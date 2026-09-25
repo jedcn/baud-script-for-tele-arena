@@ -1419,6 +1419,8 @@ local function resolveColdStart(name)
     -- provisional room, which the Exits handler can still fold into a known one on
     -- the evidence of its exit-set.
     if taPackage.arrivedByTeleport then
+        -- A Device that says where this Teleport goes settles it outright.
+        if taPackage.teleportDest then return taPackage.teleportDest, false end
         local ids = taPackage.db.roomIdsByName(name)
         if #ids == 1 then return ids[1], false end
         return taPackage.db.discoverRoom(name, taPackage.currentAreaId), true
@@ -1653,6 +1655,29 @@ end
 -- a local has to exist before the trigger that names it.
 local function handleRoomEntryUnlessLooking(matches)
     if taPackage.monsterDb.state == "accumulating_room" then return end
+    -- The brief after the smoke is a Teleport, not a move (see the smoke trigger
+    -- below). If the room it fired in has a Device saying where it goes, and the
+    -- brief names that room, that is where we are; otherwise we are lost, as
+    -- after `push stone`, rather than guessing among same-named rooms.
+    local smoke = taPackage.pendingSmoke
+    if smoke then
+        taPackage.pendingSmoke = nil
+        local dest = smoke.from and taPackage.db.teleportOnEntry(smoke.from) or nil
+        if dest and taPackage.db.roomName(dest) ~= normalizeRoomName(matches[2]) then
+            dest = nil
+        end
+        taPackage.arrivedByTeleport = true
+        taPackage.teleportDest = dest
+        taPackage.coordLost = true
+        if not dest and taPackage.hereState ~= "lost" then
+            taPackage.loseHere("the smoke moved you somewhere no Device records")
+        end
+        handleRoomEntry(matches)
+        if dest and not taPackage.mapping then taPackage.setHere(dest) end
+        taPackage.arrivedByTeleport = nil
+        taPackage.teleportDest = nil
+        return
+    end
     handleRoomEntry(matches)
 end
 
@@ -2369,6 +2394,17 @@ createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in
         handleRoomEntry(matches)
         taPackage.arrivedByTeleport = nil
     end, { type = "regex" })
+
+-- Walking into the tower's [L] or the labyrinth's [T] prints its arrival brief,
+-- then this, then the brief of where you land -- nothing is typed for it. Mark
+-- the next brief as a Teleport from the room just entered; the brief handler
+-- resolves it. (Anchored, so "X has just appeared in a puff of thick black
+-- smoke!" about someone else arriving does not match.)
+createTrigger("^A cloud of thick black smoke suddenly engulfs you!$", function()
+    taPackage.pendingSmoke = {
+        from = (taPackage.mapping and taPackage.currentRoomId) or taPackage.here,
+    }
+end, { type = "regex" })
 
 -- `where` -- what the tracker currently believes, and why. Deliberately says
 -- "lost" rather than a best guess: a wrong answer here is worse than none.

@@ -3459,6 +3459,56 @@ describe("World map triggers", function()
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))   -- no copy minted
         end)
 
+        -- The tower's [L] and the labyrinth's [T] teleport you the moment you walk
+        -- in: the arrival brief, then "A cloud of thick black smoke suddenly
+        -- engulfs you!", then a second brief for where you land. That second
+        -- brief is a Teleport, not a move, and the Device on the room it fired in
+        -- says where it goes -- by name alone "marble hallway" is 57 rooms.
+        describe("a teleport that fires on walking in (the smoke)", function()
+            local function smokeFrom(roomId, dest)
+                helper.mockDbOneRow = function(sql, params)
+                    if string.find(sql, "FROM devices WHERE room_id", 1, true)
+                        and params[1] == roomId then
+                        return { dest_room_id = dest }
+                    elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                        return { name = "labyrinth" }
+                    end
+                    return nil
+                end
+            end
+
+            it("lands on the Device's destination, with no exit linked", function()
+                taPackage.currentRoomId = 2469              -- the tower's [L]
+                taPackage.currentRoom = "marble hallway"
+                smokeFrom(2469, 2470)
+                helper.simulateLine("A cloud of thick black smoke suddenly engulfs you!")
+                helper.simulateLine("You're in a labyrinth.")
+                assert.are.equal(2470, taPackage.currentRoomId)
+                assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+                assert.is_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)"))
+                assert.is_nil(taPackage.arrivedByTeleport)   -- one arrival only
+            end)
+
+            it("keeps the tracker's position across it when not mapping", function()
+                taPackage.mapping = false
+                taPackage.here, taPackage.hereState = 2469, "known"
+                smokeFrom(2469, 2470)
+                helper.simulateLine("A cloud of thick black smoke suddenly engulfs you!")
+                helper.simulateLine("You're in a labyrinth.")
+                assert.are.equal("known", taPackage.hereState)
+                assert.are.equal(2470, taPackage.here)
+            end)
+
+            it("says it is lost when no Device says where the smoke goes", function()
+                taPackage.mapping = false
+                taPackage.here, taPackage.hereState = 12, "known"
+                smokeFrom(999, 2470)                        -- nothing recorded for 12
+                helper.simulateLine("A cloud of thick black smoke suddenly engulfs you!")
+                helper.simulateLine("You're in a labyrinth.")
+                assert.are_not.equal("known", taPackage.hereState)
+            end)
+        end)
+
         it("re-resolves when a known edge points at a differently-named room", function()
             -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
             -- game reprints "You're in the magic shop." The edge 13--n-->10 points

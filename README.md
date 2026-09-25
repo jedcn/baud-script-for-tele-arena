@@ -102,7 +102,7 @@ affects.
 | column | meaning |
 |---|---|
 | `room_id` | where you stand to work it |
-| `command` | what you send, verbatim: `pull lever`, `push stone`, `say komi`, `move tapestry`. Free text — the verbs are an open set |
+| `command` | what you send, verbatim: `pull lever`, `push stone`, `say komi`, `move tapestry`. Free text — the verbs are an open set. `(on entry)` for one that fires when you walk in, with nothing typed: the tower's `[L]` and the labyrinth's `[T]` print "A cloud of thick black smoke suddenly engulfs you!" and move you, and the mapper resolves the arrival from this row |
 | `effect` | `seal`, `teleport`, `trap` or `light` |
 | `repeats` | `once` (working it again this Reset does nothing more) or `toggle` (each use reverses the last). NULL for a `teleport`, which is neither |
 | `dest_room_id` | `teleport` only: where it lands you, always the same room |
