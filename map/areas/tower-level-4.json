@@ -283,6 +283,14 @@
           "to": "tower-level-4/marble-hallway-41"
         }
       },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "dest": "labyrinth-level-1/labyrinth",
+          "note": "Tower Level 4 [L], \"Entrance to Labyrinth (Green Rune Required)\". Walking in prints the arrival brief, then \"A cloud of thick black smoke suddenly engulfs you!\", then lands on the labyrinth's [E] (Entrance Point). Nothing is typed. The Green Rune requirement is the page's; not tested without one."
+        }
+      ],
       "layout": {
         "x": -13,
         "y": -48
