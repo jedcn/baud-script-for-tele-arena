@@ -694,6 +694,8 @@ export const DRAWN = [
   { slug: 'labyrinth-level-1', title: 'The Labyrinth, Level 1', origin: 'labyrinth' },
   // Level 3, from the foot of the stairs down from Level 2. Level 2 is dark and
   // not mapped yet, so the two are not joined.
+  // Level 2, lit by the stone on Level 5; drawn from its stairs down to Level 3.
+  { slug: 'labyrinth-level-2', title: 'The Labyrinth, Level 2', origin: 'labyrinth-318' },
   { slug: 'labyrinth-level-3', title: 'The Labyrinth, Level 3', origin: 'labyrinth-100' },
   // Level 5, from the foot of the stairs down from the dark Level 4.
   { slug: 'labyrinth-level-5', title: 'The Labyrinth, Level 5', origin: 'labyrinth-204' },

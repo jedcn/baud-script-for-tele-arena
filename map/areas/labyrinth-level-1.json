@@ -1744,6 +1744,23 @@
         "x": 0,
         "y": 1
       }
+    },
+    {
+      "id": "labyrinth-level-1/labyrinth-399",
+      "name": "labyrinth",
+      "exits": {
+        "d": {
+          "to": "labyrinth-level-2/labyrinth-398"
+        },
+        "s": {
+          "to": null
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. A huge stone doorway stands to the south.",
+      "layout": {
+        "x": -1,
+        "y": 3
+      }
     }
   ]
 }

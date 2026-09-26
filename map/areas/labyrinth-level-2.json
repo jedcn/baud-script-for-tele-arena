@@ -1,0 +1,1714 @@
+{
+  "area": "labyrinth-level-2",
+  "name": "The Labyrinth, Level 2",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "labyrinth-level-2/labyrinth-299",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-320"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-300"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-300",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-299"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-301"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -1,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-301",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-302"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-300"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -1,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-302",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-303"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-301"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-303",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-302"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-304"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": 0,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-304",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-303"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-305"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-305",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-304"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-306"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -2,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-306",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-307"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-305"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-307",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-306"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-308"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -2,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-308",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-307"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-309"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -3,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-309",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-308"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-310"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -3,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-310",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-309"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-311"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -3,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-311",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-310"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-312"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -4,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-312",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-313"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-311"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -4,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-313",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-314"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-312"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -4,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-314",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-313"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-315"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -4,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-315",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-314"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-316"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -5,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-316",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-315"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-317"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -5,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-317",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-316"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-318"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -6,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-318",
+      "name": "labyrinth",
+      "exits": {
+        "d": {
+          "to": "labyrinth-level-3/labyrinth-100"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-317"
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. You can also exit to the south.",
+      "layout": {
+        "x": -6,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-320",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-299"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-321"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-321",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-320"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-322"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-322",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-321"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-323"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -2,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-323",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-322"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-324"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -3,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-324",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-323"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-325"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -3,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-325",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-324"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-326"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -4,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-326",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-325"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-327"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -5,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-327",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-326"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-328"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -6,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-328",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-327"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-329"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -7,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-329",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-328"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-330"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -7,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-330",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-329"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-331"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -8,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-331",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-330"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-332"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -8,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-332",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-333"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-331"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -8,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-333",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-334"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-332"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -7,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-334",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-333"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-335"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -7,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-335",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-336"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-334"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -7,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-336",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-337"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-335"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -6,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-337",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-338"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-336"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -5,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-338",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-337"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-339"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -5,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-339",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-338"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-340"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -6,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-340",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-339"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-341"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -7,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-341",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-340"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-342"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -8,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-342",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-341"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-343"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -9,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-343",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-344"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-342"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -9,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-344",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-345"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-343"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -8,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-345",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-344"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-346"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -8,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-346",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-345"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-347"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -9,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-347",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-348"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-346"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -9,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-348",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-349"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-347"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -9,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-349",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-350"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-348"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -9,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-350",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-351"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-349"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -9,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-351",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-352"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-350"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -8,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-352",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-353"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-351"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -7,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-353",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-354"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-352"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -6,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-354",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-355"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-353"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -6,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-355",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-319"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-354"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. You notice a small round stone protruding from the south wall. Exits are north and west.",
+      "devices": [
+        {
+          "command": "push stone",
+          "effect": "light",
+          "note": "Labyrinth Level 2 [1]: \"Push Stone to turn on lights on Level 4\". The stone is in the description: \"You notice a small round stone protruding from the south wall.\" Recorded from the page and the description on 2026-09-26, before anyone pushed it; the Level 5 stone that lights this level answers only \"You push the protruding stone into it's recess...\", and this one probably does too."
+        }
+      ],
+      "layout": {
+        "x": -5,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-319",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-356"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-355"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -5,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-356",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-319"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-357"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -5,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-357",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-356"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-358"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -6,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-358",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-357"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-359"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -7,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-359",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-358"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-360"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -8,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-360",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-359"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-361"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -9,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-361",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-362"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-360"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -9,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-362",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-363"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-361"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -9,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-363",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-364"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-362"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -8,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-364",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-365"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-363"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -8,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-365",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-366"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-364"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -7,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-366",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-367"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-365"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -7,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-367",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-368"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-366"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -6,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-368",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-369"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-367"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -6,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-369",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-370"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-368"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -5,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-370",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-371"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-369"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -5,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-371",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-372"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-370"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -4,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-372",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-371"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-373"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -4,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-373",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-374"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-372"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -4,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-374",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-375"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-373"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -3,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-375",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-376"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-374"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -3,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-376",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-377"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-375"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -3,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-377",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-378"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-376"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -2,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-378",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-379"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-377"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-379",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-380"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-378"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-380",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-379"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-381"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-381",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-380"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-382"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-382",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-381"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-383"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -2,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-383",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-382"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-384"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-384",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-383"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-385"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": -2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-385",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-384"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-386"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -3,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-386",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-385"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-387"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -4,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-387",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-388"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-386"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -4,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-388",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-389"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-387"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -3,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-389",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-390"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-388"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-390",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-391"
+        },
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-389"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and east.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-391",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-392"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-390"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-392",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-393"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-391"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and west.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-393",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-394"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-392"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-394",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-395"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-393"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-395",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-394"
+        },
+        "w": {
+          "to": "labyrinth-level-2/labyrinth-396"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are south and west.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-396",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-2/labyrinth-395"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-397"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are east and south.",
+      "layout": {
+        "x": -1,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-397",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-396"
+        },
+        "s": {
+          "to": "labyrinth-level-2/labyrinth-398"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. Exits are north and south.",
+      "layout": {
+        "x": -1,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-2/labyrinth-398",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-2/labyrinth-397"
+        },
+        "u": {
+          "to": "labyrinth-level-1/labyrinth-399"
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the north.",
+      "layout": {
+        "x": -1,
+        "y": 3
+      }
+    }
+  ]
+}

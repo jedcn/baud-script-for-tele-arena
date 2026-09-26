@@ -26,18 +26,19 @@
 22. [The Tower, Level 3](#the-tower-level-3)
 23. [The Tower, Level 4](#the-tower-level-4)
 24. [The Labyrinth, Level 1](#the-labyrinth-level-1)
-25. [The Labyrinth, Level 3](#the-labyrinth-level-3)
-26. [The Labyrinth, Level 5](#the-labyrinth-level-5)
-27. [The Cellars](#the-cellars)
-28. [Third Town](#third-town)
-29. [Fourth Town](#fourth-town)
-30. [The Deep Forest](#the-deep-forest)
-31. [The Valley](#the-valley)
-32. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-33. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-34. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-35. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-36. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+25. [The Labyrinth, Level 2](#the-labyrinth-level-2)
+26. [The Labyrinth, Level 3](#the-labyrinth-level-3)
+27. [The Labyrinth, Level 5](#the-labyrinth-level-5)
+28. [The Cellars](#the-cellars)
+29. [Third Town](#third-town)
+30. [Fourth Town](#fourth-town)
+31. [The Deep Forest](#the-deep-forest)
+32. [The Valley](#the-valley)
+33. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+34. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+35. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+36. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+37. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -1039,7 +1040,7 @@ Key:
 ### The Labyrinth, Level 1
 
 ```
-[ ]--[ ]--[ ]  [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+[ ]--[ ]--[ ]  [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]            [ v]   down to The Labyrinth, Level 2   s to unexplored
  |         |                        |         |
  |         |                        |         |
 [ ]  [ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]  [ ]  [ ]
@@ -1051,7 +1052,7 @@ Key:
 [ ]--[ ]--[ ]  [ ]  [ ]--[ ]  [ ]--[ ]--[ ]  [ ]
  |         |    |    |                   |    |
  |         |    |    |                   |    |
-[ ]  [ v] [ ]  [ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ]   down to unexplored
+[ ]  [ v] [ ]  [ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ]                   down to unexplored
  |    |    |    |    |         |         |    |
  |    |    |    |    |         |         |    |
 [ ]  [ ]  [ ]  [ ]--[ ]  [ ]  [ ]--[ ]--[ ]  [ ]
@@ -1067,6 +1068,39 @@ Key:
  |    |    |    |                   |         |
  |    |    |    |                   |         |
 [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]--[ ]
+```
+
+### The Labyrinth, Level 2
+
+```
+[ ]--[ ]  [ ]--[ ]  [ ]--[ ]  [ ]--[ ]--[ ]--[ ]
+ |    |    |    |    |    |    |              |
+ |    |    |    |    |    |    |              |
+[ ]  [ ]--[ ]  [ ]--[ ]  [ ]  [ ]  [ ]--[ ]--[ ]
+ |                        |    |    |
+ |                        |    |    |
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]  [ ]  [ ]--[ ]
+                     |              |    |    |
+                     |              |    |    |
+[ ]--[ ]--[ ]--[ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ]
+ |              |    |    |              |    |
+ |              |    |    |              |    |
+[ ]  [ ]--[ ]  [ ]--[ ]  [ ]--[ ]--[ ]  [ ^] [ ]   up to The Labyrinth, Level 1
+ |    |    |                        |         |
+ |    |    |                        |         |
+[ ]  [ ]  [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]
+ |    |                        |
+ |    |                        |
+[ ]  [ ]--[ ]  [ v] [ ]--[ ]  [ ]--[ ]--[ ]--[ ]   down to The Labyrinth, Level 3
+ |         |    |    |    |                   |
+ |         |    |    |    |                   |
+[ ]--[ ]  [ ]  [ ]--[ ]  [ ]  [ ]--[ ]  [ ]--[ ]
+      |    |              |    |    |    |
+      |    |              |    |    |    |
+[ ]--[ ]  [ ]--[ ]--[ ]  [ ]  [ ]  [ ]  [ ]--[ ]
+ |                   |    |    |    |         |
+ |                   |    |    |    |         |
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]  [ ]--[ ]--[ ]
 ```
 
 ### The Labyrinth, Level 3
@@ -1090,7 +1124,7 @@ Key:
 [ ]  [ ]  [ ]--[ ]  [ ]  [ ]  [ ]  [ ]--[ ]--[ ]
  |    |    |    |    |    |         |    |    |
  |    |    |    |    |    |         |    |    |
-[ ]  [ ]  [ ]  [ ]  [ ]  [ ]--[ ^] [ ]  [ ]  [ ]   up to unexplored
+[ ]  [ ]  [ ]  [ ]  [ ]  [ ]--[ ^] [ ]  [ ]  [ ]   up to The Labyrinth, Level 2
  |    |    |         |    |              |
  |    |    |         |    |              |
 [ ]  [ ]  [ ]--[ ]--[ ]  [ ]  [ ]--[ ]--[ ]--[ ]

@@ -93,8 +93,14 @@
     {
       "area": "labyrinth-level-1",
       "name": "The Labyrinth, Level 1",
-      "rooms": 100,
+      "rooms": 101,
       "file": "areas/labyrinth-level-1.json"
+    },
+    {
+      "area": "labyrinth-level-2",
+      "name": "The Labyrinth, Level 2",
+      "rooms": 100,
+      "file": "areas/labyrinth-level-2.json"
     },
     {
       "area": "labyrinth-level-3",

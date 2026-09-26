@@ -8,7 +8,7 @@
       "name": "labyrinth",
       "exits": {
         "u": {
-          "to": null
+          "to": "labyrinth-level-2/labyrinth-318"
         },
         "w": {
           "to": "labyrinth-level-3/labyrinth-101"
@@ -936,7 +936,8 @@
         {
           "command": "(on entry)",
           "effect": "teleport",
-          "note": "Labyrinth Level 3 [C], a springboard: walking in prints \"A spring loaded pressure plate rapidly lifts you through the ceiling!\" and lands you on Level 2 at its [C] (per the page: \"A,B,C = Springboards to corresponding letters on Level 2\"). One way. Level 2 is dark, so the landing room is not mapped and dest_room_id is empty (logs/session-teekywiki-2026-09-25T22-17-45.log, line 1036)."
+          "dest": "labyrinth-level-2/labyrinth-306",
+          "note": "Labyrinth Level 3 [C], a springboard: walking in prints \"A spring loaded pressure plate rapidly lifts you through the ceiling!\" and lands you on Level 2 at its [C] (per the page: \"A,B,C = Springboards to corresponding letters on Level 2\"). One way. Level 2 is dark, so the landing room is not mapped and dest_room_id is empty (logs/session-teekywiki-2026-09-25T22-17-45.log, line 1036). Landing now known from the page, not yet sprung: Level 2's [c] is labyrinth-306."
         }
       ],
       "layout": {
@@ -1712,7 +1713,8 @@
         {
           "command": "(on entry)",
           "effect": "teleport",
-          "note": "Labyrinth Level 3 [B], a springboard, south of labyrinth-157 (named by the user). Lands on Level 2 at its [B]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its exits are inferred: n back to labyrinth-157. The page also draws a w, but the row it belongs to ([1]-[ ]-[B]) is not joined in the game -- labyrinth-166 is n only and labyrinth-155 n,s -- so it is left out."
+          "dest": "labyrinth-level-2/labyrinth-320",
+          "note": "Labyrinth Level 3 [B], a springboard, south of labyrinth-157 (named by the user). Lands on Level 2 at its [B]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its exits are inferred: n back to labyrinth-157. The page also draws a w, but the row it belongs to ([1]-[ ]-[B]) is not joined in the game -- labyrinth-166 is n only and labyrinth-155 n,s -- so it is left out. Landing now known from the page, not yet sprung: Level 2's [b] is labyrinth-320."
         }
       ],
       "layout": {

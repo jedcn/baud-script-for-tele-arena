@@ -526,6 +526,14 @@ export const SHRINE_MAPS: Record<string,
   // Two levels down from Level 1. Level 2 is dark until a Device is worked, so
   // it is walked blind for now and Level 3 is mapped on its own, joined up later.
   // The walk comes down the stairs into the page's [^], "Stairs Up to Level 2".
+  // Dark until the stone on Level 5 is pushed; walked lit on 2026-09-26. Anchored
+  // on the page's [v], "Stairs Down to Level 3": labyrinth-318, exits s,d, whose
+  // d is Level 3's labyrinth-100.
+  'labyrinth-level-2': {
+    file: 'map/shrine/labyrinth-2.txt',
+    originBox: 'v',
+    originRoom: 'labyrinth-318',
+  },
   'labyrinth-level-3': {
     file: 'map/shrine/labyrinth-3.txt',
     originBox: '^',

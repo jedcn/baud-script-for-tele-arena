@@ -1666,7 +1666,7 @@
           "to": null
         }
       },
-      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, west, and east.",
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. You can also exit to the north.",
       "layout": {
         "x": 2,
         "y": 3
