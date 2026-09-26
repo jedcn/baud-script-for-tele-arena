@@ -932,6 +932,13 @@
           "to": "labyrinth-level-3/labyrinth-153"
         }
       },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "note": "Labyrinth Level 3 [C], a springboard: walking in prints \"A spring loaded pressure plate rapidly lifts you through the ceiling!\" and lands you on Level 2 at its [C] (per the page: \"A,B,C = Springboards to corresponding letters on Level 2\"). One way. Level 2 is dark, so the landing room is not mapped and dest_room_id is empty (logs/session-teekywiki-2026-09-25T22-17-45.log, line 1036)."
+        }
+      ],
       "layout": {
         "x": 1,
         "y": -2
@@ -982,7 +989,7 @@
           "to": "labyrinth-level-3/labyrinth-158"
         },
         "s": {
-          "to": null
+          "to": "labyrinth-level-3/labyrinth-201"
         },
         "w": {
           "to": "labyrinth-level-3/labyrinth-156"
@@ -1259,7 +1266,7 @@
           "to": "labyrinth-level-3/labyrinth-171"
         },
         "w": {
-          "to": null
+          "to": "labyrinth-level-3/labyrinth-182"
         }
       },
       "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east, south, and west.",
@@ -1273,7 +1280,7 @@
       "name": "labyrinth",
       "exits": {
         "d": {
-          "to": null
+          "to": "labyrinth-level-4/labyrinth-198"
         },
         "n": {
           "to": "labyrinth-level-3/labyrinth-174"
@@ -1330,7 +1337,7 @@
           "to": "labyrinth-level-3/labyrinth-177"
         },
         "s": {
-          "to": null
+          "to": "labyrinth-level-3/labyrinth-179"
         },
         "w": {
           "to": "labyrinth-level-3/labyrinth-175"
@@ -1370,6 +1377,366 @@
       "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the north.",
       "layout": {
         "x": 3,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-179",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-176"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-180"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-202"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north, south, and west.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-180",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-181"
+        },
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-179"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north and east.",
+      "layout": {
+        "x": 2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-181",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-180"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the west.",
+      "layout": {
+        "x": 3,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-182",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-172"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-183"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-183",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-182"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-184"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and south.",
+      "layout": {
+        "x": -3,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-184",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-185"
+        },
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-183"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-186"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north, west, and east.",
+      "layout": {
+        "x": -3,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-185",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-184"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the west.",
+      "layout": {
+        "x": -2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-186",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-184"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-187"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -4,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-187",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-186"
+        },
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-188"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-189"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north, west, and east.",
+      "layout": {
+        "x": -5,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-188",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-187"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the south.",
+      "layout": {
+        "x": -5,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-189",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-187"
+        },
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-190"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north and east.",
+      "layout": {
+        "x": -6,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-190",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-191"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-189"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north and south.",
+      "layout": {
+        "x": -6,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-191",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-192"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-190"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and south.",
+      "layout": {
+        "x": -6,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-192",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-193"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-191"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -5,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-193",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-195"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-194"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-192"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east, south, and west.",
+      "layout": {
+        "x": -4,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-194",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-193"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the north.",
+      "layout": {
+        "x": -4,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-195",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-196"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-193"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -3,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-196",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-197"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-195"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -2,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-197",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-196"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. The only exit is to the west.",
+      "layout": {
+        "x": -1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-201",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-157"
+        }
+      },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "note": "Labyrinth Level 3 [B], a springboard, south of labyrinth-157 (named by the user). Lands on Level 2 at its [B]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its exits are inferred: n back to labyrinth-157. The page also draws a w, but the row it belongs to ([1]-[ ]-[B]) is not joined in the game -- labyrinth-166 is n only and labyrinth-155 n,s -- so it is left out."
+        }
+      ],
+      "layout": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-202",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-179"
+        }
+      },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "note": "Labyrinth Level 3 [A], a springboard, west of labyrinth-179 (named by the user). Lands on Level 2 at its [A]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its one exit (e) is the page's."
+        }
+      ],
+      "layout": {
+        "x": 1,
         "y": 5
       }
     }
