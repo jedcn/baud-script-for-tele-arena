@@ -1071,7 +1071,16 @@ Key:
 ### The Labyrinth, Level 3
 
 ```
-[ ]--[ ]--[ ]--[ ]--[ ]--[ ]       [ ]  [ ]--[ ]   n to unexplored   w to unexplored
+                              [ ]--[ ]--[ ]--[ ]   s to unexplored
+                               |              |
+                               |              |
+                         [ ]--[ v]           [ ]   w to unexplored   down to unexplored
+                          |
+                          |
+                         [ ]--[ ]--[ ]
+                                    |
+                                    |
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]  [ ]--[ ]
  |                        |         |    |    |
  |                        |         |    |    |
 [ ]  [ ]--[ ]--[ ]--[ ]  [ ]  [ ]--[ ]--[ ]  [ ]
