@@ -3528,6 +3528,30 @@ describe("World map triggers", function()
             assert.is_truthy(said:find("springboard", 1, true), said)
         end)
 
+        -- Level 5's springboards land on Level 3, which is lit and mapped: the
+        -- plate line is followed by an ordinary brief for [e], [f] or [g]. When
+        -- the springboard's Device says where it lands, that is a Teleport like
+        -- the smoke, and there is no reason to stop mapping or lose the position
+        -- (logs/session-teekywiki-2026-09-26T16-13-38.log, line 1220).
+        it("lands a springboard whose Device names the room, and keeps mapping", function()
+            taPackage.currentRoomId = 2712                   -- level 5's [G]
+            taPackage.currentRoom = "labyrinth"
+            taPackage.here, taPackage.hereState = 2712, "known"
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "FROM devices WHERE room_id", 1, true) and params[1] == 2712 then
+                    return { dest_room_id = 2650 }           -- level 3's [gv]
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "labyrinth" }
+                end
+                return nil
+            end
+            helper.simulateLine("A spring loaded pressure plate rapidly lifts you through the ceiling!")
+            helper.simulateLine("You're in a labyrinth.")
+            assert.is_true(taPackage.mapping)
+            assert.are.equal(2650, taPackage.currentRoomId)
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
         it("re-resolves when a known edge points at a differently-named room", function()
             -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
             -- game reprints "You're in the magic shop." The edge 13--n-->10 points

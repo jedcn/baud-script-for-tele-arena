@@ -2458,12 +2458,20 @@ end, { type = "regex" })
 
 -- The labyrinth's Level 3 springboards ([A], [B], [C]) throw you up into Level 2
 -- the moment you walk in, and Level 2 is dark: what follows is "It's too dark to
--- see.", never a room brief. So there is no arrival to resolve and nothing to map
+-- see.", never a room brief. (One whose landing room is known is handled first.) So there is no arrival to resolve and nothing to map
 -- from. Say so, stop mapping, and drop the moves already typed -- in the dark they
 -- would wait for a brief that never comes and then be matched against the first
 -- lit room reached. Each springboard is also a Device, '(on entry)' teleport with
 -- no destination yet, so the `[device]` line warns before it fires.
 createTrigger("^A spring loaded pressure plate rapidly lifts you through the ceiling!$", function()
+    -- Level 5's springboards land on Level 3, which is lit and mapped. Where the
+    -- springboard's Device names its landing room, it is a Teleport like the smoke:
+    -- the brief that follows is resolved to that room, and mapping carries on.
+    local from = (taPackage.mapping and taPackage.currentRoomId) or taPackage.here
+    if from and taPackage.db.teleportOnEntry(from) then
+        taPackage.pendingSmoke = { from = from }
+        return
+    end
     taPackage.pendingDirs = {}
     taPackage.pendingDirection = nil
     taPackage.pendingSmoke = nil
