@@ -1915,6 +1915,13 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             taPackage.pendingClosure = nil
             echo("[map] loop closure into #" .. tostring(pc.into)
                 .. " refused -- this room sits exactly on #" .. tostring(exact) .. " instead")
+        elseif type(expected) == "number" and taPackage.db.hasEntryTeleport(expected) then
+            -- It predicts a room that throws you elsewhere the moment you enter,
+            -- and here we stand. Level 5's [G], 2026-09-26.
+            taPackage.pendingClosure = nil
+            echo("[map] loop closure into #" .. tostring(pc.into)
+                .. " refused -- it predicts #" .. tostring(expected)
+                .. ", which would have teleported you")
         elseif type(expected) == "number"
             and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
             pc.pairs[#pc.pairs + 1] = { from = taPackage.currentRoomId, into = expected }

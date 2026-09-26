@@ -541,6 +541,15 @@ end
 -- Where a teleport that fires on walking in goes -- the tower's [L] and the
 -- labyrinth's [T], whose Devices have no command to send and are recorded with
 -- command '(on entry)'. nil when this room has none.
+-- Does walking into this room teleport you -- any '(on entry)' Device, known
+-- destination or not? A held closure that predicts such a room for one you just
+-- walked into, and were not thrown out of, is wrong.
+function TaDb.hasEntryTeleport(roomId)
+    return db:queryOne(
+        "SELECT 1 AS n FROM devices WHERE room_id = ? AND effect = 'teleport'"
+        .. " AND command = '(on entry)'", roomId) ~= nil
+end
+
 function TaDb.teleportOnEntry(roomId)
     local row = db:queryOne(
         "SELECT dest_room_id FROM devices WHERE room_id = ? AND effect = 'teleport'"
@@ -985,8 +994,24 @@ end
 -- "fitted with massive iron doors" the day after the Reset, and refusing on that
 -- is what minted the duplicate. Uniqueness plus the two frontiers carries it
 -- instead; several candidates mean no answer.
+-- The first sentence of a description: what KIND of place this is ("You are
+-- deep inside a winding labyrinth."). Device State lives further on -- the riddle
+-- chamber's "archways which stand open" / "fitted with massive iron doors" is in
+-- its third -- so this part holds still across a Reset. nil for no description.
+local function firstSentence(text)
+    if not text then return nil end
+    return text:match("^(.-[%.!?])%s") or text
+end
+
 function TaDb.findSeamRoom(name, dirs, excludeId, back, areaId)
     if not back or not areaId then return nil end
+    -- A candidate has to be the same kind of place. Only the first sentence is
+    -- compared, for the reason above -- never the whole description (see the
+    -- note on this function). Nothing to compare on either side is no evidence
+    -- either way. On 2026-09-26 this would have kept a Level 4 labyrinth corridor
+    -- ("You are deep inside a winding labyrinth.") from being taken for Level 5's
+    -- ("You are nearly lost in a complexity of caverns ...").
+    local mine = firstSentence(TaDb.roomDescription(excludeId))
     local want, wantCount = {}, 0
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
@@ -999,6 +1024,10 @@ function TaDb.findSeamRoom(name, dirs, excludeId, back, areaId)
             for dir in pairs(have) do
                 haveCount = haveCount + 1
                 if not want[dir] then ok = false; break end
+            end
+            if ok and mine then
+                local theirs = firstSentence(TaDb.roomDescription(id))
+                if theirs and theirs ~= mine then ok = false end
             end
             if ok and haveCount == wantCount and have[back]
                 and type(TaDb.exitDestination(id, back)) ~= "number" then

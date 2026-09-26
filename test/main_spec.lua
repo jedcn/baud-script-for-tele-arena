@@ -2716,26 +2716,44 @@ describe("ta_db", function()
             assert.are.same({ 1, 2 }, candidates)
         end)
 
-        it("does not compare descriptions, unlike findLoopClosure", function()
-            -- A Seam is where descriptions differ most honestly: the riddle
-            -- chamber reads "archways which stand open" the day the seal is open
-            -- and "fitted with massive iron doors" after the Reset. Refusing on
-            -- that difference is exactly what minted the duplicate on 2026-09-14.
-            -- The stub answers no description at all for either room, so this test
-            -- pins that none is ASKED for: a lookup would return nil and the old
-            -- code would have fallen through anyway.
-            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = nil })
-            local asked = false
+        -- A Seam is where descriptions differ most honestly: the riddle chamber
+        -- reads "archways which stand open" the day the seal is open and "fitted
+        -- with massive iron doors" after the Reset, and refusing on that minted a
+        -- duplicate on 2026-09-14. But that wording is never in the FIRST
+        -- sentence, which says what kind of place this is ("You are standing in a
+        -- stonework chamber, fitted with dull grey stone tiles."). Comparing only
+        -- that keeps the riddle chamber, and refuses the labyrinth's Level 4
+        -- corridor that was taken for Level 5's on 2026-09-26: "You are deep
+        -- inside a winding labyrinth." is not "You are nearly lost in a complexity
+        -- of caverns..."
+        local function withDescriptions(mine, theirs)
             local rows = helper.mockDbOneRow
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "SELECT description FROM rooms", 1, true) then
-                    asked = true
+                    return { description = params[1] == 9 and mine or theirs }
                 end
                 return rows(sql, params)
             end
+        end
+
+        it("matches across a Seam whose descriptions differ only after the first sentence", function()
+            stub({ 1 }, { [1] = { "n", "e", "s" } }, { [1] = nil })
+            withDescriptions(
+                "You are standing in a stonework chamber, fitted with dull grey stone tiles."
+                    .. " The visible exits are south and east through stone archways which stand open.",
+                "You are standing in a stonework chamber, fitted with dull grey stone tiles."
+                    .. " The visible exits are south and east, fitted with massive iron doors.")
             assert.are.equal(1, TaDb.findSeamRoom("stonework chamber",
                 { "n", "e", "s" }, 9, "n", 11))
-            assert.is_false(asked, "findSeamRoom must not consult descriptions")
+        end)
+
+        it("refuses a room whose first sentence is a different kind of place", function()
+            stub({ 1 }, { [1] = { "e", "s", "w" } }, { [1] = nil })
+            withDescriptions(
+                "You are deep inside a winding labyrinth. The walls are smooth.",
+                "You are nearly lost in a complexity of caverns deeper than anything you have"
+                    .. " ever experienced. The dark chambers disorient you.")
+            assert.is_nil(TaDb.findSeamRoom("labyrinth", { "e", "s", "w" }, 9, "s", 11))
         end)
 
         it("needs an area to be outside of", function()
@@ -3550,6 +3568,39 @@ describe("World map triggers", function()
             assert.is_true(taPackage.mapping)
             assert.are.equal(2650, taPackage.currentRoomId)
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+        end)
+
+        -- A chain predicted Level 5's [G] -- a springboard -- for a Level 4 room
+        -- that was walked into without being thrown anywhere (2026-09-26). A room
+        -- that teleports you on entry cannot be the room you are standing in.
+        it("refuses a held closure whose predicted room would have teleported you", function()
+            taPackage.pendingClosure = { pairs = { { from = 50, into = 2711 } }, from = 50, into = 2711 }
+            taPackage.currentRoomId = 51
+            taPackage.currentRoom = "labyrinth"
+            taPackage.currentRoomProvisional = true
+            taPackage.prevRoomId = 50
+            taPackage.currentEntryDir = "s"
+            taPackage.coord = nil
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "n" } }
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 2712 }                  -- the chain predicts [G]
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "labyrinth" }
+                elseif string.find(sql, "FROM devices WHERE room_id", 1, true) and params[1] == 2712 then
+                    return { n = 1 }
+                end
+                return nil
+            end
+            helper.simulateLine("Exits: n.")
+            assert.is_nil(taPackage.pendingClosure)
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("refused", 1, true), said)
         end)
 
         it("re-resolves when a known edge points at a differently-named room", function()
