@@ -1071,13 +1071,25 @@ Key:
 ### The Labyrinth, Level 3
 
 ```
-     [ ]--[ ^]   up to unexplored   n to unexplored
-      |
-      |
-     [ ]
-      |
-      |
-[ ]--[ ]         w to unexplored
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+ |                        |
+ |                        |
+[ ]                      [ ]
+ |                        |
+ |                        |
+[ ]                      [ ]
+ |                        |
+ |                        |
+[ ]                      [ ]--[ ^]   up to unexplored
+ |                        |
+ |                        |
+[ ]                      [ ]
+ |                        |
+ |                        |
+[ ]                 [ ]--[ ]         w to unexplored
+ |
+ |
+[ ]--[ ]--[ ]--[ ]--[ ]              e to unexplored
 ```
 
 ### The Cellars
