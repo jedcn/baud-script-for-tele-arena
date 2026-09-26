@@ -1105,16 +1105,16 @@ Key:
 ### The Labyrinth, Level 5
 
 ```
-               [ ]--[ ]--[ ]--[ ]                  s to unexplored
-                |              |
-                |              |
-               [ ]--[ ]       [ ]            [ ]   w to unexplored
-                     |                        |
-                     |                        |
-[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]--[ ]   n to unexplored   s to unexplored   n to unexplored   n to unexplored
- |    |                   |         |    |
- |    |                   |         |    |
-[ ]  [ ]                 [ ]       [ ]--[ ]--[ ]   e to unexplored   s to unexplored
+[ ]--[ ]--[ ]  [ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]   s to unexplored
+      |         |              |    |         |
+      |         |              |    |         |
+[ ]--[ ]--[ ]--[ ]--[ ]       [ ]  [ ]--[ ]--[ ]
+ |                   |              |         |
+ |                   |              |         |
+[ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]--[ ]   n to unexplored
+ |    |              |    |         |    |
+ |    |              |    |         |    |
+[ ]  [ ]            [ ]  [ ]       [ ]--[ ]--[ ]   e to unexplored   s to unexplored   s to unexplored   w to unexplored
       |                   |                   |
       |                   |                   |
 [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]       [ ]--[ ]   n to unexplored   n to unexplored
