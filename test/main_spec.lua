@@ -4632,6 +4632,14 @@ describe("World map triggers", function()
                 return nil
             end
             helper.simulateLine("Exits: e,w.")
+            -- One room has agreed, so the crossing is held for more (the labyrinth
+            -- showed one agreement is not proof) -- and nothing is merged yet.
+            assert.are.equal(10, taPackage.currentRoomId)
+            assert.is_not_nil(taPackage.pendingClosure)
+            -- Stopping here settles on the agreement it has, rather than leaving
+            -- a duplicate, and the merge still has to follow us into the other area.
+            helper.simulateAlias("map-off")
+            assert.is_nil(taPackage.pendingClosure)
             assert.are.equal(5, taPackage.currentRoomId)
             assert.are.equal(22, taPackage.currentAreaId)
             local confirmed, moved

@@ -125,6 +125,9 @@ function M.replayChain(paths, opts)
         if i == 1 then
             for _, sql in ipairs(opts.seed or {}) do db.exec(sql) end
         end
+        -- Hand edits made to the real database between two sessions, so a later
+        -- log replays against the map it actually walked on.
+        for _, sql in ipairs((opts.sqlBefore or {})[i] or {}) do db.exec(sql) end
         for _, cmd in ipairs((opts.setup or {})[i] or {}) do
             helper.simulateAlias(cmd)
         end

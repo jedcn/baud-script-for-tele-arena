@@ -1804,6 +1804,39 @@ local function printRoomSlugCandidates(name, dirs)
     end
 end
 
+-- How many fresh rooms in a row must agree with a held loop closure before it
+-- is merged. Three, because the labyrinth's Level 3 has a corridor that mimics a
+-- walked one for three rooms and only the third tells them apart.
+taPackage.closureConfirmations = 3
+
+-- Merge a held closure: every provisional room of the chain into the room the
+-- candidate's graph predicted for it, in order. Moves our position onto the
+-- merged room if we were standing on one of the provisionals.
+function taPackage.settleClosure(pc)
+    local pairs_ = pc.pairs or { { from = pc.from, into = pc.into } }
+    for _, p in ipairs(pairs_) do
+        taPackage.db.mergeRoomInto(p.from, p.into)
+        if taPackage.currentRoomId == p.from then
+            taPackage.currentRoomId = p.into
+            taPackage.currentRoomProvisional = false
+            local snapped = taPackage.db.roomCoord(p.into)
+            if snapped then taPackage.coord = snapped end
+        end
+        if taPackage.prevRoomId == p.from then taPackage.prevRoomId = p.into end
+    end
+    echo("[map] " .. (pc.seam and "Seam crossing confirmed: #" or "loop closure confirmed: #")
+        .. tostring(pairs_[1].from) .. " was #" .. tostring(pairs_[1].into))
+    -- A confirmed Seam leaves us standing in the other area, so follow it: rooms
+    -- minted from here belong to where we actually are. handleRoomEntry does this
+    -- for a KNOWN room, and cannot for one it has just folded in.
+    local landedIn = taPackage.db.roomArea(taPackage.currentRoomId)
+    if landedIn and landedIn ~= taPackage.currentAreaId then
+        taPackage.currentAreaId = landedIn
+        echo("[map] now mapping " .. tostring(taPackage.db.areaSlugOf(taPackage.currentRoomId)))
+    end
+    if taPackage.currentRoomId then taPackage.setHere(taPackage.currentRoomId) end
+end
+
 -- `ex` prints the current room's exits ("Exits: n,e,sw."). While mapping, use
 -- them for loop closure: if we provisionally minted this room but it's really an
 -- already-known one (same name + exit-set), fold the provisional into it. Then
@@ -1852,45 +1885,56 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     -- that walk stepped `sw` and arrived somewhere answering ne,se,w where the
     -- candidate's `sw` neighbour was recorded as ne,sw. So: hold the closure, walk
     -- one more room, and ask the graph whether it agrees.
+    --
+    -- One agreeing room is not always enough. In the labyrinth's Level 3 a new
+    -- corridor mimics a walked one for THREE rooms -- same name, description and
+    -- exits -- and one agreement merged it, after which the walk followed the old
+    -- edges until the lost-room guard stopped it (twice, on 2026-09-25). So the
+    -- closure is held while fresh rooms keep agreeing, up to closureConfirmations,
+    -- and any disagreement in that window refuses it. If the walk leaves the
+    -- chain early -- turns back, reaches a room the candidate cannot predict, or
+    -- mapping stops -- it merges on the agreement it has, as it always did.
+    local holding = false
     if taPackage.pendingClosure and taPackage.currentRoomProvisional then
         local pc = taPackage.pendingClosure
-        taPackage.pendingClosure = nil
+        pc.pairs = pc.pairs or { { from = pc.from, into = pc.into } }
+        local last = pc.pairs[#pc.pairs]
         local onward = taPackage.currentEntryDir
-        local expected = onward and taPackage.prevRoomId == pc.from
-            and taPackage.db.exitDestination(pc.into, onward) or nil
+        local expected = onward and taPackage.prevRoomId == last.from
+            and taPackage.db.exitDestination(last.into, onward) or nil
         if type(expected) == "number"
             and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
-            -- The candidate's graph predicted this room. Fold the held room in,
-            -- and this arrival is the room it predicted.
-            taPackage.db.mergeRoomInto(pc.from, pc.into)
-            taPackage.db.mergeRoomInto(taPackage.currentRoomId, expected)
-            taPackage.currentRoomId = expected
-            taPackage.currentRoomProvisional = false
-            local snapped = taPackage.db.roomCoord(expected)
-            if snapped then taPackage.coord = snapped end
-            echo("[map] " .. (pc.seam and "Seam crossing confirmed: #"
-                              or "loop closure confirmed: #") .. tostring(pc.from)
-                .. " was #" .. tostring(pc.into))
-            -- A confirmed Seam leaves us standing in the other area, so follow it:
-            -- rooms minted from here belong to where we actually are, not to the
-            -- area we walked out of. handleRoomEntry does this for a KNOWN room,
-            -- and cannot for one it has just folded in.
-            local landedIn = taPackage.db.roomArea(expected)
-            if landedIn and landedIn ~= taPackage.currentAreaId then
-                taPackage.currentAreaId = landedIn
-                echo("[map] now mapping " .. tostring(taPackage.db.areaSlugOf(expected)))
+            pc.pairs[#pc.pairs + 1] = { from = taPackage.currentRoomId, into = expected }
+            local agreed = #pc.pairs - 1
+            if agreed >= taPackage.closureConfirmations then
+                taPackage.pendingClosure = nil
+                taPackage.settleClosure(pc)
+            else
+                holding = true
+                echo("[map] " .. (pc.seam and "Seam crossing" or "loop closure")
+                    .. " into #" .. tostring(pc.into) .. " agrees so far (" .. agreed
+                    .. " of " .. taPackage.closureConfirmations .. ") -- keep walking to settle it")
             end
+        elseif type(expected) ~= "number" and #pc.pairs >= 2 then
+            -- The candidate has nothing to say about this room, but it predicted
+            -- the ones before it. Settle on that; this room is judged on its own.
+            taPackage.pendingClosure = nil
+            taPackage.settleClosure(pc)
         else
-            -- Refuted, or nothing to check against. Either way the two rooms stay
+            -- Refuted, or nothing to check against. Either way the rooms stay
             -- separate: a duplicate is visible and mergeable, where a wrong merge
             -- deletes a room and misattaches everything walked after it.
+            taPackage.pendingClosure = nil
             echo("[map] loop closure into #" .. tostring(pc.into)
                 .. " refused -- the next room is not what it predicted")
         end
     elseif taPackage.pendingClosure then
-        -- The next arrival was not a fresh room, so there is nothing to confirm
-        -- against. Drop it rather than carrying it into a later move.
+        -- The next arrival was not a fresh room -- we turned back, say -- so the
+        -- chain cannot go on. Settle on what agreed so far, or drop it if nothing
+        -- has yet.
+        local pc = taPackage.pendingClosure
         taPackage.pendingClosure = nil
+        if pc.pairs and #pc.pairs >= 2 then taPackage.settleClosure(pc) end
     end
 
     -- Are we where we think we are? `ex` lists every exit a room has (sealed ones
@@ -1930,7 +1974,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         end
     end
 
-    if taPackage.currentRoomProvisional then
+    if taPackage.currentRoomProvisional and not holding then
         taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
@@ -2331,6 +2375,12 @@ local function stopMapping()
     -- A held loop closure can only be settled by the next move, so stopping here
     -- leaves a duplicate. Say so plainly and say what resolves it: the cost of
     -- deferring is paid entirely by whoever closes a loop as their last act.
+    local held = taPackage.pendingClosure
+    if held and held.pairs and #held.pairs >= 2 then
+        -- It has agreed for a room or more; settle on that, as a turn back would.
+        taPackage.pendingClosure = nil
+        taPackage.settleClosure(held)
+    end
     if taPackage.pendingClosure then
         echo("[map] a possible " .. (taPackage.pendingClosure.seam and "Seam crossing"
                                     or "loop closure")
