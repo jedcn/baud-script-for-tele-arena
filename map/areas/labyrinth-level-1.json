@@ -1643,7 +1643,7 @@
       "name": "labyrinth",
       "exits": {
         "d": {
-          "to": null
+          "to": "labyrinth-level-2/labyrinth-398"
         },
         "s": {
           "to": "labyrinth-level-1/labyrinth-83",
@@ -1653,7 +1653,7 @@
           }
         }
       },
-      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. You notice a lever in a recess in the southern wall. The only exit is to the north. pull lever You pulled the lever. OKAY NOW THAT I PULLED IT LET'S SEE IF THE DOOR IS LOCKED AGAIN",
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. A huge stone doorway stands to the south.",
       "layout": {
         "x": -4,
         "y": 2
@@ -1743,23 +1743,6 @@
       "layout": {
         "x": 0,
         "y": 1
-      }
-    },
-    {
-      "id": "labyrinth-level-1/labyrinth-399",
-      "name": "labyrinth",
-      "exits": {
-        "d": {
-          "to": "labyrinth-level-2/labyrinth-398"
-        },
-        "s": {
-          "to": null
-        }
-      },
-      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. A huge stone doorway stands to the south.",
-      "layout": {
-        "x": -1,
-        "y": 3
       }
     }
   ]
