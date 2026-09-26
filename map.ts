@@ -695,6 +695,8 @@ export const DRAWN = [
   // Level 3, from the foot of the stairs down from Level 2. Level 2 is dark and
   // not mapped yet, so the two are not joined.
   { slug: 'labyrinth-level-3', title: 'The Labyrinth, Level 3', origin: 'labyrinth-100' },
+  // Level 5, from the foot of the stairs down from the dark Level 4.
+  { slug: 'labyrinth-level-5', title: 'The Labyrinth, Level 5', origin: 'labyrinth-204' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

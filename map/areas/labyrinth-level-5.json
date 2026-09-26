@@ -1,0 +1,586 @@
+{
+  "area": "labyrinth-level-5",
+  "name": "The Labyrinth, Level 5",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "labyrinth-level-5/labyrinth-203",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-204"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. The only exit is to the east.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-204",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-205"
+        },
+        "u": {
+          "to": null
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-203"
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the south and west.",
+      "layout": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-205",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-204"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-209"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-206"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, south, and west.",
+      "layout": {
+        "x": 1,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-206",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-205"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-207"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-207",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-206"
+        },
+        "n": {
+          "to": null
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-208"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, east, and south.",
+      "layout": {
+        "x": -1,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-208",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-207"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. The only exit is to the north.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-209",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-210"
+        },
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-205"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, west, and east.",
+      "layout": {
+        "x": 1,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-210",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-211"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-209"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are south and west.",
+      "layout": {
+        "x": 2,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-211",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-210"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-212"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and west.",
+      "layout": {
+        "x": 2,
+        "y": -3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-212",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-211"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-213"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 1,
+        "y": -3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-213",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-212"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-214"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 0,
+        "y": -3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-214",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-213"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-215"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": -1,
+        "y": -3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-215",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-214"
+        },
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-216"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and east.",
+      "layout": {
+        "x": -2,
+        "y": -3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-216",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-217"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-215"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-217",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-218"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-216"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-218",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-219"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-217"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-219",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-220"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-218"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": -2,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-220",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-221"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-219"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and south.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-221",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-222"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-220"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, west, and east.",
+      "layout": {
+        "x": -1,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-222",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-223"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-221"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": -1,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-223",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-226"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-222"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-224"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east, south, and west.",
+      "layout": {
+        "x": -1,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-224",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-223"
+        },
+        "n": {
+          "to": null
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-225"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, east, and south.",
+      "layout": {
+        "x": -2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-225",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-224"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. The only exit is to the north.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-226",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-227"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-223"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-227",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-228"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-226"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 1,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-228",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-229"
+        },
+        "s": {
+          "to": null
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-227"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, south, and west.",
+      "layout": {
+        "x": 2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-229",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-228"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-230"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are south and west.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-230",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-229"
+        },
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-231"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, west, and east.",
+      "layout": {
+        "x": 1,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-231",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-232"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-230"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and south.",
+      "layout": {
+        "x": 1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-232",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-233"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-231"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 2,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-233",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-234"
+        },
+        "s": {
+          "to": null
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-232"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east, south, and west.",
+      "layout": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-234",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-235"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-233"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are south and west.",
+      "layout": {
+        "x": 4,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-235",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-234"
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. You can also exit to the north and west.",
+      "layout": {
+        "x": 4,
+        "y": 5
+      }
+    }
+  ]
+}

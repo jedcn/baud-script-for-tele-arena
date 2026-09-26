@@ -531,6 +531,14 @@ export const SHRINE_MAPS: Record<string,
     originBox: '^',
     originRoom: 'labyrinth-100',
   },
+  // The bottom of the labyrinth, reached down the stairs from Level 4 -- which is
+  // dark, so it is not mapped and the two are not joined. Anchored on the page's
+  // [^], "Stairs Up to Level 4": labyrinth-204, exits s,u,w.
+  'labyrinth-level-5': {
+    file: 'map/shrine/labyrinth-5.txt',
+    originBox: '^',
+    originRoom: 'labyrinth-204',
+  },
   'orc-caves': {
     file: 'map/shrine/orc-caves.txt',
     originBox: '*',
