@@ -3509,6 +3509,25 @@ describe("World map triggers", function()
             end)
         end)
 
+        -- The labyrinth's Level 3 springboards ([A], [B], [C]) throw you up
+        -- into Level 2 the moment you walk in: "A spring loaded pressure plate
+        -- rapidly lifts you through the ceiling!", then "It's too dark to see."
+        -- Level 2 is unlit, so no room brief follows -- ever, while it stays
+        -- dark -- and every move typed after would sit in the queue waiting for
+        -- one, to be matched against the first lit room reached
+        -- (logs/session-teekywiki-2026-09-25T22-17-45.log, line 1036).
+        it("stops mapping and forgets the position when a springboard fires", function()
+            taPackage.currentRoomId = 2631                   -- [C]
+            taPackage.here, taPackage.hereState = 2631, "known"
+            taPackage.pendingDirs = { "n" }                  -- typed ahead
+            helper.simulateLine("A spring loaded pressure plate rapidly lifts you through the ceiling!")
+            assert.is_false(taPackage.mapping)
+            assert.are_not.equal("known", taPackage.hereState)
+            assert.are.same({}, taPackage.pendingDirs)
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("springboard", 1, true), said)
+        end)
+
         it("re-resolves when a known edge points at a differently-named room", function()
             -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
             -- game reprints "You're in the magic shop." The edge 13--n-->10 points

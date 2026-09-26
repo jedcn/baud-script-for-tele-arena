@@ -2456,6 +2456,27 @@ createTrigger("^A cloud of thick black smoke suddenly engulfs you!$", function()
     }
 end, { type = "regex" })
 
+-- The labyrinth's Level 3 springboards ([A], [B], [C]) throw you up into Level 2
+-- the moment you walk in, and Level 2 is dark: what follows is "It's too dark to
+-- see.", never a room brief. So there is no arrival to resolve and nothing to map
+-- from. Say so, stop mapping, and drop the moves already typed -- in the dark they
+-- would wait for a brief that never comes and then be matched against the first
+-- lit room reached. Each springboard is also a Device, '(on entry)' teleport with
+-- no destination yet, so the `[device]` line warns before it fires.
+createTrigger("^A spring loaded pressure plate rapidly lifts you through the ceiling!$", function()
+    taPackage.pendingDirs = {}
+    taPackage.pendingDirection = nil
+    taPackage.pendingSmoke = nil
+    if taPackage.mapping then
+        stopMapping()
+        cecho("red", "[map] mapping OFF: a springboard threw you up through the ceiling, into"
+            .. " the dark level above. `map-here <slug>` once you can see where you are.")
+    end
+    if taPackage.hereState ~= "lost" then
+        taPackage.loseHere("a springboard threw you up through the ceiling")
+    end
+end, { type = "regex" })
+
 -- `where` -- what the tracker currently believes, and why. Deliberately says
 -- "lost" rather than a best guess: a wrong answer here is worse than none.
 createAlias("^where$", function()
