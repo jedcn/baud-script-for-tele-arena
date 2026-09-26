@@ -8,7 +8,7 @@
       "name": "labyrinth",
       "exits": {
         "e": {
-          "to": null
+          "to": "labyrinth-level-4/labyrinth-441"
         },
         "n": {
           "to": "labyrinth-level-4/labyrinth-399"
@@ -232,7 +232,7 @@
       "name": "labyrinth",
       "exits": {
         "e": {
-          "to": null
+          "to": "labyrinth-level-4/labyrinth-440"
         },
         "s": {
           "to": "labyrinth-level-4/labyrinth-409"
@@ -303,7 +303,7 @@
       "name": "labyrinth",
       "exits": {
         "e": {
-          "to": null
+          "to": "labyrinth-level-4/labyrinth-437"
         },
         "s": {
           "to": "labyrinth-level-4/labyrinth-413"
@@ -655,7 +655,7 @@
           "to": "labyrinth-level-4/labyrinth-429"
         },
         "w": {
-          "to": null
+          "to": "labyrinth-level-4/labyrinth-421"
         }
       },
       "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east, south, and west.",
@@ -693,6 +693,963 @@
       "layout": {
         "x": 8,
         "y": 8
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-421",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-433"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-436"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and west.",
+      "layout": {
+        "x": 6,
+        "y": 9
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-436",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-421"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the east.",
+      "layout": {
+        "x": 5,
+        "y": 9
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-437",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-438"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-412"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-438",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-439"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-437"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 4,
+        "y": 8
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-439",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-438"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 5,
+        "y": 8
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-440",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-408"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 4,
+        "y": 9
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-441",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-444"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-442"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-198"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, east, and west.",
+      "layout": {
+        "x": 1,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-442",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-443"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-441"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 1,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-443",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-442"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 2,
+        "y": 6
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-444",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-445"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-441"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and west.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-445",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-446"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-444"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 3,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-446",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-445"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-490"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-447"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, south, and west.",
+      "layout": {
+        "x": 3,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-447",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-446"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-448"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 2,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-448",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-447"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-449"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 2,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-449",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-448"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-450"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 1,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-450",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-449"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-462"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-451"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, south, and west.",
+      "layout": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-451",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-450"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-452"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-457"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east, south, and west.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-452",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-451"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-453"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-455"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, south, and west.",
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-453",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-454"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-452"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-454",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-453"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-455",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-452"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-456"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-456",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-455"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the north.",
+      "layout": {
+        "x": -1,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-457",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-451"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-458"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": -1,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-458",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-459"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-457"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": -1,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-459",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-460"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-458"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-460",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-461"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-459"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-461",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-460"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 1,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-462",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-463"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-450"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-463",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-465"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-464"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-462"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east, south, and west.",
+      "layout": {
+        "x": 2,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-464",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-463"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the north.",
+      "layout": {
+        "x": 2,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-465",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-466"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-463"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 3,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-466",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-467"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-465"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-467",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-468"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-469"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-466"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, east, and west.",
+      "layout": {
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-468",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-467"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 5,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-469",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-473"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-470"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-467"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, east, and south.",
+      "layout": {
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-470",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-469"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-471"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 4,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-471",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-470"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-472"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and west.",
+      "layout": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-472",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-471"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the east.",
+      "layout": {
+        "x": 2,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-473",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-474"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-481"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-469"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, east, and west.",
+      "layout": {
+        "x": 5,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-474",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-475"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-473"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-475",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-476"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-474"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-476",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-477"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-475"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and west.",
+      "layout": {
+        "x": 7,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-477",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-478"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-476"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-478",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-477"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-479"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-479",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-478"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-480"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 7,
+        "y": 1
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-480",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-479"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the south.",
+      "layout": {
+        "x": 7,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-481",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-482"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-473"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 5,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-482",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-483"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-481"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 6,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-483",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-484"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-482"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 6,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-484",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-485"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-487"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-483"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north, east, and west.",
+      "layout": {
+        "x": 7,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-485",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-486"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-484"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are south and west.",
+      "layout": {
+        "x": 8,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-486",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-485"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the north.",
+      "layout": {
+        "x": 8,
+        "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-487",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-488"
+        },
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-484"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and south.",
+      "layout": {
+        "x": 7,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-488",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-489"
+        },
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-487"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and west.",
+      "layout": {
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-489",
+      "name": "labyrinth",
+      "exits": {
+        "s": {
+          "to": "labyrinth-level-4/labyrinth-488"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the south.",
+      "layout": {
+        "x": 8,
+        "y": 5
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-490",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-4/labyrinth-491"
+        },
+        "n": {
+          "to": "labyrinth-level-4/labyrinth-446"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are north and east.",
+      "layout": {
+        "x": 3,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-491",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-4/labyrinth-490"
+        }
+      },
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the west.",
+      "layout": {
+        "x": 4,
+        "y": 3
       }
     }
   ]
