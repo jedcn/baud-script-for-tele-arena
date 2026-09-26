@@ -97,6 +97,12 @@
       "file": "areas/labyrinth-level-1.json"
     },
     {
+      "area": "labyrinth-level-3",
+      "name": "The Labyrinth, Level 3",
+      "rooms": 5,
+      "file": "areas/labyrinth-level-3.json"
+    },
+    {
       "area": "mountain-road",
       "name": "The Mountain Road",
       "rooms": 3,

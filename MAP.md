@@ -26,16 +26,17 @@
 22. [The Tower, Level 3](#the-tower-level-3)
 23. [The Tower, Level 4](#the-tower-level-4)
 24. [The Labyrinth, Level 1](#the-labyrinth-level-1)
-25. [The Cellars](#the-cellars)
-26. [Third Town](#third-town)
-27. [Fourth Town](#fourth-town)
-28. [The Deep Forest](#the-deep-forest)
-29. [The Valley](#the-valley)
-30. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-31. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-32. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-33. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-34. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+25. [The Labyrinth, Level 3](#the-labyrinth-level-3)
+26. [The Cellars](#the-cellars)
+27. [Third Town](#third-town)
+28. [Fourth Town](#fourth-town)
+29. [The Deep Forest](#the-deep-forest)
+30. [The Valley](#the-valley)
+31. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+32. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+33. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+34. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+35. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -1065,6 +1066,18 @@ Key:
  |    |    |    |                   |         |
  |    |    |    |                   |         |
 [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]  [ ]--[ ]
+```
+
+### The Labyrinth, Level 3
+
+```
+     [ ]--[ ^]   up to unexplored   n to unexplored
+      |
+      |
+     [ ]
+      |
+      |
+[ ]--[ ]         w to unexplored
 ```
 
 ### The Cellars

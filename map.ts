@@ -692,6 +692,9 @@ export const DRAWN = [
   { slug: 'tower-level-4', title: 'The Tower, Level 4', origin: 'marble-hallway-28' },
   // Teleported in from the tower's [L] (see coverage.ts); drawn from where you land.
   { slug: 'labyrinth-level-1', title: 'The Labyrinth, Level 1', origin: 'labyrinth' },
+  // Level 3, from the foot of the stairs down from Level 2. Level 2 is dark and
+  // not mapped yet, so the two are not joined.
+  { slug: 'labyrinth-level-3', title: 'The Labyrinth, Level 3', origin: 'labyrinth-100' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

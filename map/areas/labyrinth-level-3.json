@@ -1,0 +1,95 @@
+{
+  "area": "labyrinth-level-3",
+  "name": "The Labyrinth, Level 3",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "labyrinth-level-3/labyrinth-100",
+      "name": "labyrinth",
+      "exits": {
+        "u": {
+          "to": null
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-101"
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the west.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-101",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-100"
+        },
+        "n": {
+          "to": null
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-102"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north, east, and south.",
+      "layout": {
+        "x": -1,
+        "y": 0
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-102",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-101"
+        },
+        "s": {
+          "to": "labyrinth-level-3/labyrinth-103"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north and south.",
+      "layout": {
+        "x": -1,
+        "y": -1
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-103",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-3/labyrinth-102"
+        },
+        "w": {
+          "to": "labyrinth-level-3/labyrinth-104"
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are north and west.",
+      "layout": {
+        "x": -1,
+        "y": -2
+      }
+    },
+    {
+      "id": "labyrinth-level-3/labyrinth-104",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-3/labyrinth-103"
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are wandering through an intracate tangle of thick subterranean growth. The warm air in this twisting passage makes you perspire. Pungent odors assail your senses from all directions. Exits are east and west.",
+      "layout": {
+        "x": -2,
+        "y": -2
+      }
+    }
+  ]
+}
