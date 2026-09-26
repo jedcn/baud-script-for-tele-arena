@@ -1891,9 +1891,10 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     -- exits -- and one agreement merged it, after which the walk followed the old
     -- edges until the lost-room guard stopped it (twice, on 2026-09-25). So the
     -- closure is held while fresh rooms keep agreeing, up to closureConfirmations,
-    -- and any disagreement in that window refuses it. If the walk leaves the
-    -- chain early -- turns back, reaches a room the candidate cannot predict, or
-    -- mapping stops -- it merges on the agreement it has, as it always did.
+    -- and any disagreement in that window refuses it. If the walk turns back or
+    -- mapping stops, it merges on the agreement it has, as it always did; if it
+    -- reaches a room the candidate cannot predict, or one that sits exactly on a
+    -- different mapped room, the chain is dropped.
     local holding = false
     if taPackage.pendingClosure and taPackage.currentRoomProvisional then
         local pc = taPackage.pendingClosure
@@ -1902,7 +1903,19 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         local onward = taPackage.currentEntryDir
         local expected = onward and taPackage.prevRoomId == last.from
             and taPackage.db.exitDestination(last.into, onward) or nil
-        if type(expected) == "number"
+        -- A room sitting EXACTLY on a mapped room's square with that room's exits
+        -- is a match trusted outright everywhere else (see the reconcile below).
+        -- If it names a different room from the one the chain predicts, the chain
+        -- is wrong: Level 5 of the labyrinth walked back onto labyrinth-286 while a
+        -- chain insisted it was 278, two columns over (2026-09-26).
+        local exact = taPackage.coord and taPackage.db.findRoomByFingerprint(
+            taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
+            taPackage.currentAreaId)
+        if type(exact) == "number" and exact ~= expected then
+            taPackage.pendingClosure = nil
+            echo("[map] loop closure into #" .. tostring(pc.into)
+                .. " refused -- this room sits exactly on #" .. tostring(exact) .. " instead")
+        elseif type(expected) == "number"
             and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
             pc.pairs[#pc.pairs + 1] = { from = taPackage.currentRoomId, into = expected }
             local agreed = #pc.pairs - 1
@@ -1916,10 +1929,14 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
                     .. " of " .. taPackage.closureConfirmations .. ") -- keep walking to settle it")
             end
         elseif type(expected) ~= "number" and #pc.pairs >= 2 then
-            -- The candidate has nothing to say about this room, but it predicted
-            -- the ones before it. Settle on that; this room is judged on its own.
+            -- The candidate has nothing to say about this room. That is running
+            -- out of evidence, not agreement: on Level 5 it merged three real rooms
+            -- two columns from where they were. Drop it; a duplicate is mergeable.
             taPackage.pendingClosure = nil
-            taPackage.settleClosure(pc)
+            echo("[map] loop closure into #" .. tostring(pc.into) .. " dropped -- "
+                .. (#pc.pairs - 1) .. " of " .. taPackage.closureConfirmations
+                .. " rooms agreed, then #" .. tostring(last.into) .. " had nothing to"
+                .. " predict this one with")
         else
             -- Refuted, or nothing to check against. Either way the rooms stay
             -- separate: a duplicate is visible and mergeable, where a wrong merge
