@@ -1324,7 +1324,7 @@
           "to": "labyrinth-level-5/labyrinth-278"
         },
         "s": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-495"
         }
       },
       "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, east, and south.",
@@ -1725,6 +1725,27 @@
       "layout": {
         "x": 4,
         "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-495",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-279"
+        }
+      },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "dest": "labyrinth-level-3/labyrinth-162",
+          "note": "Labyrinth Level 5 [F], a springboard, south of labyrinth-279. Lands on Level 3 at [f], labyrinth-162, per the page (\"E,F,G = Springboards to corresponding letters on Level 3\") -- not yet sprung, though [E] and [G] behaved exactly so. The room was added by hand before anyone entered it, because the springboard fires before ex can answer: its one exit (n) and its lack of a description are the page's and the springboard's."
+        }
+      ],
+      "layout": {
+        "x": 5,
+        "y": 2
       }
     }
   ]
