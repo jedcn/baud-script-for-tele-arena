@@ -539,6 +539,16 @@ export const SHRINE_MAPS: Record<string,
     originBox: '^',
     originRoom: 'labyrinth-100',
   },
+  // Lit by the stone on Level 2. Two anchors, because the two stairs rooms were
+  // walked before anything joined them: [^] (labyrinth-198, up to Level 3) and
+  // [v] (labyrinth-236, down to Level 5). The rooms minted here in the dark were
+  // junk and are gone (2026-09-26).
+  'labyrinth-level-4': {
+    file: 'map/shrine/labyrinth-4.txt',
+    originBox: '^',
+    originRoom: 'labyrinth-198',
+    moreOrigins: [{ box: 'v', room: 'labyrinth-236' }],
+  },
   // The bottom of the labyrinth, reached down the stairs from Level 4 -- which is
   // dark, so it is not mapped and the two are not joined. Anchored on the page's
   // [^], "Stairs Up to Level 4": labyrinth-204, exits s,u,w.

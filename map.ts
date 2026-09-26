@@ -697,6 +697,8 @@ export const DRAWN = [
   // Level 2, lit by the stone on Level 5; drawn from its stairs down to Level 3.
   { slug: 'labyrinth-level-2', title: 'The Labyrinth, Level 2', origin: 'labyrinth-318' },
   { slug: 'labyrinth-level-3', title: 'The Labyrinth, Level 3', origin: 'labyrinth-100' },
+  // Level 4, from the stairs up to Level 3.
+  { slug: 'labyrinth-level-4', title: 'The Labyrinth, Level 4', origin: 'labyrinth-198' },
   // Level 5, from the foot of the stairs down from the dark Level 4.
   { slug: 'labyrinth-level-5', title: 'The Labyrinth, Level 5', origin: 'labyrinth-204' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },

@@ -111,7 +111,7 @@
     {
       "area": "labyrinth-level-4",
       "name": "The Labyrinth, Level 4",
-      "rooms": 4,
+      "rooms": 2,
       "file": "areas/labyrinth-level-4.json"
     },
     {

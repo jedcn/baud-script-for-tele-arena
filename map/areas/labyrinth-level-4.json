@@ -8,7 +8,7 @@
       "name": "labyrinth",
       "exits": {
         "e": {
-          "to": "labyrinth-level-4/labyrinth-200"
+          "to": null
         },
         "n": {
           "to": null
@@ -17,58 +17,12 @@
           "to": "labyrinth-level-3/labyrinth-173"
         },
         "w": {
-          "to": "labyrinth-level-4/labyrinth-199"
+          "to": null
         }
       },
       "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the north, east, and west.",
       "layout": {
         "x": 0,
-        "y": 5
-      }
-    },
-    {
-      "id": "labyrinth-level-4/labyrinth-199",
-      "name": "labyrinth",
-      "exits": {
-        "e": {
-          "to": "labyrinth-level-4/labyrinth-198"
-        },
-        "n": {
-          "to": null
-        },
-        "u": {
-          "to": null
-        },
-        "w": {
-          "to": null
-        }
-      },
-      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the north, east, and west.",
-      "layout": {
-        "x": -1,
-        "y": 5
-      }
-    },
-    {
-      "id": "labyrinth-level-4/labyrinth-200",
-      "name": "labyrinth",
-      "exits": {
-        "e": {
-          "to": null
-        },
-        "n": {
-          "to": null
-        },
-        "u": {
-          "to": null
-        },
-        "w": {
-          "to": "labyrinth-level-4/labyrinth-198"
-        }
-      },
-      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads upward. You can also exit to the north, east, and west.",
-      "layout": {
-        "x": 1,
         "y": 5
       }
     },
