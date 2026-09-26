@@ -1083,13 +1083,13 @@ Key:
 [ ]                      [ ]--[ ^]   up to unexplored
  |                        |
  |                        |
-[ ]                      [ ]
- |                        |
- |                        |
-[ ]                 [ ]--[ ]         w to unexplored
- |
- |
-[ ]--[ ]--[ ]--[ ]--[ ]              e to unexplored
+[ ]                      [ ]  [ ]    e to unexplored
+ |                        |    |
+ |                        |    |
+[ ]                 [ ]--[ ]  [ ]    w to unexplored
+ |                             |
+ |                             |
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
 ```
 
 ### The Cellars
