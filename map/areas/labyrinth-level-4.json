@@ -71,6 +71,23 @@
         "x": 1,
         "y": 5
       }
+    },
+    {
+      "id": "labyrinth-level-4/labyrinth-236",
+      "name": "labyrinth",
+      "exits": {
+        "d": {
+          "to": "labyrinth-level-5/labyrinth-204"
+        },
+        "n": {
+          "to": null
+        }
+      },
+      "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. You can also exit to the north.",
+      "layout": {
+        "x": 1,
+        "y": 0
+      }
     }
   ]
 }
