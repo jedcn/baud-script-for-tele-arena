@@ -508,7 +508,7 @@
           "to": "labyrinth-level-5/labyrinth-230"
         }
       },
-      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and south.",
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. The only exit is to the east.",
       "layout": {
         "x": 1,
         "y": 6
@@ -525,7 +525,7 @@
           "to": "labyrinth-level-5/labyrinth-231"
         }
       },
-      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east and west.",
       "layout": {
         "x": 2,
         "y": 6
@@ -545,7 +545,7 @@
           "to": "labyrinth-level-5/labyrinth-232"
         }
       },
-      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east, south, and west.",
+      "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. Exits are east, south, and west.",
       "layout": {
         "x": 3,
         "y": 6

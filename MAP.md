@@ -1140,7 +1140,25 @@ Key:
 ### The Labyrinth, Level 4
 
 ```
-[ ^]           [ v]   e to unexplored   n to unexplored   up to The Labyrinth, Level 3   w to unexplored   down to The Labyrinth, Level 5   n to unexplored
+[ ]--[ ]--[ ]--[ ]--[ ]                 [ ]--[ ]   e to unexplored   w to unexplored
+ |         |         |                   |    |
+ |         |         |                   |    |
+[ ]       [ ]  [ ]--[ ]            [ ]--[ ]  [ ]
+ |              |                   |    |
+ |              |                   |    |
+[ ]            [ ]--[ ]       [ ]--[ ]  [ ]--[ ]   e to unexplored
+ |                   |         |              |
+ |                   |         |              |
+[ ]--[ ]            [ ]--[ ]--[ ]  [ ]--[ ]  [ ]
+      |                   |    |         |
+      |                   |    |         |
+[ ]--[ ^]                [ ]  [ ]--[ ]--[ ]        e to unexplored   up to The Labyrinth, Level 3
+ |                                  |
+ |                                  |
+[ ]                      [ ]--[ ]--[ ]
+                               |
+                               |
+                              [ v]                 down to The Labyrinth, Level 5
 ```
 
 ### The Labyrinth, Level 5
