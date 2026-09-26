@@ -539,7 +539,7 @@
           "to": "labyrinth-level-5/labyrinth-234"
         },
         "s": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-496"
         },
         "w": {
           "to": "labyrinth-level-5/labyrinth-232"
@@ -1264,7 +1264,7 @@
           "to": "labyrinth-level-5/labyrinth-277"
         },
         "n": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-496"
         },
         "s": {
           "to": "labyrinth-level-5/labyrinth-275"
@@ -1746,6 +1746,23 @@
       "layout": {
         "x": 5,
         "y": 2
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-496",
+      "name": "labyrinth",
+      "exits": {
+        "n": {
+          "to": "labyrinth-level-5/labyrinth-233"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-276"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north and south.",
+      "layout": {
+        "x": 3,
+        "y": 5
       }
     }
   ]

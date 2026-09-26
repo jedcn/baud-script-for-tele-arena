@@ -1734,7 +1734,8 @@
         {
           "command": "(on entry)",
           "effect": "teleport",
-          "note": "Labyrinth Level 3 [A], a springboard, west of labyrinth-179 (named by the user). Lands on Level 2 at its [A]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its one exit (e) is the page's."
+          "dest": "labyrinth-level-2/labyrinth-382",
+          "note": "Labyrinth Level 3 [A], a springboard, west of labyrinth-179 (named by the user). Lands on Level 2 at its [A]; one way; dest unmapped (Level 2 is dark). The room itself was added by hand: the springboard fires before ex can answer, so its one exit (e) is the page's. Landing now known from the page, not yet sprung: Level 2's [a] is labyrinth-382."
         }
       ],
       "layout": {
