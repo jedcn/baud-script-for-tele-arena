@@ -1153,7 +1153,7 @@
           "to": "labyrinth-level-5/labyrinth-271"
         },
         "n": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-492"
         },
         "w": {
           "to": "labyrinth-level-5/labyrinth-221"
@@ -1190,7 +1190,7 @@
           "to": "labyrinth-level-5/labyrinth-273"
         },
         "n": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-298"
         },
         "w": {
           "to": "labyrinth-level-5/labyrinth-271"
@@ -1241,7 +1241,7 @@
       "name": "labyrinth",
       "exits": {
         "e": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-494"
         },
         "n": {
           "to": "labyrinth-level-5/labyrinth-276"
@@ -1250,7 +1250,7 @@
           "to": "labyrinth-level-5/labyrinth-273"
         }
       },
-      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, south, and west.",
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are north, east, and south.",
       "layout": {
         "x": 3,
         "y": 3
@@ -1660,15 +1660,70 @@
           "to": "labyrinth-level-5/labyrinth-228"
         },
         "s": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-272"
         },
         "w": {
-          "to": null
+          "to": "labyrinth-level-5/labyrinth-493"
         }
       },
       "description": "You have entered a small room with a with a stone staircase in the center. The staircase leads downward. You can also exit to the north.",
       "layout": {
         "x": 2,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-492",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-493"
+        },
+        "s": {
+          "to": "labyrinth-level-5/labyrinth-270"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and south.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-493",
+      "name": "labyrinth",
+      "exits": {
+        "e": {
+          "to": "labyrinth-level-5/labyrinth-298"
+        },
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-492"
+        }
+      },
+      "description": "You are nearly lost in a complexity of caverns deeper than anything you have ever experienced. The dark chambers disorient you as you pick your way through them. Exits are east and west.",
+      "layout": {
+        "x": 1,
+        "y": 3
+      }
+    },
+    {
+      "id": "labyrinth-level-5/labyrinth-494",
+      "name": "labyrinth",
+      "exits": {
+        "w": {
+          "to": "labyrinth-level-5/labyrinth-275"
+        }
+      },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "dest": "labyrinth-level-3/labyrinth-168",
+          "note": "Labyrinth Level 5 [E], a springboard, east of labyrinth-275. Walking in prints \"A spring loaded pressure plate rapidly lifts you through the ceiling!\" and lands you on Level 3 at [e], labyrinth-168 (\"...intracate tangle of thick subterranean growth... The only exit is to the east.\"). One way. Seen 2026-09-26 (logs/session-teekywiki-2026-09-26T17-53-42.log, at the end). This room's own description is unknown: the springboard fires before look answers, and the one captured was the landing's."
+        }
+      ],
+      "layout": {
+        "x": 4,
         "y": 3
       }
     }
