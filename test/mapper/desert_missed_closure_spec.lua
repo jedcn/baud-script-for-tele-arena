@@ -30,8 +30,8 @@
 -- end -- announced twice over, which is the whole point -- and the live map was
 -- repaired by merging it by hand.
 
-local replay = dofile("test/log_replay.lua")
-local fixture = dofile("test/desert_fixture.lua")
+local replay = dofile("test/mapper/log_replay.lua")
+local fixture = dofile("test/mapper/desert_fixture.lua")
 
 describe("The desert, a closure that was nearly missed", function()
 

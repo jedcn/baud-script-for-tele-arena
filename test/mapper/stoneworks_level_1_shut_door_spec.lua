@@ -25,7 +25,7 @@
 -- "Sorry, there's no exit in that direction." trigger shifts the queue, and this
 -- is what says so from a real walk rather than a hand-fed line.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
 local RESUME = "logs/session-tojolias-2026-09-12T10-18-42.log"

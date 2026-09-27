@@ -13,7 +13,12 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 ## Testing
 
-- Run `just test` after every change to verify nothing is broken.
+- Run `just test` after every change to verify nothing is broken. It is the fast suite (~15s): `test/main_spec.lua` (which includes the mapper's unit tests, against a mocked DB) and bun.
+- **Also run `just test-mapper` when the change touches the mapper.** That is the slow suite (~14 min) in `test/mapper/`: whole session logs replayed into a real SQLite database, checking the room graph the mapper builds. It is what catches wrong loop closures, duplicate rooms and bad merges, which the mocked unit tests cannot. The mapper means:
+  - `ta_db.lua` (the room graph, fingerprints, merges, devices schema);
+  - in `main.lua`, anything that decides which room you are in or writes the map: the room-entry and `Exits:` handlers, the teleport / smoke / springboard / `push stone` triggers, the move queue (`pendingDirs`) and the rejected-move triggers that clear it, the `map-*` aliases, and the `here` / `where` tracker;
+  - anything under `test/mapper/`.
+  When unsure, run it. A new replay regression spec goes in `test/mapper/`; a new spec anywhere else goes at the top of `test/`, where `just test` picks it up.
 
 ## Session logs
 
@@ -55,7 +60,7 @@ When hand-editing the room graph with `sqlite3` (deleting/merging rooms), the DB
 - **Prefer merging over delete-and-re-walk** when a duplicate already exists. To merge by hand, faithfully replicate `TaDb.mergeRoomInto` (ta_db.lua) — don't improvise: move the provisional's outgoing edges with `INSERT OR IGNORE` (only ever *fill* a NULL stub on the target, never clobber a real edge), guard against self-loops (`from_id=into AND to_id=from` → NULL), repoint inbound edges (`UPDATE room_exits SET to_id=into WHERE to_id=from`), and carry `visits`/`description`/coords via `COALESCE`. Merge in dependency order (fold the leaf that others point *at* last).
 - **Follow `player_location`.** If a player stands in a room you delete/merge, repoint or NULL their `room_id` in the same transaction — nothing enforces the FK, so a dangling id just sits there.
 - **Verify reciprocity, not just row counts.** After the edit, confirm every edge has its reverse (`A --se--> B` implies `B --nw--> A`) and that no `to_id` points at a deleted id. A merge that leaves one-directional exits is still broken.
-- **Devices are entered by hand, and deleting one does not cascade.** There are ~20 in the game and they never change, so there is no capture alias — `devices` and `room_exits.sealed_by` are populated with SQL (see README.md "Devices"). Two traps. `PRAGMA foreign_keys` is off, so before `DELETE FROM devices WHERE id=X` you must clear `room_exits.sealed_by = X` and `devices.sealed_by = X` yourself or you leave exits pointing at an id that is gone (`test/devices_spec.lua` pins that this does not cascade, so it is deliberate). And a Seal goes ON an exit that already exists — `UPDATE room_exits SET sealed_by=...` silently changes 0 rows if that direction was never seeded by `ex`, so check the row count rather than assuming it took.
+- **Devices are entered by hand, and deleting one does not cascade.** There are ~20 in the game and they never change, so there is no capture alias — `devices` and `room_exits.sealed_by` are populated with SQL (see README.md "Devices"). Two traps. `PRAGMA foreign_keys` is off, so before `DELETE FROM devices WHERE id=X` you must clear `room_exits.sealed_by = X` and `devices.sealed_by = X` yourself or you leave exits pointing at an id that is gone (`test/mapper/devices_spec.lua` pins that this does not cascade, so it is deliberate). And a Seal goes ON an exit that already exists — `UPDATE room_exits SET sealed_by=...` silently changes 0 rows if that direction was never seeded by `ex`, so check the row count rather than assuming it took.
 - **Never add a column for whether a Device has been operated.** That is Device State (GLOSSARY.md): a fact about the current Reset, not about the map, and it is wrong by 4am. The same goes for "this door is open" on an exit — `ex` lists a Sealed exit, and its `to_id` stays whatever was walked.
 - **Coordinates are soft; topology is truth.** These rooms never sat on a real grid, so dead-reckoned `x/y/z` can be internally contradictory (e.g. `50 se→61` and `60 nw→61` disagreeing by +2). Fix and trust the exit graph; treat coords as a hint that can legitimately be inconsistent.
 

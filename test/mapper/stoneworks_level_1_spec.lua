@@ -22,7 +22,7 @@
 -- Description differs from the one just captured. Both groups collapsed into this
 -- one when it did.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
 -- Per-log, because a chain needs one list each. This log predates baud

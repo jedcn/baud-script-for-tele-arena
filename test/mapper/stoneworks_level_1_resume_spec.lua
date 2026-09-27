@@ -16,7 +16,7 @@
 -- map/shrine/stoneworks-1.txt move by move before it was frozen: all four new
 -- rooms sit on the boxes the drawing puts them on, and the last is `[!]`.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
 local RESUME = "logs/session-tojolias-2026-09-12T10-18-42.log"

@@ -16,7 +16,7 @@
 -- everywhere else, suppressed here because a chain was pending. Such a match now
 -- overrules the chain.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = { "logs/session-teekywiki-2026-09-26T16-13-38.log" }
 

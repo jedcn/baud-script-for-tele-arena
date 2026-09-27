@@ -26,8 +26,8 @@
 -- deferring is one duplicate room if a session stops on a held closure, and
 -- map-off says so.
 
-local replay = dofile("test/log_replay.lua")
-local fixture = dofile("test/desert_fixture.lua")
+local replay = dofile("test/mapper/log_replay.lua")
+local fixture = dofile("test/mapper/desert_fixture.lua")
 
 describe("The desert, the first loop", function()
 

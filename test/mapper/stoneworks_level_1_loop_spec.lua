@@ -32,7 +32,7 @@
 -- The assertions below are what a correct mapper produces, taken from
 -- map/shrine/stoneworks-1.txt.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = {
     "logs/focused-session-tojolias-2026-09-11T21-24-54.log",  -- the outer edge

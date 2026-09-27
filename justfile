@@ -3,20 +3,33 @@ BAUD_HOME := "~/src/baud"
 install:
     luarocks install busted
 
-# Both suites. Grep the tail for `0 fail` as well as busted's success line --
-# checking only one of them has hidden real failures before now.
+# The fast suites, run after every change: the Lua specs at the top of test/
+# (not test/mapper/) and bun. About 15 seconds. Grep the tail for `0 fail` as
+# well as busted's success line -- checking only one of them has hidden real
+# failures before now.
 #
 # Both always run, and the recipe fails if either did. Previously a busted
 # failure aborted the recipe and `bun test` never ran at all, so a red Lua suite
 # silently stopped the TypeScript one from being checked -- which is exactly when
 # you most want to know the rest still works.
+#
+# The glob is deliberately top-level only: a new spec file lands in the fast
+# suite unless it is put in test/mapper/ on purpose.
 test:
     #!/usr/bin/env bash
     set -uo pipefail
     rc=0
-    busted test/ || rc=1
+    busted test/*_spec.lua || rc=1
     bun test || rc=1
     exit $rc
+
+# The slow suite, about 14 minutes: the mapper replaying real session logs into
+# a real SQLite database and checking the room graph it built, plus the devices
+# schema. Slow because test/mapper/sqlite_db.lua starts one `sqlite3` process per
+# statement. Run it, as well as `just test`, when a change touches the mapper --
+# see CLAUDE.md "Testing" for what counts.
+test-mapper:
+    busted test/mapper/
 
 # How much of a level have we walked? Prints the SHRINE's own drawing with our
 # rooms marked on it, so it can be compared with map/shrine/*.txt at a glance --

@@ -15,7 +15,7 @@
 -- A closure is now held for up to three predicted rooms, and the third one here
 -- refutes it before anything is merged.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = {
     "logs/session-teekywiki-2026-09-25T21-07-06.log",   -- down to Level 3, map-area

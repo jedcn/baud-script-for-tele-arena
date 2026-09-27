@@ -28,9 +28,9 @@
 --     Both are real exits `ex` lists, and reading only the first sentence
 --     reported them as defects until this walk.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
-local fixture = dofile("test/desert_fixture.lua")
+local fixture = dofile("test/mapper/desert_fixture.lua")
 local LOGS = fixture.upTo(1)
 
 -- The strip as the shrine draws it (map/shrine/desert.txt, the top row and the

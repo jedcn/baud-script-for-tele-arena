@@ -24,7 +24,7 @@
 -- `just coverage stoneworks-level-2` compares against: 40 rooms, and the only
 -- unwalked exit left is the staircase down to level 3.
 
-local replay = dofile("test/log_replay.lua")
+local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = {
     "logs/session-tojolias-2026-09-13T19-34-24.log",  -- down the stairs, into [T2]
@@ -32,7 +32,7 @@ local LOGS = {
     "logs/session-tojolias-2026-09-13T19-57-35.log",  -- the loop, `say arok`, [v]
 }
 
--- What level 1 hands to this walk. See `opts.seed` in test/log_replay.lua for
+-- What level 1 hands to this walk. See `opts.seed` in test/mapper/log_replay.lua for
 -- why it is stated rather than replayed: the level 1 chain is ten logs long and
 -- asserts nothing about level 2.
 --

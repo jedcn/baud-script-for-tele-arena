@@ -12,7 +12,7 @@
 -- cascade on delete.
 
 local helper = require("test.test_helper")
-local SqliteDb = dofile("test/sqlite_db.lua")
+local SqliteDb = dofile("test/mapper/sqlite_db.lua")
 
 describe("the devices schema", function()
 

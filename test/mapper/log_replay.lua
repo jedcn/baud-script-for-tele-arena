@@ -12,7 +12,7 @@
 -- built, and the returned table reads it back as rooms, exits and stubs.
 
 local helper = require("test.test_helper")
-local SqliteDb = dofile("test/sqlite_db.lua")
+local SqliteDb = dofile("test/mapper/sqlite_db.lua")
 
 local M = {}
 
