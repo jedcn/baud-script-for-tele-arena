@@ -859,14 +859,14 @@
           "to": "stoneworks-level-6/stonework-corridor-201"
         },
         "w": {
-          "to": null,
+          "to": "stoneworks-level-6/stonework-corridor-225",
           "sealedBy": {
             "command": "pull lever",
             "room": "stoneworks-level-6/stonework-corridor-223"
           }
         }
       },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west. A very wide natural chasm blocks the passage to the west.",
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
       "layout": {
         "x": 4,
         "y": -10
@@ -928,7 +928,7 @@
       "name": "stonework corridor",
       "exits": {
         "e": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-corridor-224"
         },
         "w": {
           "to": "stoneworks-level-6/stonework-corridor-205"
@@ -1240,7 +1240,7 @@
           "to": "stoneworks-level-6/stonework-corridor-222"
         },
         "s": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-corridor-224"
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A small lever is partially concealed in a niche in the east wall. The corridor runs to the north and south.",
@@ -1249,12 +1249,50 @@
           "command": "pull lever",
           "effect": "seal",
           "repeats": "toggle",
-          "note": "Shrine Stoneworks 6 [L7]: \"Pull Lever to open East Chasm (EC)\". Seals stonework-corridor-202 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the east wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27): pulling it again closes the chasm, so only the first character through should pull it. The same is true of this level's other chasm lever, [L6]."
+          "note": "Shrine Stoneworks 6 [L7]: \"Pull Lever to open East Chasm (EC)\". Seals stonework-corridor-202 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the east wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27): pulling it again closes the chasm, so only the first character through should pull it. The same is true of this level's other chasm lever, [L6]. Pulled 2026-09-27: the chasm opened and 202 w led to stonework-corridor-225, whose e is the far side of the same chasm and carries the same Seal (that it blocks from the west too is assumed, not tested). The description carries the Seal state: open, 202 reads just \"The corridor runs to the east and west.\" -- the chasm sentence is gone -- which is what the stored description now says."
         }
       ],
       "layout": {
         "x": 10,
         "y": -8
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-224",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-223"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-206"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and west.",
+      "layout": {
+        "x": 11,
+        "y": -8
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-225",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-202",
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "stoneworks-level-6/stonework-corridor-223"
+          }
+        },
+        "w": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
+      "layout": {
+        "x": 3,
+        "y": -10
       }
     }
   ]
