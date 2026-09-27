@@ -13,12 +13,9 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 ## Testing
 
-- Run `just test` after every change to verify nothing is broken. It is the fast suite (~15s): `test/main_spec.lua` (which includes the mapper's unit tests, against a mocked DB) and bun.
-- **Also run `just test-mapper` when the change touches the mapper.** That is the mapper suite (~1s) in `test/mapper/`: whole session logs replayed into a real SQLite database, checking the room graph the mapper builds. It is what catches wrong loop closures, duplicate rooms and bad merges, which the mocked unit tests cannot. The mapper means:
-  - `ta_db.lua` (the room graph, fingerprints, merges, devices schema);
-  - in `main.lua`, anything that decides which room you are in or writes the map: the room-entry and `Exits:` handlers, the teleport / smoke / springboard / `push stone` triggers, the move queue (`pendingDirs`) and the rejected-move triggers that clear it, the `map-*` aliases, and the `here` / `where` tracker;
-  - anything under `test/mapper/`.
-  When unsure, run it. A new replay regression spec goes in `test/mapper/`; a new spec anywhere else goes at the top of `test/`, where `just test` picks it up.
+- Run `just test` after every change to verify nothing is broken (~15s). It runs every Lua spec and bun.
+- `test/main_spec.lua` holds the unit tests, including the mapper's, against a mocked DB. `test/mapper/` holds the mapper replays: whole session logs walked into a real SQLite database, checking the room graph the mapper builds -- what catches wrong loop closures, duplicate rooms and bad merges, which mocked unit tests cannot. A new replay regression spec goes in `test/mapper/`.
+- **A replay spec should replay only the part of a log it is about.** When the bug is late in a long session, freeze the map built before it into a seed file and replay only the window (`opts.seedFile`, `opts.from`/`opts.to` in `test/mapper/log_replay.lua`; `labyrinth_level_5_closure_spec.lua` is the worked example). Then check the slim spec still fails against `main.lua` from before the fix -- a fast spec that passes on the buggy code proves nothing.
 
 ## Session logs
 

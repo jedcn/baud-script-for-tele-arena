@@ -3,61 +3,25 @@ BAUD_HOME := "~/src/baud"
 install:
     luarocks install busted
 
-# The fast suites, run after every change: the Lua specs at the top of test/
-# (not test/mapper/) and bun. About 15 seconds. Grep the tail for `0 fail` as
-# well as busted's success line -- checking only one of them has hidden real
-# failures before now.
+# Every suite, run after every change: all the Lua specs, including the mapper
+# replays under test/mapper/, and bun. About 15 seconds. Grep the tail for
+# `0 fail` as well as busted's success line -- checking only one of them has
+# hidden real failures before now.
 #
 # Both always run, and the recipe fails if either did. Previously a busted
 # failure aborted the recipe and `bun test` never ran at all, so a red Lua suite
 # silently stopped the TypeScript one from being checked -- which is exactly when
 # you most want to know the rest still works.
 #
-# The glob is deliberately top-level only: a new spec file lands in the fast
-# suite unless it is put in test/mapper/ on purpose.
+# The mapper replays were split into a separate recipe for a while, when they
+# took up to 14 minutes. That was test/mapper/sqlite_db.lua starting a sqlite3
+# process per statement; it keeps one per database now, and they take a second.
 test:
     #!/usr/bin/env bash
     set -uo pipefail
     rc=0
-    busted test/*_spec.lua || rc=1
+    busted test/ || rc=1
     bun test || rc=1
-    exit $rc
-
-# The mapper suite, about a second: the mapper replaying real session logs into
-# a real SQLite database and checking the room graph it built, plus the devices
-# schema. It took minutes while test/mapper/sqlite_db.lua started one `sqlite3`
-# process per statement; it now keeps one per database. Run it, as well as
-# `just test`, when a change touches the mapper -- see CLAUDE.md "Testing" for
-# what counts.
-#
-# Each spec file runs as its own busted process, all at once. They cannot
-# interfere: every replay builds its own temp database (sqlite_db.install).
-# Output is collected per file and printed in a fixed order afterwards -- a
-# summary line each, and the whole output of any file that failed -- so it never
-# interleaves. The recipe fails if any file did.
-test-mapper:
-    #!/usr/bin/env bash
-    set -uo pipefail
-    out=$(mktemp -d)
-    specs=(test/mapper/*_spec.lua)
-    pids=()
-    for f in "${specs[@]}"; do
-        busted "$f" > "$out/$(basename "$f").out" 2>&1 &
-        pids+=($!)
-    done
-    rc=0
-    for i in "${!specs[@]}"; do
-        f=${specs[$i]}
-        log="$out/$(basename "$f").out"
-        if wait "${pids[$i]}"; then
-            printf '%-55s %s\n' "$f" "$(grep -o '[0-9]* successes.*' "$log")"
-        else
-            rc=1
-            echo "---- FAILED: $f"
-            cat "$log"
-        fi
-    done
-    rm -rf "$out"
     exit $rc
 
 # How much of a level have we walked? Prints the SHRINE's own drawing with our
