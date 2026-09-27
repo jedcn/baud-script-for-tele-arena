@@ -541,7 +541,11 @@ describe('map.html', () => {
     area.value = 'The Stoneworks';
     area.listeners.change[0]();
     expect(level.disabled).toBe(false);
-    expect(level.kids.map(o => o.textContent)).toEqual(['Level 1', 'Level 2', 'Level 3']);
+    // Every level exported so far, in order -- not a fixed list, which broke each
+    // time a new level of the stoneworks was walked.
+    const levels = level.kids.map(o => o.textContent);
+    expect(levels.length).toBeGreaterThan(1);
+    expect(levels).toEqual(levels.map((_, i) => `Level ${i + 1}`));
     expect(doc).toBeDefined();
   });
 
