@@ -211,7 +211,7 @@ describe('proseAgreement', () => {
     // third town's doorway: you arrive from the town square going east, and the
     // corridor does not count that as one of its exits.
     const f = proseAgreement(
-      [room(1, 'stonework-corridor-175', 'The corridor continues to the east.')],
+      [room(1, 'stonework-corridor-237', 'The corridor continues to the east.')],
       [{ from_id: 1, direction: 'e', to_id: null }, { from_id: 1, direction: 'w', to_id: 2 }]);
     expect(f.ok).toBe(true);
   });

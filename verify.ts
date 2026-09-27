@@ -462,8 +462,11 @@ export function proseDirections(description: string | null): string[] | null {
  * game's wording is right and so are our edges.
  */
 export const PROSE_EXCEPTIONS: Record<string, string> = {
-  'stonework-corridor-175': 'third town\'s doorway: entered from the town square'
-    + ' to the west, which the corridor does not count among its exits',
+  // Once third town's stonework-corridor-175, merged in 2026-09-27: it is the
+  // [*] room at the west end of Stoneworks Level 6, seen from the town side.
+  'stonework-corridor-237': 'third town\'s doorway: entered from the town square'
+    + ' to the west, which the corridor does not count among its exits when its'
+    + ' prose is the "stone in the north wall ... continues to the east" version',
 };
 
 /**
