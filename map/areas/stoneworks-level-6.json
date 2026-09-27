@@ -1337,14 +1337,14 @@
           "to": "stoneworks-level-6/stonework-corridor-226"
         },
         "w": {
-          "to": null,
+          "to": "stoneworks-level-6/stonework-corridor-237",
           "sealedBy": {
             "command": "pull lever",
             "room": "stoneworks-level-6/stonework-corridor-236"
           }
         }
       },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west. A very wide natural chasm blocks the passage to the west.",
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
       "layout": {
         "x": 0,
         "y": -10
@@ -1503,12 +1503,33 @@
           "command": "pull lever",
           "effect": "seal",
           "repeats": "toggle",
-          "note": "Shrine Stoneworks 6 [L6]: \"Pull Lever to open West Chasm (WC)\". Seals stonework-corridor-227 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the west wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27), like [L7]: pulling it again closes the chasm, so only the first character through should pull it."
+          "note": "Shrine Stoneworks 6 [L6]: \"Pull Lever to open West Chasm (WC)\". Seals stonework-corridor-227 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the west wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27), like [L7]: pulling it again closes the chasm, so only the first character through should pull it. Crossed 2026-09-27: 227 w leads to stonework-corridor-237 (the page's [*], beside Town 3), whose e is the far side of the same chasm and carries the same Seal (that it blocks from the west too is assumed, not tested)."
         }
       ],
       "layout": {
         "x": -3,
         "y": 3
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-237",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-227",
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "stoneworks-level-6/stonework-corridor-236"
+          }
+        },
+        "w": {
+          "to": "third-town/town-square"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
+      "layout": {
+        "x": -1,
+        "y": -10
       }
     }
   ]

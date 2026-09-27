@@ -8,7 +8,7 @@
       "name": "town square",
       "exits": {
         "e": {
-          "to": "third-town/stonework-corridor-175"
+          "to": "stoneworks-level-6/stonework-corridor-237"
         },
         "ne": {
           "to": "third-town/underground-plaza-2"
@@ -146,23 +146,6 @@
       "layout": {
         "x": 2,
         "y": 1
-      }
-    },
-    {
-      "id": "third-town/stonework-corridor-175",
-      "name": "stonework corridor",
-      "exits": {
-        "e": {
-          "to": null
-        },
-        "w": {
-          "to": "third-town/town-square"
-        }
-      },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A stone in the north wall appears to protrude from the wall slightly more than the others. The corridor continues to the east.",
-      "layout": {
-        "x": 1,
-        "y": 0
       }
     },
     {

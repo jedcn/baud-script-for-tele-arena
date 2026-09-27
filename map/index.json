@@ -219,7 +219,7 @@
     {
       "area": "stoneworks-level-6",
       "name": "The Stoneworks, Level 6",
-      "rooms": 86,
+      "rooms": 87,
       "file": "areas/stoneworks-level-6.json"
     },
     {
@@ -231,7 +231,7 @@
     {
       "area": "third-town",
       "name": "third-town",
-      "rooms": 14,
+      "rooms": 13,
       "file": "areas/third-town.json"
     },
     {
