@@ -541,7 +541,7 @@ describe('map.html', () => {
     area.value = 'The Stoneworks';
     area.listeners.change[0]();
     expect(level.disabled).toBe(false);
-    expect(level.kids.map(o => o.textContent)).toEqual(['Level 1', 'Level 2']);
+    expect(level.kids.map(o => o.textContent)).toEqual(['Level 1', 'Level 2', 'Level 3']);
     expect(doc).toBeDefined();
   });
 
