@@ -557,7 +557,7 @@
           "effect": "trap",
           "repeats": "once",
           "trapRoom": "stoneworks-level-2/stonework-corridor-56",
-          "note": "Shrine [L2]. Disarms the falling-rocks trap in stonework-corridor-56 (shrine [T2]), eight moves away at the other end of the level. The lever is in the description -- \"A small lever is partially concealed in a niche in the south wall\" (the [L1] lever is in the NORTH wall). Reply is a plain \"You pulled the lever.\" Verified 2026-09-13: trap fired on entry, lever pulled, trap did not fire on re-entry. NOT yet proven that the trap would have fired a second time had the lever been left alone -- the control needs a fresh Reset (enter, take the hit, step out and back in). repeats=once is assumed, not tested."
+          "note": "Shrine [L2]. Disarms the falling-rocks trap in stonework-corridor-56 (shrine [T2]), eight moves away at the other end of the level. The lever is in the description -- \"A small lever is partially concealed in a niche in the south wall\" (the [L1] lever is in the NORTH wall). Reply is a plain \"You pulled the lever.\" Verified 2026-09-13: trap fired on entry, lever pulled, trap did not fire on re-entry. Verified 2026-09-27: repeats=once, NOT toggle -- pulling the lever a second time does not re-arm the trap, so it is safe for every character to pull. NOT yet proven that the trap would have fired a second time had the lever been left alone -- the control needs a fresh Reset (enter, take the hit, step out and back in)."
         }
       ],
       "layout": {
@@ -701,7 +701,7 @@
       "name": "stonework corridor",
       "exits": {
         "d": {
-          "to": null
+          "to": "stoneworks-level-3/stonework-chamber-11"
         },
         "s": {
           "to": "stoneworks-level-2/stonework-chamber-10"
