@@ -116,7 +116,7 @@
           "to": "stoneworks-level-4/stonework-corridor-114"
         },
         "se": {
-          "to": null
+          "to": "stoneworks-level-4/stonework-corridor-132"
         },
         "sw": {
           "to": "stoneworks-level-4/stonework-corridor-116"
@@ -468,7 +468,7 @@
       "name": "stonework corridor",
       "exits": {
         "nw": {
-          "to": "stoneworks-level-4/stonework-corridor-133"
+          "to": "stoneworks-level-4/stonework-corridor-115"
         },
         "s": {
           "to": "stoneworks-level-4/stonework-corridor-131"
@@ -477,43 +477,6 @@
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south and northwest.",
       "layout": {
         "x": -9,
-        "y": 3
-      }
-    },
-    {
-      "id": "stoneworks-level-4/stonework-corridor-133",
-      "name": "stonework corridor",
-      "exits": {
-        "ne": {
-          "to": null
-        },
-        "se": {
-          "to": "stoneworks-level-4/stonework-corridor-132"
-        },
-        "sw": {
-          "to": "stoneworks-level-4/stonework-corridor-134"
-        }
-      },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northeast, southwest, and southeast.",
-      "layout": {
-        "x": -10,
-        "y": 4
-      }
-    },
-    {
-      "id": "stoneworks-level-4/stonework-corridor-134",
-      "name": "stonework corridor",
-      "exits": {
-        "ne": {
-          "to": "stoneworks-level-4/stonework-corridor-133"
-        },
-        "w": {
-          "to": null
-        }
-      },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the west and northeast.",
-      "layout": {
-        "x": -11,
         "y": 3
       }
     }
