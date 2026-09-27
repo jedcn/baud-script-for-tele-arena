@@ -1248,8 +1248,8 @@
         {
           "command": "pull lever",
           "effect": "seal",
-          "repeats": "once",
-          "note": "Shrine Stoneworks 6 [L7]: \"Pull Lever to open East Chasm (EC)\". Seals stonework-corridor-202 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the east wall.\" Named by the user 2026-09-27. repeats=once is assumed from the Stoneworks trap levers [L1]-[L5], not tested for this one."
+          "repeats": "toggle",
+          "note": "Shrine Stoneworks 6 [L7]: \"Pull Lever to open East Chasm (EC)\". Seals stonework-corridor-202 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the east wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27): pulling it again closes the chasm, so only the first character through should pull it. The same is true of this level's other chasm lever, [L6]."
         }
       ],
       "layout": {
