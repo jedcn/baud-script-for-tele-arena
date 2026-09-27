@@ -3525,6 +3525,69 @@ describe("World map triggers", function()
                 helper.simulateLine("You're in a labyrinth.")
                 assert.are_not.equal("known", taPackage.hereState)
             end)
+
+            -- The Level 4 tunnel's way back to the riddle room.
+            it("treats a flash of light the same way", function()
+                taPackage.currentRoomId = 3001              -- entrance to a tunnel
+                taPackage.currentRoom = "entrance to a tunnel"
+                smokeFrom(3001, 2892)                       -- the riddle room
+                helper.simulateLine("A sudden flash of light momentarily blinds you!")
+                helper.simulateLine("You're in a labyrinth.")
+                assert.are.equal(2892, taPackage.currentRoomId)
+                assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+            end)
+        end)
+
+        -- The Level 4 riddle's answer moves you, and the game glues the arrival
+        -- onto the answer line, as it does for `push stone`
+        -- (logs/session-teekywiki-2026-09-26T22-11-28.log, line 137).
+        describe("a riddle answer that teleports", function()
+            local ANSWER = "As the answer passes your lips, your surroundings fade...You're in a tunnel."
+
+            before_each(function()
+                taPackage.currentRoomId = 2892              -- the riddle room
+                taPackage.currentRoom = "labyrinth"
+                taPackage.here, taPackage.hereState = 2892, "known"
+            end)
+
+            it("lands on the Device's destination, with no exit linked", function()
+                helper.mockDbRows = function(sql, params)
+                    if string.find(sql, "FROM devices WHERE room_id", 1, true) and params[1] == 2892 then
+                        return { { dest_room_id = 3000 } }
+                    end
+                    return {}
+                end
+                helper.mockDbOneRow = function(sql)
+                    if string.find(sql, "SELECT name FROM rooms", 1, true) then
+                        return { name = "tunnel" }
+                    end
+                    return nil
+                end
+                helper.simulateLine(ANSWER)
+                assert.are.equal(3000, taPackage.currentRoomId)
+                assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
+                assert.is_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO room_exits (from_id, direction, to_id) VALUES (?, ?, ?)"))
+            end)
+
+            -- The first time through, before the Device is recorded: it must at
+            -- least leave the riddle room, so `map-area` files the new room and
+            -- not the riddle room into the new area.
+            it("leaves the riddle room when no Device says where it goes", function()
+                helper.mockDbOneRow = function(sql)
+                    if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                        return { id = 3000 }
+                    end
+                    return nil
+                end
+                helper.mockDbRows = function() return {} end
+                taPackage.pendingDirs = { "n" }
+                helper.simulateLine(ANSWER)
+                assert.are.equal(3000, taPackage.currentRoomId)
+                assert.are.equal("tunnel", taPackage.currentRoom)
+                assert.are.same({ "n" }, taPackage.pendingDirs)   -- not a compass move
+                assert.is_nil(taPackage.coord)
+                assert.are_not.equal("known", taPackage.hereState)
+            end)
         end)
 
         -- The labyrinth's Level 3 springboards ([A], [B], [C]) throw you up

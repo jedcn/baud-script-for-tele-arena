@@ -557,6 +557,17 @@ function TaDb.teleportOnEntry(roomId)
     return row and row.dest_room_id or nil
 end
 
+-- Where the teleport you WORK in this room goes -- a spoken riddle answer, a
+-- stone -- as opposed to one that fires on walking in. Only when there is
+-- exactly one: two would need the command that was sent to tell them apart, and
+-- no room has two.
+function TaDb.teleportByCommand(roomId)
+    local rows = db:query(
+        "SELECT dest_room_id FROM devices WHERE room_id = ? AND effect = 'teleport'"
+        .. " AND command <> '(on entry)' AND dest_room_id IS NOT NULL", roomId) or {}
+    return #rows == 1 and rows[1].dest_room_id or nil
+end
+
 -- Coordinate-based identity: the one room in `areaId` with this display name
 -- sitting at exactly (x, y, z), excluding `excludeId`. Returns its id, or nil
 -- when nothing matches or more than one does (ambiguous — don't guess). This is

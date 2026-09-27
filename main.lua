@@ -1662,7 +1662,8 @@ local function handleRoomEntryUnlessLooking(matches)
     local smoke = taPackage.pendingSmoke
     if smoke then
         taPackage.pendingSmoke = nil
-        local dest = smoke.from and taPackage.db.teleportOnEntry(smoke.from) or nil
+        local lookup = smoke.lookup or taPackage.db.teleportOnEntry
+        local dest = smoke.from and lookup(smoke.from) or nil
         if dest and taPackage.db.roomName(dest) ~= normalizeRoomName(matches[2]) then
             dest = nil
         end
@@ -1670,7 +1671,7 @@ local function handleRoomEntryUnlessLooking(matches)
         taPackage.teleportDest = dest
         taPackage.coordLost = true
         if not dest and taPackage.hereState ~= "lost" then
-            taPackage.loseHere("the smoke moved you somewhere no Device records")
+            taPackage.loseHere((smoke.what or "the smoke") .. " moved you somewhere no Device records")
         end
         handleRoomEntry(matches)
         if dest and not taPackage.mapping then taPackage.setHere(dest) end
@@ -2474,11 +2475,40 @@ createTrigger("^You push the protruding stone into it's recess\\.\\.\\.You're in
 -- the next brief as a Teleport from the room just entered; the brief handler
 -- resolves it. (Anchored, so "X has just appeared in a puff of thick black
 -- smoke!" about someone else arriving does not match.)
-createTrigger("^A cloud of thick black smoke suddenly engulfs you!$", function()
-    taPackage.pendingSmoke = {
-        from = (taPackage.mapping and taPackage.currentRoomId) or taPackage.here,
-    }
-end, { type = "regex" })
+--
+-- The labyrinth's Level 4 tunnel does the same with a flash instead of smoke:
+-- walk `s` from the tunnel into "the entrance to a tunnel", and "A sudden flash
+-- of light momentarily blinds you!" is followed by the riddle room's brief
+-- (logs/session-teekywiki-2026-09-26T22-11-28.log, line 159).
+for _, line in ipairs({
+    { pattern = "^A cloud of thick black smoke suddenly engulfs you!$", what = "the smoke" },
+    { pattern = "^A sudden flash of light momentarily blinds you!$", what = "the flash" },
+}) do
+    createTrigger(line.pattern, function()
+        taPackage.pendingSmoke = {
+            from = (taPackage.mapping and taPackage.currentRoomId) or taPackage.here,
+            what = line.what,
+        }
+    end, { type = "regex" })
+end
+
+-- The right answer to a riddle can move you, and like `push stone` the game
+-- glues the arrival onto the answer line, so `^You're in ` never sees it:
+-- "As the answer passes your lips, your surroundings fade...You're in a tunnel."
+-- (logs/session-teekywiki-2026-09-26T22-11-28.log, line 137, the labyrinth's
+-- Level 4 riddle). Unhandled, the mapper stayed on the riddle room, and the
+-- `map-area tunnels` that followed re-filed the riddle room into the new area.
+-- It is a Teleport from the room the answer was spoken in; a `teleport` Device
+-- there, worked by a command, says where it lands.
+createTrigger("^As the answer passes your lips, your surroundings fade\\.\\.\\.You're in (.+)\\.$",
+    function(matches)
+        taPackage.pendingSmoke = {
+            from = (taPackage.mapping and taPackage.currentRoomId) or taPackage.here,
+            what = "the riddle's answer",
+            lookup = taPackage.db.teleportByCommand,
+        }
+        handleRoomEntryUnlessLooking(matches)
+    end, { type = "regex" })
 
 -- The labyrinth's Level 3 springboards ([A], [B], [C]) throw you up into Level 2
 -- the moment you walk in, and Level 2 is dark: what follows is "It's too dark to
