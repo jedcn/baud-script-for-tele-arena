@@ -207,7 +207,7 @@
           "to": "stoneworks-level-4/stonework-corridor-118"
         },
         "s": {
-          "to": null
+          "to": "stoneworks-level-4/stonework-corridor-133"
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south and northwest.",
@@ -478,6 +478,23 @@
       "layout": {
         "x": -9,
         "y": 3
+      }
+    },
+    {
+      "id": "stoneworks-level-4/stonework-corridor-133",
+      "name": "stonework corridor",
+      "exits": {
+        "d": {
+          "to": "stoneworks-level-5/stonework-chamber-19"
+        },
+        "n": {
+          "to": "stoneworks-level-4/stonework-corridor-119"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusual designs and are of very fine craftsmanship. The corridor continues to the north. There is a stone staircase here leading downward.",
+      "layout": {
+        "x": -9,
+        "y": -2
       }
     }
   ]
