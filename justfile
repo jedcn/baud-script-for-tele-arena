@@ -23,13 +23,41 @@ test:
     bun test || rc=1
     exit $rc
 
-# The slow suite, about 6 minutes: the mapper replaying real session logs into
+# The slow suite: the mapper replaying real session logs into
 # a real SQLite database and checking the room graph it built, plus the devices
 # schema. Slow because test/mapper/sqlite_db.lua starts one `sqlite3` process per
 # statement. Run it, as well as `just test`, when a change touches the mapper --
 # see CLAUDE.md "Testing" for what counts.
+#
+# Each spec file runs as its own busted process, all at once. They cannot
+# interfere: every replay builds its own temp database (sqlite_db.install).
+# Output is collected per file and printed in a fixed order afterwards -- a
+# summary line each, and the whole output of any file that failed -- so it never
+# interleaves. The recipe fails if any file did.
 test-mapper:
-    busted test/mapper/
+    #!/usr/bin/env bash
+    set -uo pipefail
+    out=$(mktemp -d)
+    specs=(test/mapper/*_spec.lua)
+    pids=()
+    for f in "${specs[@]}"; do
+        busted "$f" > "$out/$(basename "$f").out" 2>&1 &
+        pids+=($!)
+    done
+    rc=0
+    for i in "${!specs[@]}"; do
+        f=${specs[$i]}
+        log="$out/$(basename "$f").out"
+        if wait "${pids[$i]}"; then
+            printf '%-55s %s\n' "$f" "$(grep -o '[0-9]* successes.*' "$log")"
+        else
+            rc=1
+            echo "---- FAILED: $f"
+            cat "$log"
+        fi
+    done
+    rm -rf "$out"
+    exit $rc
 
 # How much of a level have we walked? Prints the SHRINE's own drawing with our
 # rooms marked on it, so it can be compared with map/shrine/*.txt at a glance --

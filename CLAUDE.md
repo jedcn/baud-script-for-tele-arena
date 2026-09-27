@@ -14,7 +14,7 @@ What is more: we have control over baud. This means that if we are bumping into 
 ## Testing
 
 - Run `just test` after every change to verify nothing is broken. It is the fast suite (~15s): `test/main_spec.lua` (which includes the mapper's unit tests, against a mocked DB) and bun.
-- **Also run `just test-mapper` when the change touches the mapper.** That is the slow suite (~6 min) in `test/mapper/`: whole session logs replayed into a real SQLite database, checking the room graph the mapper builds. It is what catches wrong loop closures, duplicate rooms and bad merges, which the mocked unit tests cannot. The mapper means:
+- **Also run `just test-mapper` when the change touches the mapper.** That is the slow suite (~1.5 min) in `test/mapper/`: whole session logs replayed into a real SQLite database, checking the room graph the mapper builds. It is what catches wrong loop closures, duplicate rooms and bad merges, which the mocked unit tests cannot. The mapper means:
   - `ta_db.lua` (the room graph, fingerprints, merges, devices schema);
   - in `main.lua`, anything that decides which room you are in or writes the map: the room-entry and `Exits:` handlers, the teleport / smoke / springboard / `push stone` triggers, the move queue (`pendingDirs`) and the rejected-move triggers that clear it, the `map-*` aliases, and the `here` / `where` tracker;
   - anything under `test/mapper/`.
