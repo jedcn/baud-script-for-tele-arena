@@ -23,11 +23,12 @@ test:
     bun test || rc=1
     exit $rc
 
-# The slow suite: the mapper replaying real session logs into
+# The mapper suite, about a second: the mapper replaying real session logs into
 # a real SQLite database and checking the room graph it built, plus the devices
-# schema. Slow because test/mapper/sqlite_db.lua starts one `sqlite3` process per
-# statement. Run it, as well as `just test`, when a change touches the mapper --
-# see CLAUDE.md "Testing" for what counts.
+# schema. It took minutes while test/mapper/sqlite_db.lua started one `sqlite3`
+# process per statement; it now keeps one per database. Run it, as well as
+# `just test`, when a change touches the mapper -- see CLAUDE.md "Testing" for
+# what counts.
 #
 # Each spec file runs as its own busted process, all at once. They cannot
 # interfere: every replay builds its own temp database (sqlite_db.install).

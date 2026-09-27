@@ -20,8 +20,8 @@
 -- The binding is the `sqlite3` CLI, not a LuaRocks C extension: there is no
 -- SQLite binding for the Lua 5.5 this repo runs, and `sqlite3` is already a
 -- hard requirement (every DB-cleanup recipe in CLAUDE.md and `just db-snapshot`
--- shell out to it). Cost: one process per statement. A 25-room walk is ~400
--- statements, which is seconds, not minutes.
+-- shell out to it). It is driven as one long-lived process per database; see
+-- `connect` below for why, and for how that is kept from hanging.
 
 local M = {}
 
@@ -73,22 +73,97 @@ local function coerce(s)
     return s
 end
 
+-- os.tmpname() CREATES the file it names, and only the "-tag" sibling is ever
+-- cleaned up -- so remove the base at once. Keeping it leaked one empty file per
+-- call, and when this helper called it once per statement that came to 1.5
+-- million files in /tmp.
 local function tmpname(tag)
-    return os.tmpname() .. "-" .. tag
+    local base = os.tmpname()
+    os.remove(base)
+    return base .. "-" .. tag
 end
 
--- Run `script` (a full set of dot-commands plus SQL) and return its stdout.
--- Piped through a file rather than the shell so no SQL is ever quoted twice.
+-- One long-lived `sqlite3` per database, spoken to over two named pipes.
+--
+-- This used to start a fresh `sqlite3` for every statement, and starting the
+-- process was nearly all the cost: ~6.7ms each, against well under 1ms for the
+-- SQL, and a replay issues tens of thousands of statements. The labyrinth
+-- Level 5 spec alone once started 74,322 of them.
+--
+-- The protocol: write the script, then `.print <MARK>`, and read lines until
+-- MARK comes back. sqlite3 flushes after every command it reads from a pipe, and
+-- it prints errors ("Parse error near line N: ...") and carries on rather than
+-- exiting, since -bail is off -- so every script, good or bad, ends with MARK.
+-- stderr is merged into the reply pipe so errors arrive in order with the rows.
+--
+-- The ways this can go wrong, and what stops each:
+--   * a script sqlite3 thinks is unfinished (an unterminated string literal)
+--     would swallow the .print as more SQL and never answer -- a hang, not a
+--     failure. So an odd number of single quotes is refused before sending.
+--   * sqlite3 dying mid-spec: the read sees end-of-file and raises, instead of
+--     waiting forever.
+--   * busted dying mid-spec: the write end of the request pipe closes with the
+--     Lua process, sqlite3 reads end-of-file and exits, so no process outlives
+--     the run. Only the two empty pipe files are left in the temp directory.
+local MARK = "<<END-OF-REPLY>>"
+local conns = {}
+
+local function connect(dbPath)
+    local c = conns[dbPath]
+    if c then return c end
+    local req, rep = dbPath .. "-req", dbPath .. "-rep"
+    os.remove(req)
+    os.remove(rep)
+    assert(os.execute("mkfifo " .. req .. " " .. rep), "mkfifo failed")
+    -- The shell opens `req` for reading, then `rep` for writing; we open them in
+    -- the same order, so each open meets its partner instead of deadlocking.
+    assert(os.execute("sqlite3 -batch " .. dbPath .. " < " .. req .. " > " .. rep .. " 2>&1 &"))
+    c = {
+        req = req,
+        rep = rep,
+        w = assert(io.open(req, "w")),
+        r = assert(io.open(rep, "r")),
+    }
+    conns[dbPath] = c
+    return c
+end
+
+local function disconnect(dbPath)
+    local c = conns[dbPath]
+    if not c then return end
+    conns[dbPath] = nil
+    c.w:write(".quit\n")
+    c.w:close()
+    c.r:read("a")   -- wait for sqlite3 to close its end, so it has exited
+    c.r:close()
+    os.remove(c.req)
+    os.remove(c.rep)
+end
+
+-- Run `script` (a full set of dot-commands plus SQL) and return its output,
+-- stdout and stderr together, exactly as a one-shot `sqlite3 < script` printed.
 local function runScript(dbPath, script)
-    local cmdPath = tmpname("cmd.sql")
-    local f = assert(io.open(cmdPath, "w"))
-    f:write(script)
-    f:close()
-    local pipe = assert(io.popen("sqlite3 " .. dbPath .. " < " .. cmdPath .. " 2>&1", "r"))
-    local out = pipe:read("a")
-    pipe:close()
-    os.remove(cmdPath)
-    return out
+    -- Whole-line comments do not count: a seed file's header may say
+    -- "labyrinth-104's". Only whole lines, because a `--` mid-line may sit inside
+    -- a description's string literal.
+    local _, quotes = ("\n" .. script):gsub("\n%s*%-%-[^\n]*", "\n"):gsub("'", "")
+    if quotes % 2 == 1 then
+        error("unbalanced quote; sqlite3 would wait for the rest of it:\n" .. script)
+    end
+    local c = connect(dbPath)
+    c.w:write(script, "\n.print ", MARK, "\n")
+    c.w:flush()
+    local lines = {}
+    while true do
+        local line = c.r:read("l")
+        if line == nil then
+            error("sqlite3 exited mid-reply to:\n" .. script .. "\n" .. table.concat(lines, "\n"))
+        end
+        if line == MARK then break end
+        lines[#lines + 1] = line
+    end
+    if #lines == 0 then return "" end
+    return table.concat(lines, "\n") .. "\n"
 end
 
 local function makeDb(dbPath, state)
@@ -96,9 +171,10 @@ local function makeDb(dbPath, state)
 
     function api:execute(sql, ...)
         local stmt = bind(sql, { ... })
-        -- changes() and last_insert_rowid() are per-connection, and this binding
-        -- opens a connection per statement -- so both are read inside the same
-        -- process as the write that set them, and cached for the queryOne below.
+        -- changes() and last_insert_rowid() are read in the same script as the
+        -- write that set them, and the rowid cached for the query below. (That
+        -- was essential when every script was its own connection; it is kept so
+        -- the move to one connection changed nothing else.)
         local out = runScript(dbPath,
             ".headers off\n.mode list\n" .. stmt .. ";\n"
             .. "SELECT 'CHANGES'||changes()||'ROWID'||last_insert_rowid();\n")
@@ -135,7 +211,9 @@ local function makeDb(dbPath, state)
             if line ~= "" then lines[#lines + 1] = line end
         end
         if #lines == 0 then return {} end
-        if out:find("^Error") or out:find("\nError") then
+        if out:find("^Error") or out:find("\nError")
+            or out:find("^Parse error") or out:find("\nParse error")
+            or out:find("^Runtime error") or out:find("\nRuntime error") then
             error("sqlite3 failed for: " .. stmt .. "\n" .. out)
         end
         local cols = {}
@@ -195,6 +273,7 @@ function M.install()
         end
     end
     function handle.remove()
+        disconnect(dbPath)
         for _, suffix in ipairs({ "", "-wal", "-shm" }) do
             os.remove(dbPath .. suffix)
         end
