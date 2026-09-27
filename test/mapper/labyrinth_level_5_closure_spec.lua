@@ -18,28 +18,35 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local LOGS = { "logs/session-teekywiki-2026-09-26T16-13-38.log" }
+local LOG = "logs/session-teekywiki-2026-09-26T16-13-38.log"
 
--- Level 5's rooms were numbered from 203 because the levels above held
--- `labyrinth` .. `labyrinth-202`; inert stand-ins keep that numbering, so the
--- log's `map-here labyrinth-204` names the right room.
-local function seed()
-    local out = { "INSERT INTO areas (slug, name) VALUES ('labyrinth-level-1', 'The Labyrinth, Level 1')" }
-    local L1 = "(SELECT id FROM areas WHERE slug = 'labyrinth-level-1')"
-    out[#out + 1] = "INSERT INTO rooms (slug, name, area_id) VALUES ('labyrinth', 'labyrinth', " .. L1 .. ")"
-    for i = 1, 202 do
-        out[#out + 1] = "INSERT INTO rooms (slug, name, area_id) VALUES ('labyrinth-" .. i
-            .. "', 'labyrinth', " .. L1 .. ")"
-    end
-    return out
-end
+-- The walk above happens at line 4148 of a 4,547-line session. Replaying the
+-- 4,147 lines before it took eight minutes (74,322 sqlite3 processes) and did
+-- nothing but build the Level 5 map the walk runs into. So that map is frozen
+-- instead, and only the walk is replayed.
+--
+-- labyrinth_level_5_at_line_4147.sql is exactly what a replay of lines 1-4147
+-- leaves in the database, less the 203 inert Level 1 stand-ins that only kept
+-- the slugs numbered as in the real session. At that line mapping is on, the
+-- mapper stands in labyrinth-289 at (5,6,0), and no closure is held -- which is
+-- all `map-here labyrinth-289` needs to reproduce.
+--
+-- Regenerate it only if a change to the mapper alters what it builds BEFORE
+-- line 4148: replay the log with `{ to = 4147 }` and the old stand-in seed (see
+-- git history of this file), then dump areas, the non-stand-in rooms and every
+-- room_exits row with `sqlite3 -header <db> ".mode insert <table>" ...`.
+local SEED = "test/mapper/labyrinth_level_5_at_line_4147.sql"
 
 describe("The labyrinth, Level 5: a closure that ran out of evidence", function()
 
     local g
 
     setup(function()
-        g = replay.replayChain(LOGS, { seed = seed() })
+        g = replay.replayChain({ LOG }, {
+            seedFile = SEED,
+            setup = { { "map-here labyrinth-289" } },
+            from = 4148,
+        })
     end)
 
     teardown(function()

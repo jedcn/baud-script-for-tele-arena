@@ -89,6 +89,16 @@ end
 --
 -- `opts.stopAfter`, if set, stops feeding once that many server lines have gone
 -- through, for tests that want the graph mid-walk.
+--
+-- `opts.from` and `opts.to` replay only that window of log lines (1-based,
+-- inclusive, numbered as in the raw file -- `clean` removes no newlines). With
+-- `opts.seedFile` standing in for everything before `from`, a regression that
+-- happens 4,000 lines into a session costs the forty lines it happens in rather
+-- than the 4,000 that build the map it happens on.
+--
+-- `opts.seedFile` is a file of SQL loaded into the fresh database in ONE sqlite3
+-- call, after the schema exists. `opts.seed` pays a process per statement, which
+-- is fine for a handful of rows and ruinous for a whole area.
 function M.replay(path, opts)
     return M.replayChain({ path }, opts)
 end
@@ -123,6 +133,7 @@ function M.replayChain(paths, opts)
         -- Seeded after main.lua, which is what creates the schema, and before
         -- setup, which may name a seeded room.
         if i == 1 then
+            if opts.seedFile then db.load(opts.seedFile) end
             for _, sql in ipairs(opts.seed or {}) do db.exec(sql) end
         end
         -- Hand edits made to the real database between two sessions, so a later
@@ -151,8 +162,12 @@ function M.replayChain(paths, opts)
         -- only trace of the move and has to run as a command.
         local records = buf:find("\n%$ ") ~= nil or buf:find("^%$ ") ~= nil
 
+        local lineNo = 0
         for line in (buf .. "\n"):gmatch("([^\n]*)\n") do
+            lineNo = lineNo + 1
+            if opts.to and lineNo > opts.to then break end
             if opts.stopAfter and fed >= opts.stopAfter then break end
+            if opts.from and lineNo < opts.from then goto continue end
             local kind, text = classify(line)
             if kind == "server" then
                 helper.simulateLine(text)
@@ -169,6 +184,7 @@ function M.replayChain(paths, opts)
                 runCommand((opts.rewrite or {})[text] or text)
                 aliased = aliased + 1
             end
+            ::continue::
         end
     end
 

@@ -186,6 +186,14 @@ function M.install()
     function handle.exec(sql)
         return makeDb(dbPath, state):execute(sql)
     end
+    -- A whole file of SQL in one process: a seeded area is hundreds of rows, and
+    -- one process per row is what made the replays slow in the first place.
+    function handle.load(sqlPath)
+        local out = runScript(dbPath, assert(io.open(sqlPath, "r")):read("a"))
+        if out:find("Error", 1, true) or out:find("error", 1, true) then
+            error("sqlite3 rejected " .. sqlPath .. ":\n" .. out)
+        end
+    end
     function handle.remove()
         for _, suffix in ipairs({ "", "-wal", "-shm" }) do
             os.remove(dbPath .. suffix)

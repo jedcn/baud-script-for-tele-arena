@@ -23,7 +23,7 @@ test:
     bun test || rc=1
     exit $rc
 
-# The slow suite, about 14 minutes: the mapper replaying real session logs into
+# The slow suite, about 6 minutes: the mapper replaying real session logs into
 # a real SQLite database and checking the room graph it built, plus the devices
 # schema. Slow because test/mapper/sqlite_db.lua starts one `sqlite3` process per
 # statement. Run it, as well as `just test`, when a change touches the mapper --
