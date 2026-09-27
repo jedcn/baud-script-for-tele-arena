@@ -213,8 +213,14 @@
     {
       "area": "stoneworks-level-5",
       "name": "The Stoneworks, Level 5",
-      "rooms": 21,
+      "rooms": 25,
       "file": "areas/stoneworks-level-5.json"
+    },
+    {
+      "area": "stoneworks-level-6",
+      "name": "The Stoneworks, Level 6",
+      "rooms": 72,
+      "file": "areas/stoneworks-level-6.json"
     },
     {
       "area": "swamp",
