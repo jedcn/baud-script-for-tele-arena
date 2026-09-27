@@ -598,7 +598,7 @@
           "to": "stoneworks-level-6/stonework-corridor-189"
         },
         "w": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-corridor-228"
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south, east, and west.",
@@ -1286,13 +1286,229 @@
           }
         },
         "w": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-chamber-27"
         }
       },
       "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
       "layout": {
         "x": 3,
         "y": -10
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-chamber-27",
+      "name": "stonework chamber",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-225"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-226"
+        }
+      },
+      "description": "You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. The only visible exits are east and west through stone archways.",
+      "layout": {
+        "x": 2,
+        "y": -10
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-226",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-chamber-27"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-227"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
+      "layout": {
+        "x": 1,
+        "y": -10
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-227",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-226"
+        },
+        "w": {
+          "to": null,
+          "sealedBy": {
+            "command": "pull lever",
+            "room": "stoneworks-level-6/stonework-corridor-236"
+          }
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west. A very wide natural chasm blocks the passage to the west.",
+      "layout": {
+        "x": 0,
+        "y": -10
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-228",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-188"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-229"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
+      "layout": {
+        "x": -1,
+        "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-229",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-228"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-230"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the east and west.",
+      "layout": {
+        "x": -2,
+        "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-230",
+      "name": "stonework corridor",
+      "exits": {
+        "e": {
+          "to": "stoneworks-level-6/stonework-corridor-229"
+        },
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-231"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and east.",
+      "layout": {
+        "x": -3,
+        "y": -3
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-231",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-232"
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-230"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": -3,
+        "y": -2
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-232",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-233"
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-231"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": -3,
+        "y": -1
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-233",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-234"
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-232"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": -3,
+        "y": 0
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-234",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-235"
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-233"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": -3,
+        "y": 1
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-235",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": "stoneworks-level-6/stonework-corridor-236"
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-234"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and south.",
+      "layout": {
+        "x": -3,
+        "y": 2
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-236",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-235"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. A small lever is partially concealed in a niche in the west wall. The corridor runs to the north and south.",
+      "devices": [
+        {
+          "command": "pull lever",
+          "effect": "seal",
+          "repeats": "toggle",
+          "note": "Shrine Stoneworks 6 [L6]: \"Pull Lever to open West Chasm (WC)\". Seals stonework-corridor-227 w, whose description reads \"A very wide natural chasm blocks the passage to the west.\" Shut, moving w answers \"The wide chasm prevents your exit in that direction.\" while ex still lists w. The lever is in the description -- \"A small lever is partially concealed in a niche in the west wall.\" Named by the user 2026-09-27. Toggles, per the user (2026-09-27), like [L7]: pulling it again closes the chasm, so only the first character through should pull it."
+        }
+      ],
+      "layout": {
+        "x": -3,
+        "y": 3
       }
     }
   ]
