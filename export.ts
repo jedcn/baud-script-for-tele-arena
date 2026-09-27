@@ -115,6 +115,17 @@ export function buildArea(
   return { area: areaSlug, name: areaName, src: 'db-export', rooms: out };
 }
 
+// The index after exporting `fresh`. A full export (`wanted` empty) is the whole
+// truth. A partial one only knows about the areas it was asked for, so every
+// other entry is carried over from the index already on disk -- writing `fresh`
+// alone would drop them all off map.html.
+export function mergeIndex(existing: Row[], fresh: Row[], wanted: string[]): Row[] {
+  if (wanted.length === 0) return fresh;
+  return [...existing.filter(e => !wanted.includes(e.area)), ...fresh]
+    // Byte order, the same as the full export's `ORDER BY slug`.
+    .sort((a, b) => (a.area < b.area ? -1 : a.area > b.area ? 1 : 0));
+}
+
 if (import.meta.main) {
   if (!existsSync('tele-arena.db')) { console.error('export: no tele-arena.db here.'); process.exit(1); }
   const db = new Database('tele-arena.db');
@@ -151,7 +162,10 @@ if (import.meta.main) {
     index.push({ area: a.slug, name: a.name, rooms: area.rooms.length, file: `areas/${a.slug}.json` });
     console.log(`  ${a.slug.padEnd(24)} ${area.rooms.length} rooms`);
   }
-  await Bun.write('map/index.json', JSON.stringify({ areas: index }, null, 2) + '\n');
+  const existing = existsSync('map/index.json')
+    ? (JSON.parse(await Bun.file('map/index.json').text()).areas as Row[]) : [];
+  await Bun.write('map/index.json',
+    JSON.stringify({ areas: mergeIndex(existing, index, wanted) }, null, 2) + '\n');
 
   // Where each character was last seen, for the "you are here" mark on the map.
   // Its own file, and an untracked one, because this is not a map fact: it

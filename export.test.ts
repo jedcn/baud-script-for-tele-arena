@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { buildArea, roomId } from './export';
+import { buildArea, mergeIndex, roomId } from './export';
 
 const ids = new Map([[1, 'first-town/north-plaza'], [2, 'first-town/arena'],
                      [3, 'first-dungeon-level-1/dungeon-entrance']]);
@@ -69,5 +69,35 @@ describe('buildArea', () => {
   it('refuses an exit pointing at a room it cannot name', () => {
     expect(() => buildArea('first-town', 'First Town', rooms,
       [{ from_id: 1, direction: 'n', to_id: 999 }], [], [], ids)).toThrow(/unknown room 999/);
+  });
+});
+
+describe('mergeIndex', () => {
+  const entry = (area: string, rooms: number) =>
+    ({ area, name: area, rooms, file: `areas/${area}.json` });
+
+  // Regression: `bun export.ts <slug>` wrote an index holding only <slug>, which
+  // took every other area off map.html until a full export put them back.
+  it('keeps the areas a partial export did not touch', () => {
+    const old = [entry('desert', 40), entry('stoneworks-level-3', 28)];
+    expect(mergeIndex(old, [entry('stoneworks-level-3', 29)], ['stoneworks-level-3']))
+      .toEqual([entry('desert', 40), entry('stoneworks-level-3', 29)]);
+  });
+
+  it('adds a newly exported area in slug order', () => {
+    const old = [entry('desert', 40), entry('swamp', 12)];
+    expect(mergeIndex(old, [entry('stoneworks-level-4', 5)], ['stoneworks-level-4']).map(e => e.area))
+      .toEqual(['desert', 'stoneworks-level-4', 'swamp']);
+  });
+
+  // A requested area with no rooms left exports nothing, so its stale entry goes.
+  it('drops a requested area that no longer has rooms', () => {
+    expect(mergeIndex([entry('desert', 40), entry('gone', 3)], [], ['gone']))
+      .toEqual([entry('desert', 40)]);
+  });
+
+  it('is the fresh index outright on a full export', () => {
+    expect(mergeIndex([entry('gone', 3)], [entry('desert', 40)], []))
+      .toEqual([entry('desert', 40)]);
   });
 });
