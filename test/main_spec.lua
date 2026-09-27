@@ -5027,6 +5027,42 @@ describe("World map triggers", function()
                 assert.are.equal("lost", taPackage.hereState)
             end)
 
+            -- The look's `Exits:` line ends the description capture BEFORE this
+            -- check runs, so the check alone came too late: on 2026-09-27 it said
+            -- "Nothing was written" while third town's stonework-corridor-175 had
+            -- just been given a Stoneworks Level 4 description
+            -- (logs/session-teekywiki-2026-09-27T18-16-45.log, line 3645).
+            it("does not file the look's description onto it either", function()
+                knownRoom({ "e", "w" })
+                helper.simulateLine("look")
+                helper.simulateLine("You are standing in a corridor that runs north and southwest.")
+                helper.simulateLine("Exits: n,sw.")
+                assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET description"))
+                assert.is_false(taPackage.mapping)
+            end)
+
+            it("still files the description when `ex` only adds exits", function()
+                knownRoom({ "n", "s" })
+                helper.simulateLine("look")
+                helper.simulateLine("You are standing in a cave.")
+                helper.simulateLine("Exits: n,s,e.")
+                local desc = helper.findDbCall("execute", "UPDATE rooms SET description")
+                assert.is_not_nil(desc)
+                assert.are.equal(972, desc.params[2])
+            end)
+
+            -- Once the check has turned mapping off, currentRoomId still names the
+            -- room we are NOT in, so the next `look` would write onto it all over
+            -- again. With mapping off nothing says where we are.
+            it("files no description at all while mapping is off", function()
+                knownRoom({ "n", "s" })
+                taPackage.mapping = false
+                helper.simulateLine("look")
+                helper.simulateLine("You are standing in a cave.")
+                helper.simulateLine("Exits: n,s.")
+                assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET description"))
+            end)
+
             it("carries on when `ex` only adds exits we had not recorded", function()
                 -- Older walks did not always seed stubs, so a room can have fewer
                 -- exits on the map than in the game. That is a gap, not a

@@ -960,10 +960,34 @@ end, { type = "regex" })
 --
 -- taPackage fields rather than locals: ta_nav.lua is a separate chunk with its
 -- own 200-local budget and navSend has to be able to call the abandon.
+--
+-- Only while mapping. With mapping off, currentRoomId is wherever mapping last
+-- stopped -- after the Exits handler's "is this the room we think?" check turns
+-- it off, that is precisely the room we are NOT in -- so the capture still runs
+-- (it is what keeps the look's own room lines from reading as arrivals) but
+-- files nothing.
 function taPackage.startRoomDescCapture()
     taPackage.monsterDb.state = "accumulating_room"
     taPackage.monsterDb.accumulatedLines = {}
-    taPackage.monsterDb.descRoomId = taPackage.currentRoomId
+    taPackage.monsterDb.descRoomId = taPackage.mapping and taPackage.currentRoomId or nil
+    taPackage.monsterDb.descRoomProvisional = taPackage.currentRoomProvisional
+end
+
+-- The exits the map has for `roomId` that the game's `ex` (`dirs`) leaves out,
+-- sorted. `ex` lists every exit a room has, sealed ones and u/d too, so any at
+-- all means `roomId` is not the room we are standing in -- or the map gave it an
+-- exit it does not have. Shared by the Exits handler, which stops mapping on it,
+-- and the description capture, which the same `Exits:` line ends first and so
+-- has to refuse on its own.
+function taPackage.exitsMissingFrom(roomId, dirs)
+    local listed = {}
+    for _, dir in ipairs(dirs) do listed[dir] = true end
+    local missing = {}
+    for dir in pairs(taPackage.db.roomExitDirections(roomId)) do
+        if not listed[dir] then missing[#missing + 1] = dir end
+    end
+    table.sort(missing)
+    return missing
 end
 
 -- Drop a capture without writing it. Every move calls this -- typed or sent by a
@@ -1136,6 +1160,16 @@ createTrigger("^(.+)$", function(matches)
         if isRoomDescTerminator(line) then
             local lines = taPackage.monsterDb.accumulatedLines
             local roomId = taPackage.monsterDb.descRoomId
+            -- A room we believed we knew, whose `ex` contradicts the map, is some
+            -- other room: its description is not this one's. (A room minted on
+            -- this move holds only an assumed back-link, so it is exempt, as it
+            -- is in the Exits handler.)
+            local exitList = line:match("^Exits: (.+)%.$")
+            if roomId and exitList and not taPackage.monsterDb.descRoomProvisional then
+                local dirs = {}
+                for dir in exitList:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
+                if #taPackage.exitsMissingFrom(roomId, dirs) > 0 then roomId = nil end
+            end
             if #lines > 0 and roomId then
                 local desc = cleanRoomDesc(table.concat(lines, " "))
                 if #desc > 0 then
@@ -1976,14 +2010,8 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     -- "were" in has nw,s, and the mapper added `ne` to it and walked on
     -- (logs/session-teekywiki-2026-09-22T21-20-30.log).
     if not taPackage.currentRoomProvisional then
-        local listed = {}
-        for _, dir in ipairs(dirs) do listed[dir] = true end
-        local missing = {}
-        for dir in pairs(taPackage.db.roomExitDirections(taPackage.currentRoomId)) do
-            if not listed[dir] then missing[#missing + 1] = dir end
-        end
+        local missing = taPackage.exitsMissingFrom(taPackage.currentRoomId, dirs)
         if #missing > 0 then
-            table.sort(missing)
             local ref = taPackage.db.roomRef(taPackage.currentRoomId)
                 or ("#" .. tostring(taPackage.currentRoomId))
             taPackage.mapping = false
