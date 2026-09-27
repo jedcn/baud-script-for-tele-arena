@@ -17,38 +17,35 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local LOGS = {
-    "logs/session-teekywiki-2026-09-25T21-07-06.log",   -- down to Level 3, map-area
-    "logs/session-teekywiki-2026-09-25T21-28-18.log",   -- the corridor, and the trap
-}
+local LOG = "logs/session-teekywiki-2026-09-25T21-28-18.log"   -- the corridor, and the trap
 
--- The real walk minted labyrinth-100 first because Level 1 already held
--- `labyrinth` .. `labyrinth-99`. Inert stand-ins keep the numbering, so the
--- second log's `map-here labyrinth-100` names the right room.
-local function seed()
-    local out = { "INSERT INTO areas (slug, name) VALUES ('labyrinth-level-1', 'The Labyrinth, Level 1')" }
-    local L1 = "(SELECT id FROM areas WHERE slug = 'labyrinth-level-1')"
-    out[#out + 1] = "INSERT INTO rooms (slug, name, area_id) VALUES ('labyrinth', 'labyrinth', " .. L1 .. ")"
-    for i = 1, 99 do
-        out[#out + 1] = "INSERT INTO rooms (slug, name, area_id) VALUES ('labyrinth-" .. i
-            .. "', 'labyrinth', " .. L1 .. ")"
-    end
-    return out
-end
+-- The walk resumes from an earlier session,
+-- logs/session-teekywiki-2026-09-25T21-07-06.log, which went down to Level 3,
+-- ran map-area, and walked five rooms (labyrinth-100 .. labyrinth-104). Replaying
+-- its 2,025 lines to rebuild those five rooms took most of this spec's runtime,
+-- so they are frozen instead.
+--
+-- labyrinth_level_3_after_first_log.sql is exactly what a replay of that session
+-- leaves in the database, less the 100 inert Level 1 stand-ins that only kept the
+-- slugs numbered as in the real session -- with labyrinth-104's description
+-- already cleaned. Before the second walk, "Tojolias logs OFF. [...]" was cleaned
+-- off the front of it (adcf538). The polluted description had been hiding the
+-- trap: a closure is refused when descriptions differ, and cleaning it is what
+-- let 104 be proposed.
+--
+-- Regenerate it only if a change to the mapper alters what that first session
+-- builds: replay it alone with the old stand-in seed (see git history of this
+-- file), apply the description cleanup, then dump areas, the non-stand-in rooms,
+-- room_exits and player_location with
+-- `sqlite3 -header <db> ".mode insert <table>" ...`.
+local SEED = "test/mapper/labyrinth_level_3_after_first_log.sql"
 
 describe("The labyrinth, Level 3: a corridor that mimics a walked one", function()
 
     local g
 
     setup(function()
-        g = replay.replayChain(LOGS, { seed = seed(), sqlBefore = { [2] = {
-            -- Before the second walk, "Tojolias logs OFF. [...]" was cleaned off
-            -- the front of labyrinth-104's description (adcf538). The polluted
-            -- description had been hiding the trap: a closure is refused when
-            -- descriptions differ, and cleaning it is what let 104 be proposed.
-            "UPDATE rooms SET description = substr(description, instr(description, 'You are wandering'))"
-                .. " WHERE slug = 'labyrinth-104'",
-        } } })
+        g = replay.replayChain({ LOG }, { seedFile = SEED })
     end)
 
     teardown(function()
