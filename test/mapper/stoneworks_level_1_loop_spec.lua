@@ -124,10 +124,16 @@ describe("Stoneworks level 1 — walking a loop", function()
             assert.are.equal(2, #g.echoesMatching("possible loop closure"))
         end)
 
+        -- Either check refutes it on that room, and the description check runs
+        -- first. A corridor's prose names only its exits, so the room after --
+        -- ne,se,w where the candidate's neighbour is ne,sw -- reads differently
+        -- too. Descriptions cannot tell the false closure's OWN room from
+        -- stonework-corridor-7 (see the header); they can tell the next one.
         it("refutes the false closure using the room after it", function()
             local refused = g.echoesMatching("refused")
             assert.are.equal(1, #refused)
-            assert.is_truthy(refused[1]:find("not what it predicted", 1, true))
+            assert.is_truthy(refused[1]:find("not what it predicted", 1, true)
+                or refused[1]:find("description is not", 1, true), refused[1])
         end)
 
         it("leaves the second closure unsettled rather than guessing", function()

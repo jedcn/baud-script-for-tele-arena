@@ -3666,6 +3666,65 @@ describe("World map triggers", function()
             assert.is_truthy(said:find("refused", 1, true), said)
         end)
 
+        -- Stoneworks Level 6, 2026-09-27: the row west of the East Chasm mimics
+        -- stonework-corridor-171/172 for two rooms -- name, exits and all -- and
+        -- then ends at the West Chasm, where the walk had to turn back, which
+        -- settled the chain and merged the chasm room into 171. The chasm room
+        -- SAYS it is not 171: its description has the chasm in it
+        -- (logs/session-teekywiki-2026-09-27T19-13-40.log, line 4636).
+        describe("a held closure's next room, by description", function()
+            local chasm = "The corridor runs to the east and west. A very wide natural"
+                .. " chasm blocks the passage to the west."
+            local plain = "The corridor runs to the east and west."
+            local function chainStep(here, predicted)
+                taPackage.pendingClosure = { pairs = { { from = 3243, into = 3185 } },
+                                             from = 3243, into = 3185 }
+                taPackage.currentRoomId = 3244
+                taPackage.currentRoom = "stonework corridor"
+                taPackage.currentRoomProvisional = true
+                taPackage.prevRoomId = 3243
+                taPackage.currentEntryDir = "w"
+                taPackage.coord = nil
+                helper.mockDbRows = function(sql)
+                    if string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                        return { { direction = "e" }, { direction = "w" } }
+                    end
+                    return {}
+                end
+                helper.mockDbOneRow = function(sql, params)
+                    if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                        return { to_id = 3184 }              -- the chain predicts 171
+                    elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                        return { name = "stonework corridor" }
+                    elseif string.find(sql, "SELECT description FROM rooms", 1, true) then
+                        return { description = (params[1] == 3244) and here or predicted }
+                    end
+                    return nil
+                end
+                helper.simulateLine("Exits: e,w.")
+            end
+
+            it("refuses the chain when this room's description differs from the prediction's", function()
+                chainStep(chasm, plain)
+                assert.is_nil(taPackage.pendingClosure)
+                assert.is_nil(helper.findDbCall("execute", "UPDATE room_exits SET to_id = ? WHERE to_id = ?"))
+                local said = table.concat(helper.echoCalls, "\n")
+                assert.is_truthy(said:find("refused", 1, true), said)
+                assert.is_truthy(said:find("description", 1, true), said)
+            end)
+
+            it("still agrees when the descriptions match", function()
+                chainStep(plain, plain)
+                assert.are.equal(2, #taPackage.pendingClosure.pairs)
+            end)
+
+            -- A room never looked at is no evidence either way, as in findLoopClosure.
+            it("still agrees when the predicted room has no description", function()
+                chainStep(chasm, nil)
+                assert.are.equal(2, #taPackage.pendingClosure.pairs)
+            end)
+        end)
+
         it("re-resolves when a known edge points at a differently-named room", function()
             -- Spurious re-display: we're in the magic shop (#13), 'go n', and the
             -- game reprints "You're in the magic shop." The edge 13--n-->10 points

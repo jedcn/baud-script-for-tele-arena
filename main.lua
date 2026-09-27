@@ -1839,6 +1839,15 @@ local function printRoomSlugCandidates(name, dirs)
     end
 end
 
+-- Do two rooms' descriptions contradict each other? Only when both have one: a
+-- room never looked at is no evidence, the same rule findLoopClosure uses. The
+-- fresh room's description is already stored by the time the Exits handler asks,
+-- because the look capture ends on that same `Exits:` line and fires first.
+function taPackage.closureDescriptionsDiffer(a, b)
+    local da, db_ = taPackage.db.roomDescription(a), taPackage.db.roomDescription(b)
+    return type(da) == "string" and type(db_) == "string" and da ~= db_
+end
+
 -- How many fresh rooms in a row must agree with a held loop closure before it
 -- is merged. Three, because the labyrinth's Level 3 has a corridor that mimics a
 -- walked one for three rooms and only the third tells them apart.
@@ -1957,6 +1966,16 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             echo("[map] loop closure into #" .. tostring(pc.into)
                 .. " refused -- it predicts #" .. tostring(expected)
                 .. ", which would have teleported you")
+        elseif type(expected) == "number"
+            and taPackage.closureDescriptionsDiffer(taPackage.currentRoomId, expected) then
+            -- Same name, same exits, and yet the room says it is something else.
+            -- Stoneworks Level 6's chasm room mimicked stonework-corridor-171 in
+            -- every way the fingerprint checks, and the walk then had to turn back
+            -- at the chasm, which settled the chain on two rooms and merged it
+            -- (logs/session-teekywiki-2026-09-27T19-13-40.log, line 4659).
+            taPackage.pendingClosure = nil
+            echo("[map] loop closure into #" .. tostring(pc.into)
+                .. " refused -- this room's description is not #" .. tostring(expected) .. "'s")
         elseif type(expected) == "number"
             and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
             pc.pairs[#pc.pairs + 1] = { from = taPackage.currentRoomId, into = expected }
