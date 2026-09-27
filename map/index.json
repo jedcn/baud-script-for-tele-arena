@@ -201,7 +201,7 @@
     {
       "area": "stoneworks-level-3",
       "name": "The Stoneworks, Level 3",
-      "rooms": 28,
+      "rooms": 29,
       "file": "areas/stoneworks-level-3.json"
     },
     {

@@ -181,13 +181,13 @@
       "name": "stonework corridor",
       "exits": {
         "nw": {
-          "to": null
+          "to": "stoneworks-level-3/stonework-corridor-108"
         },
         "se": {
           "to": "stoneworks-level-3/stonework-corridor-91"
         }
       },
-      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the northwest and southeast.",
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the southwest.",
       "trap": {
         "type": "falling block"
       },
@@ -483,9 +483,35 @@
         }
       },
       "description": "You are standing in a stonework chamber, fitted with dull grey stone tiles. The room is rectangular in shape and is roughly thirty feet by fifty feet across. A small lever is partially concealed in a niche in the south wall. The only visible exit is north through a stone archway.",
+      "devices": [
+        {
+          "command": "pull lever",
+          "effect": "trap",
+          "repeats": "once",
+          "trapRoom": "stoneworks-level-3/stonework-corridor-91",
+          "note": "Shrine [L3]. Disarms the stone trap in stonework-corridor-91 (shrine [T3]). Verified 2026-09-27: pulled twice, then walked into corridor-91 and the trap did not fire -- so repeats=once, a second pull does not re-arm it, and it is safe for every character to pull."
+        }
+      ],
       "layout": {
         "x": -5,
         "y": -5
+      }
+    },
+    {
+      "id": "stoneworks-level-3/stonework-corridor-108",
+      "name": "stonework corridor",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "se": {
+          "to": "stoneworks-level-3/stonework-corridor-92"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the north and southeast.",
+      "layout": {
+        "x": -10,
+        "y": 8
       }
     }
   ]
