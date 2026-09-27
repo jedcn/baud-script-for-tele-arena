@@ -15420,9 +15420,25 @@ describe("navigate-to", function()
 
         it("refuses an unknown destination and lists what it does know", function()
             helper.simulateAlias("navigate-to nowhere/at-all")
-            assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'", 1, true))
-            assert.is_truthy(lastEchoes():find("town-3/ruby-door", 1, true))
+            assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'. I know:", 1, true))
+            assert.is_truthy(lastEchoes():find("\n  town-3/\n", 1, true))
+            assert.is_truthy(lastEchoes():find("\n    ruby-door\n", 1, true))
             assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("lists known routes one per line, grouped under a shared prefix", function()
+            assert.are.same({
+                "  ruined-town",
+                "  town-1/north-plaza",
+                "  town-2",
+                "  town-3/",
+                "    after-doors",
+                "    get-onyx-key",
+                "    temple",
+            }, taPackage.navRouteListLines({
+                "town-3/temple", "town-2", "town-1/north-plaza", "ruined-town",
+                "town-3/after-doors", "town-3/get-onyx-key",
+            }))
         end)
 
         -- A name we've agreed on but haven't walked yet. Reporting it as

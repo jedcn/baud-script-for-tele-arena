@@ -1573,6 +1573,37 @@ end
 -- The two branches word themselves differently on purpose. A fingerprint knows
 -- nothing but the room in front of it; a map reference can say which room the
 -- map thinks this is, which is the more useful sentence when it's the wrong one.
+-- The route names as an indented list, one per line, with the ones that share
+-- a `town-3/` style prefix gathered under it. On one comma-separated line two
+-- dozen names were a wall to read. A prefix with only one route under it stays
+-- on one line (`town-1/north-plaza`): a heading over a single entry is more
+-- lines, not more clarity.
+function taPackage.navRouteListLines(names)
+    local sorted = {}
+    for i, name in ipairs(names) do sorted[i] = name end
+    table.sort(sorted)
+    local count = {}
+    for _, name in ipairs(sorted) do
+        local prefix = name:match("^(.-/)")
+        if prefix then count[prefix] = (count[prefix] or 0) + 1 end
+    end
+    local lines, heading = {}, nil
+    for _, name in ipairs(sorted) do
+        local prefix = name:match("^(.-/)")
+        if prefix and count[prefix] > 1 then
+            if heading ~= prefix then
+                lines[#lines + 1] = "  " .. prefix
+                heading = prefix
+            end
+            lines[#lines + 1] = "    " .. name:sub(#prefix + 1)
+        else
+            lines[#lines + 1] = "  " .. name
+            heading = nil
+        end
+    end
+    return lines
+end
+
 function taPackage.navFromMatches(from, name, dirs)
     local sorted = navExitKey(dirs)
     if type(from) == "table" then
@@ -2792,10 +2823,15 @@ createAlias("^navigate-to (.+)$", function(matches)
     if not route then
         local known = {}
         for name in pairs(NAV_ROUTES) do known[#known + 1] = name end
-        table.sort(known)
-        navEcho("I don't know a route to '" .. destination .. "'."
-            .. (#known > 0 and (" I know: " .. table.concat(known, ", ") .. ".")
-                            or " No routes are recorded yet."))
+        if #known == 0 then
+            navEcho("I don't know a route to '" .. destination .. "'. No routes are recorded yet.")
+            return
+        end
+        navEcho("I don't know a route to '" .. destination .. "'. I know:")
+        -- Plain echo, not navEcho: a `[nav] ` on every line of the list is
+        -- noise, and the list is no use in an and-exit push notification.
+        echo("")
+        for _, line in ipairs(taPackage.navRouteListLines(known)) do echo(line) end
         return
     end
     -- A name we've agreed on but haven't been given the way to yet. Saying so
