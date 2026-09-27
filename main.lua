@@ -2898,6 +2898,30 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
     end
 end, { type = "regex" })
 
+-- Being hurled out of a room (a female cyclops picks you up and throws you) is a
+-- move: the game names the direction, and the next brief is the room that way.
+-- Unqueued, that arrival fell back on its name alone, and with 170-odd rooms
+-- called "stonework corridor" it landed the walk on third town's #1022 and
+-- wrote Stoneworks Level 4's description onto it (2026-09-27,
+-- logs/session-teekywiki-2026-09-27T18-16-45.log). Like the trap-door fall, it
+-- goes to the FRONT of the queue, ahead of anything typed but not yet resolved;
+-- and like any move it ends a look still being read. Mapping or not, since
+-- `where` follows the same queue.
+taPackage.compassWords = {
+    north = "n", south = "s", east = "e", west = "w",
+    northeast = "ne", northwest = "nw", southeast = "se", southwest = "sw",
+    up = "u", down = "d",
+}
+createTrigger("^You tumble (.+), out of the room!$", function(matches)
+    local dir = taPackage.compassWords[matches[2]]
+    if not dir then return end
+    taPackage.suppressRoomEntry = nil
+    taPackage.abandonRoomDescCapture()
+    taPackage.prevRoom = taPackage.currentRoom
+    taPackage.prevRoomId = taPackage.currentRoomId
+    table.insert(taPackage.pendingDirs, 1, dir)
+end, { type = "regex" })
+
 -- Advanced monsters cast area-effect spells that hit everyone nearby without
 -- printing a damage number — just like a trap. Use the identical trick: stash
 -- our HP, ask for a fresh status ("st"), and let the Vitality trigger above

@@ -4378,6 +4378,31 @@ describe("World map triggers", function()
             assert.are.equal(146, taPackage.prevRoomId)
         end)
 
+        -- Stoneworks Level 4, 2026-09-27: a female cyclops hurled teekywiki south
+        -- out of stonework-chamber-18. With no move queued, the arrival fell back
+        -- on the name alone, and of the 170-odd "stonework corridor"s it picked
+        -- third town's #1022 -- whose description the look then overwrote
+        -- (logs/session-teekywiki-2026-09-27T18-16-45.log, line 3627). The game
+        -- names the direction, so it is a move like any other.
+        it("treats being hurled out of a room as a move that way", function()
+            taPackage.currentRoomId = 3132
+            taPackage.pendingDirs = { "e" }                  -- typed, not yet arrived
+            helper.simulateLine("You tumble south, out of the room!")
+            assert.are.same({ "s", "e" }, taPackage.pendingDirs)
+            assert.are.equal(3132, taPackage.prevRoomId)
+        end)
+
+        it("follows a hurl with mapping off too, so `where` keeps up", function()
+            taPackage.mapping = false
+            helper.simulateLine("You tumble northwest, out of the room!")
+            assert.are.same({ "nw" }, taPackage.pendingDirs)
+        end)
+
+        it("ignores somebody else being hurled", function()
+            helper.simulateLine("Tojolias has just tumbled south, out of the room!")
+            assert.are.same({}, taPackage.pendingDirs)
+        end)
+
     end)
 
     describe("map-area alias", function()
