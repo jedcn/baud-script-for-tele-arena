@@ -701,6 +701,11 @@ export const DRAWN = [
   { slug: 'labyrinth-level-4', title: 'The Labyrinth, Level 4', origin: 'labyrinth-198' },
   // Level 5, from the foot of the stairs down from the dark Level 4.
   { slug: 'labyrinth-level-5', title: 'The Labyrinth, Level 5', origin: 'labyrinth-204' },
+  // Teleported in by answering Level 4's riddle (labyrinth-406); drawn from the
+  // room you land in. Its `s` is the entrance that flashes you back.
+  { slug: 'tunnels', title: 'The Tunnels', origin: 'tunnel' },
+  // Up from tunnel-28.
+  { slug: 'ledge', title: 'The Ledge', origin: 'ledge-41' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it

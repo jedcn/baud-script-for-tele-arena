@@ -121,6 +121,12 @@
       "file": "areas/labyrinth-level-5.json"
     },
     {
+      "area": "ledge",
+      "name": "The Ledge",
+      "rooms": 16,
+      "file": "areas/ledge.json"
+    },
+    {
       "area": "mountain-road",
       "name": "The Mountain Road",
       "rooms": 3,
@@ -227,6 +233,12 @@
       "name": "The Tower, Level 4",
       "rooms": 17,
       "file": "areas/tower-level-4.json"
+    },
+    {
+      "area": "tunnels",
+      "name": "The Tunnels",
+      "rooms": 70,
+      "file": "areas/tunnels.json"
     },
     {
       "area": "valley",

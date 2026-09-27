@@ -1,0 +1,1215 @@
+{
+  "area": "tunnels",
+  "name": "The Tunnels",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "tunnels/tunnel",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-1"
+        },
+        "s": {
+          "to": "tunnels/tunnel-7"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and south.",
+      "layout": {
+        "x": 6,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/tunnel-1",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-13"
+        },
+        "se": {
+          "to": "tunnels/tunnel-2"
+        },
+        "sw": {
+          "to": "tunnels/tunnel"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/tunnel-2",
+      "name": "tunnel",
+      "exits": {
+        "e": {
+          "to": "tunnels/tunnel-3"
+        },
+        "nw": {
+          "to": "tunnels/tunnel-1"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the east and northwest.",
+      "layout": {
+        "x": 1,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/tunnel-3",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-4"
+        },
+        "u": {
+          "to": "tunnels/ledge"
+        },
+        "w": {
+          "to": "tunnels/tunnel-2"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast, west, and up.",
+      "layout": {
+        "x": 2,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/tunnel-3"
+        },
+        "se": {
+          "to": "tunnels/ledge-1"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southeast and slopes downward.",
+      "layout": {
+        "x": 2,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge-1",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-2"
+        },
+        "nw": {
+          "to": "tunnels/ledge"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads east and northwest.",
+      "layout": {
+        "x": 3,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-2",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-3"
+        },
+        "w": {
+          "to": "tunnels/ledge-1"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 4,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-3",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-4"
+        },
+        "w": {
+          "to": "tunnels/ledge-2"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 5,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-4",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-5"
+        },
+        "u": {
+          "to": "tunnels/ledge-17"
+        },
+        "w": {
+          "to": "tunnels/ledge-3"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads east, west, and slopes upward.",
+      "layout": {
+        "x": 6,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-5",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-6"
+        },
+        "w": {
+          "to": "tunnels/ledge-4"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 7,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-6",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-7"
+        },
+        "w": {
+          "to": "tunnels/ledge-5"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and west.",
+      "layout": {
+        "x": 8,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-7",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-8"
+        },
+        "sw": {
+          "to": "tunnels/ledge-6"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge-8",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-9"
+        },
+        "sw": {
+          "to": "tunnels/ledge-7"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/ledge-9",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-10"
+        },
+        "sw": {
+          "to": "tunnels/ledge-8"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and southwest.",
+      "layout": {
+        "x": 11,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/ledge-10",
+      "name": "ledge",
+      "exits": {
+        "s": {
+          "to": "tunnels/ledge-9"
+        },
+        "u": {
+          "to": "tunnels/ledge-11"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads south and slopes upward.",
+      "layout": {
+        "x": 11,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/ledge-11",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-10"
+        },
+        "s": {
+          "to": "tunnels/ledge-12"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads south and slopes downward.",
+      "layout": {
+        "x": 11,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/ledge-12",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-11"
+        },
+        "sw": {
+          "to": "tunnels/ledge-13"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and southwest.",
+      "layout": {
+        "x": 11,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/ledge-13",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-12"
+        },
+        "sw": {
+          "to": "tunnels/ledge-14"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/ledge-14",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-13"
+        },
+        "u": {
+          "to": "tunnels/ledge-15"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and slopes upward.",
+      "layout": {
+        "x": 9,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge-15",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-14"
+        },
+        "ne": {
+          "to": "tunnels/ledge-16"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and slopes downward.",
+      "layout": {
+        "x": 9,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge-16",
+      "name": "ledge",
+      "exits": {
+        "sw": {
+          "to": "tunnels/ledge-15"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southwest.",
+      "layout": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/ledge-17",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-4"
+        },
+        "w": {
+          "to": "tunnels/ledge-18"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads west and slopes downward.",
+      "layout": {
+        "x": 6,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-18",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-17"
+        },
+        "w": {
+          "to": "tunnels/ledge-19"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 5,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-19",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-18"
+        },
+        "w": {
+          "to": "tunnels/ledge-20"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 4,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-20",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "tunnels/ledge-19"
+        },
+        "nw": {
+          "to": "tunnels/ledge-21"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads east and northwest.",
+      "layout": {
+        "x": 3,
+        "y": -2
+      }
+    },
+    {
+      "id": "tunnels/ledge-21",
+      "name": "ledge",
+      "exits": {
+        "nw": {
+          "to": "tunnels/ledge-22"
+        },
+        "se": {
+          "to": "tunnels/ledge-20"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southeast and northwest.",
+      "layout": {
+        "x": 2,
+        "y": -1
+      }
+    },
+    {
+      "id": "tunnels/ledge-22",
+      "name": "ledge",
+      "exits": {
+        "nw": {
+          "to": "tunnels/ledge-23"
+        },
+        "se": {
+          "to": "tunnels/ledge-21"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southeast and northwest.",
+      "layout": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/ledge-23",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-24"
+        },
+        "se": {
+          "to": "tunnels/ledge-22"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and southeast.",
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/ledge-24",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-25"
+        },
+        "s": {
+          "to": "tunnels/ledge-23"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/ledge-25",
+      "name": "ledge",
+      "exits": {
+        "s": {
+          "to": "tunnels/ledge-24"
+        },
+        "u": {
+          "to": "tunnels/ledge-26"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads south and slopes upward.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/ledge-26",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-25"
+        },
+        "n": {
+          "to": "tunnels/ledge-27"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and slopes downward.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/ledge-27",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-28"
+        },
+        "s": {
+          "to": "tunnels/ledge-26"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "tunnels/ledge-28",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-29"
+        },
+        "s": {
+          "to": "tunnels/ledge-27"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads south and slopes downward.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/ledge-29",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-30"
+        },
+        "u": {
+          "to": "tunnels/ledge-28"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads east and slopes upward.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/ledge-30",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-31"
+        },
+        "s": {
+          "to": "tunnels/ledge-29"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and south.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/ledge-31",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-32"
+        },
+        "sw": {
+          "to": "tunnels/ledge-30"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 1,
+        "y": 7
+      }
+    },
+    {
+      "id": "tunnels/ledge-32",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "tunnels/ledge-33"
+        },
+        "sw": {
+          "to": "tunnels/ledge-31"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southwest and slopes downward.",
+      "layout": {
+        "x": 2,
+        "y": 8
+      }
+    },
+    {
+      "id": "tunnels/ledge-33",
+      "name": "ledge",
+      "exits": {
+        "sw": {
+          "to": "tunnels/ledge-34"
+        },
+        "u": {
+          "to": "tunnels/ledge-32"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southwest and slopes upward.",
+      "layout": {
+        "x": 2,
+        "y": 8
+      }
+    },
+    {
+      "id": "tunnels/ledge-34",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-33"
+        },
+        "sw": {
+          "to": "tunnels/ledge-35"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 1,
+        "y": 7
+      }
+    },
+    {
+      "id": "tunnels/ledge-35",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "tunnels/ledge-34"
+        },
+        "s": {
+          "to": "tunnels/ledge-36"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and south.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/ledge-36",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-35"
+        },
+        "s": {
+          "to": "tunnels/ledge-37"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/ledge-37",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-36"
+        },
+        "s": {
+          "to": "tunnels/ledge-38"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": "tunnels/ledge-38",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-37"
+        },
+        "s": {
+          "to": "tunnels/ledge-39"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/ledge-39",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-38"
+        },
+        "s": {
+          "to": "tunnels/ledge-40"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and south.",
+      "layout": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/ledge-40",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "tunnels/ledge-39"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north.",
+      "layout": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/tunnel-4",
+      "name": "tunnel",
+      "exits": {
+        "e": {
+          "to": "tunnels/tunnel-5"
+        },
+        "n": {
+          "to": "tunnels/tunnel-8"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-3"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the north, east, and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/tunnel-5",
+      "name": "tunnel",
+      "exits": {
+        "e": {
+          "to": "tunnels/tunnel-6"
+        },
+        "w": {
+          "to": "tunnels/tunnel-4"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the east and west.",
+      "layout": {
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/tunnel-6",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-7"
+        },
+        "w": {
+          "to": "tunnels/tunnel-5"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and west.",
+      "layout": {
+        "x": 5,
+        "y": 0
+      }
+    },
+    {
+      "id": "tunnels/tunnel-7",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-6"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/tunnel-8",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-9"
+        },
+        "s": {
+          "to": "tunnels/tunnel-4"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the north and south.",
+      "layout": {
+        "x": 3,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/tunnel-9",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-21"
+        },
+        "nw": {
+          "to": "tunnels/tunnel-10"
+        },
+        "s": {
+          "to": "tunnels/tunnel-8"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/tunnel-10",
+      "name": "tunnel",
+      "exits": {
+        "nw": {
+          "to": "tunnels/tunnel-11"
+        },
+        "se": {
+          "to": "tunnels/tunnel-9"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-12"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the southeast, southwest, and northwest.",
+      "layout": {
+        "x": 2,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/tunnel-11",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-14"
+        },
+        "se": {
+          "to": "tunnels/tunnel-10"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": 1,
+        "y": 4
+      }
+    },
+    {
+      "id": "tunnels/tunnel-12",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-10"
+        },
+        "s": {
+          "to": "tunnels/tunnel-13"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and south.",
+      "layout": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/tunnel-13",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-12"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-1"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "id": "tunnels/tunnel-14",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-15"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-11"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/tunnel-15",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-16"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-14"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/tunnel-16",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-17"
+        },
+        "se": {
+          "to": "tunnels/tunnel-18"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-15"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast, southeast, and southwest.",
+      "layout": {
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "id": "tunnels/tunnel-17",
+      "name": "tunnel",
+      "exits": {
+        "sw": {
+          "to": "tunnels/tunnel-16"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The only exit lies to the southwest.",
+      "layout": {
+        "x": 5,
+        "y": 8
+      }
+    },
+    {
+      "id": "tunnels/tunnel-18",
+      "name": "tunnel",
+      "exits": {
+        "e": {
+          "to": "tunnels/tunnel-22"
+        },
+        "nw": {
+          "to": "tunnels/tunnel-16"
+        },
+        "s": {
+          "to": "tunnels/tunnel-19"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the east, south, and northwest.",
+      "layout": {
+        "x": 5,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/tunnel-19",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-18"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-20"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 5,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/tunnel-20",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-19"
+        },
+        "s": {
+          "to": "tunnels/tunnel-21"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and south.",
+      "layout": {
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "id": "tunnels/tunnel-21",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-20"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-9"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 4,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/tunnel-22",
+      "name": "tunnel",
+      "exits": {
+        "se": {
+          "to": "tunnels/tunnel-23"
+        },
+        "w": {
+          "to": "tunnels/tunnel-18"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the southeast and west.",
+      "layout": {
+        "x": 6,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/tunnel-23",
+      "name": "tunnel",
+      "exits": {
+        "e": {
+          "to": "tunnels/tunnel-24"
+        },
+        "nw": {
+          "to": "tunnels/tunnel-22"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the east and northwest.",
+      "layout": {
+        "x": 7,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/tunnel-24",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-25"
+        },
+        "s": {
+          "to": null
+        },
+        "w": {
+          "to": "tunnels/tunnel-23"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the north, south, and west.",
+      "layout": {
+        "x": 8,
+        "y": 5
+      }
+    },
+    {
+      "id": "tunnels/tunnel-25",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-26"
+        },
+        "s": {
+          "to": "tunnels/tunnel-24"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the north and south.",
+      "layout": {
+        "x": 8,
+        "y": 6
+      }
+    },
+    {
+      "id": "tunnels/tunnel-26",
+      "name": "tunnel",
+      "exits": {
+        "nw": {
+          "to": "tunnels/tunnel-27"
+        },
+        "s": {
+          "to": "tunnels/tunnel-25"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the south and northwest.",
+      "layout": {
+        "x": 8,
+        "y": 7
+      }
+    },
+    {
+      "id": "tunnels/tunnel-27",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-28"
+        },
+        "se": {
+          "to": "tunnels/tunnel-26"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southeast.",
+      "layout": {
+        "x": 7,
+        "y": 8
+      }
+    },
+    {
+      "id": "tunnels/tunnel-28",
+      "name": "tunnel",
+      "exits": {
+        "sw": {
+          "to": "tunnels/tunnel-27"
+        },
+        "u": {
+          "to": "ledge/ledge-41"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the southwest and up.",
+      "layout": {
+        "x": 8,
+        "y": 9
+      }
+    }
+  ]
+}
