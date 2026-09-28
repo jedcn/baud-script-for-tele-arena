@@ -99,6 +99,10 @@ test("distinguishes a walked room from a looked-at one", () => {
   expect(classify("You are in the arena.").fields).toEqual({ room: "arena", via: "look" });
 });
 
+test("reads the 'down in' brief of the shaft below the crooked path as a move", () => {
+  expect(classify("You're down in a hole.").fields).toEqual({ room: "hole", via: "move" });
+});
+
 // ── whole-file normalize ───────────────────────────────────────────────────────
 
 function fixture(body: string): string {

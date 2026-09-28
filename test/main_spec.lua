@@ -3798,6 +3798,17 @@ describe("World map triggers", function()
             assert.are.equal("town gates", taPackage.currentRoom)
         end)
 
+        -- The shaft below the mountain road's crooked path briefs as "You're
+        -- down in a hole." Missed on 2026-09-28, the descent never registered:
+        -- the mapper stayed on the crooked path and stopped at the first `ex`.
+        it("recognizes a 'down in' move brief", function()
+            stubDiscover(1)
+            helper.simulateLine("You're down in a hole.")
+            assert.are.equal("hole", taPackage.currentRoom)
+            helper.simulateLine("You're down in a hole, above a chamber.")
+            assert.are.equal("hole, above a chamber", taPackage.currentRoom)
+        end)
+
         it("ignores a 'You are ...' line while accumulating a look description", function()
             taPackage.currentRoom = "large cavern"
             taPackage.currentRoomId = 5

@@ -1747,6 +1747,12 @@ createTrigger("^You're at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "reg
 -- stopped: the arrival never registered, so the walk sat waiting for a brief
 -- that had already gone past.
 createTrigger("^You're outside (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+-- And "down in", which the shaft below the mountain road's crooked path uses
+-- all the way down: "You're down in a hole." Missed on 2026-09-28, the descent
+-- never registered, so the mapper still believed it stood on the crooked path
+-- and stopped at the first `ex`. Its `look` answers "You're down in a hole you
+-- found by...", which the looking guard keeps from minting a second room.
+createTrigger("^You're down in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 -- Some rooms print their move brief with "You are ..." instead of the "You're"
 -- contraction (e.g. "You are inside the dungeon entrance.", "You are in a large

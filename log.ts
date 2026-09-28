@@ -313,7 +313,7 @@ const RULES: Rule[] = [
   // would look like, since the glue would have carried the too-dark line. Either
   // way nothing follows it, which is why that step advances on a pause.
   { kind: "push-stone", re: /^You push the protruding stone into it's recess\.\.\.$/ },
-  { kind: "room", re: /^You're (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,
+  { kind: "room", re: /^You're (?:in|on|at|inside|outside|down in) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "move" }) },
   { kind: "room", re: /^You are (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "look" }) },
