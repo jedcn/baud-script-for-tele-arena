@@ -401,6 +401,11 @@ export const SHRINE_MAPS: Record<string,
     originBox: '^',                      // the stairs back up to Level 3
     originRoom: 'stonework-chamber-15',
   },
+  'stoneworks-level-5': {
+    file: 'map/shrine/stoneworks-5.txt',
+    originBox: '^',                      // the stairs back up to Level 4
+    originRoom: 'stonework-chamber-19',
+  },
   // The last level. Its bottom row runs west through two Seals (the chasms) to
   // the [*] beside "Town 3", stonework-corridor-237, whose w is third town's
   // town-square -- the one exit that leaves the level besides the stairs.
