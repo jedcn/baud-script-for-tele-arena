@@ -63,6 +63,158 @@ export type Placement = {
 };
 
 /**
+ * Lay out one compass-connected group of rooms with every line pointing the way
+ * its exit goes, letting straight lines run longer than one cell where a loop
+ * needs it -- or return null when no such drawing exists.
+ *
+ * First-come placement gives every exit one cell, which is right until a loop's
+ * two sides differ in length. Then the loop still CLOSES, just not on unit
+ * steps: Stoneworks Level 6's west column is seven rooms from corner to corner
+ * where the east column is five, and the shrine draws it by stretching the east
+ * column's lines. Placed first-come, the west column came out short and two of
+ * its rooms were parked above the corner (2026-09-27).
+ *
+ * Each axis is solved on its own. Rooms that must share a coordinate -- a
+ * column for `n`/`s`, a row for `e`/`w`, or one apart for a diagonal, which is
+ * never stretched -- are merged into one group with fixed offsets. Every
+ * straight step then becomes "at least one cell that way": a longest-path pass
+ * finds positions meeting all of them, and a relaxation pass pulls each group
+ * as close to its neighbours as those allow, so lines stay short except where a
+ * loop needs the slack.
+ *
+ * Two rooms that nothing joins can land on one cell; they are kept apart in the
+ * order `hint` (the first-come layout) has them, and the axes solved again. It
+ * gives up -- and the caller keeps the first-come layout -- when the data asks
+ * for a shape that does not exist (a loop that genuinely misses, as parts of
+ * the labyrinth do), when a collision cannot be separated, or when a stretched
+ * line would run through another room's box.
+ */
+export function stretchLayout(
+  members: number[], exits: Exit[], hint?: Map<number, Pos>,
+): Map<number, Pos> | null {
+  const inSet = new Set(members);
+  const edges = exits.filter(e => e.to_id != null && inSet.has(e.from_id)
+    && inSet.has(e.to_id) && OFF[e.direction]);
+  // Separations added after a collision: x[b] - x[a] >= 1 on that axis.
+  const apart: [[number, number][], [number, number][]] = [[], []];
+
+  const solve = (axis: 0 | 1): Map<number, number> | null => {
+    // Weighted union-find: x[id] = x[root] + off[id].
+    const parent = new Map(members.map(id => [id, id]));
+    const off = new Map(members.map(id => [id, 0]));
+    const find = (id: number): [number, number] => {
+      let root = id, sum = 0;
+      while (parent.get(root) !== root) { sum += off.get(root)!; root = parent.get(root)!; }
+      parent.set(id, root); off.set(id, sum);
+      return [root, sum];
+    };
+    // x[b] = x[a] + d
+    const same = (a: number, b: number, d: number): boolean => {
+      const [ra, oa] = find(a), [rb, ob] = find(b);
+      if (ra === rb) return ob - oa === d;
+      parent.set(rb, ra); off.set(rb, oa + d - ob);
+      return true;
+    };
+    const atLeast: [number, number][] = [];      // x[b] - x[a] >= 1
+    for (const e of edges) {
+      const o = OFF[e.direction], d = o[axis];
+      const diagonal = o[0] !== 0 && o[1] !== 0;
+      if (diagonal || d === 0) { if (!same(e.from_id, e.to_id!, d)) return null; }
+      else atLeast.push(d > 0 ? [e.from_id, e.to_id!] : [e.to_id!, e.from_id]);
+    }
+    // Between groups: X[B] - X[A] >= w.
+    const cons: { a: number; b: number; w: number }[] = [];
+    for (const [a, b] of [...atLeast, ...apart[axis]]) {
+      const [ra, oa] = find(a), [rb, ob] = find(b);
+      if (ra === rb) { if (ob - oa < 1) return null; continue; }
+      cons.push({ a: ra, b: rb, w: 1 + oa - ob });
+    }
+    const groups = [...new Set(members.map(id => find(id)[0]))];
+    const X = new Map(groups.map(g => [g, 0]));
+    // Longest path; still relaxing after |groups| rounds means a positive cycle,
+    // i.e. a loop that asks to be longer than itself.
+    for (let round = 0; ; round++) {
+      let changed = false;
+      for (const c of cons)
+        if (X.get(c.a)! + c.w > X.get(c.b)!) { X.set(c.b, X.get(c.a)! + c.w); changed = true; }
+      if (!changed) break;
+      if (round > groups.length) return null;
+    }
+    // Pull each group to the median of where its constraints would put it,
+    // within the window they leave. Each move stays feasible, so any stopping
+    // point is a valid drawing; the cap only bounds the polish.
+    for (let pass = 0; pass < 100; pass++) {
+      let moved = false;
+      for (const g of groups) {
+        let lo = -Infinity, hi = Infinity;
+        const want: number[] = [];
+        for (const c of cons) {
+          if (c.b === g) { const v = X.get(c.a)! + c.w; lo = Math.max(lo, v); want.push(v); }
+          if (c.a === g) { const v = X.get(c.b)! - c.w; hi = Math.min(hi, v); want.push(v); }
+        }
+        if (!want.length) continue;
+        want.sort((p, q) => p - q);
+        const to = Math.min(hi, Math.max(lo, want[Math.floor((want.length - 1) / 2)]));
+        if (to !== X.get(g)) { X.set(g, to); moved = true; }
+      }
+      if (!moved) break;
+    }
+    return new Map(members.map(id => { const [r, o] = find(id); return [id, X.get(r)! + o]; }));
+  };
+
+  // Two rooms nothing joins can land on one cell: the constraints say where
+  // each is relative to its neighbours, not to each other. Pull them apart and
+  // solve again -- first along the axis the first-come layout (`hint`)
+  // separates them on, since it placed every room somewhere distinct, and if
+  // that leads nowhere, along the other. The hint is only a first guess: where
+  // first-come placement had shoved a room outside a loop, following it drags
+  // that room's line straight through the loop's wall. Bounded, because each
+  // separation can expose another collision.
+  let budget = 200;
+  const attempt = (): Map<number, Pos> | null => {
+    if (--budget < 0) return null;
+    const cs = solve(0);
+    if (!cs) return null;
+    const rs = solve(1);
+    if (!rs) return null;
+    const pos = new Map(members.map(id => [id, { c: cs.get(id)!, r: rs.get(id)! }]));
+    const at = new Map<string, number>();
+    let clash: [number, number] | null = null;
+    for (const [id, p] of pos) {
+      const k = `${p.c},${p.r}`;
+      if (at.has(k)) { clash = [at.get(k)!, id]; break; }
+      at.set(k, id);
+    }
+    if (!clash) {
+      // A stretched line must not run through another room's box.
+      for (const e of edges) {
+        const a = pos.get(e.from_id)!, b = pos.get(e.to_id!)!;
+        const n = Math.max(Math.abs(b.c - a.c), Math.abs(b.r - a.r));
+        for (let step = 1; step < n; step++)
+          if (at.has(`${a.c + Math.sign(b.c - a.c) * step},${a.r + Math.sign(b.r - a.r) * step}`))
+            return null;
+      }
+      return pos;
+    }
+    const [a, b] = clash;
+    const ha = hint?.get(a), hb = hint?.get(b);
+    if (!ha || !hb) return null;
+    const d: [number, number] = [hb.c - ha.c, hb.r - ha.r];
+    const first: 0 | 1 = Math.abs(d[0]) >= Math.abs(d[1]) ? 0 : 1;
+    for (const axis of [first, (1 - first) as 0 | 1]) {
+      // Along the hint's order on that axis, or -- where the hint has them level
+      // -- a before b, which is as good a guess as any.
+      apart[axis].push(d[axis] < 0 ? [b, a] : [a, b]);
+      const got = attempt();
+      if (got) return got;
+      apart[axis].pop();
+    }
+    return null;
+  };
+  return attempt();
+}
+
+/**
  * Place every room of an area on an integer grid by walking its exits from an
  * origin. Shared by the two renderers -- the ASCII maps in MAP.md and the SVG
  * in map.html -- because the hard part is the placement, not the paint, and two
@@ -312,11 +464,16 @@ export function placeRooms(opts: {
       if (!placedVertical) break;
     }
 
-    const cols = [...local.values()].map(p => p.c);
-    const rws = [...local.values()].map(p => p.r);
+    // Where the whole group can be drawn with every line pointing true, some
+    // of them stretched, that drawing wins; the first-come one above stands
+    // wherever it cannot. See stretchLayout.
+    const stretched = stretchLayout(members, relevant, local);
+    const final = stretched && stretched.size === local.size ? stretched : local;
+    const cols = [...final.values()].map(p => p.c);
+    const rws = [...final.values()].map(p => p.r);
     const loC = Math.min(...cols), loR = Math.min(...rws);
     const normalised = new Map<number, Pos>();
-    for (const [id, p] of local) normalised.set(id, { c: p.c - loC, r: p.r - loR });
+    for (const [id, p] of final) normalised.set(id, { c: p.c - loC, r: p.r - loR });
     laid.push({ members: normalised,
                 w: Math.max(...cols) - loC + 1, h: Math.max(...rws) - loR + 1 });
   });

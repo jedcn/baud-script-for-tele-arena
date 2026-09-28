@@ -341,3 +341,89 @@ describe('placeRooms nudges by bearing', () => {
     expect(skew.filter(s => !s.inherent)).toEqual([]);
   });
 });
+
+// A loop whose two sides are different lengths is not a loop that misses: it
+// closes, just not on a square grid of unit steps. Stoneworks Level 6's west
+// column runs seven rooms from the trap corner to the bottom row where the east
+// column runs five, and the shrine draws that by stretching the east column's
+// lines. First-come placement cannot stretch anything, so it drew the west
+// column short and parked the lever room and its neighbour ABOVE the corner,
+// with amber lines between them (2026-09-27).
+describe('stretched layout', () => {
+  // A rectangle: top row a-b-c, a west column of `left` rooms down to the bottom
+  // row, an east column of `right` rooms, bottom row x-y-z.
+  const lopsided = (left: number, right: number) => {
+    const rooms: Room[] = [room(1, 'a'), room(2, 'b'), room(3, 'c'),
+                           room(4, 'x'), room(5, 'y'), room(6, 'z')];
+    const exits: Exit[] = [...pair(1, 'e', 2, 'w'), ...pair(2, 'e', 3, 'w'),
+                           ...pair(4, 'e', 5, 'w'), ...pair(5, 'e', 6, 'w')];
+    const column = (top: number, bottom: number, n: number, base: number) => {
+      let prev = top;
+      for (let i = 0; i < n; i++) {
+        const id = base + i;
+        rooms.push(room(id, `r${id}`));
+        exits.push(...pair(prev, 's', id, 'n'));
+        prev = id;
+      }
+      exits.push(...pair(prev, 's', bottom, 'n'));
+    };
+    column(1, 4, left, 100);
+    column(3, 6, right, 200);
+    return { rooms, exits };
+  };
+
+  it('draws a lopsided loop with no crooked line, by stretching the short side', () => {
+    const { rooms, exits } = lopsided(6, 4);
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    expect(skewedEdges(rooms, exits, pos)).toEqual([]);
+    // Both columns span the same height: the long side sets it.
+    expect(pos.get(4)!.r - pos.get(1)!.r).toBe(7);
+    expect(pos.get(6)!.r - pos.get(3)!.r).toBe(7);
+  });
+
+  it('keeps every line one cell long where nothing needs stretching', () => {
+    const { rooms, exits } = lopsided(3, 3);
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    for (const e of exits) {
+      const a = pos.get(e.from_id)!, b = pos.get(e.to_id!)!;
+      expect(Math.max(Math.abs(a.c - b.c), Math.abs(a.r - b.r))).toBe(1);
+    }
+  });
+
+  // A spur hanging off one room of the loop has nothing pulling it anywhere but
+  // toward that room, so it must end up beside it, not wherever the solver's
+  // lower bound happens to put it.
+  it('keeps a dead-end spur beside the room it hangs off', () => {
+    const { rooms, exits } = lopsided(6, 4);
+    rooms.push(room(300, 'spur'));
+    exits.push(...pair(202, 'w', 300, 'e'));
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    expect(pos.get(300)).toEqual({ c: pos.get(202)!.c - 1, r: pos.get(202)!.r });
+  });
+
+  // Two spurs pointing into the loop from opposite sides are joined to nothing
+  // that says where they sit relative to EACH OTHER, so the solver can put both
+  // in one cell. That was Stoneworks Level 6's actual obstacle: it fell back to
+  // the crooked layout over a single collision. They are kept apart instead.
+  it('keeps two rooms apart that the constraints alone would stack on one cell', () => {
+    const { rooms, exits } = lopsided(6, 4);
+    rooms.push(room(300, 'east-spur'), room(301, 'west-spur'));
+    exits.push(...pair(101, 'e', 300, 'w'), ...pair(201, 'w', 301, 'e'));
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    const cells = [...pos.values()].map(p => `${p.c},${p.r}`);
+    expect(new Set(cells).size).toBe(cells.length);
+    expect(skewedEdges(rooms, exits, pos)).toEqual([]);
+  });
+
+  // A stretched line that would run through another room's box reads as two
+  // exits that do not exist; that group keeps the old layout instead.
+  it('does not stretch a line through another box', () => {
+    const { rooms, exits } = lopsided(6, 4);
+    // A room sitting in the east column's gap, joined only to the west column.
+    rooms.push(room(301, 'blocker'), room(302, 'arm'));
+    exits.push(...pair(105, 'e', 301, 'w'), ...pair(301, 'e', 302, 'w'));
+    const { pos } = placeRooms({ rooms, exits, origin: 'a' });
+    const cells = [...pos.values()].map(p => `${p.c},${p.r}`);
+    expect(new Set(cells).size).toBe(cells.length);
+  });
+});
