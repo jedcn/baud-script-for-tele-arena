@@ -748,6 +748,9 @@ end, { type = "regex" })
 
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     setGold(matches[2])
+    -- A held level-up notification is waiting on this line to measure the
+    -- training fee. Defined with the training trigger far below.
+    if taPackage.noticeLevelUpGold then taPackage.noticeLevelUpGold() end
     -- The last reply of the `st`/`i` pair the entry trigger fires, so this is
     -- the moment the character sheet is fully parsed and an init command can
     -- safely run. It is a no-op on every other inventory check.
@@ -2723,6 +2726,8 @@ local function trainWatchArm(watch)
         if taPackage.trainWatch ~= watch or watch.awaitingVerdict then return end
         watch.awaitingVerdict = true
         echo("[train] A potion wore off — buying training.")
+        -- Read our gold first, so the success trigger can measure the fee.
+        send("i")
         send("buy training")
     end)
 
@@ -4424,7 +4429,9 @@ local function arenaJourneyOnMovement(room)
         -- Arrived at the guild hall. Send the purchase and start walking home
         -- at once: its success or refusal is handled by their own triggers, so
         -- there is nothing to wait for. Banking the level, charging the fee and
-        -- re-buying potions all happen in the success trigger.
+        -- re-buying potions all happen in the success trigger. The `i` first
+        -- reads our gold, so the success trigger can measure the fee.
+        send("i")
         send("buy training")
         taPackage.arenaState = "returning"
         local nav = arenaNav()
@@ -5996,15 +6003,16 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
     end
 end, { type = "regex" })
 
--- How long to wait for the character sheet we ask for after training before
+-- How long to wait for the character sheet and inventory we ask for after training before
 -- pushing the level-up notification without the HP/MP figures. The sheet comes
 -- straight back; this only has to outlast a hiccup.
 local LEVEL_UP_SHEET_WAIT_MS = 5000
 
--- Push the held "Leveled Up!" notification, filling in the stat gains if the
--- character sheet we asked for has landed. Called from the Vitality trigger (the
--- last of the two lines we're waiting on) and from a timeout, whichever comes
--- first; whoever gets there clears the pending record so the other is a no-op.
+-- Push the held "Leveled Up!" notification, filling in the stat gains and the
+-- fee if the character sheet and inventory we asked for have landed. Called once
+-- both have (noticeLevelUpStats / taPackage.noticeLevelUpGold) or from a
+-- timeout, whichever comes first; whoever gets there clears the pending record
+-- so the other is a no-op.
 --
 -- Global rather than local because the Vitality trigger is registered ~3000
 -- lines above this point and can't see a local declared down here. It only ever
@@ -6038,8 +6046,8 @@ function flushLevelUpNotification()
     if mp and mp > 0 then
         lines[#lines + 1] = "- New MP: " .. formatWithCommas(mp) .. gain(pending.mpBefore, mp, "MP")
     end
-    lines[#lines + 1] = "- Training cost: " .. formatWithCommas(pending.cost) .. " gold"
-    lines[#lines + 1] = "- Gold: " .. (pending.gold and formatWithCommas(pending.gold) or "?")
+    lines[#lines + 1] = "- Training cost: " .. (pending.cost and formatWithCommas(pending.cost) or "?") .. " gold"
+    lines[#lines + 1] = "- Gold: " .. (pending.goldAfter and formatWithCommas(pending.goldAfter) or "?")
     sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
 end
 
@@ -6052,7 +6060,25 @@ function noticeLevelUpStats()
     local pending = taPackage.levelUpPush
     if not pending then return end
     if pending.hpBefore and taPackage.character.vitalityMax == pending.hpBefore then return end
-    flushLevelUpNotification()
+    pending.statsLanded = true
+    if pending.goldAfter then flushLevelUpNotification() end
+end
+
+-- The inventory we asked for after training has landed: the fee is the gold we
+-- read just before `buy training` minus the gold we have now. Any `i` answered
+-- after the hall's success line was answered after the purchase, so unlike the
+-- sheet there is no stale reply to screen out. Done here rather than in the
+-- flush so a gold-farming run, which pushes nothing, still records the fee.
+function taPackage.noticeLevelUpGold()
+    local pending = taPackage.levelUpPush
+    if not pending or pending.goldAfter then return end
+    pending.goldAfter = getGold()
+    if pending.goldBefore then
+        pending.cost = pending.goldBefore - pending.goldAfter
+        taPackage.db.recordService("training", "guild", pending.cost)
+        echo("[arena] Training cost " .. pending.cost .. " gold.")
+    end
+    if pending.statsLanded then flushLevelUpNotification() end
 end
 
 -- Guild-hall confirmation that a training session succeeded (its reply to `buy
@@ -6061,9 +6087,10 @@ end
 --   * Bank the level locally. The game's own `Level:` line lags until the next
 --     status poll, and a stale level would keep checkTrainingNeeded() true and
 --     re-trigger a training trip on the next kill.
---   * Charge the fee. Training costs (next level x 5) gold — see help/TUTORIAL
---     ("level 2 costs 10 gold") — and the success line carries no crown amount to
---     parse, so we compute it from the level we just reached.
+--   * Measure the fee. The success line carries no crown amount, so both
+--     callers send `i` just before `buy training` and we send another now; the
+--     fee is the difference (taPackage.noticeLevelUpGold). The tutorial says it
+--     is (next level x 5) gold, but that is the game's word, not a measurement.
 --   * Re-buy the stat potions we drained to be allowed to train — unless another
 --     banked level is still owed, in which case keep draining and train again.
 createTrigger("^After a rigorous mental and physical training session, you managed to blend$", function()
@@ -6075,10 +6102,7 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     if lvl then
         local newLevel = lvl + 1
         setLevel(newLevel)
-        local cost = newLevel * 5
-        setGold((getGold() or 0) - cost)
-        taPackage.db.recordService("training", "guild", cost)
-        echo("[arena] Trained to level " .. newLevel .. " (" .. cost .. " gold).")
+        echo("[arena] Trained to level " .. newLevel .. ".")
         -- Off-screen heads-up that the drain-then-train actually completed. This
         -- fires on the confirmed level-up (distinct from checkLevelUpNotification's
         -- "Time to Level Up!", which fires earlier when the XP threshold is crossed).
@@ -6087,16 +6111,17 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         -- message carries neither figure and our own maxima are whatever the last
         -- `st` said — i.e. pre-level. So hold the push, ask for a fresh sheet, and
         -- assemble it when the new Vitality line lands. Mana is printed just above
-        -- Vitality on the sheet, so both are current by the time we flush.
+        -- Vitality on the sheet, so both are current by the time we flush. The
+        -- `i` after it measures the fee against the gold read before the buy.
         taPackage.levelUpPush = {
             headline = "[" .. (taPackage.character.name or "?") .. "] trained to level "
                 .. newLevel .. "!",
-            cost = cost,
-            gold = getGold(),
+            goldBefore = getGold(),
             hpBefore = taPackage.character.vitalityMax,
             mpBefore = taPackage.character.manaMax,
         }
         send("st")
+        send("i")
         createTimer(LEVEL_UP_SHEET_WAIT_MS, flushLevelUpNotification, { repeating = false })
     end
     -- Restocking is an arena-loop concern only: outside a run there is no errand

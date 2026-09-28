@@ -8837,9 +8837,9 @@ describe("ring-gong-and-fight-in-arena", function()
 
         -- On the guild-hall success line we bank the level locally (the game's own
         -- Level line lags until the next status poll, and a stale level would
-        -- re-trigger a training trip on the next kill), charge the fee
-        -- (next level x 5 gold), and flag a potion restock for the way home.
-        it("banks the level, charges the fee, and re-buys potions on a successful train", function()
+        -- re-trigger a training trip on the next kill), ask for our gold so the
+        -- fee can be measured, and flag a potion restock for the way home.
+        it("banks the level, re-reads gold, and re-buys potions on a successful train", function()
             taPackage.arenaState = "returning"
             taPackage.character.class = "Rogue"
             taPackage.character.level = 1
@@ -8848,8 +8848,34 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaPotionsActive = 0
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
             assert.are.equal(2, taPackage.character.level)   -- banked locally
-            assert.are.equal(490, taPackage.character.gold)  -- 500 - (2 x 5)
+            assert.are.equal("i", helper.sendCalls[#helper.sendCalls])
             assert.is_true(taPackage.needsPotions)           -- restock on the way home
+        end)
+
+        -- The fee is measured, not computed: gold read before the buy minus gold
+        -- read after it. 37 is deliberately not the tutorial's level x 5.
+        it("measures the training fee from the gold before and after", function()
+            helper.clearDbCalls()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120
+            taPackage.character.gold = 500
+            helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+            helper.simulateLine("You are carrying 463 gold crowns")
+            assert.are.equal(37, taPackage.levelUpPush.cost)
+            local recorded
+            for _, c in ipairs(helper.dbCalls) do
+                if c.sql and c.sql:find("services") and c.params and c.params[1] == "training" then
+                    recorded = c.params
+                end
+            end
+            assert.is_truthy(recorded)
+            local sawCost = false
+            for _, v in ipairs(recorded) do
+                if v == 37 then sawCost = true end
+            end
+            assert.is_true(sawCost)
         end)
 
         it("records the training fee as a service", function()
@@ -8860,6 +8886,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.experience = 1120
             taPackage.character.gold = 500
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+            helper.simulateLine("You are carrying 490 gold crowns")
             local recorded = false
             for _, c in ipairs(helper.dbCalls) do
                 if c.sql and c.sql:find("services") and c.params and c.params[1] == "training" then
@@ -8904,6 +8931,9 @@ describe("ring-gong-and-fight-in-arena", function()
 
             helper.simulateLine("Mana:         18 / 18")
             helper.simulateLine("Vitality:     434 / 434")
+            -- Still waiting: the inventory that measures the fee has not landed.
+            assert.are.equal(0, #helper.httpRequestCalls)
+            helper.simulateLine("You are carrying 490 gold crowns")
 
             assert.are.equal(1, #helper.httpRequestCalls)
             local call = helper.httpRequestCalls[1]
@@ -8914,6 +8944,8 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_truthy(body:find("- New HP: 434, gain of 23 HP", 1, true))
             assert.is_truthy(body:find("- New MP: 18, gain of 1 MP", 1, true))
             -- Stat gains read above the bookkeeping, as in the example wording.
+            assert.is_truthy(body:find("- Training cost: 10 gold", 1, true))
+            assert.is_truthy(body:find("- Gold: 490", 1, true))
             assert.is_true(body:find("New HP", 1, true) < body:find("Training cost", 1, true))
         end)
 
@@ -8948,6 +8980,7 @@ describe("ring-gong-and-fight-in-arena", function()
             trainForNtfy()
             taPackage.character.manaMax = 0
             helper.simulateLine("Vitality:     434 / 434")
+            helper.simulateLine("You are carrying 490 gold crowns")
             local body = helper.httpRequestCalls[1].options.body
             assert.is_truthy(body:find("- New HP: 434", 1, true))
             assert.is_nil(body:find("New MP", 1, true))
@@ -8957,6 +8990,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Flushing on it would claim a gain of 0, so wait for the real one.
         it("ignores a stale sheet whose maximum has not moved", function()
             trainForNtfy()
+            helper.simulateLine("You are carrying 490 gold crowns")
             helper.simulateLine("Vitality:     380 / 411")
             assert.are.equal(0, #helper.httpRequestCalls)
 
@@ -8969,6 +9003,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- no notification at all.
         it("pushes without the stat lines when no sheet comes back", function()
             trainForNtfy()
+            helper.simulateLine("You are carrying 490 gold crowns")
             levelUpTimer.cb()
             assert.are.equal(1, #helper.httpRequestCalls)
             local body = helper.httpRequestCalls[1].options.body
@@ -8978,11 +9013,25 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_truthy(body:find("- Training cost: 10 gold", 1, true))
         end)
 
+        -- No inventory came back, so nothing was measured. Say so rather than
+        -- falling back to the tutorial's formula and passing it off as the fee.
+        it("reports the fee as unknown when no inventory comes back", function()
+            trainForNtfy()
+            helper.simulateLine("Vitality:     434 / 434")
+            assert.are.equal(0, #helper.httpRequestCalls)
+            levelUpTimer.cb()
+            local body = helper.httpRequestCalls[1].options.body
+            assert.is_truthy(body:find("- New HP: 434", 1, true))
+            assert.is_truthy(body:find("- Training cost: ? gold", 1, true))
+            assert.is_truthy(body:find("- Gold: ?", 1, true))
+        end)
+
         -- Whichever of the sheet and the timeout arrives second must find nothing
         -- left to send.
         it("pushes only once when the timeout fires after the sheet", function()
             trainForNtfy()
             helper.simulateLine("Vitality:     434 / 434")
+            helper.simulateLine("You are carrying 490 gold crowns")
             levelUpTimer.cb()
             assert.are.equal(1, #helper.httpRequestCalls)
         end)
@@ -12075,7 +12124,9 @@ describe("ring-gong-and-fight-in-arena 3", function()
             taPackage.arenaState = "training"
             taPackage.arenaJourney = { steps = { "sw", "se", "ne", "n" }, index = 4, arriveRoom = "guild hall" }
             helper.simulateLine("You're in the guild hall.")
-            assert.are.equal("buy training", helper.sendCalls[1])
+            -- Gold first, so the fee can be measured against it.
+            assert.are.equal("i", helper.sendCalls[1])
+            assert.are.equal("buy training", helper.sendCalls[2])
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
             assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
@@ -15278,8 +15329,8 @@ describe("train-and-exit-once-potions-wear-off", function()
         helper.simulateLine("An odd tingling sensation washes over you briefly!")
         helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
         assert.are.equal(13, getLevel())
-        assert.are.equal(435, getGold()) -- 500 - 13 * 5
         helper.simulateLine("Vitality:     434 / 434")
+        helper.simulateLine("You are carrying 435 gold crowns")
         assert.are.equal(1, #helper.httpRequestCalls)
         assert.are.equal("Leveled Up!", helper.httpRequestCalls[1].options.headers["X-Title"])
         assert.is_true(helper.httpRequestCalls[1].options.body:find("[Grond] trained to level 13!", 1, true) ~= nil)
