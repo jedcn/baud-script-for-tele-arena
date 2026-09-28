@@ -1753,6 +1753,12 @@ createTrigger("^You're outside (.+)\\.$", handleRoomEntryUnlessLooking, { type =
 -- and stopped at the first `ex`. Its `look` answers "You're down in a hole you
 -- found by...", which the looking guard keeps from minting a second room.
 createTrigger("^You're down in (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
+-- One arrival ends with no full stop at all: "You're on a path in the Elven
+-- Valley", north-east of the mountain road. Matched exactly rather than by
+-- making the "\\.$" optional everywhere, because the first line of a look wraps
+-- at 78 columns and would then read as a brief ("You're in a large stone
+-- chamber illuminated by brightly glowing orbs suspended").
+createTrigger("^You're on (a path in the Elven Valley)$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 -- Some rooms print their move brief with "You are ..." instead of the "You're"
 -- contraction (e.g. "You are inside the dungeon entrance.", "You are in a large

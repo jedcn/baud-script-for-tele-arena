@@ -3809,6 +3809,14 @@ describe("World map triggers", function()
             assert.are.equal("hole, above a chamber", taPackage.currentRoom)
         end)
 
+        -- The Elven Valley path's brief is the one arrival that ends without a
+        -- full stop, so the "\\.$" anchor every other trigger uses missed it.
+        it("recognizes the Elven Valley brief, which has no full stop", function()
+            stubDiscover(1)
+            helper.simulateLine("You're on a path in the Elven Valley")
+            assert.are.equal("path in the Elven Valley", taPackage.currentRoom)
+        end)
+
         it("ignores a 'You are ...' line while accumulating a look description", function()
             taPackage.currentRoom = "large cavern"
             taPackage.currentRoomId = 5

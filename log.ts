@@ -315,6 +315,9 @@ const RULES: Rule[] = [
   { kind: "push-stone", re: /^You push the protruding stone into it's recess\.\.\.$/ },
   { kind: "room", re: /^You're (?:in|on|at|inside|outside|down in) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "move" }) },
+  // The one arrival with no full stop; see the matching trigger in main.lua.
+  { kind: "room", re: /^You're on an? (path in the Elven Valley)$/,
+    fields: m => ({ room: m[1], via: "move" }) },
   { kind: "room", re: /^You are (?:in|on|at|inside|outside) (?:an? |the )?(.+)\.$/,
     fields: m => ({ room: m[1], via: "look" }) },
   { kind: "exits", re: /^Exits: (.+)\.$/, fields: m => ({ exits: m[1] }) },

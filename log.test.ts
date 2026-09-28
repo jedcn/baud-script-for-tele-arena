@@ -103,6 +103,11 @@ test("reads the 'down in' brief of the shaft below the crooked path as a move", 
   expect(classify("You're down in a hole.").fields).toEqual({ room: "hole", via: "move" });
 });
 
+test("reads the Elven Valley brief, which has no full stop, as a move", () => {
+  expect(classify("You're on a path in the Elven Valley").fields)
+    .toEqual({ room: "path in the Elven Valley", via: "move" });
+});
+
 // ── whole-file normalize ───────────────────────────────────────────────────────
 
 function fixture(body: string): string {
