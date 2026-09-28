@@ -8100,7 +8100,7 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
-        it("ntfy notification is throttled to every 90 minutes", function()
+        it("ntfy notification is throttled to every 2 hours", function()
             taPackage.arenaProfile = "2"
             taPackage.character.name = "Tojolias"
             taPackage.character.vitalityCurrent = 313
@@ -8112,7 +8112,7 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("Experience:   620046")
             assert.are.equal(1, #helper.httpRequestCalls)
 
-            -- Next check (10 min in) is within the 90-min window: no ping.
+            -- Next check (10 min in) is within the 2-hour window: no ping.
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   620100")
             assert.are.equal(1, #helper.httpRequestCalls)
@@ -8123,8 +8123,14 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("Experience:   620150")
             assert.are.equal(1, #helper.httpRequestCalls)
 
-            -- Once 90 min has elapsed since the last ping, it fires again.
+            -- 90 min used to be the window, and no longer is: still silent.
             taPackage.arenaLastNtfyTime = os.time() - 5400
+            taPackage.arenaXpCheckPending = true
+            helper.simulateLine("Experience:   620175")
+            assert.are.equal(1, #helper.httpRequestCalls)
+
+            -- Once 2 hours have elapsed since the last ping, it fires again.
+            taPackage.arenaLastNtfyTime = os.time() - 7200
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   620200")
             assert.are.equal(2, #helper.httpRequestCalls)
