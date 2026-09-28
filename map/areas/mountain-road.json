@@ -42,7 +42,7 @@
       "name": "mountain road",
       "exits": {
         "n": {
-          "to": null
+          "to": "mountain-road/mountain-road-3"
         },
         "sw": {
           "to": "mountain-road/mountain-road-1"
@@ -52,6 +52,927 @@
       "layout": {
         "x": 13,
         "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-3",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-4"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-2"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the south and northeast.",
+      "layout": {
+        "x": 13,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-4",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-5"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-3"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 14,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-5",
+      "name": "mountain road",
+      "exits": {
+        "s": {
+          "to": "mountain-road/mountain-road-4"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-6"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the south and southeast.",
+      "layout": {
+        "x": 14,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-6",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-7"
+        },
+        "nw": {
+          "to": "mountain-road/mountain-road-5"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and northeast.",
+      "layout": {
+        "x": 15,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-7",
+      "name": "mountain road",
+      "exits": {
+        "s": {
+          "to": "mountain-road/mountain-road-8"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-6"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and south.",
+      "layout": {
+        "x": 16,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-8",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-7"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-9"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 16,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-9",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-8"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-10"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northeast and southeast.",
+      "layout": {
+        "x": 15,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-10",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-9"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-11"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 16,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-11",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-10"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-12"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and south.",
+      "layout": {
+        "x": 17,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-12",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-11"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-13"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the north and southeast.",
+      "layout": {
+        "x": 17,
+        "y": 5
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-13",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-14"
+        },
+        "nw": {
+          "to": "mountain-road/mountain-road-12"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and east.",
+      "layout": {
+        "x": 18,
+        "y": 4
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-14",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-15"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-13"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and northeast.",
+      "layout": {
+        "x": 19,
+        "y": 4
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-15",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-16"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-14"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 20,
+        "y": 5
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-16",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-17"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-15"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and south.",
+      "layout": {
+        "x": 20,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-17",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-18"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-16"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 19,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-18",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-19"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-17"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northeast and southeast.",
+      "layout": {
+        "x": 18,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-19",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-20"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-18"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 19,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-20",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-21"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-19"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-21",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-22"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-20"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the south and northeast.",
+      "layout": {
+        "x": 19,
+        "y": 11
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-22",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-23"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-21"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and east.",
+      "layout": {
+        "x": 20,
+        "y": 12
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-23",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-24"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-22"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and northeast.",
+      "layout": {
+        "x": 21,
+        "y": 12
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-24",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-25"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-23"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and north.",
+      "layout": {
+        "x": 22,
+        "y": 13
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-25",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-26"
+        },
+        "nw": {
+          "to": "mountain-road/crooked-path"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-24"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road.",
+      "layout": {
+        "x": 22,
+        "y": 14
+      }
+    },
+    {
+      "id": "mountain-road/crooked-path",
+      "name": "crooked path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/crooked-path-1"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-25"
+        }
+      },
+      "description": "You're on a crooked path, that is oddly straight for a crooked path. This path, although oddly straight as it is, is oddly crooked for being so straight.  Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 21,
+        "y": 15
+      }
+    },
+    {
+      "id": "mountain-road/crooked-path-1",
+      "name": "crooked path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/crooked-path-2"
+        },
+        "se": {
+          "to": "mountain-road/crooked-path"
+        }
+      },
+      "description": "You're on a crooked path, that is oddly straight for a crooked path. This path, although oddly straight as it is, is oddly crooked for being so straight.  Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 20,
+        "y": 16
+      }
+    },
+    {
+      "id": "mountain-road/crooked-path-2",
+      "name": "crooked path",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole"
+        },
+        "se": {
+          "to": "mountain-road/crooked-path-1"
+        }
+      },
+      "description": "You're on a crooked path, that is oddly straight for a crooked path. This path, although oddly straight as it is, is oddly crooked for being so straight.  Exits are to the southeast and downward.",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-1"
+        },
+        "u": {
+          "to": "mountain-road/crooked-path-2"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-1",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-2"
+        },
+        "u": {
+          "to": "mountain-road/hole"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-2",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-3"
+        },
+        "u": {
+          "to": "mountain-road/hole-1"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-3",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-4"
+        },
+        "u": {
+          "to": "mountain-road/hole-2"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-4",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-5"
+        },
+        "u": {
+          "to": "mountain-road/hole-3"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-5",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-6"
+        },
+        "u": {
+          "to": "mountain-road/hole-4"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-6",
+      "name": "hole",
+      "exits": {
+        "d": {
+          "to": "mountain-road/hole-above-a-chamber"
+        },
+        "u": {
+          "to": "mountain-road/hole-5"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  The path also went straight, but the path was very crooked.  This is a straight hole.  A straight hole",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/hole-above-a-chamber",
+      "name": "hole, above a chamber",
+      "exits": {
+        "u": {
+          "to": "mountain-road/hole-6"
+        }
+      },
+      "description": "You're down in a hole you found by travelling through a crooked path. This hole is not crooked, it goes straight down.  Down to a chamber, so you see.  It doesn't look like you will be able to climb back up this way if you",
+      "layout": {
+        "x": 19,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-26",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-27"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-25"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the east and west.",
+      "layout": {
+        "x": 23,
+        "y": 14
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-27",
+      "name": "mountain road",
+      "exits": {
+        "se": {
+          "to": "mountain-road/mountain-road-28"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-26"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and southeast.",
+      "layout": {
+        "x": 24,
+        "y": 14
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-28",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-29"
+        },
+        "nw": {
+          "to": "mountain-road/mountain-road-27"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and east.",
+      "layout": {
+        "x": 25,
+        "y": 13
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-29",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-30"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-28"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the east and west.",
+      "layout": {
+        "x": 26,
+        "y": 13
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-30",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-31"
+        },
+        "s": {
+          "to": null
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-29"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. The road continues north and west, and a dirt path is leading south from here.",
+      "layout": {
+        "x": 27,
+        "y": 13
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-31",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-32"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-30"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the north and south.",
+      "layout": {
+        "x": 27,
+        "y": 14
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-32",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-33"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-31"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and south.",
+      "layout": {
+        "x": 27,
+        "y": 15
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-33",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-34"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-32"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 26,
+        "y": 16
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-34",
+      "name": "mountain road",
+      "exits": {
+        "se": {
+          "to": "mountain-road/mountain-road-33"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-35"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and southeast.",
+      "layout": {
+        "x": 25,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-35",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-34"
+        },
+        "nw": {
+          "to": "mountain-road/mountain-road-36"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and east.",
+      "layout": {
+        "x": 24,
+        "y": 17
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-36",
+      "name": "mountain road",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/mountain-road-37"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-35"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 23,
+        "y": 18
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-37",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-38"
+        },
+        "se": {
+          "to": "mountain-road/mountain-road-36"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the north and southeast.",
+      "layout": {
+        "x": 22,
+        "y": 19
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-38",
+      "name": "mountain road",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-39"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-37"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the north and south.",
+      "layout": {
+        "x": 22,
+        "y": 20
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-39",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-40"
+        },
+        "s": {
+          "to": "mountain-road/mountain-road-38"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the south and northeast.",
+      "layout": {
+        "x": 22,
+        "y": 21
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-40",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-41"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-39"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and east.",
+      "layout": {
+        "x": 23,
+        "y": 22
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-41",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-42"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-40"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the east and west.",
+      "layout": {
+        "x": 24,
+        "y": 22
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-42",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/mountain-road-43"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-41"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and northeast.",
+      "layout": {
+        "x": 25,
+        "y": 22
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-43",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-44"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-42"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the southwest and east.",
+      "layout": {
+        "x": 26,
+        "y": 23
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-44",
+      "name": "mountain road",
+      "exits": {
+        "e": {
+          "to": "mountain-road/mountain-road-45"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-43"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the east and west.",
+      "layout": {
+        "x": 27,
+        "y": 23
+      }
+    },
+    {
+      "id": "mountain-road/mountain-road-45",
+      "name": "mountain road",
+      "exits": {
+        "ne": {
+          "to": "elven-valley/path-in-the-elven-valley"
+        },
+        "w": {
+          "to": "mountain-road/mountain-road-44"
+        }
+      },
+      "description": "You are travelling along an old cobblestone road in the mountains.  The stones making up the path have all but worn away.  Legend has it that the spirits of elves watch this road closely, alerting their kin of presense of danger.  Bones of unfortunate travellers and pieces of broken equipment, too brittle to be a target of thieves, litter the otherwise clean road. Exits are to the west and northeast.",
+      "layout": {
+        "x": 28,
+        "y": 23
       }
     }
   ]

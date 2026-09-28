@@ -1,0 +1,126 @@
+{
+  "area": "elven-valley",
+  "name": "The Elven Valley",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "elven-valley/path-in-the-elven-valley",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-1"
+        },
+        "sw": {
+          "to": "mountain-road/mountain-road-45"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are southwest toward the mountain road, and north along the path.",
+      "layout": {
+        "x": 29,
+        "y": 24
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-1",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-2"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the north and south.",
+      "layout": {
+        "x": 29,
+        "y": 25
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-2",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "nw": {
+          "to": "elven-valley/path-in-the-elven-valley-3"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-1"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the northwest and south.",
+      "layout": {
+        "x": 29,
+        "y": 26
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-3",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "nw": {
+          "to": "elven-valley/path-in-the-elven-valley-4"
+        },
+        "se": {
+          "to": "elven-valley/path-in-the-elven-valley-2"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 28,
+        "y": 27
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-4",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "nw": {
+          "to": "elven-valley/path-in-the-elven-valley-5"
+        },
+        "se": {
+          "to": "elven-valley/path-in-the-elven-valley-3"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 27,
+        "y": 28
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-5",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "nw": {
+          "to": "elven-valley/path-in-the-elven-valley-6"
+        },
+        "se": {
+          "to": "elven-valley/path-in-the-elven-valley-4"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the northwest and southeast.",
+      "layout": {
+        "x": 26,
+        "y": 29
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-6",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": null
+        },
+        "se": {
+          "to": "elven-valley/path-in-the-elven-valley-5"
+        }
+      },
+      "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  The path is bordered neatly on both sides by logs, which can be easily passed on foot in many places.  Exits are to the north and southeast.",
+      "layout": {
+        "x": 25,
+        "y": 30
+      }
+    }
+  ]
+}

@@ -43,6 +43,12 @@
       "file": "areas/desert.json"
     },
     {
+      "area": "elven-valley",
+      "name": "The Elven Valley",
+      "rooms": 7,
+      "file": "areas/elven-valley.json"
+    },
+    {
       "area": "first-dungeon-level-1",
       "name": "First Dungeon, Level 1",
       "rooms": 51,
@@ -129,7 +135,7 @@
     {
       "area": "mountain-road",
       "name": "The Mountain Road",
-      "rooms": 3,
+      "rooms": 57,
       "file": "areas/mountain-road.json"
     },
     {
