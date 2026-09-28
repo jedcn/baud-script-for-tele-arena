@@ -837,6 +837,9 @@ export const DRAWN = [
   // the shrine's maps -- so there is no drawing to check it against, and it is
   // named for its first room until the walk shows where it goes.
   { slug: 'mountain-road', title: 'The Mountain Road', origin: 'mountain-road' },
+  // North-east off mountain-road-45. On no shrine page either; the game names
+  // it ("You're on a path in the Elven Valley"). Drawn from the room you arrive in.
+  { slug: 'elven-valley', title: 'The Elven Valley', origin: 'path-in-the-elven-valley' },
   // South off the forest, through forest-64 -- the [H] under "to Forest" on the
   // shrine's page, and the forest page's Hyena [c].
   { slug: 'gnoll-caves', title: 'The Gnoll Caves', origin: 'forest-64' },
