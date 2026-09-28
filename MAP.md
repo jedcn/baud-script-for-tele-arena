@@ -10,36 +10,42 @@
 6. [The Desert](#the-desert)
 7. [The Stoneworks, Level 1](#the-stoneworks-level-1)
 8. [The Stoneworks, Level 2](#the-stoneworks-level-2)
-9. [Sewers, Level 1](#sewers-level-1)
-10. [Sewers, Level 2](#sewers-level-2)
-11. [Sewers, Level 3](#sewers-level-3)
-12. [The Mountains](#the-mountains)
-13. [The Forest](#the-forest)
-14. [The Swamp](#the-swamp)
-15. [The Ruined Town](#the-ruined-town)
-16. [The Orc Caves](#the-orc-caves)
-17. [The Mountain Road](#the-mountain-road)
-18. [The Gnoll Caves](#the-gnoll-caves)
-19. [The Ruined Mansion](#the-ruined-mansion)
-20. [The Tower, Level 1](#the-tower-level-1)
-21. [The Tower, Level 2](#the-tower-level-2)
-22. [The Tower, Level 3](#the-tower-level-3)
-23. [The Tower, Level 4](#the-tower-level-4)
-24. [The Labyrinth, Level 1](#the-labyrinth-level-1)
-25. [The Labyrinth, Level 2](#the-labyrinth-level-2)
-26. [The Labyrinth, Level 3](#the-labyrinth-level-3)
-27. [The Labyrinth, Level 4](#the-labyrinth-level-4)
-28. [The Labyrinth, Level 5](#the-labyrinth-level-5)
-29. [The Cellars](#the-cellars)
-30. [Third Town](#third-town)
-31. [Fourth Town](#fourth-town)
-32. [The Deep Forest](#the-deep-forest)
-33. [The Valley](#the-valley)
-34. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-35. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-36. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-37. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-38. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+9. [The Stoneworks, Level 3](#the-stoneworks-level-3)
+10. [The Stoneworks, Level 4](#the-stoneworks-level-4)
+11. [The Stoneworks, Level 5](#the-stoneworks-level-5)
+12. [The Stoneworks, Level 6](#the-stoneworks-level-6)
+13. [Sewers, Level 1](#sewers-level-1)
+14. [Sewers, Level 2](#sewers-level-2)
+15. [Sewers, Level 3](#sewers-level-3)
+16. [The Mountains](#the-mountains)
+17. [The Forest](#the-forest)
+18. [The Swamp](#the-swamp)
+19. [The Ruined Town](#the-ruined-town)
+20. [The Orc Caves](#the-orc-caves)
+21. [The Mountain Road](#the-mountain-road)
+22. [The Gnoll Caves](#the-gnoll-caves)
+23. [The Ruined Mansion](#the-ruined-mansion)
+24. [The Tower, Level 1](#the-tower-level-1)
+25. [The Tower, Level 2](#the-tower-level-2)
+26. [The Tower, Level 3](#the-tower-level-3)
+27. [The Tower, Level 4](#the-tower-level-4)
+28. [The Labyrinth, Level 1](#the-labyrinth-level-1)
+29. [The Labyrinth, Level 2](#the-labyrinth-level-2)
+30. [The Labyrinth, Level 3](#the-labyrinth-level-3)
+31. [The Labyrinth, Level 4](#the-labyrinth-level-4)
+32. [The Labyrinth, Level 5](#the-labyrinth-level-5)
+33. [The Tunnels](#the-tunnels)
+34. [The Ledge](#the-ledge)
+35. [The Cellars](#the-cellars)
+36. [Third Town](#third-town)
+37. [Fourth Town](#fourth-town)
+38. [The Deep Forest](#the-deep-forest)
+39. [The Valley](#the-valley)
+40. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+41. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+42. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+43. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+44. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
@@ -417,7 +423,7 @@ Key:
 ### The Stoneworks, Level 2
 
 ```
-                                             [ v]        down to unexplored
+                                             [ v]        down to The Stoneworks, Level 3
                                               |
                                               |
                                              [ ]
@@ -463,6 +469,189 @@ Key:
                      |
                      |
                     [ ]
+```
+
+### The Stoneworks, Level 3
+
+```
+[ v]                                                down to The Stoneworks, Level 4
+ |
+ |
+[ ]
+   \
+    \
+     [ ]                                [ ]--[ ^]   up to The Stoneworks, Level 2
+        \                              /
+         \                            /
+          [ ]                      [ ]
+           |                        |
+           |                        |
+          [ ]--[ ]       [ ]--[ ]--[ ]
+           |      \     /
+           |       \   /
+          [ ]       [ ]
+             \
+              \
+               [ ]
+              /
+             /
+          [ ]
+         /
+        /
+     [ ]                           [ ]
+        \                           |
+         \                          |
+          [ ]       [ ]            [ ]
+             \     /   \          /   \
+              \   /     \        /     \
+               [ ]       [ ]--[ ]       [ ]
+                                 \     /
+                                  \   /
+                                   [ ]
+                                  /
+                                 /
+                         [ ]--[ ]
+                          |
+                          |
+                         [ ]
+                          |
+                          |
+                         [ ]
+```
+
+### The Stoneworks, Level 4
+
+```
+     [ ^]                                    [ ]   up to The Stoneworks, Level 3
+        \                                     |
+         \                                    |
+          [ ]                                [ ]
+           |                                /
+           |                               /
+          [ ]                           [ ]
+             \                             \
+              \                             \
+               [ ]                           [ ]
+                  \                         /
+                   \                       /
+                    [ ]--[ ]            [ ]
+                   /      |              |
+                  /       |              |
+               [ ]       [ ]            [ ]
+              /           |            /
+             /            |           /
+          [ ]            [ ]       [ ]
+         /   \          /   \     /
+        /     \        /     \   /
+[ ]--[ ]  [ ]--[ ]  [ ]       [ ]
+ |           \     /
+ |            \   /
+[ ]            [ ]
+   \
+    \
+     [ ]
+        \
+         \
+          [ ]
+           |
+           |
+          [ v]                                     down to The Stoneworks, Level 5
+```
+
+### The Stoneworks, Level 5
+
+```
+                                   [ v]            down to The Stoneworks, Level 6
+                                    |
+                                    |
+                                   [ ]
+                                    |
+                                    |
+                                   [ ]
+                                      \
+                                       \
+                                        [ ]
+                                           \
+                                            \
+[ ]--[ ]                      [ ]            [ ]
+        \                    /   \          /
+         \                  /     \        /
+          [ ]--[ ]       [ ]       [ ]--[ ]
+                  \     /   \     /        \
+                   \   /     \   /          \
+                    [ ]       [ ]            [ ]
+                   /                          |
+                  /                           |
+          [ ]--[ ]                           [ ]
+         /                                  /
+        /                                  /
+     [ ]                                [ ]
+    /                                  /
+   /                                  /
+[ ^]                               [ ]             up to The Stoneworks, Level 4
+                                      \
+                                       \
+                                        [ ]
+                                         |
+                                         |
+                                        [ ]
+```
+
+### The Stoneworks, Level 6
+
+```
+     [ ^]-[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                      up to The Stoneworks, Level 5
+                                    |
+                                    |
+                                   [ ]--[ ]--[ ]--[ ]
+                                                   |
+                                                   |
+                                                  [ ]
+                                                   |
+                                                   |
+[ ]                                               [ ]
+ |                                                 |
+ |                                                 |
+[ ]                                               [ ]
+ |                                                 |
+ |                                                 |
+[ ]--[ ]--[ ]--[ ]--[ ]                 [ ]--[ ]--[ ]
+ |                   |                   |
+ |                   |                   |
+[ ]                 [ ]                 [ ]--[ ]--[ ]--[ ]
+ |                   |                   |              |
+ |                   |                   |              |
+[ ]                 [ ]                 [ ]       [ ]--[ ]--[ ]--[ ]
+ |                   |                   |         | \  |         |
+ |                   |                   |         |  \ |         |
+[ ]                 [ ]--[ ]--[ ]--[ ]--[ ]       [ ]  [ ]       [ ]
+ |                   |                             |              |
+ |                   |                             |              |
+[ ]                 [ ]                      [ ]--[ ]            [ ]
+ |                   |                        |                   |
+ |                   |                        |                   |
+[ ]--[ ]--[ ]--[ ]--[ ]                      [ ]                 [ ]
+                |                             |                   |
+                |                             |                   |
+               [ ]                           [ ]                 [ ]
+                |                             |                   |
+                |                             |                   |
+               [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                 [ ]
+                                              |                   |
+                                              |                   |
+                                             [ ]                 [ ]
+                                              |                   |
+                                              |                   |
+                                             [ ]                 [ ]
+                                              |                   |
+                                              |                   |
+                                        [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+                                         |                        |  /
+                                         |                        | /
+                                        [ ]                      [ ]
+                                         |
+                                         |
+          [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                 w to third-town
 ```
 
 ### Sewers, Level 1
@@ -1203,6 +1392,96 @@ Key:
 [ ]--[ ]--[ ]--[ ]--[ ]  [ ]--[ ]--[ ]--[ ]--[ ]
 ```
 
+### The Tunnels
+
+```
+                                             [ ^]                                                        [ ^]---------------------[ v]                [ ]   up to The Ledge
+                                            /                                                             |                        |                 /
+                                           /                                                              |                        |                /
+                              [ ]       [ ]                                                              [ ]                      [ ]            [ v]
+                             /             \                                                            /                        /            /
+                            /               \                                                          /                        /         /
+                         [ ]                 [ ]                                                    [ ]                      [ ]      /
+                        /   \                 |                                                    /                        /    /
+                       /     \                |                                                   /                        / /
+                    [ ]       [ ]--[ ]       [ ]            [ v]                               [ ]                      [ ^]
+                   /           |      \       |            /   \                              /
+                  /            |       \      |          /      \                            /
+               [ ]            [ ]       [ ]--[ ]       /         [ ]--[ ]--[ ]--[ ^]-[ ]--[ ]                                                               s to unexplored
+              /              /                      /                           /
+             /              /                     /                            /
+          [ ]            [ ]                    /                             /
+             \            |                   /                              /
+              \           |                 /                              /
+               [ ]       [ ]              /                               /
+              /   \     /               /                                /
+             /     \   /             /                                  /
+          [ ]       [ ]            /                                   /
+           |         |           /                                    /
+           |         |         /                                     /
+          [ ]       [ ]      /                                      /
+         /           |     /                                       /
+        /            |   /                                       /
+     [ ]            [ ]--[ ]--[ ]                               /
+    /   \          //     /                                    /
+   /     \        /  /                                        /
+[ ]       [ ]--[ ^]                                          /
+ |         /                                                /
+ |    /                                                    /
+[ ]                                                       /
+                                                         /
+                                                       /
+                                                      /
+                                                     /
+                                                    /
+                                                   /
+                                                  /
+                                                 /
+[ ^]                                         [ v]                     [ v]---------------------[ ^]
+ |       \                                    |/\                    /                        /
+ |              \                            /|  \                  /                        /
+[ ]                     \                   /[ ]   \             [ ]                      [ ]
+ |                             \           /  |      \          /                        /
+ |                                     \  /   |       \        /                        /
+[ ]                                      /   [ v]       \   [ ]                      [ ]
+   \                                    /                 \  |                        |
+    \                                  /                   \ |                        |
+     [ ]                              /                     [ ^]                     [ ]
+        \                            /                                                |
+         \                         /                                                  |
+          [ ]                     /                                                  [ ]
+             \                   /                                                    |
+              \                 /                                                     |
+               [ ]--[ ]--[ ]--[ v]                                                   [ ]
+                                                                                      |
+                                                                                      |
+                                                                                     [ ]
+                                                                                      |
+                                                                                      |
+                                                                                     [ ]
+```
+
+### The Ledge
+
+```
+[ ]--[ ]--[ ]--[ ]--[ v]                          [ ]                   down to The Tunnels   w to unexplored
+                       \                             \
+                        \                             \
+                         [ ]                           [ ]
+                            \                             \
+                             \                             \
+                              [ ]                           [ ]
+                                 \                             \
+                                  \                             \
+                                   [ ]                           [ ]
+                                    |                             |
+                                    |                             |
+                                   [ ]                           [ ]
+                                    |                             |
+                                    |                             |
+                                   [ ^]--------------------------[ v]
+```
+
 ### The Cellars
 
 ```
@@ -1263,7 +1542,7 @@ Key:
      [ ]       [ ]--[t]
         \     /
          \   /
-[E]       [ ]--[ ]        e to unexplored
+[E]       [ ]             e to The Stoneworks, Level 6
    \     /   \
     \   /     \
      [ ]       [ ]
