@@ -334,7 +334,7 @@
       "name": "stonework corridor",
       "exits": {
         "e": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-corridor-175"
         },
         "w": {
           "to": "stoneworks-level-6/stonework-corridor-171"
@@ -1050,7 +1050,7 @@
       "name": "stonework corridor",
       "exits": {
         "n": {
-          "to": null
+          "to": "stoneworks-level-6/stonework-corridor-175"
         },
         "s": {
           "to": "stoneworks-level-6/stonework-corridor-211"
@@ -1530,6 +1530,26 @@
       "layout": {
         "x": -1,
         "y": -10
+      }
+    },
+    {
+      "id": "stoneworks-level-6/stonework-corridor-175",
+      "name": "stonework corridor",
+      "exits": {
+        "s": {
+          "to": "stoneworks-level-6/stonework-corridor-212"
+        },
+        "w": {
+          "to": "stoneworks-level-6/stonework-corridor-172"
+        }
+      },
+      "description": "You are standing in a well kept stonework corridor. The tightly fit stone tiles that make up the floor and walls here bear unusal designs and are of very fine craftsmanship. The corridor runs to the south and west.",
+      "trap": {
+        "type": "falling block"
+      },
+      "layout": {
+        "x": 7,
+        "y": 2
       }
     }
   ]
