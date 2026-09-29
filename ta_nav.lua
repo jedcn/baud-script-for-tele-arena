@@ -1033,6 +1033,32 @@ NAV_ROUTES["town-3/part-2"] = NAV_ROUTES["town-3/after-doors-to-town-3"]
 -- walking today.
 NAV_ROUTES["town-3/part-1"].requires = NAV_ROUTES["town-3/part-2"].requires
 NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from where this ends,"
+-- And the two halves as one command: part-1's gated walk through the sewer
+-- doors, a seam at the junction, then part-2's eight legs. A leg can't itself
+-- be built from legs, so this names after-doors followed by part-2's own legs
+-- -- read from part-2's list rather than transcribed, so a leg added there is a
+-- leg walked here.
+--
+-- Everything part-2 asks of the pack is asked here, at the north plaza, before
+-- a step is taken -- the same reason part-1 asks for it -- and `anyway` skips
+-- it for both halves at once. `chasm-is-clear` is taken from the legs as it is
+-- on part-2; after-doors has no such variant and is walked as usual, which is
+-- right, because its doors relock daily whatever the levers below are doing.
+do
+    local p1, p2 = NAV_ROUTES["town-3/part-1"], NAV_ROUTES["town-3/part-2"]
+    local legs = { "town-3/after-doors" }
+    for _, leg in ipairs(p2.legs) do legs[#legs + 1] = leg end
+    NAV_ROUTES["town-3/combined"] = {
+        from     = p1.from,
+        to       = p2.to,
+        requires = p2.requires,
+        onPoison = p2.onPoison,
+        legs     = legs,
+        variants = {
+            ["chasm-is-clear"] = { fromLegs = true },
+        },
+    }
+end
 -- The chasm-is-clear way needs nothing on top of that: the same rope and the
 -- same potion, and no pearl key.
 --

@@ -16051,6 +16051,105 @@ describe("navigate-to", function()
 
         end)
 
+        -- part-1 then part-2 as one command: after-doors, a seam at the
+        -- junction, then part-2's eight legs.
+        describe("town-3/combined", function()
+
+            local function COMBINED() return taPackage.navRoutes["town-3/combined"] end
+            local function P1() return taPackage.navRoutes["town-3/part-1"] end
+            local function P2() return taPackage.navRoutes["town-3/part-2"] end
+
+            it("starts where part-1 starts and ends where part-2 ends", function()
+                assert.are.equal(P1().from, COMBINED().from)
+                assert.are.equal(P2().to, COMBINED().to)
+            end)
+
+            -- Read from part-2's list, so a leg added there is walked here too.
+            it("walks after-doors and then part-2's legs", function()
+                local legs = COMBINED().legs
+                assert.are.equal("town-3/after-doors", legs[1])
+                assert.are.equal(#P2().legs + 1, #legs)
+                for i, entry in ipairs(P2().legs) do
+                    assert.are.equal(entry, legs[i + 1])
+                end
+            end)
+
+            -- part-1's 22 steps, a seam at the junction, then part-2's 364.
+            it("flattens to part-1, a seam, then part-2", function()
+                local flat = taPackage.navRouteSteps(COMBINED())
+                local p1 = taPackage.navRouteSteps(P1())
+                local p2 = taPackage.navRouteSteps(P2())
+                assert.are.equal(#p1 + 1 + #p2, #flat)
+                for i = 1, #p1 do assert.are.same(p1[i], flat[i]) end
+                assert.are.same({ seam = "town-3/hydra" }, flat[#p1 + 1])
+                for i = 1, #p2 do assert.are.same(p2[i], flat[#p1 + 1 + i]) end
+            end)
+
+            -- chasm-is-clear leaves part-1 alone and takes part-2's short way.
+            it("passes chasm-is-clear on to part-2", function()
+                local flat = taPackage.navRouteSteps(COMBINED(), "chasm-is-clear")
+                local p1 = taPackage.navRouteSteps(P1())
+                local p2 = taPackage.navRouteSteps(P2(), "chasm-is-clear")
+                assert.are.equal(#p1 + 1 + #p2, #flat)
+                for i = 1, #p1 do assert.are.same(p1[i], flat[i]) end
+                assert.are.same({ seam = "town-3/hydra" }, flat[#p1 + 1])
+                for i = 1, #p2 do assert.are.same(p2[i], flat[#p1 + 1 + i]) end
+            end)
+
+            -- The pack is checked once, at the north plaza, for both halves.
+            it("checks for part-2's items before the first step", function()
+                assert.are.equal(P2().requires, COMBINED().requires)
+                assert.are.equal(P2().onPoison, COMBINED().onPoison)
+                helper.simulateAlias("navigate-to town-3/combined")
+                answerProbe(274)
+                assert.are.equal(1, sent("i"))
+                assert.are.equal(0, sent("sw"))
+                helper.simulateLine("You are carrying a coil of rope, and a verbena potion.")
+                assert.are.equal(1, sent("sw"))
+                local out = lastEchoes()
+                assert.is_falsy(out:find("fix the route table", 1, true))
+                assert.is_truthy(out:find("387 steps", 1, true))
+            end)
+
+            it("refuses from the junction, where part-2 starts", function()
+                helper.simulateAlias("navigate-to town-3/combined")
+                answerProbe(426)
+                assert.is_truthy(lastEchoes():find(
+                    "I don't know how to get there from here.", 1, true))
+                assert.are.equal(0, sent("s"))
+            end)
+
+            it("skips the pack check with anyway", function()
+                helper.simulateAlias("navigate-to town-3/combined anyway")
+                answerProbe(274)
+                assert.are.equal(0, sent("i"))
+                assert.are.equal(1, sent("sw"))
+            end)
+
+            it("takes chasm-is-clear together with anyway", function()
+                helper.simulateAlias("navigate-to town-3/combined chasm-is-clear anyway")
+                answerProbe(274)
+                local out = lastEchoes()
+                assert.is_truthy(out:find("Walking to town-3/combined chasm-is-clear", 1, true))
+                assert.are.equal(1, sent("sw"))
+            end)
+
+            it("resumes with from-step", function()
+                helper.simulateAlias("navigate-to town-3/combined from-step 2 anyway")
+                answerProbe(274)
+                assert.are.equal(0, sent("sw"))
+                assert.are.equal(1, sent("d"))
+            end)
+
+            it("arms and-exit", function()
+                helper.simulateAlias("navigate-to town-3/combined and-exit anyway")
+                answerProbe(274)
+                assert.are.equal(1, sent("sw"))
+                assert.are.equal("town-3/combined", taPackage.navExitWhenDone.destination)
+            end)
+
+        end)
+
         -- A variant is an alternative ENDING asked for as a trailing word. The
         -- live one, chasm-is-clear, is pending -- so these build their own to
         -- test the flattening, and use the live one for the plumbing.
