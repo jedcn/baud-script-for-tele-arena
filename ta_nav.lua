@@ -1852,12 +1852,16 @@ local function navResendStep()
     -- re-sending a lever pull would work it twice. A gate is a move -- walking
     -- at a door twice costs nothing -- and has to be named explicitly here or a
     -- trip on one would leave the walk waiting for a step it never re-sent.
+    -- The walk back into a room we were thrown out of is a move too, and not
+    -- one of the route's: it is what gets re-sent while it is under way.
     local step = j.steps[j.index]
-    local dir = (type(step) == "string" and step)
+    local dir = j.returning
+        or (type(step) == "string" and step)
         or (navStepKind(step) == "gate" and step.door)
         or nil
     if dir then
-        navDebug("re-send step " .. j.index .. " " .. dir)
+        navDebug(j.returning and ("go back " .. dir .. " after being thrown")
+            or ("re-send step " .. j.index .. " " .. dir))
         navSend(dir)
     end
 end
@@ -1874,9 +1878,13 @@ local function navScheduleStep()
     if not j then return end
     if j.paced == j.index then return end
     j.paced = j.index
-    local gen = taPackage.navGen or 0
+    -- Bumped by being thrown out of a room, which has to call off the step
+    -- this timer is about to send (see the tumble trigger).
+    j.paceSeq = (j.paceSeq or 0) + 1
+    local gen, seq = taPackage.navGen or 0, j.paceSeq
     createTimer(NAV_STEP_DELAY_MS, function()
-        if taPackage.navigate and (taPackage.navGen or 0) == gen then navStep() end
+        local w = taPackage.navigate
+        if w and (taPackage.navGen or 0) == gen and w.paceSeq == seq then navStep() end
     end, { repeating = false })
 end
 
@@ -2037,9 +2045,14 @@ end, { type = "regex" })
 
 -- Re-send the step we tripped on, after the usual pacing pause.
 local function navScheduleResend(delayMs)
-    local gen = taPackage.navGen or 0
+    local j = taPackage.navigate
+    if not j then return end
+    -- Bumped by being thrown out of a room, like paceSeq.
+    j.resendSeq = (j.resendSeq or 0) + 1
+    local gen, seq = taPackage.navGen or 0, j.resendSeq
     createTimer(delayMs or NAV_STEP_DELAY_MS, function()
-        if taPackage.navigate and (taPackage.navGen or 0) == gen then navResendStep() end
+        local w = taPackage.navigate
+        if w and (taPackage.navGen or 0) == gen and w.resendSeq == seq then navResendStep() end
     end, { repeating = false })
 end
 
@@ -2421,6 +2434,40 @@ local function navOnRoomBrief(room)
     -- happen, so exactly one is swallowed and the flag is spent.
     if j.swallowOne then
         j.swallowOne = nil
+        return
+    end
+
+    -- Where a monster threw us (see the tumble trigger). If the route's next
+    -- step goes that way anyway, the throw has walked it for us. Otherwise
+    -- walk back the way we came flying and take the step from there.
+    if j.thrown then
+        local dir = j.thrown
+        j.thrown = nil
+        local nextStep = j.steps[j.index + 1]
+        local nextDir = (type(nextStep) == "string" and nextStep)
+            or (navStepKind(nextStep) == "gate" and nextStep.door)
+            or nil
+        if nextDir == dir then
+            j.index = j.index + 1
+            j.stepKind = navStepKind(nextStep)
+            navDebug("thrown " .. dir .. " — that is step " .. j.index .. ", counting it ("
+                .. room .. ")")
+            if j.index >= #j.steps then navArrive(room) else navScheduleStep() end
+            return
+        end
+        j.returning = NAV_OPPOSITE[dir]
+        navEcho("Thrown " .. j.thrownWord .. " out of the room — going back " .. j.returning
+            .. " before step " .. (j.index + 1) .. ".")
+        navScheduleResend()
+        return
+    end
+
+    -- Back in the room we were thrown out of. Not a step of the route: the
+    -- step we were about to take is still to come.
+    if j.returning then
+        navDebug("back " .. j.returning .. " after being thrown (" .. room .. ")")
+        j.returning = nil
+        navScheduleStep()
         return
     end
 
@@ -3374,6 +3421,47 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
 end, { type = "regex" })
 
 createTrigger("^In your haste, you trip and fall!$", navRecoverAfterRefusedMove, { type = "regex" })
+
+-- A monster picked us up and threw us out of the room (a female cyclops does
+-- this). The game names the direction, and the next brief is the room we land
+-- in -- which, uncaught, read as the arrival for the step we had just taken,
+-- so the walk sent the next step from the wrong room. That is how tojolias's
+-- town-3/combined stopped at step 149 on 2026-09-29: thrown ne after step 148,
+-- then `s` from a room with no south exit
+-- (logs/session-tojolias-2026-09-29T19-59-13.log).
+--
+-- The landing is dealt with in navOnRoomBrief. Here we call off the step that
+-- was about to go out, and say which step comes next. Two states are safe to
+-- recover from: a step landed and the next is waiting on its pacing timer, or
+-- the next step was refused (held in combat, winded) and is waiting to be
+-- re-sent -- which is the likely one, since the thrower is fighting us. That
+-- step was never taken, so it is put back to be taken again. Anything else --
+-- a step in flight, a sweep, a seam check, thrown again on the way back -- we
+-- can't say where we are relative to the route, so stop and say so.
+createTrigger("^You tumble (.+), out of the room!$", function(matches)
+    local j = taPackage.navigate
+    if not j then return end
+    local dir = taPackage.compassWords[matches[2]]
+    local between = j.phase == "walking" and not j.returning and dir ~= nil
+    if between and j.blocked then
+        j.index = j.index - 1
+        j.blocked = nil
+    elseif not (between and j.paced == j.index) then
+        local at = j.index
+        stopNavigate()
+        navEcho("Thrown " .. matches[2] .. " out of the room at step " .. at
+            .. ", in the middle of something I can't pick back up — stopping.")
+        navEcho("  Find your way back and pick the walk up with"
+            .. " `navigate-to <dest> from-step <N>`.")
+        return
+    end
+    navDebug("thrown " .. dir .. " after step " .. j.index)
+    -- Neither the pacing timer nor a pending re-send may fire now.
+    j.paceSeq = (j.paceSeq or 0) + 1
+    j.resendSeq = (j.resendSeq or 0) + 1
+    j.paced = nil
+    j.thrown, j.thrownWord = dir, matches[2]
+end, { type = "regex" })
 
 -- Being winded is not tripping, and treating it as one was wrong three ways.
 --

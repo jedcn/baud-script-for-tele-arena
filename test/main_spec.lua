@@ -19772,6 +19772,111 @@ describe("navigate-to", function()
 
     end)
 
+    -- A female cyclops picks you up and throws you out of the room. Uncaught,
+    -- the landing brief read as the arrival for the step just taken, and the
+    -- next step went out from the wrong room (tojolias, 2026-09-29: thrown ne
+    -- after step 148, then `s` into a wall).
+    describe("thrown out of a room", function()
+
+        local function walkOneStep(steps)
+            route({ steps = steps })
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
+            answerProbe(274)
+            brief("path")                                        -- step 1 landed
+        end
+
+        local function thrown(dir)
+            helper.simulateLine("The female cyclops picks up and hurls you for 6 damage!")
+            helper.simulateLine("You tumble " .. dir .. ", out of the room!")
+        end
+
+        -- The case from the log: the next step goes elsewhere, so walk back the
+        -- way we came flying, then take it.
+        it("walks back before taking a step that goes elsewhere", function()
+            walkOneStep({ "sw", "s", "e" })
+            thrown("northeast")
+            brief("corridor")                                    -- the landing
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("s"))
+            assert.are.equal(2, sent("sw"))                      -- step 1, and the way back
+            assert.are.equal(1, taPackage.navigate.index)
+            brief("path")                                        -- back where step 1 landed
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("s"))
+            assert.are.equal(2, taPackage.navigate.index)
+            brief("tunnel")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("e"))
+            assert.is_truthy(lastEchoes():find("Thrown northeast out of the room", 1, true))
+        end)
+
+        -- The throw went the way the route was going next: that step is done.
+        it("counts the throw as the next step when it goes that way", function()
+            walkOneStep({ "sw", "ne", "e" })
+            thrown("northeast")
+            brief("corridor")
+            assert.are.equal(2, taPackage.navigate.index)
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("ne"))
+            assert.are.equal(1, sent("e"))
+        end)
+
+        it("arrives when the throw takes the last step", function()
+            walkOneStep({ "sw", "ne" })
+            thrown("northeast")
+            brief("town sewers")
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("Arrived at", 1, true))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("ne"))
+        end)
+
+        -- Held in combat by the thrower, so the next step was refused and is
+        -- waiting to be re-sent. It was never taken, so it is still next.
+        it("recovers when the next step was held in combat", function()
+            walkOneStep({ "sw", "s", "e" })
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("s"))
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            thrown("northeast")
+            brief("corridor")
+            helper.fireTimers(taPackage.navCombatRetryMs)        -- the called-off re-send
+            assert.are.equal(1, sent("s"))
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("sw"))                      -- the way back
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("s"))
+            assert.are.equal(2, taPackage.navigate.index)
+        end)
+
+        -- The way back is a move, and refused moves are retried: it must be
+        -- the way back that is re-sent, not the route's step.
+        it("re-sends the way back when that is refused", function()
+            walkOneStep({ "sw", "s", "e" })
+            thrown("northeast")
+            brief("corridor")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            helper.fireTimers(taPackage.navCombatRetryMs)
+            assert.are.equal(3, sent("sw"))
+            assert.are.equal(0, sent("s"))
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("s"))
+        end)
+
+        -- Mid-step we can't say where we are relative to the route.
+        it("stops when thrown with a step in flight", function()
+            walkOneStep({ "sw", "s", "e" })
+            helper.fireTimers(taPackage.navStepDelayMs)          -- `s` goes out
+            thrown("northeast")
+            assert.is_nil(taPackage.navigate)
+            assert.is_truthy(lastEchoes():find("can't pick back up", 1, true))
+        end)
+
+    end)
+
     -- Getting to third-town is not all walking: there are levers to pull and
     -- stones to push. Nothing in the game reliably answers such a command, so
     -- the pacing pause is what says it has had its chance.
