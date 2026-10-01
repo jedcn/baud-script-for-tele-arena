@@ -645,6 +645,16 @@ function TaDb.roomIdsInArea(areaSlug)
     return ids
 end
 
+-- Every room tagged with this trap, as a set of ids. `live-navigate` asks for
+-- the trap doors: a route through one can end at the bottom of a pit.
+function TaDb.roomIdsWithTrap(trap)
+    local ids = {}
+    for _, row in ipairs(db:query("SELECT id FROM rooms WHERE trap = ?", trap) or {}) do
+        ids[row.id] = true
+    end
+    return ids
+end
+
 -- Directions out of `id` that already lead somewhere known, as a sorted list.
 --
 -- These are the moves that can settle a held loop closure: confirming one asks

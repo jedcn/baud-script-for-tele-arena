@@ -2718,6 +2718,9 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- written route, whose steps you can read in this file -- `live-navigate`
         -- turns it on because its route exists only for the length of the walk.
         announceSteps = route.announceSteps,
+        -- Read by the trap-door trigger: add the climb out of a pit the route
+        -- doesn't know it can fall into.
+        climbOutOfPits = route.climbOutOfPits,
         mappingWasOn = mappingWasOn,
         floor        = startFloor,
         debug        = debug,
@@ -3415,6 +3418,15 @@ createTrigger("^You just fell through a trap door in the floor!$", function()
     local j = taPackage.navigate
     if not j then return end
     navDebug("fell through a trap door on step " .. j.index)
+    -- A written route has the climb out as its next step already; a live one
+    -- walks through the trap room as if it were any other, so it gets one here.
+    -- The step that landed us in the trap room has been counted, so the climb
+    -- goes in as the next one, and the route carries on from the trap room.
+    if j.climbOutOfPits then
+        table.insert(j.steps, j.index + 1, "u")
+        navEcho("Fell into a pit — climbing back out before step "
+            .. (j.index + 2) .. ".")
+    end
     -- Its own flag, not `blocked`: this really is "swallow exactly one" -- the
     -- move succeeded and nothing is going to be re-sent to clear a sticky flag.
     j.swallowOne = true
@@ -3671,11 +3683,12 @@ createTrigger("^An? (.+) has just arrived from below\\.$",
 -- route exists, prefer it.
 
 -- Breadth-first search of the walked graph from `fromId` to the first room
--- `isGoal` accepts. Returns the directions to send, and the room reached; or nil
--- when nothing connects. A taPackage field rather than a local: ta_nav.lua has
+-- `isGoal` accepts. Returns the directions to send, the room reached, and the
+-- rooms walked into on the way (the last of them the room reached); or nil when
+-- nothing connects. A taPackage field rather than a local: ta_nav.lua has
 -- its own 200-local budget and this is the cheap way to spend none of it.
 function taPackage.navSearch(fromId, isGoal)
-    if isGoal(fromId) then return {}, fromId end
+    if isGoal(fromId) then return {}, fromId, {} end
     local nbr = {}
     for _, e in ipairs(taPackage.db.allExits()) do
         local list = nbr[e.from_id]
@@ -3692,12 +3705,13 @@ function taPackage.navSearch(fromId, isGoal)
             if cameFrom[e.to_id] == nil then
                 cameFrom[e.to_id] = { from = id, dir = e.direction }
                 if isGoal(e.to_id) then
-                    local steps, cur = {}, e.to_id
+                    local steps, rooms, cur = {}, {}, e.to_id
                     while cameFrom[cur] do
                         table.insert(steps, 1, cameFrom[cur].dir)
+                        table.insert(rooms, 1, cur)
                         cur = cameFrom[cur].from
                     end
-                    return steps, e.to_id
+                    return steps, e.to_id, rooms
                 end
                 queue[#queue + 1] = e.to_id
             end
@@ -3742,7 +3756,7 @@ createAlias("^live-navigate (.+)$", function(matches)
         navEcho("No area or room called " .. arg .. ". `map-list-areas` lists the areas.")
         return
     end
-    local steps, reached = taPackage.navSearch(taPackage.here, isGoal)
+    local steps, reached, rooms = taPackage.navSearch(taPackage.here, isGoal)
     if not steps then
         navEcho("Nothing walked connects "
             .. (taPackage.db.roomRef(taPackage.here) or ("#" .. tostring(taPackage.here)))
@@ -3757,6 +3771,25 @@ createAlias("^live-navigate (.+)$", function(matches)
     if justSay then return end
     navEcho("Nothing here knows about levers, keys or doors -- if the way needs"
         .. " one, use navigate-to instead.")
-    navStart("live:" .. label, { steps = steps, announceSteps = true },
-        nil, nil, reached, false, nil, nil, nil)
+    -- `climbOutOfPits`: the map records a trap door's fall as a `d` edge, but
+    -- the search walks straight through the trap room, so this route has no
+    -- climb out of the pit. The walk adds one if the floor gives way (see the
+    -- trap-door trigger) -- it doesn't always, so it can't be planned for.
+    local function go()
+        navStart("live:" .. label, { steps = steps, announceSteps = true, climbOutOfPits = true },
+            nil, nil, reached, false, nil, nil, nil)
+    end
+    -- The pit's walls can't be climbed unaided, so a way through a trap door
+    -- needs a rope, the same as the written routes through one.
+    local traps = taPackage.db.roomIdsWithTrap("trap door")
+    for _, id in ipairs(rooms) do
+        if traps[id] then
+            local gen = (taPackage.navGen or 0) + 1
+            taPackage.navGen = gen
+            navCheckInventory("coil of rope", gen, go, "This route (it crosses the trap door in "
+                .. (taPackage.db.roomRef(id) or ("#" .. tostring(id))) .. ")")
+            return
+        end
+    end
+    go()
 end, { type = "regex" })

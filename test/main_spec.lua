@@ -20705,4 +20705,95 @@ describe("live-navigate", function()
 
     end)
 
+    -- A trap door drops you into a pit mid-walk. The map records the fall as a
+    -- `d` edge, but the search walks straight through the trap room, so its
+    -- route has no climb out: the next step went out from the bottom of the pit
+    -- and the walk ended there. Whether the floor gives way isn't certain (the
+    -- hydra route walks into town-sewers-147 without falling), so the climb is
+    -- added when the fall happens, not planned for.
+    describe("crossing a trap door", function()
+
+        -- stubGraph's rooms, with room 2 tagged as a trap door.
+        local function trapGraph()
+            stubGraph({ { id = 4 } })
+            local rows = helper.mockDbRows
+            helper.mockDbRows = function(sql, ...)
+                if string.find(sql, "SELECT id FROM rooms WHERE trap = ?", 1, true) then
+                    return { { id = 2 } }
+                end
+                return rows(sql, ...)
+            end
+            taPackage.hereState = "known"
+            taPackage.here = 1
+        end
+
+        local function arrive(name)
+            helper.simulateLine("You're in " .. name .. ".")
+            helper.simulateLine("There is nobody here.")
+            helper.simulateLine("There is nothing on the floor.")
+        end
+
+        local function sent(cmd)
+            local n = 0
+            for _, s in ipairs(helper.sendCalls) do if s == cmd then n = n + 1 end end
+            return n
+        end
+
+        it("checks for a rope before setting off", function()
+            trapGraph()
+            helper.simulateAlias("live-navigate somewhere")
+            assert.are.equal("i", helper.sendCalls[#helper.sendCalls])
+            assert.are.equal(0, sent("e"))
+            helper.simulateLine("You are carrying a coil of rope.")
+            assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("won't set off without a rope", function()
+            trapGraph()
+            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateLine("You are carrying 12 gold crowns.")
+            assert.are.equal(0, sent("e"))
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("needs a coil of rope", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
+        it("doesn't ask about a rope when the way crosses no trap door", function()
+            stubGraph({ { id = 4 } })
+            taPackage.hereState = "known"
+            taPackage.here = 1
+            helper.simulateAlias("live-navigate somewhere")
+            assert.are.equal(0, sent("i"))
+            assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("climbs out of the pit before taking the next step", function()
+            trapGraph()
+            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateLine("You are carrying a coil of rope.")
+            arrive("the trap room")                              -- step 1 landed
+            helper.simulateLine("You just fell through a trap door in the floor!")
+            arrive("a pit")                                      -- not a step
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal("u", helper.sendCalls[#helper.sendCalls])
+            assert.is_truthy(table.concat(helper.echoCalls, "\n")
+                :find("Taking step 2/4: u", 1, true))
+            arrive("the trap room")                              -- climbed out
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(2, sent("e"))
+        end)
+
+        -- When the floor holds there's no pit and nothing to climb out of.
+        it("walks on as planned when the floor holds", function()
+            trapGraph()
+            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateLine("You are carrying a coil of rope.")
+            arrive("the trap room")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(0, sent("u"))
+            assert.are.equal(2, sent("e"))
+        end)
+
+    end)
+
 end)
