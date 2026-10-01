@@ -4456,6 +4456,17 @@ describe("World map triggers", function()
             assert.are.equal(146, taPackage.prevRoomId)
         end)
 
+        -- `where` follows the same queue, and a walk suspends mapping. Without
+        -- the `d` the pit's brief was no move at all, the tracker kept us in
+        -- the trap room, and the climb out walked it off the map.
+        it("primes the downward move when mapping is off too, without tagging", function()
+            taPackage.mapping = false
+            taPackage.currentRoomId = 146
+            helper.simulateLine("You just fell through a trap door in the floor!")
+            assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET trap = ?"))
+            assert.are.equal("d", taPackage.pendingDirs[1])
+        end)
+
         -- Stoneworks Level 4, 2026-09-27: a female cyclops hurled teekywiki south
         -- out of stonework-chamber-18. With no move queued, the arrival fell back
         -- on the name alone, and of the 170-odd "stonework corridor"s it picked

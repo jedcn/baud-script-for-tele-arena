@@ -2951,15 +2951,19 @@ createTrigger("^A ball of flame explodes from an opening in the wall and engulfs
 -- below) and linked with a d/u edge. Without this the fall cold-starts the pit
 -- at the origin (0,0,0), stranding it and everything after it on the wrong
 -- floor. It deals no HP we track here.
+--
+-- The move is queued mapping or not, like being thrown out of a room: `where`
+-- follows the same queue, and a navigate walk suspends mapping. Unqueued, the
+-- pit's brief moved the tracker nowhere and the climb out walked it off the map.
 createTrigger("^You just fell through a trap door in the floor!$", function()
     if taPackage.mapping and taPackage.currentRoomId then
         taPackage.db.setRoomTrap(taPackage.currentRoomId, "trap door")
-        taPackage.prevRoom = taPackage.currentRoom
-        taPackage.prevRoomId = taPackage.currentRoomId
-        -- The fall is the next arrival, so it goes to the FRONT of the queue --
-        -- ahead of anything typed but not yet resolved.
-        table.insert(taPackage.pendingDirs, 1, "d")
     end
+    taPackage.prevRoom = taPackage.currentRoom
+    taPackage.prevRoomId = taPackage.currentRoomId
+    -- The fall is the next arrival, so it goes to the FRONT of the queue --
+    -- ahead of anything typed but not yet resolved.
+    table.insert(taPackage.pendingDirs, 1, "d")
 end, { type = "regex" })
 
 -- Being hurled out of a room (a female cyclops picks you up and throws you) is a
