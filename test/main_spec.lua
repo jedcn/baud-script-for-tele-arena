@@ -7241,7 +7241,7 @@ describe("ring-gong-and-fight-in-arena", function()
         helper.clearDbCalls()
         setClass("Warrior")
         -- Real sessions always run through beginArenaSession("1"), which sets
-        -- the profile; the training gate now keys on it (ARENA_HAS_TRAINING), so
+        -- the profile; the training gate now keys on its route (ARENA_NAV), so
         -- default it here for tests that drive combat without the alias.
         taPackage.arenaProfile = "1"
     end)
@@ -11725,41 +11725,131 @@ describe("ring-gong-and-fight-in-arena 2", function()
 
     end)
 
-    describe("no training in the second arena", function()
+    -- The second town has no guild hall; the first town's is across the great
+    -- lake: eight rooms to the docks, `buy passage` (100 crowns), then one room
+    -- south. The ferry makes it a ~500-crown round trip, so the trip is only
+    -- taken with that much in hand on top of the arena's own gold floor.
+    describe("training in the second arena", function()
+
+        local stepTimer
+        local TO_HALL   = { "s", "s", "w", "w", "s", "s", "se", "se", "buy passage", "s" }
+        local FROM_HALL = { "n", "buy passage", "nw", "nw", "n", "n", "e", "e", "n", "n" }
 
         before_each(function()
+            _G.createTimer = function(interval, cb, opts)
+                if interval == taPackage.arenaStepDelayMs then stepTimer = { cb = cb } end
+                return "mock_timer"
+            end
+            stepTimer = nil
             taPackage.arenaProfile = "2"
+            taPackage.character.class = "Rogue"
+            taPackage.character.level = 1
+            taPackage.character.experience = 1120  -- Rogue level 2 threshold
         end)
 
-        it("keeps fighting through a level-up instead of leaving to train", function()
+        local function killWith(gold, potions)
+            setGold(gold)
+            taPackage.arenaPotionsActive = potions or 0
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             setHP(80, 100)
-            taPackage.character.experience = 1120  -- past a level threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
             helper.simulateLine("The cave bear falls to the ground lifeless!")
-            assert.are_not.equal("training", taPackage.arenaState)
-            -- resumes the ring loop, does not send the arena-1 training move
+        end
+
+        it("sets out for the guild hall with 550 crowns (500 trip + 50 floor)", function()
+            killWith(550)
+            assert.are.equal("training", taPackage.arenaState)
+            assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("keeps fighting through a level-up while short of the trip's gold", function()
+            killWith(549)
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
-        -- The temple-restore detour exists to get a tainted character accepted by
-        -- a training hall. This arena has none, so there is nothing to be accepted
-        -- by and no reason to spend 25 crowns: checkTrainingNeeded gates on
-        -- ARENA_HAS_TRAINING before arenaTryTrain ever looks at the potion count.
-        it("does not detour to the temple for restoring while potions are active", function()
-            taPackage.arenaState = "fighting"
-            taPackage.arenaMonster = "cave bear"
-            setHP(80, 100)
-            taPackage.character.experience = 1120  -- past a level threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.arenaPotionsActive = 2      -- tainted, but irrelevant here
-            helper.simulateLine("The cave bear falls to the ground lifeless!")
-            assert.are_not.equal("restoring", taPackage.arenaState)
+        -- A restore costs 25 crowns. Taking it on 560 would come home with 535,
+        -- too little to then make the trip, and the character would fight on
+        -- with its potions dispelled and nothing to set off a restock.
+        it("needs the restore's 25 crowns on top while potion-tainted", function()
+            killWith(574, 2)
             assert.are.equal("ringing", taPackage.arenaState)
             assert.is_nil(taPackage.arenaRestoreTried)
+        end)
+
+        it("detours to the temple for restoring when it can afford both", function()
+            killWith(575, 2)
+            assert.are.equal("restoring", taPackage.arenaState)
+            assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+        end)
+
+        -- Short of gold, a level owed is not a level we are about to train for,
+        -- so a lapsing potion is restocked as usual rather than drained.
+        it("restocks a lapsed potion while short of the trip's gold", function()
+            setGold(300)
+            taPackage.arenaPotionsActive = 2
+            taPackage.arenaState = "fighting"
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.are.equal("potions", taPackage.arenaState)
+        end)
+
+        -- Walk the whole route room by room, ferry included. The docks brief as
+        -- "You're on the docks." -- neither "on a" nor "in the" -- so this also
+        -- proves the walk counts them rather than stalling at the lake.
+        local function walk(rooms)
+            for _, room in ipairs(rooms) do
+                helper.simulateLine(room)
+                if stepTimer then stepTimer.cb(); stepTimer = nil end
+            end
+        end
+
+        it("walks to the hall across the lake, buying passage on the docks", function()
+            killWith(1000)
+            walk({
+                "You're on a path.", "You're in the east plaza.", "You're on a path.",
+                "You're in the north plaza.", "You're on a path.", "You're in the south plaza.",
+                "You're on a path.", "You're on the docks.", "You're on the docks.",
+            })
+            local sent = {}
+            for _, c in ipairs(helper.sendCalls) do
+                if c ~= "" and c ~= "i" then table.insert(sent, c) end
+            end
+            assert.are.same(TO_HALL, { table.unpack(sent, #sent - #TO_HALL + 1) })
+            assert.are.equal("training", taPackage.arenaState)
+        end)
+
+        it("buys training at the hall and walks home across the lake", function()
+            taPackage.arenaState = "training"
+            taPackage.arenaJourney = { steps = TO_HALL, index = #TO_HALL, arriveRoom = "guild hall" }
+            helper.simulateLine("You're in the guild hall.")
+            assert.are.equal("i", helper.sendCalls[1])
+            assert.are.equal("buy training", helper.sendCalls[2])
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
+            walk({
+                "You're on the docks.", "You're on the docks.", "You're on a path.",
+                "You're in the south plaza.", "You're on a path.", "You're in the north plaza.",
+                "You're on a path.", "You're in the east plaza.", "You're on a path.",
+            })
+            local sent = {}
+            for _, c in ipairs(helper.sendCalls) do
+                if c ~= "" and c ~= "i" then table.insert(sent, c) end
+            end
+            assert.are.same(FROM_HALL, { table.unpack(sent, #sent - #FROM_HALL + 1) })
+        end)
+
+        -- A restore dispels the potions outright, so no wear-off line will ever
+        -- come to send us shopping. The training success line has to.
+        it("restocks potions on arriving home after training", function()
+            setGold(1000)
+            taPackage.arenaState = "returning"
+            taPackage.arenaPotionsActive = 0
+            helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
+            assert.is_true(taPackage.needsPotions)
+            taPackage.arenaJourney = { steps = FROM_HALL, index = #FROM_HALL, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("potions", taPackage.arenaState)
+            assert.are.equal("magic shop", taPackage.arenaJourney.arriveRoom)
         end)
 
     end)
@@ -12077,7 +12167,7 @@ describe("ring-gong-and-fight-in-arena 3", function()
 
     end)
 
-    describe("training hall (paced route, unlike the second arena)", function()
+    describe("training hall (paced route)", function()
 
         local stepTimer
 

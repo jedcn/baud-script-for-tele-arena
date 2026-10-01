@@ -4087,9 +4087,10 @@ local ARENA_PARCHED_LIMIT = 20
 -- A profile is the arena's number as a string, "1"/"2"/"3" — the same word the
 -- aliases take, so there is one vocabulary for the arenas and not two.
 --
--- Arena 2 has no training hall (checkTrainingNeeded gates on ARENA_HAS_TRAINING
--- below); arena 3 does, so it also carries a toTraining/fromTraining route and
--- a trainingRoom name.
+-- Every arena trains now, so every profile carries a toTraining/fromTraining
+-- route and a trainingRoom name. Arena 2's is the long one: the second town has
+-- no guild hall, so it crosses the great lake to the first town's (see
+-- trainingTripGold there).
 local ARENA_NAV = {
     -- Arena 1 used to walk by room name instead: send the next
     -- direction the instant the arrival line lands. That paced it at the
@@ -4128,6 +4129,18 @@ local ARENA_NAV = {
         fromTemple = { "n", "n", "n", "n" },
         toBar      = { "s", "s", "w", "w", "sw", "sw" },
         fromBar    = { "ne", "ne", "e", "e", "n", "n" },
+        -- The second town has no guild hall. The nearest is the first town's,
+        -- one room south of its docks: eight rooms down to this town's docks,
+        -- the ferry, then "s". Read off the mapped graph (arena-1 -> docks-1 ->
+        -- passage -> docks -> guild-hall). The ferry lands at once with an
+        -- ordinary "You're on the docks." brief, so it is just another step.
+        trainingRoom = "guild hall",
+        toTraining   = { "s", "s", "w", "w", "s", "s", "se", "se", "buy passage", "s" },
+        fromTraining = { "n", "buy passage", "nw", "nw", "n", "n", "e", "e", "n", "n" },
+        -- Passage is 100 crowns each way, plus the hall's own fee. Only leave to
+        -- train holding this much over ARENA_MIN_GOLD (see checkTrainingNeeded):
+        -- a ferry we can't pay for strands the walk on the wrong shore.
+        trainingTripGold = 500,
     },
     ["3"] = {
         arenaRoom    = ARENA_ROOM,
@@ -4143,9 +4156,15 @@ local ARENA_NAV = {
     },
 }
 
--- Which profiles have a training hall to bank earned levels. Arena 2 has none,
--- so a level-up there just keeps fighting. Absent = false.
-local ARENA_HAS_TRAINING = { ["1"] = true, ["3"] = true }
+-- Below this the arena loop can't keep paying for healing and potions, and
+-- checkArenaGoldFloor exits the game. Up here so the training gate can keep a
+-- training trip from spending us under it.
+local ARENA_MIN_GOLD = 50
+
+-- What `buy restoring` charges ("...to it's former state for 25 crowns."). A
+-- tainted character pays it before a training trip, so the trip's gold gate has
+-- to count it.
+local ARENA_RESTORING_GOLD = 25
 
 local function arenaNav()
     return ARENA_NAV[taPackage.arenaProfile]
@@ -4489,11 +4508,9 @@ end
 -- Assigns to the forward-declared local above (no `local` keyword) so
 -- departForShop, defined earlier, can refuse to restock while a level is owed.
 function checkTrainingNeeded()
-    -- Only profiles with a training hall ever leave to train (the second arena
-    -- has none). Short-circuiting here disables both the XP-trigger and
-    -- death-handler training transitions at once, so a level-up in a
-    -- hall-less arena just keeps fighting.
-    if not ARENA_HAS_TRAINING[taPackage.arenaProfile] then return false end
+    -- Only a profile with a route to a guild hall can leave to train.
+    local nav = arenaNav()
+    if not (nav and nav.toTraining) then return false end
     local xp  = getExperience()
     local cls = getClass()
     local lvl = getLevel()
@@ -4501,7 +4518,23 @@ function checkTrainingNeeded()
     local thresholds = xpThresholds[cls]
     if not thresholds then return false end
     local nextThreshold = thresholds[lvl + 1]
-    return nextThreshold ~= nil and xp >= nextThreshold
+    if not (nextThreshold ~= nil and xp >= nextThreshold) then return false end
+    -- A trip that costs real money (arena 2's ferry) waits until we can pay for
+    -- it and still stay above the arena's gold floor -- including the restore,
+    -- when that comes first, or we would come home from the temple too poor to
+    -- go on and fight with our potions dispelled. Gating here rather than in
+    -- arenaTryTrain means a level we can't yet afford is not "owed": potions
+    -- are restocked as usual instead of drained, and the trip is taken at the
+    -- first decision point after the purse fills.
+    if nav.trainingTripGold then
+        local need = nav.trainingTripGold + ARENA_MIN_GOLD
+        if (taPackage.arenaPotionsActive or 0) > 0 then
+            need = need + ARENA_RESTORING_GOLD
+        end
+        local gold = getGold()
+        if not gold or gold < need then return false end
+    end
+    return true
 end
 
 -- Head to the training hall to bank an earned level — but only when it is safe.
@@ -5494,13 +5527,13 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
 end, { type = "regex" })
 
 -- The arena loop only stays alive while it can pay the temple for healing and
--- the shop for potions. If our gold ever falls below this floor, the next such
+-- the shop for potions. If our gold ever falls below this floor (ARENA_MIN_GOLD,
+-- declared up with ARENA_NAV so the training gate can count it), the next such
 -- trip is one bad roll away from a "can't afford" wedge that grinds the
 -- character to death, so bail out of the game now while the balance is still
 -- positive. Assigns to the local forward-declared up by setGold so every gold
 -- change is checked; a nil balance (not yet read) is left alone. Returns true
 -- when it triggered the exit.
-local ARENA_MIN_GOLD = 50
 function checkArenaGoldFloor()
     if not taPackage.arenaState then return false end
     local gold = getGold()
@@ -5919,6 +5952,14 @@ end, { type = "regex" })
 -- trigger above never matches. Feed them to the walk handler too so every step
 -- advances. Only meaningful mid-journey; otherwise a no-op.
 createTrigger("^You're on a (.+)\\.$", function(matches)
+    if not taPackage.arenaJourney then return end
+    arenaJourneyOnMovement(matches[2])
+end, { type = "regex" })
+
+-- The second arena's training route crosses the great lake, and both docks
+-- brief as "You're on the docks." -- "the", which the "on a" trigger above
+-- doesn't match. Without this the walk stalls on the near shore.
+createTrigger("^You're on the (.+)\\.$", function(matches)
     if not taPackage.arenaJourney then return end
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
