@@ -6843,8 +6843,10 @@ end
 local GROUP_HEAL_TERMINATOR = "ex"
 -- context labels the scan's origin so the decision log distinguishes a typed
 -- heal.allies, an automatic loop tick, and the kill-loop's exhaustion heal.
-local function beginGroupHealScan(threshold, context)
+-- spell overrides the kamotu/motu choice in finalizeGroupHeal.
+local function beginGroupHealScan(threshold, context, spell)
     taPackage.groupHealPhase = "want"
+    taPackage.groupHealSpell = spell
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
     taPackage.groupHealThreshold = threshold or HEAL_THRESHOLD
@@ -6902,7 +6904,11 @@ local function finalizeGroupHeal()
     -- mana, so use motu (minor heal, ~4-8 HP), which matches the damage and
     -- stretches mana further.
     local spell = taPackage.arenaState and "motu" or "kamotu"
-    send("cast " .. spell .. " " .. name)
+    if taPackage.groupHealSpell then
+        send("cast " .. taPackage.groupHealSpell .. " " .. string.lower(name))
+    else
+        send("cast " .. spell .. " " .. name)
+    end
 end
 
 local function startKill(target, debug)
@@ -7047,6 +7053,13 @@ createAlias("^heal\\.allies$", function()
     else
         echo("[heal] Only an Acolyte can heal the group.")
     end
+end, { type = "regex" })
+
+-- Deific heal (kusamotu) on whoever has the lowest HE% in the group listing.
+-- Threshold 100 so anyone short of full counts; at full health it does nothing.
+-- No class gate: kusamotu is a High Priest spell and the game says so if not.
+createAlias("^heal-most-injured-party-member$", function()
+    beginGroupHealScan(100, "heal-most-injured-party-member", "kusamotu")
 end, { type = "regex" })
 
 -- Hands-off group healing: every minute, scan the group and top off anyone

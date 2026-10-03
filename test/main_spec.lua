@@ -13962,6 +13962,63 @@ describe("ta.follow", function()
 
     end)
 
+    describe("heal-most-injured-party-member alias", function()
+
+        before_each(function()
+            helper.resetAll()
+            dofile("main.lua")
+        end)
+
+        it("casts kusamotu on the lowest-HE member, lowercased", function()
+            helper.simulateAlias("heal-most-injured-party-member")
+            assert.are.equal("group", helper.sendCalls[1])
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("   Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("   Tojolias                           [HE: 80% ST:Ready]")
+            helper.simulateLine("   Pelayo                         (L) [HE: 71% ST:Ready]")
+            helper.simulateLine("   Kerhak                             [HE:100% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.are.equal("cast kusamotu pelayo", helper.sendCalls[1])
+        end)
+
+        it("heals someone at 99%", function()
+            helper.simulateAlias("heal-most-injured-party-member")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("   Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("   Kerhak                             [HE: 99% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.are.equal("cast kusamotu kerhak", helper.sendCalls[1])
+        end)
+
+        it("casts nothing when everyone is at full health", function()
+            helper.simulateAlias("heal-most-injured-party-member")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("   Teekywiki                          [HE:100% ST:Ready]")
+            helper.simulateLine("   Kerhak                             [HE:100% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not leak kusamotu into a later heal.allies", function()
+            setClass("Acolyte")
+            helper.simulateAlias("heal-most-injured-party-member")
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            taPackage.castPending = false
+            helper.simulateAlias("heal.allies")
+            helper.sendCalls = {}
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
+            helper.simulateLine("Exits: n,sw.")
+            assert.are.equal("cast kamotu Kerhak", helper.sendCalls[1])
+        end)
+
+    end)
+
     describe("heal-allies-in-loop alias", function()
 
         local timers
