@@ -45,7 +45,7 @@
     {
       "area": "elven-valley",
       "name": "The Elven Valley",
-      "rooms": 7,
+      "rooms": 13,
       "file": "areas/elven-valley.json"
     },
     {
