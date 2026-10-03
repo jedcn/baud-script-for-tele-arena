@@ -708,7 +708,7 @@
           "to": "mountain-road/mountain-road-31"
         },
         "s": {
-          "to": null
+          "to": "mountain-road/dirt-path"
         },
         "w": {
           "to": "mountain-road/mountain-road-29"
@@ -973,6 +973,448 @@
       "layout": {
         "x": 28,
         "y": 23
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path",
+      "name": "dirt path",
+      "exits": {
+        "n": {
+          "to": "mountain-road/mountain-road-30"
+        },
+        "se": {
+          "to": "mountain-road/dirt-path-1"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the north and southeast.",
+      "layout": {
+        "x": 27,
+        "y": 12
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-1",
+      "name": "dirt path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/dirt-path"
+        },
+        "se": {
+          "to": "mountain-road/dirt-path-2"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 28,
+        "y": 11
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-2",
+      "name": "dirt path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/dirt-path-1"
+        },
+        "s": {
+          "to": "mountain-road/dirt-path-3"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and south.",
+      "layout": {
+        "x": 29,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-3",
+      "name": "dirt path",
+      "exits": {
+        "n": {
+          "to": "mountain-road/dirt-path-2"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-4"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the north and southwest.",
+      "layout": {
+        "x": 29,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-4",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-3"
+        },
+        "s": {
+          "to": "mountain-road/dirt-path-5"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and south.",
+      "layout": {
+        "x": 28,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-5",
+      "name": "dirt path",
+      "exits": {
+        "n": {
+          "to": "mountain-road/dirt-path-4"
+        },
+        "se": {
+          "to": "mountain-road/dirt-path-6"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the north and southeast.",
+      "layout": {
+        "x": 28,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-6",
+      "name": "dirt path",
+      "exits": {
+        "e": {
+          "to": "mountain-road/dirt-path-7"
+        },
+        "nw": {
+          "to": "mountain-road/dirt-path-5"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and east.",
+      "layout": {
+        "x": 29,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-7",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-8"
+        },
+        "w": {
+          "to": "mountain-road/dirt-path-6"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and west.",
+      "layout": {
+        "x": 30,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-8",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-9"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-7"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 31,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-9",
+      "name": "dirt path",
+      "exits": {
+        "e": {
+          "to": "mountain-road/dirt-path-10"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-8"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the east and southwest.",
+      "layout": {
+        "x": 32,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-10",
+      "name": "dirt path",
+      "exits": {
+        "se": {
+          "to": "mountain-road/dirt-path-11"
+        },
+        "w": {
+          "to": "mountain-road/dirt-path-9"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the southeast and west.",
+      "layout": {
+        "x": 33,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-11",
+      "name": "dirt path",
+      "exits": {
+        "e": {
+          "to": "mountain-road/dirt-path-12"
+        },
+        "nw": {
+          "to": "mountain-road/dirt-path-10"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and east.",
+      "layout": {
+        "x": 34,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-12",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-13"
+        },
+        "w": {
+          "to": "mountain-road/dirt-path-11"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and west.",
+      "layout": {
+        "x": 35,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-13",
+      "name": "dirt path",
+      "exits": {
+        "n": {
+          "to": "mountain-road/dirt-path-14"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-12"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the north and southwest.",
+      "layout": {
+        "x": 36,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-14",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-15"
+        },
+        "s": {
+          "to": "mountain-road/dirt-path-13"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and south.",
+      "layout": {
+        "x": 36,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-15",
+      "name": "dirt path",
+      "exits": {
+        "ne": {
+          "to": "mountain-road/dirt-path-16"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-14"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northeast and southwest.",
+      "layout": {
+        "x": 37,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-16",
+      "name": "dirt path",
+      "exits": {
+        "e": {
+          "to": "mountain-road/dirt-path-17"
+        },
+        "sw": {
+          "to": "mountain-road/dirt-path-15"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the east and southwest.",
+      "layout": {
+        "x": 38,
+        "y": 11
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-17",
+      "name": "dirt path",
+      "exits": {
+        "se": {
+          "to": "mountain-road/dirt-path-18"
+        },
+        "w": {
+          "to": "mountain-road/dirt-path-16"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the southeast and west.",
+      "layout": {
+        "x": 39,
+        "y": 11
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-18",
+      "name": "dirt path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/dirt-path-17"
+        },
+        "se": {
+          "to": "mountain-road/dirt-path-19"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 40,
+        "y": 10
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-19",
+      "name": "dirt path",
+      "exits": {
+        "e": {
+          "to": "mountain-road/dirt-path-20"
+        },
+        "nw": {
+          "to": "mountain-road/dirt-path-18"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and east.",
+      "layout": {
+        "x": 41,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-20",
+      "name": "dirt path",
+      "exits": {
+        "se": {
+          "to": "mountain-road/dirt-path-21"
+        },
+        "w": {
+          "to": "mountain-road/dirt-path-19"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the southeast and west.",
+      "layout": {
+        "x": 42,
+        "y": 9
+      }
+    },
+    {
+      "id": "mountain-road/dirt-path-21",
+      "name": "dirt path",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/dirt-path-20"
+        },
+        "se": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano"
+        }
+      },
+      "description": "You're on a dirt path that winds around to the area's only known active volcano, according to a very informative sign seen next to the old cobblestone road.  Hostile elves are often seen travelling this road, so you best watch your back!  The trail continues to the northwest and southeast.",
+      "layout": {
+        "x": 43,
+        "y": 8
+      }
+    },
+    {
+      "id": "mountain-road/smouldering-path-at-the-base-of-the-volcano",
+      "name": "smouldering path at the base of the volcano",
+      "exits": {
+        "nw": {
+          "to": "mountain-road/dirt-path-21"
+        },
+        "s": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano-1"
+        }
+      },
+      "description": "You're on a smouldering path at the base of the volcano.  Small streams of hot lava flow through crevices at your feet, disappearing into the earth.  Luckily the air here is kept cool and refreshing by the wind coming from the nearby ocean.  You thank the gods for the Seas of Palthorak.  Faint grumbling and howling noises fill the atmosphere as you go about your business.  Exits are northwest and south.",
+      "layout": {
+        "x": 44,
+        "y": 7
+      }
+    },
+    {
+      "id": "mountain-road/smouldering-path-at-the-base-of-the-volcano-1",
+      "name": "smouldering path at the base of the volcano",
+      "exits": {
+        "n": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano"
+        },
+        "se": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano-2"
+        }
+      },
+      "description": "You're on a smouldering path at the base of the volcano.  Small streams of hot lava flow through crevices at your feet, disappearing into the earth.  Luckily the air here is kept cool and refreshing by the wind coming from the nearby ocean.  You thank the gods for the Seas of Palthorak.  Faint grumbling and howling noises fill the atmosphere as you go about your business.  Exits are north and southeast.",
+      "layout": {
+        "x": 44,
+        "y": 6
+      }
+    },
+    {
+      "id": "mountain-road/smouldering-path-at-the-base-of-the-volcano-2",
+      "name": "smouldering path at the base of the volcano",
+      "exits": {
+        "e": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano-3"
+        },
+        "nw": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano-1"
+        }
+      },
+      "description": "You're on a smouldering path at the base of the volcano.  Small streams of hot lava flow through crevices at your feet, disappearing into the earth.  Luckily the air here is kept cool and refreshing by the wind coming from the nearby ocean.  You thank the gods for the Seas of Palthorak.  Faint grumbling and howling noises fill the atmosphere as you go about your business.  Exits are northwest and east.",
+      "layout": {
+        "x": 45,
+        "y": 5
+      }
+    },
+    {
+      "id": "mountain-road/smouldering-path-at-the-base-of-the-volcano-3",
+      "name": "smouldering path at the base of the volcano",
+      "exits": {
+        "se": {
+          "to": null
+        },
+        "w": {
+          "to": "mountain-road/smouldering-path-at-the-base-of-the-volcano-2"
+        }
+      },
+      "description": "You're on a smouldering path at the base of the volcano.  Small streams of hot lava flow through crevices at your feet, disappearing into the earth.  Luckily the air here is kept cool and refreshing by the wind coming from the nearby ocean.  You thank the gods for the Seas of Palthorak.  Faint grumbling and howling noises fill the atmosphere as you go about your business.  Exits are west and southeast.",
+      "layout": {
+        "x": 46,
+        "y": 5
       }
     }
   ]

@@ -135,7 +135,7 @@
     {
       "area": "mountain-road",
       "name": "The Mountain Road",
-      "rooms": 57,
+      "rooms": 83,
       "file": "areas/mountain-road.json"
     },
     {
