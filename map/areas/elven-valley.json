@@ -133,7 +133,7 @@
           "to": "elven-valley/path-in-the-elven-valley-6"
         },
         "w": {
-          "to": "elven-valley/path-in-the-elven-valley-12"
+          "to": null
         }
       },
       "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  There is a huge mithril door to the north, apparently the entrance to Mytthos.  Two paths run east and west of here, alongside the city wall.  This path continues southward.",
@@ -215,7 +215,7 @@
       "name": "path in the Elven Valley",
       "exits": {
         "e": {
-          "to": "elven-valley/path-in-the-elven-valley-7"
+          "to": null
         },
         "w": {
           "to": "elven-valley/path-in-the-elven-valley-11"
