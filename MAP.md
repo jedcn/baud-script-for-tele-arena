@@ -4,9 +4,9 @@
 
 1. [First Town](#first-town)
 2. [Second Town](#second-town)
-3. [First Dungeon, Level 1](#first-dungeon-level-1)
-4. [First Dungeon, Level 2](#first-dungeon-level-2)
-5. [First Dungeon, Level 3](#first-dungeon-level-3)
+3. [The First Dungeon, Level 1](#the-first-dungeon-level-1)
+4. [The First Dungeon, Level 2](#the-first-dungeon-level-2)
+5. [The First Dungeon, Level 3](#the-first-dungeon-level-3)
 6. [The Desert](#the-desert)
 7. [The Stoneworks, Level 1](#the-stoneworks-level-1)
 8. [The Stoneworks, Level 2](#the-stoneworks-level-2)
@@ -14,9 +14,9 @@
 10. [The Stoneworks, Level 4](#the-stoneworks-level-4)
 11. [The Stoneworks, Level 5](#the-stoneworks-level-5)
 12. [The Stoneworks, Level 6](#the-stoneworks-level-6)
-13. [Sewers, Level 1](#sewers-level-1)
-14. [Sewers, Level 2](#sewers-level-2)
-15. [Sewers, Level 3](#sewers-level-3)
+13. [The Sewers, Level 1](#the-sewers-level-1)
+14. [The Sewers, Level 2](#the-sewers-level-2)
+15. [The Sewers, Level 3](#the-sewers-level-3)
 16. [The Mountains](#the-mountains)
 17. [The Forest](#the-forest)
 18. [The Swamp](#the-swamp)
@@ -56,7 +56,7 @@
 [E]  [Gv] [T^]
    \  |  /
     \ | /
-[t]--[ ]--[Av]                                 down to First Dungeon, Level 1
+[t]--[ ]--[Av]                                 down to The First Dungeon, Level 1
       |
       |
 [a]--[ ]--[W]                                  sw to The Mountains
@@ -94,7 +94,7 @@ Key:
 [E]--[ ]--[ ]--[ ]--[ ]--[ ]--[a]
          / |         |
         /  |         |
-     [ v] [ ]       [ ]             down to Sewers, Level 1
+     [ v] [ ]       [ ]             down to The Sewers, Level 1
     /      |         |
    /       |         |
 [I]       [ ]       [t]
@@ -120,10 +120,10 @@ Key:
 `[ ]` — a room with no shop or service (plaza, path, corridor).
 `^` / `v` — an exit up / down.
 
-### First Dungeon, Level 1
+### The First Dungeon, Level 1
 
 ```
-                                                                                [ v]   down to First Dungeon, Level 2
+                                                                                [ v]   down to The First Dungeon, Level 2
                                                                                /
                                                                               /
                                                                            [ ]
@@ -174,7 +174,7 @@ Key:
                                                   [ ]
 ```
 
-### First Dungeon, Level 2
+### The First Dungeon, Level 2
 
 ```
                                         [ ]                                          [ ^]
@@ -186,7 +186,7 @@ Key:
                               [ ]            [ ]                /
                                             /                /
                                            /             /
-                                        [ ]           /     [ ^]                            up to First Dungeon, Level 1
+                                        [ ]           /     [ ^]                            up to The First Dungeon, Level 1
                                        /          /          |
                                       /       /              |
                                    [ ]     /                [ ]
@@ -237,10 +237,10 @@ Key:
 [ ]            [ ]                           [ ]
    \          /                                 \
     \        /                                   \
-     [ ]--[ ]                                     [ v]                                      down to First Dungeon, Level 3
+     [ ]--[ ]                                     [ v]                                      down to The First Dungeon, Level 3
 ```
 
-### First Dungeon, Level 3
+### The First Dungeon, Level 3
 
 ```
                               [ ]--[ ]--[ ]--[ ]                                          [ ]
@@ -294,13 +294,13 @@ Key:
                                                   [ ]
                                                    |
                                                    |
-                                                  [ ^]                                               up to First Dungeon, Level 2
+                                                  [ ^]                                               up to The First Dungeon, Level 2
 ```
 
 ### The Desert
 
 ```
-                    [ ]--[ ]--[ v]-[ ]------------[ ]                                      down to Sewers, Level 3
+                    [ ]--[ ]--[ v]-[ ]------------[ ]                                      down to The Sewers, Level 3
                                                    |
                                                    |
                                                   [ ]
@@ -681,7 +681,7 @@ Key:
 [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                           w to third-town
 ```
 
-### Sewers, Level 1
+### The Sewers, Level 1
 
 ```
 [ ^]-[ ]                                                                                        up to second-town
@@ -714,10 +714,10 @@ Key:
                                         [ ]--[ ]--[ ]       [ ]                      [ ]
                                               |       \      |
                                               |           \  |
-                                             [ v]           [ ]                                 down to Sewers, Level 2
+                                             [ v]           [ ]                                 down to The Sewers, Level 2
 ```
 
-### Sewers, Level 2
+### The Sewers, Level 2
 
 ```
                                                                  [ ]
@@ -750,10 +750,10 @@ Key:
                                         [ ]                      [ ]            [ ]
                                          |                          \          /   \
                                          |                           \        /     \
-                                   [ ]--[ ^]-[ ]                      [ ]--[ ]       [ ]             up to Sewers, Level 1
+                                   [ ]--[ ^]-[ ]                      [ ]--[ ]       [ ]             up to The Sewers, Level 1
                                   /      |      \                                       \
                                  /       |       \                                       \
-                              [ ]       [ v]      [ ]                                     [ ]        down to Sewers, Level 3
+                              [ ]       [ v]      [ ]                                     [ ]        down to The Sewers, Level 3
                              /                       \                                   /   \
                             /                         \                                 /     \
                          [ ]                           [ ]                           [ ]       [ ]
@@ -774,7 +774,7 @@ Key:
                               [ ]
 ```
 
-### Sewers, Level 3
+### The Sewers, Level 3
 
 ```
           [ ^]-[ ]-----------------[ ]-------------------------------------[ ^]-----------[ ^]-----------[ ^v]----------[ ^v]   up to The Desert
@@ -816,7 +816,7 @@ Key:
           [ ]            [ ]            [ ]            [ ]
              \          /                  \          /
               \        /                    \        /
-               [ ]--[ ^]                     [ ]--[ ]                                                                           up to Sewers, Level 2
+               [ ]--[ ^]                     [ ]--[ ]                                                                           up to The Sewers, Level 2
 ```
 
 ### The Mountains

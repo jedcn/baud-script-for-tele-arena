@@ -801,9 +801,9 @@ export const DRAWN = [
   // joined by exactly three passages), so each renders as an ordinary section
   // and the stairs between them fall out as cross-area labels. Origins are the
   // room you arrive in coming down from the level above.
-  { slug: 'first-dungeon-level-1', title: 'First Dungeon, Level 1', origin: 'dungeon-entrance' },
-  { slug: 'first-dungeon-level-2', title: 'First Dungeon, Level 2', origin: 'bottom-of-a-circular-stairwell' },
-  { slug: 'first-dungeon-level-3', title: 'First Dungeon, Level 3', origin: 'bottom-of-a-stairwell' },
+  { slug: 'first-dungeon-level-1', title: 'The First Dungeon, Level 1', origin: 'dungeon-entrance' },
+  { slug: 'first-dungeon-level-2', title: 'The First Dungeon, Level 2', origin: 'bottom-of-a-circular-stairwell' },
+  { slug: 'first-dungeon-level-3', title: 'The First Dungeon, Level 3', origin: 'bottom-of-a-stairwell' },
   // The desert, which is not split into levels and renders as a sprawl.
   { slug: 'desert', title: 'The Desert', origin: 'crude-stone-building' },
   // The stoneworks, one area per level now, which is what the shrine draws. The
@@ -819,9 +819,9 @@ export const DRAWN = [
   { slug: 'stoneworks-level-6', title: 'The Stoneworks, Level 6', origin: 'stonework-chamber-22' },
   // The sewers under the second town, three levels. Origins are the room you
   // arrive in coming down from above.
-  { slug: 'sewers-level-1', title: 'Sewers, Level 1', origin: 'town-sewers' },
-  { slug: 'sewers-level-2', title: 'Sewers, Level 2', origin: 'town-sewers-63' },
-  { slug: 'sewers-level-3', title: 'Sewers, Level 3', origin: 'town-sewers-118' },
+  { slug: 'sewers-level-1', title: 'The Sewers, Level 1', origin: 'town-sewers' },
+  { slug: 'sewers-level-2', title: 'The Sewers, Level 2', origin: 'town-sewers-63' },
+  { slug: 'sewers-level-3', title: 'The Sewers, Level 3', origin: 'town-sewers-118' },
   // The wilderness south-west of the first town, and what lies under it: out
   // through the town gates into the mountains, west into the forest, east into
   // the swamp, north to the ruined town, down its temple to the cellars. One
