@@ -18450,6 +18450,19 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        -- town-3/combined, 2026-10-03: 450 steps walked and the 451st refused
+        -- with this. It is a Rune the character has (or lacks), so no retry
+        -- will get through -- before this the walk just sat there waiting for
+        -- a brief that was never coming.
+        it("stops on a mystical force and says it is a Rune", function()
+            startWalking()
+            helper.simulateLine("A mystical force prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("step 1 of 3 (sw)", 1, true))
+            assert.is_truthy(out:find("Rune", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
         -- A trip is now two-phase: wait out the stumble, look at the floor (the
         -- fall may have cost us an item), then walk on.
         it("re-sends the same step after a trip, without advancing", function()

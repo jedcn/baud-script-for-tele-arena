@@ -3257,6 +3257,23 @@ createTrigger("^Sorry, there's no exit in that direction\\.$", function()
         .. " Either the route is wrong or I wasn't where I thought I was.")
 end, { type = "regex" })
 
+-- The way is there but this character may not take it: a Rune they haven't
+-- earned yet, or one they have that now bars them. Either way no retry gets
+-- through, and nothing follows the refusal -- town-3/combined walked 450 steps
+-- on 2026-10-03 and then sat on the 451st waiting for a brief that was never
+-- coming. Stop and say which step it was.
+createTrigger("^A mystical force prevents your exit in that direction\\.$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    local dest = j.destination
+    local where = (j.phase == "door")
+        and ("the " .. j.door.dir .. " door out of " .. dest)
+        or ("step " .. j.index .. " of " .. #j.steps .. " (" .. tostring(j.steps[j.index]) .. ")")
+    stopNavigate()
+    navEcho("A mystical force blocks " .. where .. " — stopping."
+        .. " This character's Runes don't allow passage that way.")
+end, { type = "regex" })
+
 -- =========================================================================
 -- Walking in the dark
 -- =========================================================================
