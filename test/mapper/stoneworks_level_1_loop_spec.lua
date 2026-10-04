@@ -35,11 +35,11 @@
 local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = {
-    "logs/focused-session-tojolias-2026-09-11T21-24-54.log",  -- the outer edge
-    "logs/session-tojolias-2026-09-12T10-18-42.log",          -- resume, cross a frontier
-    "logs/session-tojolias-2026-09-12T10-37-22.log",          -- the shut door
-    "logs/session-tojolias-2026-09-13T11-59-10.log",          -- say komi, walk east
-    "logs/session-tojolias-2026-09-13T14-52-50.log",          -- this loop
+    "test/fixtures/session-logs/focused-session-tojolias-2026-09-11T21-24-54.log",  -- the outer edge
+    "test/fixtures/session-logs/session-tojolias-2026-09-12T10-18-42.log",          -- resume, cross a frontier
+    "test/fixtures/session-logs/session-tojolias-2026-09-12T10-37-22.log",          -- the shut door
+    "test/fixtures/session-logs/session-tojolias-2026-09-13T11-59-10.log",          -- say komi, walk east
+    "test/fixtures/session-logs/session-tojolias-2026-09-13T14-52-50.log",          -- this loop
 }
 
 -- Only the first log predates baud recording aliases.

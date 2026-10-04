@@ -15,6 +15,7 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 - Run `just test` after every change to verify nothing is broken (~15s). It runs every Lua spec and bun.
 - `test/main_spec.lua` holds the unit tests, including the mapper's, against a mocked DB. `test/mapper/` holds the mapper replays: whole session logs walked into a real SQLite database, checking the room graph the mapper builds -- what catches wrong loop closures, duplicate rooms and bad merges, which mocked unit tests cannot. A new replay regression spec goes in `test/mapper/`.
+- **A replay spec reads its log from `test/fixtures/session-logs/`, never from `logs/` or the archive.** Those are temporary places logs pass through, and `just archive-logs` moving one used to break every spec that cited it. Copy the log in when you write the spec. (Not `test/fixtures/logs/`: `.gitignore`'s `logs/` would ignore it.)
 - **A replay spec should replay only the part of a log it is about.** When the bug is late in a long session, freeze the map built before it into a seed file and replay only the window (`opts.seedFile`, `opts.from`/`opts.to` in `test/mapper/log_replay.lua`; `labyrinth_level_5_closure_spec.lua` is the worked example). Then check the slim spec still fails against `main.lua` from before the fix -- a fast spec that passes on the buggy code proves nothing.
 
 ## Session logs

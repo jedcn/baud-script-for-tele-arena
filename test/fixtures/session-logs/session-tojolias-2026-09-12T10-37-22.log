@@ -1,0 +1,355 @@
+# baud text log - started 2026-09-12T14:37:22.429Z
+
+Starting to read main.lua
+Finishing reading main.lua
+* MajorTCP/IP by Vircom Inc. *
+Connecting...Please Wait...
+Auto-sensing...
+    [!
+[2J
+       ·           ·                                ▌░▒▓█▒████▓█▓█▓▓▓▓▓▓▓▓▓█▓▓▓
+                              ·                    ▌░▒▓██▒▒▓▒█▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓█▓
+   ·                                              ▌░▒▓█▓█▒█▓█▓▓▓▓▓▓▓▓▓▒▒▓▒▓▓███
+                          ·        ·             ▌░▒▓▓▓█▒▓▓▓▓▓▒█▒▒▒▒▒▒▒▒▒▒▒▒▓▓█
+  ┌───┐┌───┐┌──┬─┐┐   ┌┌───┐┌┐   ┌               ▌░▒▓███▓▒▒▒▓▒███▓▒▒▒▒█▓▓▓▓████
+  │    │   │   │  │   ││   ││└┐  │              ▌░▒▓▓█▓██▓▒▒▒▓▓█▓▓▓▓▒▒▓▓▓██▓███
+  └───┐├───┤   │  │   │├──┬┘│ └┐ │ ·            ▌░▒▓███▓██▓▓▓███▓██▒▓▒▒▒▒█▓▓▓██
+    · ││   │   │  │   ││  │ │  └┐│             ▌░▒▓███▒█▒█▓▓██▒█▒▓▓▓▓▒▒▒▒███▓▓█
+  └───┘┘   └   ┘  └───┘┘  └ ┘   └┘             ▌░▒▓█▓██▒▓▒▒▒▓▓█████▒▒░░░░░▓▓▓▓▓
+          ·                                    ▌░▒▓█▓█▓▓▓▓▒▓▒▓▓▓▓▓▒▒█░░░▒▒▒▓▓▓▓
+         · ·  ┌─────                           ▌░▒▓███▓██▒▒▒▓▓▒▒▒▒░░▒░░▒▒▒▒▓▓▓▓
+  ·           │                                 ▌░▒▓██▓▓▓▓▒▒▓▓▒▒░░░░░░▒▒▒▓▓▓▓▓▓
+              └────┐   ·           ·            ▌░▒▓▓█▓▒▒▒▒▒▓▓▓▓▒░░░▒▒▒ ▒█▒█▓▓▓
+                   │       ∙                     ▌░▒▓▓█▓▒▒▒░▒▒▒▒░░░▒▒▒  █▓▓▓▓██
+     ·        ─────┘  ·            ∙             ▌░▒▓▒██▓▓▓▓▒▒▒░░░░▒▒▒▒▓▓▓▓██▓█
+                 ·              ·   ·             ▌░▒▓██▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒█▓▓█████
+·       ∙                                          ▌░▓▓██▓█▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓██▓█
+                                                    ▌░▒▓█████▓▓▓▓▓▓▓▓▓██▓░██▓██
+              ·            ·                         ▌░▒▓██████▓█▓▓▓▓▓▓▓▓▓▓█░██
+                                                      ▐░▒▓██▓███▒▓▓▓▓▓▓▓▓▓▓█▓██
+  ·        ·                              ∙             ▐░▒▓█████▓█▓▓▓▓▓▓███▓██
+        ·                ·                                ▐░▒▓█▒█▒███▓▓▓▒▓▒█▒█▒
+                                   ·                        ▐░░▒▓█▒█▒█▒██▒░▒▒█░
+                 ∙                                            ▐░░▒▓█████░▒▒▒░░░
+
+Enter your username now and press
+ENTER or type "NEW" to create one.
+Username: 
+> tojolias
+tojolias
+
+Password: 
+> arbor123
+▒▒▒▒▒▒▒▒
+
+Greetings, Tojolias, glad to see you back again.
+(N)onstop, (Q)uit, or (C)ontinue?
+> n
+[2J
+ ╔═══════════════════════════ Distant Realms ════════════════════════════════╗
+ ║ Fight for survival, seek out the demons and annihlate them.               ║
+ ║ Destroy anyone who gets in your way. The quest has just begun!            ║
+ ╚═══════════════════════════════════════════════════════════════════════════╝
+
+-= Bud Globals v1.0 =- With Ultragrams installed!  Type >>> ; <<< for info!
+
+###  User-ID                Age   Sex Time  Class    Flags Option Selected
+-------------------------------------------------------------------------------
+
+ 01  Teekywiki              OLD    M  5     USER      ---  Arena5.6d-Gold      
+ 02  Pelayo                 46     M  32    USER      ---  Arena5.6d-Gold      
+ 03  Kerhak                 OLD    M  32    USER      ---  Arena5.6d-Gold      
+ 04  Tojolias               46     M  0     USER      ---  Ultra Globals       
+-------------------------------------------------------------------------------
+(N)onstop, (Q)uit, or (C)ontinue?
+
+Main System Menu (TOP)
+Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X
+> 5
+to exit): 
+5
+Entering Tele-Arena...
+> st
+> i
+You're in a stonework corridor.
+There is a female orc here.
+There is nothing on the floor.
+
+st
+i
+Race:         Half-ogre
+Class:        Knight
+Level:        21
+Experience:   20654884
+Rune:         Blue
+Intellect:    14
+Knowledge:    12
+Physique:     35
+Stamina:      35
+Agility:      23
+Charisma:     12
+Mana:         0 / 0
+Vitality:     1996 / 2005
+Status:       Healthy
+Armor Rating: 18
+Weapon:       Wyrmslayer
+Armor:        Dragonscale
+Encumberance: 704 / 1750
+You are carrying 392 gold crowns, a glowstone, a coil of rope, a soulstone, a
+waterskin(1), a heartstone, a topaz key, a zarynthium potion, an opal key, a
+tigereye key, a verbena potion, and a zarynthium potion.
+$ map-debug on
+[map] mapdbg tracing on
+$ map-print-room-slug
+> 
+> ex
+You're in a stonework corridor.
+There is a female orc here.
+There is nothing on the floor.
+ex
+Exits: sw.
+[map] this is stonework-corridor-24  (position tracked)  ->  map-here stonework-corridor-24 to map from here
+The female orc attacked you, but her dagger glanced off your armor!
+
+$ map-here stonework-corridor-24
+[map] anchored at stonework-corridor-24 (#1114) coord=(11,-2,0)
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1113 (number) provisional=false coord=(10,-3,0)
+> look
+> ex
+There is a hobgoblin here.
+There is nothing on the floor.
+A female orc has just arrived from the northeast.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and northeast.
+Exits: ne,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1113 (number)
+[map] all exits mapped: ne, w
+The hobgoblin attacked you, but his flail glanced off your armor!
+
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1112 (number) provisional=false coord=(9,-3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor continues to the east and southwest.
+ex
+Exits: e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1112 (number)
+[map] all exits mapped: e, sw
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1111 (number) provisional=false coord=(8,-4,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south and northeast.
+ex
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1111 (number)
+[map] all exits mapped: ne, s
+$ s
+> s
+s
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1106 (number) provisional=false coord=(8,-5,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north, south, and west.
+ex
+Exits: n,s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1106 (number)
+[map] all exits mapped: n, s, w
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1105 (number) provisional=false coord=(7,-5,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1105 (number)
+[map] all exits mapped: e, w
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1104 (number) provisional=false coord=(6,-5,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1104 (number)
+[map] all exits mapped: e, w
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1103 (number) provisional=false coord=(5,-5,0)
+> look
+> ex
+There is a hobgoblin here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+ex
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1103 (number)
+[map] all exits mapped: e, w
+$ w
+> w
+w
+You're in a stonework chamber.
+[mapdbg] entry 'stonework chamber' roomId=1102 (number) provisional=false coord=(4,-5,0)
+> look
+> ex
+There is an ogre mage here.
+There is nothing on the floor.
+A hobgoblin has just arrived from the east.
+
+look
+ex
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The northern portion of this chamber is obscured by a strange mist.
+The only visible exit is east through a stone archway.
+Exits: n,e.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1102 (number)
+[map] all exits mapped: n, e
+$ n
+> n
+n
+The hobgoblin's poorly executed attack misses you!
+Sorry, there's no exit in that direction.
+
+The ogre mage just discharged a shower of ice shards at the hobgoblin!
+
+The hobgoblin has just gone to the north.
+A hobgoblin returned with a perplexed look on its face.
+The hobgoblin has just gone to the north.
+A hobgoblin returned with a perplexed look on its face.
+
+$ map-debug off
+[map] mapdbg tracing off
+$ map-off
+[map] mapping OFF
+The ogre mage attacked the hobgoblin with his glaive!
+
+> x
+x
+Exiting Tele-Arena...
+
+<< hit return >>
+> 
+[2J
+       ┌────────────────────────────────────────────────────────────────┐
+       │                        Saturn V ßßδ                            │
+       └────────────────────────────────────────────────────────────────┘
+[s├─┼──┼▄│1│ Tournament Lord├──┼──┼──┼──┼──┼──┼──┼▄│#│ Who's Online┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│2│ The Rose - Council of Guardians──┼──┼█│'│ <message> Global Chat┼──┼─┤[u
+[s├─┼──┼█│3│ iNFinITY CoMpLeX──┼──┼──┼──┼──┼──┼──┼█│T│ Teleconference─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│4│ MajorMUD─┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│ │ ────────────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│5│ Tele-Arena 5.6g├──┼──┼──┼──┼──┼──┼──┼█│F│ Farwest Trivia─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│6│ Wheel of Fame──┼──┼──┼──┼──┼──┼──┼──┼█│I│ Internet Relay Chat──┼──┼─┤[u
+[s├─┼──┼█│7│ World Conquest─┼──┼──┼──┼──┼──┼──┼──┼█│R│ Registry of Users─┼──┼──┼─┤[u
+[s├─┼──┼█│8│ Distant Realms─┼──┼──┼──┼──┼──┼──┼──┼█│E│ Edit User Info─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│9│ Mutants──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│M│ Messages────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│0│ Swords of Chaos├──┼──┼──┼──┼──┼──┼──┼█│A│ SysOp Menu──┼──┼──┼─
+─┼──┼─┤[u
+[s├─┼──┼█│L│ Galactic Empire┼──┼──┼──┼──┼──┼──┼──┼█│X│ Log Off──┼──┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│G│ More Games!─┼──┼──┼──┼──┼──┼──┼──┼──┼█│;?│ Global Help┼──┼──┼──┼──┼─┤[u
+[s└─┼──┼█│B│─Trade Wars 2002┼──┼──┼──┼──┼──┼──┼──┼▀▀┼──┼──┼──┼──┼──┼──┼──┼──┼──┼─┘[u
+  └──┴▀▀┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+■ Users online: 3 ■ Connected for 2 minutes  ■
+■ 10:36:58 ■ 11-SEP-26 ■ Command ■ : [1D
+> x
+x
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
+> y
+y
+[2J         · ·      ·        ·      ·         .                       ·
+  ·           ·    · ·         ·         ·   .       ·   ·    ·    ·     ·
+     ·                 · ·  ·      ·    · · ·     ·     ·            ·  ·     ·
+.    ·                                                                 ·   ·
+      · ·     ▄▀▀▀▀▀▀▀▀▀▀▀▄ ▄▀▀▀▀▀▀▀▀▄   ▄▀▀▀▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄   ··  ··
+ ·           ▀███████████ █▀▄▄████████   ████████▄▀████████▄▄█▄▄█████
+    ·       ██▀▄▄██▄▄▄█▀▀▄▄▄████▄▄▀▄▀██ ██▄▀▀▄▄██  ██▄▀▄▄▄███▀████████  ·   ·
+           ████▀███   ████▄▀██ ████████▌███▀████ · ██████▀▄██▀▀▀▀▀▀▀▀  ·  ·
+   ·      ████████   ▄▀███████  ███████████████     ██████████  ·        ·    ·
+   ·     █▄▀ ▀▀▄▄▀  ▄▀█▄▀▄▀██    ██▄██▀▀█▀████  ··  ██▄▀▀▄▀▄██        ·  ·  ··
+        ████▀█▄█▀▀▀▀█▄███▄▄▀  ·   ████▄██▀███        ████▄██▄█▀▀▀▀▀▀▀▄
+[s·      ████████████▄█████[1
+;37;46m▀▄ · ·    █████████  · ·    ▀▄███████▄████████   ··  
+.[u
+[s·     ████████████████████▀▄    ·  █████████          ██████████████████      
+·[u
+     █      ▄▄█▀▀▀▀▄█▄▄   ██       █▀▄  ▀▀▄█      ·    █   ▀▄ █ █▀▀▀▀▀▀  ·
+    ███▄█▀▄███      ██  ▀▄ ▐▌ ·   ▐▌  ▄▄ █ ▐▌   ·      ██▀█▄█▀██▄█        ·   ·
+[s   ██▄███▄███▄▄▄▄▄▄▀████▄███      ▐▌██▀█▄██▐▌  · ·  ·  ▀▄████ ▄ ██▀▀▀▀▀▀▀▀▀▀▄ 
+·[u
+  █████▄█▀▄ ███████ ▄▀▄███▄▀   ·  ▐▌████▄▀▄▐▌           ████ █  ███▄▀█▄▄█▀▄▄▀█
+ ███████████████████████▄▀        ███████████     ·      ████████████████████▄█
+[s██████████████████████▄▀  ·  ·    ███████████  ·   .    
+▀▄█████████████████████[u
+ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀    ·        ▀▀▀▀▀▀▀▀▀    ·          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+   ·   ·       ·      ·     ·   ·          ·         .            ·
+   ·      ·                                               ·         ·
+   ·          ·                            ·                   ·         ·
+                         ·                        ·
+         ·  ·                       ·
+                               
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    

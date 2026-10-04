@@ -18,7 +18,7 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local LOG = "logs/session-teekywiki-2026-09-26T16-13-38.log"
+local LOG = "test/fixtures/session-logs/session-teekywiki-2026-09-26T16-13-38.log"
 
 -- The walk above happens at line 4148 of a 4,547-line session. Replaying the
 -- 4,147 lines before it took eight minutes (74,322 sqlite3 processes) and did

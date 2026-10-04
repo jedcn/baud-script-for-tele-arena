@@ -1,0 +1,1822 @@
+# baud text log - started 2026-09-15T00:53:34.949Z
+
+Starting to read main.lua
+Finishing reading main.lua
+* MajorTCP/IP by Vircom Inc. *
+Connecting...Please Wait...
+Auto-sensing...
+    [!
+[2J
+       ·           ·                                ▌░▒▓█▒████▓█▓█▓▓▓▓▓▓▓▓▓█▓▓▓
+                              ·                    ▌░▒▓██▒▒▓▒█▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓█▓
+   ·                                              ▌░▒▓█▓█▒█▓█▓▓▓▓▓▓▓▓▓▒▒▓▒▓▓███
+                          ·        ·             ▌░▒▓▓▓█▒▓▓▓▓▓▒█▒▒▒▒▒▒▒▒▒▒▒▒▓▓█
+  ┌───┐┌───┐┌──┬─┐┐   ┌┌───┐┌┐   ┌               ▌░▒▓███▓▒▒▒▓▒███▓▒▒▒▒█▓▓▓▓████
+  │    │   │   │  │   ││   ││└┐  │              ▌░▒▓▓█▓██▓▒▒▒▓▓█▓▓▓▓▒▒▓▓▓██▓███
+  └───┐├───┤   │  │   │├──┬┘│ └┐ │ ·            ▌░▒▓███▓██▓▓▓███▓██▒▓▒▒▒▒█▓▓▓██
+    · ││   │   │  │   ││  │ │  └┐│             ▌░▒▓███▒█▒█▓▓██▒█▒▓▓▓▓▒▒▒▒███▓▓█
+  └───┘┘   └   ┘  └───┘┘  └ ┘   └┘             [30;43
+m▌░▒▓█▓██▒▓▒▒▒▓▓█████▒▒░░░░░▓▓▓▓▓
+          ·                                    ▌░▒▓█▓█▓▓▓▓▒▓▒▓▓▓▓▓▒▒█░░░▒▒▒▓▓▓▓
+         · ·  ┌─────                           ▌░▒▓███▓██▒▒▒▓▓▒▒▒▒░░▒░░▒▒▒▒▓▓▓▓
+  ·           │                                 ▌░▒▓██▓▓▓▓▒▒▓▓▒▒░░░░░░▒▒▒▓▓▓▓▓▓
+              └────┐   ·           ·            ▌░▒▓▓█▓▒▒▒▒▒▓▓▓▓▒░░░▒▒▒ ▒█▒█▓▓▓
+                   │       ∙                     ▌░▒▓▓█▓▒▒▒░▒▒▒▒░░░▒▒▒  █▓▓▓▓██
+     ·        ─────┘  ·            ∙             ▌░▒▓▒██▓▓▓▓▒▒▒░░░░▒▒▒▒▓▓▓▓██▓█
+                 ·              ·   ·             ▌░▒▓██▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒█▓▓█████
+·       ∙                                          ▌░▓▓██▓█▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓██▓█
+                                                    ▌░▒▓█████▓▓▓▓▓▓▓▓▓██▓░██▓██
+              ·            ·                         ▌░▒▓██████▓█▓▓▓▓▓▓▓▓▓▓█░██
+                                                      ▐░▒▓██▓███▒▓▓▓▓▓▓▓▓▓▓█▓██
+  ·        ·                              ∙             ▐░▒▓█████▓█▓▓▓▓▓▓███▓██
+        ·                ·                                ▐░▒▓█▒█▒███▓▓▓▒▓▒█▒█▒
+                                   ·                        ▐░░▒▓█▒█▒█▒██▒░▒▒█░
+                 ∙                                            ▐░░▒▓█████░▒▒▒░░░
+
+Enter your username now and press
+ENTER or type "NEW" to create one.
+Username: 
+> tojolias
+tojolias
+
+Password: 
+> arbor123
+▒▒▒▒▒▒▒▒
+
+Greetings, Tojolias, glad to see you back again.
+(N)onstop, (Q)uit, or (C)ontinue?
+> n
+[2J
+ ╔═══════════════════════════ Distant Realms ════════════════════════════════╗
+ ║ Fight for survival, seek out the demons and annihlate them.               ║
+ ║ Destroy anyone who gets in your way. The quest has just begun!            ║
+ ╚═══════════════════════════════════════════════════════════════════════════╝
+
+-= Bud Globals v1.0 =- With Ultragrams installed!  Type >>> ; <<< for info!
+
+###  User-ID                Age   Sex Time  Class    Flags Option Selected
+-------------------------------------------------------------------------------
+
+ 01  Pelayo                 46     M  28    USER      ---  Arena5.6d-Gold      
+ 02  Teekywiki              OLD    M  66    USER      ---  Arena5.6d-Gold      
+ 03  Kerhak                 OLD    M  66    USER      ---  Arena5.6d-Gold      
+ 04  Tojolias               46     M  0     USER      ---  Ultra Globals       
+-------------------------------------------------------------------------------
+(N)onstop, (Q)uit, or (C)ontinue?
+
+Main System Menu (TOP)
+Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X
+> 5
+to exit): 
+5
+Entering Tele-Arena...
+> st
+> i
+You're in the desert.
+There is nobody here.
+There is nothing on the floor.
+
+st
+Race:         Half-ogre
+Class:        Knight
+Level:        21
+Experience:   20450539
+Rune:         Blue
+Intellect:    14
+Knowledge:    12
+Physique:     35
+Stamina:      35
+Agility:      23
+Charisma:     12
+Mana:         0 / 0
+Vitality:     1953 / 2005
+Status:       Healthy
+Armor Rating: 18
+Weapon:       Wyrmslayer
+Armor:        Dragonscale
+Encumberance: 1122 / 1750
+i
+You are carrying 2534 gold crowns, a glowstone, a coil of rope, a soulstone, a
+waterskin(1), a heartstone, a topaz key, a zarynthium potion, an opal key, a
+tigereye key, and a zarynthium potion.
+$ map-print-room-slug
+> 
+> ex
+ex
+You're in the desert.
+There is nobody here.
+There is nothing on the floor.
+Exits: n,sw.
+[map] 2 candidates for 'desert' [n,sw]: desert-33 (7,-9,0), desert-36 (3,-9,0)
+[map] the map last saw you in desert-33 -- if nothing walked since, that is this room  ->  map-here desert-33
+[map] walk a room or two and they will narrow on their own.
+$ map-here desert-33
+[map] anchored at desert-33 (#1241) coord=(7,-9,0)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1242 (number) provisional=false coord=(6,-10,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+and southwest.
+Exits: ne,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1242 (number)
+[map] all exits mapped: ne, sw, nw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1272 (number) provisional=false coord=(6,-10,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and northeast.
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1272 (number)
+[map] all exits mapped: ne, s
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1271 (number) provisional=false coord=(6,-11,0)
+> look
+> ex
+There is a lizard here.
+There is a ration of food lying on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, east, and southwest.
+Exits: n,e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1271 (number)
+[map] unexplored exits: e  (mapped: n, sw)
+$ e
+> e
+e
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-57 INSERT changes=1 -> id=1275 (number)
+[mapdbg] entry 'desert' roomId=1275 (number) provisional=true coord=(7,-11,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west and southeast.
+Exits: se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1275 (number)
+[mapdbg] reconcile: room=desert id=1275 dirs=se,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=nil val=nil
+[map] unexplored exits: se  (mapped: w)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-58 INSERT changes=1 -> id=1276 (number)
+[mapdbg] entry 'desert' roomId=1276 (number) provisional=true coord=(8,-12,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and northwest.
+ex
+Exits: s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1276 (number)
+[mapdbg] reconcile: room=desert id=1276 dirs=s,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: s  (mapped: nw)
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-59 INSERT changes=1 -> id=1277 (number)
+[mapdbg] entry 'desert' roomId=1277 (number) provisional=true coord=(8,-13,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, southeast and
+southwest.
+Exits: n,se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1277 (number)
+[mapdbg] reconcile: room=desert id=1277 dirs=n,se,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[map] unexplored exits: se, sw  (mapped: n)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-60 INSERT changes=1 -> id=1278 (number)
+[mapdbg] entry 'desert' roomId=1278 (number) provisional=true coord=(9,-14,0)
+> look
+> ex
+There is a sand worm here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southwest.
+Exits: sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1278 (number)
+[mapdbg] reconcile: room=desert id=1278 dirs=sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: nw)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-61 INSERT changes=1 -> id=1279 (number)
+[mapdbg] entry 'desert' roomId=1279 (number) provisional=true coord=(8,-15,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A sand worm has just arrived from the northeast.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+and southwest.
+Exits: ne,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1279 (number)
+[mapdbg] reconcile: room=desert id=1279 dirs=ne,sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: sw, nw  (mapped: ne)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-62 INSERT changes=1 -> id=1280 (number)
+[mapdbg] entry 'desert' roomId=1280 (number) provisional=true coord=(7,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A sand worm has just arrived from the southeast.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast and
+southeast.
+ex
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1280 (number)
+[mapdbg] reconcile: room=desert id=1280 dirs=ne,se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: ne, nw  (mapped: se)
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-63 INSERT changes=1 -> id=1281 (number)
+[mapdbg] entry 'desert' roomId=1281 (number) provisional=true coord=(8,-13,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, southeast and
+southwest.
+Exits: n,se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1281 (number)
+[mapdbg] reconcile: room=desert id=1281 dirs=n,se,sw
+[mapdbg] findRoomByFingerprint -> type=number val=1277
+[map] linked into #1277 (desert)
+[map] all exits mapped: n, se, sw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1280 (number) provisional=false coord=(7,-14,0)
+> look
+> ex
+There is a sand worm here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast and
+southeast.
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1280 (number)
+[map] unexplored exits: nw  (mapped: ne, se)
+$ nw
+> nw
+nw
+The sand worm attacked you, but its gaping maw glanced off your armor!
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-63 INSERT changes=1 -> id=1282 (number)
+[mapdbg] entry 'desert' roomId=1282 (number) provisional=true coord=(6,-13,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1282 (number)
+[mapdbg] reconcile: room=desert id=1282 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: nw  (mapped: se)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-64 INSERT changes=1 -> id=1283 (number)
+[mapdbg] entry 'desert' roomId=1283 (number) provisional=true coord=(5,-12,0)
+> look
+> ex
+There is a lizard here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west, northeast, and
+southeast.
+Exits: ne,se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1283 (number)
+[mapdbg] reconcile: room=desert id=1283 dirs=ne,se,w
+[mapdbg] findRoomByFingerprint -> type=number val=1270
+[map] linked into #1270 (desert)
+[map] all exits mapped: ne, se, w
+$ nw
+> nw
+nw
+Sorry, there's no exit in that direction.
+
+The lizard has just gone to the west.
+
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1267 (number) provisional=false coord=(4,-12,0)
+> look
+> ex
+There is a lizard here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east, southwest and
+northwest.
+Exits: e,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1267 (number)
+[map] all exits mapped: e, sw, nw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1266 (number) provisional=false coord=(3,-13,0)
+> look
+> ex
+There is a nomad here.
+There is a ration of food lying on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northeast, southeast and
+southwest.
+Exits: ne,se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1266 (number)
+[map] unexplored exits: se  (mapped: ne, sw)
+The nomad's poorly executed attack misses you!
+
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-64 INSERT changes=1 -> id=1284 (number)
+[mapdbg] entry 'desert' roomId=1284 (number) provisional=true coord=(4,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1284 (number)
+[mapdbg] reconcile: room=desert id=1284 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: se  (mapped: nw)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-65 INSERT changes=1 -> id=1285 (number)
+[mapdbg] entry 'desert' roomId=1285 (number) provisional=true coord=(5,-15,0)
+> look
+> ex
+There is nobody here.
+There is a rue potion lying on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1285 (number)
+[mapdbg] reconcile: room=desert id=1285 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: se  (mapped: nw)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-66 INSERT changes=1 -> id=1286 (number)
+[mapdbg] entry 'desert' roomId=1286 (number) provisional=true coord=(6,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east and northwest.
+ex
+Exits: e,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1286 (number)
+[mapdbg] reconcile: room=desert id=1286 dirs=e,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: e  (mapped: nw)
+$ e
+> e
+e
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-67 INSERT changes=1 -> id=1287 (number)
+[mapdbg] entry 'desert' roomId=1287 (number) provisional=true coord=(7,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west, northeast, and
+southeast.
+Exits: ne,se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1287 (number)
+[mapdbg] reconcile: room=desert id=1287 dirs=ne,se,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=nil val=nil
+[map] unexplored exits: ne, se  (mapped: w)
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-68 INSERT changes=1 -> id=1288 (number)
+[mapdbg] entry 'desert' roomId=1288 (number) provisional=true coord=(8,-15,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+and southwest.
+Exits: ne,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1288 (number)
+[mapdbg] reconcile: room=desert id=1288 dirs=ne,sw,nw
+[mapdbg] findRoomByFingerprint -> type=number val=1279
+[map] linked into #1279 (desert)
+[map] all exits mapped: ne, sw, nw
+> WOW! IT'S JSUT WORKING!
+WOW! IT'S JSUT WORKING!
+Sorry, that is not an appropriate command.
+
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1287 (number) provisional=false coord=(7,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west, northeast, and
+southeast.
+ex
+Exits: ne,se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1287 (number)
+[map] unexplored exits: se  (mapped: ne, w)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-68 INSERT changes=1 -> id=1289 (number)
+[mapdbg] entry 'desert' roomId=1289 (number) provisional=true coord=(8,-17,0)
+> look
+> ex
+There is a carrion crane here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southwest.
+ex
+Exits: sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1289 (number)
+[mapdbg] reconcile: room=desert id=1289 dirs=sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: nw)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-69 INSERT changes=1 -> id=1290 (number)
+[mapdbg] entry 'desert' roomId=1290 (number) provisional=true coord=(7,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A carrion crane has just arrived from the northeast.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and northeast.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1290 (number)
+[mapdbg] reconcile: room=desert id=1290 dirs=ne,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: ne)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-70 INSERT changes=1 -> id=1291 (number)
+[mapdbg] entry 'desert' roomId=1291 (number) provisional=true coord=(6,-19,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and northeast.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1291 (number)
+[mapdbg] reconcile: room=desert id=1291 dirs=ne,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: ne)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-71 INSERT changes=1 -> id=1292 (number)
+[mapdbg] entry 'desert' roomId=1292 (number) provisional=true coord=(5,-20,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west and northeast.
+Exits: ne,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1292 (number)
+[mapdbg] reconcile: room=desert id=1292 dirs=ne,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: w  (mapped: ne)
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-72 INSERT changes=1 -> id=1293 (number)
+[mapdbg] entry 'desert' roomId=1293 (number) provisional=true coord=(4,-20,0)
+> look
+> ex
+There is a female nomad here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, east, and west.
+Exits: n,e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1293 (number)
+[mapdbg] reconcile: room=desert id=1293 dirs=n,e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[map] unexplored exits: n, w  (mapped: e)
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-73 INSERT changes=1 -> id=1294 (number)
+[mapdbg] entry 'desert' roomId=1294 (number) provisional=true coord=(4,-19,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A female nomad has just arrived from the south.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, northwest and
+northeast.
+Exits: ne,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1294 (number)
+[mapdbg] reconcile: room=desert id=1294 dirs=ne,s,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[map] unexplored exits: ne, nw  (mapped: s)
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-74 INSERT changes=1 -> id=1295 (number)
+[mapdbg] entry 'desert' roomId=1295 (number) provisional=true coord=(5,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A female nomad has just arrived from the southwest.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southwest.
+Exits: sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1295 (number)
+[mapdbg] reconcile: room=desert id=1295 dirs=sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=nil val=nil
+[map] unexplored exits: nw  (mapped: sw)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-75 INSERT changes=1 -> id=1296 (number)
+[mapdbg] entry 'desert' roomId=1296 (number) provisional=true coord=(4,-17,0)
+> look
+> ex
+There is nobody here.
+There is a hyssop potion lying on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and southeast.
+Exits: se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1296 (number)
+[mapdbg] reconcile: room=desert id=1296 dirs=se,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: se)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-76 INSERT changes=1 -> id=1297 (number)
+[mapdbg] entry 'desert' roomId=1297 (number) provisional=true coord=(3,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+southwest, and southeast.
+ex
+Exits: ne,se,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1297 (number)
+[mapdbg] reconcile: room=desert id=1297 dirs=ne,se,sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: se, sw, nw  (mapped: ne)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-77 INSERT changes=1 -> id=1298 (number)
+[mapdbg] entry 'desert' roomId=1298 (number) provisional=true coord=(4,-19,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, northwest and
+northeast.
+ex
+Exits: ne,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1298 (number)
+[mapdbg] reconcile: room=desert id=1298 dirs=ne,s,nw
+[mapdbg] findRoomByFingerprint -> type=number val=1294
+[map] linked into #1294 (desert)
+[map] all exits mapped: ne, s, nw
+> IT JUST WORKED AGAIN
+IT JUST WORKED AGAIN
+Sorry, that is not an appropriate command.
+
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1297 (number) provisional=false coord=(3,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+southwest, and southeast.
+Exits: ne,se,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1297 (number)
+[map] unexplored exits: sw, nw  (mapped: ne, se)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-77 INSERT changes=1 -> id=1299 (number)
+[mapdbg] entry 'desert' roomId=1299 (number) provisional=true coord=(2,-17,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1299 (number)
+[mapdbg] reconcile: room=desert id=1299 dirs=n,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: n  (mapped: se)
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-78 INSERT changes=1 -> id=1300 (number)
+[mapdbg] entry 'desert' roomId=1300 (number) provisional=true coord=(2,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, south, and
+west.
+Exits: n,s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1300 (number)
+[mapdbg] reconcile: room=desert id=1300 dirs=n,s,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[map] unexplored exits: n, w  (mapped: s)
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-79 INSERT changes=1 -> id=1301 (number)
+[mapdbg] entry 'desert' roomId=1301 (number) provisional=true coord=(2,-15,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, east and
+northwest.
+Exits: e,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1301 (number)
+[mapdbg] reconcile: room=desert id=1301 dirs=e,s,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=number val=1264
+[map] possible loop closure into #1264 -- settle it by walking e or nw
+[map] unexplored exits: e, nw  (mapped: s)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-80 INSERT changes=1 -> id=1302 (number)
+[mapdbg] entry 'desert' roomId=1302 (number) provisional=true coord=(1,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1302 (number)
+[map] loop closure confirmed: #1301 was #1264
+[map] all exits mapped: n, se
+> AND AGAIN!
+AND AGAIN!
+Sorry, that is not an appropriate command.
+
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1251 (number) provisional=false coord=(0,-12,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, northwest and
+northeast.
+ex
+Exits: ne,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1251 (number)
+[map] all exits mapped: ne, s, nw
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1263 (number) provisional=false coord=(0,-13,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1263 (number)
+[map] all exits mapped: n, se
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1264 (number) provisional=false coord=(1,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, east and
+northwest.
+Exits: e,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1264 (number)
+[map] all exits mapped: e, s, nw
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1300 (number) provisional=false coord=(2,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, south, and
+west.
+ex
+Exits: n,s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1300 (number)
+[map] unexplored exits: w  (mapped: n, s)
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-79 INSERT changes=1 -> id=1303 (number)
+[mapdbg] entry 'desert' roomId=1303 (number) provisional=true coord=(1,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1303 (number)
+[mapdbg] reconcile: room=desert id=1303 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-80 INSERT changes=1 -> id=1304 (number)
+[mapdbg] entry 'desert' roomId=1304 (number) provisional=true coord=(0,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, south, east, and
+west.
+ex
+Exits: n,e,s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1304 (number)
+[mapdbg] reconcile: room=desert id=1304 dirs=n,e,s,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=number val=1256
+[map] possible loop closure into #1256 -- settle it by walking n or w
+[map] unexplored exits: n, s, w  (mapped: e)
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-81 INSERT changes=1 -> id=1305 (number)
+[mapdbg] entry 'desert' roomId=1305 (number) provisional=true coord=(0,-15,0)
+> look
+> ex
+There is a lizard here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and northwest.
+Exits: s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1305 (number)
+[map] loop closure confirmed: #1304 was #1256
+[map] all exits mapped: s, nw
+> AND AGAIN!
+AND AGAIN!
+Sorry, that is not an appropriate command.
+
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1254 (number) provisional=false coord=(-1,-12,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A lizard has just arrived from the southeast.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west, northeast, and
+southeast.
+ex
+Exits: ne,se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1254 (number)
+[map] all exits mapped: ne, se, w
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1260 (number) provisional=false coord=(-1,-11,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east and southwest.
+Exits: e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1260 (number)
+[map] all exits mapped: e, sw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1259 (number) provisional=false coord=(-2,-12,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, northwest and
+northeast.
+Exits: ne,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1259 (number)
+[map] unexplored exits: nw  (mapped: ne, s)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-80 INSERT changes=1 -> id=1306 (number)
+[mapdbg] entry 'desert' roomId=1306 (number) provisional=true coord=(-3,-11,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1306 (number)
+[mapdbg] reconcile: room=desert id=1306 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: nw  (mapped: se)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-81 INSERT changes=1 -> id=1307 (number)
+[mapdbg] entry 'desert' roomId=1307 (number) provisional=true coord=(-4,-10,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A giant asp has just arrived from the southeast.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1307 (number)
+[mapdbg] reconcile: room=desert id=1307 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: nw  (mapped: se)
+$ nw
+> nw
+nw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-82 INSERT changes=1 -> id=1308 (number)
+[mapdbg] entry 'desert' roomId=1308 (number) provisional=true coord=(-5,-9,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A giant asp has just arrived from the southeast.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1308 (number)
+[mapdbg] reconcile: room=desert id=1308 dirs=n,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: n  (mapped: se)
+$ n
+> n
+n
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-83 INSERT changes=1 -> id=1309 (number)
+[mapdbg] entry 'desert' roomId=1309 (number) provisional=true coord=(-5,-8,0)
+> look
+> ex
+There is a female nomad here.
+There is nothing on the floor.
+A giant asp has just arrived from the south.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and northeast.
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1309 (number)
+[mapdbg] reconcile: room=desert id=1309 dirs=ne,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[map] unexplored exits: ne  (mapped: s)
+The female nomad attacked you, but her scimitar glanced off your armor!
+
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-84 INSERT changes=1 -> id=1310 (number)
+[mapdbg] entry 'desert' roomId=1310 (number) provisional=true coord=(-4,-7,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A female nomad has just arrived from the southwest.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, southeast and
+southwest.
+Exits: n,se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1310 (number)
+[mapdbg] reconcile: room=desert id=1310 dirs=n,se,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=number val=1220
+[map] possible loop closure into #1220 -- settle it by walking n or se
+[map] unexplored exits: n, se  (mapped: sw)
+$ n
+> n
+n
+The female nomad attacked you, but her scimitar glanced off your armor!
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-85 INSERT changes=1 -> id=1311 (number)
+[mapdbg] entry 'desert' roomId=1311 (number) provisional=true coord=(-4,-6,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and east.
+ex
+Exits: e,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1311 (number)
+[map] loop closure confirmed: #1310 was #1220
+[map] all exits mapped: e, s
+The giant asp attacked you, but its wicked bite glanced off your armor!
+
+> AND AGAIN!!!
+AND AGAIN!!!
+Sorry, that is not an appropriate command.
+
+> a asp
+a asp
+The giant asp dodged your attack!
+
+> a asp
+a asp
+Your attack hit the giant asp for 104 damage!
+The giant asp falls to the ground lifeless!
+
+> gr
+gr
+Your group currently consists of:
+  Tojolias                       (L) [HE: 97% ST:Ready]
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1220 (number) provisional=false coord=(-5,-8,0)
+> look
+> ex
+There is a female nomad here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, southeast and
+southwest.
+ex
+Exits: n,se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1220 (number)
+[map] all exits mapped: n, se, sw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1309 (number) provisional=false coord=(-5,-8,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south and northeast.
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1309 (number)
+[map] all exits mapped: ne, s
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1308 (number) provisional=false coord=(-5,-9,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1308 (number)
+[map] all exits mapped: n, se
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1307 (number) provisional=false coord=(-4,-10,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+ex
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1307 (number)
+[map] all exits mapped: se, nw
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1306 (number) provisional=false coord=(-3,-11,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1306 (number)
+[map] all exits mapped: se, nw
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1259 (number) provisional=false coord=(-2,-12,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the south, northwest and
+northeast.
+Exits: ne,s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1259 (number)
+[map] all exits mapped: ne, s, nw
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1258 (number) provisional=false coord=(-2,-13,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1258 (number)
+[map] all exits mapped: n, se
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1257 (number) provisional=false coord=(-1,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east and northwest.
+Exits: e,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1257 (number)
+[map] all exits mapped: e, nw
+$ e
+> e
+e
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1256 (number) provisional=false coord=(0,-14,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, south, east, and
+west.
+Exits: n,e,s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1256 (number)
+[map] unexplored exits: s  (mapped: n, e, w)
+$ s
+> s
+s
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-84 INSERT changes=1 -> id=1312 (number)
+[mapdbg] entry 'desert' roomId=1312 (number) provisional=true coord=(0,-15,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1312 (number)
+[mapdbg] reconcile: room=desert id=1312 dirs=n,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[map] unexplored exits: se  (mapped: n)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-85 INSERT changes=1 -> id=1313 (number)
+[mapdbg] entry 'desert' roomId=1313 (number) provisional=true coord=(1,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest and southeast.
+Exits: se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1313 (number)
+[mapdbg] reconcile: room=desert id=1313 dirs=se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: se  (mapped: nw)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-86 INSERT changes=1 -> id=1314 (number)
+[mapdbg] entry 'desert' roomId=1314 (number) provisional=true coord=(2,-17,0)
+> look
+> ex
+There is a hyena here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast and
+southeast.
+ex
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1314 (number)
+[mapdbg] reconcile: room=desert id=1314 dirs=ne,se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: ne, se  (mapped: nw)
+$ ne
+> ne
+ne
+The hyena attacked you, but its wicked teeth glanced off your armor!
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-87 INSERT changes=1 -> id=1315 (number)
+[mapdbg] entry 'desert' roomId=1315 (number) provisional=true coord=(3,-16,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and northeast.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1315 (number)
+[mapdbg] reconcile: room=desert id=1315 dirs=ne,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=nil val=nil
+[map] unexplored exits: ne  (mapped: sw)
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-88 INSERT changes=1 -> id=1316 (number)
+[mapdbg] entry 'desert' roomId=1316 (number) provisional=true coord=(4,-15,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A giant asp has just arrived from the southwest.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+southwest, and southeast.
+Exits: ne,se,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1316 (number)
+[mapdbg] reconcile: room=desert id=1316 dirs=ne,se,sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=number val=1297
+[map] possible loop closure into #1297 -- settle it by walking ne or nw or se
+[map] unexplored exits: ne, se, nw  (mapped: sw)
+$ ne
+> ne
+ne
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-89 INSERT changes=1 -> id=1317 (number)
+[mapdbg] entry 'desert' roomId=1317 (number) provisional=true coord=(5,-14,0)
+> look
+> ex
+There is nobody here.
+There is a hyssop potion lying on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and southeast.
+Exits: se,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1317 (number)
+[map] loop closure confirmed: #1316 was #1297
+[map] all exits mapped: se, sw
+> AND AGAIN
+AND AGAIN
+Sorry, that is not an appropriate command.
+
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1297 (number) provisional=false coord=(3,-18,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast,
+southwest, and southeast.
+Exits: ne,se,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1297 (number)
+[map] all exits mapped: ne, se, sw, nw
+The giant asp coiled around you for 15 damage!
+
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1315 (number) provisional=false coord=(3,-16,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the southwest and northeast.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1315 (number)
+[map] all exits mapped: ne, sw
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1314 (number) provisional=false coord=(2,-17,0)
+> look
+> ex
+There is a hyena here.
+There is nothing on the floor.
+
+look
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest, northeast and
+southeast.
+ex
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1314 (number)
+[map] unexplored exits: se  (mapped: ne, nw)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-88 INSERT changes=1 -> id=1318 (number)
+[mapdbg] entry 'desert' roomId=1318 (number) provisional=true coord=(3,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A hyena has just arrived from the northwest.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east, southwest and
+northwest.
+Exits: e,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1318 (number)
+[mapdbg] reconcile: room=desert id=1318 dirs=e,sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: e, sw  (mapped: nw)
+$ e
+> e
+e
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-89 INSERT changes=1 -> id=1319 (number)
+[mapdbg] entry 'desert' roomId=1319 (number) provisional=true coord=(4,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, east, and west.
+Exits: n,e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1319 (number)
+[mapdbg] reconcile: room=desert id=1319 dirs=n,e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=1293
+[map] possible loop closure into #1293 -- settle it by walking e or n
+[map] unexplored exits: n, e  (mapped: w)
+$ e
+> e
+e
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-90 INSERT changes=1 -> id=1320 (number)
+[mapdbg] entry 'desert' roomId=1320 (number) provisional=true coord=(5,-18,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the west and northeast.
+Exits: ne,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1320 (number)
+[map] loop closure confirmed: #1319 was #1293
+[map] all exits mapped: ne, w
+> AND AGAIN
+AND AGAIN
+Sorry, that is not an appropriate command.
+
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1293 (number) provisional=false coord=(4,-20,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the north, east, and west.
+Exits: n,e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1293 (number)
+[map] all exits mapped: n, e, w
+$ w
+> w
+w
+You're in the desert.
+[mapdbg] entry 'desert' roomId=1318 (number) provisional=false coord=(3,-18,0)
+> look
+> ex
+There is a hyena here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the east, southwest and
+northwest.
+Exits: e,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1318 (number)
+[map] unexplored exits: sw  (mapped: e, nw)
+$ sw
+> sw
+sw
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-89 INSERT changes=1 -> id=1321 (number)
+[mapdbg] entry 'desert' roomId=1321 (number) provisional=true coord=(2,-19,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northeast and southeast.
+Exits: ne,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1321 (number)
+[mapdbg] reconcile: room=desert id=1321 dirs=ne,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: se  (mapped: ne)
+$ se
+> se
+se
+You're in the desert.
+[mapdbg] discoverRoom slug=desert-90 INSERT changes=1 -> id=1322 (number)
+[mapdbg] entry 'desert' roomId=1322 (number) provisional=true coord=(3,-20,0)
+> look
+> ex
+There is a giant asp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a rocky windswept desert. Huge black outcroppings of
+rock block travel in all directions except to the northwest. The entrance
+to a cave in a large rock outcropping lies to the south.
+Exits: s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1322 (number)
+[mapdbg] reconcile: room=desert id=1322 dirs=s,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: s  (mapped: nw)
+$ s
+> s
+s
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber-11 INSERT changes=1 -> id=1323 (number)
+[mapdbg] entry 'stonework chamber' roomId=1323 (number) provisional=true coord=(3,-21,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A giant asp has just arrived from the north.
+
+look
+ex
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The western wall bears this cryptic message: "Speak the element of
+the guardian of the temple catacombs in the language of spellcraft to gain
+entrance." The visible exits are south and east through stone archways
+fitted with massive iron doors. There is also a stone archway leading out
+into the desert to the north.
+Exits: n,e,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1323 (number)
+[mapdbg] reconcile: room=stonework chamber id=1323 dirs=n,e,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[map] unexplored exits: e, s  (mapped: n)
+$ map-off
+[map] mapping OFF
+> UT OH I WALKED INTO THE STONEWORKS-- HOW DO I MANUALLY FIX THIS
+UT OH I WALKED INTO THE STONEWORKS-- HOW DO I MANUALLY FIX THIS
+Sorry, that is not an appropriate command.
+The giant asp attacked you, but its wicked bite glanced off your armor!
+
+> x
+x
+Exiting Tele-Arena...
+
+<< hit return >>
+> 
+[2J
+       ┌────────────────────────────────────────────────────────────────┐
+       │                        Saturn V ßßδ                            │
+       └────────────────────────────────────────────────────────────────┘
+[s├─┼──┼▄│1│ Tournament Lord├──┼──┼──┼──┼──┼──┼──┼▄│#│ Who's Online┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│2│ The Rose - Council of Guardians──┼──┼█│'│ <message> Global Chat┼──┼─┤[u
+[s├─┼──┼█│3│ iNFinITY CoMpLeX──┼──┼──┼──┼──┼──┼──┼█│T│ Teleconference─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│4│ MajorMUD─┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│ │ ────────────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│5│ Tele-Arena 5.6g├──┼──┼──┼──┼──┼──┼──┼█│F│ Farwest Trivia─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│6│ Wheel of Fame──┼──┼──┼──┼──┼──┼──┼──┼█│I│ Internet Relay Chat──┼──┼─┤[u
+[s├─┼──┼█│7│ World Conquest─┼──┼──┼──┼──┼──┼──┼──┼█│R│ Registry of Users─┼──┼──┼─┤[u
+[s├─┼──┼█│8│ Distant Realms─┼──┼──┼──┼──┼──┼──┼──┼█│E│ Edit User Info─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│9│ Mutants──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│M│ Messages────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│0│ Swords of Chaos├──┼──┼──┼──┼──┼──┼──┼█│A│ SysOp Menu──┼──┼──┼─
+─┼──┼─┤[u
+[s├─┼──┼█│L│ Galactic Empire┼──┼──┼──┼──┼──┼──┼──┼█│X│ Log Off──┼──┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│G│ More Games!─┼──┼──┼──┼──┼──┼──┼──┼──┼█│;?│ Global Help┼──┼──┼──┼──┼─┤[u
+[s└─┼──┼█│B│─Trade Wars 2002┼──┼──┼──┼──┼──┼──┼──┼▀▀┼──┼──┼──┼──┼──┼──┼──┼──┼──┼─┘[u
+  └──┴▀▀┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+■ Users online: 3 ■ Connected for 15 minutes ■
+■ 20:58:14 ■ 12-SEP-26 ■ Command ■ : [1D
+> x
+x
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
+> y
+y
+[2J         · ·      ·        ·      ·         .                       ·
+  ·           ·    · ·         ·         ·   .       ·   ·    ·    ·     ·
+     ·                 · ·  ·      ·    · · ·     ·     ·            ·  ·     ·
+.    ·                                                                 ·   ·
+      · ·     ▄▀▀▀▀▀▀▀▀▀▀▀▄ ▄▀▀▀▀▀▀▀▀▄   ▄▀▀▀▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄   ··  ··
+ ·           ▀███████████ █▀▄▄████████   ████████▄▀████████▄▄█▄▄█████
+    ·       ██▀▄▄██▄▄▄█▀▀▄▄▄████▄▄▀▄▀██ ██▄▀▀▄▄██  ██▄▀▄▄▄███▀████████  ·   ·
+           ████▀███   ████▄▀██ ████████▌███▀████ · ██████▀▄██▀▀▀▀▀▀▀▀  ·  ·
+   ·      ████████   ▄▀███████  ███████████████     ██████████  ·        ·    ·
+   ·     █▄▀ ▀▀▄▄▀  ▄▀█▄▀▄▀██    ██▄██▀▀█▀████  ··  ██▄▀▀▄▀▄██        ·  ·  ··
+        ████▀█▄█▀▀▀▀█▄███▄▄▀  ·   ████▄██▀███        ████▄██▄█▀▀▀▀▀▀▀▄
+[s·      ████████████▄█████[1
+;37;46m▀▄ · ·    █████████  · ·    ▀▄███████▄████████   ··  
+.[u
+[s·     ████████████████████▀▄    ·  █████████          ██████████████████      
+·[u
+     █      ▄▄█▀▀▀▀▄█▄▄   ██       █▀▄  ▀▀▄█      ·    █   ▀▄ █ █▀▀▀▀▀▀  ·
+    ███▄█▀▄███      ██  ▀▄ ▐▌ ·   ▐▌  ▄▄ █ ▐▌   ·      ██▀█▄█▀██▄█        ·   ·
+[s   ██▄███▄███▄▄▄▄▄▄▀████▄███      ▐▌██▀█▄██▐▌  · ·  ·  ▀▄████ ▄ ██▀▀▀▀▀▀▀▀▀▀▄ 
+·[u
+  █████▄█▀▄ ███████ ▄▀▄███▄▀   ·  ▐▌████▄▀▄▐▌           ████ █  ███▄▀█▄▄█▀▄▄▀█
+ ███████████████████████▄▀        ███████████     ·      ████████████████████▄█
+[s██████████████████████▄▀  ·  ·    ███████████  ·   .    
+▀▄█████████████████████[u
+ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀    ·        ▀▀▀▀▀▀▀▀▀    ·          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+   ·   ·       ·      ·     ·   ·          ·         .            ·
+   ·      ·                                               ·         ·
+   ·          ·                            ·                   ·         ·
+                         ·                        ·
+         ·  ·                       ·
+                               
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    

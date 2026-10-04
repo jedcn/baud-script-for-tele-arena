@@ -1,0 +1,457 @@
+> s
+s
+You're in a stonework chamber.
+There is nobody here.
+There is nothing on the floor.
+
+>
+> ex
+ex
+You're in a stonework chamber.
+There is nobody here.
+There is nothing on the floor.
+Exits: n,e,s.
+[map] no known room matches 'stonework chamber' with exits n,e,s (new room? use map-area to start mapping here)
+[map] reset area stoneworks (0 rooms removed). Run map-area stoneworks to re-map it.
+[mapdbg] ensureArea slug=stoneworks-level-1 INSERT changes=1 -> id=23 (number)
+[map] mapping stoneworks-level-1 from here
+>
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber INSERT changes=1 -> id=1087 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The western wall bears this cryptic message: "Speak the element of
+the guardian of the temple catacombs in the language of spellcraft to gain
+entrance." The visible exits are south and east through stone archways which
+stand open to bare stone corridors. There is also a stone archway leading
+out into the desert to the north.
+Exits: n,e,s.
+[map] unexplored exits: n, e, s
+> s
+s
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor INSERT changes=1 -> id=1088 (number)
+> look
+> ex
+There is nobody here.
+There is a hyssop potion lying on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and south.
+Exits: n,s.
+[map] unexplored exits: s  (mapped: n)
+> s
+s
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-1 INSERT changes=1 -> id=1089 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southeast.
+Exits: n,se.
+[map] unexplored exits: se  (mapped: n)
+> se
+se
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-2 INSERT changes=1 -> id=1090 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northwest and southwest.
+Exits: sw,nw.
+[map] unexplored exits: sw  (mapped: nw)
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-3 INSERT changes=1 -> id=1091 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south and northeast.
+ex
+Exits: ne,s.
+[map] unexplored exits: s  (mapped: ne)
+> s
+s
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber-1 INSERT changes=1 -> id=1092 (number)
+> look
+> ex
+There are two ogres here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The only visible exits are north, south, and east through stone
+archways.
+Exits: n,e,s.
+[map] linked into #1087 (stonework chamber)
+[map] unexplored exits: e  (mapped: n, s)
+The ogre's poorly executed attack misses you!
+
+> s
+s
+You're in a stonework corridor.
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southeast.
+ex
+Exits: n,se.
+[map] unexplored exits: se  (mapped: n)
+> se
+se
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-4 INSERT changes=1 -> id=1093 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and northwest.
+Exits: e,nw.
+[map] unexplored exits: e  (mapped: nw)
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-5 INSERT changes=1 -> id=1094 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and northeast.
+ex
+Exits: ne,w.
+[map] unexplored exits: ne  (mapped: w)
+> ne
+ne
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-6 INSERT changes=1 -> id=1095 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and southwest.
+Exits: ne,sw.
+[map] unexplored exits: ne  (mapped: sw)
+> ne
+ne
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-7 INSERT changes=1 -> id=1096 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east, northwest, and
+southwest.
+Exits: e,sw,nw.
+[map] unexplored exits: e, nw  (mapped: sw)
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-8 INSERT changes=1 -> id=1097 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and southeast.
+ex
+Exits: se,w.
+[map] unexplored exits: se  (mapped: w)
+> se
+se
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-9 INSERT changes=1 -> id=1098 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south, northwest, and
+northeast.
+Exits: ne,s,nw.
+[map] unexplored exits: ne, s  (mapped: nw)
+> s
+s
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-10 INSERT changes=1 -> id=1099 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southwest.
+ex
+Exits: n,sw.
+[map] unexplored exits: sw  (mapped: n)
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-11 INSERT changes=1 -> id=1100 (number)
+> look
+> ex
+There is an imp here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and southwest.
+Exits: ne,sw.
+[map] unexplored exits: sw  (mapped: ne)
+> sw
+sw
+The imp attacked you, but its club glanced off your armor!
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-12 INSERT changes=1 -> id=1101 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and south.
+Exits: ne,s.
+[map] unexplored exits: s  (mapped: ne)
+> s
+s
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber-1 INSERT changes=1 -> id=1102 (number)
+> look
+> ex
+There is an ogre mage here.
+There is nothing on the floor.
+
+look
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The northern portion of this chamber is obscured by a strange mist.
+The only visible exit is east through a stone archway.
+ex
+Exits: n,e.
+[map] unexplored exits: e  (mapped: n)
+The ogre mage attacked you, but his battleax glanced off your armor!
+
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-13 INSERT changes=1 -> id=1103 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+Exits: e,w.
+[map] unexplored exits: e  (mapped: w)
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-14 INSERT changes=1 -> id=1104 (number)
+> look
+> ex
+There is a huge rat here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+ex
+Exits: e,w.
+[map] unexplored exits: e  (mapped: w)
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-15 INSERT changes=1 -> id=1105 (number)
+> look
+> ex
+There is a female orc here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and west.
+Exits: e,w.
+[map] unexplored exits: e  (mapped: w)
+> e
+e
+The female orc attacked you, but her club glanced off your armor!
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-16 INSERT changes=1 -> id=1106 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north, south, and west.
+Exits: n,s,w.
+[map] unexplored exits: n, s  (mapped: w)
+> s
+s
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-17 INSERT changes=1 -> id=1107 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southeast.
+Exits: n,se.
+[map] unexplored exits: se  (mapped: n)
+> se
+se
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-18 INSERT changes=1 -> id=1108 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east and northwest.
+ex
+Exits: e,nw.
+[map] unexplored exits: e  (mapped: nw)
+> e
+e
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-19 INSERT changes=1 -> id=1109 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and southeast.
+ex
+Exits: se,w.
+[map] unexplored exits: se  (mapped: w)
+> se
+se
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-20 INSERT changes=1 -> id=1110 (number)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. A stone in the northeast wall appears to protrude
+from the wall slightly more than the others. The corridor continues to the
+northwest.
+Exits: nw.
+[map] all exits mapped: nw
+> just verify-area stoneworks-level-1
+just verify-area stoneworks-level-1
+Sorry, that is not an appropriate command.
+
+
+Pelayo logs OFF.  [10-SEP-26/21:43:52] Users Online: 3:
+You're thirsty.
+
+You're thirsty.
+
+You're thirsty.
+[abandoned] 3 thirst ticks with nothing in between — leaving the game (x).
+[all] arena not running.
+[all] heal loop not running.
+[all] kill not running.
+[all] hang-around-in-tavern-and-deposit-gold not running.
+[all] Stopped mapping.
+[all] navigate not running.
+[all] train-and-exit not running.
+[all] gold-farming not running.
+[all] banking not running.
+> x
+
+x
+Exiting Tele-Arena...

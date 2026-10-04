@@ -27,9 +27,9 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
-local RESUME = "logs/session-tojolias-2026-09-12T10-18-42.log"
-local SHUT = "logs/session-tojolias-2026-09-12T10-37-22.log"
+local OUTER = "test/fixtures/session-logs/focused-session-tojolias-2026-09-11T21-24-54.log"
+local RESUME = "test/fixtures/session-logs/session-tojolias-2026-09-12T10-18-42.log"
+local SHUT = "test/fixtures/session-logs/session-tojolias-2026-09-12T10-37-22.log"
 
 -- Only OUTER predates baud recording aliases.
 local SETUP = { { "map-area stoneworks-level-1 The Stoneworks, Level 1" } }

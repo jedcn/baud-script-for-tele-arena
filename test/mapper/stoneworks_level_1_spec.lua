@@ -24,7 +24,7 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local OUTER = "logs/focused-session-tojolias-2026-09-11T21-24-54.log"
+local OUTER = "test/fixtures/session-logs/focused-session-tojolias-2026-09-11T21-24-54.log"
 -- Per-log, because a chain needs one list each. This log predates baud
 -- logging aliases, so its `map-area` has to be supplied.
 local SETUP = { { "map-area stoneworks-level-1 The Stoneworks, Level 1" } }

@@ -27,9 +27,9 @@
 local replay = dofile("test/mapper/log_replay.lua")
 
 local LOGS = {
-    "logs/session-tojolias-2026-09-13T19-34-24.log",  -- down the stairs, into [T2]
-    "logs/session-tojolias-2026-09-13T19-46-09.log",  -- out to [L2], pull lever
-    "logs/session-tojolias-2026-09-13T19-57-35.log",  -- the loop, `say arok`, [v]
+    "test/fixtures/session-logs/session-tojolias-2026-09-13T19-34-24.log",  -- down the stairs, into [T2]
+    "test/fixtures/session-logs/session-tojolias-2026-09-13T19-46-09.log",  -- out to [L2], pull lever
+    "test/fixtures/session-logs/session-tojolias-2026-09-13T19-57-35.log",  -- the loop, `say arok`, [v]
 }
 
 -- What level 1 hands to this walk. See `opts.seed` in test/mapper/log_replay.lua for

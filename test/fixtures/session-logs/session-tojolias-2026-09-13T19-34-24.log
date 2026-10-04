@@ -1,0 +1,624 @@
+# baud text log - started 2026-09-13T23:34:24.737Z
+
+Starting to read main.lua
+Finishing reading main.lua
+* MajorTCP/IP by Vircom Inc. *
+Connecting...Please Wait...
+Auto-sensing...
+    [!
+[2J
+       ·           ·                                ▌░▒▓█▒████▓█▓█▓▓▓▓▓▓▓▓▓█▓▓▓
+                              ·                    ▌░▒▓██▒▒▓▒█▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓█▓
+   ·                                              ▌░▒▓█▓█▒█▓█▓▓▓▓▓▓▓▓▓▒▒▓▒▓▓███
+                          ·        ·             ▌░▒▓▓▓█▒▓▓▓▓▓▒█▒▒▒▒▒▒▒▒▒▒▒▒▓▓█
+  ┌───┐┌───┐┌──┬─┐┐   ┌┌───┐┌┐   ┌               ▌░▒▓███▓▒▒▒▓▒███▓▒▒▒▒█▓▓▓▓████
+  │    │   │   │  │   ││   ││└┐  │              ▌░▒▓▓█▓██▓▒▒▒▓▓█▓▓▓▓▒▒▓▓▓██▓███
+  └───┐├───┤   │  │   │├──┬┘│ └┐ │ ·            ▌░▒▓███▓██▓▓▓███▓██▒▓▒▒▒▒█▓▓▓██
+    · ││   │   │  │   ││  │ │  └┐│             ▌░▒▓███▒█▒█▓▓██▒█▒▓▓▓▓▒▒▒▒███▓▓█
+  └───┘┘   └   ┘  └───┘┘  └ ┘   └┘             ▌░▒▓█▓██▒▓▒▒▒▓▓█████▒▒░░░░░▓▓▓▓▓
+          ·                                    ▌░▒▓█▓█▓▓▓▓▒▓▒▓▓▓▓▓▒▒█░░░▒▒▒▓▓▓▓
+         · ·  ┌─────                           ▌░▒▓███▓██▒▒▒▓▓▒▒▒▒░░▒░░▒▒▒▒▓▓▓▓
+  ·           │                                 ▌░▒▓██▓▓▓▓▒▒▓▓▒▒░░░░░░▒▒▒▓▓▓▓▓▓
+              └────┐   ·           ·            ▌░▒▓▓█▓▒▒▒▒▒▓▓▓▓▒░░░▒▒▒ ▒█▒█▓▓▓
+                   │       ∙                     ▌░▒▓▓█▓▒▒▒░▒▒▒▒░░░▒▒▒  █▓▓▓▓██
+     ·        ─────┘  ·            ∙             ▌░▒▓▒██▓▓▓▓▒▒▒░░░░▒▒▒▒▓▓▓▓██▓█
+                 ·              ·   ·             ▌░▒▓██▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒█▓▓█████
+·       ∙                                          ▌░▓▓██▓█▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓██▓█
+                                                    ▌░▒▓█████▓▓▓▓▓▓▓▓▓██▓░██▓██
+              ·            ·                         ▌░▒▓██████▓█▓▓▓▓▓▓▓▓▓▓█░██
+                                                      ▐░▒▓██▓███▒▓▓▓▓▓▓▓▓▓▓█▓██
+  ·        ·                              ∙             ▐░▒▓█████▓█▓▓▓▓▓▓███▓██
+        ·                ·                                ▐░▒▓█▒█▒███▓▓▓▒▓▒█▒█▒
+                                   ·                        ▐░░▒▓█▒█▒█▒██▒░▒▒█░
+                 ∙                                            ▐░░▒▓█████░▒▒▒░░░
+
+Enter your username now and press
+ENTER or type "NEW" to create one.
+Username: 
+> tojolias
+tojolias
+
+Password: 
+> arbor123
+▒▒▒▒▒▒▒▒
+
+Greetings, Tojolias, glad to see you back again.
+(N)onstop, (Q)uit, or (C)ontinue?
+> n
+[2J
+ ╔═══════════════════════════ Distant Realms ════════════════════════════════╗
+ ║ Fight for survival, seek out the demons and annihlate them.               ║
+ ║ Destroy anyone who gets in your way. The quest has just begun!            ║
+ ╚═══════════════════════════════════════════════════════════════════════════╝
+
+-= Bud Globals v1.0 =- With Ultragrams installed!  Type >>> ; <<< for info!
+
+###  User-ID                Age   Sex Time  Class    Flags Option Selected
+-------------------------------------------------------------------------------
+
+ 01  Pelayo                 46     M  97    USER      ---  Arena5.6d-Gold      
+ 02  Teekywiki              OLD    M  97    USER      ---  Arena5.6d-Gold      
+ 03  Tojolias               46     M  0     USER      ---  Ultra Globals       
+-------------------------------------------------------------------------------
+(N)onstop, (Q)uit, or (C)ontinue?
+
+Main System Menu (TOP)
+Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X
+> 5
+to exit): 
+5
+Entering Tele-Arena...
+> st
+> i
+You're in a stonework corridor.
+There is an imp here.
+There is nothing on the floor.
+
+st
+i
+Race:         Half-ogre
+Class:        Knight
+Level:        21
+Experience:   20449478
+Rune:         Blue
+Intellect:    14
+Knowledge:    12
+Physique:     35
+Stamina:      35
+Agility:      23
+Charisma:     12
+Mana:         0 / 0
+Vitality:     1865 / 2005
+Status:       Healthy
+Armor Rating: 18
+Weapon:       Wyrmslayer
+Armor:        Dragonscale
+Encumberance: 769 / 1750
+You are carrying 668 gold crowns, a glowstone, a coil of rope, a soulstone, a
+waterskin(2), a heartstone, a topaz key, a zarynthium potion, an opal key, a
+tigereye key, a yarrow potion, and a zarynthium potion.
+The imp attacked you, but its club glanced off your armor!
+The imp's poorly executed attack misses you!
+
+$ map-print-room-slug
+> 
+> ex
+ex
+You're in a stonework corridor.
+There is an imp here.
+There is nothing on the floor.
+Exits: w,d.
+[map] this is stonework-corridor-45  (position tracked)  ->  map-here stonework-corridor-45 to map from here
+$ map-here stonework-corridor-45
+[map] anchored at stonework-corridor-45 (#1142)
+$ d
+> d
+d
+The imp attacked you, but its club glanced off your armor!
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber-5 INSERT changes=1 -> id=1150 (number)
+[mapdbg] entry 'stonework chamber' roomId=1150 (number) provisional=true coord=(0,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The only visible exit is west through a stone archway. There is a
+stone staircase here leading upward.
+Exits: w,u.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1150 (number)
+[mapdbg] reconcile: room=stonework chamber id=1150 dirs=w,u
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=u -> type=nil val=nil
+[map] unexplored exits: w  (mapped: u)
+$ map-area stoneworks-level-2 The Stoneworks, Level 2
+[mapdbg] ensureArea slug=stoneworks-level-2 INSERT changes=1 -> id=24 (number)
+[map] moved current room into stoneworks-level-2
+[map] mapping stoneworks-level-2 from here
+[map] kept anchor #1150 (walked in from the previous area)
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-50 INSERT changes=1 -> id=1151 (number)
+[mapdbg] entry 'stonework corridor' roomId=1151 (number) provisional=true coord=(-1,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor continues to the east and southwest.
+Exits: e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1151 (number)
+[mapdbg] reconcile: room=stonework corridor id=1151 dirs=e,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: e)
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-51 INSERT changes=1 -> id=1152 (number)
+[mapdbg] entry 'stonework corridor' roomId=1152 (number) provisional=true coord=(-2,-1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and northeast.
+ex
+Exits: ne,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1152 (number)
+[mapdbg] reconcile: room=stonework corridor id=1152 dirs=ne,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: w  (mapped: ne)
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-52 INSERT changes=1 -> id=1153 (number)
+[mapdbg] entry 'stonework corridor' roomId=1153 (number) provisional=true coord=(-3,-1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the east, northwest, and
+southwest.
+Exits: e,sw,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1153 (number)
+[mapdbg] reconcile: room=stonework corridor id=1153 dirs=e,sw,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[map] unexplored exits: sw, nw  (mapped: e)
+$ nw
+> nw
+nw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-53 INSERT changes=1 -> id=1154 (number)
+[mapdbg] entry 'stonework corridor' roomId=1154 (number) provisional=true coord=(-4,0,0)
+> look
+> ex
+There is an ogre here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1154 (number)
+[mapdbg] reconcile: room=stonework corridor id=1154 dirs=n,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: n  (mapped: se)
+The ogre attacked you, but his glaive glanced off your armor!
+
+$ n
+> n
+n
+The ogre's poorly executed attack misses you!
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-54 INSERT changes=1 -> id=1155 (number)
+[mapdbg] entry 'stonework corridor' roomId=1155 (number) provisional=true coord=(-4,1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south and northwest.
+Exits: s,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1155 (number)
+[mapdbg] reconcile: room=stonework corridor id=1155 dirs=s,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[map] unexplored exits: nw  (mapped: s)
+$ nw
+> nw
+nw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-55 INSERT changes=1 -> id=1156 (number)
+[mapdbg] entry 'stonework corridor' roomId=1156 (number) provisional=true coord=(-5,2,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast, northwest, and
+southeast.
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1156 (number)
+[mapdbg] reconcile: room=stonework corridor id=1156 dirs=ne,se,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: ne, nw  (mapped: se)
+$ ne
+> ne
+ne
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-56 INSERT changes=1 -> id=1157 (number)
+[mapdbg] entry 'stonework corridor' roomId=1157 (number) provisional=true coord=(-4,3,0)
+> look
+> ex
+There is a female cyclops here.
+There is nothing on the floor.
+Several large stones fall on you from above!
+> st
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and southwest.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1157 (number)
+[mapdbg] reconcile: room=stonework corridor id=1157 dirs=ne,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=nil val=nil
+[map] unexplored exits: ne  (mapped: sw)
+st
+Race:         Half-ogre
+Class:        Knight
+Level:        21
+Experience:   20449478
+Rune:         Blue
+Intellect:    14
+Knowledge:    12
+Physique:     35
+Stamina:      35
+Agility:      23
+Charisma:     12
+Mana:         0 / 0
+Vitality:     1749 / 2005
+Status:       Healthy
+Armor Rating: 18
+Weapon:       Wyrmslayer
+Armor:        Dragonscale
+Encumberance: 769 / 1750
+$ sw
+> sw
+sw
+The female cyclops's poorly executed attack misses you!
+You're in a stonework corridor.
+[mapdbg] entry 'stonework corridor' roomId=1156 (number) provisional=false coord=(-5,2,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast, northwest, and
+southeast.
+ex
+Exits: ne,se,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1156 (number)
+[map] unexplored exits: nw  (mapped: ne, se)
+$ nw
+> nw
+nw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-57 INSERT changes=1 -> id=1158 (number)
+[mapdbg] entry 'stonework corridor' roomId=1158 (number) provisional=true coord=(-6,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the west and southeast.
+ex
+Exits: se,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1158 (number)
+[mapdbg] reconcile: room=stonework corridor id=1158 dirs=se,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=se -> type=nil val=nil
+[map] unexplored exits: w  (mapped: se)
+$ w
+> w
+w
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-58 INSERT changes=1 -> id=1159 (number)
+[mapdbg] entry 'stonework corridor' roomId=1159 (number) provisional=true coord=(-7,3,0)
+> look
+> ex
+There is a giant spider here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor continues to the east and southwest.
+Exits: e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1159 (number)
+[mapdbg] reconcile: room=stonework corridor id=1159 dirs=e,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: e)
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-59 INSERT changes=1 -> id=1160 (number)
+[mapdbg] entry 'stonework corridor' roomId=1160 (number) provisional=true coord=(-8,2,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south and northeast.
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1160 (number)
+[mapdbg] reconcile: room=stonework corridor id=1160 dirs=ne,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: s  (mapped: ne)
+$ s
+> s
+s
+You're in a stonework chamber.
+[mapdbg] discoverRoom slug=stonework-chamber-6 INSERT changes=1 -> id=1161 (number)
+[mapdbg] entry 'stonework chamber' roomId=1161 (number) provisional=true coord=(-8,1,0)
+> look
+> ex
+There is an ogre, and two ogresses here.
+There is nothing on the floor.
+
+look
+You are standing in a stonework chamber, fitted with dull grey stone tiles.
+The room is rectangular in shape and is roughly thirty feet by fifty feet
+across. The only visible exits are north and southwest through stone
+archways.
+ex
+Exits: n,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1161 (number)
+[mapdbg] reconcile: room=stonework chamber id=1161 dirs=n,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[map] unexplored exits: sw  (mapped: n)
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-60 INSERT changes=1 -> id=1162 (number)
+[mapdbg] entry 'stonework corridor' roomId=1162 (number) provisional=true coord=(-9,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and southwest.
+Exits: ne,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1162 (number)
+[mapdbg] reconcile: room=stonework corridor id=1162 dirs=ne,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=number val=1157
+[map] possible loop closure into #1157 -- settle it by walking sw
+[map] unexplored exits: sw  (mapped: ne)
+$ sw
+> sw
+sw
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-61 INSERT changes=1 -> id=1163 (number)
+[mapdbg] entry 'stonework corridor' roomId=1163 (number) provisional=true coord=(-10,-1,0)
+> look
+> ex
+There is nobody here.
+There is a rue potion lying on the floor.
+
+look
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the south and northeast.
+ex
+Exits: ne,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1163 (number)
+[map] loop closure into #1157 refused -- the next room is not what it predicted
+[mapdbg] reconcile: room=stonework corridor id=1163 dirs=ne,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=ne -> type=nil val=nil
+[map] unexplored exits: s  (mapped: ne)
+> get rue
+get rue
+Ok, you got a rue potion.
+> drink rue
+drink rue
+You feel somehow different after drinking the potion.
+$ s
+> s
+s
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-62 INSERT changes=1 -> id=1164 (number)
+[mapdbg] entry 'stonework corridor' roomId=1164 (number) provisional=true coord=(-10,-2,0)
+> look
+> ex
+There is an ogre here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the north and southeast.
+Exits: n,se.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1164 (number)
+[mapdbg] reconcile: room=stonework corridor id=1164 dirs=n,se
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[map] unexplored exits: se  (mapped: n)
+$ se
+> se
+se
+The ogre attacked you, but his greatsword glanced off your armor!
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-63 INSERT changes=1 -> id=1165 (number)
+[mapdbg] entry 'stonework corridor' roomId=1165 (number) provisional=true coord=(-9,-3,0)
+> look
+> ex
+There is an ogress here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor runs to the northeast and northwest.
+Exits: ne,nw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1165 (number)
+[mapdbg] reconcile: room=stonework corridor id=1165 dirs=ne,nw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=nw -> type=nil val=nil
+[map] unexplored exits: ne  (mapped: nw)
+$ ne
+> ne
+ne
+You're in a stonework corridor.
+[mapdbg] discoverRoom slug=stonework-corridor-64 INSERT changes=1 -> id=1166 (number)
+[mapdbg] entry 'stonework corridor' roomId=1166 (number) provisional=true coord=(-8,-2,0)
+> look
+> ex
+There is a cave lion here.
+There is nothing on the floor.
+
+look
+ex
+You are standing in a well kept stonework corridor. The tightly fit stone
+tiles that make up the floor and walls here bear unusal designs and are of
+very fine craftsmanship. The corridor continues to the east and southwest.
+Exits: e,sw.
+[mapdbg] Exits trigger: mapping=true currentRoomId=1166 (number)
+[mapdbg] reconcile: room=stonework corridor id=1166 dirs=e,sw
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=sw -> type=nil val=nil
+[map] unexplored exits: e  (mapped: sw)
+$ map-off
+[map] mapping OFF
+> x
+x
+Exiting Tele-Arena...
+
+<< hit return >>
+> 
+[2J
+       ┌────────────────────────────────────────────────────────────────┐
+       │                        Saturn V ßßδ                            │
+       └────────────────────────────────────────────────────────────────┘
+[s├─┼──┼▄│1│ Tournament Lord├──┼──┼──┼──┼──┼──┼──┼▄│#│ Who's Online┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│2│ The Rose - Council of Guardians──┼──┼█│'│ <message> Global Chat┼──┼─┤[u
+[s├─┼──┼█│3│ iNFinITY CoMpLeX──┼──┼──┼──┼──┼──┼──┼█│T│ Teleconference─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│4│ MajorMUD─┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│ │ ────────────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│5│ Tele-Arena 5.6g├──┼──┼──┼──┼──┼──┼──┼█│F│ Farwest Trivia─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│6│ Wheel of Fame──┼──┼──┼──┼──┼──┼──┼──┼█│I│ Internet Relay Chat──┼──┼─┤[u
+[s├─┼──┼█│7│ World Conquest─┼──┼──┼──┼──┼──┼──┼──┼█│R│ Registry of Users─┼──┼──┼─┤[u
+[s├─┼──┼█│8│ Distant Realms─┼──┼──┼──┼──┼──┼──┼──┼█│E│ Edit User Info─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│9│ Mutants──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│M│ Messages────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│0│ Swords of Chaos├──┼──┼──┼──┼──┼──┼──┼█│A│ SysOp Menu──┼──┼──┼─
+─┼──┼─┤[u
+[s├─┼──┼█│L│ Galactic Empire┼──┼──┼──┼──┼──┼──┼──┼█│X│ Log Off──┼──┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│G│ More Games!─┼──┼──┼──┼──┼──┼──┼──┼──┼█│;?│ Global Help┼──┼──┼──┼──┼─┤[u
+[s└─┼──┼█│B│─Trade Wars 2002┼──┼──┼──┼──┼──┼──┼──┼▀▀┼──┼──┼──┼──┼──┼──┼──┼──┼──┼─┘[u
+  └──┴▀▀┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+■ Users online: 2 ■ Connected for 27 minutes ■
+■ 22:24:12 ■ 11-SEP-26 ■ Command ■ : [1D
+> x
+x
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
+> y
+y
+[2J         · ·      ·        ·      ·         .                       ·
+  ·           ·    · ·         ·         ·   .       ·   ·    ·    ·     ·
+     ·                 · ·  ·      ·    · · ·     ·     ·            ·  ·     ·
+.    ·                                                                 ·   ·
+      · ·     ▄▀▀▀▀▀▀▀▀▀▀▀▄ ▄▀▀▀▀▀▀▀▀▄   ▄▀▀▀▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄   ··  ··
+ ·           ▀███████████ █▀▄▄████████   ████████▄▀████████▄▄█▄▄█████
+    ·       ██▀▄▄██▄▄▄█▀▀▄▄▄████▄▄▀▄▀██ ██▄▀▀▄▄██  ██▄▀▄▄▄███▀████████  ·   ·
+           ████▀███   ████▄▀██ ████████▌███▀████ · ██████▀▄██▀▀▀▀▀▀▀▀  ·  ·
+   ·      ████████   ▄▀███████  ███████████████     ██████████  ·        ·    ·
+   ·     █▄▀ ▀▀▄▄▀  ▄▀█▄▀▄▀██    ██▄██▀▀█▀████  ··  ██▄▀▀▄▀▄██        ·  ·  ··
+        ████▀█▄█▀▀▀▀█▄███▄▄▀  ·   ████▄██▀███        ████▄██▄█▀▀▀▀▀▀▀▄
+[s·      ████████████▄█████[1
+;37;46m▀▄ · ·    █████████  · ·    ▀▄███████▄████████   ··  
+.[u
+[s·     ████████████████████▀▄    ·  █████████          ██████████████████      
+·[u
+     █      ▄▄█▀▀▀▀▄█▄▄   ██       █▀▄  ▀▀▄█      ·    █   ▀▄ █ █▀▀▀▀▀▀  ·
+    ███▄█▀▄███      ██  ▀▄ ▐▌ ·   ▐▌  ▄▄ █ ▐▌   ·      ██▀█▄█▀██▄█        ·   ·
+[s   ██▄███▄███▄▄▄▄▄▄▀████▄███      ▐▌██▀█▄██▐▌  · ·  ·  ▀▄████ ▄ ██▀▀▀▀▀▀▀▀▀▀▄ 
+·[u
+  █████▄█▀▄ ███████ ▄▀▄███▄▀   ·  ▐▌████▄▀▄▐▌           ████ █  ███▄▀█▄▄█▀▄▄▀█
+ ███████████████████████▄▀        ███████████     ·      ████████████████████▄█
+[s██████████████████████▄▀  ·  ·    ███████████  ·   .    
+▀▄█████████████████████[u
+ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀    ·        ▀▀▀▀▀▀▀▀▀    ·          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+   ·   ·       ·      ·     ·   ·          ·         .            ·
+   ·      ·                                               ·         ·
+   ·          ·                            ·                   ·         ·
+                         ·                        ·
+         ·  ·                       ·
+                               
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    

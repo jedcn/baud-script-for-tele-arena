@@ -16,12 +16,12 @@ local M = {}
 
 -- In walking order. A spec takes the prefix it needs.
 M.LOGS = {
-    "logs/session-tojolias-2026-09-14T19-50-04.log",  -- the strip in from the sewers
-    "logs/session-tojolias-2026-09-14T20-12-25.log",  -- east and round the first loop
-    "logs/session-tojolias-2026-09-14T20-21-08.log",  -- the south-west arm, and a
+    "test/fixtures/session-logs/session-tojolias-2026-09-14T19-50-04.log",  -- the strip in from the sewers
+    "test/fixtures/session-logs/session-tojolias-2026-09-14T20-12-25.log",  -- east and round the first loop
+    "test/fixtures/session-logs/session-tojolias-2026-09-14T20-21-08.log",  -- the south-west arm, and a
                                                       -- closure the mapper missed
-    "logs/session-tojolias-2026-09-14T20-44-59.log",  -- seven loops closed
-    "logs/session-tojolias-2026-09-14T20-53-34.log",  -- the rest, and into the Stoneworks
+    "test/fixtures/session-logs/session-tojolias-2026-09-14T20-44-59.log",  -- seven loops closed
+    "test/fixtures/session-logs/session-tojolias-2026-09-14T20-53-34.log",  -- the rest, and into the Stoneworks
 }
 
 -- The first `n` sessions. A spec asks for the prefix it is about, rather than

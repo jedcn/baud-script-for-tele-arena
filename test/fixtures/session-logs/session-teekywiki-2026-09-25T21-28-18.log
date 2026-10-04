@@ -1,0 +1,807 @@
+# baud text log - started 2026-09-26T01:28:18.956Z
+
+Starting to read main.lua
+Finishing reading main.lua
+* MajorTCP/IP by Vircom Inc. *
+Connecting...Please Wait...
+Auto-sensing...
+    [!
+[2J
+       ·           ·                                ▌░▒▓█▒████▓█▓█▓▓▓▓▓▓▓▓▓█▓▓▓
+                              ·                    ▌░▒▓██▒▒▓▒█▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓█▓
+   ·                                              ▌░▒▓█▓█▒█▓█▓▓▓▓▓▓▓▓▓▒▒▓▒▓▓███
+                          ·        ·             ▌░▒▓▓▓█▒▓▓▓▓▓▒█▒▒▒▒▒▒▒▒▒▒▒▒▓▓█
+  ┌───┐┌───┐┌──┬─┐┐   ┌┌───┐┌┐   ┌               ▌░▒▓███▓▒▒▒▓▒███▓▒▒▒▒█▓▓▓▓████
+  │    │   │   │  │   ││   ││└┐  │              ▌░▒▓▓█▓██▓▒▒▒▓▓█▓▓▓▓▒▒▓▓▓██▓███
+  └───┐├───┤   │  │   │├──┬┘│ └┐ │ ·            ▌░▒▓███▓██▓▓▓███▓██▒▓▒▒▒▒█▓▓▓██
+    · ││   │   │  │   ││  │ │  └┐│             ▌░▒▓███▒█▒█▓▓██▒█▒▓▓▓▓▒▒▒▒███▓▓█
+  └───┘┘   └   ┘  └───┘┘  └ ┘   └┘             ▌░▒▓█▓██▒▓▒▒▒▓▓█████▒▒░░░░░▓▓▓▓▓
+          ·                                    ▌░▒▓█▓█▓▓▓▓▒▓▒▓▓▓▓▓▒▒█░░░▒▒▒▓▓▓▓
+         · ·  ┌─────                           ▌░▒▓███▓██▒▒▒▓▓▒▒▒▒░░▒░░▒▒▒▒▓▓▓▓
+  ·           │                                 ▌░▒▓██▓▓▓▓▒▒▓▓▒▒░░░░░░▒▒▒▓▓▓▓▓▓
+              └────┐   ·           ·            ▌░▒▓▓█▓▒▒▒▒▒▓▓▓▓▒░░░▒▒▒ ▒█▒█▓▓▓
+                   │       ∙                     ▌░▒▓▓█▓▒▒▒░▒▒▒▒░░░▒▒▒  █▓▓▓▓██
+     ·        ─────┘  ·            ∙             ▌░▒▓▒██▓▓▓▓▒▒▒░░░░▒▒▒▒▓▓▓▓██▓█
+                 ·              ·   ·             ▌░▒▓██▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒█▓▓█████
+·       ∙                                          ▌░▓▓██▓█▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓██▓█
+                                                    ▌░▒▓█████▓▓▓▓▓▓▓▓▓██▓░██▓██
+              ·            ·                         ▌░▒▓██████▓█▓▓▓▓▓▓▓▓▓▓█░██
+                                                      ▐░▒▓██▓███▒▓▓▓▓▓▓▓▓▓▓█▓██
+  ·        ·                              ∙             ▐░▒▓█████▓█▓▓▓▓▓▓███▓██
+        ·                ·                                ▐░▒▓█▒█▒███▓▓▓▒▓▒█▒█▒
+                                   ·                        ▐░░▒▓█▒█▒█▒██▒░▒▒█░
+                 ∙                                            ▐░░▒▓█████░▒▒▒░░░
+
+Enter your username now and press
+ENTER or type "NEW" to create one.
+Username: 
+[login] logging in as teekywiki
+> teekywiki
+teekywiki
+
+Password: 
+> arbor123
+▒▒▒▒▒▒▒▒
+
+Greetings, Teekywiki, glad to see you back again.
+(N)onstop, (Q)uit, or (C)ontinue?
+> n
+[2J
+ ╔═══════════════════════════ Distant Realms ════════════════════════════════╗
+ ║ Fight for survival, seek out the demons and annihlate them.               ║
+ ║ Destroy anyone who gets in your way. The quest has just begun!            ║
+ ╚═══════════════════════════════════════════════════════════════════════════╝
+
+-= Bud Globals v1.0 =- With Ultragrams installed!  Type >>> ; <<< for info!
+
+###  User-ID                Age   Sex Time  Class    Flags Option Selected
+-------------------------------------------------------------------------------
+
+ 01  Tojolias               46     M  2     USER      ---  Arena5.6d-Gold      
+ 02  Teekywiki              107    M  0     USER      ---  Ultra Globals       
+-------------------------------------------------------------------------------
+(N)onstop, (Q)uit, or (C)ontinue?
+
+Main System Menu (TOP)
+Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X
+> 5
+to exit): 
+5
+Entering Tele-Arena...
+> st
+> i
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+st
+i
+Race:         Goblin
+Class:        Blackguard
+Level:        20
+Experience:   18324952
+Rune:         Violet
+Intellect:    9
+Knowledge:    20
+Physique:     25
+Stamina:      26
+Agility:      35
+Charisma:     15
+Mana:         0 / 0
+Vitality:     1354 / 1393
+Status:       Healthy
+Armor Rating: 21
+Weapon:       Twin Katanas
+Armor:        Charred Chain Mail
+Encumberance: 1112 / 1250
+You are carrying 2964 gold crowns, a soulstone, a coil of rope, a waterskin(1),
+a glowstone, a verbena potion, a zarynthium potion, a zarynthium potion, a
+verbena potion, a zarynthium potion, a heartstone, and a rue potion.
+$ map-print-room-slug
+> 
+> ex
+ex
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+Exits: w,u.
+[map] this is labyrinth-100  (position tracked)  ->  map-here labyrinth-100 to map from here
+$ map-here labyrinth-100
+[map] anchored at labyrinth-100 (#2573) coord=(0,0,0)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] entry 'labyrinth' roomId=2574 (number) provisional=false coord=(-1,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north, east, and south.
+Exits: n,e,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2574 (number)
+[map] unexplored exits: n  (mapped: e, s)
+$ n
+> n
+n
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-105 INSERT changes=1 -> id=2578 (number)
+[mapdbg] entry 'labyrinth' roomId=2578 (number) provisional=true coord=(-1,1,0)
+> look
+> ex
+There is an ogress mage here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2578 (number)
+[mapdbg] reconcile: room=labyrinth id=2578 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[mapdbg] findSeamRoom back=s -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-105, but 1 room matches this name and exit-set and was rejected on coordinates alone: labyrinth-level-3/labyrinth-102 (-1,-1,0) vs reckoned (-1,1,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: n  (mapped: s)
+$ n
+> n
+n
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-106 INSERT changes=1 -> id=2579 (number)
+[mapdbg] entry 'labyrinth' roomId=2579 (number) provisional=true coord=(-1,2,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2579 (number)
+[mapdbg] reconcile: room=labyrinth id=2579 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[mapdbg] findSeamRoom back=s -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-106, but 1 room matches this name and exit-set and was rejected on coordinates alone: labyrinth-level-3/labyrinth-105 (-1,1,0) vs reckoned (-1,2,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: n  (mapped: s)
+$ n
+> n
+n
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-107 INSERT changes=1 -> id=2580 (number)
+[mapdbg] entry 'labyrinth' roomId=2580 (number) provisional=true coord=(-1,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are south and west.
+Exits: s,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2580 (number)
+[mapdbg] reconcile: room=labyrinth id=2580 dirs=s,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=s -> type=nil val=nil
+[mapdbg] findSeamRoom back=s -> type=nil val=nil
+[map] unexplored exits: w  (mapped: s)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-108 INSERT changes=1 -> id=2581 (number)
+[mapdbg] entry 'labyrinth' roomId=2581 (number) provisional=true coord=(-2,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2581 (number)
+[mapdbg] reconcile: room=labyrinth id=2581 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[mapdbg] findSeamRoom back=e -> type=nil val=nil
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-109 INSERT changes=1 -> id=2582 (number)
+[mapdbg] entry 'labyrinth' roomId=2582 (number) provisional=true coord=(-3,3,0)
+> look
+> ex
+There is a female troll here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2582 (number)
+[mapdbg] reconcile: room=labyrinth id=2582 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[mapdbg] findSeamRoom back=e -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-109, but 1 room matches this name and exit-set and was rejected on coordinates alone: labyrinth-level-3/labyrinth-108 (-2,3,0) vs reckoned (-3,3,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-110 INSERT changes=1 -> id=2583 (number)
+[mapdbg] entry 'labyrinth' roomId=2583 (number) provisional=true coord=(-4,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+ex
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2583 (number)
+[mapdbg] reconcile: room=labyrinth id=2583 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[mapdbg] findSeamRoom back=e -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-110, but 2 rooms match this name and exit-set and were rejected on coordinates alone: labyrinth-level-3/labyrinth-108 (-2,3,0), labyrinth-level-3/labyrinth-109 (-3,3,0) vs reckoned (-4,3,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-111 INSERT changes=1 -> id=2584 (number)
+[mapdbg] entry 'labyrinth' roomId=2584 (number) provisional=true coord=(-5,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2584 (number)
+[mapdbg] reconcile: room=labyrinth id=2584 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[mapdbg] findSeamRoom back=e -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-111, but 2 rooms match this name and exit-set and were rejected on coordinates alone: labyrinth-level-3/labyrinth-109 (-3,3,0), labyrinth-level-3/labyrinth-110 (-4,3,0) vs reckoned (-5,3,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-112 INSERT changes=1 -> id=2585 (number)
+[mapdbg] entry 'labyrinth' roomId=2585 (number) provisional=true coord=(-6,3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and south.
+Exits: e,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2585 (number)
+[mapdbg] reconcile: room=labyrinth id=2585 dirs=e,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=nil val=nil
+[mapdbg] findSeamRoom back=e -> type=nil val=nil
+[map] unexplored exits: s  (mapped: e)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-113 INSERT changes=1 -> id=2586 (number)
+[mapdbg] entry 'labyrinth' roomId=2586 (number) provisional=true coord=(-6,2,0)
+> look
+> ex
+There is an ogress mage here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2586 (number)
+[mapdbg] reconcile: room=labyrinth id=2586 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] unexplored exits: s  (mapped: n)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-114 INSERT changes=1 -> id=2587 (number)
+[mapdbg] entry 'labyrinth' roomId=2587 (number) provisional=true coord=(-6,1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2587 (number)
+[mapdbg] reconcile: room=labyrinth id=2587 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-114, but 1 room matches this name and exit-set and was rejected on coordinates alone: labyrinth-level-3/labyrinth-113 (-6,2,0) vs reckoned (-6,1,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: s  (mapped: n)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-115 INSERT changes=1 -> id=2588 (number)
+[mapdbg] entry 'labyrinth' roomId=2588 (number) provisional=true coord=(-6,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2588 (number)
+[mapdbg] reconcile: room=labyrinth id=2588 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-115, but 2 rooms match this name and exit-set and were rejected on coordinates alone: labyrinth-level-3/labyrinth-113 (-6,2,0), labyrinth-level-3/labyrinth-114 (-6,1,0) vs reckoned (-6,0,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: s  (mapped: n)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-116 INSERT changes=1 -> id=2589 (number)
+[mapdbg] entry 'labyrinth' roomId=2589 (number) provisional=true coord=(-6,-1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2589 (number)
+[mapdbg] reconcile: room=labyrinth id=2589 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-116, but 2 rooms match this name and exit-set and were rejected on coordinates alone: labyrinth-level-3/labyrinth-114 (-6,1,0), labyrinth-level-3/labyrinth-115 (-6,0,0) vs reckoned (-6,-1,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: s  (mapped: n)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-117 INSERT changes=1 -> id=2590 (number)
+[mapdbg] entry 'labyrinth' roomId=2590 (number) provisional=true coord=(-6,-2,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2590 (number)
+[mapdbg] reconcile: room=labyrinth id=2590 dirs=n,s
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] minting labyrinth-level-3/labyrinth-117, but 2 rooms match this name and exit-set and were rejected on coordinates alone: labyrinth-level-3/labyrinth-115 (-6,0,0), labyrinth-level-3/labyrinth-116 (-6,-1,0) vs reckoned (-6,-2,0)
+[map]   If this is that room, stop now and `map-here` it -- every room walked from here will be a duplicate too.
+[map] unexplored exits: s  (mapped: n)
+$ s
+> s
+s
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-118 INSERT changes=1 -> id=2591 (number)
+[mapdbg] entry 'labyrinth' roomId=2591 (number) provisional=true coord=(-6,-3,0)
+> look
+> ex
+There is an ogress mage here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and east.
+Exits: n,e.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2591 (number)
+[mapdbg] reconcile: room=labyrinth id=2591 dirs=n,e
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=n -> type=nil val=nil
+[mapdbg] findSeamRoom back=n -> type=nil val=nil
+[map] unexplored exits: e  (mapped: n)
+$ e
+> e
+e
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-119 INSERT changes=1 -> id=2592 (number)
+[mapdbg] entry 'labyrinth' roomId=2592 (number) provisional=true coord=(-5,-3,0)
+> look
+> ex
+There is a stone giant here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2592 (number)
+[mapdbg] reconcile: room=labyrinth id=2592 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=2577
+[map] possible loop closure into #2577 -- settle it by walking e
+[map] unexplored exits: e  (mapped: w)
+$ e
+> e
+e
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-120 INSERT changes=1 -> id=2593 (number)
+[mapdbg] entry 'labyrinth' roomId=2593 (number) provisional=true coord=(-4,-3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+A stone giant has just arrived from the west.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2593 (number)
+[map] loop closure into #2577 refused -- the next room is not what it predicted
+[mapdbg] reconcile: room=labyrinth id=2593 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=2577
+[map] possible loop closure into #2577 -- settle it by walking e
+[map] unexplored exits: e  (mapped: w)
+$ e
+> e
+e
+The stone giant hurled a boulder at you for 18 damage!
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-121 INSERT changes=1 -> id=2594 (number)
+[mapdbg] entry 'labyrinth' roomId=2594 (number) provisional=true coord=(-3,-3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2594 (number)
+[map] loop closure into #2577 refused -- the next room is not what it predicted
+[mapdbg] reconcile: room=labyrinth id=2594 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=2577
+[map] possible loop closure into #2577 -- settle it by walking e
+[map] unexplored exits: e  (mapped: w)
+$ e
+> e
+e
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-122 INSERT changes=1 -> id=2595 (number)
+[mapdbg] entry 'labyrinth' roomId=2595 (number) provisional=true coord=(-2,-3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2595 (number)
+[map] loop closure into #2577 refused -- the next room is not what it predicted
+[mapdbg] reconcile: room=labyrinth id=2595 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=2577
+[map] possible loop closure into #2577 -- settle it by walking e
+[map] unexplored exits: e  (mapped: w)
+$ e
+> e
+e
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-123 INSERT changes=1 -> id=2596 (number)
+[mapdbg] entry 'labyrinth' roomId=2596 (number) provisional=true coord=(-1,-3,0)
+> look
+> ex
+There is nobody here.
+There is a rue potion lying on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2596 (number)
+[map] loop closure into #2577 refused -- the next room is not what it predicted
+[mapdbg] reconcile: room=labyrinth id=2596 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=w -> type=number val=2577
+[map] possible loop closure into #2577 -- settle it by walking e
+[map] unexplored exits: e  (mapped: w)
+$ e
+> e
+e
+You're in a labyrinth.
+[mapdbg] discoverRoom slug=labyrinth-124 INSERT changes=1 -> id=2597 (number)
+[mapdbg] entry 'labyrinth' roomId=2597 (number) provisional=true coord=(0,-3,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and west.
+Exits: n,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2597 (number)
+[map] loop closure confirmed: #2596 was #2577
+[map] all exits mapped: n, w
+$ n
+> n
+n
+You're in a labyrinth.
+[mapdbg] entry 'labyrinth' roomId=2575 (number) provisional=false coord=(-1,-1,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are north and south.
+Exits: n,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2575 (number)
+[map] all exits mapped: n, s
+$ n
+> n
+n
+You're in a labyrinth.
+[mapdbg] entry 'labyrinth' roomId=2574 (number) provisional=false coord=(-1,0,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You are wandering through an intracate tangle of thick subterranean growth.
+The warm air in this twisting passage makes you perspire. Pungent odors
+assail your senses from all directions. Exits are east and south.
+Exits: e,s.
+[mapdbg] Exits trigger: mapping=true currentRoomId=2574 (number)
+[where] lost track: the map has labyrinth-level-3/labyrinth-101 with n, which this room does not
+[map] mapping OFF: `ex` says e,s, but labyrinth-level-3/labyrinth-101 has n too -- so this is not labyrinth-level-3/labyrinth-101, or the map gave it an exit it does not have. Nothing was written.
+[map]   `map-print-room-slug` to find where you are, then `map-here <slug>` to carry on.
+$ e
+> e
+e
+You're in a labyrinth.
+There is a stone giantess here.
+There is nothing on the floor.
+
+> 
+You're in a labyrinth.
+There is a stone giantess here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: e,w.
+$ e
+> e
+e
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: n,e,s,w.
+$ e
+> e
+e
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: w.
+$ w
+> w
+w
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: n,e,s,w.
+$ w
+> w
+w
+You're in a labyrinth.
+There is a stone giantess here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: e,w.
+$ w
+> w
+You barely dodge the stone giantess's attack!
+w
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: e,s.
+$ s
+> s
+s
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: n,s.
+$ s
+> s
+s
+You're in a labyrinth.
+There is nobody here.
+There is nothing on the floor.
+
+> ex
+ex
+Exits: n,w.
+$ map-off
+[map] mapping OFF
+> x
+x
+Exiting Tele-Arena...
+
+<< hit return >>
+> 
+[2J
+       ┌────────────────────────────────────────────────────────────────┐
+       │                        Saturn V ßßδ                            │
+       └────────────────────────────────────────────────────────────────┘
+[s├─┼──┼▄│1│ Tournament Lord├──┼──┼──┼──┼──┼──┼──┼▄│#│ Who's Online┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│2│ The Rose - Council of Guardians──┼──┼█│'│ <message> Global Chat┼──┼─┤[u
+[s├─┼──┼█│3│ iNFinITY CoMpLeX──┼──┼──┼──┼──┼──┼──┼█│T│ Teleconference─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│4│ MajorMUD─┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│ │ ────────────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│5│ Tele-Arena 5.6g├──┼──┼──┼──┼──┼──┼──┼█│F│ Farwest Trivia─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│6│ Wheel of Fame──┼──┼──┼──┼──┼──┼──┼──┼█│I│ Internet Relay Chat──┼──┼─┤[u
+[s├─┼──┼█│7│ World Conquest─┼──┼──┼──┼──┼──┼──┼──┼█│R│ Registry of Users─┼──┼──┼─┤[u
+[s├─┼──┼█│8│ Distant Realms─┼──┼──┼──┼──┼──┼──┼──┼█│E│ Edit User Info─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│9│ Mutants──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│M│ Messages────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│0│ Swords of Chaos├──┼──┼──┼──┼──┼──┼──┼█│A│ SysOp Menu──┼──┼──┼─
+─┼──┼─┤[u
+[s├─┼──┼█│L│ Galactic Empire┼──┼──┼──┼──┼──┼──┼──┼█│X│ Log Off──┼──┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│G│ More Games!─┼──┼──┼──┼──┼──┼──┼──┼──┼█│;?│ Global Help┼──┼──┼──┼──┼─┤[u
+[s└─┼──┼█│B│─Trade Wars 2002┼──┼──┼──┼──┼──┼──┼──┼▀▀┼──┼──┼──┼──┼──┼──┼──┼──┼──┼─┘[u
+  └──┴▀▀┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+■ Users online: 1 ■ Connected for 10 minutes ■
+■ 21:28:08 ■ 23-SEP-26 ■ Command ■ : [1D
+> x
+x
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
+> y
+y
+[2J         · ·      ·        ·      ·         .                       ·
+  ·           ·    · ·         ·         ·   .       ·   ·    ·    ·     ·
+     ·                 · ·  ·      ·    · · ·     ·     ·            ·  ·     ·
+.    ·                                                                 ·   ·
+      · ·     ▄▀▀▀▀▀▀▀▀▀▀▀▄ ▄▀▀▀▀▀▀▀▀▄   ▄▀▀▀▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄   ··  ··
+ ·           ▀███████████ █▀▄▄████████   ████████▄▀████████▄▄█▄▄█████
+    ·       ██▀▄▄██▄▄▄█▀▀▄▄▄████▄▄▀▄▀██ ██▄▀▀▄▄██  ██▄▀▄▄▄███▀████████  ·   ·
+           ████▀███   ████▄▀██ ████████▌███▀████ · ██████▀▄██▀▀▀▀▀▀▀▀  ·  ·
+   ·      ████████   ▄▀███████  ███████████████     ██████████  ·        ·    ·
+   ·     █▄▀ ▀▀▄▄▀  ▄▀█▄▀▄▀██    ██▄██▀▀█▀████  ··  ██▄▀▀▄▀▄██        ·  ·  ··
+        ████▀█▄█▀▀▀▀█▄███▄▄▀  ·   ████▄██▀███        ████▄██▄█▀▀▀▀▀▀▀▄
+[s·      ████████████▄█████[1
+;37;46m▀▄ · ·    █████████  · ·    ▀▄███████▄████████   ··  
+.[u
+[s·     ████████████████████▀▄    ·  █████████          ██████████████████      
+·[u
+     █      ▄▄█▀▀▀▀▄█▄▄   ██       █▀▄  ▀▀▄█      ·    █   ▀▄ █ █▀▀▀▀▀▀  ·
+    ███▄█▀▄███      ██  ▀▄ ▐▌ ·   ▐▌  ▄▄ █ ▐▌   ·      ██▀█▄█▀██▄█        ·   ·
+[s   ██▄███▄███▄▄▄▄▄▄▀████▄███      ▐▌██▀█▄██▐▌  · ·  ·  ▀▄████ ▄ ██▀▀▀▀▀▀▀▀▀▀▄ 
+·[u
+  █████▄█▀▄ ███████ ▄▀▄███▄▀   ·  ▐▌████▄▀▄▐▌           ████ █  ███▄▀█▄▄█▀▄▄▀█
+ ███████████████████████▄▀        ███████████     ·      ████████████████████▄█
+[s██████████████████████▄▀  ·  ·    ███████████  ·   .    
+▀▄█████████████████████[u
+ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀    ·        ▀▀▀▀▀▀▀▀▀    ·          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+   ·   ·       ·      ·     ·   ·          ·         .            ·
+   ·      ·                                               ·         ·
+   ·          ·                            ·                   ·         ·
+                         ·                        ·
+         ·  ·                       ·
+                               
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    

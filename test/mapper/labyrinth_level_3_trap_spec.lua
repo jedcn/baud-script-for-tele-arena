@@ -17,7 +17,7 @@
 
 local replay = dofile("test/mapper/log_replay.lua")
 
-local LOG = "logs/session-teekywiki-2026-09-25T21-28-18.log"   -- the corridor, and the trap
+local LOG = "test/fixtures/session-logs/session-teekywiki-2026-09-25T21-28-18.log"   -- the corridor, and the trap
 
 -- The walk resumes from an earlier session,
 -- logs/session-teekywiki-2026-09-25T21-07-06.log, which went down to Level 3,
