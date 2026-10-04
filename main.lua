@@ -2863,7 +2863,9 @@ local checkFleeArena
 -- for N damage!" phrasing covers ordinary swings, but many enemies deal damage
 -- through special verbs that never say "attacked you" — a stone giant's boulder
 -- (seen for 52), a cyclops's throw (22), a stygian dragon's bite (39) or tail
--- lash (35), a minotaur chieftain's charge (42), a caster's "discharged" spell.
+-- lash (35), a minotaur chieftain's charge (42), a caster's "discharged" spell,
+-- a giant's breath ("exhaled a blast of flame", or "of frost" from an ice
+-- giantess for 60).
 -- Each needs its own phrasing but the handler is identical, so drive them all
 -- from one list. Only the "you" variants carry a number; when a special lands on
 -- another group member the game prints no damage ("hurled a boulder at
@@ -2878,7 +2880,7 @@ local incomingDamagePatterns = {
     "^The (.+) lashed out with its tail for (\\d+) damage!$",
     "^The (.+) charged you for (\\d+) damage!$",
     "^The (.+) expelled a ball of fire at you for (\\d+) damage!$",
-    "^The (.+) exhaled a blast of flame at you for (\\d+) damage!$",
+    "^The (.+) exhaled a blast of .+ at you for (\\d+) damage!$",
 }
 
 for _, pattern in ipairs(incomingDamagePatterns) do

@@ -66,6 +66,12 @@ test("reads damage off an incoming special-verb hit", () => {
   expect(e.fields).toEqual({ monster: "flame giant", damage: 395 });
 });
 
+test("reads damage off a frost breath as well as a flame one", () => {
+  const e = classify("The ice giantess exhaled a blast of frost at you for 60 damage!");
+  expect(e.kind).toBe("incoming-hit");
+  expect(e.fields).toEqual({ monster: "ice giantess", damage: 60 });
+});
+
 test("counts a rogue's skillful attack as one of our hits", () => {
   const e = classify("Your skillful attack hit the apollyon dragon for 58 damage!");
   expect(e.kind).toBe("our-hit");

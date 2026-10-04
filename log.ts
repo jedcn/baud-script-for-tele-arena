@@ -213,7 +213,7 @@ const HIT_VERBS = [
   /^The (.+) lashed out with its tail for (\d+) damage!$/,
   /^The (.+) charged you for (\d+) damage!$/,
   /^The (.+) expelled a ball of fire at you for (\d+) damage!$/,
-  /^The (.+) exhaled a blast of flame at you for (\d+) damage!$/,
+  /^The (.+) exhaled a blast of .+ at you for (\d+) damage!$/,
 ];
 
 const RULES: Rule[] = [
@@ -424,7 +424,7 @@ function classify(text: string): { kind: string; fields: Record<string, unknown>
     if (m) return { kind: "incoming-hit", fields: { monster: m[1], damage: +m[2] } };
   }
   // Same verbs aimed at someone else: no damage number is printed.
-  const other = text.match(/^The (.+?) (?:attacked|exhaled a blast of flame at|breathed flames at|hurled a boulder at|charged|viciously bit) (.+?)(?: with .+)?!$/);
+  const other = text.match(/^The (.+?) (?:attacked|exhaled a blast of .+? at|breathed flames at|hurled a boulder at|charged|viciously bit) (.+?)(?: with .+)?!$/);
   if (other && other[2] !== "you") {
     return { kind: "monster-vs-other", fields: { monster: other[1], target: other[2] } };
   }
