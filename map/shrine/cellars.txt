@@ -1,6 +1,13 @@
 # Cellars
 # https://tele-arena.tumblr.com/cellars
 # fetched 2026-09-10
+#
+# EDITED, not as scraped: the [^] under "To Ruined Town" is labelled [r] -- the
+# room we call `cellar` (exits u to the ancient temple, e, sw) -- so `just
+# coverage cellars` has an anchor. The page has a second [^] (on the east side,
+# by the Elysian Dragon) which is found first, so '^' alone would anchor on the
+# wrong box. Same width as `[ ]`, so nothing else moves.
+# `just scrape-shrine-maps` will revert this -- re-apply it.
 
                         [ ]     [ ] 
                        /   \   /                
@@ -10,7 +17,7 @@
    /             |                         \           \     |       |   | 
 [ ]             [ ]    To Ruined Town       [ ]         [ ]-[^]     [ ]  | 
  |             /             |               |         /                 | 
-[ ]         [ ]             [^]- - -[ ]     [ ]     [ ]         To Flagstones 
+[ ]         [ ]             [r]- - -[ ]     [ ]     [ ]         To Flagstones 
    \           \           /           \   /         | 
     [ ]         [ ]      /              [ ]         [ ] 
        \           \   /               /           / 

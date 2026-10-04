@@ -493,6 +493,14 @@ export const SHRINE_MAPS: Record<string,
     originRoom: 'ancient-temple',
     region: { ...RUINED_TOWN_ON_SWAMP_PAGE, keep: 'inside' },
   },
+  // Down the ancient temple's stairs. The way in is the [^] under "To Ruined
+  // Town", which carries an [r] we added (see the drawing's header): the page has
+  // another [^] further east that a plain '^' would find first.
+  cellars: {
+    file: 'map/shrine/cellars.txt',
+    originBox: 'r',                      // up to the ruined town's temple
+    originRoom: 'cellar',
+  },
   // South off the forest, from forest-63. The way in is the page's [H] under "to
   // Forest" (H for the Hyenas), which is forest-64: n to the forest, w into the
   // caves. The page has a second [H] further down, but boxes are found top to
