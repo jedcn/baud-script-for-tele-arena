@@ -23,7 +23,9 @@ local LOG = "test/fixtures/session-logs/session-teekywiki-2026-09-26T16-13-38.lo
 -- The walk above happens at line 4148 of a 4,547-line session. Replaying the
 -- 4,147 lines before it took eight minutes (74,322 sqlite3 processes) and did
 -- nothing but build the Level 5 map the walk runs into. So that map is frozen
--- instead, and only the walk is replayed.
+-- instead, and only the walk is replayed. The fixture holds just that walk:
+-- lines 4148-4477 of the original log, which is in the session-log archive.
+-- Line numbers in comments here are the original's.
 --
 -- labyrinth_level_5_at_line_4147.sql is exactly what a replay of lines 1-4147
 -- leaves in the database, less the 203 inert Level 1 stand-ins that only kept
@@ -32,8 +34,8 @@ local LOG = "test/fixtures/session-logs/session-teekywiki-2026-09-26T16-13-38.lo
 -- all `map-here labyrinth-289` needs to reproduce.
 --
 -- Regenerate it only if a change to the mapper alters what it builds BEFORE
--- line 4148: replay the log with `{ to = 4147 }` and the old stand-in seed (see
--- git history of this file), then dump areas, the non-stand-in rooms and every
+-- line 4148: replay the ORIGINAL log with `{ to = 4147 }` and the old stand-in
+-- seed (see git history of this file), then dump areas, the non-stand-in rooms and every
 -- room_exits row with `sqlite3 -header <db> ".mode insert <table>" ...`.
 local SEED = "test/mapper/labyrinth_level_5_at_line_4147.sql"
 
@@ -45,7 +47,6 @@ describe("The labyrinth, Level 5: a closure that ran out of evidence", function(
         g = replay.replayChain({ LOG }, {
             seedFile = SEED,
             setup = { { "map-here labyrinth-289" } },
-            from = 4148,
         })
     end)
 
