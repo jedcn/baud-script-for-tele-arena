@@ -7205,6 +7205,7 @@ createTrigger("^The .+ attacked .+ with .+!$", reactToGroupHit, { type = "regex"
 createTrigger("^The .+ hurled a boulder at .+!$", reactToGroupHit, { type = "regex" })
 createTrigger("^The .+ picks up and hurls .+!$", reactToGroupHit, { type = "regex" })
 createTrigger("^The .+ breathed flames at .+!$", reactToGroupHit, { type = "regex" })
+createTrigger("^The .+ exhaled a blast of .+ at .+!$", reactToGroupHit, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end

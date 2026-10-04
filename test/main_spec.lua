@@ -14258,6 +14258,18 @@ describe("ta.follow", function()
             assert.are.equal("group", helper.sendCalls[1])
         end)
 
+        it("scans when a flame giant's breath lands on an ally", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The flame giant exhaled a blast of flame at Pelayo!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
+        it("scans when an ice giantess's frost breath lands on the healer", function()
+            taPackage.healLoopActive = true
+            helper.simulateLine("The ice giantess exhaled a blast of frost at you for 60 damage!")
+            assert.are.equal("group", helper.sendCalls[1])
+        end)
+
         it("does not scan on special attacks when the loop is not active", function()
             taPackage.healLoopActive = false
             helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
