@@ -159,7 +159,7 @@
     {
       "area": "ruined-town",
       "name": "The Ruined Town",
-      "rooms": 4,
+      "rooms": 20,
       "file": "areas/ruined-town.json"
     },
     {

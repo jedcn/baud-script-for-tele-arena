@@ -42,22 +42,22 @@
       "name": "ruined plaza",
       "exits": {
         "e": {
-          "to": null
+          "to": "ruined-town/ruined-street"
         },
         "n": {
           "to": "ruined-town/ancient-temple"
         },
         "ne": {
-          "to": null
+          "to": "ruined-town/ruined-street-2"
         },
         "nw": {
-          "to": null
+          "to": "ruined-town/ruined-street-3"
         },
         "s": {
           "to": "ruined-town/path-11"
         },
         "w": {
-          "to": null
+          "to": "ruined-town/ruined-street-1"
         }
       },
       "description": "You are standing in the center of a ruined plaza which has succumbed to decay and the plantlife of the swamp. To the north is the entrance to a rather impressive temple which has stood the test of time well. The stonework and architecture are of a design you do not recognize. Ruined streets lead east, west, northeast, northwest, and south out through the open town gates.",
@@ -81,6 +81,266 @@
       "layout": {
         "x": 23,
         "y": -1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-street",
+      "name": "ruined street",
+      "exits": {
+        "e": {
+          "to": "ruined-town/ruined-intersection"
+        },
+        "w": {
+          "to": "ruined-town/ruined-plaza"
+        }
+      },
+      "description": "You are standing on a stonework street which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads to the east and west into the plaza.",
+      "layout": {
+        "x": 24,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-intersection",
+      "name": "ruined intersection",
+      "exits": {
+        "e": {
+          "to": "ruined-town/ruined-shop-1"
+        },
+        "s": {
+          "to": "ruined-town/ruined-shop"
+        },
+        "w": {
+          "to": "ruined-town/ruined-street"
+        }
+      },
+      "description": "You are standing at a stonework intersection which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads west. Paths lead east and south into the ruins of shops.",
+      "layout": {
+        "x": 25,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop",
+      "name": "ruined shop",
+      "exits": {
+        "n": {
+          "to": "ruined-town/ruined-intersection"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the north.",
+      "layout": {
+        "x": 25,
+        "y": -3
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-1",
+      "name": "ruined shop",
+      "exits": {
+        "w": {
+          "to": "ruined-town/ruined-intersection"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the west.",
+      "layout": {
+        "x": 26,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-street-1",
+      "name": "ruined street",
+      "exits": {
+        "e": {
+          "to": "ruined-town/ruined-plaza"
+        },
+        "w": {
+          "to": "ruined-town/ruined-intersection-1"
+        }
+      },
+      "description": "You are standing on a stonework street which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads to the west and east into the plaza.",
+      "layout": {
+        "x": 22,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-intersection-1",
+      "name": "ruined intersection",
+      "exits": {
+        "e": {
+          "to": "ruined-town/ruined-street-1"
+        },
+        "s": {
+          "to": "ruined-town/ruined-shop-2"
+        },
+        "w": {
+          "to": "ruined-town/ruined-shop-3"
+        }
+      },
+      "description": "You are standing at a stonework intersection which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads east. Paths lead west and south into the ruins of shops.",
+      "layout": {
+        "x": 21,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-2",
+      "name": "ruined shop",
+      "exits": {
+        "n": {
+          "to": "ruined-town/ruined-intersection-1"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the north.",
+      "layout": {
+        "x": 21,
+        "y": -3
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-3",
+      "name": "ruined shop",
+      "exits": {
+        "e": {
+          "to": "ruined-town/ruined-intersection-1"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the east.",
+      "layout": {
+        "x": 20,
+        "y": -2
+      }
+    },
+    {
+      "id": "ruined-town/ruined-street-2",
+      "name": "ruined street",
+      "exits": {
+        "ne": {
+          "to": "ruined-town/ruined-intersection-2"
+        },
+        "sw": {
+          "to": "ruined-town/ruined-plaza"
+        }
+      },
+      "description": "You are standing on a stonework street which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads to the northeast and southwest into the plaza.",
+      "layout": {
+        "x": 24,
+        "y": -1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-intersection-2",
+      "name": "ruined intersection",
+      "exits": {
+        "ne": {
+          "to": "ruined-town/ruined-shop-5"
+        },
+        "nw": {
+          "to": "ruined-town/ruined-shop-4"
+        },
+        "sw": {
+          "to": "ruined-town/ruined-street-2"
+        }
+      },
+      "description": "You are standing at a stonework intersection which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads southwest. Paths lead northeast and northwest into the ruins of shops.",
+      "layout": {
+        "x": 25,
+        "y": 0
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-4",
+      "name": "ruined shop",
+      "exits": {
+        "se": {
+          "to": "ruined-town/ruined-intersection-2"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the southeast.",
+      "layout": {
+        "x": 24,
+        "y": 1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-5",
+      "name": "ruined shop",
+      "exits": {
+        "sw": {
+          "to": "ruined-town/ruined-intersection-2"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the southwest.",
+      "layout": {
+        "x": 26,
+        "y": 1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-street-3",
+      "name": "ruined street",
+      "exits": {
+        "nw": {
+          "to": "ruined-town/ruined-intersection-3"
+        },
+        "se": {
+          "to": "ruined-town/ruined-plaza"
+        }
+      },
+      "description": "You are standing on a stonework street which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads to the northwest and southeast into the plaza.",
+      "layout": {
+        "x": 22,
+        "y": -1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-intersection-3",
+      "name": "ruined intersection",
+      "exits": {
+        "ne": {
+          "to": "ruined-town/ruined-shop-7"
+        },
+        "nw": {
+          "to": "ruined-town/ruined-shop-6"
+        },
+        "se": {
+          "to": "ruined-town/ruined-street-3"
+        }
+      },
+      "description": "You are standing at a stonework intersection which shows signs of extreme age and weathering. Plants spring up from between the stones in places and many of the stones are cracked. The street leads southeast. Paths lead northeast and northwest into the ruins of shops.",
+      "layout": {
+        "x": 21,
+        "y": 0
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-6",
+      "name": "ruined shop",
+      "exits": {
+        "se": {
+          "to": "ruined-town/ruined-intersection-3"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the southeast.",
+      "layout": {
+        "x": 20,
+        "y": 1
+      }
+    },
+    {
+      "id": "ruined-town/ruined-shop-7",
+      "name": "ruined shop",
+      "exits": {
+        "sw": {
+          "to": "ruined-town/ruined-intersection-3"
+        }
+      },
+      "description": "You're standing in the ruin of a shop which is littered with debris from ages past. Whatever was bought or sold here is a mystery now. The only exit is to the southwest.",
+      "layout": {
+        "x": 22,
+        "y": 1
       }
     }
   ]
