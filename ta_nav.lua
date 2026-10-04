@@ -1322,7 +1322,10 @@ end
 -- route is likelier to trip somewhere simply because it takes more moves, and
 -- the pace has to be low enough per move to make that rare. navDebug below is
 -- there to replace the guessing with measurements.
-local NAV_STEP_DELAY_MS = 1500
+-- Raised to 1750ms on 2026-10-04: long walks (220 steps) were tripping several
+-- times per walk at 1500 -- e.g. trip 4 by step 141 -- which is still a flat
+-- per-move risk, just one that adds up over a route ten times the hydra's.
+local NAV_STEP_DELAY_MS = 1750
 local NAV_TRIP_RETRY_MS = 2000
 -- How long to leave a monster alone before trying the blocked move again. A
 -- combat round lasts seconds, so hammering it only fills the screen.
@@ -1344,7 +1347,7 @@ taPackage.navRestRetryMs = NAV_REST_RETRY_MS
 -- anything we haven't seen the game do yet (a wall that prints nothing, a line
 -- we don't recognise arriving instead) leaves the character standing in a maze
 -- with nothing on screen to say why. Eight seconds is far longer than the
--- 1500ms pace plus any plausible lag, and short enough to be useful.
+-- 1750ms pace plus any plausible lag, and short enough to be useful.
 local NAV_DARK_ACK_MS = 8000
 taPackage.navDarkAckMs = NAV_DARK_ACK_MS
 
