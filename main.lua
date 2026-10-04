@@ -7041,8 +7041,18 @@ createTrigger("^There \\S+ (.+) here\\.$", function(matches)
     end
 end, { type = "regex" })
 
+-- A leader's kill-stop also stands the group down: a follower's kill loop
+-- swings at whatever matches the target's first word, so when the monster we
+-- were fighting leaves the room it keeps hitting the next one. Conferring lets
+-- the leader pick the moment to move on and have everyone stop with them.
+-- Only a leader confers -- followers only obey their leader, so a follower's
+-- confer would reach nobody who acts on it.
 createAlias("^kill-stop$", function()
     stopKill()
+    if not taPackage.followTarget
+        and taPackage.followedBy and #taPackage.followedBy > 0 then
+        send("confer kill-stop")
+    end
 end, { type = "regex" })
 
 -- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
@@ -7432,6 +7442,8 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     local killMonster = command:match("^kill (.+)$")
     if killMonster then
         startKill(killMonster, taPackage.followDebug)
+    elseif command == "kill-stop" then
+        stopKill()
     elseif command == "heal.allies" then
         if getClass() == "Acolyte" then
             beginGroupHealScan()

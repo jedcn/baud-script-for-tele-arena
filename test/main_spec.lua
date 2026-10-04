@@ -13191,6 +13191,15 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("stops the kill loop on 'confer kill-stop' from the leader", function()
+            helper.simulateLine("From Tojolias (to group): kill lizard")
+            helper.sendCalls = {}
+            helper.simulateLine("From Tojolias (to group): kill-stop")
+            assert.is_falsy(taPackage.killActive)
+            assert.is_nil(taPackage.killTarget)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
         it("ignores conferred commands from a non-leader", function()
             helper.simulateLine("From Pelayo (to group): kill lizard")
             assert.is_falsy(taPackage.killActive)
@@ -13510,6 +13519,32 @@ describe("ta.follow", function()
             helper.simulateAlias("kill-stop")
             assert.is_falsy(taPackage.killActive)
             assert.is_nil(taPackage.killTarget)
+        end)
+
+        it("kill-stop confers to the group when leading one", function()
+            taPackage.followedBy = { "Tojolias" }
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateAlias("kill-stop")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.same({ "confer kill-stop" }, helper.sendCalls)
+        end)
+
+        it("kill-stop does not confer when not in a group", function()
+            taPackage.followedBy = nil
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateAlias("kill-stop")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("kill-stop does not confer when following someone", function()
+            taPackage.followTarget = "tojolias"
+            taPackage.followedBy = { "Kerhak" }
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateAlias("kill-stop")
+            assert.are.equal(0, #helper.sendCalls)
         end)
 
         describe("kill-all", function()
