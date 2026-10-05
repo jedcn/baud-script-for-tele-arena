@@ -100,6 +100,23 @@ describe('parseDrawing', () => {
     expect(d.edges.size).toBe(8);
   });
 
+  // The flagstones draw their long central corridor as a column of boxes on
+  // consecutive rows, with no row between them for a `|`. Read as nothing, the
+  // pairing stopped at the stairs and no room south of them could be placed.
+  it('reads a box stacked on the box below as a step south', () => {
+    const d = parseDrawing([
+      '[^]',
+      '[ ]',
+      '[ ] [ ]',
+    ].join('\n'));
+    const at = (r: number, c0: number) => d.boxes.find(b => b.r === r && b.c0 === c0)!.id;
+    expect(drawingExits(d, at(0, 0)).s).toBe(at(1, 0));
+    expect(drawingExits(d, at(1, 0)).s).toBe(at(2, 0));
+    expect(drawingExits(d, at(2, 0)).n).toBe(at(1, 0));
+    // Two steps, each both ways; the box off to the side is joined to nothing.
+    expect(d.edges.size).toBe(4);
+  });
+
   // The labyrinth draws a locked door as a `#` in place of a `|` -- "Lever at 1
   // unlocks door (#)". Read as nothing, walking through either door would show as
   // an exit the drawing lacks. Only in a vertical line between two boxes: the

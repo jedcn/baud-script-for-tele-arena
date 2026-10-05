@@ -158,6 +158,12 @@ export function parseDrawing(text: string, region?: Region): Drawing {
       add(near(r - 1, c, 'R'), near(rB + 1, cB, 'L'), 'sw');
     }
   }
+  // A box sitting squarely on the box below it, with no row between them for a
+  // `|`, is a step south: the flagstones draw their long central corridor as a
+  // column of fifteen boxes stacked this way.
+  for (const a of boxes) {
+    add(a, (rowBoxes.get(a.r + 1) ?? []).find(b => b.c0 === a.c0 && b.c1 === a.c1) ?? null, 's');
+  }
   return { lines: g, boxes, edges, legend };
 }
 
