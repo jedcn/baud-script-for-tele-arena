@@ -1254,20 +1254,15 @@
         "se": {
           "to": "flagstones/flagstone-corridor-68"
         }
-      }
-    },
-    {
-      "id": "flagstones/flagstone-corridor-70",
-      "name": "flagstone corridor",
-      "exits": {
-        "n": {
-          "to": null
-        },
-        "s": {
-          "to": null
-        }
       },
-      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the north and south."
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "dest": "flagstones/flagstone-corridor-8",
+          "note": "Flagstones, the second [E] (bottom right, nw of flagstone-corridor-68), a flash trap: walking in prints the arrival brief, then \"A sudden flash of light momentarily blinds you!\", and lands you in flagstone-corridor-8, the [e] in the long n-s corridor -- the same landing as device 27, the first [E]. Nothing is typed. The user named -68; the log shows -68 answered ex (se,nw) and the flash fired in -69. The flash fires before ex can answer, so this room's only exit (se, back to -68) is inferred and its description is unknown. The landing was minted as a duplicate, flagstone-corridor-70, and deleted (logs/session-pelayo-2026-10-04T21-48-25.log, lines 721-745)."
+        }
+      ]
     }
   ]
 }
