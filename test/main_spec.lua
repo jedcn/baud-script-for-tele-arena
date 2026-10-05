@@ -2835,6 +2835,29 @@ describe("ta_db", function()
             assert.is_nil(TaDb.findRoomAtCoord(2, "cave", 4, 4, 0, 9))
         end)
 
+        -- Where a new coordinate frame starts. Each frame used to start at
+        -- (0,0,0), so two frames in one area overlaid each other and a room in
+        -- one could sit exactly on a lookalike in the other.
+        it("freshOrigin is the origin for an area with no coordinates yet", function()
+            helper.mockDbOneRow = { x = nil }
+            assert.are.same({ x = 0, y = 0, z = 0 }, TaDb.freshOrigin(69))
+        end)
+
+        it("freshOrigin is the origin when there is no area to look in", function()
+            helper.mockDbOneRow = { x = 2 }
+            assert.are.same({ x = 0, y = 0, z = 0 }, TaDb.freshOrigin(nil))
+        end)
+
+        it("freshOrigin starts well clear of the area's coordinates", function()
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "MAX(x)", 1, true) and params[1] == 69 then
+                    return { x = 2 }
+                end
+                return nil
+            end
+            assert.are.same({ x = 102, y = 0, z = 0 }, TaDb.freshOrigin(69))
+        end)
+
     end)
 
     describe("roomBySlug", function()
@@ -4041,6 +4064,33 @@ describe("World map triggers", function()
             assert.is_not_nil(call)
             assert.are.same({ 0, 0, 0, 1 }, call.params)
             assert.are.same({ x = 0, y = 0, z = 0 }, taPackage.coord)
+        end)
+
+        -- `map-here` on a room with no coordinate leaves nothing to reckon from,
+        -- so the first room walked to starts a new frame. It used to start at
+        -- (0,0,0) every time, and in the Flagstones two such frames overlaid: a
+        -- new corridor reckoned to (-3,-3,0) landed exactly on
+        -- flagstone-corridor-67, an [e,nw] lookalike from the other frame, and
+        -- was merged into it (logs/session-pelayo-2026-10-04T22-05-31.log, line
+        -- 469).
+        it("starts a new frame clear of the area's coordinates, not at the origin", function()
+            taPackage.currentRoomId = 5
+            taPackage.prevRoomId = 5
+            taPackage.currentAreaId = 69
+            taPackage.pendingDirs = { "w" }
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE slug", 1, true) then
+                    return { id = 1 }                       -- freshly minted room id
+                elseif string.find(sql, "MAX(x)", 1, true) then
+                    return { x = 2 }                        -- the area's easternmost room
+                end
+                return nil                                  -- room 5 has no coordinate
+            end
+            helper.mockDbRows = {}
+            helper.simulateLine("You're in a cave.")
+            local call = helper.findDbCall("execute", "UPDATE rooms SET x = ?, y = ?, z = ?")
+            assert.are.same({ 102, 0, 0, 1 }, call.params)
+            assert.are.same({ x = 102, y = 0, z = 0 }, taPackage.coord)
         end)
 
         it("dead-reckons the coordinate of a room reached through an unknown exit", function()

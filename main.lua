@@ -1605,8 +1605,8 @@ local function handleRoomEntry(matches)
 
     -- Anchor this room's coordinate. Adopt a stored coordinate when the room
     -- already has one (trust the persisted map over dead-reckoning, which drifts
-    -- when a move is missed); otherwise stamp the coordinate we computed, or the
-    -- origin for a cold anchor with nothing to walk from. taPackage.coord is the
+    -- when a move is missed); otherwise stamp the coordinate we computed, or a
+    -- fresh origin for a cold anchor with nothing to walk from. taPackage.coord is the
     -- cursor the next move dead-reckons from.
     local stored = taPackage.db.roomCoord(roomId)
     if stored then
@@ -1622,7 +1622,9 @@ local function handleRoomEntry(matches)
         -- component of its own, the way the dungeon's pit is.
         taPackage.coord = nil
     else
-        local c = arriveCoord or { x = 0, y = 0, z = 0 }
+        -- Nothing to reckon from: a new frame, started clear of every other frame
+        -- in this area (see TaDb.freshOrigin).
+        local c = arriveCoord or taPackage.db.freshOrigin(taPackage.currentAreaId)
         taPackage.db.setRoomCoord(roomId, c.x, c.y, c.z)
         taPackage.coord = c
     end

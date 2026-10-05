@@ -512,6 +512,22 @@ function TaDb.roomCoord(roomId)
     return { x = row.x, y = row.y, z = row.z }
 end
 
+-- Where a new coordinate frame starts in an area: the origin when the area has
+-- no coordinates yet, else a point 100 cells east of its easternmost room. A
+-- frame starts wherever there is nothing to reckon from -- `map-here` on a room
+-- with no coordinate, or the first step after one -- and every frame used to
+-- start at (0,0,0), so two frames in one area overlaid each other and a room
+-- could sit exactly on a lookalike from the other one, which is a match merged
+-- on the spot. Coordinates in different frames mean nothing relative to each
+-- other, so the honest thing is for them never to coincide; 100 cells is far
+-- more than any area here spans.
+function TaDb.freshOrigin(areaId)
+    if areaId == nil then return { x = 0, y = 0, z = 0 } end
+    local row = db:queryOne("SELECT MAX(x) AS x FROM rooms WHERE area_id = ?", areaId)
+    if not row or row.x == nil then return { x = 0, y = 0, z = 0 } end
+    return { x = row.x + 100, y = 0, z = 0 }
+end
+
 function TaDb.setRoomCoord(roomId, x, y, z)
     db:execute("UPDATE rooms SET x = ?, y = ?, z = ? WHERE id = ?", x, y, z, roomId)
     dbLog("[DB\xE2\x86\x92rooms] coord: #" .. tostring(roomId)
