@@ -871,6 +871,9 @@ export const DRAWN = [
   // Up from tunnel-28.
   { slug: 'ledge', title: 'The Ledge', origin: 'ledge-41' },
   { slug: 'cellars', title: 'The Cellars', origin: 'cellar' },
+  // Down from the cellars (forest-29). The shrine draws three pages and this is
+  // page 1, so the title carries the level; drawn from the stairs back up.
+  { slug: 'flagstones', title: 'The Flagstones, Level 1', origin: 'flagstone-corridor' },
   { slug: 'third-town', title: 'Third Town', origin: 'town-square' },
   // The fourth town, which no mapped area reaches yet -- the only way on from it
   // is catwalk-18's `d`, down to the deep forest. Its four plazas sit in a 2x2
