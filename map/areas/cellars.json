@@ -244,30 +244,13 @@
       "name": "forest",
       "exits": {
         "d": {
-          "to": "cellars/flagstone-corridor"
+          "to": "flagstones/flagstone-corridor"
         },
         "w": {
           "to": "cellars/clearing-4"
         }
       },
       "description": "You are standing in a grassy area in the forest. A jagged edged hole ringed with dead vegetation and rubble in the forest floor allows access to the darkness below. There is passable vegetation to the west.",
-      "layout": {
-        "x": 32,
-        "y": 0
-      }
-    },
-    {
-      "id": "cellars/flagstone-corridor",
-      "name": "flagstone corridor",
-      "exits": {
-        "s": {
-          "to": null
-        },
-        "u": {
-          "to": "cellars/forest-29"
-        }
-      },
-      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. There is a jagged hole in the ceiling, and rubble litters the floor. The corridor leads to the south.",
       "layout": {
         "x": 32,
         "y": 0

@@ -1,0 +1,58 @@
+{
+  "area": "flagstones",
+  "name": "The Flagstones, Level 1",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "flagstones/flagstone-corridor",
+      "name": "flagstone corridor",
+      "exits": {
+        "s": {
+          "to": "flagstones/flagstone-corridor-1"
+        },
+        "u": {
+          "to": "cellars/forest-29"
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. There is a jagged hole in the ceiling, and rubble litters the floor. The corridor leads to the south.",
+      "layout": {
+        "x": 32,
+        "y": 0
+      }
+    },
+    {
+      "id": "flagstones/flagstone-corridor-1",
+      "name": "flagstone corridor",
+      "exits": {
+        "n": {
+          "to": "flagstones/flagstone-corridor"
+        },
+        "s": {
+          "to": "flagstones/flagstone-corridor-2"
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the north and south.",
+      "layout": {
+        "x": 32,
+        "y": -1
+      }
+    },
+    {
+      "id": "flagstones/flagstone-corridor-2",
+      "name": "flagstone corridor",
+      "exits": {
+        "n": {
+          "to": "flagstones/flagstone-corridor-1"
+        },
+        "s": {
+          "to": null
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the north and south.",
+      "layout": {
+        "x": 32,
+        "y": -2
+      }
+    }
+  ]
+}

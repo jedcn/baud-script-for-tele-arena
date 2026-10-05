@@ -3,7 +3,7 @@
     {
       "area": "cellars",
       "name": "The Cellars",
-      "rooms": 63,
+      "rooms": 62,
       "file": "areas/cellars.json"
     },
     {
@@ -71,6 +71,12 @@
       "name": "First Town",
       "rooms": 13,
       "file": "areas/first-town.json"
+    },
+    {
+      "area": "flagstones",
+      "name": "The Flagstones, Level 1",
+      "rooms": 3,
+      "file": "areas/flagstones.json"
     },
     {
       "area": "forest",
