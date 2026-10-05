@@ -1120,7 +1120,15 @@
         "n": {
           "to": "flagstones/enormous-chamber-6"
         }
-      }
+      },
+      "devices": [
+        {
+          "command": "(on entry)",
+          "effect": "teleport",
+          "dest": "flagstones/flagstone-corridor-61",
+          "note": "Flagstones [D], a flash trap: walking in (s from enormous-chamber-6, the east chamber of the pair below [a]) prints the arrival brief, then \"A sudden flash of light momentarily blinds you!\", and lands you in flagstone-corridor-61 ([d], on the long e-w row at the foot of the page; exits e,w). Nothing is typed. Named by the user. The twin of device 27 ([E], s of enormous-chamber-4, to [e], flagstone-corridor-8). The flash fires before ex can answer, so this room's only exit (n, back to enormous-chamber-6) is inferred and its description is unknown (logs/session-pelayo-2026-10-04T21-48-25.log, lines 498-523)."
+        }
+      ]
     },
     {
       "id": "flagstones/flagstone-corridor-61",
