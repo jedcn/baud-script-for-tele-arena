@@ -507,6 +507,17 @@ export const SHRINE_MAPS: Record<string,
     originBox: 'r',                      // up to the ruined town's temple
     originRoom: 'cellar',
   },
+  // Down from the cellars (the room we call forest-29, filed under the cellars).
+  // The shrine draws the Flagstones as three pages and this is page 1, whose way
+  // in is the [^] under "Up to Cellars": flagstone-corridor, u to the cellars and
+  // s down the long central column. The page has a second [^] in its bottom-left
+  // corner, but boxes are found top to bottom, so '^' is this one without
+  // editing the drawing.
+  flagstones: {
+    file: 'map/shrine/flagstones-1.txt',
+    originBox: '^',                      // up to the cellars
+    originRoom: 'flagstone-corridor',
+  },
   // South off the forest, from forest-63. The way in is the page's [H] under "to
   // Forest" (H for the Hyenas), which is forest-64: n to the forest, w into the
   // caves. The page has a second [H] further down, but boxes are found top to
