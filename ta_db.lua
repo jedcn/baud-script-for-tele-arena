@@ -807,6 +807,12 @@ end
 -- coordinates are known; when `coord` is nil (nothing to dead-reckon from) the
 -- guard is inert and we fall back to name+exit-set alone.
 --
+-- Its third return says whether the match was CONFIRMED by its coordinate:
+-- true only when both `coord` and the match's stored coordinate exist and are
+-- equal. A match that merely survived -- no `coord`, or a candidate that never
+-- had one -- is name plus exit-set alone, and the caller holds it rather than
+-- merging (logs/session-pelayo-2026-10-04T22-15-15.log, line 164).
+--
 -- On nil it ALSO returns the candidates it rejected on the coordinate alone --
 -- same name, same exit-set, different stored position. That veto is the only
 -- thing standing between a re-walk and a duplicate, and it is silent: on
@@ -827,7 +833,7 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
     for _, dir in ipairs(dirs) do
         if not want[dir] then want[dir] = true; wantCount = wantCount + 1 end
     end
-    local match, vetoed = nil, {}
+    local match, vetoed, coordAgreed = nil, {}, false
     for _, id in ipairs(TaDb.roomIdsByName(name, areaId)) do
         if id ~= excludeId then
             local cand = coord and TaDb.roomCoord(id)
@@ -871,13 +877,15 @@ function TaDb.findRoomByFingerprint(name, dirs, excludeId, coord, areaId)
                 if not want[dir] then ok = false; break end
             end
             if ok and haveCount == wantCount then
-                if match then return nil, vetoed end  -- ambiguous: >1 match
+                if match then return nil, vetoed, false end  -- ambiguous: >1 match
                 match = id
+                -- Past the veto, a stored coordinate can only be an equal one.
+                coordAgreed = cand ~= nil
             end
         end
         ::continue::
     end
-    return match, vetoed
+    return match, vetoed, coordAgreed
 end
 
 -- Topological loop closure, for when coordinates have drifted too far to trust

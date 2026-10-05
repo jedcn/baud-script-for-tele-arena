@@ -1967,10 +1967,16 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         -- If it names a different room from the one the chain predicts, the chain
         -- is wrong: Level 5 of the labyrinth walked back onto labyrinth-286 while a
         -- chain insisted it was 278, two columns over (2026-09-26).
-        local exact = taPackage.coord and taPackage.db.findRoomByFingerprint(
-            taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
-            taPackage.currentAreaId)
-        if type(exact) == "number" and exact ~= expected then
+        -- Exactly means its coordinate was compared and agreed: a lookalike with no
+        -- stored coordinate sits on no square and overrules nothing.
+        local exact, onSquare
+        if taPackage.coord then
+            local _
+            exact, _, onSquare = taPackage.db.findRoomByFingerprint(
+                taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
+                taPackage.currentAreaId)
+        end
+        if type(exact) == "number" and onSquare and exact ~= expected then
             taPackage.pendingClosure = nil
             echo("[map] loop closure into #" .. tostring(pc.into)
                 .. " refused -- this room sits exactly on #" .. tostring(exact) .. " instead")
@@ -2065,7 +2071,7 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         taPackage.mapdbg("[mapdbg] reconcile: room=" .. tostring(taPackage.currentRoom)
             .. " id=" .. tostring(taPackage.currentRoomId)
             .. " dirs=" .. table.concat(dirs, ","))
-        local match, coordVetoed = taPackage.db.findRoomByFingerprint(
+        local match, coordVetoed, coordAgreed = taPackage.db.findRoomByFingerprint(
             taPackage.currentRoom, dirs, taPackage.currentRoomId, taPackage.coord,
             taPackage.currentAreaId)
         taPackage.mapdbg("[mapdbg] findRoomByFingerprint -> type=" .. type(match)
@@ -2076,7 +2082,11 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         -- veto when `coord` is nil, so with none it is just name plus exit-set --
         -- the weakest signal we have, and the one that has cost us rooms twice.
         -- After a Teleport there is no coordinate, so those matches get held.
-        local byCoord = type(match) == "number" and taPackage.coord ~= nil
+        -- Both SIDES need one: a candidate with no stored coordinate also skips
+        -- the veto, and checking only ours merged a new Flagstones corridor into
+        -- the one coordless [ne,w] corridor in the area, rooms away
+        -- (logs/session-pelayo-2026-10-04T22-15-15.log, line 164).
+        local byCoord = type(match) == "number" and coordAgreed
         -- Set when the candidate is in another area: the echo says so, and a
         -- confirmed merge has to follow us into that area.
         local acrossSeam = false

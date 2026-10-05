@@ -2462,6 +2462,32 @@ describe("ta_db", function()
             assert.are.equal(1, TaDb.findRoomByFingerprint("cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 }))
         end)
 
+        -- Whether the match was CONFIRMED by its coordinate, or only survived
+        -- because there was none to compare. The caller merges on the spot only
+        -- for the first; the second is name plus exit-set and gets held.
+        it("says the coordinate agreed when the match has one equal to ours", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = function(sql)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) then
+                    return { x = 5, y = 5, z = 0 }
+                end
+                return nil
+            end
+            local match, _, coordAgreed = TaDb.findRoomByFingerprint(
+                "cave", { "n", "s" }, 5, { x = 5, y = 5, z = 0 })
+            assert.are.equal(1, match)
+            assert.is_true(coordAgreed)
+        end)
+
+        it("does not say the coordinate agreed when the match has none", function()
+            stubRooms("cave", { 1, 5 }, { [1] = { "n", "s" } })
+            helper.mockDbOneRow = nil
+            local match, _, coordAgreed = TaDb.findRoomByFingerprint(
+                "cave", { "n", "s" }, 5, { x = 9, y = 9, z = 0 })
+            assert.are.equal(1, match)
+            assert.is_false(coordAgreed)
+        end)
+
         -- The veto is the only thing between a re-walk and a duplicate, and it
         -- used to fire silently. On 2026-09-19 it rejected a candidate over a
         -- drift of (1,1) at the first mint of the session, and the walk went on
@@ -3674,6 +3700,39 @@ describe("World map triggers", function()
             assert.is_truthy(said:find("refused", 1, true), said)
         end)
 
+        -- "Sits exactly on" a mapped room means on its SQUARE. A same-named room
+        -- with the same exits but no stored coordinate sits on no square at all,
+        -- and must not be able to overrule the chain's prediction -- it only
+        -- passes findRoomByFingerprint because there was nothing to compare.
+        it("does not refuse a held closure over a room that has no coordinate", function()
+            taPackage.pendingClosure = { pairs = { { from = 50, into = 2711 } }, from = 50, into = 2711 }
+            taPackage.currentRoomId = 51
+            taPackage.currentRoom = "labyrinth"
+            taPackage.currentRoomProvisional = true
+            taPackage.prevRoomId = 50
+            taPackage.currentEntryDir = "s"
+            taPackage.coord = { x = 3, y = -4, z = 0 }
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 900 }, { id = 51 } }   -- 900: coordless lookalike
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    return { { direction = "n" } }
+                end
+                return {}
+            end
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    return { to_id = 2712 }                  -- what the chain predicts
+                elseif string.find(sql, "SELECT name FROM rooms", 1, true) then
+                    return { name = "labyrinth" }
+                end
+                return nil                                   -- nobody has a coordinate
+            end
+            helper.simulateLine("Exits: n.")
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_falsy(said:find("sits exactly on", 1, true), said)
+        end)
+
         -- Stoneworks Level 6, 2026-09-27: the row west of the East Chasm mimics
         -- stonework-corridor-171/172 for two rooms -- name, exits and all -- and
         -- then ends at the West Chasm, where the walk had to turn back, which
@@ -4859,7 +4918,15 @@ describe("World map triggers", function()
             -- name plus exit-set, which is now held for the next room to confirm --
             -- see the coordless case below.
             taPackage.coord = { x = 0, y = 0, z = 0 }
-            -- Room 1 (existing) shares the name and the observed exit-set {n,s}.
+            -- Room 1 (existing) shares the name and the observed exit-set {n,s},
+            -- and sits at the very coordinate we reckoned -- the candidate needs a
+            -- coordinate of its own too, or there was nothing to compare.
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT x, y, z FROM rooms", 1, true) and params[1] == 1 then
+                    return { x = 0, y = 0, z = 0 }
+                end
+                return nil
+            end
             helper.mockDbRows = function(sql, params)
                 if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
                     return { { id = 1 }, { id = 5 } }
@@ -5192,6 +5259,37 @@ describe("World map triggers", function()
             taPackage.currentRoom = "north plaza"
             taPackage.currentRoomProvisional = true
             taPackage.coord = nil
+            helper.mockDbRows = function(sql, params)
+                if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
+                    return { { id = 1 }, { id = 5 } }
+                elseif string.find(sql, "SELECT direction FROM room_exits WHERE from_id", 1, true) then
+                    if params[1] == 1 then return { { direction = "n" }, { direction = "s" } } end
+                    return {}
+                end
+                return {}
+            end
+            helper.simulateLine("Exits: n,s.")
+            assert.are.equal(5, taPackage.currentRoomId)   -- still the provisional
+            assert.is_nil(helper.findDbCall("execute", "DELETE FROM rooms WHERE id"))
+            assert.is_not_nil(taPackage.pendingClosure)
+            assert.are.equal(1, taPackage.pendingClosure.into)
+        end)
+
+        -- The other way to have nothing to compare: WE have a coordinate, the
+        -- candidate has none. findRoomByFingerprint's veto only rejects a stored
+        -- coordinate that disagrees, so a coordless candidate is name plus
+        -- exit-set again -- and it used to be merged on the spot, because only our
+        -- side was checked. In the Flagstones that made every coordless room a
+        -- magnet: walking e from flagstone-corridor-76 into a new [ne,w] corridor
+        -- "linked into" flagstone-corridor-66, rooms away, the only coordless
+        -- [ne,w] corridor in the area (logs/session-pelayo-2026-10-04T22-15-15.log,
+        -- line 164).
+        it("HOLDS a fingerprint match whose candidate has no coordinate", function()
+            taPackage.currentRoomId = 5
+            taPackage.currentRoom = "north plaza"
+            taPackage.currentRoomProvisional = true
+            taPackage.coord = { x = -2, y = -3, z = 0 }
+            helper.mockDbOneRow = nil   -- room 1 has no stored coordinate
             helper.mockDbRows = function(sql, params)
                 if string.find(sql, "SELECT id FROM rooms WHERE name", 1, true) then
                     return { { id = 1 }, { id = 5 } }
