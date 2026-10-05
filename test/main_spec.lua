@@ -15408,6 +15408,21 @@ describe("buy-potions", function()
 
 end)
 
+describe("buy-tavern", function()
+
+    before_each(function()
+        helper.resetAll()
+        _G.createTimer = function() return "mock_timer" end
+        dofile("main.lua")
+    end)
+
+    it("buys a meal and a drink", function()
+        helper.simulateAlias("buy-tavern")
+        assert.are.same({ "buy meal", "buy drink" }, helper.sendCalls)
+    end)
+
+end)
+
 describe("wait-for-potions-to-wear-off-and-exit", function()
 
     before_each(function()

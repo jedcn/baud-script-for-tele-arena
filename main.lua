@@ -2671,6 +2671,13 @@ createAlias("^buy-potions$", function()
     send("drink hyssop")
 end, { type = "regex" })
 
+-- buy-tavern — the manual version of the tavern stop: a meal and a drink while
+-- you're standing in a tavern, to top off hunger and thirst.
+createAlias("^buy-tavern$", function()
+    send("buy meal")
+    send("buy drink")
+end, { type = "regex" })
+
 -- wait-for-potions-to-wear-off-and-exit — the one phrase we wait on often
 -- enough to deserve its own name: the line the game prints when a potion runs
 -- out. Same behaviour as message-me-and-exit-when-you-see with that phrase,
