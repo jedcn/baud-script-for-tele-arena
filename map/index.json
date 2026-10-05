@@ -75,7 +75,7 @@
     {
       "area": "flagstones",
       "name": "The Flagstones, Level 1",
-      "rooms": 78,
+      "rooms": 85,
       "file": "areas/flagstones.json"
     },
     {
