@@ -20928,6 +20928,30 @@ describe("Auto-login", function()
         assert.are.same({ "rg 2" }, helper.runCommandCalls)
     end)
 
+    -- baud reconnects on a drop, and a stop by hand has to survive that: the
+    -- next login must not quietly restart the arena that was just stopped.
+    it("is disarmed by stop-all-scripts, reconnects included", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "tfia 3" })
+        enterTheGame()
+        inventoryReply()
+        helper.simulateAlias("stop-all-scripts")
+        assert.is_true(tableContains(helper.echoCalls, "[all] Stopped TA_INIT_CMD."))
+
+        enterTheGame()
+        inventoryReply()
+        assert.are.same({ "tfia 3" }, helper.runCommandCalls)
+    end)
+
+    -- Stopped in the gap between entering and the sheet landing, the run
+    -- already armed for this login must not fire either.
+    it("is disarmed by stop-all-scripts before it has fired", function()
+        loadWith({ TA_CHARACTER = "kerhak", TA_INIT_CMD = "tfia 3" })
+        enterTheGame()
+        helper.simulateAlias("stop-all-scripts")
+        inventoryReply()
+        assert.are.same({}, helper.runCommandCalls)
+    end)
+
     -- The point of runCommand: "rg 2" is an alias, and send() would put the
     -- literal text on the wire instead of starting an arena session.
     it("really executes the alias, arena session and all", function()

@@ -7187,6 +7187,10 @@ createAlias("^stop-all-scripts$", function()
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
         { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
         { name = "banking",               running = taPackage.bankingRunning(),       stop = taPackage.stopBanking },
+        -- Not a loop of its own but what starts one: baud reconnects on a
+        -- drop, and every fresh login re-runs TA_INIT_CMD ("tfia 3"), so an
+        -- arena stopped here would otherwise be back on the next reconnect.
+        { name = "TA_INIT_CMD",           running = taPackage.login.initCmd ~= nil,   stop = taPackage.disarmLoginInitCmd },
     }
     for _, s in ipairs(scripts) do
         if s.running then
@@ -7660,6 +7664,14 @@ function runLoginInitCmd()
     if not taPackage.login.initPending then return end
     taPackage.login.initPending = nil
     loginRunCommand("TA_INIT_CMD", taPackage.login.initCmd)
+end
+
+-- Disarm TA_INIT_CMD for the rest of this load: both the run already armed by
+-- "Entering Tele-Arena..." and the one every later reconnect would arm. A
+-- reloadScript() re-reads the environment, and so re-arms it.
+function taPackage.disarmLoginInitCmd()
+    taPackage.login.initPending = nil
+    taPackage.login.initCmd = nil
 end
 
 -- Answer `step` with `text`, unless we already answered it during this login.
