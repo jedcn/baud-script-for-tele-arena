@@ -9479,6 +9479,23 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.is_false(taPackage.checkPromotionNeeded())
         end)
 
+        -- Promotion dispelled the potions; nothing wore off, so the shop trip
+        -- must not claim one did.
+        it("heads for the shop after promoting without blaming a wear-off", function()
+            setHP(90, 100)
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            setGold(1100)
+            hallReply("knight")
+            taPackage.arenaJourney = { steps = { "s", "e" }, index = 2, arriveRoom = "arena" }
+            helper.simulateLine("You're in the arena.")
+            assert.are.equal("potions", taPackage.arenaState)
+            for _, msg in ipairs(helper.echoCalls) do
+                assert.is_nil(msg:find("wore off", 1, true))
+            end
+        end)
+
         -- A refusal we did not foresee must not send every trip home back to
         -- the hall.
         it("stops asking after the hall says it is not ready", function()

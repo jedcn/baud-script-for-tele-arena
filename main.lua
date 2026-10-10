@@ -4312,11 +4312,17 @@ taPackage.arenaHeal = arenaHeal
 -- Head to the magic shop to restock the strength/agility potions. Both arenas
 -- reach the same shop by different routes, chosen by profile. Always a journey,
 -- so even the first arena walks it one paced step at a time.
+--
+-- The echo says what we are doing, not why: a potion wearing off is only one
+-- reason to be here. Training and promotion both dispel the pair, and saying
+-- "a potion wore off" after a promotion sent the log reader looking for a
+-- wear-off that never happened (session-pollux-2026-10-10T10-50-07.log). A
+-- real wear-off has the game's own line right above this one.
 local function departForShop()
     local nav = ARENA_SHOP[taPackage.arenaProfile]
     if not nav then return end
     taPackage.arenaState = "potions"
-    echo("[arena] A potion wore off — heading to the magic shop.")
+    echo("[arena] Restocking stat potions — heading to the magic shop.")
     arenaJourneyStart(nav.to, SHOP_ROOM, ARENA_ROOM)
 end
 
