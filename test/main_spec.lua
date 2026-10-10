@@ -2163,6 +2163,13 @@ describe("Arena combat", function()
             assert.is_true(cast)
         end)
 
+        -- Promotion renames the class but keeps the spellbook.
+        it("keeps casting toduza once promoted to Arch Magus", function()
+            setClass("Arch Magus")
+            helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
+            assert.are.equal("cast toduza lizard", lastSend())
+        end)
+
         it("clears the cast pending flag on mental exhaustion", function()
             taPackage.arenaCastPending = true
             helper.simulateLine("You are still too mentally exhausted from your last incantation!")
@@ -14355,6 +14362,12 @@ describe("ta.follow", function()
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
             assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
+        end)
+
+        it("still heals the group once promoted to High Priest", function()
+            setClass("High Priest")
+            helper.simulateAlias("heal.allies")
+            assert.are.equal("group", helper.sendCalls[1])
         end)
 
         it("chases the listing with `ex` so a terminator line always arrives", function()

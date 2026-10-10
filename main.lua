@@ -170,6 +170,15 @@ taPackage.PROMOTED_CLASS = {
     Necrolyte = "Necromancer",
 }
 
+-- Is the character this base class, before or after promotion? Promotion
+-- renames the class but keeps the spellbook, so an Arch Magus still casts
+-- toduza and a High Priest still heals the group -- anything keyed on what a
+-- class can do asks this, not getClass() == "Sorceror".
+function isClass(base)
+    local cls = getClass()
+    return cls ~= nil and (cls == base or cls == taPackage.PROMOTED_CLASS[base])
+end
+
 function setLevel(value)
     taPackage.character.level = tonumber(value)
 end
@@ -3369,7 +3378,7 @@ local function arenaCast()
     -- Casting is attacking: a Sorceror support gives away XP with toduza just
     -- as surely as with its sword, so it holds on the same rule.
     if taPackage.arenaTeamHeal.holdingBack() then return end
-    if getClass() ~= "Sorceror" then return end
+    if not isClass("Sorceror") then return end
     local name = taPackage.arenaMonster
     if not name then return end
     if taPackage.arenaCastPending then return end
@@ -6990,8 +6999,7 @@ local function castSpell()
         killDebugEcho("cast-skip: kill loop not active")
         return
     end
-    local class = getClass()
-    if class == "Sorceror" then
+    if isClass("Sorceror") then
         local target = taPackage.killTarget
         if not target then
             killDebugEcho("cast-skip: no target")
@@ -7001,7 +7009,7 @@ local function castSpell()
         local name = target:match("^(%S+)")
         killDebugEcho("cast-sent: toduza " .. name)
         send("cast toduza " .. name)
-    elseif class == "Acolyte" then
+    elseif isClass("Acolyte") then
         if taPackage.acolyteAutoHealDisabled then
             killDebugEcho("cast-skip: acolyte auto-heal disabled")
             return
@@ -7245,7 +7253,7 @@ end, { type = "regex" })
 -- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
 -- and heals its most-injured member. Non-Acolytes have no group heal to cast.
 createAlias("^heal\\.allies$", function()
-    if getClass() == "Acolyte" then
+    if isClass("Acolyte") then
         beginGroupHealScan()
     else
         echo("[heal] Only an Acolyte can heal the group.")
@@ -7274,7 +7282,7 @@ local function scheduleHealAlliesLoop()
 end
 
 createAlias("^heal-allies-in-loop$", function()
-    if getClass() ~= "Acolyte" then
+    if not isClass("Acolyte") then
         echo("[heal] Only an Acolyte can heal the group.")
         return
     end
@@ -7376,7 +7384,7 @@ end, { type = "regex" })
 -- scan.
 local function reactToGroupHit()
     if not taPackage.healLoopActive then return end
-    if getClass() ~= "Acolyte" then return end
+    if not isClass("Acolyte") then return end
     if taPackage.groupHealPhase then return end
     beginGroupHealScan(HEAL_LOOP_THRESHOLD, "hit reaction")
 end
@@ -7525,7 +7533,7 @@ createTrigger("^You are still physically exhausted from your previous activities
     -- Out of melee for now; an Acolyte spends the lull checking the group so
     -- the next cast (on the mental clock) heals whoever needs it. Skipped when
     -- auto-heal is disabled — then the Acolyte just rides out the lull.
-    if getClass() == "Acolyte" and not taPackage.acolyteAutoHealDisabled then
+    if isClass("Acolyte") and not taPackage.acolyteAutoHealDisabled then
         beginGroupHealScan(nil, "exhaustion")
     end
     local gen = taPackage.killGeneration or 0
@@ -7637,7 +7645,7 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     elseif command == "kill-stop" then
         stopKill()
     elseif command == "heal.allies" then
-        if getClass() == "Acolyte" then
+        if isClass("Acolyte") then
             beginGroupHealScan()
         end
     end
