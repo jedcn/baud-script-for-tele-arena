@@ -1444,6 +1444,15 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
+        -- Promotion is the one time the class changes, and the bar follows it
+        -- at once rather than waiting for the next `st`.
+        it("shows the promoted class after buy promotion", function()
+            taPackage.character.name = "Tojolias"
+            helper.simulateLine("Class:        Warrior")
+            helper.simulateLine("previously known. The guild bestows upon you the title of knight!")
+            assert.are.equal("Tojolias [Knight]", capturedFn()[1].text)
+        end)
+
         it("shows the same Leader tag regardless of follower count", function()
             taPackage.character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
@@ -9246,6 +9255,236 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.level = 2
             helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
             assert.are.equal(2, taPackage.character.level)  -- untouched
+        end)
+
+    end)
+
+    -- At level 25 a Warrior, Rogue or Hunter has nothing left to train for.
+    -- Instead of fighting on for XP that buys nothing, the run restores at the
+    -- temple like any trip to the hall, checks it can afford the 1000-crown
+    -- promotion, buys it, and fights on as the promoted class.
+    describe("auto-promotion", function()
+
+        local BLEND = "After a rigorous mental and physical training session, you managed to blend"
+
+        local function killAtLevel25(class)
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.name = "Tojolias"
+            taPackage.character.class = class or "Warrior"
+            taPackage.character.level = 25
+            taPackage.character.experience = 11594700  -- Warrior level 25 threshold
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+        end
+
+        -- The hall's whole reply, as tojolias got it in
+        -- session-tojolias-2026-08-20T19-44-24.log.
+        local function hallReply(title)
+            helper.simulateLine(BLEND)
+            helper.simulateLine("your personal experience and the new knowledge imparted to you by the guild")
+            helper.simulateLine("masters into a greater level of personal power beyond anything you have")
+            helper.simulateLine("previously known. The guild bestows upon you the title of " .. title .. "!")
+        end
+
+        local function ntfyTitled(title)
+            for _, c in ipairs(helper.httpRequestCalls) do
+                if c.options.headers["X-Title"] == title then return c end
+            end
+        end
+
+        it("walks to the guild hall to promote a level 25 warrior", function()
+            setGold(2000)
+            killAtLevel25()
+            assert.are.equal("promoting", taPackage.arenaState)
+            assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
+            assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("promotes rogues and hunters too", function()
+            setGold(2000)
+            killAtLevel25("Rogue")
+            assert.are.equal("promoting", taPackage.arenaState)
+            helper.resetAll()
+            dofile("main.lua")
+            taPackage.arenaProfile = "1"
+            setGold(2000)
+            killAtLevel25("Hunter")
+            assert.are.equal("promoting", taPackage.arenaState)
+        end)
+
+        -- Casters get a new spell list on promotion, which is a person's call.
+        it("leaves a level 25 caster fighting", function()
+            setGold(2000)
+            killAtLevel25("Sorceror")
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("does not promote below level 25", function()
+            setGold(2000)
+            taPackage.arenaState = "fighting"
+            taPackage.arenaMonster = "lizard man"
+            setHP(80, 100)
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 24
+            taPackage.character.experience = 10000000  -- short of level 25
+            helper.simulateLine("The lizard man falls to the ground lifeless!")
+            assert.are.equal("ringing", taPackage.arenaState)
+        end)
+
+        it("buys restoring at the temple first when stat potions are up", function()
+            setGold(2000)
+            taPackage.arenaPotionsActive = 2
+            killAtLevel25()
+            assert.are.equal("restoring", taPackage.arenaState)
+            assert.are.equal("temple", taPackage.arenaJourney.arriveRoom)
+        end)
+
+        -- The potions are about to be dispelled for the trip, so a wear-off
+        -- must not send us to the shop for a fresh pair.
+        it("does not restock potions while a promotion is owed", function()
+            setGold(2000)
+            taPackage.arenaState = "fighting"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            taPackage.arenaPotionsActive = 2
+            helper.simulateLine("An odd tingling sensation washes over you briefly!")
+            assert.is_nil(taPackage.needsPotions)
+        end)
+
+        it("pushes a notification and leaves the game when short of gold", function()
+            setGold(900)
+            killAtLevel25()
+            assert.is_nil(taPackage.arenaState)
+            assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
+            local call = ntfyTitled("Short of gold for promotion")
+            assert.is_truthy(call)
+            assert.is_truthy(call.options.body:find("Tojolias", 1, true))
+            assert.is_truthy(call.options.body:find("has 900", 1, true))
+        end)
+
+        -- 1000 is the fee; the gold floor on top keeps the walk home from
+        -- emergency-exiting on the spot.
+        it("counts the arena's gold floor on top of the fee", function()
+            setGold(1000)
+            killAtLevel25()
+            assert.is_nil(taPackage.arenaState)
+            setGold(1050)
+            taPackage.arenaProfile = "1"
+            killAtLevel25()
+            assert.are.equal("promoting", taPackage.arenaState)
+        end)
+
+        it("buys promotion on arrival at the guild hall and walks home", function()
+            taPackage.arenaState = "promoting"
+            taPackage.arenaJourney = { steps = { "w", "n" }, index = 2, arriveRoom = "guild hall" }
+            helper.simulateLine("You're in the guild hall.")
+            assert.are.equal("i", helper.sendCalls[1])
+            assert.are.equal("buy promotion", helper.sendCalls[2])
+            assert.are.equal("returning", taPackage.arenaState)
+            assert.are.equal("arena", taPackage.arenaJourney.arriveRoom)
+        end)
+
+        it("retries a step out of the arena blocked by a monster", function()
+            taPackage.arenaState = "promoting"
+            taPackage.arenaLastCmd = "w"
+            helper.simulateLine("You cannot leave in the heat of battle!")
+            assert.is_true(taPackage.arenaFleeTimerPending)
+        end)
+
+        it("takes on the new class at level 1 with no XP", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            taPackage.character.experience = 13900000
+            taPackage.character.earnedLevel = 25
+            setGold(1100)
+            hallReply("knight")
+            assert.are.equal("Knight", getClass())
+            assert.are.equal(1, getLevel())
+            assert.are.equal(0, getExperience())
+            assert.are.equal(1, taPackage.character.earnedLevel)
+            assert.is_nil(taPackage.xpChange)
+        end)
+
+        -- The first line is training's too; at the top of the ladder it must
+        -- not bank a level 26 or push "Leveled Up!".
+        it("does not mistake the promotion for a training session", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            setGold(1100)
+            helper.simulateLine(BLEND)
+            assert.are.equal(25, taPackage.character.level)
+            assert.is_nil(taPackage.levelUpPush)
+        end)
+
+        it("title-cases a two-word title to match the class line", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Hunter"
+            taPackage.character.level = 25
+            setGold(1100)
+            hallReply("beast master")
+            assert.are.equal("Beast Master", getClass())
+        end)
+
+        it("pushes the old class, new class and measured cost", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.name = "Tojolias"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            setGold(1100)
+            hallReply("knight")
+            assert.is_nil(ntfyTitled("Promoted!"))   -- waiting on the inventory
+            helper.simulateLine("You are carrying 100 gold crowns")
+            local call = ntfyTitled("Promoted!")
+            assert.is_truthy(call)
+            local body = call.options.body
+            assert.is_truthy(body:find("- Old class: Warrior", 1, true))
+            assert.is_truthy(body:find("- New class: Knight", 1, true))
+            assert.is_truthy(body:find("- Promotion cost: 1,000 gold", 1, true))
+            assert.is_truthy(body:find("- Gold: 100", 1, true))
+            assert.is_nil(ntfyTitled("Leveled Up!"))
+        end)
+
+        it("records the promotion fee as a service", function()
+            helper.clearDbCalls()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            setGold(1100)
+            hallReply("knight")
+            helper.simulateLine("You are carrying 100 gold crowns")
+            local recorded
+            for _, c in ipairs(helper.dbCalls) do
+                if c.sql and c.sql:find("services") and c.params and c.params[1] == "promotion" then
+                    recorded = c.params
+                end
+            end
+            assert.is_truthy(recorded)
+        end)
+
+        -- Then it fights on as a Knight: potions first, no second promotion.
+        it("restocks potions and owes nothing more once promoted", function()
+            taPackage.arenaState = "returning"
+            taPackage.character.class = "Warrior"
+            taPackage.character.level = 25
+            setGold(1100)
+            hallReply("knight")
+            assert.is_true(taPackage.needsPotions)
+            assert.is_false(taPackage.checkPromotionNeeded())
+        end)
+
+        -- A refusal we did not foresee must not send every trip home back to
+        -- the hall.
+        it("stops asking after the hall says it is not ready", function()
+            setGold(2000)
+            taPackage.arenaState = "returning"
+            helper.simulateLine("You are not ready for a promotion, you must first achieve greater")
+            assert.is_true(taPackage.arenaPromotionRefused)
+            assert.is_truthy(ntfyTitled("Promotion refused"))
+            killAtLevel25()
+            assert.are.equal("ringing", taPackage.arenaState)
         end)
 
     end)

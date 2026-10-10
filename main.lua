@@ -751,6 +751,8 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     -- A held level-up notification is waiting on this line to measure the
     -- training fee. Defined with the training trigger far below.
     if taPackage.noticeLevelUpGold then taPackage.noticeLevelUpGold() end
+    -- Likewise a held promotion notification, measuring its fee.
+    if taPackage.noticePromotionGold then taPackage.noticePromotionGold() end
     -- The last reply of the `st`/`i` pair the entry trigger fires, so this is
     -- the moment the character sheet is fully parsed and an init command can
     -- safely run. It is a no-op on every other inventory check.
@@ -4187,6 +4189,15 @@ local ARENA_MIN_GOLD = 50
 -- to count it.
 local ARENA_RESTORING_GOLD = 25
 
+-- What `buy promotion` costs: pelayo was refused at 900 crowns and promoted at
+-- exactly 1000, leaving 0 (archived session-pelayo-2026-08-29T20-04-53.log).
+local ARENA_PROMOTION_GOLD = 1000
+
+-- The classes an arena run promotes by itself once it reaches level 25. The
+-- casters are left out: a promoted caster has a new spell list to buy, which is
+-- a decision for a person, not the loop.
+local ARENA_PROMOTABLE = { Warrior = true, Rogue = true, Hunter = true }
+
 local function arenaNav()
     return ARENA_NAV[taPackage.arenaProfile]
 end
@@ -4492,6 +4503,16 @@ local function arenaJourneyOnMovement(room)
         taPackage.arenaState = "returning"
         local nav = arenaNav()
         arenaJourneyStart(nav.fromTraining, nav.arenaRoom, nav.trainingRoom)
+    elseif st == "promoting" then
+        -- Same shape as "buy training": the `i` reads our gold so the
+        -- promotion trigger can measure the fee, and the walk home starts at
+        -- once. The new class, the potion restock and the push all hang off the
+        -- hall's reply.
+        send("i")
+        send("buy promotion")
+        taPackage.arenaState = "returning"
+        local nav = arenaNav()
+        arenaJourneyStart(nav.fromTraining, nav.arenaRoom, nav.trainingRoom)
     elseif st == "restoring" then
         -- Arrived at the temple to have the potion taint dispelled. Send the
         -- purchase and start walking home at once, like "buy training": the
@@ -4526,12 +4547,30 @@ local function arenaJourneyOnMovement(room)
     end
 end
 
+-- A promotion is owed once a promotable class has trained to 25, the top of its
+-- ladder (the status bar's "(max)"). The class name is the whole of the state:
+-- promoting renames it (Warrior -> Knight), and a Knight is not in
+-- ARENA_PROMOTABLE, so this goes false by itself the moment the hall says yes.
+-- arenaPromotionRefused is the loop-stopper for a hall that says no for a reason
+-- we did not foresee (see the "not ready for a promotion" trigger).
+function taPackage.checkPromotionNeeded()
+    if taPackage.arenaPromotionRefused then return false end
+    if not ARENA_PROMOTABLE[getClass() or ""] then return false end
+    local lvl = getLevel()
+    return lvl ~= nil and lvl >= 25
+end
+
 -- Assigns to the forward-declared local above (no `local` keyword) so
 -- departForShop, defined earlier, can refuse to restock while a level is owed.
 function checkTrainingNeeded()
     -- Only a profile with a route to a guild hall can leave to train.
     local nav = arenaNav()
     if not (nav and nav.toTraining) then return false end
+    -- A promotion owed counts as a trip owed: the same hall, the same restore
+    -- first, and the same hold on restocking potions until it is done. Its gold
+    -- is checked by arenaTryTrain, which leaves the game when it is short rather
+    -- than fighting on at level 25, where XP no longer buys anything.
+    if taPackage.checkPromotionNeeded() then return true end
     local xp  = getExperience()
     local cls = getClass()
     local lvl = getLevel()
@@ -4595,6 +4634,37 @@ local function arenaTryTrain()
         taPackage.arenaState = "restoring"
         local nav = arenaNav()
         arenaJourneyStart(nav.toTemple, nav.templeRoom, nav.arenaRoom)
+        return true
+    end
+    -- Promotion. The hall does not actually refuse a tainted character for this
+    -- (docs/promotion-observed-acolyte-to-high-priest.md), but it builds the
+    -- new class from base stats either way, so the restore above costs nothing
+    -- that matters and keeps one path for both trips.
+    --
+    -- Checked here, after the restore, rather than in checkTrainingNeeded: short
+    -- of gold is not "nothing owed, fight on" as it is for a level. At 25 the XP
+    -- buys nothing, so a run that cannot promote has nothing left to fight for,
+    -- and says so and leaves. ARENA_MIN_GOLD on top so the fee cannot drop us
+    -- straight through the gold floor on the way home, plus the ferry where the
+    -- hall is across the lake.
+    if taPackage.checkPromotionNeeded() then
+        local nav = arenaNav()
+        local need = ARENA_PROMOTION_GOLD + ARENA_MIN_GOLD + (nav.trainingTripGold or 0)
+        local gold = getGold()
+        if not gold then return false end
+        if gold < need then
+            local name = taPackage.character.name or "?"
+            sendNtfy("Short of gold for promotion",
+                name .. " is a level 25 " .. getClass() .. " and needs "
+                    .. formatWithCommas(need) .. " gold to buy promotion, but has "
+                    .. formatWithCommas(gold) .. ". Leaving the game.")
+            taPackage.arenaEmergencyExit("Short of gold for promotion ("
+                .. gold .. " of " .. need .. ")")
+            return true
+        end
+        echo("[arena] Level 25 — heading to the guild hall to buy promotion.")
+        taPackage.arenaState = "promoting"
+        arenaJourneyStart(nav.toTraining, nav.trainingRoom, nav.arenaRoom)
         return true
     end
     echo("[arena] Leveling up — heading to training hall.")
@@ -4967,6 +5037,7 @@ local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
     -- the first wear-off/restock. Only matters for the train-when-clean gate.
     taPackage.arenaPotionsActive = 0
     taPackage.arenaRestoreTried = nil
+    taPackage.arenaPromotionRefused = nil
     -- A fresh session is never already winding down. stopArena clears this too,
     -- but a session can be started without one in between (a reload, or an `rg`
     -- typed over a run that was armed), and inheriting it would stop the new run
@@ -5167,6 +5238,7 @@ local function stopArena()
     taPackage.needsPotions = nil
     taPackage.arenaPotionsActive = nil
     taPackage.arenaRestoreTried = nil
+    taPackage.arenaPromotionRefused = nil
     -- Cancel any in-flight exit retry loop (a manual stop or stop-all-scripts
     -- means halt everything). arenaEmergencyExit calls stopArena first and
     -- re-arms this afterward, so its own loop survives.
@@ -6177,6 +6249,12 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     -- way — without this the hand-driven training would silently notify nobody.
     if not (taPackage.arenaState or taPackage.trainWatch) then return end
     local lvl = getLevel()
+    -- `buy promotion` answers with this very line too, and only its third line
+    -- says which it was. At the top of a ladder there is no level to train to,
+    -- so here it can only be a promotion: leave it to the bestowal trigger below
+    -- rather than bank a level 26 that does not exist.
+    local thresholds = xpThresholds[getClass() or ""]
+    if lvl and thresholds and not thresholds[lvl + 1] then return end
     if lvl then
         local newLevel = lvl + 1
         setLevel(newLevel)
@@ -6208,6 +6286,84 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     if taPackage.arenaState and not checkTrainingNeeded() then
         taPackage.needsPotions = true
     end
+end, { type = "regex" })
+
+-- Push the held "Promoted!" notification. Called when the inventory we asked for
+-- lands (taPackage.noticePromotionGold) or from a timeout, whichever is first;
+-- whoever gets there clears the pending record so the other is a no-op.
+function taPackage.flushPromotionNotification()
+    local pending = taPackage.promotionPush
+    if not pending then return end
+    taPackage.promotionPush = nil
+    sendNtfy("Promoted!", table.concat({
+        "[" .. (taPackage.character.name or "?") .. "] bought promotion!",
+        "- Old class: " .. (pending.oldClass or "?"),
+        "- New class: " .. pending.newClass,
+        "- Promotion cost: " .. (pending.cost and formatWithCommas(pending.cost) or "?") .. " gold",
+        "- Gold: " .. (pending.goldAfter and formatWithCommas(pending.goldAfter) or "?"),
+    }, "\n"), true)
+end
+
+-- The inventory after the promotion: the fee is the gold read just before `buy
+-- promotion` minus the gold now, measured the same way as the training fee.
+function taPackage.noticePromotionGold()
+    local pending = taPackage.promotionPush
+    if not pending then return end
+    pending.goldAfter = getGold()
+    if pending.goldBefore then
+        pending.cost = pending.goldBefore - pending.goldAfter
+        taPackage.db.recordService("promotion", "guild", pending.cost)
+        echo("[arena] Promotion cost " .. pending.cost .. " gold.")
+    end
+    taPackage.flushPromotionNotification()
+end
+
+-- The third line of the hall's reply to `buy promotion`, and the only one that
+-- differs from training's: "previously known. The guild bestows upon you the
+-- title of knight!" (archived session-tojolias-2026-08-20T19-44-24.log). This is
+-- the one moment a character's class changes, so everything keyed on it is
+-- brought across here rather than left for the next `st`:
+--   * The class, which the status bar shows and every XP table is looked up by.
+--     The title is lower case; the class line and ta_xp.lua are title case.
+--   * Level 1 and 0 XP, the bottom of the new 105-level ladder. Written directly
+--     rather than through setExperience, whose "XP moved" marker would flash
+--     13 million XP of meaningless delta.
+--   * earnedLevel, or the level-up push would stay silent until the new ladder
+--     passed 25.
+-- Not gated on an arena run: a hand-typed promotion changes the class just the
+-- same, and the push is wanted either way.
+createTrigger("The guild bestows upon you the title of (.+)!$", function(matches)
+    local oldClass = getClass()
+    local newClass = matches[2]:gsub("(%a)(%a*)", function(first, rest)
+        return first:upper() .. rest
+    end)
+    setClass(newClass)
+    setLevel(1)
+    taPackage.character.experience = 0
+    taPackage.xpChange = nil
+    taPackage.character.earnedLevel = 1
+    echo("[arena] Promoted: " .. (oldClass or "?") .. " -> " .. newClass .. ".")
+    taPackage.promotionPush = { oldClass = oldClass, newClass = newClass, goldBefore = getGold() }
+    send("st")
+    send("i")
+    createTimer(LEVEL_UP_SHEET_WAIT_MS, taPackage.flushPromotionNotification, { repeating = false })
+    -- The stat potions were dispelled for the trip; restock them on the way home
+    -- and fight on as the new class.
+    if taPackage.arenaState then taPackage.needsPotions = true end
+end, { type = "regex" })
+
+-- The hall's refusal: "You are not ready for a promotion, you must first achieve
+-- greater power, and gain wider knowledge of your abilities." Seen only below 25,
+-- which checkPromotionNeeded already rules out, so reaching it means a rule we
+-- do not know. Stop asking for the rest of the run (or every trip home would
+-- walk back to the hall) and say so, since the run is now grinding XP that buys
+-- nothing.
+createTrigger("^You are not ready for a promotion", function()
+    if not taPackage.arenaState then return end
+    taPackage.arenaPromotionRefused = true
+    echo("[arena] Promotion refused — fighting on without it.")
+    sendNtfy("Promotion refused", (taPackage.character.name or "?")
+        .. " was told it is not ready for a promotion. Fighting on without it.")
 end, { type = "regex" })
 
 -- The taint is gone: every stat is back at base, so the hall will take us. Zero
@@ -6441,7 +6597,7 @@ end, { type = "regex" })
 
 -- Any walk-out that gets blocked by a monster — fleeing to the temple, an errand
 -- run to the bar ("tavern") or magic shop ("potions"), or a level being banked
--- via the temple ("restoring") or the guild hall ("training") — retries the same
+-- via the temple ("restoring") or the guild hall ("training", "promoting") — retries the same
 -- step until a between-attacks window opens. arenaCanDepartNow now stops us from
 -- departing into an in-flight summon, so this is a backstop for the case where a
 -- monster arrives after we've stepped out (e.g. another player's ring on the
@@ -6456,7 +6612,7 @@ end, { type = "regex" })
 createTrigger("^You cannot leave in the heat of battle!$", function()
     local st = taPackage.arenaState
     if st ~= "fleeing" and st ~= "tavern" and st ~= "potions"
-        and st ~= "restoring" and st ~= "training" then return end
+        and st ~= "restoring" and st ~= "training" and st ~= "promoting" then return end
     if taPackage.arenaFleeTimerPending then return end
     taPackage.arenaFleeTimerPending = true
     local gen = taPackage.arenaRetryGeneration or 0
