@@ -156,6 +156,20 @@ function getClass()
     return taPackage.character.class
 end
 
+-- What each base class becomes when it buys promotion at level 25
+-- (docs/shrine/PROMOTIONS.md). A class with an entry here can still promote;
+-- the promoted names have none, so they are done.
+taPackage.PROMOTED_CLASS = {
+    Warrior   = "Knight",
+    Hunter    = "Beast Master",
+    Archer    = "Master Archer",
+    Rogue     = "Blackguard",
+    Acolyte   = "High Priest",
+    Druid     = "Arch Druid",
+    Sorceror  = "Arch Magus",
+    Necrolyte = "Necromancer",
+}
+
 function setLevel(value)
     taPackage.character.level = tonumber(value)
 end
@@ -4193,10 +4207,6 @@ local ARENA_RESTORING_GOLD = 25
 -- exactly 1000, leaving 0 (archived session-pelayo-2026-08-29T20-04-53.log).
 local ARENA_PROMOTION_GOLD = 1000
 
--- The classes an arena run promotes by itself once it reaches level 25. The
--- casters are left out: a promoted caster has a new spell list to buy, which is
--- a decision for a person, not the loop.
-local ARENA_PROMOTABLE = { Warrior = true, Rogue = true, Hunter = true }
 
 local function arenaNav()
     return ARENA_NAV[taPackage.arenaProfile]
@@ -4547,15 +4557,15 @@ local function arenaJourneyOnMovement(room)
     end
 end
 
--- A promotion is owed once a promotable class has trained to 25, the top of its
+-- A promotion is owed once a base class has trained to 25, the top of its
 -- ladder (the status bar's "(max)"). The class name is the whole of the state:
--- promoting renames it (Warrior -> Knight), and a Knight is not in
--- ARENA_PROMOTABLE, so this goes false by itself the moment the hall says yes.
+-- promoting renames it (Warrior -> Knight), and a Knight has no PROMOTED_CLASS
+-- entry, so this goes false by itself the moment the hall says yes.
 -- arenaPromotionRefused is the loop-stopper for a hall that says no for a reason
 -- we did not foresee (see the "not ready for a promotion" trigger).
 function taPackage.checkPromotionNeeded()
     if taPackage.arenaPromotionRefused then return false end
-    if not ARENA_PROMOTABLE[getClass() or ""] then return false end
+    if not taPackage.PROMOTED_CLASS[getClass() or ""] then return false end
     local lvl = getLevel()
     return lvl ~= nil and lvl >= 25
 end

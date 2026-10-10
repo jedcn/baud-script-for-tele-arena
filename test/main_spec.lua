@@ -9301,23 +9301,20 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
         end)
 
-        it("promotes rogues and hunters too", function()
-            setGold(2000)
-            killAtLevel25("Rogue")
-            assert.are.equal("promoting", taPackage.arenaState)
-            helper.resetAll()
-            dofile("main.lua")
-            taPackage.arenaProfile = "1"
-            setGold(2000)
-            killAtLevel25("Hunter")
-            assert.are.equal("promoting", taPackage.arenaState)
-        end)
+        for _, class in ipairs({ "Rogue", "Hunter", "Archer", "Acolyte", "Druid", "Sorceror", "Necrolyte" }) do
+            it("promotes a level 25 " .. class .. " too", function()
+                setGold(2000)
+                killAtLevel25(class)
+                assert.are.equal("promoting", taPackage.arenaState)
+            end)
+        end
 
-        -- Casters get a new spell list on promotion, which is a person's call.
-        it("leaves a level 25 caster fighting", function()
+        -- Promoted classes sit at level 1-105 on their own ladder; there is
+        -- nothing further to buy.
+        it("never promotes an already-promoted class", function()
             setGold(2000)
-            killAtLevel25("Sorceror")
-            assert.are.equal("ringing", taPackage.arenaState)
+            killAtLevel25("Knight")
+            assert.are_not.equal("promoting", taPackage.arenaState)
         end)
 
         it("does not promote below level 25", function()
