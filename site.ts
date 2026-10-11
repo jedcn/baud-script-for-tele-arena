@@ -379,8 +379,12 @@ export function renderLevel(
       + `</g>`);
   }
 
-  const svg = `<svg class="level" viewBox="0 0 ${width} ${height}"`
-    + ` style="max-width:${width}px" role="img"`
+  // The drawing is twice the layout in each direction, with the layout in the
+  // middle: room to drag a wing out to any side. The margin is added by moving
+  // the viewBox's origin negative rather than by shifting the rooms, so every
+  // position -- home and saved alike -- means what it meant before.
+  const svg = `<svg class="level" viewBox="${-width / 2} ${-height / 2} ${width * 2} ${height * 2}"`
+    + ` style="max-width:${width * 2}px" role="img"`
     + ` aria-label="${esc(area.name)}">\n`
     + edges.join('\n') + '\n' + gates.join('\n') + '\n'
     + boxes.join('\n') + '\n</svg>';
@@ -504,7 +508,11 @@ aside { flex: 0 0 20rem; display: flex; flex-direction: column; gap: 1rem; }
 #panel li { border-left: 3px solid var(--amber); background: rgba(227,179,65,0.08);
   padding: 0.25rem 0.5rem; margin: 0.25rem 0; border-radius: 2px; }
 #panel li.trap { border-left-color: var(--red); background: rgba(248,81,73,0.08); }
-svg.level { display: block; width: 100%; height: auto; touch-action: none; }
+/* Twice the pane, so a room is drawn as big as it was before the margin was
+   added; the pane scrolls, and is held to the window's height so it scrolls
+   both ways rather than making the whole page tall. */
+.canvas { max-height: 80vh; }
+svg.level { display: block; width: 200%; height: auto; touch-action: none; }
 .box { cursor: grab; }
 .box.dragging { cursor: grabbing; }
 .box.dragging rect { stroke: var(--blue); stroke-width: 2.5px; }
@@ -615,10 +623,15 @@ function inside(id, p) {
   // the scale -- the page has no table of level sizes, and the box is already
   // in hand here.
   var el = (ownEls[id] || [])[0], svg = el ? closestOf(el, 'svg') : null;
-  var vb = svg ? (svg.getAttribute('viewBox') || '').split(/[\\s,]+/) : null;
-  if (!vb || !(Number(vb[2]) > 0) || !(Number(vb[3]) > 0)) return p;
-  return [Math.max(EDGE, Math.min(p[0], Number(vb[2]) - EDGE)),
-          Math.max(EDGE, Math.min(p[1], Number(vb[3]) - EDGE))];
+  var vb = svg ? viewBox(svg) : null;
+  if (!vb || !(vb[2] > 0) || !(vb[3] > 0)) return p;
+  return [Math.max(vb[0] + EDGE, Math.min(p[0], vb[0] + vb[2] - EDGE)),
+          Math.max(vb[1] + EDGE, Math.min(p[1], vb[1] + vb[3] - EDGE))];
+}
+
+/** [x, y, width, height] of an svg's viewBox. The origin is negative: see renderLevel. */
+function viewBox(svg) {
+  return (svg.getAttribute('viewBox') || '').split(/[\\s,]+/).map(Number);
 }
 
 function save(slug) {
@@ -704,6 +717,9 @@ function show(slug) {
   index();
   loadSaved(slug);
   for (var id in pos) if (levelOf(id) === slug) place(id);
+  // Open on the layout, which sits in the middle of the margin around it.
+  seen.scrollLeft = (seen.scrollWidth - seen.clientWidth) / 2;
+  seen.scrollTop = (seen.scrollHeight - seen.clientHeight) / 2;
   select(null);
 }
 
@@ -757,10 +773,10 @@ var drag = null, marquee = null, group = [];
 var CLICK_SLOP = 4;                   // px of travel still counted as a click
 
 function userScale(svg) {
-  var vb = (svg.getAttribute('viewBox') || '').split(/[\\s,]+/);
+  var vb = viewBox(svg);
   var box = svg.getBoundingClientRect ? svg.getBoundingClientRect() : null;
   if (!vb[2] || !box || !box.width) return 1;
-  return Number(vb[2]) / box.width;
+  return vb[2] / box.width;
 }
 
 function closestOf(el, sel) { return el && el.closest ? el.closest(sel) : null; }
@@ -794,10 +810,10 @@ function moveRooms(ids, dx, dy) {
   });
 }
 
-/** Where a pointer is, in the user units of 'svg'. Every level's viewBox starts at 0 0. */
+/** Where a pointer is, in the user units of 'svg'. */
 function svgPoint(svg, e, k) {
-  var r = svg.getBoundingClientRect();
-  return [(e.clientX - r.left) * k, (e.clientY - r.top) * k];
+  var r = svg.getBoundingClientRect(), vb = viewBox(svg);
+  return [vb[0] + (e.clientX - r.left) * k, vb[1] + (e.clientY - r.top) * k];
 }
 
 function drawMarquee() {

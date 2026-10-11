@@ -212,6 +212,18 @@ describe('a Device that teleports', () => {
 describe('renderLevel', () => {
   const { svg, stats } = renderLevel(MINI, NAME_OF);
 
+  it('leaves a margin as big again as the layout on every side, for dragging into', () => {
+    // The margin comes from a negative viewBox origin, not from moving the
+    // rooms, so a saved arrangement still means what it did.
+    const { width, height, home } = renderLevel(MINI, NAME_OF);
+    expect(svg).toContain(`viewBox="${-width / 2} ${-height / 2} ${width * 2} ${height * 2}"`);
+    expect(svg).toContain(`max-width:${width * 2}px`);
+    for (const [x, y] of Object.values(home)) {
+      expect(x).toBeGreaterThan(0); expect(x).toBeLessThan(width);
+      expect(y).toBeGreaterThan(0); expect(y).toBeLessThan(height);
+    }
+  });
+
   it('draws one box per room', () => {
     expect(svg.match(/class="box[^"]*" data-id=/g)!.length).toBe(3);
     expect(stats.rooms).toBe(3);
@@ -617,6 +629,32 @@ describe('map.html', () => {
     const rect = svg.kids.find(k => k.tag === 'rect')!;
     expect(Number(rect.attrs['x'])).toBeCloseTo(200, 6);
     expect(Number(rect.attrs['y'])).toBeCloseTo(100, 6);
+  });
+
+  it('lets a room be dragged out into the margin left of and above the layout', async () => {
+    // The real viewBox starts negative. Clamped to 0 0 as it used to be, the
+    // whole left and top margin would be out of reach.
+    const { dragBox, boxFor, svgOf } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const svg = svgOf('stoneworks-level-2');
+    svg.attrs['viewBox'] = '-500 -400 2000 1600';
+    svg.shownWidth = 2000;
+    const box = boxFor('stoneworks-level-2');
+    dragBox(box, -5000, -5000);
+    const [x, y] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x).toBeCloseTo(-500 + 21, 6);
+    expect(y).toBeCloseTo(-400 + 21, 6);
+  });
+
+  it('starts a sweep where the pointer is pressed when the viewBox origin is negative', async () => {
+    const { doc, svgOf } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const svg = svgOf('stoneworks-level-2');
+    svg.attrs['viewBox'] = '-500 -400 2000 1600';
+    svg.shownWidth = 2000;
+    doc._l.pointerdown({ target: svg, clientX: 100, clientY: 50, pointerId: 1,
+                         preventDefault() {} });
+    const rect = svg.kids.find(k => k.tag === 'rect')!;
+    expect(Number(rect.attrs['x'])).toBeCloseTo(-400, 6);
+    expect(Number(rect.attrs['y'])).toBeCloseTo(-350, 6);
   });
 
   it('converts pointer pixels through the viewBox', async () => {
