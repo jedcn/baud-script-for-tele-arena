@@ -143,6 +143,24 @@ test("attributes a hand-typed command to the user and a scripted one to the scri
   ]);
 });
 
+test("leaves origin unknown once baud logs script sends with the same prompt", () => {
+  // From baud e46e03d (2026-08-13) a script's send() is logged as "> cmd"
+  // exactly like typed input, so the prompt no longer says who sent it. Both
+  // of these were the script's in session-pollux-2026-10-10T23-28-55.log.
+  const path = fixture([
+    "# baud text log - started 2026-10-10T23:28:56.000Z",
+    "Entering Tele-Arena...",
+    "> ring gong",
+    "ring gong",
+    "> a flame",
+    "a flame",
+  ].join("\n"));
+  const events = normalizeFile(path);
+  const withOrigin = events.filter(e => e.kind === "sent" || e.kind === "input");
+  expect(withOrigin.length).toBe(4);
+  expect(withOrigin.every(e => e.origin === "unknown")).toBe(true);
+});
+
 test("collapses an st block into one status record", () => {
   const events = normalizeFile(fixture(HEADER + [
     "Entering Tele-Arena...",

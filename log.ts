@@ -395,8 +395,9 @@ const RULES: Rule[] = [
 ];
 
 // Commands we send or type. Recognized so a command echo is never mistaken for
-// game text — and so `origin` can tell a scripted swing from a hand-typed one,
-// which is exactly the distinction that explains a death after the fact.
+// game text — and so `origin` can tell a scripted swing from a hand-typed one
+// in a log old enough to allow it (see SCRIPT_SENDS_PROMPTED_FROM), which is
+// exactly the distinction that explains a death after the fact.
 const RE_COMMAND = new RegExp(
   "^(?:" + [
     "[nsew]|[ns][ew]|u|d|up|down",           // movement
@@ -413,6 +414,15 @@ const RE_COMMAND = new RegExp(
     "[a-z][a-z0-9]{1,19}",
   ].join("|") + ")$"
 );
+
+// When baud started logging a script's send() as "> cmd", the same prompt typed
+// input gets (baud e46e03d, 2026-08-13 18:30 EDT). Before it, a command echoed
+// with no "> " line was the script's, which is what `origin` reads. From it on,
+// both look alike, so `origin` is "unknown" rather than a confident guess: the
+// script's own `a flame` and `ring gong` were read as "user" in
+// session-pollux-2026-10-10T23-28-55.log. Aliases ("$ cmd") only exist in logs
+// after this, and runCommand logs them too, so theirs is always "unknown".
+const SCRIPT_SENDS_PROMPTED_FROM = Date.parse("2026-08-13T22:30:29Z");
 
 // Speech the arena script says out loud. Short, capitalized, no game punctuation
 // — indistinguishable from prose by shape alone, so list them.
@@ -481,6 +491,9 @@ function normalizeFile(path: string): Event[] {
 
   const header = text.match(/^# baud text log - started (\S+)/);
   const headerMs = header ? Date.parse(header[1]) : NaN;
+  // Whether `> ` still means "typed by hand" in this log. See
+  // SCRIPT_SENDS_PROMPTED_FROM; a log with no header is not trusted either.
+  const originKnown = !Number.isNaN(headerMs) && headerMs < SCRIPT_SENDS_PROMPTED_FROM;
 
   // First pass: find an in-band clock so the UTC header can be localized.
   let firstLocal: string | null = null;
@@ -642,17 +655,21 @@ function normalizeFile(path: string): Event[] {
     const aliasLine = text.match(/^\$\s?(.*)$/);
     if (aliasLine) {
       const cmd = aliasLine[1].trim();
-      events.push({ ...at(), kind: "alias", text: trimmed, command: cmd, origin: "user" });
+      events.push({ ...at(), kind: "alias", text: trimmed, command: cmd, origin: "unknown" });
       return;
     }
 
-    // — a command typed by hand: baud echoes it locally with a prompt, which is
-    //   the only thing that distinguishes it from a command the script sent.
+    // — a command baud sent, logged with a prompt. In a log from before
+    //   SCRIPT_SENDS_PROMPTED_FROM only typed input got one, so it was typed by
+    //   hand; after it, the script's own sends look exactly the same.
     const prompt = text.match(/^>\s?(.*)$/);
     if (prompt) {
       const cmd = prompt[1].trim();
       if (cmd !== "") typed.push(cmd);
-      events.push({ ...at(), kind: "input", text: trimmed, command: cmd, origin: "user" });
+      events.push({
+        ...at(), kind: "input", text: trimmed, command: cmd,
+        origin: originKnown ? "user" : "unknown",
+      });
       return;
     }
 
@@ -673,7 +690,7 @@ function normalizeFile(path: string): Event[] {
       if (idx >= 0) typed.splice(idx, 1);
       events.push({
         ...at(), kind: "sent", text: trimmed, command: trimmed,
-        origin: idx >= 0 ? "user" : "script",
+        origin: !originKnown ? "unknown" : idx >= 0 ? "user" : "script",
       });
       return;
     }
