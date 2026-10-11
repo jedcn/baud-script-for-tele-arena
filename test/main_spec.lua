@@ -7904,6 +7904,44 @@ describe("ring-gong-and-fight-in-arena", function()
 
         end)
 
+        -- Leaving the game ends the session, however the "x" was sent. A hand
+        -- typed one during a flee left the game in
+        -- session-pollux-2026-10-10T23-28-55.log with the session still live:
+        -- the walk's next step went to the BBS menu ("S" is not in the above
+        -- list), and the XP poll sent `status` there 60 times over five hours.
+        describe("leaving the game mid-session", function()
+
+            it("stops the session when the game says we left", function()
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exiting Tele-Arena...")
+                assert.is_nil(taPackage.arenaState)
+            end)
+
+            it("sends nothing more once out of the game mid-walk", function()
+                helper.simulateLine("You're in the arena.")
+                setHP(273, 440)
+                helper.simulateAlias("tfia 3")
+                assert.are.equal("fleeing", taPackage.arenaState)
+                helper.simulateLine("Exiting Tele-Arena...")
+                local before = #helper.sendCalls
+                helper.simulateLine("You're in an underground plaza.")
+                helper.fireTimers()
+                helper.fireTimers()
+                assert.are.equal(before, #helper.sendCalls)
+            end)
+
+            it("says why it stopped", function()
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exiting Tele-Arena...")
+                local said = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "Left the game", 1, true) then said = true end
+                end
+                assert.is_true(said)
+            end)
+
+        end)
+
     end)
 
     describe("stop alias", function()

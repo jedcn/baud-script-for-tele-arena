@@ -5489,9 +5489,19 @@ taPackage.arenaEmergencyExit = arenaEmergencyExit
 -- The game acknowledges a successful "x" with this line before dropping to the
 -- BBS "<< hit return >>" prompt — the character is out of the game and safe from
 -- damage. Clear the pending flag so exitGameWithRetry's retry loop stops.
+--
+-- And end any arena session still running: out of the game, its walk and its
+-- timers can only talk to the BBS menu. Every scripted exit stops the session
+-- first, so this is for an "x" nobody planned on -- one typed during a flee in
+-- session-pollux-2026-10-10T23-28-55.log left the walk's next step and five
+-- hours of `status` polls going to the menu.
 createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     taPackage.exitGamePending = false
     taPackage.inGame = false
+    if taPackage.arenaState then
+        echo("[arena] Left the game — stopping the arena session.")
+        stopArena()
+    end
 end, { type = "regex" })
 
 -- The BBS main menu means we are not in the game, however we got here. The
