@@ -634,6 +634,44 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(after, #helper.sendCalls)
         end)
 
+        -- At the BBS menu "x" is the BBS's log-off, which asks "Are you sure
+        -- (Y/N, or R to re-logon)?"; the next "x" is not an answer, so the menu
+        -- comes back, and the retry -- waiting for an "Exiting Tele-Arena..."
+        -- that cannot come -- sent "x" about 340 times in
+        -- session-pollux-2026-10-10T23-28-55.log. Out of the game there is
+        -- nothing to save, so send nothing.
+        it("sends no x when already out of the game", function()
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.simulateLine(WARNING)
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.is_false(tableContains(helper.sendCalls, "x"))
+        end)
+
+        it("says it is already out of the game", function()
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.simulateLine(WARNING)
+            local said = false
+            for _, text in ipairs(helper.echoCalls) do
+                if text and text:find("already out of the game", 1, true) then said = true end
+            end
+            assert.is_true(said)
+        end)
+
+        -- The exit line can be missed (a broadcast glued in front of it, a
+        -- dropped connection); reaching the BBS menu proves we are out just
+        -- the same.
+        it("stops retrying at the BBS menu even without the exit line", function()
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine(WARNING)
+            assert.is_true(tableContains(helper.sendCalls, "x"))
+            helper.simulateLine("Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X to exit):")
+            local after = #helper.sendCalls
+            helper.fireTimers(2000)
+            helper.fireTimers(2000)
+            assert.are.equal(after, #helper.sendCalls)
+        end)
+
     end)
 
     -- A character nobody is driving prints nothing but thirst ticks. Three in a

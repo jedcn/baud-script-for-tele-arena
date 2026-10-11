@@ -5413,6 +5413,15 @@ local function exitGameWithRetry(firstDelayMs)
     taPackage.exitGamePending = true
     local function tryExit()
         if not taPackage.exitGamePending or taPackage.exitGameGen ~= gen then return end
+        -- Known to be out of the game already (the exit line, or the BBS menu,
+        -- said so): nothing left to save, and at the menu "x" is the BBS's own
+        -- log-off, whose "Are you sure (Y/N...)?" the next "x" does not answer.
+        -- Re-sending it there looped ~340 times in
+        -- session-pollux-2026-10-10T23-28-55.log. Unknown (nil) still sends.
+        if taPackage.inGame == false then
+            taPackage.exitGamePending = false
+            return
+        end
         send("x")
         createTimer(2000, tryExit, { repeating = false })
     end
@@ -5459,8 +5468,13 @@ taPackage.exitGameWithRetry = exitGameWithRetry
 createTrigger("^Sorry to interrupt here, but the BBS will be shutting$", function()
     if taPackage.shutdownExitSent then return end
     taPackage.shutdownExitSent = true
-    echo("[shutdown] BBS closing for nightly maintenance — stopping everything"
-        .. " and leaving the game (x) so the character is saved.")
+    if taPackage.inGame == false then
+        echo("[shutdown] BBS closing for nightly maintenance — stopping everything;"
+            .. " already out of the game, so nothing to save.")
+    else
+        echo("[shutdown] BBS closing for nightly maintenance — stopping everything"
+            .. " and leaving the game (x) so the character is saved.")
+    end
     sendNtfy("Nightly shutdown",
         "The BBS is closing. Scripts stopped and " ..
         (taPackage.character.name or "the character") .. " is leaving the game"
