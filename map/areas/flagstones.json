@@ -1208,7 +1208,7 @@
       },
       "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the northeast and southwest.",
       "layout": {
-        "x": -1,
+        "x": 99,
         "y": -2
       }
     },
@@ -1225,7 +1225,7 @@
       },
       "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the west and northeast.",
       "layout": {
-        "x": -2,
+        "x": 98,
         "y": -3
       }
     },
@@ -1240,9 +1240,9 @@
           "to": "flagstones/flagstone-corridor-68"
         }
       },
-      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the east and northwest.",
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the east and northwest. You're in a flagstone corridor.",
       "layout": {
-        "x": -3,
+        "x": 97,
         "y": -3
       }
     },
@@ -1257,7 +1257,11 @@
           "to": "flagstones/flagstone-corridor-67"
         }
       },
-      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the northwest and southeast."
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the northwest and southeast.",
+      "layout": {
+        "x": -1,
+        "y": 1
+      }
     },
     {
       "id": "flagstones/flagstone-corridor-69",
@@ -1355,7 +1359,7 @@
           "to": "flagstones/flagstone-corridor-74"
         }
       },
-      "description": "You are standing in an enormous stone chamber, fitted with reddish brown flagstones, unlike the dull grey stones in the outer corridors. The room is octagonal in shape, and huge smouldering censers burn in the corners. The only visible exit is northeast through an ornate stone archway.",
+      "description": "You are standing in an enormous stone chamber, fitted with reddish brown flagstones, unlike the dull grey stones in the outer corridors. The room is octagonal in shape, and huge smouldering censers burn in the corners. The only visible exit is northeast through an ornate stone archway. a ice a ice a ice You found 29 gold crowns while searching the area. a ice You're in an enormous chamber. a ice a ice a ice a ice a ice a ice a ice You found 28 gold crowns while searching the area. a ice You're in an enormous chamber. gr Your group currently consists of: Pelayo                         (L) [HE: 91% ST:Resting]",
       "layout": {
         "x": -4,
         "y": -1
@@ -1369,7 +1373,7 @@
           "to": "flagstones/enormous-chamber-8"
         },
         "se": {
-          "to": null
+          "to": "flagstones/flagstone-corridor-76"
         },
         "sw": {
           "to": "flagstones/flagstone-corridor-75"
@@ -1395,6 +1399,40 @@
       "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the northwest and northeast.",
       "layout": {
         "x": -5,
+        "y": -3
+      }
+    },
+    {
+      "id": "flagstones/flagstone-corridor-76",
+      "name": "flagstone corridor",
+      "exits": {
+        "e": {
+          "to": "flagstones/flagstone-corridor-77"
+        },
+        "nw": {
+          "to": "flagstones/flagstone-corridor-74"
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the east and northwest.",
+      "layout": {
+        "x": -3,
+        "y": -3
+      }
+    },
+    {
+      "id": "flagstones/flagstone-corridor-77",
+      "name": "flagstone corridor",
+      "exits": {
+        "ne": {
+          "to": null
+        },
+        "w": {
+          "to": "flagstones/flagstone-corridor-76"
+        }
+      },
+      "description": "You are standing in a well kept flagstone corridor. The stonework here is of the finest quality, and certain of the stones are engraved with a luniform design. The corridor runs to the west and northeast.",
+      "layout": {
+        "x": -2,
         "y": -3
       }
     }
