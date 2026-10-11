@@ -4199,6 +4199,21 @@ local ARENA_NAV = {
         fromBar      = { "se", "ne" },
         toTraining   = { "sw", "se", "ne", "n" },
         fromTraining = { "s", "sw", "nw", "ne" },
+        -- Routes home from the town's in-between rooms, for a session started
+        -- out there (taPackage.arenaWalkHomeFirst). The errand rooms need none
+        -- of their own: their from* legs above already lead home. The four
+        -- plazas share one name, so they are told apart by `ex`, whose exit
+        -- sets all differ. Read off the mapped graph (underground-plaza..-3).
+        homeFrom = {
+            ["town square"] = { "nw", "ne" },
+            ["underground plaza"] = {
+                byExits = true,
+                ["ne,nw,se"]    = { "ne" },              -- beside the arena
+                ["ne,nw,se,sw"] = { "ne", "nw", "ne" },  -- the armor/weapon shops'
+                ["e,n,sw"]      = { "sw", "nw", "ne" },  -- the temple's and hall's
+                ["nw,se"]       = { "nw", "nw", "ne" },  -- the magic shop's
+            },
+        },
     },
 }
 
@@ -5017,6 +5032,71 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     end
 end, { type = "regex" })
 
+-- A session started outside the arena walks home before anything else. Every
+-- route the loop knows sets out from the arena, so starting anywhere else rang
+-- the gong in a plaza, or (starting hurt) sent the temple route's "sw" from a
+-- room with no sw and left the game -- nine keep-going reconnects in a row from
+-- session-pollux-2026-10-11T08-03-19.log on, pollux saved one step from home.
+--
+-- arenaLastRoom is the last room brief seen, which at a TA_INIT_CMD start is
+-- the entry brief. Unknown (nil) is treated as the arena, as it always was.
+-- The walk home is an ordinary "returning" leg, so arriving runs
+-- arenaArrivedHome: hurt goes to the temple, a level owed goes to the hall.
+-- Returns true if it has taken over the start (walking, probing or stopped).
+function taPackage.arenaWalkHomeFirst()
+    local nav = arenaNav()
+    local room = taPackage.arenaLastRoom
+    if not room or room == nav.arenaRoom then return false end
+    local route
+    if room == nav.templeRoom then route = nav.fromTemple
+    elseif room == nav.barRoom then route = nav.fromBar
+    elseif room == nav.trainingRoom then route = nav.fromTraining
+    elseif room == SHOP_ROOM then route = ARENA_SHOP[taPackage.arenaProfile].from
+    else route = nav.homeFrom and nav.homeFrom[room] end
+    if route and route.byExits then
+        -- The answer lands in the "Exits:" trigger below.
+        taPackage.arenaLocatePending = { room = room, routes = route }
+        send("ex")
+        return true
+    end
+    if not route then
+        taPackage.arenaNoRouteHome(room)
+        return true
+    end
+    taPackage.arenaState = "returning"
+    arenaJourneyStart(route, nav.arenaRoom, room)
+    return true
+end
+
+function taPackage.arenaNoRouteHome(room)
+    echo("[arena] Not in the arena (in the " .. room .. ") and no route home from"
+        .. " there — walk to the arena and start again.")
+    sendNtfy("Arena not started", (taPackage.character.name or "?")
+        .. " is in the " .. room .. ", not the arena, and has no route home.")
+    taPackage.stopArena()
+end
+
+-- The `ex` arenaWalkHomeFirst asked for. Plazas share a name, so the exit set
+-- picks the route; sorted, so the key does not depend on the game's order.
+-- No `fromRoom` on this leg: the walk passes through other plazas, and those
+-- arrivals must count as steps rather than be ignored as the room we left.
+createTrigger("^Exits: (.+)\\.$", function(matches)
+    local pending = taPackage.arenaLocatePending
+    if not pending then return end
+    taPackage.arenaLocatePending = nil
+    if not taPackage.arenaState then return end
+    local dirs = {}
+    for dir in matches[2]:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
+    table.sort(dirs)
+    local route = pending.routes[table.concat(dirs, ",")]
+    if not route then
+        taPackage.arenaNoRouteHome(pending.room .. " with exits " .. matches[2])
+        return
+    end
+    taPackage.arenaState = "returning"
+    arenaJourneyStart(route, arenaNav().arenaRoom, nil)
+end, { type = "regex" })
+
 -- Start an arena session. profile "1" is the original adjacent-rooms arena;
 -- profiles "2" and "3" share this combat engine but walk their distant
 -- temple/bar/shop one paced step at a time (see ARENA_NAV). Arena 3 also has a
@@ -5080,6 +5160,8 @@ local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
         .. debugSuffix .. ". XP: " .. startXpStr)
     scheduleArenaXpCheck()
     arenaSolo.arm()
+    taPackage.arenaLocatePending = nil
+    if taPackage.arenaWalkHomeFirst() then return end
     -- Starting hurt: walk out before doing anything else, exactly as
     -- arenaArrivedHome does. A session usually starts from a standing start in
     -- an empty arena, but not always -- the case this exists for is a character
@@ -5246,6 +5328,7 @@ local function stopArena()
     taPackage.arenaProbePending = nil
     taPackage.arenaProfile = nil
     taPackage.arenaJourney = nil
+    taPackage.arenaLocatePending = nil
     taPackage.arenaTeam = nil
     taPackage.arenaTeamRoster = nil
     taPackage.arenaTeamSlot = nil
@@ -6057,11 +6140,14 @@ createTrigger("^You barely dodge the .+'s attack!$", function()
 end, { type = "regex" })
 
 -- Every arena leg is a paced journey now, so a room line means one thing: a
--- step of the walk in progress. The room-name navigation that used to sit here
+-- step of the walk in progress. These four also remember the room the brief
+-- named (arenaLastRoom), journey or not, so a session started anywhere knows
+-- where it is standing (taPackage.arenaWalkHomeFirst). The room-name navigation that used to sit here
 -- -- react to a named waypoint, send the next direction at once -- is gone with
 -- the first arena's step lists, and with it the two faults it carried: no
 -- pacing, and no trip recovery. A room line with no journey running is a no-op.
 createTrigger("^You're in the (.+)\\.$", function(matches)
+    taPackage.arenaLastRoom = matches[2]
     if not taPackage.arenaJourney then return end
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
@@ -6070,6 +6156,7 @@ end, { type = "regex" })
 -- trigger above never matches. Feed them to the walk handler too so every step
 -- advances. Only meaningful mid-journey; otherwise a no-op.
 createTrigger("^You're on a (.+)\\.$", function(matches)
+    taPackage.arenaLastRoom = matches[2]
     if not taPackage.arenaJourney then return end
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
@@ -6078,6 +6165,7 @@ end, { type = "regex" })
 -- brief as "You're on the docks." -- "the", which the "on a" trigger above
 -- doesn't match. Without this the walk stalls on the near shore.
 createTrigger("^You're on the (.+)\\.$", function(matches)
+    taPackage.arenaLastRoom = matches[2]
     if not taPackage.arenaJourney then return end
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
@@ -6092,6 +6180,7 @@ end, { type = "regex" })
 -- them to the walk handler too; inert unless a paced journey is active, so the
 -- first arena's name-based navigation is untouched.
 createTrigger("^You're in an? (.+)\\.$", function(matches)
+    taPackage.arenaLastRoom = matches[2]
     if not taPackage.arenaJourney then return end
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })

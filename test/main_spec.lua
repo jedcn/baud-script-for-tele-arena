@@ -7783,6 +7783,127 @@ describe("ring-gong-and-fight-in-arena", function()
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
+        -- Starting somewhere other than the arena. Every route assumes it
+        -- sets out from the arena, so a session started anywhere else rang
+        -- the gong in a plaza ("not an appropriate command") or, starting
+        -- hurt, sent the temple route's first "sw" from a room with no sw,
+        -- and left the game. That was nine keep-going reconnects in a row in
+        -- session-pollux-2026-10-11T08-03-19.log and the eight logs after it:
+        -- pollux had been saved in the plaza beside the arena.
+        describe("starting outside the arena", function()
+
+            local function sent(cmd)
+                for _, s in ipairs(helper.sendCalls) do
+                    if s == cmd then return true end
+                end
+                return false
+            end
+
+            it("asks for the exits rather than ringing in a plaza", function()
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                assert.is_true(sent("ex"))
+                assert.is_false(sent("ring gong"))
+                assert.is_false(sent("sw"))
+            end)
+
+            it("walks home from the plaza beside the arena", function()
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exits: ne,nw,se.")
+                assert.are.equal("ne", helper.sendCalls[#helper.sendCalls])
+                assert.are.equal("returning", taPackage.arenaState)
+            end)
+
+            it("starts fighting once it is home", function()
+                setHP(440, 440)
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exits: ne,nw,se.")
+                helper.simulateLine("You're in the arena.")
+                assert.are.equal("ringing", taPackage.arenaState)
+                assert.is_true(taPackage.arenaProbePending)
+            end)
+
+            -- The pollux case exactly: saved hurt beside the arena. Home first,
+            -- then the ordinary temple trip from the room every route knows.
+            it("walks home before going to the temple when it starts hurt", function()
+                setHP(273, 440)
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                assert.is_false(sent("sw"))
+                helper.simulateLine("Exits: ne,nw,se.")
+                helper.simulateLine("You're in the arena.")
+                assert.are.equal("fleeing", taPackage.arenaState)
+                assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            -- Through the town square and a second plaza: the plaza arrival on
+            -- the way must count as a step, not be ignored as the room we left.
+            it("walks home from the temple's plaza through the town square", function()
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exits: e,n,sw.")
+                assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+                helper.simulateLine("You're in the town square.")
+                helper.fireTimers()
+                assert.are.equal("nw", helper.sendCalls[#helper.sendCalls])
+                helper.simulateLine("You're in an underground plaza.")
+                helper.fireTimers()
+                assert.are.equal("ne", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            it("walks home from the temple on the temple's own route", function()
+                helper.simulateLine("You're in the temple.")
+                helper.simulateAlias("tfia 3")
+                assert.is_false(sent("ex"))
+                assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+                assert.are.equal("returning", taPackage.arenaState)
+            end)
+
+            it("walks home from the magic shop on the shop's route", function()
+                helper.simulateLine("You're in the magic shop.")
+                helper.simulateAlias("tfia 3")
+                assert.are.equal("nw", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            it("stops and says so when it has no route home", function()
+                helper.simulateLine("You're in a stonework corridor.")
+                helper.simulateAlias("tfia 3")
+                assert.is_nil(taPackage.arenaState)
+                assert.is_false(sent("ring gong"))
+                local said = false
+                for _, msg in ipairs(helper.echoCalls) do
+                    if string.find(msg, "stonework corridor", 1, true) then said = true end
+                end
+                assert.is_true(said)
+            end)
+
+            it("stops when the plaza's exits match none it knows", function()
+                helper.simulateLine("You're in an underground plaza.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exits: n,s.")
+                assert.is_nil(taPackage.arenaState)
+            end)
+
+            -- A plain `ex` later in the run is not a location probe.
+            it("ignores exits it did not ask for", function()
+                helper.simulateLine("You're in the arena.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("Exits: ne,nw,se.")
+                assert.are.equal("ringing", taPackage.arenaState)
+                assert.is_false(sent("ne"))
+            end)
+
+            it("scans the room as usual when it starts in the arena", function()
+                helper.simulateLine("You're in the arena.")
+                helper.simulateAlias("tfia 3")
+                assert.are.equal("ringing", taPackage.arenaState)
+                assert.is_true(taPackage.arenaProbePending)
+            end)
+
+        end)
+
     end)
 
     describe("stop alias", function()
