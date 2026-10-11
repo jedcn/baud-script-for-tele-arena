@@ -508,6 +508,9 @@ svg.level { display: block; width: 100%; height: auto; touch-action: none; }
 .box { cursor: grab; }
 .box.dragging { cursor: grabbing; }
 .box.dragging rect { stroke: var(--blue); stroke-width: 2.5px; }
+.box.grouped rect { stroke: var(--amber); stroke-width: 2px; }
+.marquee { fill: rgba(88,166,255,0.08); stroke: var(--blue); stroke-width: 1px;
+  stroke-dasharray: 4 3; pointer-events: none; }
 button.ghost { background: var(--raised); color: var(--muted); border: 1px solid var(--border);
   border-radius: 5px; padding: 0.35rem 0.7rem; font: inherit; font-size: 0.78rem; cursor: pointer; }
 button.ghost:hover { color: var(--text); border-color: var(--blue); }
@@ -697,6 +700,7 @@ function show(slug) {
     + (s.teleports ? ' · <b>' + s.teleports + '</b> teleports' : '');
   if (location.hash.slice(1) !== slug) history.replaceState(null, '', '#' + slug);
   shown = slug;
+  setGroup([]);
   index();
   loadSaved(slug);
   for (var id in pos) if (levelOf(id) === slug) place(id);
@@ -749,7 +753,7 @@ levelSel.addEventListener('change', function () { show(levelSel.value); });
 //
 // Pointer movement is in CSS pixels and the SVG is scaled to its pane, so every
 // delta is converted through the viewBox before it moves anything.
-var drag = null;
+var drag = null, marquee = null, group = [];
 var CLICK_SLOP = 4;                   // px of travel still counted as a click
 
 function userScale(svg) {
@@ -761,11 +765,74 @@ function userScale(svg) {
 
 function closestOf(el, sel) { return el && el.closest ? el.closest(sel) : null; }
 
+// A group is the rooms a rectangle drawn over empty space caught. Dragging any
+// one of them moves them all, so a whole wing can be pulled clear of another
+// without being rebuilt a room at a time.
+function setGroup(ids) {
+  group.forEach(function (id) {
+    (ownEls[id] || []).forEach(function (el) { el.classList.remove('grouped'); });
+  });
+  group = ids;
+  group.forEach(function (id) {
+    (ownEls[id] || []).forEach(function (el) { el.classList.add('grouped'); });
+  });
+}
+
+/**
+ * Move every room in 'ids' by the same (dx, dy). The step is shrunk until the
+ * whole set fits inside the level, rather than each room being clamped on its
+ * own -- that would flatten the group against the edge and lose its shape.
+ */
+function moveRooms(ids, dx, dy) {
+  ids.forEach(function (id) {
+    var p = pos[id], q = inside(id, [p[0] + dx, p[1] + dy]);
+    dx = q[0] - p[0]; dy = q[1] - p[1];
+  });
+  ids.forEach(function (id) {
+    pos[id] = [pos[id][0] + dx, pos[id][1] + dy];
+    place(id);
+  });
+}
+
+/** Where a pointer is, in the user units of 'svg'. Every level's viewBox starts at 0 0. */
+function svgPoint(svg, e, k) {
+  var r = svg.getBoundingClientRect();
+  return [(e.clientX - r.left) * k, (e.clientY - r.top) * k];
+}
+
+function drawMarquee() {
+  var a = marquee.from, b = marquee.to;
+  marquee.el.setAttribute('x', Math.min(a[0], b[0]));
+  marquee.el.setAttribute('y', Math.min(a[1], b[1]));
+  marquee.el.setAttribute('width', Math.abs(b[0] - a[0]));
+  marquee.el.setAttribute('height', Math.abs(b[1] - a[1]));
+}
+
 document.addEventListener('pointerdown', function (e) {
   var box = closestOf(e.target, '.box');
-  if (!box) return;
+  if (!box) {
+    // Only a level's own drawing: the legend's swatches are SVGs too.
+    var level = closestOf(e.target, '.level');
+    if (!level || !shown) return;
+    var k = userScale(level), at = svgPoint(level, e, k);
+    var el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    el.setAttribute('class', 'marquee');
+    level.appendChild(el);
+    marquee = { svg: level, el: el, k: k, from: at, to: at, travelled: 0 };
+    drawMarquee();
+    if (level.setPointerCapture && e.pointerId != null) {
+      try { level.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+    if (e.preventDefault) e.preventDefault();
+    return;
+  }
   var svg = closestOf(box, 'svg');
-  drag = { id: box.getAttribute('data-id'), box: box, travelled: 0,
+  var id = box.getAttribute('data-id');
+  // Pressing a room outside the group lets the group go: the press is about
+  // that room alone.
+  if (group.indexOf(id) < 0) setGroup([]);
+  drag = { id: id, box: box, travelled: 0,
+           ids: group.length ? group.slice() : [id],
            k: svg ? userScale(svg) : 1, x: e.clientX, y: e.clientY };
   box.classList.add('dragging');
   // Capture, so a fast drag that outruns the box keeps sending us moves.
@@ -776,16 +843,39 @@ document.addEventListener('pointerdown', function (e) {
 });
 
 document.addEventListener('pointermove', function (e) {
+  if (marquee) {
+    var to = svgPoint(marquee.svg, e, marquee.k);
+    marquee.travelled += Math.abs(to[0] - marquee.to[0]) + Math.abs(to[1] - marquee.to[1]);
+    marquee.to = to;
+    drawMarquee();
+    return;
+  }
   if (!drag) return;
   var dx = (e.clientX - drag.x) * drag.k, dy = (e.clientY - drag.y) * drag.k;
   drag.x = e.clientX; drag.y = e.clientY;
   drag.travelled += Math.abs(dx) + Math.abs(dy);
-  var p = pos[drag.id];
-  pos[drag.id] = inside(drag.id, [p[0] + dx, p[1] + dy]);
-  place(drag.id);
+  moveRooms(drag.ids, dx, dy);
 });
 
 document.addEventListener('pointerup', function () {
+  if (marquee) {
+    var m = marquee;
+    marquee = null;
+    if (m.el.remove) m.el.remove();
+    // A press on empty space that went nowhere is a click there: let go of
+    // the group, the way clicking off a selection does anywhere else.
+    if (m.travelled <= CLICK_SLOP * m.k) { setGroup([]); return; }
+    var x0 = Math.min(m.from[0], m.to[0]), x1 = Math.max(m.from[0], m.to[0]),
+        y0 = Math.min(m.from[1], m.to[1]), y1 = Math.max(m.from[1], m.to[1]);
+    var caught = [];
+    for (var id in pos) {
+      if (levelOf(id) !== shown) continue;
+      var p = pos[id];
+      if (p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1) caught.push(id);
+    }
+    setGroup(caught);
+    return;
+  }
   if (!drag) return;
   drag.box.classList.remove('dragging');
   // A press that went nowhere is a click: show the room. Selecting on pointerup
@@ -796,7 +886,7 @@ document.addEventListener('pointerup', function () {
 });
 
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') { select(null); return; }
+  if (e.key === 'Escape') { select(null); setGroup([]); return; }
   var box = closestOf(e.target, '.box');
   if (!box) return;
   var id = box.getAttribute('data-id');
@@ -804,8 +894,7 @@ document.addEventListener('keydown', function (e) {
   var step = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
   if (!step) return;
   var far = e.shiftKey ? 10 : 2;
-  pos[id] = inside(id, [pos[id][0] + step[0] * far, pos[id][1] + step[1] * far]);
-  place(id);
+  moveRooms(group.indexOf(id) < 0 ? [id] : group, step[0] * far, step[1] * far);
   if (shown) save(shown);
   if (e.preventDefault) e.preventDefault();
 });
@@ -916,7 +1005,9 @@ export function buildPage(
   <div class="stats" id="stats"></div>
 </div>
 <div class="hint" style="padding: 0 1.5rem 0.75rem">Drag a room to move it — its exits
-  follow. Arrow keys nudge the room you have selected. Your arrangement is kept in this
+  follow. Drag across empty space to catch several rooms, then drag any one of them to
+  move them together; click empty space or press Esc to let go. Arrow keys nudge the room
+  you have selected, or its group. Your arrangement is kept in this
   browser, per level, until you reset it.</div>
 <main>
 ${panes.join('\n')}

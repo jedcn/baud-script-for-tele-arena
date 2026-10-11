@@ -347,7 +347,7 @@ class El {
   setAttribute(n: string, v: string | number) { this.attrs[n] = String(v); }
   addEventListener(t: string, fn: Function) { (this.listeners[t] ??= []).push(fn); }
   appendChild(k: El) { this.kids.push(k); k.parent = this; return k; }
-  remove() {}
+  remove() { if (this.parent) this.parent.kids = this.parent.kids.filter(k => k !== this); }
   setPointerCapture(id: number) { this.captured = id; }
   getBoundingClientRect() { return { x: 0, y: 0, width: 1000, height: 800, top: 0, left: 0 }; }
   get classList() {
@@ -392,7 +392,7 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
 
   const panes = levelSlugs.map(slug => {
     const pane = new El('div', { 'data-level': slug });
-    pane.appendChild(new El('svg', { viewBox: '0 0 1000 800' }));
+    pane.appendChild(new El('svg', { viewBox: '0 0 1000 800' }, ['level']));
     return pane;
   });
   const svgOf = (slug: string) => panes.find(p => p.attrs['data-level'] === slug)!.kids[0];
@@ -415,6 +415,7 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   const doc: any = {
     getElementById: (id: string) => byId[id] ?? new El('div'),
     createElement: (t: string) => new El(t),
+    createElementNS: (_ns: string, t: string) => new El(t),
     addEventListener(t: string, fn: Function) { (this._l ??= {})[t] = fn; },
     _l: {} as Record<string, Function>,
     querySelectorAll(sel: string) {
@@ -445,9 +446,16 @@ function runPage(html: string, hash = '', seed: Record<string, string> = {}) {
   };
   const boxFor = (slug: string) =>
     boxes.find(b => b.attrs['data-id'].startsWith(slug + '/'))!;
+  /** Press on empty space in a level at (x0, y0), drag to (x1, y1), release. */
+  const sweep = (slug: string, x0: number, y0: number, x1: number, y1: number) => {
+    doc._l.pointerdown({ target: svgOf(slug), clientX: x0, clientY: y0, pointerId: 1,
+                         preventDefault() {} });
+    if (x1 !== x0 || y1 !== y0) doc._l.pointermove({ clientX: x1, clientY: y1 });
+    doc._l.pointerup({});
+  };
 
-  return { doc, area, level, stats, panel, reset, panes, boxes, edges, arrows, store,
-           dragBox, boxFor };
+  return { doc, data, area, level, stats, panel, reset, panes, boxes, edges, arrows, store,
+           dragBox, boxFor, sweep, svgOf };
 }
 
 describe('the "you are here" mark', () => {
@@ -706,5 +714,92 @@ describe('map.html', () => {
                        'seal-mark', 'device-dot', 'trap-dot', 'vbadge']) {
       expect(legend).toContain(`class="${cls}`);
     }
+  });
+});
+
+describe('moving rooms as a group', () => {
+  const areasP = readAreas();
+  const SLUG = 'stoneworks-level-2';
+  const at = (b: El) => b.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+
+  /** A sweep over the top-left of the level's rooms, and who it should catch. */
+  async function setUp() {
+    const page = runPage(buildPage(await areasP), '#' + SLUG);
+    const mine = page.boxes.filter(b => b.attrs['data-id'].startsWith(SLUG + '/'));
+    const xs = mine.map(b => at(b)[0]).sort((a, b) => a - b);
+    const ys = mine.map(b => at(b)[1]).sort((a, b) => a - b);
+    const cx = xs[Math.floor(xs.length / 2)], cy = ys[Math.floor(ys.length / 2)];
+    const isIn = (b: El) => at(b)[0] <= cx && at(b)[1] <= cy;
+    const caught = mine.filter(isIn), missed = mine.filter(b => !isIn(b));
+    expect(caught.length).toBeGreaterThan(1);
+    expect(missed.length).toBeGreaterThan(0);
+    return { ...page, caught, missed, cx, cy };
+  }
+
+  it('catches the rooms a rectangle drawn over empty space covers', async () => {
+    const { sweep, caught, missed, cx, cy, svgOf } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    for (const b of caught) expect(b.classes.has('grouped')).toBe(true);
+    for (const b of missed) expect(b.classes.has('grouped')).toBe(false);
+    // The rectangle itself is gone once the button is let go.
+    expect(svgOf(SLUG).kids.filter(k => k.tag === 'rect')).toHaveLength(0);
+  });
+
+  it('moves every caught room by the same amount when one of them is dragged', async () => {
+    const { sweep, dragBox, caught, missed, cx, cy, store } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    const before = caught.map(at), still = missed.map(at);
+    dragBox(caught[0], 30, 20);
+    caught.forEach((b, i) => {
+      expect(at(b)[0] - before[i][0]).toBeCloseTo(30, 6);
+      expect(at(b)[1] - before[i][1]).toBeCloseTo(20, 6);
+    });
+    expect(missed.map(at)).toEqual(still);
+    // And the whole group is remembered, not just the room under the pointer.
+    const saved = JSON.parse(store['ta-map-layout:' + SLUG]);
+    for (const b of caught) expect(saved[b.attrs['data-id']]).toBeDefined();
+  });
+
+  it('keeps the group in shape when it is pushed against the edge', async () => {
+    // Clamping each room on its own would pile them all up on the border.
+    const { sweep, dragBox, caught, cx, cy } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    const before = caught.map(at);
+    dragBox(caught[0], -5000, -5000);
+    const after = caught.map(at);
+    const dx = after[0][0] - before[0][0], dy = after[0][1] - before[0][1];
+    after.forEach((p, i) => {
+      expect(p[0] - before[i][0]).toBeCloseTo(dx, 6);
+      expect(p[1] - before[i][1]).toBeCloseTo(dy, 6);
+      expect(p[0]).toBeGreaterThanOrEqual(0);
+      expect(p[1]).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it('nudges the whole group with the arrow keys', async () => {
+    const { sweep, doc, caught, cx, cy } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    const before = caught.map(at);
+    doc._l.keydown({ key: 'ArrowDown', target: caught[0], preventDefault() {} });
+    caught.forEach((b, i) => expect(at(b)[1]).toBeCloseTo(before[i][1] + 2, 6));
+  });
+
+  it('lets go of the group on a click in empty space, or on Esc', async () => {
+    const { sweep, doc, caught, cx, cy } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    sweep(SLUG, 5, 5, 5, 5);
+    for (const b of caught) expect(b.classes.has('grouped')).toBe(false);
+    sweep(SLUG, 0, 0, cx, cy);
+    doc._l.keydown({ key: 'Escape', target: {}, preventDefault() {} });
+    for (const b of caught) expect(b.classes.has('grouped')).toBe(false);
+  });
+
+  it('drags a room outside the group on its own, and lets the group go', async () => {
+    const { sweep, dragBox, caught, missed, cx, cy } = await setUp();
+    sweep(SLUG, 0, 0, cx, cy);
+    const before = caught.map(at);
+    dragBox(missed[0], 30, 20);
+    expect(caught.map(at)).toEqual(before);
+    for (const b of caught) expect(b.classes.has('grouped')).toBe(false);
   });
 });
