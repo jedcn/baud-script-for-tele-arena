@@ -332,6 +332,8 @@ class El {
   kids: El[] = [];
   parent: El | null = null;
   captured: number | null = null;
+  /** How wide the element is drawn, in CSS pixels. */
+  shownWidth = 1000;
   listeners: Record<string, Function[]> = {};
   constructor(public tag: string, attrs: Record<string, string> = {}, classes: string[] = []) {
     this.attrs = attrs;
@@ -349,7 +351,10 @@ class El {
   appendChild(k: El) { this.kids.push(k); k.parent = this; return k; }
   remove() { if (this.parent) this.parent.kids = this.parent.kids.filter(k => k !== this); }
   setPointerCapture(id: number) { this.captured = id; }
-  getBoundingClientRect() { return { x: 0, y: 0, width: 1000, height: 800, top: 0, left: 0 }; }
+  getBoundingClientRect() {
+    const h = this.shownWidth * 0.8;
+    return { x: 0, y: 0, width: this.shownWidth, height: h, top: 0, left: 0 };
+  }
   get classList() {
     return {
       add: (c: string) => this.classes.add(c),
@@ -585,6 +590,33 @@ describe('map.html', () => {
     // A drag is not a click, so the panel stays as it was.
     expect(panel.innerHTML).not.toContain(id);
     expect(box.classes.has('dragging')).toBe(false);
+  });
+
+  it('converts pointer pixels through the viewBox when the drawing is scaled down', async () => {
+    // Drawn at half size, a 60px drag is 120 user units. This used to come out
+    // as 60: the viewBox was split on /[s,]+/ -- the template literal the page
+    // script lives in ate the backslash -- so the scale was always 1, drags
+    // lagged the pointer, and a rectangle swept over empty space started short
+    // of where it was pressed.
+    const { dragBox, boxFor, svgOf } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    svgOf('stoneworks-level-2').shownWidth = 500;
+    const box = boxFor('stoneworks-level-2');
+    const [x0, y0] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    dragBox(box, 60, 40);
+    const [x1, y1] = box.attrs['transform'].match(/-?[\d.]+/g)!.map(Number);
+    expect(x1 - x0).toBeCloseTo(120, 6);
+    expect(y1 - y0).toBeCloseTo(80, 6);
+  });
+
+  it('starts a sweep where the pointer is pressed when the drawing is scaled down', async () => {
+    const { doc, svgOf } = runPage(buildPage(await areasP), '#stoneworks-level-2');
+    const svg = svgOf('stoneworks-level-2');
+    svg.shownWidth = 500;
+    doc._l.pointerdown({ target: svg, clientX: 100, clientY: 50, pointerId: 1,
+                         preventDefault() {} });
+    const rect = svg.kids.find(k => k.tag === 'rect')!;
+    expect(Number(rect.attrs['x'])).toBeCloseTo(200, 6);
+    expect(Number(rect.attrs['y'])).toBeCloseTo(100, 6);
   });
 
   it('converts pointer pixels through the viewBox', async () => {

@@ -757,7 +757,7 @@ var drag = null, marquee = null, group = [];
 var CLICK_SLOP = 4;                   // px of travel still counted as a click
 
 function userScale(svg) {
-  var vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/);
+  var vb = (svg.getAttribute('viewBox') || '').split(/[\\s,]+/);
   var box = svg.getBoundingClientRect ? svg.getBoundingClientRect() : null;
   if (!vb[2] || !box || !box.width) return 1;
   return Number(vb[2]) / box.width;
