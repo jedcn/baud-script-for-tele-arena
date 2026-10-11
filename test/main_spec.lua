@@ -7942,6 +7942,42 @@ describe("ring-gong-and-fight-in-arena", function()
 
         end)
 
+        -- The BBS's logon/logoff broadcast has no line break of its own, so a
+        -- room brief that arrives with it is glued on the end:
+        --   Pelayo logs OFF.  [08-OCT-26/22:22:30] Users Online: 2: You're in an underground plaza.
+        -- The room triggers are anchored, so that arrival went uncounted and
+        -- the walk home from the temple stalled after its first step
+        -- (session-pollux-2026-10-10T23-28-55.log).
+        describe("a room brief glued to a broadcast", function()
+
+            local GLUED = "Pelayo logs OFF.  [08-OCT-26/22:22:30] Users Online: 2: "
+
+            it("counts as a step of the walk", function()
+                helper.simulateLine("You're in the temple.")
+                helper.simulateAlias("tfia 3")
+                assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
+                helper.simulateLine(GLUED .. "You're in an underground plaza.")
+                helper.fireTimers()
+                assert.are.equal("sw", helper.sendCalls[#helper.sendCalls])
+            end)
+
+            it("counts the arrival that ends the walk", function()
+                setHP(440, 440)
+                helper.simulateLine("You're in the town square.")
+                helper.simulateAlias("tfia 3")
+                helper.simulateLine("You're in an underground plaza.")
+                helper.fireTimers()
+                helper.simulateLine(GLUED .. "You're in the arena.")
+                assert.are.equal("ringing", taPackage.arenaState)
+            end)
+
+            it("is remembered as where we are standing", function()
+                helper.simulateLine("Tojolias logs ON line 4.  [08-OCT-26/22:22:20] Users Online: 3: You're in the temple.")
+                assert.are.equal("temple", taPackage.arenaLastRoom)
+            end)
+
+        end)
+
         -- Leaving the game ends the session, however the "x" was sent. A hand
         -- typed one during a flee left the game in
         -- session-pollux-2026-10-10T23-28-55.log with the session still live:

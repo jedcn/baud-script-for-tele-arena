@@ -6209,6 +6209,24 @@ createTrigger("^You're in an? (.+)\\.$", function(matches)
     arenaJourneyOnMovement(matches[2])
 end, { type = "regex" })
 
+-- The same briefs, glued to the end of a logon/logoff broadcast, which carries
+-- no line break of its own:
+--
+--     Pelayo logs OFF.  [08-OCT-26/22:22:30] Users Online: 2: You're in an underground plaza.
+--
+-- The anchored triggers above never see that arrival, and the walk home from
+-- the temple stalled on it (session-pollux-2026-10-10T23-28-55.log). Peel the
+-- article off by hand: the four forms above, one trigger.
+createTrigger("Users Online: \\d+: You're (.+)$", function(matches)
+    local rest = matches[2]:gsub("%.$", "")
+    local room = rest:match("^in the (.+)$") or rest:match("^in an? (.+)$")
+        or rest:match("^on the (.+)$") or rest:match("^on an? (.+)$")
+    if not room then return end
+    taPackage.arenaLastRoom = room
+    if not taPackage.arenaJourney then return end
+    arenaJourneyOnMovement(room)
+end, { type = "regex" })
+
 -- Moving between rooms too quickly makes the character trip and fall. No room
 -- line follows, so the step-driven walk above would stall forever waiting to
 -- enter a room it never does. Re-send the current step after a longer pause to
