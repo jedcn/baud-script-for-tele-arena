@@ -575,7 +575,7 @@ function taPackage.onArenaArrivedHome()
         .. " dropping the gear.")
     -- We are done with the arena: stop it before walking, or its own errand
     -- dispatch and ring pump would keep issuing commands underneath us.
-    if taPackage.stopArena then taPackage.stopArena() end
+    if taPackage.stopArena then taPackage.stopArena(nil, { quiet = true }) end
     createWalkStart(CASH_OUT_STEPS, "cash-out",
         "Gear dropped and the suicide sent — waiting for the BBS to start the next one.")
     return true

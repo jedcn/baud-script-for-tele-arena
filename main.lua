@@ -5071,9 +5071,7 @@ end
 function taPackage.arenaNoRouteHome(room)
     echo("[arena] Not in the arena (in the " .. room .. ") and no route home from"
         .. " there — walk to the arena and start again.")
-    sendNtfy("Arena not started", (taPackage.character.name or "?")
-        .. " is in the " .. room .. ", not the arena, and has no route home.")
-    taPackage.stopArena()
+    taPackage.stopArena("Not in the arena (in the " .. room .. ") and no route home")
 end
 
 -- The `ex` arenaWalkHomeFirst asked for. Plazas share a name, so the exit set
@@ -5302,17 +5300,39 @@ for _, teamAliasPattern in ipairs({ "^team-fight-in-arena(.*)$", "^tfia(.*)$" })
     end, { type = "regex" })
 end
 
-local function stopArena()
+-- `reason` says why, for the push below; `opts.quiet` skips the push, for a
+-- caller that stops the arena only to hand over to something that reports for
+-- itself (the gold-farming cash-out).
+local function stopArena(reason, opts)
+    local wasRunning = taPackage.arenaState ~= nil
+    local profile = taPackage.arenaProfile
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
     taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaXpCheckPending = false
     local startXp = taPackage.arenaSessionStartXp
     local currentXp = taPackage.character.experience
     local startTime = taPackage.arenaSessionStartTime
+    local summary
     if startXp and currentXp and startTime then
         local gained = currentXp - startXp
         local minutes = math.floor((os.time() - startTime) / 60)
         echo("[arena] Session over — +" .. gained .. " XP in " .. minutes .. " minutes.")
+        summary = "+" .. formatWithCommas(gained) .. " XP in " .. minutes .. " minutes"
+    end
+    -- Say so off-screen. A run nobody is watching (keep-going on the VPS) can
+    -- end for a dozen reasons, and the overnight pollux run of 2026-10-10
+    -- stopped at 02:24 without a word to anyone.
+    if wasRunning and not (opts and opts.quiet) then
+        local hp, hpMax = getVitality()
+        local gold = getGold()
+        sendNtfy("Arena stopped", table.concat({
+            "[" .. (taPackage.character.name or "?") .. "] arena "
+                .. (profile or "?") .. " session stopped",
+            "- Why: " .. (reason or "stopped"),
+            "- Ran: " .. (summary or "?"),
+            "- HP: " .. (hp or "?") .. (hpMax and (" / " .. hpMax) or ""),
+            "- Gold: " .. (gold and formatWithCommas(gold) or "?"),
+        }, "\n"), true)
     end
     taPackage.arenaSessionStartXp = nil
     taPackage.arenaSessionStartTime = nil
@@ -5390,7 +5410,7 @@ function taPackage.arenaStopIfArmed(reason)
         echo("[create] Gold-farming run disarmed -- resume with"
             .. " continue-farming-gold-from-arena.")
     end
-    stopArena()
+    stopArena("stop-after-next: " .. reason)
     return true
 end
 
@@ -5493,7 +5513,7 @@ end, { type = "regex" })
 -- stale combat timer re-arms, then keep only the exit retry loop alive.
 local function arenaEmergencyExit(reason)
     echo("[arena] " .. reason .. " — leaving the game (x).")
-    stopArena()
+    stopArena(reason)
     exitGameWithRetry()
 end
 -- Published for arenaSolo, which is defined further up the file (it has to be
@@ -5514,7 +5534,7 @@ createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     taPackage.inGame = false
     if taPackage.arenaState then
         echo("[arena] Left the game — stopping the arena session.")
-        stopArena()
+        stopArena("Left the game")
     end
 end, { type = "regex" })
 
@@ -5789,7 +5809,7 @@ end
 -- One stop for every arena: stopArena() clears the profile along with the rest
 -- of the session, so there was never anything per-arena about stopping.
 createAlias("^stop-arena-fight$", function()
-    stopArena()
+    stopArena("stop-arena-fight")
 end, { type = "regex" })
 
 -- The graceful counterpart to stop-arena-fight: finish what is in front of us,
@@ -7478,7 +7498,7 @@ dofile(scriptDir .. "ta_bank.lua")
 -- When you add a new script, add it here too (see CLAUDE.md).
 createAlias("^stop-all-scripts$", function()
     local scripts = {
-        { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = stopArena },
+        { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = function() stopArena("stop-all-scripts") end },
         { name = "heal loop",             running = taPackage.healLoopActive == true, stop = stopHealLoop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         -- Every `running` flag is read when this table is built, before any

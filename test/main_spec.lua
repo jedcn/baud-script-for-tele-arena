@@ -8018,6 +8018,81 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    -- A run nobody is watching (keep-going on the VPS) can end for many
+    -- reasons, and until now most of them were silent: the overnight pollux
+    -- run of 2026-10-10 stopped at 02:24 and nothing said so.
+    describe("notifying when a session stops", function()
+
+        local function stopPushes()
+            local found = {}
+            for _, call in ipairs(helper.httpRequestCalls) do
+                if call.options.headers["X-Title"] == "Arena stopped" then
+                    found[#found + 1] = call
+                end
+            end
+            return found
+        end
+
+        it("pushes once when a running session is stopped by hand", function()
+            helper.simulateAlias("tfia 3")
+            helper.simulateAlias("stop-arena-fight")
+            local pushes = stopPushes()
+            assert.are.equal(1, #pushes)
+            assert.is_truthy(pushes[1].options.body:find("stop-arena-fight", 1, true))
+            assert.is_truthy(pushes[1].options.body:find("arena 3", 1, true))
+        end)
+
+        it("pushes nothing when no session was running", function()
+            helper.simulateAlias("stop-arena-fight")
+            assert.are.equal(0, #stopPushes())
+        end)
+
+        it("says why when navigation is lost", function()
+            helper.simulateLine("You're in the arena.")
+            setHP(273, 440)
+            helper.simulateAlias("tfia 3")
+            helper.simulateLine("Sorry, there's no exit in that direction.")
+            local pushes = stopPushes()
+            assert.are.equal(1, #pushes)
+            assert.is_truthy(pushes[1].options.body:find("Navigation lost", 1, true))
+        end)
+
+        it("says why when the character leaves the game", function()
+            helper.simulateAlias("tfia 3")
+            helper.simulateLine("Exiting Tele-Arena...")
+            local pushes = stopPushes()
+            assert.are.equal(1, #pushes)
+            assert.is_truthy(pushes[1].options.body:find("Left the game", 1, true))
+        end)
+
+        it("says why when stop-all-scripts stops it", function()
+            helper.simulateAlias("tfia 3")
+            helper.simulateAlias("stop-all-scripts")
+            local pushes = stopPushes()
+            assert.are.equal(1, #pushes)
+            assert.is_truthy(pushes[1].options.body:find("stop-all-scripts", 1, true))
+        end)
+
+        -- arenaNoRouteHome used to push its own; one stop, one push.
+        it("pushes once when there is no route home", function()
+            helper.simulateLine("You're in a stonework corridor.")
+            helper.simulateAlias("tfia 3")
+            local pushes = stopPushes()
+            assert.are.equal(1, #pushes)
+            assert.is_truthy(pushes[1].options.body:find("stonework corridor", 1, true))
+            assert.are.equal(1, #helper.httpRequestCalls)
+        end)
+
+        -- The gold-farming cash-out stops the arena only to start its own
+        -- walk; the run is not over, and it reports for itself.
+        it("stays quiet when asked to", function()
+            helper.simulateAlias("tfia 3")
+            taPackage.stopArena(nil, { quiet = true })
+            assert.are.equal(0, #stopPushes())
+        end)
+
+    end)
+
     describe("stop alias", function()
 
         it("clears arenaState", function()
