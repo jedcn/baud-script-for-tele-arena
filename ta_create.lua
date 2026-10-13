@@ -131,23 +131,45 @@ local CREATE_ANSWERS = {
 --   invisible to the training gate and the first level owed would walk to the
 --   hall, be refused, and only self-correct from there. Reporting it costs one
 --   command and skips that bounce.
-local CREATE_STEPS = {
+--
+-- The gear is only there if the last character lived to drop it. A death loses
+-- everything it was wearing, so the gate is empty for the next character, and
+-- the old blind "get robes" walked it into the arena unarmed. So the walk parks
+-- on the gate's own room brief ("sw", await = "gear") and reads the floor line:
+--
+--     There is robes, and a warhammer lying on the floor.
+--
+-- and buys whichever piece is missing on the way, never both by reflex -- it
+-- costs gold the run exists to harvest. If the brief never comes back, the
+-- timeout walks on into the "get" steps, which is what this did before.
+local CREATE_STEPS_TO_GATE = {
     "re-roll-stop",
     "s",
-    "sw",
-    "get robes",
-    "equip robes",
-    "get warhammer",
-    "equip warhammer",
-    "ne",
-    "s",
-    "buy-potions",
-    "n",
-    "n",
-    "e",
-    "rg 1",
-    "arena-potions-drunk",
+    { cmd = "sw", await = "gear" },
 }
+
+-- From the gate to the arena, picking up what is on the floor and buying what
+-- is not. The shops hang off the south plaza ("ne" from the gate): robes one
+-- room west, the warhammer one room east, stat potions one room south. Each
+-- shop is an out-and-back, so the potion detour and the walk north to the arena
+-- are the same whatever was bought.
+local function createGearSteps(haveRobes, haveWarhammer)
+    local steps = {}
+    local function add(...)
+        for _, step in ipairs({ ... }) do steps[#steps + 1] = step end
+    end
+    if haveRobes then add("get robes", "equip robes") end
+    if haveWarhammer then add("get warhammer", "equip warhammer") end
+    add("ne")
+    if not haveRobes then add("w", "buy robes", "equip robes", "e") end
+    if not haveWarhammer then add("e", "buy warhammer", "equip warhammer", "w") end
+    add("s", "buy-potions", "n", "n", "e", "rg 1", "arena-potions-drunk")
+    return steps
+end
+
+local CREATE_STEPS = {}
+for _, step in ipairs(CREATE_STEPS_TO_GATE) do CREATE_STEPS[#CREATE_STEPS + 1] = step end
+for _, step in ipairs(createGearSteps(true, true)) do CREATE_STEPS[#CREATE_STEPS + 1] = step end
 
 -- The other end of the run. `rg 1` fights until the character has earned a
 -- level and banks it at the guild hall -- that whole trip is the arena script's
@@ -664,6 +686,34 @@ createTrigger("^There .+ on the floor\\.$", function()
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })
 
+-- The gate's floor line, read on the creation walk's "gear" await. Anything
+-- missing from it gets bought: the steps still to come are swapped for a list
+-- with the shop detours in it (CREATE_STEPS itself is shared, so it is copied,
+-- never edited).
+createTrigger("^There .+ on the floor\\.$", function(matches)
+    local walk = taPackage.createWalk
+    if not (walk and walk.awaiting == "gear") then return end
+    walk.awaiting = nil
+    local floor = matches[1]
+    local haveRobes = floor:find("robes", 1, true) ~= nil
+    local haveWarhammer = floor:find("warhammer", 1, true) ~= nil
+    if not (haveRobes and haveWarhammer) then
+        local steps = {}
+        for i = 1, walk.index - 1 do steps[i] = walk.steps[i] end
+        for _, step in ipairs(createGearSteps(haveRobes, haveWarhammer)) do
+            steps[#steps + 1] = step
+        end
+        walk.steps = steps
+        local missing = {}
+        if not haveRobes then missing[#missing + 1] = "robes" end
+        if not haveWarhammer then missing[#missing + 1] = "warhammer" end
+        -- echo, not cecho, so a run's gold going on gear shows up in the log.
+        echo("[create] No " .. table.concat(missing, " or ")
+            .. " at the gate — buying on the way to the arena.")
+    end
+    createWalkSchedule(CREATE_STEP_DELAY_MS)
+end, { type = "regex" })
+
 -- The inventory reply the cash-out parks on. Reading the amount from the reply
 -- rather than from our own tracked gold is deliberate: the arena spends on
 -- healing, food and training as it goes, so the tracked figure is only ever as
@@ -940,13 +990,14 @@ local function createWalkRetryStep(why, delay)
     -- belongs to something else. Rewinding here would re-run the step before it
     -- and lose the reply we are waiting on.
     --
-    -- The recipient await is the exception, because what it waits for is a MOVE's
-    -- own room brief: a refused "ne" never arrives in the tavern, so no brief is
-    -- coming and the refusal is unmistakably ours. Left to the timeout the walk
-    -- would `i` in the plaza and reach the give with nobody to give to, which
-    -- stops a run that only needed the step retried.
+    -- The recipient and gear awaits are the exceptions, because what they wait
+    -- for is a MOVE's own room brief: a refused "ne" never arrives in the tavern
+    -- (nor a refused "sw" at the gate), so no brief is coming and the refusal is
+    -- unmistakably ours. Left to the timeout the walk would `i` in the plaza and
+    -- reach the give with nobody to give to, which stops a run that only needed
+    -- the step retried -- or `get robes` in the wrong room.
     if walk.awaiting then
-        if walk.awaiting ~= "recipient" then return end
+        if walk.awaiting ~= "recipient" and walk.awaiting ~= "gear" then return end
         walk.awaiting = nil
         walk.occupants = nil
     end

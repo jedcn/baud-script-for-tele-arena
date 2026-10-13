@@ -6183,11 +6183,18 @@ describe("start-gold-farming", function()
             helper.simulateLine("Vitality:     30 / 30")
         end
 
+        local GEAR_ON_FLOOR = "There is robes, and a warhammer lying on the floor."
+
         -- Run the paced walk to completion. Each pump arms the next timer, so
-        -- fireTimers advances exactly one step per call.
-        local function walkToEnd()
+        -- fireTimers advances exactly one step per call. The walk parks at the
+        -- gate on its room brief; `floor` is the floor line that brief ends
+        -- with, and defaults to the gear the last character staged there.
+        local function walkToEnd(floor)
             for _ = 1, 40 do
                 if not taPackage.createWalk then break end
+                if taPackage.createWalk.awaiting == "gear" then
+                    helper.simulateLine(floor or GEAR_ON_FLOOR)
+                end
                 helper.fireTimers(taPackage.arenaStepDelayMs)
             end
         end
@@ -6206,6 +6213,86 @@ describe("start-gold-farming", function()
                 "rg 1",
                 "arena-potions-drunk",
             }, helper.runCommandCalls)
+        end)
+
+        -- The last character died rather than retiring, so the gear went with it
+        -- and the gate is bare. Buy both on the way, the route the user walked:
+        -- robes one room west of the south plaza, the warhammer one room east.
+        it("buys robes and a warhammer when the gate is bare", function()
+            reachAcceptedRoll()
+            walkToEnd("There is nothing on the floor.")
+            assert.are.same({
+                "re-roll-stop",
+                "s", "sw",
+                "ne",
+                "w", "buy robes", "equip robes", "e",
+                "e", "buy warhammer", "equip warhammer", "w",
+                "s",
+                "buy-potions",
+                "n", "n", "e",
+                "rg 1",
+                "arena-potions-drunk",
+            }, helper.runCommandCalls)
+        end)
+
+        -- Buying costs gold the run exists to harvest, so only what is missing.
+        it("buys only the warhammer when the robes are still there", function()
+            reachAcceptedRoll()
+            walkToEnd("There is robes lying on the floor.")
+            assert.is_true(ranCommand("get robes"))
+            assert.is_false(ranCommand("buy robes"))
+            assert.is_true(ranCommand("buy warhammer"))
+            assert.is_false(ranCommand("get warhammer"))
+        end)
+
+        it("buys only the robes when the warhammer is still there", function()
+            reachAcceptedRoll()
+            walkToEnd("There is a ration of food, and a warhammer lying on the floor.")
+            assert.is_true(ranCommand("buy robes"))
+            assert.is_false(ranCommand("get robes"))
+            assert.is_true(ranCommand("get warhammer"))
+            assert.is_false(ranCommand("buy warhammer"))
+        end)
+
+        it("buys nothing when both are on the floor", function()
+            reachAcceptedRoll()
+            walkToEnd("There is a warhammer, and robes lying on the floor.")
+            assert.is_false(ranCommand("buy robes"))
+            assert.is_false(ranCommand("buy warhammer"))
+        end)
+
+        -- Only the gate's brief decides. The plaza "s" passes through prints a
+        -- bare floor too, and reading that one would buy gear we already have.
+        it("ignores floor lines before it reaches the gate", function()
+            reachAcceptedRoll()
+            helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+            helper.simulateLine("There is nothing on the floor.")
+            walkToEnd()
+            assert.is_false(ranCommand("buy robes"))
+            assert.is_false(ranCommand("buy warhammer"))
+        end)
+
+        -- A refused "sw" never reaches the gate, so its brief is not coming:
+        -- retry the move rather than sit out the timeout and then `get robes`
+        -- in the plaza.
+        it("retries a refused move onto the gate", function()
+            reachAcceptedRoll()
+            helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+            helper.fireTimers(taPackage.arenaStepDelayMs) -- "sw", parked
+            assert.are.equal("gear", taPackage.createWalk.awaiting)
+            helper.simulateLine("In your haste, you trip and fall!")
+            helper.fireTimers(2000)
+            assert.are.equal("sw", helper.runCommandCalls[#helper.runCommandCalls])
+            assert.are.equal("gear", taPackage.createWalk.awaiting)
+        end)
+
+        -- No brief at all: fall back on what the walk always did.
+        it("walks on to the floor pick-up when the gate brief never comes", function()
+            reachAcceptedRoll()
+            helper.fireTimers(taPackage.arenaStepDelayMs) -- "s"
+            helper.fireTimers(taPackage.arenaStepDelayMs) -- "sw", parked
+            helper.fireTimers(10000)
+            assert.are.equal("get robes", helper.runCommandCalls[#helper.runCommandCalls])
         end)
 
         -- Stat potions were tried, dropped, and are now back: they take the hit
