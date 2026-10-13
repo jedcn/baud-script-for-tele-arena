@@ -77,6 +77,20 @@ run label:
     trap 'echo "session log: $log"' EXIT
     TA_CHARACTER={{label}} bun run {{BAUD_HOME}}/src/main.tsx --profile sat5 --script ./main.lua --log-text "$log"
 
+# Farm gold unattended, all day. Every time baud exits -- the BBS dropped the
+# line, or an emergency exit left the character idle until it did -- log back
+# in with farm-for-gold, which picks the run up from wherever the character was
+# left: dead, mid-walk, mid-fight or mid-handover. Each login writes its own
+# session log. Quit baud and then Ctrl-C during the pause to stop.
+keep-farming character:
+    #!/usr/bin/env bash
+    set -u
+    while true; do
+        TA_LOGIN_CMD=farm-for-gold just run {{character}}
+        echo "[keep-farming] baud exited at $(date +%H:%M:%S) — logging back in in 60s (Ctrl-C to stop)"
+        sleep 60
+    done
+
 # Build report.html and open it. The build runs the page's own script against a
 # stub DOM first, so a report that would render a blank map fails here instead
 # of in your browser.
