@@ -541,6 +541,10 @@ end
 -- (accepted, summary), where accepted is true once the roll is good enough to
 -- stop on. Aliases below pick which matcher the Vitality trigger uses.
 local reRollBuilds = {}
+-- Readable from other chunks: farm-for-gold (ta_create.lua) asks the same
+-- question of a character it finds on login -- "is this roll good enough?" --
+-- and has to get the same answer the re-roll stops on.
+taPackage.reRollBuilds = reRollBuilds
 
 -- Elf Sorceror: exact floors on Int/Kno/Sta, combined Phy+Cha deficit <= 5, Agi ignored.
 reRollBuilds.elfSorceror = function(s)
@@ -694,7 +698,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         if not taPackage.createRerollArmed then
             sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
         end
-        -- A scripted run (start-gold-farming) takes it from here: it stops the
+        -- A scripted run (farm-for-gold) takes it from here: it stops the
         -- re-roll itself and walks the new character to the arena. Defined in
         -- ta_create.lua, and a no-op unless that script is the one that started
         -- this re-roll -- a hand-run re-roll still just stops and waits for you,
@@ -713,6 +717,12 @@ end, { type = "regex" })
 
 createTrigger("^Weapon:\\s+(.+)$", function(matches)
     taPackage.character.weapon = matches[2]
+end, { type = "regex" })
+
+-- "Armor:" alone, not "Armor Rating:", which the colon right after the word
+-- keeps out. farm-for-gold reads it to tell whether the robes are on.
+createTrigger("^Armor:\\s+(.+)$", function(matches)
+    taPackage.character.armor = matches[2]
 end, { type = "regex" })
 
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
@@ -5404,11 +5414,10 @@ function taPackage.arenaStopIfArmed(reason)
     -- alone would leave goldFarming set and half the loop live -- the training
     -- confirmation would still arm the cash-out -- so bring its flags down too.
     -- The character is left standing in the arena with its gold and an untrained
-    -- level; continue-farming-gold-from-arena picks the run back up.
+    -- level; farm-for-gold picks the run back up.
     if taPackage.goldFarming and taPackage.stopCreateCharacter then
         taPackage.stopCreateCharacter()
-        echo("[create] Gold-farming run disarmed -- resume with"
-            .. " continue-farming-gold-from-arena.")
+        echo("[create] Gold-farming run disarmed -- resume with farm-for-gold.")
     end
     stopArena("stop-after-next: " .. reason)
     return true
@@ -5762,6 +5771,8 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
     sendNtfy("Character killed",
         (taPackage.character.name or "The character") .. " was killed. All scripts"
         .. " stopped. Equipment and carried gold are lost.")
+    -- Read before the stop below clears it.
+    local farming = taPackage.goldFarming
     -- Reuse the alias rather than reimplementing its teardown, so a script added
     -- later is covered here the moment it is added there.
     if runCommand then
@@ -5769,6 +5780,12 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
     else
         cecho("yellow", "[death] this baud has no runCommand — type stop-all-scripts yourself")
     end
+    -- The one exception. A farming character is disposable: dying costs its
+    -- gear and its takings, and the next one buys new gear on the way out
+    -- (ta_create.lua). So everything it was doing stops as above, but the run
+    -- itself carries on into the next character rather than leaving an
+    -- unattended session sitting at the BBS.
+    if farming and taPackage.onFarmingDeath then taPackage.onFarmingDeath() end
 end, { type = "regex" })
 
 -- The arena loop only stays alive while it can pay the temple for healing and
@@ -5818,9 +5835,8 @@ end, { type = "regex" })
 -- character standing next to a live monster with nothing driving it.
 --
 -- One alias covers every repeating script that rings the gong, because they are
--- all the same loop: `rg` and `tfia` are this engine directly, and both
--- gold-farming entry points (start-farming-gold's walk script, and
--- continue-farming-gold-from-arena) end by running `rg 1`.
+-- all the same loop: `rg` and `tfia` are this engine directly, and every
+-- farm-for-gold walk that ends in a fight ends by running `rg 1`.
 --
 -- There is no cancel by design. stop-arena-fight and stop-all-scripts remain the
 -- escape hatch -- they stop now rather than resuming -- which is said in the
@@ -7923,7 +7939,7 @@ end, { type = "regex" })
 -- TA_LOGIN_CMD runs at the front door instead, right after the username goes
 -- out, so it happens on both paths. That makes it the one that can arm
 -- something which has to be LISTENING before the game exists --
--- TA_LOGIN_CMD="start-gold-farming" is the case it was added for. It is for
+-- TA_LOGIN_CMD="farm-for-gold" is the case it was added for. It is for
 -- arming a script, not for sending text: at the username prompt there is no
 -- game to send a command to.
 --
@@ -8015,6 +8031,11 @@ end
 
 createTrigger("^Username:\\s*$", function()
     taPackage.awaitingUsername = true
+    -- At the front door we are certainly not in the game, whatever a dropped
+    -- connection left this saying. farm-for-gold, run from TA_LOGIN_CMD on the
+    -- next line, reads it to decide between arming the creation prompts and
+    -- sending `st` -- which at this prompt would go out as a password.
+    taPackage.inGame = false
     -- A username prompt means we are at the front door again, whatever
     -- happened before it, so this is where a login starts over.
     taPackage.login.pending = true

@@ -62,7 +62,7 @@ normalize-stats +files:
 # character never enters the game, so it never gets a sheet and TA_INIT_CMD can
 # never fire; picking 5 at the main menu lands it on the resurrect/create menu
 # instead. Making a fresh farming character is the case it exists for:
-#   TA_LOGIN_CMD="start-gold-farming" just run garbageman
+#   TA_LOGIN_CMD="farm-for-gold" just run garbageman
 # Use it to arm a script, not to send text: at the username prompt there is no
 # game to send a command to.
 #

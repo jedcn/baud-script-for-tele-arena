@@ -549,7 +549,7 @@ describe("Tele-Arena triggers", function()
         local LAPSED = "An odd tingling sensation washes over you briefly!"
 
         it("does not head back to the shop", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             taPackage.arenaState = "fighting"
             taPackage.arenaPotionsActive = 2
             helper.simulateLine(LAPSED)
@@ -558,7 +558,7 @@ describe("Tele-Arena triggers", function()
         end)
 
         it("still counts the potion down so training can proceed", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             taPackage.arenaState = "fighting"
             taPackage.arenaPotionsActive = 2
             helper.simulateLine(LAPSED)
@@ -1076,49 +1076,49 @@ describe("Tele-Arena triggers", function()
             assert.is_falsy(taPackage.died)
         end)
 
-        -- The revive line cannot carry this on its own: a suicide prints it too,
-        -- and the gold-farming loop hangs its restart off it.
-        it("stops the farming loop restarting after a death", function()
-            helper.simulateAlias("start-gold-farming")
+        -- A farming character is disposable: the next one buys whatever gear the
+        -- death took (ta_create.lua), so the run goes on rather than leaving an
+        -- unattended session parked at the BBS. Everything the character was
+        -- doing still stops.
+        it("keeps the farming loop going through a death", function()
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(KILLED)
+            assert.is_true(taPackage.goldFarming)
             helper.simulateLine("You awaken after an unknown amount of time...")
-            assert.is_falsy(taPackage.creating)
-            assert.is_nil(taPackage.createRestarting)
+            assert.is_true(taPackage.createRestarting)
         end)
 
-        it("still restarts the farming loop after our own suicide", function()
-            helper.simulateAlias("start-gold-farming")
+        it("still stops what the farming character was doing", function()
+            helper.simulateAlias("farm-for-gold")
+            taPackage.createWalk = { steps = { "s" }, index = 1, label = "create" }
+            helper.simulateLine(KILLED)
+            assert.is_nil(taPackage.createWalk)
+        end)
+
+        it("restarts the farming loop after our own suicide", function()
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("After intense mental preparation, you take your own life!")
             helper.simulateLine("You awaken after an unknown amount of time...")
-            assert.is_true(taPackage.creating)
             assert.is_true(taPackage.createRestarting)
         end)
 
-        -- The soulstone case, which is what made the guard fire on the wrong
-        -- awakenings. A death survived with a soulstone revives at the temple
-        -- and never re-enters the game, so nothing ever clears the flag: read as
-        -- a bare boolean it still said "died" hours later, and the suicide that
-        -- ends the next farming round was refused as a death.
-        it("does not read a stale death as this awakening", function()
+        -- A soulstone revives in the temple, still in the game, where a live
+        -- prompt-answerer would send "1"s and "6"s as commands. So the awakening
+        -- arms only the BBS's own prompts; the Command prompt -- which proves we
+        -- are at the BBS -- turns creation back on.
+        it("does not answer creation prompts until the BBS asks for a command", function()
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(KILLED)
-            -- The death stopped every script; the run is picked back up by hand.
-            helper.simulateAlias("start-gold-farming")
-            helper.advanceMs(60 * 60 * 1000)
-            helper.simulateLine("You awaken after an unknown amount of time...")
-            assert.is_true(taPackage.creating)
-            assert.is_true(taPackage.createRestarting)
-            -- ...and the flag itself is still there for everyone else.
-            assert.is_true(taPackage.died)
-        end)
-
-        -- The line the death's own revive arrives on is a second behind it, so
-        -- the window has to be generous enough to cover a slow BBS.
-        it("still catches the death's own revive a few seconds later", function()
-            helper.simulateAlias("start-gold-farming")
-            helper.simulateLine(KILLED)
-            helper.advanceMs(3000)
             helper.simulateLine("You awaken after an unknown amount of time...")
             assert.is_falsy(taPackage.creating)
+            helper.simulateLine("■ 20:11:28 ■ 15-AUG-26 ■ Command ■ : \27[1D")
+            assert.is_true(taPackage.creating)
+        end)
+
+        it("does not restart a loop that was not farming", function()
+            helper.simulateLine(KILLED)
+            helper.simulateLine("You awaken after an unknown amount of time...")
+            assert.is_falsy(taPackage.goldFarming)
             assert.is_nil(taPackage.createRestarting)
         end)
 
@@ -1137,7 +1137,7 @@ describe("Tele-Arena triggers", function()
 
         -- Read, not consumed: a second reader must still see it.
         it("stays readable for other scripts until re-entry", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(KILLED)
             helper.simulateLine("You awaken after an unknown amount of time...")
             assert.is_true(taPackage.died)
@@ -1314,7 +1314,7 @@ describe("Tele-Arena triggers", function()
         it("stays silent during a gold-farming run", function()
             taPackage.character.class = "Warrior"
             taPackage.character.name = "Garbageman"
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Experience:   792683")  -- seeds earned level 12
             helper.simulateLine("Experience:   815600")  -- crosses to level 13
             assert.are.equal(0, #helper.httpRequestCalls)
@@ -1325,7 +1325,7 @@ describe("Tele-Arena triggers", function()
         it("does not announce a crossing that happened while farming", function()
             taPackage.character.class = "Warrior"
             taPackage.character.name = "Garbageman"
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Experience:   792683")
             helper.simulateLine("Experience:   815600")
             helper.simulateAlias("stop-gold-farming")
@@ -5940,7 +5940,7 @@ end)
 -- The prompt wording throughout is transcribed from a hand-driven creation run,
 -- logs/session-garbageman-2026-08-15T07-30-44.log lines 129-298, trailing
 -- spaces and all.
-describe("start-gold-farming", function()
+describe("farm-for-gold", function()
 
     before_each(function()
         helper.resetAll()
@@ -5973,7 +5973,7 @@ describe("start-gold-farming", function()
     describe("answering the creation prompts", function()
 
         before_each(function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
         end)
 
         it("sends nothing until a prompt arrives", function()
@@ -6044,6 +6044,7 @@ describe("start-gold-farming", function()
         it("stops answering once we are in the game", function()
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             assert.is_false(taPackage.creating)
             local answersBefore = #helper.sendCalls
             helper.simulateLine("<< hit return >>")
@@ -6056,7 +6057,7 @@ describe("start-gold-farming", function()
     describe("handing off to the re-roll", function()
 
         before_each(function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
         end)
 
         -- The entry `st`/`i` replies are still in flight here, and the `st`
@@ -6066,6 +6067,7 @@ describe("start-gold-farming", function()
         it("does not start on 'Entering Tele-Arena...'", function()
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
             assert.is_falsy(taPackage.reRolling)
         end)
@@ -6073,6 +6075,7 @@ describe("start-gold-farming", function()
         it("starts on the inventory reply, once the sheet has landed", function()
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("You are carrying 830 gold crowns.")
             assert.is_true(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
             assert.is_true(taPackage.reRolling)
@@ -6081,6 +6084,7 @@ describe("start-gold-farming", function()
         it("starts it only once", function()
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("You are carrying 830 gold crowns.")
             local runsBefore = #helper.runCommandCalls
             helper.simulateLine("You are carrying 830 gold crowns.")
@@ -6109,7 +6113,7 @@ describe("start-gold-farming", function()
 
         it("TA_LOGIN_CMD arms creation at the username prompt", function()
             loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
-                       TA_LOGIN_CMD = "start-gold-farming" })
+                       TA_LOGIN_CMD = "farm-for-gold" })
             helper.simulateLine("Username:")
             assert.is_true(taPackage.creating)
         end)
@@ -6119,7 +6123,7 @@ describe("start-gold-farming", function()
         -- can be relied on to arm anything.
         it("answers the resurrect menu on the dead-character path", function()
             loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
-                       TA_LOGIN_CMD = "start-gold-farming" })
+                       TA_LOGIN_CMD = "farm-for-gold" })
             helper.simulateLine("Username:")
             helper.simulateLine("Password:")
             helper.simulateLine("Make your selection (1,2,3,...):")
@@ -6133,7 +6137,7 @@ describe("start-gold-farming", function()
 
         it("runs TA_LOGIN_CMD only once per login prompt", function()
             loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
-                       TA_LOGIN_CMD = "start-gold-farming" })
+                       TA_LOGIN_CMD = "farm-for-gold" })
             helper.simulateLine("Username:")
             local runs = #helper.runCommandCalls
             helper.simulateLine("Username:")
@@ -6146,18 +6150,17 @@ describe("start-gold-farming", function()
             assert.is_falsy(taPackage.creating)
         end)
 
-        -- Regression: TA_INIT_CMD fires off the inventory reply, and main.lua's
-        -- gold trigger is registered before ta_create.lua's. Left unguarded,
-        -- re-arming there both stranded prompt-answering in-game and cleared
-        -- the handoff flag the next trigger was about to read, costing the
-        -- re-roll entirely.
-        it("TA_INIT_CMD cannot re-arm creation on top of the re-roll handoff", function()
+        -- TA_INIT_CMD fires off the inventory reply, and main.lua's gold trigger
+        -- is registered before ta_create.lua's. Running farm-for-gold there must
+        -- neither leave prompt-answering live in the game nor lose the re-roll.
+        it("TA_INIT_CMD=farm-for-gold still starts the re-roll, prompts disarmed", function()
             loadWith({ TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
-                       TA_INIT_CMD = "start-gold-farming" })
+                       TA_INIT_CMD = "farm-for-gold" })
             helper.simulateLine("Username:")
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("You are carrying 830 gold crowns.")
             assert.is_false(taPackage.creating)
             assert.is_true(taPackage.reRolling)
@@ -6172,9 +6175,10 @@ describe("start-gold-farming", function()
         -- in it afterwards is a walk step and not the handoff that started the
         -- re-roll in the first place.
         local function reachAcceptedRoll()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("You are carrying 830 gold crowns.")
             for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
             helper.simulateLine("Physique:     29")
@@ -6379,9 +6383,10 @@ describe("start-gold-farming", function()
         end)
 
         it("does not fire on a roll that was rejected", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateLine("You are carrying 830 gold crowns.")
             helper.simulateLine("Physique:     10")
             helper.simulateLine("Stamina:      10")
@@ -6512,7 +6517,7 @@ describe("start-gold-farming", function()
         -- under 50. A character with nothing in its pockets therefore never
         -- reaches our handler at all.
         local function trainDuringGoldFarming()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             taPackage.arenaState = "training"
             setLevel(1)
             setGold(1372)
@@ -6802,7 +6807,7 @@ describe("start-gold-farming", function()
         end)
 
         it("leaves an ordinary arrival home alone", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             assert.is_false(taPackage.onArenaArrivedHome())
         end)
 
@@ -6908,7 +6913,7 @@ describe("start-gold-farming", function()
             -- attack prints when the monster is already dead. Ungated, it would
             -- halt the loop on almost every arena fight.
             it("ignores it outside a cash-out walk", function()
-                helper.simulateAlias("start-gold-farming")
+                helper.simulateAlias("farm-for-gold")
                 taPackage.arenaState = "fighting"
                 assert.has_no.errors(function()
                     helper.simulateLine("Sorry, you don't see \"flame\" nearby.")
@@ -6918,9 +6923,10 @@ describe("start-gold-farming", function()
 
             -- Nor during the gear-up walk, which names no targets.
             it("ignores it during the gear-up walk", function()
-                helper.simulateAlias("start-gold-farming")
+                helper.simulateAlias("farm-for-gold")
                 helper.simulateLine("Select a class: ")
                 helper.simulateLine("Entering Tele-Arena...")
+                helper.simulateLine("You're in the north plaza.")
                 helper.simulateLine("You are carrying 830 gold crowns.")
                 helper.simulateLine("Physique:     29")
                 helper.simulateLine("Stamina:      30")
@@ -6951,21 +6957,33 @@ describe("start-gold-farming", function()
         -- loop sit at the BBS forever with an end-of-line anchor.
         local COMMAND_PROMPT = "■ 20:11:28 ■ 15-AUG-26 ■ Command ■ : \27[1D"
 
-        it("re-arms the creation prompts once the death is confirmed", function()
-            helper.simulateAlias("start-gold-farming")
+        -- Not on the awakening itself: a soulstone wakes in the game, where a
+        -- live prompt-answerer would send "1"s as commands. The Command prompt
+        -- proves we are at the BBS.
+        it("re-arms the creation prompts once the BBS asks for a command", function()
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(AWAKEN)
+            assert.is_falsy(taPackage.creating)
+            helper.simulateLine(COMMAND_PROMPT)
             assert.is_true(taPackage.creating)
         end)
 
+        it("pages past the BBS's << hit return >> on the way out", function()
+            helper.simulateAlias("farm-for-gold")
+            helper.simulateLine(AWAKEN)
+            helper.simulateLine("<< hit return >>")
+            assert.are.same({ "" }, helper.sendCalls)
+        end)
+
         it("answers the BBS command prompt with 5", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(AWAKEN)
             helper.simulateLine(COMMAND_PROMPT)
             assert.are.equal("5", helper.sendCalls[#helper.sendCalls])
         end)
 
         it("then answers the resurrect menu, closing the loop", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(AWAKEN)
             helper.simulateLine(COMMAND_PROMPT)
             helper.simulateLine("Select an option: ")
@@ -6978,7 +6996,7 @@ describe("start-gold-farming", function()
         -- and a spare "5" would sit in its input buffer until the game started
         -- and then arrive in the arena as chat.
         it("answers the command prompt only once", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine(AWAKEN)
             helper.simulateLine(COMMAND_PROMPT)
             local sent = #helper.sendCalls
@@ -7001,117 +7019,205 @@ describe("start-gold-farming", function()
         end)
 
         it("stop-gold-farming ends the loop instead of restarting", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateAlias("stop-gold-farming")
             helper.simulateLine(AWAKEN)
-            assert.is_false(taPackage.creating)
+            assert.is_falsy(taPackage.creating)
             helper.simulateLine(COMMAND_PROMPT)
             assert.are.equal(0, #helper.sendCalls)
         end)
 
     end)
 
-    -- The arena is where a run spends nearly all its time, so it is where a
-    -- dropped connection lands, and the expensive phase to lose.
-    describe("continue-farming-gold-from-arena", function()
+    -- farm-for-gold is run again on every login (TA_LOGIN_CMD), so it meets the
+    -- character wherever a disconnect left it. Each case is the sheet and room
+    -- a login reads, and the walk that should follow from them.
+    describe("picking up where the run left off", function()
 
-        it("arms the loop and starts the arena", function()
-            taPackage.currentRoom = "arena"
-            helper.simulateAlias("continue-farming-gold-from-arena")
-            assert.is_true(taPackage.goldFarming)
-            assert.is_true(ranCommand("rg 1"))
-        end)
+        local GOOD_ROLL = { phy = 29, sta = 30, agi = 16 }
 
-        it("is reachable under the other word order too", function()
-            taPackage.currentRoom = "arena"
-            helper.simulateAlias("continue-gold-farming-from-arena")
-            assert.is_true(ranCommand("rg 1"))
-        end)
+        -- Log in under farm-for-gold and land in the game with this sheet.
+        local function enterWith(o)
+            helper.simulateAlias("farm-for-gold")
+            helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine(o.brief or ("You're in the " .. (o.room or "north plaza") .. "."))
+            helper.simulateLine("Level:        " .. (o.level or 1))
+            helper.simulateLine("Experience:   " .. (o.xp or 0))
+            helper.simulateLine("Physique:     " .. (o.phy or GOOD_ROLL.phy))
+            helper.simulateLine("Stamina:      " .. (o.sta or GOOD_ROLL.sta))
+            helper.simulateLine("Agility:      " .. (o.agi or GOOD_ROLL.agi))
+            helper.simulateLine("Vitality:     33 / 33")
+            helper.simulateLine("Weapon:       " .. (o.weapon or "Warhammer"))
+            helper.simulateLine("Armor:        " .. (o.armor or "Robes"))
+            for k in pairs(helper.runCommandCalls) do helper.runCommandCalls[k] = nil end
+            helper.simulateLine("You are carrying " .. (o.gold or 800) .. " gold crowns.")
+        end
 
-        -- start-/stop- take both word orders for the same reason: the wrong one
-        -- silently doing nothing looks exactly like a script that failed to arm.
-        it("start- and stop- take both word orders too", function()
-            helper.simulateAlias("start-farming-gold")
-            assert.is_true(taPackage.goldFarming)
-            helper.simulateAlias("stop-farming-gold")
-            assert.is_falsy(taPackage.goldFarming)
-            helper.simulateAlias("start-gold-farming")
-            assert.is_true(taPackage.goldFarming)
-            helper.simulateAlias("stop-gold-farming")
-            assert.is_falsy(taPackage.goldFarming)
-        end)
+        -- Run the walk out, answering the gate's brief with the gear on the floor.
+        local function walkAll()
+            for _ = 1, 40 do
+                local walk = taPackage.createWalk
+                if not walk then break end
+                if walk.awaiting == "gear" then
+                    helper.simulateLine("There is robes, and a warhammer lying on the floor.")
+                elseif walk.awaiting then
+                    break
+                end
+                helper.fireTimers(taPackage.arenaStepDelayMs)
+            end
+            return helper.runCommandCalls
+        end
 
-        -- Resuming is only worth anything if the cash-out still fires at the end.
-        it("still cashes out when the level lands", function()
-            taPackage.currentRoom = "arena"
-            helper.simulateAlias("continue-farming-gold-from-arena")
-            taPackage.arenaState = "training"
-            setLevel(1)
-            setGold(1372)
-            helper.simulateLine(
-                "After a rigorous mental and physical training session, you managed to blend")
-            assert.is_true(taPackage.createCashOutArmed)
-        end)
-
-        it("refuses when standing somewhere else", function()
-            taPackage.currentRoom = "tavern"
-            helper.simulateAlias("continue-farming-gold-from-arena")
-            assert.is_false(ranCommand("rg 1"))
-            assert.is_falsy(taPackage.goldFarming)
-        end)
-
-        -- No brief seen since connecting is not an error, just unverifiable.
-        it("proceeds when the room is not known yet", function()
-            helper.simulateAlias("continue-farming-gold-from-arena")
-            assert.is_true(ranCommand("rg 1"))
-        end)
-
-        -- A reload keeps taPackage, so a half-finished walk or an armed cash-out
-        -- from before the drop must not survive into the resumed run.
-        it("clears stale state from the interrupted run", function()
-            taPackage.currentRoom = "arena"
-            taPackage.createWalk = { steps = { "x" }, index = 1, label = "cash-out" }
-            taPackage.createCashOutArmed = true
-            taPackage.createRestarting = true
-            helper.simulateAlias("continue-farming-gold-from-arena")
+        it("re-rolls a character whose roll falls short", function()
+            enterWith({ phy = 20 })
+            assert.is_true(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
             assert.is_nil(taPackage.createWalk)
-            assert.is_nil(taPackage.createCashOutArmed)
-            assert.is_nil(taPackage.createRestarting)
-            assert.is_true(taPackage.goldFarming)
         end)
 
-    end)
+        it("goes for the gear when it is still holding the starting kit", function()
+            enterWith({ weapon = "Dagger", armor = "Cloak" })
+            assert.are.same({
+                "s", "sw",
+                "get robes", "equip robes", "get warhammer", "equip warhammer",
+                "ne", "s", "buy-potions", "n", "n", "e",
+                "rg 1", "arena-potions-drunk",
+            }, walkAll())
+        end)
 
-    -- Entering the game and creating a character are not the same event. A live
-    -- character goes from the main menu straight to "Entering Tele-Arena...",
-    -- with no resurrect menu and none of the creation questions -- which is
-    -- exactly what a reconnect looks like.
-    describe("reconnecting with a live character", function()
+        -- Wherever it is standing: the walk goes by the north plaza.
+        it("reaches the gate from the arena", function()
+            enterWith({ room = "arena", weapon = "Dagger", armor = "Cloak" })
+            local steps = walkAll()
+            assert.are.same({ "w", "s", "sw" }, { steps[1], steps[2], steps[3] })
+        end)
 
-        it("does not re-roll a character it did not create", function()
+        it("fits only the piece it is missing", function()
+            enterWith({ armor = "Cloak" })
+            local steps = walkAll()
+            assert.is_true(ranCommand("get robes"))
+            assert.is_false(ranCommand("get warhammer"))
+            assert.is_false(ranCommand("buy warhammer"))
+            assert.are.equal("arena-potions-drunk", steps[#steps])
+        end)
+
+        it("buys the potions when kitted out but not yet fought", function()
+            enterWith({ room = "temple" })
+            assert.are.same({
+                "e", "s", "s", "buy-potions", "n", "n", "e",
+                "rg 1", "arena-potions-drunk",
+            }, walkAll())
+        end)
+
+        -- Agility over the race's maximum is the potion talking, and the only
+        -- way to know after a reconnect. The arena has to be told, or its first
+        -- level walks to the hall and is refused.
+        it("goes to fight, and reports the potions, when they are already up", function()
+            enterWith({ room = "temple", phy = 35, agi = 28 })
+            assert.are.same({ "e", "e", "rg 1", "arena-potions-drunk" }, walkAll())
+        end)
+
+        -- Boosted stats are not the roll; nothing to re-roll here.
+        it("does not re-roll a sheet the potions are inflating", function()
+            enterWith({ phy = 25, agi = 28 })
+            assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
+        end)
+
+        -- Part-way to its level: a farming run never restocks.
+        it("fights on without potions once it has fought", function()
+            enterWith({ room = "arena", xp = 400 })
+            assert.are.same({ "rg 1" }, walkAll())
+        end)
+
+        it("walks to the arena from the north plaza to fight", function()
+            enterWith({ room = "north plaza", xp = 400 })
+            assert.are.same({ "e", "rg 1" }, walkAll())
+        end)
+
+        -- Earned but not trained is still level 1, and rg 1 trains it: it
+        -- buys restoring first when the potions are up.
+        it("leaves an untrained level to the arena", function()
+            enterWith({ room = "temple", xp = 1200, phy = 35, agi = 28 })
+            assert.are.same({ "e", "e", "rg 1", "arena-potions-drunk" }, walkAll())
+        end)
+
+        it("cashes out a character that has trained", function()
+            enterWith({ room = "guild hall", level = 2, xp = 1200 })
+            walkAll()
+            assert.are.same({ "s", "ne" }, helper.runCommandCalls)
+            assert.are.equal("cash-out", taPackage.createWalk.label)
+            assert.are.equal("recipient", taPackage.createWalk.awaiting)
+        end)
+
+        it("cashes out from the arena by the usual route", function()
+            enterWith({ room = "arena", level = 2, xp = 1200 })
+            walkAll()
+            assert.are.same({ "w", "ne" }, helper.runCommandCalls)
+        end)
+
+        -- Dropped after the give but before the suicide: nothing left to hand
+        -- over, and the walk still ends in the suicide.
+        it("finishes a cash-out that had already handed the gold over", function()
+            enterWith({ room = "town gates", brief = "You're outside the town gates.",
+                        level = 2, xp = 1200, gold = 0 })
+            walkAll()
+            helper.simulateLine("There is a barkeep, and a barmaid here.")
+            helper.simulateLine("Kerhak is here.")
+            helper.simulateLine("There is nothing on the floor.")
+            walkAll()
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            walkAll()
+            helper.simulateLine("You are carrying 0 gold crowns.")
+            walkAll()
+            assert.are.equal("suicide", helper.runCommandCalls[#helper.runCommandCalls])
+            assert.is_false(ranCommand("give Kerhak 0 gold"))
+        end)
+
+        it("stops, and says so, in a room it has no route from", function()
+            enterWith({ room = "wilderness", xp = 400 })
+            assert.is_nil(taPackage.createWalk)
+            assert.is_falsy(taPackage.goldFarming)
+            assert.are.equal(1, #helper.httpRequestCalls)
+        end)
+
+        -- The connection that dropped may have left a walk mid-stride; its
+        -- timers must not keep sending underneath the new plan.
+        it("drops a walk left over from before the disconnect", function()
+            taPackage.createWalk = { steps = { "x", "y" }, index = 1, label = "cash-out" }
+            taPackage.createCashOutArmed = true
+            enterWith({ room = "arena", xp = 400 })
+            assert.is_nil(taPackage.createCashOutArmed)
+            assert.is_false(ranCommand("x"))
+        end)
+
+        -- Typed in the game, it reads the sheet afresh instead of waiting for
+        -- creation prompts that will never come.
+        it("re-reads the sheet when run in the game", function()
+            taPackage.inGame = true
+            helper.simulateAlias("farm-for-gold")
+            assert.is_falsy(taPackage.creating)
+            assert.are.same({ "st", "i" }, helper.sendCalls)
+            assert.is_true(taPackage.farmAssessPending)
+        end)
+
+        -- TA_LOGIN_CMD fires at the username prompt, where a stale "in game"
+        -- from a dropped connection would send `st` as the password.
+        it("arms the prompts at the username prompt even after a drop", function()
             helper.resetAll()
             helper.env = { TA_CHARACTER = "garbageman", TA_PASSWORD = "x",
-                           TA_LOGIN_CMD = "start-gold-farming" }
+                           TA_LOGIN_CMD = "farm-for-gold" }
             dofile("main.lua")
+            taPackage.inGame = true
             helper.simulateLine("Username:")
-            -- straight in: no "Select an option:", no race, no class
-            helper.simulateLine("Entering Tele-Arena...")
-            helper.simulateLine("You are carrying 1500 gold crowns.")
-            assert.is_falsy(taPackage.reRolling)
-            local rolled = false
-            for _, c in ipairs(helper.runCommandCalls) do
-                if c == "re-roll-half-ogre-warrior-fast-mode" then rolled = true end
-            end
-            assert.is_false(rolled)
+            assert.is_true(taPackage.creating)
+            assert.are.same({ "garbageman" }, helper.sendCalls)
         end)
 
-        -- ...but a real creation, which answers the class question last, still does.
-        it("still re-rolls a character it did create", function()
-            helper.simulateAlias("start-gold-farming")
-            helper.simulateLine("Select a class: ")
-            helper.simulateLine("Entering Tele-Arena...")
-            helper.simulateLine("You are carrying 830 gold crowns.")
-            assert.is_true(taPackage.reRolling)
+        it("stop aliases take every word order", function()
+            for _, stop in ipairs({ "stop-gold-farming", "stop-farming-gold", "stop-farm-for-gold" }) do
+                helper.simulateAlias("farm-for-gold")
+                helper.simulateAlias(stop)
+                assert.is_falsy(taPackage.goldFarming)
+            end
         end)
 
     end)
@@ -7119,7 +7225,7 @@ describe("start-gold-farming", function()
     describe("stop-gold-farming", function()
 
         it("disarms the prompt answers", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateAlias("stop-gold-farming")
             helper.simulateLine("Select a race: ")
             assert.is_false(taPackage.creating)
@@ -7129,9 +7235,10 @@ describe("start-gold-farming", function()
         -- A stop between "Entering Tele-Arena..." and the inventory reply means
         -- we no longer want the re-roll either.
         it("cancels a re-roll that is armed but not yet started", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Select a class: ")
             helper.simulateLine("Entering Tele-Arena...")
+            helper.simulateLine("You're in the north plaza.")
             helper.simulateAlias("stop-gold-farming")
             helper.simulateLine("You are carrying 830 gold crowns.")
             assert.is_false(ranCommand("re-roll-half-ogre-warrior-fast-mode"))
@@ -8644,7 +8751,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.name = "Garbageman"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             local before = #helper.httpRequestCalls
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   620046")
@@ -8658,7 +8765,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.name = "Garbageman"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   800")
             local found = false
@@ -8677,7 +8784,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.character.level = 12
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             taPackage.arenaXpCheckPending = true
             helper.simulateLine("Experience:   620046")
             helper.simulateAlias("stop-gold-farming")
@@ -9549,7 +9656,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Same silence as the threshold crossing: a farming round trains
         -- repeatedly and nobody is waiting to hear about any of it.
         it("pushes nothing for a level trained during a gold-farming run", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             local before = #helper.httpRequestCalls
             trainForNtfy()
             helper.simulateLine("Mana:         18 / 18")
@@ -9560,7 +9667,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Held at the push, not at the point it is armed, so the fresh sheet is
         -- still asked for and the tracked maxima follow the level up.
         it("still refreshes the sheet for a level trained while farming", function()
-            helper.simulateAlias("start-gold-farming")
+            helper.simulateAlias("farm-for-gold")
             trainForNtfy()
             local askedForSheet = false
             for _, s in ipairs(helper.sendCalls) do
@@ -15193,10 +15300,10 @@ describe("ta.follow", function()
 
         it("stops character creation too", function()
             taPackage.creating = true
-            taPackage.createRerollPending = true
+            taPackage.farmAssessPending = true
             helper.simulateAlias("stop-all-scripts")
             assert.is_false(taPackage.creating)
-            assert.is_nil(taPackage.createRerollPending)
+            assert.is_nil(taPackage.farmAssessPending)
             assert.is_true(echoed("[all] Stopped gold-farming."))
         end)
 

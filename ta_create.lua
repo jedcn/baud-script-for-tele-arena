@@ -1,6 +1,8 @@
 --
--- Character creation: `start-gold-farming` answers the BBS's create-a-character
--- questions, then hands off to the fast-mode Half-Ogre Warrior re-roll.
+-- Gold farming: `farm-for-gold` makes a throwaway Half-Ogre Warrior, levels it
+-- once in the first arena, hands its gold to whoever waits in the tavern, and
+-- retires it to start over -- picking up from wherever a disconnect or a death
+-- left the last one.
 --
 -- Loaded by main.lua with dofile, in its own file for the reason CLAUDE.md
 -- gives: Lua allows at most 200 local variables active at once in a single
@@ -10,8 +12,10 @@
 --
 -- The seam, through taPackage (locals are not visible across chunks):
 --
---   in    (nothing)
---   out   taPackage.creating, taPackage.stopCreateCharacter
+--   in    taPackage.reRollBuilds, taPackage.character, taPackage.currentRoom
+--   out   taPackage.creating, taPackage.stopCreateCharacter,
+--         taPackage.onRerollAccepted, taPackage.onArenaArrivedHome,
+--         taPackage.onFarmingDeath
 --
 -- =========================================================================
 -- Create a character
@@ -48,6 +52,13 @@
 -- normal `x` out of the game, and a bare `1` sent into the arena is a real
 -- command. Nothing fires until the alias arms it, and "Entering Tele-Arena..."
 -- disarms it again.
+--
+-- Creating is only one way into the game, though. The same alias, run from
+-- TA_LOGIN_CMD, also meets a character that is still alive -- dropped by the
+-- BBS mid-walk, mid-fight or mid-handover -- and a fresh character is just the
+-- earliest of those cases. So nothing here follows a script from the top:
+-- every entry into the game reads the character sheet and the room, and plans
+-- the rest of the run from there (see farmAssess below).
 
 -- Which number answers which prompt. The noun is the capture from "Select a
 -- <noun>:" / "Select an <noun>:"; anything not named here gets "1", which is a
@@ -61,18 +72,8 @@ local CREATE_ANSWERS = {
     option = "2", -- Create New Character (not "1", Resurect Old Character)
 }
 
--- What to do once the re-roll finally lands a good set of stats: stop the
--- re-roll, kit the new character out from the gear staged on the floor, walk to
--- the arena and start fighting. Hand-verified; every direction here is one the
--- user walked themselves.
---
--- "re-roll-stop" leads deliberately. Accepting a roll does not stop the
--- re-roller -- it bumps the generation so the pending timer no-ops, but leaves
--- taPackage.reRolling true, which is why the "Done after N rolls" message tells
--- you to stop it by hand. Left running, every status block from here on
--- (including the ones `rg 1` pulls) would be fed back through the matcher.
--- Putting the stop first in the same ordered list is what makes "before
--- anything else" a visible property rather than a promise in a comment.
+-- The walks below are hand-verified; every direction in them is one the user
+-- walked themselves.
 --
 -- Every step goes through runCommand, not send, so each takes the path typed
 -- input takes. That is load-bearing three times over: "re-roll-stop" and "rg 1"
@@ -120,56 +121,130 @@ local CREATE_ANSWERS = {
 -- which is now allowed. If the measured cycle does not come in well under 25
 -- minutes, this is not paying for itself and should come out again.
 --
--- Two details in the step list below are load-bearing:
+-- Where the run picks up is decided afresh every time a character enters the
+-- game, from what the entry `st`/`i` say and the room it is standing in:
 --
---   the magic-shop detour is "ne" then "s" from the gate, and "n"/"n" back to the
---   north plaza, rejoining the original walk at its last step. Same rooms the
---   arena's own ARENA_SHOP["1"] route uses from the other direction.
+--   level 2 or more         it has trained: cash out from here
+--   stats short of the roll re-roll (a fresh character always lands here)
+--   no robes or warhammer   walk to the gate, take or buy them
+--   never fought, no potion buy the potions on the way to the arena
+--   otherwise               walk to the arena and fight
+--
+-- A level earned but not yet trained needs nothing of its own: rg 1 trains it
+-- at the first decision point, buying restoring first if the potions are up.
+--
+-- Two details in the routes below are load-bearing:
+--
+--   the magic shop is "s" from the south plaza, and "n"/"n" leads back to the
+--   north plaza. Same rooms the arena's own ARENA_SHOP["1"] route uses from
+--   the other direction.
 --
 --   "arena-potions-drunk" AFTER "rg 1", not before. Starting a session zeroes
 --   arenaPotionsActive (see beginArenaSession), so anything drunk beforehand is
 --   invisible to the training gate and the first level owed would walk to the
 --   hall, be refused, and only self-correct from there. Reporting it costs one
 --   command and skips that bounce.
---
--- The gear is only there if the last character lived to drop it. A death loses
--- everything it was wearing, so the gate is empty for the next character, and
--- the old blind "get robes" walked it into the arena unarmed. So the walk parks
--- on the gate's own room brief ("sw", await = "gear") and reads the floor line:
---
---     There is robes, and a warhammer lying on the floor.
---
--- and buys whichever piece is missing on the way, never both by reflex -- it
--- costs gold the run exists to harvest. If the brief never comes back, the
--- timeout walks on into the "get" steps, which is what this did before.
-local CREATE_STEPS_TO_GATE = {
-    "re-roll-stop",
-    "s",
-    { cmd = "sw", await = "gear" },
+
+-- The way to the north plaza from every room a farming character passes
+-- through. The north plaza is the hub: the arena is "e" of it, the tavern
+-- "ne", the south plaza "s", and the gate and the three shops hang off the
+-- south plaza. Checked against the arena's own routes (toTemple w,w; toBar
+-- w,ne; toTraining w,n) and the gear walk the user wrote down. A room not in
+-- here stops the run: there is no guessing a way home from it.
+local TO_NORTH_PLAZA = {
+    ["north plaza"] = {},
+    ["arena"]       = { "w" },
+    ["temple"]      = { "e" },
+    ["tavern"]      = { "sw" },
+    ["guild hall"]  = { "s" },
+    ["south plaza"] = { "n" },
+    ["town gates"]  = { "ne", "n" },
+    ["armor shop"]  = { "e", "n" },
+    ["weapon shop"] = { "w", "n" },
+    ["magic shop"]  = { "n", "n" },
 }
 
--- From the gate to the arena, picking up what is on the floor and buying what
--- is not. The shops hang off the south plaza ("ne" from the gate): robes one
--- room west, the warhammer one room east, stat potions one room south. Each
--- shop is an out-and-back, so the potion detour and the walk north to the arena
--- are the same whatever was bought.
-local function createGearSteps(haveRobes, haveWarhammer)
-    local steps = {}
-    local function add(...)
-        for _, step in ipairs({ ... }) do steps[#steps + 1] = step end
-    end
-    if haveRobes then add("get robes", "equip robes") end
-    if haveWarhammer then add("get warhammer", "equip warhammer") end
-    add("ne")
-    if not haveRobes then add("w", "buy robes", "equip robes", "e") end
-    if not haveWarhammer then add("e", "buy warhammer", "equip warhammer", "w") end
-    add("s", "buy-potions", "n", "n", "e", "rg 1", "arena-potions-drunk")
+-- The highest agility a Half-Ogre rolls. Hyssop adds 12, so anything above this
+-- on a level-1 farming character means the potions are up -- the only way to
+-- tell after a reconnect, when nothing remembers drinking them.
+local HALF_OGRE_MAX_AGILITY = 17
+
+local function appendSteps(steps, list)
+    for _, step in ipairs(list) do steps[#steps + 1] = step end
     return steps
 end
 
-local CREATE_STEPS = {}
-for _, step in ipairs(CREATE_STEPS_TO_GATE) do CREATE_STEPS[#CREATE_STEPS + 1] = step end
-for _, step in ipairs(createGearSteps(true, true)) do CREATE_STEPS[#CREATE_STEPS + 1] = step end
+-- From the gate to the south plaza, fitting whatever `need` says is missing:
+-- picked up if `floor` says it is lying here, bought otherwise. Robes from the
+-- armor shop one room west of the south plaza, the warhammer from the weapon
+-- shop one room east, each an out-and-back so the walk on from the south plaza
+-- is the same whatever was bought. Buying costs gold the run exists to
+-- harvest, so it is only ever done for a piece that is missing.
+local function gearSteps(need, floor)
+    local steps = {}
+    if need.robes and floor.robes then appendSteps(steps, { "get robes", "equip robes" }) end
+    if need.warhammer and floor.warhammer then
+        appendSteps(steps, { "get warhammer", "equip warhammer" })
+    end
+    steps[#steps + 1] = "ne"
+    if need.robes and not floor.robes then
+        appendSteps(steps, { "w", "buy robes", "equip robes", "e" })
+    end
+    if need.warhammer and not floor.warhammer then
+        appendSteps(steps, { "e", "buy warhammer", "equip warhammer", "w" })
+    end
+    return steps
+end
+
+-- What to do with a character that is in the game and in a room we know, as a
+-- walk: { steps, label, doneMsg }, plus `need`/`afterGear` when it goes by the
+-- gate, so the floor line can rebuild the rest of it. The re-roll is decided
+-- before this is called (see farmAssess); everything here assumes a good roll.
+local function farmPlan(room)
+    local c = taPackage.character
+    local steps = appendSteps({}, TO_NORTH_PLAZA[room])
+
+    if (getLevel() or 1) >= 2 then
+        return {
+            steps = appendSteps(steps, taPackage.cashOutFromNorthPlaza),
+            label = "cash-out",
+            doneMsg = "Gear dropped and the suicide sent — waiting for the BBS to start the next one.",
+        }
+    end
+
+    local potionsUp = (getAgility() or 0) > HALF_OGRE_MAX_AGILITY
+    -- Only for a character that has not fought yet. One that has is part-way
+    -- to its level, and a farming run never restocks (main.lua's potion
+    -- wear-off handler says why): a fresh taint only pushes training back.
+    local buyPotions = not potionsUp and (getExperience() or 0) == 0
+    local fight = { "rg 1" }
+    if buyPotions or potionsUp then fight[#fight + 1] = "arena-potions-drunk" end
+    local fromSouthPlaza = {}
+    if buyPotions then appendSteps(fromSouthPlaza, { "s", "buy-potions", "n" }) end
+    appendSteps(fromSouthPlaza, { "n", "e" })
+    appendSteps(fromSouthPlaza, fight)
+
+    local done = "Kitted out and in the arena — rg 1 has the wheel."
+    local need = { robes = c.armor ~= "Robes", warhammer = c.weapon ~= "Warhammer" }
+    if need.robes or need.warhammer then
+        appendSteps(steps, { "s", { cmd = "sw", await = "gear" } })
+        -- Until the floor line says otherwise, assume the gear is lying there:
+        -- if the brief never comes, picking it up is what the walk always did.
+        appendSteps(steps, gearSteps(need, { robes = true, warhammer = true }))
+        appendSteps(steps, fromSouthPlaza)
+        return { steps = steps, label = "create", doneMsg = done,
+                 need = need, afterGear = fromSouthPlaza }
+    end
+    if buyPotions then
+        appendSteps(steps, { "s" })
+        return { steps = appendSteps(steps, fromSouthPlaza), label = "create", doneMsg = done }
+    end
+    if room == "arena" then
+        return { steps = fight, label = "create", doneMsg = done }
+    end
+    appendSteps(steps, { "e" })
+    return { steps = appendSteps(steps, fight), label = "create", doneMsg = done }
+end
 
 -- The other end of the run. `rg 1` fights until the character has earned a
 -- level and banks it at the guild hall -- that whole trip is the arena script's
@@ -207,8 +282,7 @@ for _, step in ipairs(createGearSteps(true, true)) do CREATE_STEPS[#CREATE_STEPS
 -- refused, or partly landed -- and if the number is anything else we stop rather
 -- than throw the difference away. That is the same call as the no-recipient
 -- stop below: never destroy something we cannot get back.
-local CASH_OUT_STEPS = {
-    "w",
+local CASH_OUT_FROM_NORTH_PLAZA = {
     { cmd = "ne", await = "recipient" },
     { cmd = "i", await = "gold" },
     "sw",
@@ -221,6 +295,9 @@ local CASH_OUT_STEPS = {
     { cmd = "i", await = "zero-gold" },
     "suicide",
 }
+-- farmPlan is defined above this table, so it reaches it through taPackage.
+taPackage.cashOutFromNorthPlaza = CASH_OUT_FROM_NORTH_PLAZA
+local CASH_OUT_STEPS = appendSteps({ "w" }, CASH_OUT_FROM_NORTH_PLAZA)
 
 -- How long to wait for a reply a parked step depends on -- the tavern's room
 -- brief, or the inventory's gold line -- before giving up and walking on.
@@ -264,136 +341,87 @@ end
 taPackage.stopPacedWalk = createWalkStop
 
 -- Shared teardown, so `stop-gold-farming` and `stop-all-scripts` disarm the
--- same state. Also clears the pending re-roll handoff (a stop between "Entering
+-- same state. Also clears a pending assessment (a stop between "Entering
 -- Tele-Arena..." and the inventory reply means we no longer want it) and halts
 -- a walk in progress, so one stop covers the whole gold-farming flow.
 local function stopCreateCharacter()
     taPackage.creating = false
     taPackage.goldFarming = nil
-    taPackage.createRerollPending = nil
+    taPackage.farmAssessPending = nil
     taPackage.createRerollArmed = nil
     taPackage.createCashOutArmed = nil
     taPackage.createRestarting = nil
-    taPackage.createAnsweredClass = nil
     createWalkStop()
 end
 taPackage.stopCreateCharacter = stopCreateCharacter
 
--- Is any part of the gold-farming flow live? It runs in four phases and only
--- the first sets `creating`, so asking about that flag alone would have
+-- Is any part of the gold-farming flow live? It runs in phases and only the
+-- first sets `creating`, so asking about that flag alone would have
 -- stop-all-scripts report "not running" while a walk was mid-stride. Kept here,
 -- next to the teardown, so the two can't drift apart.
 --
 --   creating            answering the BBS creation prompts
---   createRerollPending created, waiting on the sheet to start the re-roll
+--   farmAssessPending   in the game, waiting on the sheet to plan the run
 --   createRerollArmed   re-rolling, and this run owns the result
---   createWalk          gearing up and walking to the arena
+--   createWalk          walking: to the arena, or out to cash in
 function taPackage.createCharacterRunning()
     return taPackage.creating == true
         or taPackage.goldFarming == true
-        or taPackage.createRerollPending == true
+        or taPackage.farmAssessPending == true
         or taPackage.createRerollArmed == true
         or taPackage.createWalk ~= nil
 end
 
--- Registered under both word orders, like the continue- pair below. "gold
--- farming" and "farming gold" are equally natural English and the wrong one
--- silently doing nothing is a genuinely expensive failure here: it looks
--- exactly like a script that loaded but did not arm, which is a confusing thing
--- to debug from a log (and TA_LOGIN_CMD's confirmation is a cecho, so it never
--- reaches the log either).
-for _, startAlias in ipairs({ "^start-gold-farming$", "^start-farming-gold$" }) do
-createAlias(startAlias, function()
-    -- Refuse to re-arm in the one window where doing so is provably wrong: a
-    -- character has just been created and its re-roll is one line away from
-    -- starting. TA_INIT_CMD="start-gold-farming" lands exactly here -- it fires
-    -- off the inventory reply, and main.lua's gold trigger is registered before
-    -- this file's, so an unguarded arm would (a) leave prompt-answering live
-    -- in-game, where a bare "1" or "6" is a real command, and (b) clear the
-    -- handoff flag the very next trigger was about to read, silently costing us
-    -- the re-roll. TA_LOGIN_CMD is the variable that actually reaches a dead
-    -- character; say so rather than just declining.
-    if taPackage.createRerollPending then
-        cecho("yellow", "[create] A character was just created and the re-roll is about to"
-            .. " start — not re-arming. (Use TA_LOGIN_CMD, not TA_INIT_CMD, to run this"
-            .. " on login: TA_INIT_CMD cannot fire for a dead character.)")
-        return
-    end
-    taPackage.creating = true
+-- The one way to farm, from anywhere: the BBS login prompt, the resurrect menu,
+-- or a character standing in the game. Meant to be TA_LOGIN_CMD, so it is
+-- listening before the BBS asks anything -- a dead character's next login goes
+-- straight to the create-a-character questions, and only an alias armed at the
+-- username prompt is there to answer them. Every way back into the game after
+-- that ends in the same assessment, so a disconnect at any point is recovered
+-- by logging in again with the same command.
+--
+-- Typed in the game it re-reads the sheet and replans from where it stands,
+-- which is how a run is resumed by hand.
+local function farmForGold()
+    -- Anything left from before belongs to an interrupted run; the assessment
+    -- decides afresh.
+    stopCreateCharacter()
     -- Marks the whole round trip as ours, not just the prompt-answering phase.
     -- The cash-out reads it much later to tell a `rg 1` this loop started from
     -- one somebody ran by hand -- only the former should end in a walk to the
     -- tavern and a pile of gear on the floor.
     taPackage.goldFarming = true
+    if taPackage.inGame then
+        taPackage.farmAssessPending = true
+        send("st")
+        send("i")
+        echo("[farm] Farming for gold — reading the character sheet to see where the run is up to.")
+        return
+    end
+    taPackage.creating = true
     -- echo, not cecho: cecho never reaches the session log, and "did this arm?"
     -- is the first question asked of every run that goes wrong.
-    echo("[create] Answering the character-creation prompts — Half-Ogre Warrior,"
-        .. " then re-roll-half-ogre-warrior-fast-mode. Type stop-gold-farming to abort.")
-end, { type = "regex" })
+    echo("[farm] Farming for gold — creating a Half-Ogre Warrior if the BBS asks,"
+        .. " picking up where this one left off if not. Type stop-gold-farming to abort.")
 end
+createAlias("^farm-for-gold$", farmForGold, { type = "regex" })
 
-for _, stopAlias in ipairs({ "^stop-gold-farming$", "^stop-farming-gold$" }) do
+-- Registered under every word order. "gold farming", "farming gold" and the
+-- start alias's own words are all natural to reach for, and the wrong one
+-- silently doing nothing looks exactly like a script that loaded but did not
+-- arm.
+for _, stopAlias in ipairs({ "^stop-gold-farming$", "^stop-farming-gold$", "^stop-farm-for-gold$" }) do
 createAlias(stopAlias, function()
     stopCreateCharacter()
     echo("[create] Stopped.")
 end, { type = "regex" })
 end
 
--- Pick a run back up after a disconnect, from the arena.
---
--- The arena is where a run spends nearly all of its time, so it is overwhelmingly
--- the phase a dropped connection lands in -- and the expensive one to lose, since
--- everything before it is a couple of minutes and the XP since is not. Log back
--- in, walk to the arena, run this.
---
--- There is very little to restore, which is the point: the loop is driven by
--- triggers reading taPackage flags, not by a position in a script. The only
--- thing the arena phase needs is `goldFarming`, which is what tells the training
--- confirmation to arm the cash-out. Everything else is cleared, because a
--- reload (rather than a reconnect) keeps taPackage and could otherwise leave a
--- half-finished walk or an armed cash-out from before the drop.
---
--- Earlier phases deliberately have no resume: they are minutes of work, and
--- re-running start-gold-farming from the top is both simpler and safer than
--- trying to rejoin a half-created character.
-local function continueGoldFarmingFromArena()
-    -- The room brief is how we know where we are standing; if one has been seen
-    -- and it is not the arena, this would ring a gong at nothing. An unknown
-    -- room (no brief since connecting) is not an error -- just say so and go.
-    local room = taPackage.currentRoom
-    if room and room ~= "arena" then
-        echo("[create] Not resuming — you are in \"" .. room .. "\", not the arena."
-            .. " Walk there first, then run this again.")
-        return
-    end
-    if not runCommand then
-        echo("[create] this baud has no runCommand — start the arena with `rg 1` yourself.")
-        return
-    end
-    -- Anything left over from before the drop belongs to the interrupted run.
-    stopCreateCharacter()
-    taPackage.goldFarming = true
-    if not room then
-        echo("[create] No room brief seen yet — taking your word that this is the arena.")
-    end
-    echo("[create] Resuming the gold-farming loop from the arena: fighting until"
-        .. " there is a level to train, then cashing out as usual.")
-    runCommand("rg 1")
-end
-
--- Registered under both word orders. The start/stop pair reads
--- "gold-farming", the name you reach for reads "farming-gold", and having the
--- wrong one silently do nothing is a poor trade for three lines.
-createAlias("^continue-farming-gold-from-arena$", continueGoldFarmingFromArena,
-    { type = "regex" })
-createAlias("^continue-gold-farming-from-arena$", continueGoldFarmingFromArena,
-    { type = "regex" })
-
 -- The intro text pages on this prompt; a bare carriage return turns the page.
 -- send("") is exactly that: baud's TelnetConnection.send writes `data .. "\r\n"`,
 -- so an empty string puts a lone newline on the wire.
 createTrigger("^<< hit return >>\\s*$", function()
-    if not taPackage.creating then return end
+    if not (taPackage.creating or taPackage.createRestarting) then return end
     send("")
 end, { type = "regex" })
 
@@ -411,67 +439,27 @@ createTrigger("^Select an? (.+):\\s*$", function(matches)
     if not taPackage.creating then return end
     local prompt = matches[2]
     send(CREATE_ANSWERS[prompt] or "1")
-    -- Class is the last question the game asks, so answering it is the point
-    -- past which a NEW character definitely exists. The entry handler below
-    -- refuses to re-roll without it.
-    if prompt == "class" then taPackage.createAnsweredClass = true end
 end, { type = "regex" })
 
--- We are in the game, so stop answering prompts.
+-- We are in the game, so stop answering prompts and plan the run.
 --
--- Whether a re-roll is armed turns on whether we actually created anything.
--- Entering the game and creating a character are NOT the same event: a live
--- character goes from the main menu straight to this line, with no resurrect
--- menu and none of the questions above. That is what a reconnect looks like,
--- and if TA_LOGIN_CMD is still set (it is a launch variable, so it fires again
--- on every reconnect) an unguarded arm would start a re-roll on a character
--- that is already several levels in -- spraying `reroll` at a character we
--- meant to keep. Answering the class question is the proof that this entry
--- followed a creation, so that is what gates it.
+-- Not the plan itself, yet. main.lua's handler for this same line fires `st`
+-- and `i`, and their replies are still in flight when it returns; the plan
+-- reads level, stats, gear and room off them. The inventory's gold line is the
+-- last reply of the pair, so the assessment waits for that (see the gold
+-- trigger after farmAssess below). Same reasoning, and the same landing spot,
+-- as runLoginInitCmd.
+--
+-- A fresh character and a live one take the same path: one that was just
+-- created simply has a short roll and a dagger, and the plan says so.
 createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
-    if not taPackage.creating then return end
     taPackage.creating = false
-    if not taPackage.createAnsweredClass then
-        echo("[create] Entered the game without creating anything (a live"
-            .. " character), so not re-rolling. Use continue-farming-gold-from-arena"
-            .. " to pick a run back up.")
-        return
-    end
-    taPackage.createAnsweredClass = nil
-    taPackage.createRerollPending = true
-end, { type = "regex" })
-
--- Start the re-roll, once, now that the entry character sheet has landed.
---
--- The timing is the reason this isn't two more lines in the handler above.
--- main.lua's "Entering Tele-Arena..." trigger fires `st` and `i`, and their
--- replies are still in flight when it returns. The `st` reply ends with a
--- "Vitality:" line, and that is the very line the re-roll counts a roll on --
--- so arming the re-roll any earlier would score the new character's opening
--- stats as roll #1 against a matcher that had not been chosen yet. The
--- inventory's gold line is the last reply of the `st`/`i` pair, so by the time
--- it arrives the sheet is fully parsed and the next "Vitality:" will be one we
--- asked for. Same reasoning, and the same landing spot, as runLoginInitCmd.
-createTrigger("^You are carrying (\\d+) gold crowns", function()
-    if not taPackage.createRerollPending then return end
-    taPackage.createRerollPending = nil
-    cecho("cyan", "[create] Character created — starting re-roll-half-ogre-warrior-fast-mode.")
-    if runCommand then
-        -- Only a re-roll WE started may end in a walk to the arena. A hand-run
-        -- re-roll-half-ogre-warrior-* is someone watching numbers go by, and
-        -- having it suddenly march the character off and ring a gong would be a
-        -- nasty surprise. Armed here, read by onRerollAccepted below.
-        taPackage.createRerollArmed = true
-        -- runCommand, not send: send puts the literal text on the wire, where
-        -- an alias name means nothing.
-        runCommand("re-roll-half-ogre-warrior-fast-mode")
-    else
-        -- Older baud (the VPS copy, say) has no runCommand and so cannot reach
-        -- an alias at all. Say so rather than silently sending the alias name
-        -- to the server as chat.
-        cecho("yellow", "[create] this baud has no runCommand — run"
-            .. " re-roll-half-ogre-warrior-fast-mode yourself")
-    end
+    if not taPackage.goldFarming then return end
+    -- Whatever was in flight belongs to the connection that dropped.
+    createWalkStop()
+    taPackage.createRerollArmed = nil
+    taPackage.createCashOutArmed = nil
+    taPackage.farmAssessPending = true
 end, { type = "regex" })
 
 -- Schedule the next step of the running walk, honouring the generation guard so
@@ -547,26 +535,101 @@ end
 -- (a character is in one place), so a single taPackage.createWalk is enough --
 -- but a step that parks must use its own `await` token, since each file only
 -- answers its own (see the inventory trigger below).
-local function createWalkStart(steps, label, doneMsg)
-    taPackage.createWalk = { steps = steps, index = 1, label = label, doneMsg = doneMsg }
+--
+-- `extra` is copied onto the walk before its first step, for a walk whose
+-- handlers need more than the steps (the gear walk's `need`/`afterGear`).
+local function createWalkStart(steps, label, doneMsg, extra)
+    local walk = { steps = steps, index = 1, label = label, doneMsg = doneMsg }
+    for k, v in pairs(extra or {}) do walk[k] = v end
+    taPackage.createWalk = walk
     taPackage.createWalkGen = (taPackage.createWalkGen or 0) + 1
     taPackage.createWalkPump()
 end
 taPackage.startPacedWalk = createWalkStart
 
+-- Decide what this character still has to do, and start doing it. Called with
+-- the sheet and the room freshly read: on entering the game, after farm-for-gold
+-- is typed in it, and once a re-roll lands. `prefix` goes ahead of the walk's
+-- own steps (the re-roll's stop, so it comes first and visibly so).
+local function farmAssess(prefix)
+    if not taPackage.goldFarming then return end
+    if not runCommand then
+        -- Older baud (the VPS copy, say) cannot reach an alias at all. Say so
+        -- rather than silently sending alias names to the server as chat.
+        cecho("yellow", "[farm] this baud has no runCommand — farm-for-gold cannot drive it")
+        return
+    end
+    -- An arena session from before would keep ringing and walking underneath
+    -- whatever we decide; every plan that fights starts a fresh one.
+    if taPackage.arenaState and taPackage.stopArena then
+        taPackage.stopArena(nil, { quiet = true })
+    end
+
+    -- A roll short of the build gets re-rolled before anything is spent on it.
+    -- Only at level 1, and only with no potions up: a potion-boosted sheet is
+    -- not the roll, and a character that has trained is cashing out anyway.
+    local c = taPackage.character
+    local potionsUp = (getAgility() or 0) > HALF_OGRE_MAX_AGILITY
+    if (getLevel() or 1) < 2 and not potionsUp then
+        local stats = {}
+        for _, k in ipairs({ "intellect", "knowledge", "physique", "stamina", "agility", "charisma" }) do
+            stats[k] = c[k] or 0
+        end
+        local good = taPackage.reRollBuilds.halfOgreWarriorFast(stats)
+        if not good then
+            echo("[farm] Stats short of the roll — starting re-roll-half-ogre-warrior-fast-mode.")
+            -- Only a re-roll WE started may end in a walk to the arena. A
+            -- hand-run re-roll-half-ogre-warrior-* is someone watching numbers go
+            -- by, and having it suddenly march the character off and ring a gong
+            -- would be a nasty surprise. Read by onRerollAccepted below.
+            taPackage.createRerollArmed = true
+            runCommand("re-roll-half-ogre-warrior-fast-mode")
+            return
+        end
+    end
+
+    -- After the re-roll, which stands still: only a walk needs to know the way.
+    local room = taPackage.currentRoom
+    if not (room and TO_NORTH_PLAZA[room]) then
+        -- The re-roll's stop still has to go out, or it rolls on unattended.
+        for _, cmd in ipairs(prefix or {}) do runCommand(cmd) end
+        stopCreateCharacter()
+        -- echo, not cecho: a run that stopped has to leave the reason in the log.
+        echo("[farm] STOPPED — no route from \"" .. tostring(room) .. "\". Walk to the"
+            .. " arena and run farm-for-gold again.")
+        sendNtfy("Gold farming stopped", "No route from \"" .. tostring(room)
+            .. "\" — the character is parked there.")
+        return
+    end
+
+    local plan = farmPlan(room)
+    local steps = appendSteps(appendSteps({}, prefix or {}), plan.steps)
+    echo("[farm] Level " .. tostring(getLevel()) .. ", " .. tostring(c.weapon) .. "/"
+        .. tostring(c.armor) .. ", in the " .. room .. " — " .. plan.label .. " walk.")
+    createWalkStart(steps, plan.label, plan.doneMsg,
+        { need = plan.need, afterGear = plan.afterGear })
+end
+
+-- The plan waits for the entry sheet to land; see "Entering Tele-Arena..." above.
+createTrigger("^You are carrying (\\d+) gold crowns", function()
+    if not taPackage.farmAssessPending then return end
+    taPackage.farmAssessPending = nil
+    farmAssess()
+end, { type = "regex" })
+
 -- The re-roll has accepted a set of stats. main.lua calls this from the
 -- Vitality trigger's accepted branch if it is defined; nothing else does.
+--
+-- "re-roll-stop" leads deliberately. Accepting a roll does not stop the
+-- re-roller -- it bumps the generation so the pending timer no-ops, but leaves
+-- taPackage.reRolling true, which is why the "Done after N rolls" message tells
+-- you to stop it by hand. Left running, every status block from here on
+-- (including the ones `rg 1` pulls) would be fed back through the matcher.
 function taPackage.onRerollAccepted()
     if not taPackage.createRerollArmed then return end
     taPackage.createRerollArmed = nil
-    if not runCommand then
-        cecho("yellow", "[create] this baud has no runCommand — run re-roll-stop"
-            .. " and gear up yourself")
-        return
-    end
-    cecho("cyan", "[create] Stats accepted — stopping the re-roll, gearing up,"
-        .. " and heading for the arena.")
-    createWalkStart(CREATE_STEPS, "create", "Kitted out and in the arena — rg 1 has the wheel.")
+    cecho("cyan", "[create] Stats accepted — stopping the re-roll and carrying on.")
+    farmAssess({ "re-roll-stop" })
 end
 
 -- Training succeeded. The arena script is already walking us home from the guild
@@ -686,27 +749,28 @@ createTrigger("^There .+ on the floor\\.$", function()
     createWalkSchedule(CREATE_STEP_DELAY_MS)
 end, { type = "regex" })
 
--- The gate's floor line, read on the creation walk's "gear" await. Anything
--- missing from it gets bought: the steps still to come are swapped for a list
--- with the shop detours in it (CREATE_STEPS itself is shared, so it is copied,
--- never edited).
+-- The gate's floor line, read on the gear walk's "gear" await. The steps still
+-- to come are rebuilt from what is actually lying here: picked up if it is,
+-- bought on the way if it is not. The walk assumed it was all here, so nothing
+-- changes when it is.
 createTrigger("^There .+ on the floor\\.$", function(matches)
     local walk = taPackage.createWalk
     if not (walk and walk.awaiting == "gear") then return end
     walk.awaiting = nil
-    local floor = matches[1]
-    local haveRobes = floor:find("robes", 1, true) ~= nil
-    local haveWarhammer = floor:find("warhammer", 1, true) ~= nil
-    if not (haveRobes and haveWarhammer) then
+    local line = matches[1]
+    local floor = {
+        robes = line:find("robes", 1, true) ~= nil,
+        warhammer = line:find("warhammer", 1, true) ~= nil,
+    }
+    local need = walk.need
+    local missing = {}
+    if need.robes and not floor.robes then missing[#missing + 1] = "robes" end
+    if need.warhammer and not floor.warhammer then missing[#missing + 1] = "warhammer" end
+    if #missing > 0 then
         local steps = {}
         for i = 1, walk.index - 1 do steps[i] = walk.steps[i] end
-        for _, step in ipairs(createGearSteps(haveRobes, haveWarhammer)) do
-            steps[#steps + 1] = step
-        end
-        walk.steps = steps
-        local missing = {}
-        if not haveRobes then missing[#missing + 1] = "robes" end
-        if not haveWarhammer then missing[#missing + 1] = "warhammer" end
+        appendSteps(steps, gearSteps(need, floor))
+        walk.steps = appendSteps(steps, walk.afterGear)
         -- echo, not cecho, so a run's gold going on gear shows up in the log.
         echo("[create] No " .. table.concat(missing, " or ")
             .. " at the gate — buying on the way to the arena.")
@@ -831,65 +895,37 @@ end, { type = "regex" })
 -- "You awaken" rather than "you take your own life": both print, but the second
 -- one is the game confirming we are actually out and back at the BBS.
 
--- How recently the killing blow has to have landed for THIS awakening to be the
--- one it caused. The two lines arrive back to back --
+-- A death prints the same line, and is now treated the same way. It used to
+-- stop the loop, because the next character would reach a bare gate; the gear
+-- walk buys what is missing now, so a death costs one character's gear and
+-- takings and the run goes on. main.lua's death trigger stops every script and
+-- hands the farm back through onFarmingDeath below, so goldFarming is set again
+-- by the time this line arrives.
 --
---     As the final blow strikes your body you fall unconscious.
---     You awaken after an unknown amount of time...
---
--- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3244-3245) -- so anything
--- further back than a few seconds is a different event that happens to find the
--- flag still set. Why it can still be set is the long comment below.
-local DEATH_REVIVE_WINDOW_MS = 5000
-
+-- Only createRestarting is armed here, not `creating`. A death survived with a
+-- soulstone prints this line and wakes in the temple, still in the game
+-- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3244-3246), where a live
+-- prompt-answerer would send "1"s and "6"s as commands. createRestarting only
+-- answers the BBS's own "<< hit return >>" and Command prompt, and the Command
+-- prompt is what turns `creating` back on, once we are certainly at the BBS.
 createTrigger("^You awaken after an unknown amount of time\\.\\.\\.$", function()
-    -- Nothing below concerns a character that was not being farmed, and this
-    -- gate comes first so an ordinary arena death stays quiet: main.lua's death
-    -- trigger has already announced it, and telling someone who never staged
-    -- any gear to re-stage it is noise.
     if not taPackage.goldFarming then return end
-
-    -- A death prints this line too, and must not be mistaken for our own
-    -- suicide. Restarting after one would send a fresh character to a gate with
-    -- no gear on it (equipment is lost on death and costs ~150 gold to replace),
-    -- and the harvest it was carrying never reached Kerhak -- so the loop would
-    -- keep turning, quietly producing less each time.
-    --
-    -- taPackage.died is main.lua's, not ours: it is set by the death trigger
-    -- there and cleared on the next entry into the game, so any script can read
-    -- it during this window. Read, never cleared here -- clearing it would hide
-    -- the death from anything else that asks.
-    --
-    -- Which is exactly why the bare flag cannot be the test. It is cleared in
-    -- one place only -- "Entering Tele-Arena..." -- and a death survived with a
-    -- soulstone never re-enters the game. It revives mid-session at the temple:
-    --
-    --     As the final blow strikes your body you fall unconscious.
-    --     You awaken after an unknown amount of time...
-    --     You're in the temple.
-    --
-    -- (logs/session-kerhak-2026-08-09T14-48-21.log, lines 3244-3246; the next
-    -- "Entering Tele-Arena..." is 238 lines later, at a manual re-login.) So the
-    -- flag stays true for the rest of that session, and read as "has there been
-    -- a death" every later awakening came back true -- including the deliberate
-    -- suicide that ends a farming round. One soulstone death early on quietly
-    -- stopped the loop from ever starting another character.
-    --
-    -- taPackage.diedAt is what answers the question actually being asked: was
-    -- THIS awakening the death's own.
-    local diedAt = taPackage.died and taPackage.diedAt
-    if diedAt and taPackage.nowMillis() - diedAt < DEATH_REVIVE_WINDOW_MS then
-        echo("[create] That was a death, not a retirement — not starting another"
-            .. " character. Re-stage the robes and warhammer at the gate first.")
-        return
-    end
     createWalkStop()
-    -- Puts the creation triggers back in charge for the next character.
-    taPackage.creating = true
-    -- ...and this arms the one answer they do not cover, below.
+    taPackage.creating = false
     taPackage.createRestarting = true
-    echo("[create] Character retired — starting the next one.")
+    if taPackage.died then
+        echo("[create] Character died — starting the next one; it will buy new gear.")
+    else
+        echo("[create] Character retired — starting the next one.")
+    end
 end, { type = "regex" })
+
+-- A farming character died. Everything it was doing has already been stopped
+-- (main.lua's death trigger runs stop-all-scripts first); this only keeps the
+-- run itself alive so the awakening above starts the next character.
+function taPackage.onFarmingDeath()
+    taPackage.goldFarming = true
+end
 
 -- The BBS main-menu prompt, which is where "5" re-enters Tele-Arena. Matched
 -- loosely and not anchored, because after a death the menu is redrawn as a
@@ -927,6 +963,8 @@ end, { type = "regex" })
 createTrigger("Command .+ :", function()
     if not taPackage.createRestarting then return end
     taPackage.createRestarting = nil
+    -- Certainly at the BBS now, so the creation prompts may be answered again.
+    taPackage.creating = true
     send("5")
 end, { type = "regex" })
 
