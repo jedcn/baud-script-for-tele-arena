@@ -22003,6 +22003,14 @@ describe("ta.follow XP poll", function()
         assert.are.equal(3, statusCount())
     end)
 
+    it("sends i with each poll to capture gold", function()
+        helper.simulateAlias("ta.follow pelayo")
+        local before = #helper.sendCalls
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.same({ "status", "i" },
+            { helper.sendCalls[before + 1], helper.sendCalls[before + 2] })
+    end)
+
     it("reports the XP gained so far on each poll", function()
         helper.simulateAlias("ta.follow pelayo")
         helper.simulateLine("Experience:   1000")

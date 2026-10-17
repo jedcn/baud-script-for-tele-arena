@@ -7759,7 +7759,8 @@ local dirShort = {
     down = "d",
 }
 
--- While following, send `status` every 5 minutes so the log keeps capturing XP.
+-- While following, send `status` and `i` every 5 minutes so the log keeps
+-- capturing XP and gold.
 -- Followers never type `st` themselves, so without this a session's only XP
 -- readings were at `ta.follow` and (if anyone remembered) `ta.unfollow`. A
 -- generation counter makes the rescheduled one-shot timer self-cancel, mirroring
@@ -7773,6 +7774,7 @@ function taPackage.scheduleFollowXpPoll()
         if (taPackage.followXpPollGen or 0) ~= gen then return end
         taPackage.followXpPollPending = true
         send("status")
+        send("i")
         taPackage.scheduleFollowXpPoll()
     end, { repeating = false })
 end
