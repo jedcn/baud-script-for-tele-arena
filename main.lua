@@ -1900,6 +1900,32 @@ function taPackage.closureDescriptionsDiffer(a, b)
     return type(da) == "string" and type(db_) == "string" and da ~= db_
 end
 
+-- Has a held closure's chain passed through a room that does not look like the
+-- one it started on? Until it has, its agreement is no evidence: in a corridor of
+-- identical rooms every room agrees with every other, so the chain would have
+-- agreed whichever room it was offered. The Elven Valley's wall path is a ring of
+-- rooms that share a name, a description and (bar the corners) exits e,w, and
+-- twice a walk west of path-in-the-elven-valley-7 was merged three rooms on into
+-- the far end of the walked arm -- a six-room ring of nothing but e moves
+-- (2026-10-02, and logs/session-pelayo-2026-10-17T17-15-32.log, line 220).
+function taPackage.closureChainDistinguished(pc)
+    local function roomLook(id)
+        local dirs = {}
+        for d in pairs(taPackage.db.roomExitDirections(id)) do dirs[#dirs + 1] = d end
+        table.sort(dirs)
+        return table.concat(dirs, ","), taPackage.db.roomDescription(id)
+    end
+    local firstDirs, firstDesc = roomLook(pc.pairs[1].into)
+    for i = 2, #pc.pairs do
+        local dirs, desc = roomLook(pc.pairs[i].into)
+        if dirs ~= firstDirs then return true end
+        if type(desc) == "string" and type(firstDesc) == "string" and desc ~= firstDesc then
+            return true
+        end
+    end
+    return false
+end
+
 -- How many fresh rooms in a row must agree with a held loop closure before it
 -- is merged. Three, because the labyrinth's Level 3 has a corridor that mimics a
 -- walked one for three rooms and only the third tells them apart.
@@ -2038,9 +2064,15 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
             and taPackage.db.roomLooksLike(expected, taPackage.currentRoom, dirs) then
             pc.pairs[#pc.pairs + 1] = { from = taPackage.currentRoomId, into = expected }
             local agreed = #pc.pairs - 1
-            if agreed >= taPackage.closureConfirmations then
+            local distinguished = taPackage.closureChainDistinguished(pc)
+            if agreed >= taPackage.closureConfirmations and distinguished then
                 taPackage.pendingClosure = nil
                 taPackage.settleClosure(pc)
+            elseif agreed >= taPackage.closureConfirmations then
+                holding = true
+                echo("[map] " .. (pc.seam and "Seam crossing" or "loop closure")
+                    .. " into #" .. tostring(pc.into) .. " agrees so far (" .. agreed
+                    .. "), but every room so far looks alike -- keep walking to a room that differs")
             else
                 holding = true
                 echo("[map] " .. (pc.seam and "Seam crossing" or "loop closure")
@@ -2070,7 +2102,14 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
         -- has yet.
         local pc = taPackage.pendingClosure
         taPackage.pendingClosure = nil
-        if pc.pairs and #pc.pairs >= 2 then taPackage.settleClosure(pc) end
+        if pc.pairs and #pc.pairs >= 2 then
+            if taPackage.closureChainDistinguished(pc) then
+                taPackage.settleClosure(pc)
+            else
+                echo("[map] loop closure into #" .. tostring(pc.into) .. " dropped -- every"
+                    .. " room that agreed looks alike, so the agreement proves nothing")
+            end
+        end
     end
 
     -- Are we where we think we are? `ex` lists every exit a room has (sealed ones
@@ -2510,7 +2549,8 @@ local function stopMapping()
     -- leaves a duplicate. Say so plainly and say what resolves it: the cost of
     -- deferring is paid entirely by whoever closes a loop as their last act.
     local held = taPackage.pendingClosure
-    if held and held.pairs and #held.pairs >= 2 then
+    if held and held.pairs and #held.pairs >= 2
+        and taPackage.closureChainDistinguished(held) then
         -- It has agreed for a room or more; settle on that, as a turn back would.
         taPackage.pendingClosure = nil
         taPackage.settleClosure(held)

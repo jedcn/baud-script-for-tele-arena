@@ -1,0 +1,310 @@
+# baud text log - started 2026-10-17T21:15:32.586Z
+
+Starting to read main.lua
+Finishing reading main.lua
+* MajorTCP/IP by Vircom Inc. *
+Connecting...Please Wait...
+Auto-sensing...
+    [!
+[2J
+       ·           ·                                ▌░▒▓█▒████▓█▓█▓▓▓▓▓▓▓▓▓█▓▓▓
+                              ·                    ▌░▒▓██▒▒▓▒█▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓█▓
+   ·                                              ▌░▒▓█▓█▒█▓█▓▓▓▓▓▓▓▓▓▒▒▓▒▓▓███
+                          ·        ·             ▌░▒▓▓▓█▒▓▓▓▓▓▒█▒▒▒▒▒▒▒▒▒▒▒▒▓▓█
+  ┌───┐┌───┐┌──┬─┐┐   ┌┌───┐┌┐   ┌               ▌░▒▓███▓▒▒▒▓▒███▓▒▒▒▒█▓▓▓▓████
+  │    │   │   │  │   ││   ││└┐  │              ▌░▒▓▓█▓██▓▒▒▒▓▓█▓▓▓▓▒▒▓▓▓██▓███
+  └───┐├───┤   │  │   │├──┬┘│ └┐ │ ·            ▌░▒▓███▓██▓▓▓███▓██▒▓▒▒▒▒█▓▓▓██
+    · ││   │   │  │   ││  │ │  └┐│             ▌░▒▓███▒█▒█▓▓██▒█▒▓▓▓▓▒▒▒▒███▓▓█
+  └───┘┘   └   ┘  └───┘┘  └ ┘   └┘             ▌░▒▓█▓██▒▓▒▒▒▓▓█████▒▒░░░░░▓▓▓▓▓
+          ·                                    ▌░▒▓█▓█▓▓▓▓▒▓▒▓▓▓▓▓▒▒█░░░▒▒▒▓▓▓▓
+         · ·  ┌─────                           ▌░▒▓███▓██▒▒▒▓▓▒▒▒▒░░▒░░▒▒▒▒▓▓▓▓
+  ·           │                                 ▌░▒▓██▓▓▓▓▒▒▓▓▒▒░░░░░░▒▒▒▓▓▓▓▓▓
+              └────┐   ·           ·            ▌░▒▓▓█▓▒▒▒▒▒▓▓▓▓▒░░░▒▒▒ ▒█▒█▓▓▓
+                   │       ∙                     ▌░▒▓▓█▓▒▒▒░▒▒▒▒░░░▒▒▒  █▓▓▓▓██
+     ·        ─────┘  ·            ∙             ▌░▒▓▒██▓▓▓▓▒▒▒░░░░▒▒▒▒▓▓▓▓██▓█
+                 ·              ·   ·             ▌░▒▓██▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒█▓▓█████
+·       ∙                                          ▌░▓▓██▓█▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓██▓█
+                                                    ▌░▒▓█████▓▓▓▓▓▓▓▓▓██▓░██▓██
+              ·            ·                         ▌░▒▓██████▓█▓▓▓▓▓▓▓▓▓▓█░██
+                                                      ▐░▒▓██▓███▒▓▓▓▓▓▓▓▓▓▓█▓██
+  ·        ·                              ∙             ▐░▒▓█████▓█▓▓▓▓▓▓███▓██
+        ·                ·                                ▐░▒▓█▒█▒███▓▓▓▒▓▒█▒█▒
+                                   ·                        ▐░░▒▓█▒█▒█▒██▒░▒▒█░
+                 ∙                                            ▐░░▒▓█████░▒▒▒░░░
+
+Enter your username now and press
+ENTER or type "NEW" to create one.
+Username: 
+[login] logging in as pelayo
+> pelayo
+pelayo
+
+Password: 
+> arbor123
+▒▒▒▒▒▒▒▒
+
+Greetings, Pelayo, glad to see you back again.
+(N)onstop, (Q)uit, or (C)ontinue?
+> n
+[2J
+ ╔═══════════════════════════ Distant Realms ════════════════════════════════╗
+ ║ Fight for survival, seek out the demons and annihlate them.               ║
+ ║ Destroy anyone who gets in your way. The quest has just begun!            ║
+ ╚═══════════════════════════════════════════════════════════════════════════╝
+
+-= Bud Globals v1.0 =- With Ultragrams installed!  Type >>> ; <<< for info!
+
+###  User-ID                Age   Sex Time  Class    Flags Option Selected
+-------------------------------------------------------------------------------
+
+ 01  <<LOG-ON>>
+ 03  <<LOG-ON>>
+ 04  <<LOG-ON>>
+ 05  <<LOG-ON>>
+ 06  <<LOG-ON>>
+ 07  <<LOG-ON>>
+ 08  <<LOG-ON>>
+ 09  <<LOG-ON>>
+ 0A  Pelayo                 46     M  0     USER      ---  Ultra Globals       
+ 0B  <<LOG-ON>>
+ 0C  <<LOG-ON>>
+ 0E  <<LOG-ON>>
+-------------------------------------------------------------------------------
+(N)onstop, (Q)uit, or (C)ontinue?
+
+Main System Menu (TOP)
+Make your selection (1,2,3,4,5,6,7,8,9,0,D,G,T,F,I,R,E,M,A,L,B,? for help, or X
+> 5
+to exit): 
+5
+Entering Tele-Arena...
+> st
+> i
+You're on a path in the Elven Valley
+There is nobody here.
+There is nothing on the floor.
+
+st
+i
+Race:         Dwarven
+Class:        High Priest
+Level:        25
+Experience:   43769799
+Rune:         Violet
+Intellect:    24
+Knowledge:    25
+Physique:     23
+Stamina:      25
+Agility:      23
+Charisma:     17
+Mana:         66 / 100
+Vitality:     1646 / 1646
+Status:       Healthy
+Armor Rating: 21
+Weapon:       Hallowed Stick
+Armor:        Charred Chain Mail
+Encumberance: 704 / 1150
+You are carrying 670 gold crowns, a coil of rope, a glowstone, a soulstone, a
+quartz key, an opal key, a waterskin(2), a heartstone, a yarrow potion, a
+yarrow potion, a manastone, and a zarynthium potion.
+> ex
+ex
+Exits: e,s,w.
+$ map-print-room-slug
+> 
+> ex
+You're on a path in the Elven Valley
+There is nobody here.
+There is nothing on the floor.
+ex
+Exits: e,s,w.
+[map] this is path-in-the-elven-valley-7  (position tracked)  ->  map-here path-in-the-elven-valley-7 to map from here
+$ map-here path-in-the-elven-valley-7
+[map] anchored at path-in-the-elven-valley-7 (#3349) coord=(25,31,0)
+$ w
+> w
+w
+You're on a path in the Elven Valley
+[mapdbg] discoverRoom slug=path-in-the-elven-valley-13 INSERT changes=1 -> id=3489 (number)
+[mapdbg] entry 'path in the Elven Valley' roomId=3489 (number) provisional=true coord=(24,31,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3489 (number)
+[mapdbg] reconcile: room=path in the Elven Valley id=3489 dirs=e,w
+[mapdbg] findRoomByFingerprint -> type=nil val=nil
+[mapdbg] findLoopClosure back=e -> type=number val=3354
+[map] possible loop closure into #3354 -- settle it by walking w
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're on a path in the Elven Valley
+[mapdbg] discoverRoom slug=path-in-the-elven-valley-14 INSERT changes=1 -> id=3490 (number)
+[mapdbg] entry 'path in the Elven Valley' roomId=3490 (number) provisional=true coord=(23,31,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+look
+ex
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3490 (number)
+[map] loop closure into #3354 agrees so far (1 of 3) -- keep walking to settle it
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+You're on a path in the Elven Valley
+[mapdbg] discoverRoom slug=path-in-the-elven-valley-15 INSERT changes=1 -> id=3491 (number)
+[mapdbg] entry 'path in the Elven Valley' roomId=3491 (number) provisional=true coord=(22,31,0)
+> look
+> ex
+There are two elven warriors here.
+There is nothing on the floor.
+
+look
+ex
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3491 (number)
+[map] loop closure into #3354 agrees so far (2 of 3) -- keep walking to settle it
+[map] unexplored exits: w  (mapped: e)
+$ w
+> w
+w
+The elven warrior attacked you with his enchanted axe for 99 damage!
+The elven warrior attacked you with his enchanted axe for 109 damage!
+You're on a path in the Elven Valley
+[mapdbg] discoverRoom slug=path-in-the-elven-valley-16 INSERT changes=1 -> id=3492 (number)
+[mapdbg] entry 'path in the Elven Valley' roomId=3492 (number) provisional=true coord=(21,31,0)
+> look
+> ex
+There are two elven warriors here.
+There is nothing on the floor.
+An elven warrior has just arrived from the east.
+
+look
+ex
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3492 (number)
+[map] loop closure confirmed: #3489 was #3354
+[map] all exits mapped: e, w
+$ w
+> w
+w
+You barely dodge the elven warrior's attack!
+You barely dodge the elven warrior's attack!
+You're on a path in the Elven Valley
+[mapdbg] entry 'path in the Elven Valley' roomId=3350 (number) provisional=false coord=(26,31,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+An elven warrior has just arrived from the east.
+
+look
+ex
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3350 (number)
+[map] all exits mapped: e, w
+$ w
+> w
+w
+You're on a path in the Elven Valley
+[mapdbg] entry 'path in the Elven Valley' roomId=3349 (number) provisional=false coord=(25,31,0)
+> look
+> ex
+There is nobody here.
+There is nothing on the floor.
+
+An elven warrior has just arrived from the east.
+look
+You're on a path in the Elven Valley that leads around the city
+of Mytthos.  There are no fresh footprints on the path, even though you
+have seen elves creeping around.  The elves are not foolish enough to
+leave their trail to anyone who would like to follow them.  The further
+you stray from the gate to the city, the more you fear for your life.
+Exits are east and west.
+ex
+Exits: e,w.
+[mapdbg] Exits trigger: mapping=true currentRoomId=3349 (number)
+[where] lost track: the map has elven-valley/path-in-the-elven-valley-7 with s, which this room does not
+[map] mapping OFF: `ex` says e,w, but elven-valley/path-in-the-elven-valley-7 has s too -- so this is not elven-valley/path-in-the-elven-valley-7, or the map gave it an exit it does not have. Nothing was written.
+[map]   `map-print-room-slug` to find where you are, then `map-here <slug>` to carry on.
+An elven warrior has just arrived from the east.
+An elven warrior has just arrived from the east.
+The elven warrior's poorly executed attack misses you!
+The elven warrior's poorly executed attack misses you!
+
+> x
+x
+Exiting Tele-Arena...
+
+<< hit return >>
+> 
+[2J
+       ┌────────────────────────────────────────────────────────────────┐
+       │                        Saturn V ßßδ                            │
+       └────────────────────────────────────────────────────────────────┘
+[s├─┼──┼▄│1│ Tournament Lord├──┼──┼──┼──┼──┼──┼──┼▄│#│ Who's Online┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│2│ The Rose - Council of Guardians──┼──┼█│'│ <message> Global Chat┼──┼─┤[u
+[s├─┼──┼█│3│ iNFinITY CoMpLeX──┼──┼──┼──┼──┼──┼──┼█│T│ Teleconference─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│4│ MajorMUD─┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│ │ ────────────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│5│ Tele-Arena 5.6g├──┼──┼──┼──┼──┼──┼──┼█│F│ Farwest Trivia─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│6│ Wheel of Fame──┼──┼──┼──┼──┼──┼──┼──┼█│I│ Internet Relay Chat──┼──┼─┤[u
+[s├─┼──┼█│7│ World Conquest─┼──┼──┼──┼──┼──┼──┼──┼█│R│ Registry of Users─┼──┼──┼─┤[u
+[s├─┼──┼█│8│ Distant Realms─┼──┼──┼──┼──┼──┼──┼──┼█│E│ Edit User Info─┼──┼──┼──┼─┤[u
+[s├─┼──┼█│9│ Mutants──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼█│M│ Messages────┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│0│ Swords of Chaos├──┼──┼──┼──┼──┼──┼──┼█│A│ SysOp Menu──┼──┼──┼─
+─┼──┼─┤[u
+[s├─┼──┼█│L│ Galactic Empire┼──┼──┼──┼──┼──┼──┼──┼█│X│ Log Off──┼──┼──┼──┼──┼──┼─┤[u
+[s├─┼──┼█│G│ More Games!─┼──┼──┼──┼──┼──┼──┼──┼──┼█│;?│ Global Help┼──┼──┼──┼──┼─┤[u
+[s└─┼──┼█│B│─Trade Wars 2002┼──┼──┼──┼──┼──┼──┼──┼▀▀┼──┼──┼──┼──┼──┼──┼──┼──┼──┼─┘[u
+  └──┴▀▀┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+■ Users online: 10■ Connected for 31 minutes ■
+■ 17:14:08 ■ 15-OCT-26 ■ Command ■ : [1D
+> x
+x
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
+> 
+
+You are about to terminate this connection!
+Are you sure (Y/N, or R to re-logon)? 
