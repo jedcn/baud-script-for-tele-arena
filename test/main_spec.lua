@@ -21978,3 +21978,65 @@ describe("live-navigate", function()
     end)
 
 end)
+
+describe("ta.follow XP poll", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function statusCount()
+        local n = 0
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "status" then n = n + 1 end
+        end
+        return n
+    end
+
+    it("sends status every 5 minutes while following", function()
+        helper.simulateAlias("ta.follow pelayo")
+        assert.are.equal(1, statusCount())
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.equal(2, statusCount())
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.equal(3, statusCount())
+    end)
+
+    it("reports the XP gained so far on each poll", function()
+        helper.simulateAlias("ta.follow pelayo")
+        helper.simulateLine("Experience:   1000")
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        helper.simulateLine("Experience:   1500")
+        assert.is_true(tableContains(helper.echoCalls,
+            "[follow] XP check — gained 500 XP so far (total: 1500)."))
+    end)
+
+    it("stops on ta.unfollow", function()
+        helper.simulateAlias("ta.follow pelayo")
+        helper.simulateAlias("ta.unfollow")
+        local before = statusCount()
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.equal(before, statusCount())
+    end)
+
+    it("stops on stop-all-scripts", function()
+        helper.simulateAlias("ta.follow pelayo")
+        helper.simulateAlias("stop-all-scripts")
+        assert.is_true(tableContains(helper.echoCalls, "[all] Stopped follow XP poll."))
+        local before = statusCount()
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.equal(before, statusCount())
+    end)
+
+    -- reloadScript() drops pending timers but keeps taPackage.
+    it("re-arms after a script reload", function()
+        helper.simulateAlias("ta.follow pelayo")
+        helper.timers = {}
+        dofile("main.lua")
+        local before = statusCount()
+        helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
+        assert.are.equal(before + 1, statusCount())
+    end)
+
+end)

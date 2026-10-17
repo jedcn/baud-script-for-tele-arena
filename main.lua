@@ -4966,6 +4966,13 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             echo("[follow] Session over — starting XP unknown (total: " .. followXp .. ").")
         end
         taPackage.followSessionStartXp = nil
+    elseif taPackage.followXpPollPending then
+        taPackage.followXpPollPending = false
+        local startXp = taPackage.followSessionStartXp
+        if startXp then
+            echo("[follow] XP check — gained " .. (followXp - startXp)
+                .. " XP so far (total: " .. followXp .. ").")
+        end
     end
     -- Between monsters and enough XP to level: head to train, but only once our
     -- stat potions have lapsed (arenaTryTrain returns false while any is active,
@@ -7534,6 +7541,8 @@ createAlias("^stop-all-scripts$", function()
         { name = "train-and-exit",        running = taPackage.trainWatch ~= nil,      stop = stopTrainWatch },
         { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
         { name = "banking",               running = taPackage.bankingRunning(),       stop = taPackage.stopBanking },
+        -- Stops only the 5-minute status poll; the character stays in the group.
+        { name = "follow XP poll",        running = taPackage.followXpPollActive == true, stop = taPackage.stopFollowXpPoll },
         -- Not a loop of its own but what starts one: baud reconnects on a
         -- drop, and every fresh login re-runs TA_INIT_CMD ("tfia 3"), so an
         -- arena stopped here would otherwise be back on the next reconnect.
@@ -7750,6 +7759,42 @@ local dirShort = {
     down = "d",
 }
 
+-- While following, send `status` every 5 minutes so the log keeps capturing XP.
+-- Followers never type `st` themselves, so without this a session's only XP
+-- readings were at `ta.follow` and (if anyone remembered) `ta.unfollow`. A
+-- generation counter makes the rescheduled one-shot timer self-cancel, mirroring
+-- scheduleArenaXpCheck. Fields on taPackage, not locals: main.lua's local budget
+-- is tight (see CLAUDE.md).
+taPackage.FOLLOW_XP_POLL_MS = 300000
+
+function taPackage.scheduleFollowXpPoll()
+    local gen = taPackage.followXpPollGen or 0
+    createTimer(taPackage.FOLLOW_XP_POLL_MS, function()
+        if (taPackage.followXpPollGen or 0) ~= gen then return end
+        taPackage.followXpPollPending = true
+        send("status")
+        taPackage.scheduleFollowXpPoll()
+    end, { repeating = false })
+end
+
+function taPackage.startFollowXpPoll()
+    taPackage.followXpPollGen = (taPackage.followXpPollGen or 0) + 1
+    taPackage.followXpPollActive = true
+    taPackage.scheduleFollowXpPoll()
+end
+
+function taPackage.stopFollowXpPoll()
+    taPackage.followXpPollGen = (taPackage.followXpPollGen or 0) + 1
+    taPackage.followXpPollActive = false
+    taPackage.followXpPollPending = false
+end
+
+-- reloadScript() clears pending timers but taPackage survives, so a reload
+-- mid-follow would silently end the poll. Re-arm it on load.
+if taPackage.followXpPollActive then
+    taPackage.startFollowXpPoll()
+end
+
 -- `ta.follow <name>` joins and shadows a leader. An optional trailing " debug"
 -- turns on tracing for the whole follow session: the join decisions below, plus
 -- every kill the follow spawns (followDebug feeds killDebugEcho, so the debug
@@ -7775,6 +7820,7 @@ createAlias("^ta\\.follow (.+)$", function(matches)
     taPackage.followStartXpPending = true
     taPackage.followEndXpPending = false
     send("status")
+    taPackage.startFollowXpPoll()
 end, { type = "regex" })
 
 -- `ta.unfollow` ends the group session started by `ta.follow`: it leaves the
@@ -7787,6 +7833,7 @@ createAlias("^ta\\.unfollow$", function()
     taPackage.followedBy = nil
     taPackage.followStartXpPending = false
     taPackage.followEndXpPending = true
+    taPackage.stopFollowXpPoll()
     echo("[follow] Left the group.")
     send("status")
 end, { type = "regex" })
