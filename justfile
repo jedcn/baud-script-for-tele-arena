@@ -212,3 +212,26 @@ db-snapshot why:
     sqlite3 tele-arena.db .dump > ../tele-arena-db/tele-arena.sql
     git -C ../tele-arena-db add tele-arena.sql
     git -C ../tele-arena-db diff --cached --quiet && echo "db-snapshot: no changes since last snapshot" || git -C ../tele-arena-db commit -m "{{why}}"
+
+image := "baud-script-dev"
+docker_flags := "--rm --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges"
+
+# Build (or rebuild) the dev image
+docker-build:
+    docker build -t {{image}} .
+
+# Rebuild from scratch, pulling the latest base image
+docker-rebuild:
+    docker build --no-cache --pull -t {{image}} .
+
+# Interactive shell in the container
+docker-shell:
+    docker run -it {{docker_flags}} -v "{{justfile_directory()}}":/workspace {{image}} bash
+
+# Run the full test suite in the container
+docker-test:
+    docker run {{docker_flags}} -v "{{justfile_directory()}}":/workspace {{image}} just test
+
+# Claude Code, with the login volume
+docker-claude:
+    docker run -it {{docker_flags}} -v "{{justfile_directory()}}":/workspace -v claude-config:/home/vscode/.claude {{image}} claude
