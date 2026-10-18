@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: twenty-nine terms, chosen because a conversation actually
+This is a first pass: thirty terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -414,8 +414,7 @@ The game's party: one Leader and the Followers it has let in (`join`, `add`,
 `leave`). Both roles are "in a Group" -- `taPackage.inGroup()` is true for
 either -- and that is the test for the things a Group does differently: `share`
 the gold found on a corpse, and `drink water` the moment you're thirsty.
-_Avoid_: party, team (the arena's team mode is a separate thing: characters
-fighting in the same arena, not a game Group)
+_Avoid_: party, team (a Team is a separate thing)
 
 **Leader**:
 The character the others follow. It never runs `ta.follow`; it becomes a Leader
@@ -432,3 +431,19 @@ to the Leader's name. A Follower walks where its Leader walks, joins the fights
 its Leader starts, and obeys the Leader's `confer` commands. Leader and Follower
 are mutually exclusive: following someone drops any Followers of your own.
 _Avoid_: member (a Leader is a member of its Group too), shadow
+
+**Team**:
+The characters fighting in the same arena together, each one running
+`team-fight-in-arena` (`tfia`). Each runs the ordinary arena loop with a team
+flag on, and two things change. First, they summon exactly one monster between
+them: each character waits its turn in alphabetical order before ringing the
+gong, and hearing anyone else ring calls its own ring off. Second, they hold the
+gong while a team-mate is out healing. Everything else stays per-character,
+including errands for drink, potions, healing and training.
+
+A Team has no Leader and needs no `join`. Membership is whoever the arena brief
+names right now, so a character out on an errand simply drops out of the ringing
+order and whoever is now first rings.
+_Avoid_: group or party (a Group is the game's `join`/`add` party, built with
+`ta.follow`, and is unrelated: a Team needs no Group, and a Group doesn't make
+anyone a Team)
