@@ -11610,13 +11610,23 @@ describe("ring-gong-and-fight-in-arena", function()
 
     end)
 
+    describe("thirsty", function()
+
+        it("drinks water when thirsty outside any script", function()
+            helper.simulateLine("You're thirsty.")
+            assert.are.same({ "drink water" }, helper.sendCalls)
+        end)
+
+    end)
+
     describe("thirsty and hungry during arena", function()
 
         it("departs for tavern immediately when thirsty while fighting", function()
             taPackage.arenaState = "fighting"
             helper.simulateLine("You're thirsty.")
             assert.are.equal("tavern", taPackage.arenaState)
-            assert.are.equal("w", helper.sendCalls[1])
+            assert.are.equal("drink water", helper.sendCalls[1])
+            assert.are.equal("w", helper.sendCalls[2])
             assert.is_true(taPackage.needsDrinks)
         end)
 
@@ -11632,7 +11642,8 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "ringing"
             helper.simulateLine("You're thirsty.")
             assert.are.equal("tavern", taPackage.arenaState)
-            assert.are.equal("w", helper.sendCalls[1])
+            assert.are.equal("drink water", helper.sendCalls[1])
+            assert.are.equal("w", helper.sendCalls[2])
         end)
 
         it("does not depart again when second need fires after already heading to tavern", function()
@@ -11648,7 +11659,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fleeing"
             helper.simulateLine("You're thirsty.")
             assert.are.equal("fleeing", taPackage.arenaState)
-            assert.are.equal(0, #helper.sendCalls)
+            assert.are.same({ "drink water" }, helper.sendCalls)
             assert.is_true(taPackage.needsDrinks)
         end)
 

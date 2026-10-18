@@ -5784,7 +5784,10 @@ end, { type = "regex" })
 taPackage.IDLE_EXIT_MS = 15 * 60 * 1000
 taPackage.IDLE_CHECK_MS = 60 * 1000
 
-createOutboundTrigger("^(.*)$", function()
+-- `drink water` is the thirst trigger's reflex, not anyone driving: counting
+-- it would let every thirst tick keep an abandoned character in the game.
+createOutboundTrigger("^(.*)$", function(matches)
+    if matches[2] == "drink water" then return end
     taPackage.lastSentAt = nowMillis()
 end, { type = "regex" })
 
@@ -6378,7 +6381,10 @@ createTrigger("^In your haste, you trip and fall!$", function()
     end, { repeating = false })
 end, { type = "regex" })
 
+-- Drink from the waterskin the moment thirst bites, whatever else is running.
+-- Without one the game just refuses; the arena still plans its tavern trip.
 createTrigger("^You're thirsty\\.$", function()
+    send("drink water")
     setCharacterStatus("Thirsty")
     if not taPackage.arenaState then return end
     if arenaCheckParched() then return end
