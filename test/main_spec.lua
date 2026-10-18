@@ -14536,7 +14536,14 @@ describe("ta.follow", function()
         it("confer-kill confers a kill to the group", function()
             taPackage.followedBy = { "Tojolias" }
             helper.simulateAlias("confer-kill warrior")
-            assert.are.same({ "confer kill warrior" }, helper.sendCalls)
+            assert.are.equal("confer kill warrior", helper.sendCalls[1])
+        end)
+
+        it("confer-kill starts the leader's own kill loop", function()
+            taPackage.followedBy = { "Tojolias" }
+            helper.simulateAlias("confer-kill warrior")
+            assert.is_true(taPackage.killActive)
+            assert.are.equal("warrior", taPackage.killTarget)
         end)
 
         it("kill-stop does not confer when not in a group", function()
