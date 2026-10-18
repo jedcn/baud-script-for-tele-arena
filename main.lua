@@ -809,12 +809,16 @@ createTrigger("^You buy passage across the great lake and board a ship", functio
     send("i")
 end, { type = "regex" })
 
--- In a group -- following someone, or led with followers -- loot found on a
+-- In a group -- following someone, or leading followers -- loot found on a
 -- corpse is split with the group via `share`. A field, not a local: main.lua's
 -- local budget is tight (see CLAUDE.md).
-function taPackage.shareLootWithGroup(found)
+function taPackage.inGroup()
     local leading = taPackage.followedBy and #taPackage.followedBy > 0
-    if taPackage.followTarget or leading then
+    return taPackage.followTarget ~= nil or leading == true
+end
+
+function taPackage.shareLootWithGroup(found)
+    if taPackage.inGroup() then
         send("share " .. found)
     end
 end
@@ -6381,10 +6385,10 @@ createTrigger("^In your haste, you trip and fall!$", function()
     end, { repeating = false })
 end, { type = "regex" })
 
--- Drink from the waterskin the moment thirst bites, whatever else is running.
--- Without one the game just refuses; the arena still plans its tavern trip.
+-- In a group (see inGroup), drink from the waterskin the moment thirst bites.
+-- Without one the game just refuses.
 createTrigger("^You're thirsty\\.$", function()
-    send("drink water")
+    if taPackage.inGroup() then send("drink water") end
     setCharacterStatus("Thirsty")
     if not taPackage.arenaState then return end
     if arenaCheckParched() then return end
