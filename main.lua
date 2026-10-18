@@ -7532,6 +7532,13 @@ createAlias("^kill-stop$", function()
     end
 end, { type = "regex" })
 
+-- A Leader sends its Followers after a monster: `confer-kill warrior` confers
+-- `kill warrior`, which each Follower runs as its own kill (see the
+-- "(to group)" trigger). The Leader starts its own fight separately.
+createAlias("^confer-kill (.+)$", function(matches)
+    send("confer kill " .. matches[2])
+end, { type = "regex" })
+
 -- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
 -- and heals its most-injured member. Non-Acolytes have no group heal to cast.
 createAlias("^heal\\.allies$", function()

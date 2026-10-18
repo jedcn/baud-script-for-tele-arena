@@ -14533,6 +14533,12 @@ describe("ta.follow", function()
             assert.are.same({ "confer kill-stop" }, helper.sendCalls)
         end)
 
+        it("confer-kill confers a kill to the group", function()
+            taPackage.followedBy = { "Tojolias" }
+            helper.simulateAlias("confer-kill warrior")
+            assert.are.same({ "confer kill warrior" }, helper.sendCalls)
+        end)
+
         it("kill-stop does not confer when not in a group", function()
             taPackage.followedBy = nil
             helper.simulateAlias("kill cave lizard")
