@@ -875,10 +875,44 @@ createTrigger("^(.+) just gave you (\\d+) gold coins\\.$", function(matches)
     setGold((getGold() or 0) + amount)
 end, { type = "regex" })
 
--- A groupmate's `share` (see shareLootWithGroup) hands each of us a cut.
-createTrigger("^(.+) just shared (\\d+) gold with the group, your share was (\\d+) gold\\.$", function(matches)
-    local share = tonumber(matches[4])
-    setGold((getGold() or 0) + share)
+-- A groupmate's `share` (see shareLootWithGroup) hands each of us a cut. The
+-- BBS hard-wraps at 78 columns, even mid-number ("...your share was 1" / "6
+-- gold."), so an unfinished tail is held and completed by the next line. The
+-- continuation trigger is registered first so it doesn't consume the very line
+-- that stashed the tail.
+function taPackage.creditGroupShare(tail)
+    local share = tail:match("^(%d+)%s*gold%.$")
+    if share then
+        setGold((getGold() or 0) + tonumber(share))
+        return true
+    end
+    return false
+end
+
+createTrigger("^(.*)$", function(matches)
+    local pending = taPackage.pendingShareTail
+    if not pending then return end
+    taPackage.pendingShareTail = nil
+    taPackage.creditGroupShare(pending .. matches[2]:match("^%s*(.-)%s*$"))
+end, { type = "regex" })
+
+createTrigger("^.+ just shared \\d+ gold with the group, your share was(.*)$", function(matches)
+    local tail = matches[2]:match("^%s*(.-)%s*$")
+    if not taPackage.creditGroupShare(tail) then
+        taPackage.pendingShareTail = tail
+    end
+end, { type = "regex" })
+
+-- Sharing our own loot leaves us one share plus the remainder: the game hands
+-- every other member `each` (2908 at 484 a share left Teekywiki 488). The line
+-- doesn't name the group size, but floor(total / each) recovers it whenever
+-- each >= group size -- true for any loot worth sharing.
+createTrigger("^You shared (\\d+) gold with the group, each share was (\\d+) gold\\.$", function(matches)
+    local total = tonumber(matches[2])
+    local each = tonumber(matches[3])
+    if each == 0 then return end
+    local others = math.floor(total / each) - 1
+    setGold((getGold() or 0) - each * others)
 end, { type = "regex" })
 
 createTrigger("^You deposited (\\d+) gold in your account\\.$", function(matches)
