@@ -202,6 +202,12 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
+        it("adds our cut when a groupmate shares gold", function()
+            helper.simulateLine("You are carrying 100 gold crowns.")
+            helper.simulateLine("Tojolias just shared 119 gold with the group, your share was 19 gold.")
+            assert.are.equal(119, getGold())
+        end)
+
         it("accumulates loot gold from zero when inventory not yet seen", function()
             helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
             assert.are.equal(5, getGold())

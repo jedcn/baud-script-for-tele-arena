@@ -875,6 +875,12 @@ createTrigger("^(.+) just gave you (\\d+) gold coins\\.$", function(matches)
     setGold((getGold() or 0) + amount)
 end, { type = "regex" })
 
+-- A groupmate's `share` (see shareLootWithGroup) hands each of us a cut.
+createTrigger("^(.+) just shared (\\d+) gold with the group, your share was (\\d+) gold\\.$", function(matches)
+    local share = tonumber(matches[4])
+    setGold((getGold() or 0) + share)
+end, { type = "regex" })
+
 createTrigger("^You deposited (\\d+) gold in your account\\.$", function(matches)
     local amount = tonumber(matches[2])
     setGold((getGold() or 0) - amount)
