@@ -809,10 +809,21 @@ createTrigger("^You buy passage across the great lake and board a ship", functio
     send("i")
 end, { type = "regex" })
 
+-- In a group -- following someone, or led with followers -- loot found on a
+-- corpse is split with the group via `share`. A field, not a local: main.lua's
+-- local budget is tight (see CLAUDE.md).
+function taPackage.shareLootWithGroup(found)
+    local leading = taPackage.followedBy and #taPackage.followedBy > 0
+    if taPackage.followTarget or leading then
+        send("share " .. found)
+    end
+end
+
 createTrigger("^You found (\\d+) gold crowns while searching the (.+)'s corpse\\.$", function(matches)
     local found = tonumber(matches[2])
     local monster = matches[3]
     setGold((getGold() or 0) + found)
+    taPackage.shareLootWithGroup(found)
     taPackage.db.recordMonsterLoot(monster, found)
     if taPackage.lastKilledMonster == monster then
         taPackage.pendingLootCheck = nil
@@ -824,6 +835,7 @@ createTrigger("^You found (\\d+) gold crowns while searching the area\\.$", func
     local found = tonumber(matches[2])
     local monster = taPackage.lastKilledMonster or "unknown"
     setGold((getGold() or 0) + found)
+    taPackage.shareLootWithGroup(found)
     taPackage.db.recordMonsterLoot(monster, found)
     taPackage.pendingLootCheck = nil
     taPackage.lastKilledMonster = nil

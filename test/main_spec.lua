@@ -178,6 +178,30 @@ describe("Tele-Arena triggers", function()
             assert.are.equal(760, getGold())
         end)
 
+        it("shares corpse loot with the group while following", function()
+            taPackage.followTarget = "tojolias"
+            helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
+            assert.are.same({ "share 5" }, helper.sendCalls)
+        end)
+
+        it("shares area loot with the group while leading followers", function()
+            taPackage.followedBy = { "Pelayo" }
+            helper.simulateLine("You found 7 gold crowns while searching the area.")
+            assert.are.same({ "share 7" }, helper.sendCalls)
+        end)
+
+        it("does not share loot when not in a group", function()
+            helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
+            helper.simulateLine("You found 7 gold crowns while searching the area.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        it("does not share loot with an empty follower list", function()
+            taPackage.followedBy = {}
+            helper.simulateLine("You found 7 gold crowns while searching the area.")
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
         it("accumulates loot gold from zero when inventory not yet seen", function()
             helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
             assert.are.equal(5, getGold())
