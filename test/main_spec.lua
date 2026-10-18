@@ -14546,6 +14546,22 @@ describe("ta.follow", function()
             assert.are.equal("warrior", taPackage.killTarget)
         end)
 
+        it("ckill is shorthand for confer-kill", function()
+            taPackage.followedBy = { "Tojolias" }
+            helper.simulateAlias("ckill warrior")
+            assert.are.equal("confer kill warrior", helper.sendCalls[1])
+            assert.are.equal("warrior", taPackage.killTarget)
+        end)
+
+        it("skill is shorthand for kill-stop", function()
+            taPackage.followedBy = { "Tojolias" }
+            helper.simulateAlias("kill cave lizard")
+            helper.sendCalls = {}
+            helper.simulateAlias("skill")
+            assert.is_falsy(taPackage.killActive)
+            assert.are.same({ "confer kill-stop" }, helper.sendCalls)
+        end)
+
         it("kill-stop does not confer when not in a group", function()
             taPackage.followedBy = nil
             helper.simulateAlias("kill cave lizard")

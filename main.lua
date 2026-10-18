@@ -7524,21 +7524,27 @@ end, { type = "regex" })
 -- the leader pick the moment to move on and have everyone stop with them.
 -- Only a leader confers -- followers only obey their leader, so a follower's
 -- confer would reach nobody who acts on it.
-createAlias("^kill-stop$", function()
-    stopKill()
-    if not taPackage.followTarget
-        and taPackage.followedBy and #taPackage.followedBy > 0 then
-        send("confer kill-stop")
-    end
-end, { type = "regex" })
+-- `skill` is shorthand.
+for _, killStopPattern in ipairs({ "^kill-stop$", "^skill$" }) do
+    createAlias(killStopPattern, function()
+        stopKill()
+        if not taPackage.followTarget
+            and taPackage.followedBy and #taPackage.followedBy > 0 then
+            send("confer kill-stop")
+        end
+    end, { type = "regex" })
+end
 
 -- A Leader sends its Followers after a monster and joins in: `confer-kill
 -- warrior` confers `kill warrior`, which each Follower runs as its own kill
 -- (see the "(to group)" trigger), then starts the Leader's own kill loop.
-createAlias("^confer-kill (.+)$", function(matches)
-    send("confer kill " .. matches[2])
-    startKill(matches[2])
-end, { type = "regex" })
+-- `ckill <monster>` is shorthand.
+for _, conferKillPattern in ipairs({ "^confer-kill (.+)$", "^ckill (.+)$" }) do
+    createAlias(conferKillPattern, function(matches)
+        send("confer kill " .. matches[2])
+        startKill(matches[2])
+    end, { type = "regex" })
+end
 
 -- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
 -- and heals its most-injured member. Non-Acolytes have no group heal to cast.
