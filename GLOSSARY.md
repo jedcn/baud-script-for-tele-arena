@@ -1,6 +1,6 @@
 # Glossary
 
-Shared vocabulary for talking about the map. The two sources that already have
+Shared vocabulary, mostly for talking about the map. The two sources that already have
 opinions about these words are the code (`main.lua`, `ta_db.lua`, `ta_nav.lua`,
 `map.ts`) and the shrine drawings (`map/shrine/*.txt`), and they don't always
 agree with each other — where they differ, this file picks one and says so.
@@ -9,7 +9,7 @@ A **Capitalised** word inside a definition is another term defined here, so the
 entries read as a linked set. Words in an `_Avoid_` line stay lowercase: those
 are the rejected spellings, not references.
 
-This is a first pass: twenty-six terms, chosen because a conversation actually
+This is a first pass: twenty-nine terms, chosen because a conversation actually
 turned on each of them. Deliberately left for later: everything about combat,
 arenas, items and spells.
 
@@ -406,3 +406,29 @@ is a claim about *today*, never a map fact, and the map must not learn to doubt
 its own topology because of it — which is why a Sealed Exit stays a walked edge
 rather than degrading to a Stub.
 _Avoid_: world state, flags, progress
+
+## Playing together
+
+**Group**:
+The game's party: one Leader and the Followers it has let in (`join`, `add`,
+`leave`). Both roles are "in a Group" -- `taPackage.inGroup()` is true for
+either -- and that is the test for the things a Group does differently: `share`
+the gold found on a corpse, and `drink water` the moment you're thirsty.
+_Avoid_: party, team (the arena's team mode is a separate thing: characters
+fighting in the same arena, not a game Group)
+
+**Leader**:
+The character the others follow. It never runs `ta.follow`; it becomes a Leader
+when someone asks to join and the script `add`s them, recording the name in
+`taPackage.followedBy`, and the status bar tags it "Leader". It stays one until
+it runs `ta.follow` or `ta.unfollow` -- a Follower leaving does not take its
+name off the list, so a Leader can outlive its Group.
+_Avoid_: followed (`followedBy` is the field holding the Followers' names, not
+a name for the role), host, captain
+
+**Follower**:
+A character that ran `ta.follow <leader>`, which sets `taPackage.followTarget`
+to the Leader's name. A Follower walks where its Leader walks, joins the fights
+its Leader starts, and obeys the Leader's `confer` commands. Leader and Follower
+are mutually exclusive: following someone drops any Followers of your own.
+_Avoid_: member (a Leader is a member of its Group too), shadow
