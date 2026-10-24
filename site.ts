@@ -72,6 +72,22 @@ export function groupAreas(areas: { area: string; name: string }[]): Group[] {
   return out;
 }
 
+export type Section = { label: string; groups: Group[] };
+
+const TOWN_ORDER = ['First', 'Second', 'Third', 'Fourth'];
+
+/**
+ * The Area select's <optgroup>s: the towns first, in the order you reach them
+ * (alphabetical would put Fourth Town second), then everywhere else as before.
+ */
+export function sectionAreas(groups: Group[]): Section[] {
+  const town = (g: Group) => TOWN_ORDER.indexOf(g.area.match(/^(\w+) Town$/)?.[1] ?? '');
+  const towns = groups.filter(g => town(g) >= 0).sort((x, y) => town(x) - town(y));
+  const rest = groups.filter(g => town(g) < 0);
+  return [{ label: 'Towns', groups: towns }, { label: 'Elsewhere', groups: rest }]
+    .filter(s => s.groups.length > 0);
+}
+
 // ---------------------------------------------------------------------------
 // One level as SVG
 
@@ -994,6 +1010,8 @@ export function buildPage(
 
   const totals = areas.reduce((n, a) => n + a.rooms.length, 0);
   const option = (g: Group) => `<option value="${esc(g.area)}">${esc(g.area)}</option>`;
+  const section = (s: Section) =>
+    `<optgroup label="${esc(s.label)}">${s.groups.map(option).join('')}</optgroup>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -1014,7 +1032,7 @@ export function buildPage(
 </header>
 <div class="picker">
   <div><label for="area">Area</label>
-    <select id="area">${groups.map(option).join('')}</select></div>
+    <select id="area">${sectionAreas(groups).map(section).join('')}</select></div>
   <div><label for="level">Level</label><select id="level"></select></div>
   <div><label for="reset">Layout</label>
     <button class="ghost" id="reset" type="button">Reset this level</button></div>

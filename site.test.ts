@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, readPlayers, renderLevel, splitName }
+import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, readPlayers, renderLevel, sectionAreas,
+  splitName }
   from './site';
 import type { Area } from './export';
 
@@ -69,6 +70,32 @@ describe('groupAreas', () => {
 
   it('keeps a level-less area as one group with one level', () => {
     expect(groups.find(g => g.area === 'The Desert')!.levels.length).toBe(1);
+  });
+});
+
+describe('sectionAreas', () => {
+  const sections = sectionAreas(groupAreas([
+    { area: 'the-desert', name: 'The Desert' },
+    { area: 'fourth-town', name: 'Fourth Town' },
+    { area: 'first-town', name: 'First Town' },
+    { area: 'third-town', name: 'Third Town' },
+    { area: 'second-town', name: 'Second Town' },
+    { area: 'ruined-town', name: 'The Ruined Town' },
+  ]));
+  const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
+
+  it('puts the towns first, in numeric rather than alphabetical order', () => {
+    expect(labels[0]).toEqual(['Towns', ['First Town', 'Second Town', 'Third Town', 'Fourth Town']]);
+  });
+
+  it('leaves everything else, including the Ruined Town, in Elsewhere', () => {
+    expect(labels[1]).toEqual(['Elsewhere', ['The Desert', 'The Ruined Town']]);
+  });
+
+  it('renders the sections as optgroups in the Area select', () => {
+    const page = buildPage([MINI]);
+    expect(page).toContain('<optgroup label="Elsewhere"><option value="Test Place">');
+    expect(page).not.toContain('<optgroup label="Towns">');
   });
 });
 
