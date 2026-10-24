@@ -19620,6 +19620,15 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        it("stops on the wide chasm and names the step", function()
+            startWalking()
+            helper.simulateLine("The wide chasm prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("step 1 of 3 (sw)", 1, true))
+            assert.is_truthy(out:find("chasm", 1, true))
+            assert.is_nil(taPackage.navigate)
+        end)
+
         -- A trip is now two-phase: wait out the stumble, look at the floor (the
         -- fall may have cost us an item), then walk on.
         it("re-sends the same step after a trip, without advancing", function()

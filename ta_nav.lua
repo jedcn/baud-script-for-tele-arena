@@ -3384,6 +3384,22 @@ createTrigger("^A mystical force prevents your exit in that direction\\.$", func
         .. " This character's Runes don't allow passage that way.")
 end, { type = "regex" })
 
+-- The chasm on the way to third town's temple, while its walls are still up.
+-- Like a missing exit, nothing follows the refusal, so a walk that ran into it
+-- used to sit waiting for a brief that was never coming. Stop and say which
+-- step it was: on a `chasm-is-clear` route it means the levers aren't pulled.
+createTrigger("^The wide chasm prevents your exit in that direction\\.$", function()
+    local j = taPackage.navigate
+    if not j then return end
+    local dest = j.destination
+    local where = (j.phase == "door")
+        and ("the " .. j.door.dir .. " door out of " .. dest)
+        or ("step " .. j.index .. " of " .. #j.steps .. " (" .. tostring(j.steps[j.index]) .. ")")
+    stopNavigate()
+    navEcho("The wide chasm blocks " .. where .. " — stopping."
+        .. " The levers that clear it haven't been pulled today.")
+end, { type = "regex" })
+
 -- =========================================================================
 -- Walking in the dark
 -- =========================================================================
