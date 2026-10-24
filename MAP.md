@@ -23,34 +23,36 @@
 19. [Ruined Town](#ruined-town)
 20. [The Orc Caves](#the-orc-caves)
 21. [The Mountain Road](#the-mountain-road)
-22. [The Gnoll Caves](#the-gnoll-caves)
-23. [The Ruined Mansion](#the-ruined-mansion)
-24. [The Tower, Level 1](#the-tower-level-1)
-25. [The Tower, Level 2](#the-tower-level-2)
-26. [The Tower, Level 3](#the-tower-level-3)
-27. [The Tower, Level 4](#the-tower-level-4)
-28. [The Labyrinth, Level 1](#the-labyrinth-level-1)
-29. [The Labyrinth, Level 2](#the-labyrinth-level-2)
-30. [The Labyrinth, Level 3](#the-labyrinth-level-3)
-31. [The Labyrinth, Level 4](#the-labyrinth-level-4)
-32. [The Labyrinth, Level 5](#the-labyrinth-level-5)
-33. [The Tunnels](#the-tunnels)
-34. [The Ledge](#the-ledge)
-35. [The Cellars](#the-cellars)
-36. [Third Town](#third-town)
-37. [Fourth Town](#fourth-town)
-38. [The Deep Forest](#the-deep-forest)
-39. [The Valley](#the-valley)
-40. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
-41. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
-42. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
-43. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
-44. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
+22. [The Elven Valley](#the-elven-valley)
+23. [The Gnoll Caves](#the-gnoll-caves)
+24. [The Ruined Mansion](#the-ruined-mansion)
+25. [The Tower, Level 1](#the-tower-level-1)
+26. [The Tower, Level 2](#the-tower-level-2)
+27. [The Tower, Level 3](#the-tower-level-3)
+28. [The Tower, Level 4](#the-tower-level-4)
+29. [The Labyrinth, Level 1](#the-labyrinth-level-1)
+30. [The Labyrinth, Level 2](#the-labyrinth-level-2)
+31. [The Labyrinth, Level 3](#the-labyrinth-level-3)
+32. [The Labyrinth, Level 4](#the-labyrinth-level-4)
+33. [The Labyrinth, Level 5](#the-labyrinth-level-5)
+34. [The Tunnels](#the-tunnels)
+35. [The Ledge](#the-ledge)
+36. [The Cellars](#the-cellars)
+37. [The Flagstones, Level 1](#the-flagstones-level-1)
+38. [Third Town](#third-town)
+39. [Fourth Town](#fourth-town)
+40. [The Deep Forest](#the-deep-forest)
+41. [The Valley](#the-valley)
+42. [The Complex of Natural Caverns, Level 1](#the-complex-of-natural-caverns-level-1)
+43. [The Complex of Natural Caverns, Level 2](#the-complex-of-natural-caverns-level-2)
+44. [The Complex of Natural Caverns, Level 3](#the-complex-of-natural-caverns-level-3)
+45. [The Complex of Natural Caverns, Level 4](#the-complex-of-natural-caverns-level-4)
+46. [The Hewn Granite Corridors](#the-hewn-granite-corridors)
 
 ### First Town
 
 ```
-     [D]                 [pv]           [V^]   passage to second-town
+     [D]                 [pv]           [V^]   passage to Second Town
       |              /       /
       |         / /
 [E]  [Gv] [T^]
@@ -103,7 +105,7 @@ Key:
      [ ]       [ ]
     /             \
    /               \
-[W]                 [D]             passage to first-town
+[W]                 [D]             passage to First Town
 ```
 
 Key:
@@ -135,7 +137,7 @@ Key:
                                              [ ]--[ ]                 [ ]
                                             /        \                 |
                                            /          \                |
-                         [ ]--[ ]--[ ]--[ ^]           [ ]--[ ]       [ ]              up to first-town
+                         [ ]--[ ]--[ ]--[ ^]           [ ]--[ ]       [ ]              up to First Town
                         /                                      \     /
                        /                                        \   /
                     [ ]                                          [ ]
@@ -678,13 +680,13 @@ Key:
                               [ ]
                                |
                                |
-[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                           w to third-town
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                           w to Third Town
 ```
 
 ### The Sewers, Level 1
 
 ```
-[ ^]-[ ]                                                                                        up to second-town
+[ ^]-[ ]                                                                                        up to Second Town
    \/
    /\
 [ ]  [ ]                           [ ]                                     [ ]
@@ -855,7 +857,7 @@ Key:
                     [ ]                                [ ]
                        \                              /
                         \                            /
-                         [ ]                 [ ]--[ ]                                                ne to first-town
+                         [ ]                 [ ]--[ ]                                                ne to First Town
                         /   \               /        \
                        /     \             /          \
                     [ ]       [ ]--[ ]--[ ]            [ ]       [ ]--[ ]                 [ ]
@@ -1047,16 +1049,22 @@ Key:
 ### Ruined Town
 
 ```
-[ v]   down to The Cellars
- |
- |
-[ ]    e to unexplored   ne to unexplored   nw to unexplored   w to unexplored
- |
- |
-[ ]
- |
- |
-[ ]    s to The Swamp
+[ ]       [ ]       [ ]       [ ]
+   \     /             \     /
+    \   /               \   /
+     [ ]                 [ ]
+        \               /
+         \             /
+          [ ]  [ v] [ ]             down to The Cellars
+             \  |  /
+              \ | /
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+      |         |         |
+      |         |         |
+     [ ]       [ ]       [ ]
+                |
+                |
+               [ ]                  s to The Swamp
 ```
 
 ### The Orc Caves
@@ -1113,10 +1121,121 @@ Key:
 ### The Mountain Road
 
 ```
-          [ ]   n to unexplored
-         /
+                                                                           [ ]--[ ]--[ ]                                                                                             ne to The Elven Valley
+                                                                          /
+                                                                         /
+                                                            [ ]--[ ]--[ ]
+                                                           /
+                                                          /
+                                                       [ ]
+                                                        |
+                                                        |
+                                                       [ ]
+                                                        |
+                                                        |
+                                                       [ ]
+                                                          \
+                                                           \
+                                                            [ ]
+                                                               \
+                                                                \
+                                        [ v]                     [ ]--[ ]
+                                        /  \                             \
+                                       /    \                             \
+                                       /     [ ]                           [ ]
+                                      /         \                             \
+                                     /           \                             \
+                                    /             [ ]                           [ ]
+                                   /                 \                           |
+                                  /                   \                          |
+                                  /                    [ ]--[ ]--[ ]            [ ]
+                                 /                      |           \            |
+                                /                       |            \           |
+                               /                       [ ]            [ ]--[ ]--[ ]
+                              /                       /                          |
+                             /                       /                           |
+                             /               [ ]--[ ]                           [ ]
+                            /               /                                      \
+                           /               /                                        \
+                          /             [ ]                                          [ ]                                               [ ]--[ ]
+                         /               |                                              \                                             /        \
+                        /                |                                               \                                           /          \
+               [ ]      /[ ]            [ ]                                               [ ]                                     [ ]            [ ]
+                | \    // |              |                                                 |                                     /                  \
+                |  \  //  |              |                                                 |                                    /                    \
+               [ ]  [ ]  [ ]            [ ]                                               [ ]                                [ ]                      [ ]--[ ]
+              /     /   /              /                                                 /                                    |                               \
+             /     /   /              /                                                 /                                     |                                \
+          [ ]      /[ ]            [ ]                                               [ ]                 [ ]--[ ]            [ ]                                [ ]
+           |      /    \              \                                               |                 /        \          /                                      \
+           |     /      \              \                                              |                /          \        /                                        \
+          [ ]   /        [ ]            [ ]                                          [ ]            [ ]            [ ]--[ ]                                          [ ]
+         /     /            \              \                                            \          /                                                                  |
+        /     /              \              \                                            \        /                                                                   |
+[ ]--[ ]      /               [ ]            [ ]                                          [ ]--[ ]                                                                   [ ]             w to The Mountains
+             /                 |              |                                                                                                                         \
+            /                  |              |                                                                                                                          \
+           /                  [ ]            [ ]                                                                                                                          [ ]--[ ]   se to unexplored
+          /                      \          /
+         /                        \        /
+         /                         [ ]--[ ]
         /
-[ ]--[ ]        w to The Mountains
+       /
+      /
+     /
+    /
+    /
+   /
+  /
+[ ^v]----------[ ^v]----------[ ^v]----------[ ^v]----------[ ^v]----------[ ^v]----------[ ^v]----------[ ^]
+```
+
+### The Elven Valley
+
+```
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]                                                                   [ ]
+ |                                                                     |
+ |                                                                     |
+[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+                                    |
+                                    |
+                                   [ ]
+                                      \
+                                       \
+                                        [ ]
+                                           \
+                                            \
+                                             [ ]
+                                                \
+                                                 \
+                                                  [ ]
+                                                     \
+                                                      \
+                                                       [ ]
+                                                        |
+                                                        |
+                                                       [ ]
+                                                        |
+                                                        |
+                                                       [ ]                  sw to The Mountain Road
 ```
 
 ### The Gnoll Caves
@@ -1491,46 +1610,67 @@ Key:
 ### The Ledge
 
 ```
-[ ]--[ ]--[ ]--[ ]--[ v]                          [ ]                   down to The Tunnels   w to unexplored
-                       \                             \
-                        \                             \
-                         [ ]                           [ ]
-                            \                             \
-                             \                             \
-                              [ ]                           [ ]
-                                 \                             \
-                                  \                             \
-                                   [ ]                           [ ]
-                                    |                             |
-                                    |                             |
-                                   [ ]                           [ ]
-                                    |                             |
-                                    |                             |
-                                   [ ^]--------------------------[ v]
+[ ]--[ ]--[ ]--[ ]--[ v]                          [ ^]-[ ]--[ ]--[ ]                   down to The Tunnels
+                       \                          /                 \
+                        \                        /                   \
+                         [ ]                   /                      [ ]
+                            \                 /                          \
+                             \               /                            \
+                              [ ]           /                              [ ]
+                                 \        /                                   \
+                                  \      /                                     \
+                                   [ ]  /                                       [ ]
+                                    |  /                                         |
+                                    |/                                           |
+                                   [ ]                                          [ ]
+                                   /|                                            |
+                                  / |                                            |
+                                /  [ ^]-----------------------------------------[ v]
+                               /
+                              /
+                             /
+                           /
+                          /
+                         /
+                        /
+                      /
+          [ ]--[ ]--[ v]                [ v]                [ ]--[ v]                  n to unexplored   s to unexplored
+         /                        /    /                   / /
+        /                   /         /                 / /
+     [ ]             /             [ ]             /   [ v]                            down to The Sweltering Passages
+    /         /                     |         /
+   /    /                           |    /
+[ ^]                               [ ^]
 ```
 
 ### The Cellars
 
 ```
-               [ ]------------------------------------------[ ]                                [ ]                 [ ^]   s to unexplored
-              /                                                \                                |              /
-             /                                                  \                               |         /
-          [ ]                                                    [ ]                      [ v]-[ ]--[ v]
-             \                                                      \                 /         |
-              \                                                      \           /              |
-               [ ]                                                    [ ]--[ ^]                [ ]
-                |                                                    /
-                |                                                   /
-[ ^]-[ ]       [ ]                                               [ ]                                                      sw to unexplored   up to Ruined Town
-        \     /                                                   |
-         \   /                                                    |
-          [ ]                                                    [ ]                                                      sw to unexplored
-                                                                /
-                                                               /
-                                                            [ ]
-                                                           /
-                                                          /
-                                                       [ ]
+                                        [ ]       [ ]                                          [ ]
+                                       /   \     /                                              |
+                                      /     \   /                                               |
+                         [ ]       [ ]       [ ]                                          [ v]-[ ]--[ v]   down to The Flagstones, Level 1
+                        /   \     /                                                      /      |
+                       /     \   /                                                      /       |
+               [ ]--[ ]       [ ]                      [ ]--[ ]                       /        [ ]
+              /                |                      /        \                    /
+             /                 |                     /          \                  /
+          [ ]                 [ ]                 [ ]            [ ]             /
+           |                 /                       \              \          /
+           |                /                         \              \        /
+          [ ]            [ ]                           [ ]            [ ]--[ ^]
+             \              \                           |            /
+              \              \                          |           /
+               [ ]            [ ]       [ ^]-[ ]       [ ]       [ ]                                       up to Ruined Town
+                  \              \     /        \     /           |
+                   \              \   /          \   /            |
+                    [ ]            [ ]            [ ]            [ ]
+                                      \          /              /
+                                       \        /              /
+                                        [ ]  [ ]--[ ]       [ ]
+                                           \     /         /
+                                            \   /         /
+                                             [ ]       [ ]
                                                         |
                                                         |
                                                        [ ]
@@ -1554,10 +1694,79 @@ Key:
                     [ ]
                      |
                      |
-                    [ ]                                                                                                   e to unexplored
+                    [ ]                                                                                    e to unexplored
                      |
                      |
                     [ ]
+```
+
+### The Flagstones, Level 1
+
+```
+                    [ ]--[ ]                                                    [ ]                                [ ]                                     [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]
+                   /        \                                                    |                                  |                                     /                                      \
+                  /          \                                                   |                                  |                                    /                                        \
+          [ ]--[ ]            [ ]-------[ ]                                     [ ]                                [ ]                                [ ]                 [ ]                      [ ]
+         /                                 \                                     |                                  |                                  |                     \                    /
+        /                                   \                                    |                                  |                                  |                      \                  /
+     [ ]                                     [ ]                                [ ]--[ ]--[ ]            [ ]--[ ]--[ ]                                [ ]                      [ ]            [ ]
+    /                                           \                                |                                  |                                /   \                        \          /
+   /                                             \                               |                                  |                               /     \                        \        /
+[ ]                      [ ^]                     [ ]                           [ ]                                [ ]                           [ ]       [ ]--[ ]                 [ ]--[ ]             up to The Cellars   nw to unexplored   ne to unexplored
+ |                        |                        |                             |                                  |
+ |                        |                        |                             |                                  |
+[ ]                      [ ]                      [ ]            [ ]--[ ]--[ ]--[ ]                                [ ]--[ ]--[ ]--[ ]
+ |                        |                        |              |                                                                |
+ |                        |                        |              |                                                                |
+[ ]                      [ ]                      [ ]            [ ]                                                              [ ]
+ |                        |                        |
+ |                        |                        |
+[ ]                      [ ]                      [ ]
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+ |                       [ ]                       |
+ |                        |                        |
+ |                        |                        |
+[ ]                      [ ]                      [ ]
+   \                      |                      /
+    \                     |                     /
+     [ ]                 [ ]                 [ ]
+        \                 |                 /
+         \                |                /
+          [ ]--[ ]       [ ]       [ ]--[ ]
+                  \       |       /
+                   \      |      /
+                    [ ]--[ ]--[ ]
+                          |
+                          |
+                         [ ]
+                        /   \
+                       /     \
+                    [ ]       [ ]
 ```
 
 ### Third Town
@@ -1642,7 +1851,7 @@ Key:
 ### The Deep Forest
 
 ```
-[ ^v]                                                       [ ]                           [ v]-[ ]--[ v]                                                                  [ ^]                                                   [ v]   up to fourth-town
+[ ^v]                                                       [ ]                           [ v]-[ ]--[ v]                                                                  [ ^]                                                   [ v]   up to Fourth Town
   \                                                            \                                  X                                                                        |    \                                               / |
    \                                                            \                              /         \                                                                 |        \                                          /  |
     \                                                            [ ]                        /                   \                                [ ]--[ ]                 [ ]            \                                   /   [ ]
@@ -2065,6 +2274,99 @@ Key:
 ### The Hewn Granite Corridors
 
 ```
-[ ]   n to unexplored   sw to The Valley
+                                   [ ]
+                                  /
+                                 /
+                              [ ]                                [ ]                                          [ ]
+                             /   \                              /                                            /
+                            /     \                            /                                            /
+                    [ ]--[ ]       [ ]                      [ ]                           [ ^]           [ ]                                           up to The Sweltering Passages
+                   /                                         |                               \            |
+                  /                                          |                                \           |
+               [ ]                                          [ ]                                [ ]       [ ]
+                |                                          /                                      \     /
+                |                                         /                                        \   /
+               [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                          [ ]
+              /                                           \                                            \
+             /                                             \                                            \
+     [ ]--[ ]                                               [ ]--[ ]--[ ]--[ ]--[ ]--[ ]                 [ ]
+    /                                                                                   \                   \
+   /                                                                                     \                   \
+[ ]                 [ ]--[ ]--[ ]--[ ]--[ ]--[ ]--[ ]                                     [ ]                 [ ]                      [ ]
+ |                 /                                 \                                       \                   \                    /
+ |                /                                   \                                       \                   \                  /
+[ ]       [ ]--[ ]                                     [ ]--[ ]--[ ]--[ ]--[ ]--[ ]            [ ]                 [ ]       [ ]--[ ]
+   \     /                                                                         \              \                   \     /
+    \   /                                                                           \              \                   \   /
+     [ ]                                                                             [ ]            [ ]                 [ ]
+    /                                                                                   \              \                   \
+   /                                                                                     \              \                   \
+[ ]                                                                                       [ ]            [ ]                 [ ]
+ |                                                                                           \              \                 |
+ |                                                                                            \              \                |
+[ ]                                                                                            [ ]            [ ]            [ ]                       sw to The Valley
+                                                                                                  \              \            |
+                                                                                                   \              \           |
+                                                                                                    [ ]            [ ]       [ ]
+                                                                                                       \            |         |
+                                                                                                        \           |         |
+                                                                                                         [ ]       [ ]       [ ]
+                                                                                                          |         |         |
+                                                                                                          |         |         |
+                                                                                                         [ ]       [ ]       [ ]
+                                                                                                          |         |         |
+                                                                                                          |         |         |
+                                                                                                         [ ]       [ ]       [ ]--[ ]
+                                                                                                          |         |         |      \
+                                                                                                          |         |         |       \
+                                                                                                         [ ]       [ ]       [ ]       [ ]--[ ]
+                                                                                                          |         |         |                \
+                                                                                                          |         |         |                 \
+                                                                                                         [ ]       [ ]       [ ]                 [ ]
+                                                                                                                    |         |
+                                                                                                                    |         |
+                                                                                                                   [ ]       [ ]
+                                                                                                                    |         |
+                                                                                                                    |         |
+                                                                                                                   [ ]       [ ]
+                                                                                                                    |         |
+                                                                                                                    |         |
+                                                                                                                   [ ]       [ ]
+                                                                                                                  /         /   \
+                                                                                                                 /         /     \
+                                                                                                              [ ]       [ ]       [ ]
+                                                                                                               |         |         |
+                                                                                                               |         |         |
+                                                                                                              [ ]       [ ]       [ ]
+                                                                                                               |         |
+                                                                                                               |         |
+                                                                                                              [ ]       [ ]
+                                                                                                               |         |
+                                                                                                               |         |
+                                                                                                              [ ]       [ ]
+                                                                                                               |         |
+                                                                                                               |         |
+                                                                                                              [ ]       [ ]
+                                                                                                             /         /
+                                                                                                            /         /
+                                                                                                         [ ]       [ ]
+                                                                                                        /         /   \
+                                                                                                       /         /     \
+                                                                                                    [ ]       [ ]       [ ]            [ ]
+                                                                                                   /         /           |            /
+                                                                                                  /         /            |           /
+                                                                                               [ ]       [ ]            [ ]       [ ]
+                                                                                                |         |                \     /
+                                                                                                |         |                 \   /
+                                                                                               [ ]       [ ]                 [ ]
+                                                                                                |         |
+                                                                                                |         |
+                                                                                               [ ]        |
+                                                                                              /           |
+                                                                                             /            |
+                                                                                          [ ]            [ ]
+                                                                                             \          /
+                                                                                              \        /
+                                                                                               [ ]--[ ]
 ```
 
