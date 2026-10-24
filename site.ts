@@ -79,7 +79,10 @@ export type Section = { label: string; groups: Group[] };
  * reach them rather than alphabetically. An area belongs to one section only.
  */
 const SECTIONS: { label: string; areas: string[] }[] = [
-  { label: 'Towns', areas: ['First Town', 'Fourth Town', 'Ruined Town'] },
+  { label: 'Starting Area',
+    areas: ['First Town', 'The First Dungeon', 'The Mountains', 'The Orc Caves', 'The Forest',
+            'The Ruined Mansion', 'The Gnoll Caves'] },
+  { label: 'Towns', areas: ['Fourth Town', 'Ruined Town'] },
   { label: 'North of First Town',
     areas: ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town'] },
 ];
