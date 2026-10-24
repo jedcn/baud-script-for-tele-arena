@@ -74,11 +74,11 @@ export function groupAreas(areas: { area: string; name: string }[]): Group[] {
 
 export type Section = { label: string; groups: Group[] };
 
-const TOWN_ORDER = ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'The Ruined Town'];
+const TOWN_ORDER = ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'Ruined Town'];
 
 /**
  * The Area select's <optgroup>s: the towns first, in the order you reach them
- * (alphabetical would put Fourth Town second), the Ruined Town after them, then
+ * (alphabetical would put Fourth Town second), Ruined Town after them, then
  * everywhere else as before.
  */
 export function sectionAreas(groups: Group[]): Section[] {

@@ -80,13 +80,13 @@ describe('sectionAreas', () => {
     { area: 'first-town', name: 'First Town' },
     { area: 'third-town', name: 'Third Town' },
     { area: 'second-town', name: 'Second Town' },
-    { area: 'ruined-town', name: 'The Ruined Town' },
+    { area: 'ruined-town', name: 'Ruined Town' },
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
-  it('puts the towns first, in numeric order, with the Ruined Town last', () => {
+  it('puts the towns first, in numeric order, with Ruined Town last', () => {
     expect(labels[0]).toEqual(['Towns',
-      ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'The Ruined Town']]);
+      ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'Ruined Town']]);
   });
 
   it('leaves everything else in Elsewhere', () => {

@@ -20,7 +20,7 @@
 16. [The Mountains](#the-mountains)
 17. [The Forest](#the-forest)
 18. [The Swamp](#the-swamp)
-19. [The Ruined Town](#the-ruined-town)
+19. [Ruined Town](#ruined-town)
 20. [The Orc Caves](#the-orc-caves)
 21. [The Mountain Road](#the-mountain-road)
 22. [The Gnoll Caves](#the-gnoll-caves)
@@ -969,7 +969,7 @@ Key:
 ### The Swamp
 
 ```
-                                                                                                         [ ]             n to The Ruined Town
+                                                                                                         [ ]             n to Ruined Town
                                                                                                           |
                                                                                                           |
                                                                                                          [ ]
@@ -1044,7 +1044,7 @@ Key:
                                                                                                [ ]
 ```
 
-### The Ruined Town
+### Ruined Town
 
 ```
 [ v]   down to The Cellars
@@ -1521,7 +1521,7 @@ Key:
                [ ]                                                    [ ]--[ ^]                [ ]
                 |                                                    /
                 |                                                   /
-[ ^]-[ ]       [ ]                                               [ ]                                                      sw to unexplored   up to The Ruined Town
+[ ^]-[ ]       [ ]                                               [ ]                                                      sw to unexplored   up to Ruined Town
         \     /                                                   |
          \   /                                                    |
           [ ]                                                    [ ]                                                      sw to unexplored

@@ -164,7 +164,7 @@
     },
     {
       "area": "ruined-town",
-      "name": "The Ruined Town",
+      "name": "Ruined Town",
       "rooms": 20,
       "file": "areas/ruined-town.json"
     },

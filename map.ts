@@ -830,7 +830,7 @@ export const DRAWN = [
   { slug: 'mountains', title: 'The Mountains', origin: 'town-gates' },
   { slug: 'forest', title: 'The Forest', origin: 'forest' },
   { slug: 'swamp', title: 'The Swamp', origin: 'swamp' },
-  { slug: 'ruined-town', title: 'The Ruined Town', origin: 'ruined-plaza' },
+  { slug: 'ruined-town', title: 'Ruined Town', origin: 'ruined-plaza' },
   // North off the mountains, through cave-201 -- the "[*] to Orc Caves" box.
   { slug: 'orc-caves', title: 'The Orc Caves', origin: 'cave-201' },
   // East off mountains-33. On no shrine page -- the game we play is newer than
