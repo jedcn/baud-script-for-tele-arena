@@ -45,7 +45,7 @@
     {
       "area": "elven-valley",
       "name": "The Elven Valley",
-      "rooms": 13,
+      "rooms": 49,
       "file": "areas/elven-valley.json"
     },
     {
@@ -97,6 +97,12 @@
       "file": "areas/gnoll-caves.json"
     },
     {
+      "area": "granite-corridors",
+      "name": "The Hewn Granite Corridors",
+      "rooms": 126,
+      "file": "areas/granite-corridors.json"
+    },
+    {
       "area": "hewn-granite-corridors",
       "name": "The Hewn Granite Corridors",
       "rooms": 1,
@@ -135,7 +141,7 @@
     {
       "area": "ledge",
       "name": "The Ledge",
-      "rooms": 16,
+      "rooms": 30,
       "file": "areas/ledge.json"
     },
     {
@@ -239,6 +245,12 @@
       "name": "The Swamp",
       "rooms": 99,
       "file": "areas/swamp.json"
+    },
+    {
+      "area": "sweltering-passages",
+      "name": "The Sweltering Passages",
+      "rooms": 113,
+      "file": "areas/sweltering-passages.json"
     },
     {
       "area": "third-town",

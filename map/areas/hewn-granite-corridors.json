@@ -8,7 +8,7 @@
       "name": "hewn granite corridor",
       "exits": {
         "n": {
-          "to": null
+          "to": "granite-corridors/hewn-granite-corridor-117"
         },
         "sw": {
           "to": "valley/valley-54"

@@ -266,13 +266,257 @@
           "to": "ledge/ledge-55"
         },
         "w": {
-          "to": null
+          "to": "ledge/ledge-57"
         }
       },
       "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southeast and west.",
       "layout": {
         "x": 8,
         "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-57",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-56"
+        },
+        "w": {
+          "to": "ledge/ledge-58"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 7,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-58",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-57"
+        },
+        "w": {
+          "to": "ledge/ledge-59"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 6,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-59",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-58"
+        },
+        "u": {
+          "to": "ledge/ledge-60"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads east and slopes downward.",
+      "layout": {
+        "x": 5,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-60",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "ledge/ledge-59"
+        },
+        "w": {
+          "to": "ledge/ledge-61"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads west and slopes downward.",
+      "layout": {
+        "x": 5,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-61",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-60"
+        },
+        "w": {
+          "to": "ledge/ledge-62"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and west.",
+      "layout": {
+        "x": 4,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-62",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-61"
+        },
+        "sw": {
+          "to": "ledge/ledge-63"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and southwest.",
+      "layout": {
+        "x": 3,
+        "y": 9
+      }
+    },
+    {
+      "id": "ledge/ledge-63",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "ledge/ledge-62"
+        },
+        "sw": {
+          "to": "ledge/ledge-64"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and southwest.",
+      "layout": {
+        "x": 2,
+        "y": 8
+      }
+    },
+    {
+      "id": "ledge/ledge-64",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "ledge/ledge-63"
+        },
+        "u": {
+          "to": "ledge/ledge-65"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and slopes upward.",
+      "layout": {
+        "x": 1,
+        "y": 7
+      }
+    },
+    {
+      "id": "ledge/ledge-65",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "ledge/ledge-64"
+        },
+        "sw": {
+          "to": "ledge/ledge-66"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads southwest and slopes downward.",
+      "layout": {
+        "x": 1,
+        "y": 7
+      }
+    },
+    {
+      "id": "ledge/ledge-66",
+      "name": "ledge",
+      "exits": {
+        "ne": {
+          "to": "ledge/ledge-65"
+        },
+        "s": {
+          "to": "ledge/ledge-67"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and south.",
+      "layout": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "id": "ledge/ledge-67",
+      "name": "ledge",
+      "exits": {
+        "n": {
+          "to": "ledge/ledge-66"
+        },
+        "u": {
+          "to": "ledge/ledge-68"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north and slopes upward.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "ledge/ledge-68",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "ledge/ledge-67"
+        },
+        "n": {
+          "to": null
+        },
+        "s": {
+          "to": null
+        },
+        "w": {
+          "to": "ledge/ledge-69"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads north, south, west, and slopes downward.",
+      "layout": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "id": "ledge/ledge-69",
+      "name": "ledge",
+      "exits": {
+        "e": {
+          "to": "ledge/ledge-68"
+        },
+        "sw": {
+          "to": "ledge/ledge-70"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads to the east and southwest.",
+      "layout": {
+        "x": -1,
+        "y": 5
+      }
+    },
+    {
+      "id": "ledge/ledge-70",
+      "name": "ledge",
+      "exits": {
+        "d": {
+          "to": "sweltering-passages/sweltering-passage"
+        },
+        "ne": {
+          "to": "ledge/ledge-69"
+        }
+      },
+      "description": "The ledge seems to be no more than a few feet wide and runs around a sheer wall high above an enormous pool of molten rock. The heat here is quite unbearable. The ledge leads northeast and slopes downward.",
+      "layout": {
+        "x": -2,
+        "y": 4
       }
     }
   ]

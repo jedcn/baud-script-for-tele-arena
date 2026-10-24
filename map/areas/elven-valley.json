@@ -133,7 +133,7 @@
           "to": "elven-valley/path-in-the-elven-valley-6"
         },
         "w": {
-          "to": null
+          "to": "elven-valley/path-in-the-elven-valley-13"
         }
       },
       "description": "You're standing on a path that is known to lead to the Elven city Mytthos, oddly named by humans instead of the Elves themselves.  There is a huge mithril door to the north, apparently the entrance to Mytthos.  Two paths run east and west of here, alongside the city wall.  This path continues southward.",
@@ -215,7 +215,7 @@
       "name": "path in the Elven Valley",
       "exits": {
         "e": {
-          "to": null
+          "to": "elven-valley/path-in-the-elven-valley-48"
         },
         "w": {
           "to": "elven-valley/path-in-the-elven-valley-11"
@@ -224,6 +224,618 @@
       "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
       "layout": {
         "x": 30,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-13",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-7"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-14"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 24,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-14",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-13"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-15"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 23,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-15",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-14"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-16"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 22,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-16",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-15"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-17"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 21,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-17",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-16"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-18"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 20,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-18",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-17"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-19"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 19,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-19",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-18"
+        },
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-20"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and north.",
+      "layout": {
+        "x": 18,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-20",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-21"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-19"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 32
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-21",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-22"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-20"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 33
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-22",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-23"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-21"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 34
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-23",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-24"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-22"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 35
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-24",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-25"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-23"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 36
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-25",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-26"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-24"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 18,
+        "y": 37
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-26",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-27"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-25"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are south and east.",
+      "layout": {
+        "x": 18,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-27",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-28"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-26"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 19,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-28",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-29"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-27"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 20,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-29",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-30"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-28"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 21,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-30",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-31"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-29"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 22,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-31",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-32"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-30"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 23,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-32",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-33"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-31"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 24,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-33",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-34"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-32"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 25,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-34",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-35"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-33"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 26,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-35",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-36"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-34"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 27,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-36",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-37"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-35"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 28,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-37",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-38"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-36"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 29,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-38",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-39"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-37"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 30,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-39",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-40"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-38"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 31,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-40",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-41"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-39"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are south and west.",
+      "layout": {
+        "x": 32,
+        "y": 38
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-41",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-40"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-42"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 37
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-42",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-41"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-43"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 36
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-43",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-42"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-44"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 35
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-44",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-43"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-45"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 34
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-45",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-44"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-46"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 33
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-46",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-45"
+        },
+        "s": {
+          "to": "elven-valley/path-in-the-elven-valley-47"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and south.",
+      "layout": {
+        "x": 32,
+        "y": 32
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-47",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "n": {
+          "to": "elven-valley/path-in-the-elven-valley-46"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-48"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are north and west.",
+      "layout": {
+        "x": 32,
+        "y": 31
+      }
+    },
+    {
+      "id": "elven-valley/path-in-the-elven-valley-48",
+      "name": "path in the Elven Valley",
+      "exits": {
+        "e": {
+          "to": "elven-valley/path-in-the-elven-valley-47"
+        },
+        "w": {
+          "to": "elven-valley/path-in-the-elven-valley-12"
+        }
+      },
+      "description": "You're on a path in the Elven Valley that leads around the city of Mytthos.  There are no fresh footprints on the path, even though you have seen elves creeping around.  The elves are not foolish enough to leave their trail to anyone who would like to follow them.  The further you stray from the gate to the city, the more you fear for your life. Exits are east and west.",
+      "layout": {
+        "x": 31,
         "y": 31
       }
     }

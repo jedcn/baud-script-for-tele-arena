@@ -1,0 +1,1940 @@
+{
+  "area": "sweltering-passages",
+  "name": "The Sweltering Passages",
+  "src": "db-export",
+  "rooms": [
+    {
+      "id": "sweltering-passages/sweltering-passage",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-33"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-1"
+        },
+        "u": {
+          "to": "ledge/ledge-70"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the south, northwest, and up.",
+      "layout": {
+        "x": -2,
+        "y": 4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-1",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-2"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": 3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-2",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-1"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-3"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": 2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-3",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-2"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-4"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": 1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-4",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-3"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-5"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": 0
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-5",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-4"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-6"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": -1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-6",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-5"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-7"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": -2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-7",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-6"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-8"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": -3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-8",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-7"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-9"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": -4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-9",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-8"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-10"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -2,
+        "y": -5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-10",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-9"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-11"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southeast.",
+      "layout": {
+        "x": -2,
+        "y": -6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-11",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-10"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-12"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": -1,
+        "y": -7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-12",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-11"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-13"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": 0,
+        "y": -8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-13",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-14"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-12"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-16"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east, southwest, and northwest.",
+      "layout": {
+        "x": 1,
+        "y": -9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-14",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-15"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-13"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 2,
+        "y": -9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-15",
+      "name": "sweltering passage",
+      "exits": {
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-14"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the west.",
+      "layout": {
+        "x": 3,
+        "y": -9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-16",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-13"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-17"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 0,
+        "y": -10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-17",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-16"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-20"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-18"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east, southwest, and northwest.",
+      "layout": {
+        "x": -1,
+        "y": -10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-18",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-17"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-19"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and northwest.",
+      "layout": {
+        "x": -2,
+        "y": -11
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-19",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-20"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-18"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southeast.",
+      "layout": {
+        "x": -3,
+        "y": -10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-20",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-21"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-17"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-19"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast, southwest, and northwest.",
+      "layout": {
+        "x": -2,
+        "y": -9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-21",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-22"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-20"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": -3,
+        "y": -8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-22",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-23"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-21"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southeast.",
+      "layout": {
+        "x": -4,
+        "y": -7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-23",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-24"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-22"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-24",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-25"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-23"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-25",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-26"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-24"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-26",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-27"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-25"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-27",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-28"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-26"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-28",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-29"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-27"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": -1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-29",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-30"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-28"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": 0
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-30",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-31"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-29"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": 1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-31",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-32"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-30"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": -4,
+        "y": 2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-32",
+      "name": "sweltering passage",
+      "exits": {
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-31"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the south.",
+      "layout": {
+        "x": -4,
+        "y": 3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-33",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-35"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-34"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north, southeast, and west.",
+      "layout": {
+        "x": -3,
+        "y": 5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-34",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-33"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the east.",
+      "layout": {
+        "x": -4,
+        "y": 5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-35",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-36"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-33"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the south and northwest.",
+      "layout": {
+        "x": -3,
+        "y": 6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-36",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-37"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-35"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southeast.",
+      "layout": {
+        "x": -4,
+        "y": 7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-37",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-38"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-36"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": -3,
+        "y": 8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-38",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-40"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-37"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-39"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, south, and west.",
+      "layout": {
+        "x": -3,
+        "y": 9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-39",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-38"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the east.",
+      "layout": {
+        "x": -4,
+        "y": 9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-40",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-41"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-38"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": -2,
+        "y": 10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-41",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-42"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-40"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and south.",
+      "layout": {
+        "x": -2,
+        "y": 11
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-42",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-43"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-41"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and southwest.",
+      "layout": {
+        "x": -1,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-43",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-44"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-42"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and west.",
+      "layout": {
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-44",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-58"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-45"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-43"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east, southwest, and northwest.",
+      "layout": {
+        "x": 1,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-45",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-46"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-44"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southeast.",
+      "layout": {
+        "x": 0,
+        "y": 14
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-46",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-49"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-47"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-45"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, south, and northwest.",
+      "layout": {
+        "x": 0,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-47",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-46"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-48"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and southwest.",
+      "layout": {
+        "x": -1,
+        "y": 16
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-48",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-47"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the northeast.",
+      "layout": {
+        "x": -2,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-49",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-50"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-46"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 1,
+        "y": 16
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-50",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-51"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-49"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and southwest.",
+      "layout": {
+        "x": 2,
+        "y": 17
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-51",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-54"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-50"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-52"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, southeast, and northwest.",
+      "layout": {
+        "x": 3,
+        "y": 16
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-52",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-53"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-51"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and northwest.",
+      "layout": {
+        "x": 4,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-53",
+      "name": "sweltering passage",
+      "exits": {
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-52"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the west.",
+      "layout": {
+        "x": 5,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-54",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-55"
+        },
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-56"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-51"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north, east, and southwest.",
+      "layout": {
+        "x": 4,
+        "y": 17
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-55",
+      "name": "sweltering passage",
+      "exits": {
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-54"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the west.",
+      "layout": {
+        "x": 5,
+        "y": 17
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-56",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-57"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-54"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and south.",
+      "layout": {
+        "x": 4,
+        "y": 18
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-57",
+      "name": "sweltering passage",
+      "exits": {
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-56"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southwest.",
+      "layout": {
+        "x": 5,
+        "y": 19
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-58",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-59"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-44"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 2,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-59",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-60"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-58"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 3,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-60",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-61"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-59"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 4,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-61",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-62"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-60"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and west.",
+      "layout": {
+        "x": 5,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-62",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-63"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-61"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and northwest.",
+      "layout": {
+        "x": 6,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-63",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-64"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-62"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 7,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-64",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-65"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-63"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 8,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-65",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-66"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-64"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 9,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-66",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-67"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-65"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and west.",
+      "layout": {
+        "x": 10,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-67",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-101"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-68"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-66"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, southeast, and west.",
+      "layout": {
+        "x": 11,
+        "y": 12
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-68",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-67"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-69"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": 12,
+        "y": 11
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-69",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-68"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-70"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": 13,
+        "y": 10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-70",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-69"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-71"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and northwest.",
+      "layout": {
+        "x": 14,
+        "y": 9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-71",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-72"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-70"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-83"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, south, and northwest.",
+      "layout": {
+        "x": 15,
+        "y": 8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-72",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-73"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-71"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and southwest.",
+      "layout": {
+        "x": 16,
+        "y": 9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-73",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": "sweltering-passages/sweltering-passage-74"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-72"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east and northwest.",
+      "layout": {
+        "x": 17,
+        "y": 8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-74",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-75"
+        },
+        "w": {
+          "to": "sweltering-passages/sweltering-passage-73"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast and west.",
+      "layout": {
+        "x": 18,
+        "y": 8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-75",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-74"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-76"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the south and northwest.",
+      "layout": {
+        "x": 19,
+        "y": 7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-76",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-75"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-77"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": 6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-77",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-76"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-78"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 19,
+        "y": 5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-78",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-77"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-79"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southeast.",
+      "layout": {
+        "x": 19,
+        "y": 4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-79",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-80"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-78"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-81"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, south, and northwest.",
+      "layout": {
+        "x": 20,
+        "y": 3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-80",
+      "name": "sweltering passage",
+      "exits": {
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-79"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southwest.",
+      "layout": {
+        "x": 21,
+        "y": 4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-81",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-79"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-82"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": 20,
+        "y": 2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-82",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-81"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the northeast.",
+      "layout": {
+        "x": 19,
+        "y": 1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-83",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-71"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-84"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 15,
+        "y": 7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-84",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-83"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-85"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 15,
+        "y": 6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-85",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-84"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-86"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 15,
+        "y": 5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-86",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-85"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-87"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": 15,
+        "y": 4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-87",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-86"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-88"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and south.",
+      "layout": {
+        "x": 14,
+        "y": 3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-88",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-87"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-89"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 14,
+        "y": 2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-89",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-88"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-90"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 14,
+        "y": 1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-90",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-89"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-91"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 14,
+        "y": 0
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-91",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-90"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-92"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": 14,
+        "y": -1
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-92",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-91"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-93"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 13,
+        "y": -2
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-93",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-92"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-94"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 12,
+        "y": -3
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-94",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-93"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-95"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and south.",
+      "layout": {
+        "x": 11,
+        "y": -4
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-95",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-94"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-96"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and south.",
+      "layout": {
+        "x": 11,
+        "y": -5
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-96",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-95"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-97"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": 11,
+        "y": -6
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-97",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-96"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-98"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 10,
+        "y": -7
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-98",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-97"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-99"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 9,
+        "y": -8
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-99",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-98"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-100"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southeast.",
+      "layout": {
+        "x": 8,
+        "y": -9
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-100",
+      "name": "sweltering passage",
+      "exits": {
+        "e": {
+          "to": null
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-99"
+        },
+        "sw": {
+          "to": null
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the east, southwest, and northwest.",
+      "layout": {
+        "x": 9,
+        "y": -10
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-101",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-102"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-67"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 12,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-102",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-103"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-108"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-101"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southeast, southwest, and northwest.",
+      "layout": {
+        "x": 13,
+        "y": 14
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-103",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-104"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-102"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southeast.",
+      "layout": {
+        "x": 12,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-104",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-106"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-105"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-103"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, southwest, and northwest.",
+      "layout": {
+        "x": 13,
+        "y": 16
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-105",
+      "name": "sweltering passage",
+      "exits": {
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-104"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the southeast.",
+      "layout": {
+        "x": 12,
+        "y": 17
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-106",
+      "name": "sweltering passage",
+      "exits": {
+        "n": {
+          "to": "sweltering-passages/sweltering-passage-107"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-104"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the north and southwest.",
+      "layout": {
+        "x": 14,
+        "y": 17
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-107",
+      "name": "sweltering passage",
+      "exits": {
+        "d": {
+          "to": "granite-corridors/hewn-granite-corridor-1"
+        },
+        "s": {
+          "to": "sweltering-passages/sweltering-passage-106"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the south and down.",
+      "layout": {
+        "x": 14,
+        "y": 18
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-108",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-109"
+        },
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-102"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and northwest.",
+      "layout": {
+        "x": 14,
+        "y": 13
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-109",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-110"
+        },
+        "se": {
+          "to": "sweltering-passages/sweltering-passage-112"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-108"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast, southeast, and southwest.",
+      "layout": {
+        "x": 15,
+        "y": 14
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-110",
+      "name": "sweltering passage",
+      "exits": {
+        "ne": {
+          "to": "sweltering-passages/sweltering-passage-111"
+        },
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-109"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the northeast and southwest.",
+      "layout": {
+        "x": 16,
+        "y": 15
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-111",
+      "name": "sweltering passage",
+      "exits": {
+        "sw": {
+          "to": "sweltering-passages/sweltering-passage-110"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. You can exit to the southwest.",
+      "layout": {
+        "x": 17,
+        "y": 16
+      }
+    },
+    {
+      "id": "sweltering-passages/sweltering-passage-112",
+      "name": "sweltering passage",
+      "exits": {
+        "nw": {
+          "to": "sweltering-passages/sweltering-passage-109"
+        }
+      },
+      "description": "This passage is huge and extremely hot. The walls are made of volcanic rock run through with veins of some chalky black mineral which flakes off easily. The only exit is to the northwest.",
+      "layout": {
+        "x": 16,
+        "y": 13
+      }
+    }
+  ]
+}
