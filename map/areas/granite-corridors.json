@@ -4,6 +4,23 @@
   "src": "db-export",
   "rooms": [
     {
+      "id": "granite-corridors/hewn-granite-corridor",
+      "name": "hewn granite corridor",
+      "exits": {
+        "n": {
+          "to": "granite-corridors/hewn-granite-corridor-117"
+        },
+        "sw": {
+          "to": "valley/valley-54"
+        }
+      },
+      "description": "Glowing orbs set in the walls give off an eerie yellow light. The high vaulted ceiling is supported by huge columns set at regular intervals. Exits lie to the north and southwest.",
+      "layout": {
+        "x": -4,
+        "y": 11
+      }
+    },
+    {
       "id": "granite-corridors/hewn-granite-corridor-1",
       "name": "hewn granite corridor",
       "exits": {
@@ -2172,7 +2189,7 @@
           "to": "granite-corridors/hewn-granite-corridor-93"
         },
         "s": {
-          "to": "hewn-granite-corridors/hewn-granite-corridor"
+          "to": "granite-corridors/hewn-granite-corridor"
         }
       },
       "description": "Glowing orbs set in the walls give off an eerie yellow light. The high vaulted ceiling is supported by huge columns set at regular intervals. Exits lie to the south and northeast through a huge stone doorway.",

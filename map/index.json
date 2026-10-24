@@ -99,14 +99,8 @@
     {
       "area": "granite-corridors",
       "name": "The Hewn Granite Corridors",
-      "rooms": 126,
+      "rooms": 127,
       "file": "areas/granite-corridors.json"
-    },
-    {
-      "area": "hewn-granite-corridors",
-      "name": "The Hewn Granite Corridors",
-      "rooms": 1,
-      "file": "areas/hewn-granite-corridors.json"
     },
     {
       "area": "labyrinth-level-1",

@@ -941,7 +941,7 @@
       "name": "valley",
       "exits": {
         "ne": {
-          "to": "hewn-granite-corridors/hewn-granite-corridor"
+          "to": "granite-corridors/hewn-granite-corridor"
         },
         "sw": {
           "to": "valley/valley-53"

@@ -906,7 +906,7 @@ export const DRAWN = [
     origin: 'complex-of-natural-caverns-191' },
   { slug: 'complex-caverns-level-4', title: 'The Complex of Natural Caverns, Level 4',
     origin: 'complex-of-natural-caverns-151' },
-  { slug: 'hewn-granite-corridors', title: 'The Hewn Granite Corridors',
+  { slug: 'granite-corridors', title: 'The Hewn Granite Corridors',
     origin: 'hewn-granite-corridor' },
 ];
 
