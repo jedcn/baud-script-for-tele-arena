@@ -81,16 +81,29 @@ describe('sectionAreas', () => {
     { area: 'third-town', name: 'Third Town' },
     { area: 'second-town', name: 'Second Town' },
     { area: 'ruined-town', name: 'Ruined Town' },
+    { area: 'stoneworks-level-1', name: 'The Stoneworks, Level 1' },
+    { area: 'stoneworks-level-2', name: 'The Stoneworks, Level 2' },
+    { area: 'sewers-level-1', name: 'The Sewers, Level 1' },
+    { area: 'swamp', name: 'The Swamp' },
+    { area: 'cellars', name: 'The Cellars' },
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
-  it('puts the towns first, in numeric order, with Ruined Town last', () => {
-    expect(labels[0]).toEqual(['Towns',
-      ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'Ruined Town']]);
+  it('puts the towns first, the ones north of First Town aside', () => {
+    expect(labels[0]).toEqual(['Towns', ['First Town', 'Fourth Town', 'Ruined Town']]);
   });
 
-  it('leaves everything else in Elsewhere', () => {
-    expect(labels[1]).toEqual(['Elsewhere', ['The Desert']]);
+  it('lists North of First Town in the order you reach it', () => {
+    expect(labels[1]).toEqual(['North of First Town',
+      ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town']]);
+  });
+
+  it('keeps a sectioned area\'s levels together under its one entry', () => {
+    expect(sections[1].groups.find(g => g.area === 'The Stoneworks')!.levels.length).toBe(2);
+  });
+
+  it('leaves everything else in Elsewhere, alphabetically', () => {
+    expect(labels[2]).toEqual(['Elsewhere', ['The Cellars', 'The Swamp']]);
   });
 
   it('renders the sections as optgroups in the Area select', () => {

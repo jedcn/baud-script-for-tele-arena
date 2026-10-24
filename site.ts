@@ -74,19 +74,26 @@ export function groupAreas(areas: { area: string; name: string }[]): Group[] {
 
 export type Section = { label: string; groups: Group[] };
 
-const TOWN_ORDER = ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'Ruined Town'];
-
 /**
- * The Area select's <optgroup>s: the towns first, in the order you reach them
- * (alphabetical would put Fourth Town second), Ruined Town after them, then
- * everywhere else as before.
+ * The Area select's named <optgroup>s, each listing its areas in the order you
+ * reach them rather than alphabetically. An area belongs to one section only.
  */
+const SECTIONS: { label: string; areas: string[] }[] = [
+  { label: 'Towns', areas: ['First Town', 'Fourth Town', 'Ruined Town'] },
+  { label: 'North of First Town',
+    areas: ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town'] },
+];
+
+/** The named sections, then every area none of them claims, alphabetically. */
 export function sectionAreas(groups: Group[]): Section[] {
-  const town = (g: Group) => TOWN_ORDER.indexOf(g.area);
-  const towns = groups.filter(g => town(g) >= 0).sort((x, y) => town(x) - town(y));
-  const rest = groups.filter(g => town(g) < 0);
-  return [{ label: 'Towns', groups: towns }, { label: 'Elsewhere', groups: rest }]
-    .filter(s => s.groups.length > 0);
+  const byArea = new Map(groups.map(g => [g.area, g]));
+  const named = SECTIONS.map(s => ({
+    label: s.label,
+    groups: s.areas.flatMap(a => byArea.get(a) ?? []),
+  }));
+  const claimed = new Set(SECTIONS.flatMap(s => s.areas));
+  const rest = groups.filter(g => !claimed.has(g.area));
+  return [...named, { label: 'Elsewhere', groups: rest }].filter(s => s.groups.length > 0);
 }
 
 // ---------------------------------------------------------------------------
