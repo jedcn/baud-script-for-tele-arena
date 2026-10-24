@@ -49,6 +49,8 @@
 --     "se"                  -- a direction; the arrival brief advances the walk
 --     { cmd = "pull lever" } -- any command; the walk advances after a pause
 --     { killAll = true }     -- clear this room; the sweep advances the walk
+--     { goTo = "<slug>" }    -- `live-navigate <slug>` from here, mid-route
+--     { anchor = "<slug>" }  -- `map-here <slug>`, for the tracker only
 --
 -- Each leg is deliberately short and run by hand. Chaining them is a later
 -- decision; for now every one is a thing you ask for and watch.
@@ -1006,6 +1008,33 @@ local NAV_ROUTES = {
                   "w", "w", "n", "e", "d" },
     },
 }
+-- From wherever the map knows you are to the start of level 2, working the
+-- levers in labyrinth-89 and labyrinth-93 on the way. The way is found on the
+-- map at each goTo rather than written out, so there is no `from`: anywhere the
+-- tracker knows you're standing is a place to start.
+--
+-- The anchors are there because a walk never moves the tracker (see navGoTo):
+-- without one, the goTo after it would search from the room the walk began in.
+--
+-- The levers toggle, like every lever in the labyrinth: only the first
+-- character through today should pull them. Everyone after that takes the
+-- `no-pull-levers` variant, which skips both lever rooms and goes straight to
+-- the stairs.
+NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
+    to       = { room = "labyrinth" },
+    steps    = { { goTo = "labyrinth-89" },
+                 { anchor = "labyrinth-89" },
+                 { cmd = "pull lever" },
+                 { goTo = "labyrinth-93" },
+                 { cmd = "pull lever" },
+                 { anchor = "labyrinth-93" },
+                 { goTo = "labyrinth-94" },
+                 "d" },
+    variants = {
+        ["no-pull-levers"] = { keep = 0, steps = { { goTo = "labyrinth-94" }, "d" } },
+    },
+}
+
 -- Second names for the two halves of the third-town journey. `after-doors` and
 -- `after-doors-to-town-3` say what each one is, which is what you want when
 -- you're editing them; `part-1` and `part-2` say what order to run them in,
@@ -1740,6 +1769,8 @@ local function navStepKind(step)
     if type(step.cmd) == "string" then return "cmd" end
     if type(step.door) == "string" then return "gate" end
     if type(step.seam) == "string" then return "seam" end
+    if type(step.goTo) == "string" then return "goTo" end
+    if type(step.anchor) == "string" then return "anchor" end
     return nil
 end
 
@@ -1753,7 +1784,7 @@ local function navBadStep(steps, seen)
         local kind = navStepKind(step)
         if not kind then
             return i, "isn't a direction, a { cmd = ... }, a { killAll = true },"
-                .. " a { door = ... } or a { seam = ... }"
+                .. " a { door = ... }, a { seam = ... }, a { goTo = ... } or an { anchor = ... }"
         end
         if kind == "seam" and not NAV_ROUTES[step.seam] then
             return i, "checks we've reached '" .. step.seam .. "', and there's no such route"
@@ -1781,11 +1812,77 @@ local function navStepLabel(step)
     if kind == "cmd" then return "'" .. step.cmd .. "'" end
     if kind == "gate" then return step.door .. " (" .. (step.key or "locked") .. " door)" end
     if kind == "seam" then return "seam check (" .. step.seam .. ")" end
+    if kind == "goTo" then return "live-navigate " .. step.goTo end
+    if kind == "anchor" then return "map-here " .. step.anchor end
     return "kill-all"
 end
 
 -- All three are defined below: they need navStep, which needs them.
 local navAdvance, navStartSweep, navStartSeam
+
+-- A `{ goTo = "<slug>" }` step: `live-navigate` in the middle of a written
+-- route. The map is searched from where the tracker says we are NOW, at this
+-- step, and the directions it finds are spliced in after it -- so they are
+-- walked, paced and checked like any written step. Spliced the same way a
+-- locked gate splices its key errand, and with the same cost: every step after
+-- this one is renumbered, so `from-step N` past a goTo means what the trace
+-- said only if the trace's total matches.
+--
+-- A walk never tells the tracker which way it went (navSend is a bare send),
+-- so after one goTo the tracker is still in the room the walk STARTED from.
+-- A second goTo needs an `anchor` in front of it, the way the same thing typed
+-- by hand needs a `map-here` between two `live-navigate`s.
+local function navGoTo(slug)
+    local j = taPackage.navigate
+    if taPackage.hereState ~= "known" or not taPackage.here then
+        local at = j.index
+        stopNavigate()
+        navEcho("Step " .. at .. " finds the way to " .. slug .. " on the map, and I don't"
+            .. " know which room you're in — stopping. `map-print-room-slug`, then"
+            .. " `map-here <slug>`.")
+        return
+    end
+    local isGoal, label = taPackage.navGoal(slug)
+    local steps = isGoal and taPackage.navSearch(taPackage.here, isGoal)
+    if not steps then
+        stopNavigate()
+        navEcho(isGoal
+            and ("Nothing walked connects "
+                 .. (taPackage.db.roomRef(taPackage.here) or ("#" .. tostring(taPackage.here)))
+                 .. " to " .. label .. " — stopping.")
+            or ("No room called " .. slug .. " on this map — stopping."))
+        return
+    end
+    navEcho(label .. " is " .. #steps .. " steps: " .. table.concat(steps, " "))
+    for i, dir in ipairs(steps) do table.insert(j.steps, j.index + i, dir) end
+    navAdvance()
+end
+
+-- An `{ anchor = "<slug>" }` step: tell the tracker which room this is, which
+-- is the half of `map-here` a walk wants. The other half -- turning mapping
+-- on -- is left out on purpose: a walk keeps the map read-only (see navStart).
+--
+-- Checked against the name of the room we are standing in, which is cheap and
+-- catches a goTo that ended somewhere else. In a maze where every room has the
+-- same name it catches nothing finer than that.
+local function navAnchor(slug)
+    local room = taPackage.db.roomBySlug(slug)
+    if not room then
+        stopNavigate()
+        navEcho("No room called " .. slug .. " on this map to anchor at — stopping.")
+        return
+    end
+    if taPackage.currentRoom and room.name and taPackage.currentRoom ~= room.name then
+        local here = taPackage.currentRoom
+        stopNavigate()
+        navEcho("Anchoring at " .. slug .. " expects a room called '" .. room.name
+            .. "', but this is '" .. here .. "' — stopping.")
+        return
+    end
+    taPackage.setHere(room.id)
+    navEcho("Anchored at " .. slug .. ".")
+    navAdvance()
+end
 
 -- Send the next queued step. index counts steps already started, so bumping it
 -- first and indexing gives the one we haven't done yet.
@@ -1839,6 +1936,10 @@ local function navStep()
         navAdvance()
     elseif kind == "seam" then
         navStartSeam(step.seam)
+    elseif kind == "goTo" then
+        navGoTo(step.goTo)
+    elseif kind == "anchor" then
+        navAnchor(step.anchor)
     else
         navStartSweep()
     end
@@ -3019,7 +3120,7 @@ createAlias("^navigate-to (.+)$", function(matches)
         -- rooms and the walk would set off from any of them.
         fromFp = { room = route.from.room,
                    exits = route.from.exits and navExitKey(route.from.exits) or nil }
-    else
+    elseif route.from then
         local fromUnmapped
         fromRoom, fromErr, fromUnmapped = navResolveRef(route.from)
         if not fromRoom and not fromUnmapped then
@@ -3128,6 +3229,12 @@ createAlias("^navigate-to (.+)$", function(matches)
             if noMap and not fromFp then
                 navEcho("No map here, so I can't check I'm at " .. tostring(route.from)
                     .. " — I'm in '" .. name .. "' with exits " .. navExitKey(dirs) .. ".")
+                checkThenGo()
+                return
+            end
+            -- No `from`: a route that opens with a goTo starts wherever the
+            -- tracker says you are, and the goTo is what checks that.
+            if not route.from then
                 checkThenGo()
                 return
             end

@@ -22093,6 +22093,120 @@ describe("live-navigate", function()
 
 end)
 
+-- A written route whose way is found on the map: `{ goTo = slug }` is
+-- live-navigate mid-route and `{ anchor = slug }` is map-here for the tracker.
+-- start-of-labrynth-to-beginning-of-level-2 is the route built from them.
+describe("navigate-to with goTo and anchor steps", function()
+
+    -- Four labyrinth rooms in a line: 1 --e--> 89 --e--> 93 --e--> 94.
+    local SLUGS = { ["labyrinth-89"] = 89, ["labyrinth-93"] = 93, ["labyrinth-94"] = 94 }
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.mockDbRows = function(sql)
+            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                return {
+                    { from_id = 1, direction = "e", to_id = 89 },
+                    { from_id = 89, direction = "w", to_id = 1 },
+                    { from_id = 89, direction = "e", to_id = 93 },
+                    { from_id = 93, direction = "w", to_id = 89 },
+                    { from_id = 93, direction = "e", to_id = 94 },
+                    { from_id = 94, direction = "w", to_id = 93 },
+                }
+            end
+            return {}
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "SELECT id, name, area_id", 1, true) then
+                local id = SLUGS[params[1]]
+                return id and { id = id, name = "labyrinth" } or nil
+            end
+            return nil
+        end
+        taPackage.hereState = "known"
+        taPackage.here = 1
+    end)
+
+    local function arrive()
+        helper.simulateLine("You're in a labyrinth.")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+    end
+
+    -- The start probe, then every paced step until the walk wants a room brief.
+    local function start(cmd)
+        helper.simulateAlias(cmd)
+        arrive()
+        helper.simulateLine("Exits: e,w.")
+    end
+
+    local function pace(n)
+        for _ = 1, n do helper.fireTimers(taPackage.navStepDelayMs) end
+    end
+
+    -- What went out after the probe's bare return and `ex`.
+    local function walked()
+        local out = {}
+        for i = 3, #helper.sendCalls do out[#out + 1] = helper.sendCalls[i] end
+        return out
+    end
+
+    it("works both levers, re-anchoring so each search starts in the right room", function()
+        start("navigate-to start-of-labrynth-to-beginning-of-level-2")
+        pace(1)                      -- e, to 89
+        arrive()
+        pace(3)                      -- anchor 89, pull lever, goTo 93
+        assert.are.equal(89, taPackage.here)
+        pace(1)                      -- e, to 93
+        arrive()
+        pace(3)                      -- pull lever, anchor 93, goTo 94
+        assert.are.equal(93, taPackage.here)
+        pace(1)                      -- e, to 94
+        arrive()
+        pace(1)                      -- d
+        arrive()
+        assert.are.same({ "e", "pull lever", "e", "pull lever", "e", "d" }, walked())
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("Arrived at start-of-labrynth-to-beginning-of-level-2", 1, true))
+    end)
+
+    it("goes straight to the stairs with no-pull-levers", function()
+        start("navigate-to start-of-labrynth-to-beginning-of-level-2 no-pull-levers")
+        pace(1)
+        for _ = 1, 3 do
+            arrive()
+            pace(1)
+        end
+        arrive()
+        assert.are.same({ "e", "e", "e", "d" }, walked())
+        assert.is_nil(taPackage.navigate)
+    end)
+
+    it("stops rather than search when the tracker has lost you", function()
+        taPackage.hereState = "lost"
+        taPackage.here = nil
+        start("navigate-to start-of-labrynth-to-beginning-of-level-2")
+        assert.are.same({}, walked())
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("don't know which room you're in", 1, true))
+    end)
+
+    it("stops at an anchor whose room has a different name", function()
+        taPackage.navRoutes["test-anchor"] = { steps = { { anchor = "labyrinth-89" }, "e" } }
+        -- Where the last arrival left us; the start probe's own brief doesn't
+        -- move it.
+        taPackage.currentRoom = "cave"
+        start("navigate-to test-anchor")
+        assert.is_nil(taPackage.navigate)
+        assert.are.equal(1, taPackage.here)
+        assert.are.same({}, walked())
+    end)
+
+end)
+
 describe("ta.follow XP poll", function()
 
     before_each(function()
