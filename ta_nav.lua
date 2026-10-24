@@ -1411,8 +1411,8 @@ taPackage.navExitDelayMs = NAV_EXIT_DELAY_MS
 taPackage.navStuckTimeoutMs = NAV_STUCK_TIMEOUT_MS
 taPackage.navStuckCheckMs = NAV_STUCK_CHECK_MS
 
-local function navEcho(msg)
-    echo("[nav] " .. msg)
+local function navEcho(msg, color)
+    if color then cecho(color, "[nav] " .. msg) else echo("[nav] " .. msg) end
     -- While an `and-exit` walk is on its way out of the game, the lines that
     -- explain how it ended are collected for the push notification: "stopped"
     -- on its own, read on a phone an hour later, tells you nothing you can act
@@ -2698,7 +2698,7 @@ local function navInventoryFinish()
     end
     navExitBeforeWalk()
     navEcho((inv.subject or "This route") .. " needs " .. taPackage.navItemPhrase(missing)
-        .. " and I'm not carrying " .. (#missing > 1 and "them" or "one") .. " — not setting off.")
+        .. " and I'm not carrying " .. (#missing > 1 and "them" or "one") .. " — not setting off.", "red")
     navEcho("  Carrying: " .. inv.text)
 end
 

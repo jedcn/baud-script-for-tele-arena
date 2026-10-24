@@ -20815,6 +20815,16 @@ describe("navigate-to", function()
             assert.is_truthy(out:find("Carrying: 559 gold crowns, and a waterskin(3).", 1, true))
         end)
 
+        it("draws the refusal in red so it is noticed", function()
+            askToWalk()
+            helper.simulateLine("You are carrying 559 gold crowns, and a waterskin(3).")
+            local red
+            for _, c in ipairs(helper.cechoCalls) do
+                if c.text:find("not setting off", 1, true) then red = c.color end
+            end
+            assert.are.equal("red", red)
+        end)
+
         it("says so when the game never answers", function()
             askToWalk()
             helper.fireTimers(5000)

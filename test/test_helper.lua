@@ -12,6 +12,7 @@ M.sendCalls = {}
 M.runCommandCalls = {}
 M.echoCalls = {}
 M.cechoBgCalls = {}
+M.cechoCalls = {}
 M.httpPostCalls = {}
 M.httpRequestCalls = {}
 M.dbCalls = {}
@@ -212,6 +213,7 @@ end
 
 function cecho(color, text)
     table.insert(M.echoCalls, text == nil and color or text)
+    if text ~= nil then table.insert(M.cechoCalls, { color = color, text = text }) end
 end
 
 function cechoBg(color, backgroundColor, text, bold)
@@ -292,6 +294,7 @@ function M.resetAll()
     for k in pairs(M.runCommandCalls) do M.runCommandCalls[k] = nil end
     for k in pairs(M.echoCalls) do M.echoCalls[k] = nil end
     for k in pairs(M.cechoBgCalls) do M.cechoBgCalls[k] = nil end
+    for k in pairs(M.cechoCalls) do M.cechoCalls[k] = nil end
     for k in pairs(M.httpPostCalls) do M.httpPostCalls[k] = nil end
     for k in pairs(M.httpRequestCalls) do M.httpRequestCalls[k] = nil end
     for k in pairs(M.dbCalls) do M.dbCalls[k] = nil end
