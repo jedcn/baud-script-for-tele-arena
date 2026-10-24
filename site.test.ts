@@ -84,12 +84,13 @@ describe('sectionAreas', () => {
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
-  it('puts the towns first, in numeric rather than alphabetical order', () => {
-    expect(labels[0]).toEqual(['Towns', ['First Town', 'Second Town', 'Third Town', 'Fourth Town']]);
+  it('puts the towns first, in numeric order, with the Ruined Town last', () => {
+    expect(labels[0]).toEqual(['Towns',
+      ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'The Ruined Town']]);
   });
 
-  it('leaves everything else, including the Ruined Town, in Elsewhere', () => {
-    expect(labels[1]).toEqual(['Elsewhere', ['The Desert', 'The Ruined Town']]);
+  it('leaves everything else in Elsewhere', () => {
+    expect(labels[1]).toEqual(['Elsewhere', ['The Desert']]);
   });
 
   it('renders the sections as optgroups in the Area select', () => {

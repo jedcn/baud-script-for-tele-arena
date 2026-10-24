@@ -74,14 +74,15 @@ export function groupAreas(areas: { area: string; name: string }[]): Group[] {
 
 export type Section = { label: string; groups: Group[] };
 
-const TOWN_ORDER = ['First', 'Second', 'Third', 'Fourth'];
+const TOWN_ORDER = ['First Town', 'Second Town', 'Third Town', 'Fourth Town', 'The Ruined Town'];
 
 /**
  * The Area select's <optgroup>s: the towns first, in the order you reach them
- * (alphabetical would put Fourth Town second), then everywhere else as before.
+ * (alphabetical would put Fourth Town second), the Ruined Town after them, then
+ * everywhere else as before.
  */
 export function sectionAreas(groups: Group[]): Section[] {
-  const town = (g: Group) => TOWN_ORDER.indexOf(g.area.match(/^(\w+) Town$/)?.[1] ?? '');
+  const town = (g: Group) => TOWN_ORDER.indexOf(g.area);
   const towns = groups.filter(g => town(g) >= 0).sort((x, y) => town(x) - town(y));
   const rest = groups.filter(g => town(g) < 0);
   return [{ label: 'Towns', groups: towns }, { label: 'Elsewhere', groups: rest }]
