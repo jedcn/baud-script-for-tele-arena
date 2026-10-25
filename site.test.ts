@@ -102,7 +102,7 @@ describe('sectionAreas', () => {
   });
 
   it('keeps the towns that belong to no other section under Towns', () => {
-    expect(labels[1]).toEqual(['Towns', ['Fourth Town', 'Ruined Town']]);
+    expect(labels[1]).toEqual(['Towns', ['Fourth Town']]);
   });
 
   it('lists North of First Town in the order you reach it', () => {
@@ -115,7 +115,8 @@ describe('sectionAreas', () => {
   });
 
   it('lists East in the order given', () => {
-    expect(labels[3]).toEqual(['East', ['The Swamp', 'The Cellars', 'The Flagstones']]);
+    expect(labels[3]).toEqual(['East',
+      ['The Swamp', 'Ruined Town', 'The Cellars', 'The Flagstones']]);
   });
 
   it('lists Southwest in the order given', () => {
