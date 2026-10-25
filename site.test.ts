@@ -91,6 +91,8 @@ describe('sectionAreas', () => {
     { area: 'flagstones-level-1', name: 'The Flagstones, Level 1' },
     { area: 'valley', name: 'The Valley' },
     { area: 'tunnels', name: 'The Tunnels' },
+    { area: 'tower-level-1', name: 'The Tower, Level 1' },
+    { area: 'deep-forest', name: 'The Deep Forest' },
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
@@ -116,8 +118,12 @@ describe('sectionAreas', () => {
     expect(labels[3]).toEqual(['East', ['The Swamp', 'The Cellars', 'The Flagstones']]);
   });
 
+  it('lists Southwest in the order given', () => {
+    expect(labels[4]).toEqual(['Southwest', ['The Tower', 'The Tunnels']]);
+  });
+
   it('leaves everything else in Elsewhere, alphabetically', () => {
-    expect(labels[4]).toEqual(['Elsewhere', ['The Tunnels', 'The Valley']]);
+    expect(labels[5]).toEqual(['Elsewhere', ['The Deep Forest', 'The Valley']]);
   });
 
   it('renders the sections as optgroups in the Area select', () => {
