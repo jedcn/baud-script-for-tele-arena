@@ -78,17 +78,19 @@ export type Section = { label: string; groups: Group[] };
  * The Area select's named <optgroup>s, each listing its areas in the order you
  * reach them rather than alphabetically. An area belongs to one section only.
  */
-const SECTIONS: { label: string; areas: string[] }[] = [
+export const SECTIONS: { label: string; areas: string[] }[] = [
   { label: 'Starting Area',
     areas: ['First Town', 'The First Dungeon', 'The Mountains', 'The Orc Caves', 'The Forest',
             'The Ruined Mansion', 'The Gnoll Caves'] },
-  { label: 'Towns', areas: ['Fourth Town'] },
   { label: 'North of First Town',
     areas: ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town'] },
   { label: 'East', areas: ['The Swamp', 'Ruined Town', 'The Cellars', 'The Flagstones'] },
   { label: 'Southwest',
     areas: ['The Tower', 'The Labyrinth', 'The Tunnels', 'The Ledge', 'The Sweltering Passages',
             'The Hewn Granite Corridors'] },
+  { label: 'End Game',
+    areas: ['The Valley', 'The Complex of Natural Caverns', 'The Deep Forest', 'The Stone Passages',
+            'Fourth Town'] },
 ];
 
 /** The named sections, then every area none of them claims, alphabetically. */

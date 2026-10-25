@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, readPlayers, renderLevel, sectionAreas,
-  splitName }
+import { awayLabel, boxLabel, buildPage, groupAreas, readAreas, readPlayers, renderLevel, SECTIONS,
+  sectionAreas, splitName }
   from './site';
 import type { Area } from './export';
 
@@ -93,6 +93,8 @@ describe('sectionAreas', () => {
     { area: 'tunnels', name: 'The Tunnels' },
     { area: 'tower-level-1', name: 'The Tower, Level 1' },
     { area: 'deep-forest', name: 'The Deep Forest' },
+    { area: 'elven-valley', name: 'The Elven Valley' },
+    { area: 'mountain-road', name: 'The Mountain Road' },
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
@@ -101,30 +103,38 @@ describe('sectionAreas', () => {
       ['First Town', 'The First Dungeon', 'The Gnoll Caves']]);
   });
 
-  it('keeps the towns that belong to no other section under Towns', () => {
-    expect(labels[1]).toEqual(['Towns', ['Fourth Town']]);
-  });
-
   it('lists North of First Town in the order you reach it', () => {
-    expect(labels[2]).toEqual(['North of First Town',
+    expect(labels[1]).toEqual(['North of First Town',
       ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town']]);
   });
 
   it('keeps a sectioned area\'s levels together under its one entry', () => {
-    expect(sections[2].groups.find(g => g.area === 'The Stoneworks')!.levels.length).toBe(2);
+    expect(sections[1].groups.find(g => g.area === 'The Stoneworks')!.levels.length).toBe(2);
   });
 
   it('lists East in the order given', () => {
-    expect(labels[3]).toEqual(['East',
+    expect(labels[2]).toEqual(['East',
       ['The Swamp', 'Ruined Town', 'The Cellars', 'The Flagstones']]);
   });
 
   it('lists Southwest in the order given', () => {
-    expect(labels[4]).toEqual(['Southwest', ['The Tower', 'The Tunnels']]);
+    expect(labels[3]).toEqual(['Southwest', ['The Tower', 'The Tunnels']]);
+  });
+
+  it('lists End Game in the order given, Fourth Town last', () => {
+    expect(labels[4]).toEqual(['End Game', ['The Valley', 'The Deep Forest', 'Fourth Town']]);
   });
 
   it('leaves everything else in Elsewhere, alphabetically', () => {
-    expect(labels[5]).toEqual(['Elsewhere', ['The Deep Forest', 'The Valley']]);
+    expect(labels[5]).toEqual(['Elsewhere', ['The Elven Valley', 'The Mountain Road']]);
+  });
+
+  it('names only areas the map has', async () => {
+    // A name that matches no area drops out of its section without a word --
+    // "The Deep Valley" was asked for when the map calls it "The Valley".
+    const real = new Set(groupAreas((await readAreas()).map(a => ({ area: a.area, name: a.name })))
+      .map(g => g.area));
+    expect(SECTIONS.flatMap(s => s.areas).filter(a => !real.has(a))).toEqual([]);
   });
 
   it('renders the sections as optgroups in the Area select', () => {
