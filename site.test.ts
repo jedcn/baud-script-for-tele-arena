@@ -88,6 +88,9 @@ describe('sectionAreas', () => {
     { area: 'cellars', name: 'The Cellars' },
     { area: 'gnoll-caves', name: 'The Gnoll Caves' },
     { area: 'first-dungeon-level-1', name: 'The First Dungeon, Level 1' },
+    { area: 'flagstones-level-1', name: 'The Flagstones, Level 1' },
+    { area: 'valley', name: 'The Valley' },
+    { area: 'tunnels', name: 'The Tunnels' },
   ]));
   const labels = sections.map(s => [s.label, s.groups.map(g => g.area)]);
 
@@ -109,8 +112,12 @@ describe('sectionAreas', () => {
     expect(sections[2].groups.find(g => g.area === 'The Stoneworks')!.levels.length).toBe(2);
   });
 
+  it('lists East in the order given', () => {
+    expect(labels[3]).toEqual(['East', ['The Swamp', 'The Cellars', 'The Flagstones']]);
+  });
+
   it('leaves everything else in Elsewhere, alphabetically', () => {
-    expect(labels[3]).toEqual(['Elsewhere', ['The Cellars', 'The Swamp']]);
+    expect(labels[4]).toEqual(['Elsewhere', ['The Tunnels', 'The Valley']]);
   });
 
   it('renders the sections as optgroups in the Area select', () => {

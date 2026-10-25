@@ -85,6 +85,7 @@ const SECTIONS: { label: string; areas: string[] }[] = [
   { label: 'Towns', areas: ['Fourth Town', 'Ruined Town'] },
   { label: 'North of First Town',
     areas: ['Second Town', 'The Sewers', 'The Desert', 'The Stoneworks', 'Third Town'] },
+  { label: 'East', areas: ['The Swamp', 'The Cellars', 'The Flagstones'] },
 ];
 
 /** The named sections, then every area none of them claims, alphabetically. */
