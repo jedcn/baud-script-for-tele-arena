@@ -1874,6 +1874,10 @@ createTrigger("^You are outside (.+)\\.$", handleRoomEntryUnlessLooking, { type 
 createTrigger("^You at (.+)\\.$", handleRoomEntryUnlessLooking, { type = "regex" })
 
 local moveDirections = { "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d" }
+-- The same set, for a navigate walk: its moves skip these aliases, and only a
+-- step in here is a move the arrival queue should expect an answer to.
+taPackage.moveDirs = {}
+for _, dir in ipairs(moveDirections) do taPackage.moveDirs[dir] = true end
 for _, dir in ipairs(moveDirections) do
     createAlias("^" .. dir .. "$", function()
         -- A real move: this arrival must not be suppressed, even if a prior

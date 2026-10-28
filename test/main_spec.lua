@@ -22110,6 +22110,96 @@ describe("live-navigate", function()
 
     end)
 
+    -- `where` follows the walk. A walk's moves skipped the direction aliases, so
+    -- nothing queued them and every arrival reached the tracker with no
+    -- direction: it ended the walk sure it was still where the walk began. In
+    -- logs/session-castor-2026-10-27T21-12-21.log castor walked town gates ->
+    -- guild hall, then `live-navigate town-gates` said "You're already in
+    -- town-gates" and `live-navigate south-plaza` planned a first step of `ne`
+    -- from the guild hall, which hasn't got one.
+    describe("keeping track of where the walk went", function()
+
+        local names = { "first room", "second room", "third room", "far room", "side room" }
+
+        -- stubGraph's rooms, named, with the single-room lookups the tracker
+        -- uses answered from the same exits.
+        local function namedGraph()
+            stubGraph({ { id = 4 } })
+            helper.mockDbOneRow = function(sql, params)
+                if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
+                    for _, row in ipairs(helper.mockDbRows("SELECT from_id, direction, to_id FROM room_exits")) do
+                        if row.from_id == params[1] and row.direction == params[2] then
+                            return { to_id = row.to_id }
+                        end
+                    end
+                    return nil
+                elseif string.find(sql, "SELECT name FROM rooms WHERE id", 1, true) then
+                    return names[params[1]] and { name = names[params[1]] }
+                end
+                return nil
+            end
+            taPackage.hereState = "known"
+            taPackage.here = 1
+        end
+
+        local function arrive(name)
+            helper.simulateLine("You're in " .. name .. ".")
+            helper.simulateLine("There is nobody here.")
+            helper.simulateLine("There is nothing on the floor.")
+        end
+
+        local function walkToTheFarRoom()
+            helper.simulateAlias("live-navigate somewhere")
+            arrive("the second room")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            arrive("the third room")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            arrive("the far room")
+        end
+
+        it("ends the walk knowing it is in the room it walked to", function()
+            namedGraph()
+            walkToTheFarRoom()
+            assert.is_nil(taPackage.navigate)
+            assert.are.equal("known", taPackage.hereState)
+            assert.are.equal(4, taPackage.here)
+            assert.are.same({}, taPackage.pendingDirs)
+        end)
+
+        it("plans the next walk from where the last one ended", function()
+            namedGraph()
+            walkToTheFarRoom()
+            -- The side room is reached from the far room by `s s`; from the
+            -- first room, where the walk began, it would be `e e s`.
+            stubGraph({ { id = 5 } })
+            helper.simulateAlias("live-navigate elsewhere")
+            local said = table.concat(helper.echoCalls, "\n")
+            assert.is_truthy(said:find("is 2 steps: s s", 1, true))
+            assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
+        end)
+
+        it("follows a move typed after the walk without losing track", function()
+            namedGraph()
+            walkToTheFarRoom()
+            helper.simulateAlias("s")
+            arrive("the third room")
+            assert.are.equal("known", taPackage.hereState)
+            assert.are.equal(3, taPackage.here)
+        end)
+
+        -- "It's too dark to see." answers a step just as a brief does, so it has
+        -- to take that step's move off the queue too -- left there, it would be
+        -- paired with the next lit arrival.
+        it("takes a dark arrival's move off the queue", function()
+            namedGraph()
+            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateLine("It's too dark to see.")
+            assert.are.same({}, taPackage.pendingDirs)
+            assert.are.equal(2, taPackage.here)
+        end)
+
+    end)
+
 end)
 
 -- A written route whose way is found on the map: `{ goTo = slug }` is

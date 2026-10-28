@@ -1725,6 +1725,8 @@ local function navWatchDarkAck()
         -- is not owed an arrival line.
         if w.phase ~= "walking" or w.blocked then return end
         local dir = tostring(w.steps[w.index])
+        -- No answer is coming for the move it queued, either.
+        taPackage.shiftPendingDir()
         stopNavigate()
         navEcho("Nothing at all came back from step " .. step .. " (" .. dir .. ") in "
             .. math.floor(NAV_DARK_ACK_MS / 1000) .. "s — not a room, not a refusal."
@@ -1742,6 +1744,15 @@ local function navSend(dir)
     -- 2026-09-18, and it ended up filed under X.
     taPackage.abandonRoomDescCapture()
     taPackage.pendingDirection = nil
+    -- Queued like a typed move, so the arrival moves `where` along with us.
+    -- Unqueued, every arrival of a walk reached trackMove with no direction and
+    -- was ignored: the tracker ended the walk still sure it was in the room the
+    -- walk STARTED from, and the next `live-navigate` planned from there --
+    -- "You're already in town-gates" from the guild hall, then a first step of
+    -- `ne` the guild hall hasn't got (logs/session-castor-2026-10-27T21-12-21.log).
+    -- Commands (`pull lever`, `push stone`) aren't moves; the triggers that
+    -- answer them queue their own arrival if they have one.
+    if taPackage.moveDirs[dir] then taPackage.pushPendingDir(dir) end
     -- When this went out, which is what the dark watchdog compares against.
     local j = taPackage.navigate
     if j then j.sentAt = navNowMs() end
@@ -3461,6 +3472,11 @@ createTrigger("^It's too dark to see\\.$", function()
     -- this -- and counting one would run the walk ahead of the character.
     if j.stepKind ~= "move" then return end
     navDebug("arrived in the dark after step " .. j.index)
+    -- An arrival, so it answers the step's queued move -- left queued, it would
+    -- be paired with the next lit arrival instead. With no name to check it
+    -- against, the tracker can only follow the map's edge; lost stays lost.
+    local dir = taPackage.shiftPendingDir()
+    if taPackage.hereState == "known" then taPackage.trackMove(dir, nil) end
     -- This room announced itself dark, whatever the route claims. Read by the
     -- trip recovery, which cannot ask an unlit room what is on its floor.
     j.litHere = false
