@@ -6,8 +6,8 @@
 -- one file. Like ta_nav.lua, it is a separate chunk and cannot see main.lua's
 -- locals; the seam runs through taPackage:
 --
---   in    taPackage.xpThresholds, taPackage.checkArenaGoldFloor (main.lua);
---         recordXpChange, getLevelForXp (main.lua globals)
+--   in    taPackage.xp (ta_xp.lua); taPackage.recordXpChange,
+--         taPackage.checkArenaGoldFloor (main.lua)
 --   out   taPackage.character (the accessors), taPackage._character (the
 --         data), taPackage.PROMOTED_CLASS
 --
@@ -74,9 +74,9 @@ function taPackage.character.setExperience(value)
     taPackage._character.experience = current
     -- The status bar flashes how far the XP figure just moved, and this is the
     -- one place that knows a move happened. recordXpChange is defined with the
-    -- status bar, further down the chunk, so it only exists once the script has
-    -- finished loading -- which is always true by the time a trigger calls us.
-    if recordXpChange then recordXpChange(previous, current) end
+    -- status bar in main.lua, after this file loads, so it only exists once the
+    -- script has finished loading -- always true by the time a trigger calls us.
+    if taPackage.recordXpChange then taPackage.recordXpChange(previous, current) end
 end
 
 function taPackage.character.getExperience()
@@ -227,6 +227,6 @@ function taPackage.character.hasUntrainedLevel()
     local xp, class, level = taPackage.character.getExperience(), taPackage.character.getClass(), taPackage.character.getLevel()
     -- Any unknown, or a class we have no XP table for, means we can't tell.
     -- The xpThresholds check keeps the comparison below off a nil level.
-    if not (xp and class and level and taPackage.xpThresholds[class]) then return false end
-    return getLevelForXp(xp, class) > level
+    if not (xp and class and level and taPackage.xp.thresholds[class]) then return false end
+    return taPackage.xp.getLevelForXp(xp, class) > level
 end

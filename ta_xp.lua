@@ -1,4 +1,4 @@
--- ta_xp.lua -- post-promotion XP tables (levels 1-105)
+-- ta_xp.lua -- the XP ladder: every class's tables, and reading them
 --
 -- At level 25 a character can `buy promotion` at its guild hall. That does not
 -- add a mode flag: it swaps the class name on the `Class:` line (Warrior ->
@@ -11,14 +11,198 @@
 --
 -- Source: docs/shrine/PROMOTED_EXP_CHART.md. Its four columns are four shared
 -- ladders, expanded to eight class names by the aliases at the bottom -- the
--- same trick main.lua uses for Necrolyte/Acolyte pre-promotion.
+-- same trick the pre-promotion tables use for Necrolyte/Acolyte.
 --
--- Lives in its own chunk (main.lua is near Lua's 200-locals-per-function
--- ceiling, and this is 400+ lines of pure data). main.lua hands the table over
--- on taPackage; we fill it in place, so its `local xpThresholds` sees the new
--- keys. See the ta_nav.lua header for the same seam.
+-- Also home to everything else about the XP ladder: the pre-promotion
+-- tables, which level a given XP earns, and the "ready to train" push. All of
+-- it is published on taPackage.xp, which main.lua loads with dofile. Like
+-- ta_nav.lua, this is a separate chunk and cannot see main.lua's locals:
+--
+--   in    taPackage.character, sendNtfy, formatWithCommas
+--   out   taPackage.xp.thresholds, taPackage.xp.getLevelForXp,
+--         taPackage.xp.getXpForNextLevel, taPackage.xp.xpRemaining,
+--         taPackage.xp.checkLevelUpNotification
 
-local P = taPackage.xpThresholds
+taPackage.xp = {}
+
+-- =========================================================================
+-- Pre-promotion tables by class (from "help Exp1" and "help Exp2")
+-- =========================================================================
+
+local xpThresholds     = {
+    Warrior = {
+        [1] = 0,
+        [2] = 1125,
+        [3] = 3240,
+        [4] = 8025,
+        [5] = 17890,
+        [6] = 36000,
+        [7] = 66300,
+        [8] = 113400,
+        [9] = 182600,
+        [10] = 280200,
+        [11] = 413000,
+        [12] = 588700,
+        [13] = 815600,
+        [14] = 1102800,
+        [15] = 1460100,
+        [16] = 1898300,
+        [17] = 2428600,
+        [18] = 3063100,
+        [19] = 3814700,
+        [20] = 4696900,
+        [21] = 5724000,
+        [22] = 6911200,
+        [23] = 8274200,
+        [24] = 9829700,
+        [25] = 11594700,
+    },
+    Archer = {
+        [1] = 0,
+        [2] = 1125,
+        [3] = 3240,
+        [4] = 8025,
+        [5] = 17890,
+        [6] = 36000,
+        [7] = 66300,
+        [8] = 113400,
+        [9] = 182600,
+        [10] = 280200,
+        [11] = 413000,
+        [12] = 588700,
+        [13] = 815600,
+        [14] = 1102800,
+        [15] = 1460100,
+        [16] = 1898300,
+        [17] = 2428600,
+        [18] = 3063100,
+        [19] = 3814700,
+        [20] = 4696900,
+        [21] = 5724000,
+        [22] = 6911200,
+        [23] = 8274200,
+        [24] = 9829700,
+        [25] = 11594700,
+    },
+    Hunter = {
+        [1] = 0,
+        [2] = 1125,
+        [3] = 3240,
+        [4] = 8025,
+        [5] = 17890,
+        [6] = 36000,
+        [7] = 66300,
+        [8] = 113400,
+        [9] = 182600,
+        [10] = 280200,
+        [11] = 413000,
+        [12] = 588700,
+        [13] = 815600,
+        [14] = 1102800,
+        [15] = 1460100,
+        [16] = 1898300,
+        [17] = 2428600,
+        [18] = 3063100,
+        [19] = 3814700,
+        [20] = 4696900,
+        [21] = 5724000,
+        [22] = 6911200,
+        [23] = 8274200,
+        [24] = 9829700,
+        [25] = 11594700,
+    },
+    Rogue = {
+        [1] = 0,
+        [2] = 1120,
+        [3] = 3200,
+        [4] = 7860,
+        [5] = 17440,
+        [6] = 35000,
+        [7] = 64400,
+        [8] = 109900,
+        [9] = 177000,
+        [10] = 271500,
+        [11] = 400000,
+        [12] = 570100,
+        [13] = 789600,
+        [14] = 1067600,
+        [15] = 1413500,
+        [16] = 1837500,
+        [17] = 2350800,
+        [18] = 2964800,
+        [19] = 3692200,
+        [20] = 4546000,
+        [21] = 5540000,
+        [22] = 6689000,
+        [23] = 8008000,
+        [24] = 9513300,
+        [25] = 11221500,
+    },
+    Acolyte = {
+        [1] = 0,
+        [2] = 1150,
+        [3] = 3490,
+        [4] = 9025,
+        [5] = 20640,
+        [6] = 42200,
+        [7] = 78200,
+        [8] = 134300,
+        [9] = 216900,
+        [10] = 333500,
+        [11] = 492000,
+        [12] = 701800,
+        [13] = 972800,
+        [14] = 1315900,
+        [15] = 1742800,
+        [16] = 2266200,
+        [17] = 2899600,
+        [18] = 3657600,
+        [19] = 4555300,
+        [20] = 5609100,
+        [21] = 6836000,
+        [22] = 8254100,
+        [23] = 9882100,
+        [24] = 11739900,
+        [25] = 13848000,
+    },
+    Sorceror = {
+        [1] = 0,
+        [2] = 1180,
+        [3] = 3800,
+        [4] = 10290,
+        [5] = 24160,
+        [6] = 50000,
+        [7] = 93500,
+        [8] = 161400,
+        [9] = 261500,
+        [10] = 402700,
+        [11] = 595000,
+        [12] = 849600,
+        [13] = 1178400,
+        [14] = 1594900,
+        [15] = 2113200,
+        [16] = 2748800,
+        [17] = 3518100,
+        [18] = 4438700,
+        [19] = 5529300,
+        [20] = 6809500,
+        [21] = 8300000,
+        [22] = 10022900,
+        [23] = 12001000,
+        [24] = 14258400,
+        [25] = 16820200,
+    },
+}
+-- Classes that share thresholds with others
+xpThresholds.Necrolyte = xpThresholds.Acolyte
+xpThresholds.Druid     = xpThresholds.Sorceror
+taPackage.xp.thresholds = xpThresholds
+
+-- =========================================================================
+-- Post-promotion tables (levels 1-105)
+-- =========================================================================
+
+local P = xpThresholds
 
 P["High Priest"] = {
     [1] = 0,
@@ -459,3 +643,76 @@ P["Necromancer"]   = P["High Priest"]
 P["Arch Magus"]    = P["Arch Druid"]
 P["Master Archer"] = P["Knight"]
 P["Beast Master"]  = P["Knight"]
+
+-- =========================================================================
+-- Reading the ladder
+-- =========================================================================
+
+-- The level `xp` has earned, or nil for a class we have no table for -- an
+-- unknown class gets no answer rather than a wrong one from someone else's
+-- ladder. Walks up from 1 rather than down from a fixed top, because the two
+-- ladders end at different levels (25 pre-promotion, 105 after).
+function taPackage.xp.getLevelForXp(xp, class)
+    local thresholds = xpThresholds[class or "Warrior"]
+    if not thresholds then return nil end
+    local lvl = 1
+    while thresholds[lvl + 1] and xp >= thresholds[lvl + 1] do
+        lvl = lvl + 1
+    end
+    return lvl
+end
+
+-- XP needed for the next level; nil at the top of the ladder, and nil for a
+-- class we have no table for.
+function taPackage.xp.getXpForNextLevel(xp, class)
+    local currentLevel = taPackage.xp.getLevelForXp(xp, class)
+    if not currentLevel then return nil end
+    return xpThresholds[class or "Warrior"][currentLevel + 1]
+end
+
+-- Push a "ready to train for the next level" notification the moment XP crosses
+-- a level threshold. We track the XP-derived level in character.earnedLevel and
+-- alert once each time it climbs. XP doesn't reset on training, so after
+-- training the earned level holds until the next threshold — one clean alert
+-- per level. Fires regardless of arena profile; runs on every status poll.
+function taPackage.xp.checkLevelUpNotification(xp)
+    local class = taPackage.character.getClass()
+    -- Only act on classes we have a real XP table for; without one there is no
+    -- threshold to announce (getLevelForXp returns nil).
+    if not (xp and class and xpThresholds[class]) then return end
+    local newEarned = taPackage.xp.getLevelForXp(xp, class)
+    local prev = taPackage.character.getEarnedLevel()
+    if prev == nil then
+        -- First observation: seed silently so we only alert on later crossings,
+        -- not on every fresh login / script reload.
+        taPackage.character.setEarnedLevel(newEarned)
+        return
+    end
+    if newEarned > prev then
+        taPackage.character.setEarnedLevel(newEarned)
+        -- Silent during a gold-farming run. That character exists to be levelled
+        -- and then thrown away, so its levels are not news -- a single round
+        -- crosses several thresholds and trains at each one, which is two pushes
+        -- a level for something nobody is waiting to hear. The push worth waking
+        -- up for in that loop is the handover ("Gave N gold to ...", ta_create),
+        -- and it still fires. The bank above runs either way, so the crossing is
+        -- not re-announced when farming stops.
+        if taPackage.goldFarming then return end
+        local threshold = xpThresholds[class][newEarned]
+        -- thresholds[N] is the XP required to reach level N (verified against the
+        -- game's own `help Exp1` table and a real training event), so crossing it
+        -- means you've earned enough to train up to level N.
+        sendNtfy("Time to Level Up!",
+            (taPackage.character.getName() or "?") .. " just passed "
+                .. formatWithCommas(threshold)
+                .. " and is ready to train for level " .. newEarned)
+    end
+end
+
+-- XP still to go before the next level: the figure the status bar shows. nil
+-- once there is no next level to count down to.
+function taPackage.xp.xpRemaining(xp, class)
+    local nextLevelXp = xp and taPackage.xp.getXpForNextLevel(xp, class)
+    if not nextLevelXp then return nil end
+    return nextLevelXp - xp
+end

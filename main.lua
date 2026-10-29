@@ -90,245 +90,7 @@ function sendNtfy(title, body, markdown)
     })
 end
 
--- =========================================================================
--- XP tables by class (from "help Exp1" and "help Exp2")
--- =========================================================================
-
-local xpThresholds     = {
-    Warrior = {
-        [1] = 0,
-        [2] = 1125,
-        [3] = 3240,
-        [4] = 8025,
-        [5] = 17890,
-        [6] = 36000,
-        [7] = 66300,
-        [8] = 113400,
-        [9] = 182600,
-        [10] = 280200,
-        [11] = 413000,
-        [12] = 588700,
-        [13] = 815600,
-        [14] = 1102800,
-        [15] = 1460100,
-        [16] = 1898300,
-        [17] = 2428600,
-        [18] = 3063100,
-        [19] = 3814700,
-        [20] = 4696900,
-        [21] = 5724000,
-        [22] = 6911200,
-        [23] = 8274200,
-        [24] = 9829700,
-        [25] = 11594700,
-    },
-    Archer = {
-        [1] = 0,
-        [2] = 1125,
-        [3] = 3240,
-        [4] = 8025,
-        [5] = 17890,
-        [6] = 36000,
-        [7] = 66300,
-        [8] = 113400,
-        [9] = 182600,
-        [10] = 280200,
-        [11] = 413000,
-        [12] = 588700,
-        [13] = 815600,
-        [14] = 1102800,
-        [15] = 1460100,
-        [16] = 1898300,
-        [17] = 2428600,
-        [18] = 3063100,
-        [19] = 3814700,
-        [20] = 4696900,
-        [21] = 5724000,
-        [22] = 6911200,
-        [23] = 8274200,
-        [24] = 9829700,
-        [25] = 11594700,
-    },
-    Hunter = {
-        [1] = 0,
-        [2] = 1125,
-        [3] = 3240,
-        [4] = 8025,
-        [5] = 17890,
-        [6] = 36000,
-        [7] = 66300,
-        [8] = 113400,
-        [9] = 182600,
-        [10] = 280200,
-        [11] = 413000,
-        [12] = 588700,
-        [13] = 815600,
-        [14] = 1102800,
-        [15] = 1460100,
-        [16] = 1898300,
-        [17] = 2428600,
-        [18] = 3063100,
-        [19] = 3814700,
-        [20] = 4696900,
-        [21] = 5724000,
-        [22] = 6911200,
-        [23] = 8274200,
-        [24] = 9829700,
-        [25] = 11594700,
-    },
-    Rogue = {
-        [1] = 0,
-        [2] = 1120,
-        [3] = 3200,
-        [4] = 7860,
-        [5] = 17440,
-        [6] = 35000,
-        [7] = 64400,
-        [8] = 109900,
-        [9] = 177000,
-        [10] = 271500,
-        [11] = 400000,
-        [12] = 570100,
-        [13] = 789600,
-        [14] = 1067600,
-        [15] = 1413500,
-        [16] = 1837500,
-        [17] = 2350800,
-        [18] = 2964800,
-        [19] = 3692200,
-        [20] = 4546000,
-        [21] = 5540000,
-        [22] = 6689000,
-        [23] = 8008000,
-        [24] = 9513300,
-        [25] = 11221500,
-    },
-    Acolyte = {
-        [1] = 0,
-        [2] = 1150,
-        [3] = 3490,
-        [4] = 9025,
-        [5] = 20640,
-        [6] = 42200,
-        [7] = 78200,
-        [8] = 134300,
-        [9] = 216900,
-        [10] = 333500,
-        [11] = 492000,
-        [12] = 701800,
-        [13] = 972800,
-        [14] = 1315900,
-        [15] = 1742800,
-        [16] = 2266200,
-        [17] = 2899600,
-        [18] = 3657600,
-        [19] = 4555300,
-        [20] = 5609100,
-        [21] = 6836000,
-        [22] = 8254100,
-        [23] = 9882100,
-        [24] = 11739900,
-        [25] = 13848000,
-    },
-    Sorceror = {
-        [1] = 0,
-        [2] = 1180,
-        [3] = 3800,
-        [4] = 10290,
-        [5] = 24160,
-        [6] = 50000,
-        [7] = 93500,
-        [8] = 161400,
-        [9] = 261500,
-        [10] = 402700,
-        [11] = 595000,
-        [12] = 849600,
-        [13] = 1178400,
-        [14] = 1594900,
-        [15] = 2113200,
-        [16] = 2748800,
-        [17] = 3518100,
-        [18] = 4438700,
-        [19] = 5529300,
-        [20] = 6809500,
-        [21] = 8300000,
-        [22] = 10022900,
-        [23] = 12001000,
-        [24] = 14258400,
-        [25] = 16820200,
-    },
-}
--- Classes that share thresholds with others
-xpThresholds.Necrolyte = xpThresholds.Acolyte
-xpThresholds.Druid     = xpThresholds.Sorceror
-
--- The other half of the ladder: `buy promotion` at level 25 renames the class
--- (Warrior -> Knight) and restarts it at level 1 on a 105-level table. Those
--- eight tables live in their own chunk; they land in this same table, keyed by
--- the promoted class name, so nothing below needs to know about promotion.
-taPackage.xpThresholds = xpThresholds
 dofile(scriptDir .. "ta_xp.lua")
-
--- The level `xp` has earned, or nil for a class we have no table for -- an
--- unknown class gets no answer rather than a wrong one from someone else's
--- ladder. Walks up from 1 rather than down from a fixed top, because the two
--- ladders end at different levels (25 pre-promotion, 105 after).
-function getLevelForXp(xp, class)
-    local thresholds = xpThresholds[class or "Warrior"]
-    if not thresholds then return nil end
-    local lvl = 1
-    while thresholds[lvl + 1] and xp >= thresholds[lvl + 1] do
-        lvl = lvl + 1
-    end
-    return lvl
-end
-
--- XP needed for the next level; nil at the top of the ladder, and nil for a
--- class we have no table for.
-function getXpForNextLevel(xp, class)
-    local currentLevel = getLevelForXp(xp, class)
-    if not currentLevel then return nil end
-    return xpThresholds[class or "Warrior"][currentLevel + 1]
-end
-
--- Push a "ready to train for the next level" notification the moment XP crosses
--- a level threshold. We track the XP-derived level in character.earnedLevel and
--- alert once each time it climbs. XP doesn't reset on training, so after
--- training the earned level holds until the next threshold — one clean alert
--- per level. Fires regardless of arena profile; runs on every status poll.
-function checkLevelUpNotification(xp)
-    local class = taPackage.character.getClass()
-    -- Only act on classes we have a real XP table for; without one there is no
-    -- threshold to announce (getLevelForXp returns nil).
-    if not (xp and class and xpThresholds[class]) then return end
-    local newEarned = getLevelForXp(xp, class)
-    local prev = taPackage.character.getEarnedLevel()
-    if prev == nil then
-        -- First observation: seed silently so we only alert on later crossings,
-        -- not on every fresh login / script reload.
-        taPackage.character.setEarnedLevel(newEarned)
-        return
-    end
-    if newEarned > prev then
-        taPackage.character.setEarnedLevel(newEarned)
-        -- Silent during a gold-farming run. That character exists to be levelled
-        -- and then thrown away, so its levels are not news -- a single round
-        -- crosses several thresholds and trains at each one, which is two pushes
-        -- a level for something nobody is waiting to hear. The push worth waking
-        -- up for in that loop is the handover ("Gave N gold to ...", ta_create),
-        -- and it still fires. The bank above runs either way, so the crossing is
-        -- not re-announced when farming stops.
-        if taPackage.goldFarming then return end
-        local threshold = xpThresholds[class][newEarned]
-        -- thresholds[N] is the XP required to reach level N (verified against the
-        -- game's own `help Exp1` table and a real training event), so crossing it
-        -- means you've earned enough to train up to level N.
-        sendNtfy("Time to Level Up!",
-            (taPackage.character.getName() or "?") .. " just passed "
-                .. formatWithCommas(threshold)
-                .. " and is ready to train for level " .. newEarned)
-    end
-end
 
 -- Progress through the current level, from just-leveled (blue) to about-to-level
 -- (red), walking across the color wheel through violet/magenta/pink in between.
@@ -491,7 +253,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     -- A held level-up notification is waiting on exactly this line for the new
     -- HP/MP maxima. Defined with the training trigger far below, so it only
     -- exists once the chunk has loaded (always true by the time a line arrives).
-    if noticeLevelUpStats then noticeLevelUpStats() end
+    if taPackage.noticeLevelUpStats then taPackage.noticeLevelUpStats() end
     if not taPackage.reRolling then return end
 
     local stats = {
@@ -2901,27 +2663,18 @@ local XP_CHANGE_VISIBLE_MS = 3000
 -- and not already spoken for (red means untrained level, yellow means gold).
 local XP_CHANGE_FG = "#ff8700"
 
--- XP still to go before the next level: the figure the bar shows. nil once
--- there is no next level to count down to. Global rather than local because the
--- main chunk is at Lua's 200-local ceiling.
-function xpRemaining(xp, class)
-    local nextLevelXp = xp and getXpForNextLevel(xp, class)
-    if not nextLevelXp then return nil end
-    return nextLevelXp - xp
-end
-
 -- The signed move in that figure, e.g. "-14,000" after gaining 14,000 XP —
 -- nil once the marker has aged out, or when we can't tell (unknown class, at
 -- max level, or a change that leaves the figure where it was). Reported as a
 -- delta of the *displayed* number rather than of raw XP, so it always agrees
 -- with the value it sits next to: training past a threshold pushes the count
 -- back up, and the marker says "+" to match.
-function xpChangeText(xp, class)
+local function xpChangeText(xp, class)
     local change = taPackage.xpChange
     if not change then return nil end
     if nowMillis() - change.at >= XP_CHANGE_VISIBLE_MS then return nil end
-    local before = xpRemaining(change.from, class)
-    local after = xpRemaining(xp, class)
+    local before = taPackage.xp.xpRemaining(change.from, class)
+    local after = taPackage.xp.xpRemaining(xp, class)
     if not (before and after) then return nil end
     local delta = after - before
     if delta == 0 then return nil end
@@ -2933,7 +2686,7 @@ local function status()
     local vitalityCurrent, vitalityMax = taPackage.character.getVitality()
     local manaCurrent, manaMax = taPackage.character.getMana()
     local xp = taPackage.character.getExperience()
-    local nextLevelXp = xp and getXpForNextLevel(xp, taPackage.character.getClass())
+    local nextLevelXp = xp and taPackage.xp.getXpForNextLevel(xp, taPackage.character.getClass())
     local gold = taPackage.character.getGold() and commafy(taPackage.character.getGold()) or "?"
 
     local charName = taPackage.character.getName()
@@ -3009,7 +2762,7 @@ setStatus(status)
 -- Only a real move counts: the arena polls `status` constantly, and seeding the
 -- marker on an unchanged reading (or on the first reading of the session, where
 -- there is nothing to compare against) would leave it flickering for no reason.
-function recordXpChange(previous, current)
+function taPackage.recordXpChange(previous, current)
     if previous == nil or current == nil or previous == current then return end
     taPackage.xpChange = { from = previous, at = nowMillis() }
     -- baud only re-evaluates the status function when the server sends data, so
@@ -4365,7 +4118,7 @@ function checkTrainingNeeded()
     local cls = taPackage.character.getClass()
     local lvl = taPackage.character.getLevel()
     if not (xp and cls and lvl) then return false end
-    local thresholds = xpThresholds[cls]
+    local thresholds = taPackage.xp.thresholds[cls]
     if not thresholds then return false end
     local nextThreshold = thresholds[lvl + 1]
     if not (nextThreshold ~= nil and xp >= nextThreshold) then return false end
@@ -4640,7 +4393,7 @@ local function arenaXpCheckDelay()
     local xp = taPackage.character.getExperience()
     local cls = taPackage.character.getClass()
     if not (xp and cls) then return ARENA_XP_CHECK_FAR_MS end
-    local nextAt = getXpForNextLevel(xp, cls)
+    local nextAt = taPackage.xp.getXpForNextLevel(xp, cls)
     -- Top of the ladder (25, or 105 once promoted), or a class with no table:
     -- nothing to count down to.
     if not nextAt then return ARENA_XP_CHECK_FAR_MS end
@@ -4686,7 +4439,7 @@ end
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     taPackage.character.setExperience(matches[2])
-    checkLevelUpNotification(tonumber(matches[2]))
+    taPackage.xp.checkLevelUpNotification(tonumber(matches[2]))
     -- Follow-session XP accounting. `ta.follow` records the starting XP and
     -- `ta.unfollow` records the ending XP by sending `status` and waiting for the
     -- Experience line below; a pending flag tells us which capture this line is
@@ -4766,7 +4519,7 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             taPackage.arenaLastNtfyTime = now
             local hp = taPackage.character.getVitality()
             local gold = taPackage.character.getGold()
-            local nextThreshold = getXpForNextLevel(xp, taPackage.character.getClass())
+            local nextThreshold = taPackage.xp.getXpForNextLevel(xp, taPackage.character.getClass())
             local lines = { "[" .. (taPackage.character.getName() or "?") .. "]" }
             if nextThreshold then
                 lines[#lines + 1] = "- XP Until Level Up: "
@@ -6109,10 +5862,10 @@ local LEVEL_UP_SHEET_WAIT_MS = 5000
 -- timeout, whichever comes first; whoever gets there clears the pending record
 -- so the other is a no-op.
 --
--- Global rather than local because the Vitality trigger is registered ~3000
--- lines above this point and can't see a local declared down here. It only ever
--- runs after the chunk has finished loading, so the name is always bound by then.
-function flushLevelUpNotification()
+-- On taPackage rather than local because the Vitality trigger is registered
+-- ~3000 lines above this point and can't see a local declared down here. It only
+-- ever runs after the chunk has finished loading, so the field is set by then.
+function taPackage.flushLevelUpNotification()
     local pending = taPackage.levelUpPush
     if not pending then return end
     taPackage.levelUpPush = nil
@@ -6151,12 +5904,12 @@ end
 -- pre-level: that's an unrelated `st` (e.g. tavern mode's HP heartbeat) that was
 -- already in flight when we trained, and flushing on it would report no gain.
 -- The timeout still pushes if our own sheet somehow never shows up.
-function noticeLevelUpStats()
+function taPackage.noticeLevelUpStats()
     local pending = taPackage.levelUpPush
     if not pending then return end
     if pending.hpBefore and select(2, taPackage.character.getVitality()) == pending.hpBefore then return end
     pending.statsLanded = true
-    if pending.goldAfter then flushLevelUpNotification() end
+    if pending.goldAfter then taPackage.flushLevelUpNotification() end
 end
 
 -- The inventory we asked for after training has landed: the fee is the gold we
@@ -6173,7 +5926,7 @@ function taPackage.noticeLevelUpGold()
         taPackage.db.recordService("training", "guild", pending.cost)
         echo("[arena] Training cost " .. pending.cost .. " gold.")
     end
-    if pending.statsLanded then flushLevelUpNotification() end
+    if pending.statsLanded then taPackage.flushLevelUpNotification() end
 end
 
 -- Guild-hall confirmation that a training session succeeded (its reply to `buy
@@ -6195,7 +5948,7 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     -- says which it was. At the top of a ladder there is no level to train to,
     -- so here it can only be a promotion: leave it to the bestowal trigger below
     -- rather than bank a level 26 that does not exist.
-    local thresholds = xpThresholds[taPackage.character.getClass() or ""]
+    local thresholds = taPackage.xp.thresholds[taPackage.character.getClass() or ""]
     if lvl and thresholds and not thresholds[lvl + 1] then return end
     if lvl then
         local newLevel = lvl + 1
@@ -6220,7 +5973,7 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         }
         send("st")
         send("i")
-        createTimer(LEVEL_UP_SHEET_WAIT_MS, flushLevelUpNotification, { repeating = false })
+        createTimer(LEVEL_UP_SHEET_WAIT_MS, taPackage.flushLevelUpNotification, { repeating = false })
     end
     -- Restocking is an arena-loop concern only: outside a run there is no errand
     -- trip to hang the flag on, and leaving it set would send the next run to the
