@@ -7016,7 +7016,7 @@ local HEAL_THRESHOLD = 90
 
 -- Hard-coded toggle: when true, an Acolyte in the kill loop skips its automatic
 -- in-combat healing (the exhaustion-driven group scan and the cast-clock heal)
--- and just melees for damage. A conferred `heal.allies` and the opt-in
+-- and just melees for damage. heal-most-injured-party-member and the opt-in
 -- `heal-allies-in-loop` are unaffected. Flip to false to restore automatic
 -- battle healing. Lives on taPackage so it can also be flipped at runtime via
 -- `/lua taPackage.acolyteAutoHealDisabled = false`.
@@ -7099,8 +7099,9 @@ end
 -- timing guesswork. Waiting for the header first means any spam arriving before
 -- the listing doesn't cut the scan short.
 local GROUP_HEAL_TERMINATOR = "ex"
--- context labels the scan's origin so the decision log distinguishes a typed
--- heal.allies, an automatic loop tick, and the kill-loop's exhaustion heal.
+-- context labels the scan's origin so the decision log distinguishes
+-- heal-most-injured-party-member, an automatic loop tick, and the kill-loop's
+-- exhaustion heal.
 -- spell overrides the kamotu/motu choice in finalizeGroupHeal.
 local function beginGroupHealScan(threshold, context, spell)
     taPackage.groupHealPhase = "want"
@@ -7108,7 +7109,7 @@ local function beginGroupHealScan(threshold, context, spell)
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
     taPackage.groupHealThreshold = threshold or HEAL_THRESHOLD
-    taPackage.groupHealContext = context or "heal.allies"
+    taPackage.groupHealContext = context or "group heal"
     -- Tallied as the listing streams in (see the member-row trigger): total
     -- members, how many are hurt (below full), and how many are below the
     -- heal threshold. Drives the decision log in finalizeGroupHeal.
@@ -7124,7 +7125,7 @@ local function finalizeGroupHeal()
     local name = taPackage.groupHealBestName
     local health = taPackage.groupHealBestHealth
     local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
-    local context = taPackage.groupHealContext or "heal.allies"
+    local context = taPackage.groupHealContext or "group heal"
     local members = taPackage.groupHealMembers or 0
     local hurt = taPackage.groupHealHurt or 0
     local needy = taPackage.groupHealNeedy or 0
@@ -7329,9 +7330,19 @@ end
 
 -- Deific heal (kusamotu) on whoever has the lowest HE% in the group listing.
 -- Threshold 100 so anyone short of full counts; at full health it does nothing.
--- No class gate: kusamotu is a High Priest spell and the game says so if not.
-createAlias("^heal-most-injured-party-member$", function()
+-- A healer does it here. Anyone else confers the alias's own name, and a
+-- healer following us answers it with the same scan (the "(to group)" trigger),
+-- so one alias works whether or not the leader can heal.
+function taPackage.healMostInjuredPartyMember()
     beginGroupHealScan(100, "heal-most-injured-party-member", "kusamotu")
+end
+
+createAlias("^heal-most-injured-party-member$", function()
+    if isClass("Acolyte") then
+        taPackage.healMostInjuredPartyMember()
+    else
+        send("confer heal-most-injured-party-member")
+    end
 end, { type = "regex" })
 
 -- Hands-off group healing: every minute, scan the group and top off anyone
@@ -7614,7 +7625,7 @@ createTrigger("^You are still physically exhausted from your previous activities
 end, { type = "regex" })
 
 createTrigger("^You are still too mentally exhausted from your last incantation!$", function()
-    -- Clear the flag even out of combat (e.g. a confer heal.allies cast), so a
+    -- Clear the flag even out of combat (e.g. a heal-most-injured-party-member cast), so a
     -- blocked cast doesn't wedge future ones; only the retry needs a fight.
     taPackage.castPending = false
     if not taPackage.killActive then return end
@@ -7752,9 +7763,9 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
         startKill(killMonster, taPackage.followDebug)
     elseif command == "kill-stop" then
         stopKill()
-    elseif command == "heal.allies" then
+    elseif command == "heal-most-injured-party-member" then
         if isClass("Acolyte") then
-            beginGroupHealScan()
+            taPackage.healMostInjuredPartyMember()
         end
     end
 end, { type = "regex" })
