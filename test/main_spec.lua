@@ -14804,9 +14804,6 @@ describe("ta.follow", function()
 
             before_each(function()
                 setClass("Acolyte")
-                -- These tests exercise the automatic in-combat healing, which is
-                -- gated off by default; turn it on for them.
-                taPackage.acolyteAutoHealDisabled = false
             end)
 
             it("melees on start like everyone else", function()
@@ -14814,82 +14811,13 @@ describe("ta.follow", function()
                 assert.are.equal("a cave", helper.sendCalls[1])
             end)
 
-            it("checks the group on attack exhaustion", function()
+            it("does not scan the group on attack exhaustion", function()
                 helper.simulateAlias("kill cave lizard")
                 helper.sendCalls = {}
                 helper.simulateLine("You are still physically exhausted from your previous activities!")
-                assert.are.equal("group", helper.sendCalls[1])
-            end)
-
-            it("heals the most injured member from the group listing", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
-                helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
-                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
-            end)
-
-            it("uses motu instead of kamotu when in the arena", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                taPackage.arenaState = "fighting"
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
-                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast motu Teekywiki", helper.sendCalls[1])
-            end)
-
-            it("parses the leader's (L) marker line", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Tojolias                       (L) [HE: 55% ST:Resting]")
-                helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast kamotu Tojolias", helper.sendCalls[1])
-            end)
-
-            it("heals only one member per group listing", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
-                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                local heals = 0
                 for _, cmd in ipairs(helper.sendCalls) do
-                    if cmd:match("^cast kamotu ") then heals = heals + 1 end
+                    assert.are_not.equal("group", cmd)
                 end
-                assert.are.equal(1, heals)
-            end)
-
-            it("does not heal when everyone is at or above the threshold", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                helper.sendCalls = {}
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Johnsonite                         [HE:100% ST:Ready]")
-                helper.simulateLine("  Teekywiki                          [HE: 95% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                assert.are.equal(0, #helper.sendCalls)
-            end)
-
-            it("does not abort the scan on combat noise before the listing", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                helper.sendCalls = {}
-                helper.simulateLine("The cave bear attacked you with its claws for 5 damage!")
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
             end)
 
             it("ignores a group listing typed outside a scan", function()
@@ -14921,43 +14849,6 @@ describe("ta.follow", function()
                 taPackage.castPending = true
                 helper.simulateLine("You confuse the key syllables and the spell fails!")
                 assert.is_false(taPackage.castPending)
-            end)
-
-        end)
-
-        describe("Acolyte with auto-heal disabled", function()
-
-            before_each(function()
-                setClass("Acolyte")
-                -- The hard-coded default, made explicit here.
-                taPackage.acolyteAutoHealDisabled = true
-            end)
-
-            it("melees on start", function()
-                helper.simulateAlias("kill cave lizard")
-                assert.are.equal("a cave", helper.sendCalls[1])
-            end)
-
-            it("does not scan the group on attack exhaustion", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.sendCalls = {}
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                for _, cmd in ipairs(helper.sendCalls) do
-                    assert.are_not.equal("group", cmd)
-                end
-            end)
-
-            it("never casts a heal across an exhaustion-driven scan", function()
-                helper.simulateAlias("kill cave lizard")
-                helper.sendCalls = {}
-                helper.simulateLine("You are still physically exhausted from your previous activities!")
-                -- A group listing arriving anyway must not be acted on.
-                helper.simulateLine("Your group currently consists of:")
-                helper.simulateLine("  Teekywiki                          [HE: 40% ST:Ready]")
-                helper.simulateLine("You're in a cave.")
-                for _, cmd in ipairs(helper.sendCalls) do
-                    assert.is_nil(cmd:match("^cast kamotu"))
-                end
             end)
 
         end)
@@ -15012,21 +14903,28 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
-        it("does not leak kusamotu into a later exhaustion scan", function()
-            setClass("Acolyte")
+        it("heals only one member per group listing", function()
             helper.simulateAlias("heal-most-injured-party-member")
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
-            helper.simulateLine("Exits: n,sw.")
-            taPackage.castPending = false
-            taPackage.killActive = true
-            taPackage.acolyteAutoHealDisabled = false
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
             helper.sendCalls = {}
             helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
-            helper.simulateLine("Exits: n,sw.")
-            assert.are.equal("cast kamotu Kerhak", helper.sendCalls[1])
+            helper.simulateLine("  Pelayo                             [HE: 82% ST:Ready]")
+            helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            local heals = 0
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd:match("^cast kusamotu ") then heals = heals + 1 end
+            end
+            assert.are.equal(1, heals)
+        end)
+
+        it("does not abort the scan on combat noise before the listing", function()
+            helper.simulateAlias("heal-most-injured-party-member")
+            helper.sendCalls = {}
+            helper.simulateLine("The cave bear attacked you with its claws for 5 damage!")
+            helper.simulateLine("Your group currently consists of:")
+            helper.simulateLine("  Teekywiki                          [HE: 70% ST:Ready]")
+            helper.simulateLine("You're in a cave.")
+            assert.are.equal("cast kusamotu teekywiki", helper.sendCalls[1])
         end)
 
     end)
@@ -15153,20 +15051,7 @@ describe("ta.follow", function()
             helper.simulateLine("  Pelayo                             [HE:100% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
-            assert.is_true(logged("all 2 allies at full health, taking no action"))
-        end)
-
-        it("logs hurt-but-above-threshold when allies are hurt but none need healing", function()
-            -- Only a scan below 100% can see someone hurt yet not needy: the kill
-            -- loop's exhaustion heal, at 90%.
-            taPackage.killActive = true
-            taPackage.acolyteAutoHealDisabled = false
-            helper.simulateLine("You are still physically exhausted from your previous activities!")
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
-            helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
-            helper.simulateLine("Exits: n,sw.")
-            assert.is_true(logged("exhaustion: 1 of 2 allies hurt but all at or above 90%, taking no action"))
+            assert.is_true(logged("[heal] All 2 allies at full health, taking no action."))
         end)
 
         it("logs the count and most-injured member when healing", function()
@@ -15175,7 +15060,7 @@ describe("ta.follow", function()
             helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
-            assert.is_true(logged("heal-most-injured-party-member: 2 of 2 allies below 100%, healing most injured Teekywiki at 60%"))
+            assert.is_true(logged("[heal] 2 of 2 allies hurt, healing most injured Teekywiki at 60%."))
         end)
 
     end)

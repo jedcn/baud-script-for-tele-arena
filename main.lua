@@ -7011,19 +7011,6 @@ end
 -- Kill a single target
 -- =========================================================================
 
--- An Acolyte heals a group member once their health drops below this.
-local HEAL_THRESHOLD = 90
-
--- Hard-coded toggle: when true, an Acolyte in the kill loop skips its automatic
--- in-combat healing (the exhaustion-driven group scan and the cast-clock heal)
--- and just melees for damage. heal-most-injured-party-member is unaffected.
--- Flip to false to restore automatic
--- battle healing. Lives on taPackage so it can also be flipped at runtime via
--- `/lua taPackage.acolyteAutoHealDisabled = false`.
-if taPackage.acolyteAutoHealDisabled == nil then
-    taPackage.acolyteAutoHealDisabled = true
-end
-
 -- Kill-loop debug tracing. Emits a timestamped line for each combat event and
 -- decision when the loop is running in debug mode. The flag is set by `kill
 -- <target> debug` directly, or inherited from a `ta.follow <name> debug` so the
@@ -7052,7 +7039,8 @@ local function killAttack()
 end
 
 -- Casters take a second action each round, on a separate exhaustion clock:
--- Sorcerors blast the target, Acolytes heal whoever was most recently hurt.
+-- Sorcerors blast the target. An Acolyte only melees in the kill loop; its
+-- healing is heal-most-injured-party-member.
 local function castSpell()
     if taPackage.castPending then
         killDebugEcho("cast-skip: cast already pending")
@@ -7072,25 +7060,13 @@ local function castSpell()
         local name = target:match("^(%S+)")
         killDebugEcho("cast-sent: toduza " .. name)
         send("cast toduza " .. name)
-    elseif isClass("Acolyte") then
-        if taPackage.acolyteAutoHealDisabled then
-            killDebugEcho("cast-skip: acolyte auto-heal disabled")
-            return
-        end
-        local ally = taPackage.healTarget
-        if not ally then
-            killDebugEcho("cast-skip: no heal target")
-            return
-        end
-        taPackage.castPending = true
-        killDebugEcho("cast-sent: kamotu " .. ally)
-        send("cast kamotu " .. ally)
     end
 end
 
--- Acolyte group healing. We send `group`, accumulate each member's health as
--- the listing streams in, and once the listing ends heal the most-injured
--- member (lowest HE%) if anyone is below the threshold. Phases:
+-- Group healing (heal-most-injured-party-member). We send `group`, accumulate
+-- each member's health as the listing streams in, and once the listing ends
+-- cast kusamotu on the most-injured member (lowest HE%), if anyone is hurt.
+-- Phases:
 --   "want"    -- asked for the listing, waiting for the header
 --   "reading" -- header seen, members are streaming in
 -- The listing itself has no terminator line, so we chase it with a harmless
@@ -7099,22 +7075,15 @@ end
 -- timing guesswork. Waiting for the header first means any spam arriving before
 -- the listing doesn't cut the scan short.
 local GROUP_HEAL_TERMINATOR = "ex"
--- context labels the scan's origin so the decision log distinguishes
--- heal-most-injured-party-member from the kill-loop's exhaustion heal.
--- spell overrides the kamotu/motu choice in finalizeGroupHeal.
-local function beginGroupHealScan(threshold, context, spell)
+local function beginGroupHealScan()
     taPackage.groupHealPhase = "want"
-    taPackage.groupHealSpell = spell
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
-    taPackage.groupHealThreshold = threshold or HEAL_THRESHOLD
-    taPackage.groupHealContext = context or "group heal"
     -- Tallied as the listing streams in (see the member-row trigger): total
-    -- members, how many are hurt (below full), and how many are below the
-    -- heal threshold. Drives the decision log in finalizeGroupHeal.
+    -- members and how many are hurt (below full). Drives the decision log in
+    -- finalizeGroupHeal.
     taPackage.groupHealMembers = 0
     taPackage.groupHealHurt = 0
-    taPackage.groupHealNeedy = 0
     send("group")
     send(GROUP_HEAL_TERMINATOR)
 end
@@ -7123,50 +7092,30 @@ local function finalizeGroupHeal()
     taPackage.groupHealPhase = nil
     local name = taPackage.groupHealBestName
     local health = taPackage.groupHealBestHealth
-    local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
-    local context = taPackage.groupHealContext or "group heal"
     local members = taPackage.groupHealMembers or 0
     local hurt = taPackage.groupHealHurt or 0
-    local needy = taPackage.groupHealNeedy or 0
     taPackage.groupHealBestName = nil
     taPackage.groupHealBestHealth = nil
 
     if members == 0 then
-        echo(string.format("[heal] %s: no group members seen, taking no action.", context))
+        echo("[heal] No group members seen, taking no action.")
         return
     end
-    if needy == 0 then
-        if hurt == 0 then
-            echo(string.format("[heal] %s: all %d allies at full health, taking no action.",
-                context, members))
-        else
-            echo(string.format("[heal] %s: %d of %d allies hurt but all at or above %d%%, taking no action.",
-                context, hurt, members, threshold))
-        end
+    if hurt == 0 then
+        echo(string.format("[heal] All %d allies at full health, taking no action.", members))
         return
     end
     if not name or not health then return end
     if taPackage.castPending then
         echo(string.format(
-            "[heal] %s: %d of %d allies below %d%% (most injured %s at %d%%), but a cast is pending — skipping.",
-            context, needy, members, threshold, name, health))
+            "[heal] %d of %d allies hurt (most injured %s at %d%%), but a cast is pending — skipping.",
+            hurt, members, name, health))
         return
     end
-    echo(string.format("[heal] %s: %d of %d allies below %d%%, healing most injured %s at %d%%.",
-        context, needy, members, threshold, name, health))
+    echo(string.format("[heal] %d of %d allies hurt, healing most injured %s at %d%%.",
+        hurt, members, name, health))
     taPackage.castPending = true
-    taPackage.healTarget = name
-    -- kamotu (regular heal, ~24 HP) by default — group members fighting real
-    -- monsters take big hits and want a full top-off. In the arena, though,
-    -- damage comes in small bites: kamotu's ~24 HP is overheal and costs more
-    -- mana, so use motu (minor heal, ~4-8 HP), which matches the damage and
-    -- stretches mana further.
-    local spell = taPackage.arenaState and "motu" or "kamotu"
-    if taPackage.groupHealSpell then
-        send("cast " .. taPackage.groupHealSpell .. " " .. string.lower(name))
-    else
-        send("cast " .. spell .. " " .. name)
-    end
+    send("cast kusamotu " .. string.lower(name))
 end
 
 local function startKill(target, debug)
@@ -7183,7 +7132,6 @@ local function startKill(target, debug)
     taPackage.killDebug = debug or false
     taPackage.killAttackPending = false
     taPackage.castPending = false
-    taPackage.healTarget = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     local debugSuffix = (taPackage.killDebug or taPackage.followDebug) and " (debug)" or ""
     echo("[kill] Attacking " .. taPackage.killTarget .. "." .. debugSuffix)
@@ -7219,7 +7167,6 @@ local function stopKill()
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
     taPackage.castPending = false
-    taPackage.healTarget = nil
     taPackage.groupHealPhase = nil
     taPackage.killGeneration = (taPackage.killGeneration or 0) + 1
     taPackage.killAllGeneration = (taPackage.killAllGeneration or 0) + 1
@@ -7333,7 +7280,7 @@ end
 -- healer following us answers it with the same scan (the "(to group)" trigger),
 -- so one alias works whether or not the leader can heal.
 function taPackage.healMostInjuredPartyMember()
-    beginGroupHealScan(100, "heal-most-injured-party-member", "kusamotu")
+    beginGroupHealScan()
 end
 
 createAlias("^heal-most-injured-party-member$", function()
@@ -7494,13 +7441,9 @@ createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)%", function(matches)
     if taPackage.groupHealPhase ~= "reading" then return end
     local health = tonumber(matches[3])
     if not health then return end
-    local threshold = taPackage.groupHealThreshold or HEAL_THRESHOLD
     taPackage.groupHealMembers = (taPackage.groupHealMembers or 0) + 1
     if health < 100 then
         taPackage.groupHealHurt = (taPackage.groupHealHurt or 0) + 1
-    end
-    if health < threshold then
-        taPackage.groupHealNeedy = (taPackage.groupHealNeedy or 0) + 1
     end
     if not taPackage.groupHealBestHealth or health < taPackage.groupHealBestHealth then
         taPackage.groupHealBestHealth = health
@@ -7528,7 +7471,6 @@ createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     taPackage.killTarget = nil
     taPackage.killAttackPending = false
     taPackage.castPending = false
-    taPackage.healTarget = nil
     taPackage.groupHealPhase = nil
     echo("[kill] " .. matches[2] .. " is dead.")
     -- A kill-all sweep re-scans the room for the next monster; the scan ends
@@ -7542,12 +7484,6 @@ createTrigger("^You are still physically exhausted from your previous activities
     if not taPackage.killActive then return end
     killDebugEcho("physically exhausted — melee retry in 30s")
     taPackage.killAttackPending = false
-    -- Out of melee for now; an Acolyte spends the lull checking the group so
-    -- the next cast (on the mental clock) heals whoever needs it. Skipped when
-    -- auto-heal is disabled — then the Acolyte just rides out the lull.
-    if isClass("Acolyte") and not taPackage.acolyteAutoHealDisabled then
-        beginGroupHealScan(nil, "exhaustion")
-    end
     local gen = taPackage.killGeneration or 0
     createTimer(30000, function()
         if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
