@@ -6484,9 +6484,9 @@ end
 -- brought across here rather than left for the next `st`:
 --   * The class, which the status bar shows and every XP table is looked up by.
 --     The title is lower case; the class line and ta_xp.lua are title case.
---   * Level 1 and 0 XP, the bottom of the new 105-level ladder. Written directly
---     rather than through setExperience, whose "XP moved" marker would flash
---     13 million XP of meaningless delta.
+--   * Level 1 and 0 XP, the bottom of the new 105-level ladder. Clearing
+--     xpChange after setExperience drops the "XP moved" marker it just armed,
+--     which would flash the old XP measured against the new ladder.
 --   * earnedLevel, or the level-up push would stay silent until the new ladder
 --     passed 25.
 -- Not gated on an arena run: a hand-typed promotion changes the class just the
@@ -6498,7 +6498,7 @@ createTrigger("The guild bestows upon you the title of (.+)!$", function(matches
     end)
     taPackage.character.setClass(newClass)
     taPackage.character.setLevel(1)
-    taPackage._character.experience = 0
+    taPackage.character.setExperience(0)
     taPackage.xpChange = nil
     taPackage.character.setEarnedLevel(1)
     echo("[arena] Promoted: " .. (oldClass or "?") .. " -> " .. newClass .. ".")
