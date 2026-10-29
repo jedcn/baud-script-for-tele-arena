@@ -450,7 +450,7 @@ end, { type = "regex" })
 -- reads level, stats, gear and room off them. The inventory's gold line is the
 -- last reply of the pair, so the assessment waits for that (see the gold
 -- trigger after farmAssess below). Same reasoning, and the same landing spot,
--- as runLoginInitCmd.
+-- as autoLogin.runInitCmd.
 --
 -- A fresh character and a live one take the same path: one that was just
 -- created simply has a short roll and a dagger, and the plan says so.
