@@ -1472,7 +1472,7 @@ local function navExitAfterWalk(outcome)
         if taPackage.navExiting ~= pending then return end
         taPackage.navExiting = nil
         sendNtfy("navigate-to " .. armed.destination,
-            (taPackage.character.name or "The character") .. " " .. outcome
+            (taPackage._character.name or "The character") .. " " .. outcome
             .. " and is leaving the game.\n" .. table.concat(pending.lines, "\n"))
         taPackage.exitGameWithRetry()
     end, { repeating = false })
@@ -2876,7 +2876,7 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- speed check, but a loaded character is the other obvious candidate,
         -- and if trips track the pack rather than the cadence then pacing is a
         -- workaround for the wrong thing. nil until an `st` has been seen.
-        local load = getEncumberancePercent()
+        local load = taPackage.character.getEncumberancePercent()
         echo(string.format("[nav|t] trace on: pace %dms, encumbrance %s",
             NAV_STEP_DELAY_MS, load and (load .. "%") or "unknown (run st)"))
     end

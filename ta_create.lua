@@ -12,7 +12,7 @@
 --
 -- The seam, through taPackage (locals are not visible across chunks):
 --
---   in    taPackage.reRollBuilds, taPackage.character, taPackage.currentRoom
+--   in    taPackage.reRollBuilds, taPackage._character, taPackage.currentRoom
 --   out   taPackage.creating, taPackage.stopCreateCharacter,
 --         taPackage.onRerollAccepted, taPackage.onArenaArrivedHome,
 --         taPackage.onFarmingDeath
@@ -201,10 +201,10 @@ end
 -- gate, so the floor line can rebuild the rest of it. The re-roll is decided
 -- before this is called (see farmAssess); everything here assumes a good roll.
 local function farmPlan(room)
-    local c = taPackage.character
+    local c = taPackage._character
     local steps = appendSteps({}, TO_NORTH_PLAZA[room])
 
-    if (getLevel() or 1) >= 2 then
+    if (taPackage.character.getLevel() or 1) >= 2 then
         return {
             steps = appendSteps(steps, taPackage.cashOutFromNorthPlaza),
             label = "cash-out",
@@ -212,11 +212,11 @@ local function farmPlan(room)
         }
     end
 
-    local potionsUp = (getAgility() or 0) > HALF_OGRE_MAX_AGILITY
+    local potionsUp = (taPackage.character.getAgility() or 0) > HALF_OGRE_MAX_AGILITY
     -- Only for a character that has not fought yet. One that has is part-way
     -- to its level, and a farming run never restocks (main.lua's potion
     -- wear-off handler says why): a fresh taint only pushes training back.
-    local buyPotions = not potionsUp and (getExperience() or 0) == 0
+    local buyPotions = not potionsUp and (taPackage.character.getExperience() or 0) == 0
     local fight = { "rg 1" }
     if buyPotions or potionsUp then fight[#fight + 1] = "arena-potions-drunk" end
     local fromSouthPlaza = {}
@@ -568,9 +568,9 @@ local function farmAssess(prefix)
     -- A roll short of the build gets re-rolled before anything is spent on it.
     -- Only at level 1, and only with no potions up: a potion-boosted sheet is
     -- not the roll, and a character that has trained is cashing out anyway.
-    local c = taPackage.character
-    local potionsUp = (getAgility() or 0) > HALF_OGRE_MAX_AGILITY
-    if (getLevel() or 1) < 2 and not potionsUp then
+    local c = taPackage._character
+    local potionsUp = (taPackage.character.getAgility() or 0) > HALF_OGRE_MAX_AGILITY
+    if (taPackage.character.getLevel() or 1) < 2 and not potionsUp then
         local stats = {}
         for _, k in ipairs({ "intellect", "knowledge", "physique", "stamina", "agility", "charisma" }) do
             stats[k] = c[k] or 0
@@ -604,7 +604,7 @@ local function farmAssess(prefix)
 
     local plan = farmPlan(room)
     local steps = appendSteps(appendSteps({}, prefix or {}), plan.steps)
-    echo("[farm] Level " .. tostring(getLevel()) .. ", " .. tostring(c.weapon) .. "/"
+    echo("[farm] Level " .. tostring(taPackage.character.getLevel()) .. ", " .. tostring(c.weapon) .. "/"
         .. tostring(c.armor) .. ", in the " .. room .. " — " .. plan.label .. " walk.")
     createWalkStart(steps, plan.label, plan.doneMsg,
         { need = plan.need, afterGear = plan.afterGear })

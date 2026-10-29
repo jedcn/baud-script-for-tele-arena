@@ -147,7 +147,7 @@ describe("Warrior XP table", function()
             helper.simulateLine("Class:        Squire")
             helper.simulateLine("Level:        1")
             helper.simulateLine("Experience:   354")
-            assert.is_false(hasUntrainedLevel())
+            assert.is_false(taPackage.character.hasUntrainedLevel())
         end)
 
     end)
@@ -169,13 +169,13 @@ describe("Tele-Arena triggers", function()
 
         it("sets gold from inventory line", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
-            assert.are.equal(755, getGold())
+            assert.are.equal(755, taPackage.character.getGold())
         end)
 
         it("increases gold when looting a corpse", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
             helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
-            assert.are.equal(760, getGold())
+            assert.are.equal(760, taPackage.character.getGold())
         end)
 
         it("shares corpse loot with the group while following", function()
@@ -205,21 +205,21 @@ describe("Tele-Arena triggers", function()
         it("adds our cut when a groupmate shares gold", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Tojolias just shared 119 gold with the group, your share was 19 gold.")
-            assert.are.equal(119, getGold())
+            assert.are.equal(119, taPackage.character.getGold())
         end)
 
         it("adds our cut when a share line wraps mid-number", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Kerhak just shared 100 gold with the group, your share was 1")
             helper.simulateLine("6 gold.")
-            assert.are.equal(116, getGold())
+            assert.are.equal(116, taPackage.character.getGold())
         end)
 
         it("adds our cut when a share line wraps before the number", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Kerhak just shared 100 gold with the group, your share was")
             helper.simulateLine("16 gold.")
-            assert.are.equal(116, getGold())
+            assert.are.equal(116, taPackage.character.getGold())
         end)
 
         it("drops a wrapped share tail the next line doesn't complete", function()
@@ -227,24 +227,24 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Kerhak just shared 100 gold with the group, your share was 1")
             helper.simulateLine("The elven warrior attacks you!")
             helper.simulateLine("6 gold.")
-            assert.are.equal(100, getGold())
+            assert.are.equal(100, taPackage.character.getGold())
         end)
 
         it("keeps one share plus the remainder after sharing our own loot", function()
             helper.simulateLine("You are carrying 2908 gold crowns.")
             helper.simulateLine("You shared 2908 gold with the group, each share was 484 gold.")
-            assert.are.equal(488, getGold())
+            assert.are.equal(488, taPackage.character.getGold())
         end)
 
         it("leaves gold alone when a share was too small to split", function()
             helper.simulateLine("You are carrying 4 gold crowns.")
             helper.simulateLine("You shared 4 gold with the group, each share was 0 gold.")
-            assert.are.equal(4, getGold())
+            assert.are.equal(4, taPackage.character.getGold())
         end)
 
         it("accumulates loot gold from zero when inventory not yet seen", function()
             helper.simulateLine("You found 5 gold crowns while searching the lizard woman's corpse.")
-            assert.are.equal(5, getGold())
+            assert.are.equal(5, taPackage.character.getGold())
         end)
 
         it("records an item found while searching, against the current room, once", function()
@@ -300,48 +300,48 @@ describe("Tele-Arena triggers", function()
 
         it("sets gold when carrying gold and items", function()
             helper.simulateLine("You are carrying 675 gold crowns, and a shortsword.")
-            assert.are.equal(675, getGold())
+            assert.are.equal(675, taPackage.character.getGold())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("You are carrying a shortsword.")
-            assert.is_nil(getGold())
+            assert.is_nil(taPackage.character.getGold())
         end)
 
         it("decreases gold when depositing at vault", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
             helper.simulateLine("You deposited 300 gold in your account.")
-            assert.are.equal(455, getGold())
+            assert.are.equal(455, taPackage.character.getGold())
         end)
 
         it("increases gold when withdrawing from vault", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("You withdrew 1 gold from your account.")
-            assert.are.equal(101, getGold())
+            assert.are.equal(101, taPackage.character.getGold())
         end)
 
         it("decreases gold when giving coins to another player", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
             helper.simulateLine("You gave 100 gold coins to Johnsonite.")
-            assert.are.equal(655, getGold())
+            assert.are.equal(655, taPackage.character.getGold())
         end)
 
         it("increases gold when another player gives you coins", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
             helper.simulateLine("Teekywiki just gave you 32 gold coins.")
-            assert.are.equal(787, getGold())
+            assert.are.equal(787, taPackage.character.getGold())
         end)
 
         it("decreases gold when buying an item from a shop", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Ok, you bought a quarterstaff for 9 crowns.")
-            assert.are.equal(91, getGold())
+            assert.are.equal(91, taPackage.character.getGold())
         end)
 
         it("handles a multi-word item name when buying", function()
             helper.simulateLine("You are carrying 100 gold crowns.")
             helper.simulateLine("Ok, you bought robes for 18 crowns.")
-            assert.are.equal(82, getGold())
+            assert.are.equal(82, taPackage.character.getGold())
         end)
 
     end)
@@ -355,7 +355,7 @@ describe("Tele-Arena triggers", function()
         it("restores vitality to max", function()
             helper.simulateLine("Vitality:     13 / 26")
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(26, current)
             assert.are.equal(26, max)
         end)
@@ -363,12 +363,12 @@ describe("Tele-Arena triggers", function()
         it("deducts the cost from gold", function()
             helper.simulateLine("You are carrying 755 gold crowns.")
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
-            assert.are.equal(753, getGold())
+            assert.are.equal(753, taPackage.character.getGold())
         end)
 
         it("works when vitality max is not yet known", function()
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.is_nil(current)
         end)
 
@@ -383,7 +383,7 @@ describe("Tele-Arena triggers", function()
         it("increases current vitality by healed amount", function()
             helper.simulateLine("Vitality:     20 / 26")
             helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(26, current)
             assert.are.equal(26, max)
         end)
@@ -391,15 +391,15 @@ describe("Tele-Arena triggers", function()
         it("does not exceed max vitality", function()
             helper.simulateLine("Vitality:     24 / 26")
             helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(26, current)
         end)
 
         it("works when max vitality is not yet known", function()
             helper.simulateLine("Vitality:     20 / 26")
-            taPackage.character.vitalityMax = nil
+            taPackage._character.vitalityMax = nil
             helper.simulateLine("Pelayo just intoned a minor healing spell for you which healed 6 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(26, current)
         end)
 
@@ -414,7 +414,7 @@ describe("Tele-Arena triggers", function()
         it("increases current vitality by healed amount", function()
             helper.simulateLine("Vitality:     8 / 26")
             helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(22, current)
             assert.are.equal(26, max)
         end)
@@ -422,15 +422,15 @@ describe("Tele-Arena triggers", function()
         it("does not exceed max vitality", function()
             helper.simulateLine("Vitality:     24 / 26")
             helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(26, current)
         end)
 
         it("works when max vitality is not yet known", function()
             helper.simulateLine("Vitality:     8 / 26")
-            taPackage.character.vitalityMax = nil
+            taPackage._character.vitalityMax = nil
             helper.simulateLine("Pelayo just intoned a healing spell for you which healed 14 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(22, current)
         end)
 
@@ -442,7 +442,7 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Vitality:    20 / 200")
             helper.simulateLine("Pelayo just intoned a very powerful healing spell for you which healed 129")
             helper.simulateLine("damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(149, current)
             assert.are.equal(200, max)
         end)
@@ -451,7 +451,7 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Vitality:    20 / 400")
             helper.simulateLine("Pelayo just intoned a healing spell fit for a God for you which healed 349")
             helper.simulateLine("damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(369, current)
             assert.are.equal(400, max)
         end)
@@ -461,7 +461,7 @@ describe("Tele-Arena triggers", function()
         it("ignores a heal cast on another player", function()
             helper.simulateLine("Vitality:     8 / 26")
             helper.simulateLine("Pelayo just intoned a healing spell for Teekywiki!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(8, current)
         end)
 
@@ -495,14 +495,14 @@ describe("Tele-Arena triggers", function()
         it("reduces current vitality by damage amount", function()
             helper.simulateLine("Vitality:     26 / 26")
             helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(19, current)
             assert.are.equal(26, max)
         end)
 
         it("does nothing when vitality is not yet known", function()
             helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.is_nil(current)
         end)
 
@@ -510,14 +510,14 @@ describe("Tele-Arena triggers", function()
             helper.simulateLine("Vitality:     26 / 26")
             helper.simulateLine("The lizard woman attacked you with her spear for 3 damage!")
             helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(16, current)
         end)
 
         it("reduces vitality for a stone giant's boulder", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The stone giant hurled a boulder at you for 52 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(28, current)
             assert.are.equal(80, max)
         end)
@@ -525,14 +525,14 @@ describe("Tele-Arena triggers", function()
         it("reduces vitality for a cyclops's throw", function()
             helper.simulateLine("Vitality:     50 / 50")
             helper.simulateLine("The cyclops picks up and hurls you for 22 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(28, current)
         end)
 
         it("reduces vitality for a chimera's flame breath", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The chimera breathed flames at you for 27 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(53, current)
             assert.are.equal(80, max)
         end)
@@ -540,7 +540,7 @@ describe("Tele-Arena triggers", function()
         it("reduces vitality for a hydra's fireball", function()
             helper.simulateLine("Vitality:    100 / 100")
             helper.simulateLine("The hydra expelled a ball of fire at you for 78 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(22, current)
             assert.are.equal(100, max)
         end)
@@ -548,7 +548,7 @@ describe("Tele-Arena triggers", function()
         it("reduces vitality for an ice giantess's frost breath", function()
             helper.simulateLine("Vitality:    100 / 100")
             helper.simulateLine("The ice giantess exhaled a blast of frost at you for 60 damage!")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(40, current)
             assert.are.equal(100, max)
         end)
@@ -556,14 +556,14 @@ describe("Tele-Arena triggers", function()
         it("ignores a boulder thrown at another player", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(80, current)
         end)
 
         it("ignores flames breathed at another player", function()
             helper.simulateLine("Vitality:     80 / 80")
             helper.simulateLine("The chimera breathed flames at Pelayo!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(80, current)
         end)
 
@@ -635,7 +635,7 @@ describe("Tele-Arena triggers", function()
         it("leaves an ordinary arena run restocking as before", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaPotionsActive = 2
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             helper.simulateLine(LAPSED)
             assert.is_true(taPackage.needsPotions)
         end)
@@ -1259,17 +1259,17 @@ describe("Tele-Arena triggers", function()
 
         it("captures Healthy status", function()
             helper.simulateLine("Status:       Healthy")
-            assert.are.equal("Healthy", getCharacterStatus())
+            assert.are.equal("Healthy", taPackage.character.getCharacterStatus())
         end)
 
         it("captures other status values", function()
             helper.simulateLine("Status:       Poisoned")
-            assert.are.equal("Poisoned", getCharacterStatus())
+            assert.are.equal("Poisoned", taPackage.character.getCharacterStatus())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Race:         Half-ogre")
-            assert.is_nil(getCharacterStatus())
+            assert.is_nil(taPackage.character.getCharacterStatus())
         end)
 
     end)
@@ -1282,17 +1282,17 @@ describe("Tele-Arena triggers", function()
 
         it("captures class", function()
             helper.simulateLine("Class:        Warrior")
-            assert.are.equal("Warrior", getClass())
+            assert.are.equal("Warrior", taPackage.character.getClass())
         end)
 
         it("captures a promoted class whose name has a space", function()
             helper.simulateLine("Class:        Beast Master")
-            assert.are.equal("Beast Master", getClass())
+            assert.are.equal("Beast Master", taPackage.character.getClass())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Race:         Half-ogre")
-            assert.is_nil(getClass())
+            assert.is_nil(taPackage.character.getClass())
         end)
 
     end)
@@ -1305,12 +1305,12 @@ describe("Tele-Arena triggers", function()
 
         it("captures level", function()
             helper.simulateLine("Level:        1")
-            assert.are.equal(1, getLevel())
+            assert.are.equal(1, taPackage.character.getLevel())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Intellect:    8")
-            assert.is_nil(getLevel())
+            assert.is_nil(taPackage.character.getLevel())
         end)
 
     end)
@@ -1323,12 +1323,12 @@ describe("Tele-Arena triggers", function()
 
         it("captures experience value", function()
             helper.simulateLine("Experience:   354")
-            assert.are.equal(354, getExperience())
+            assert.are.equal(354, taPackage.character.getExperience())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Intellect:    8")
-            assert.is_nil(getExperience())
+            assert.is_nil(taPackage.character.getExperience())
         end)
 
     end)
@@ -1340,8 +1340,8 @@ describe("Tele-Arena triggers", function()
     describe("Level-up notification", function()
 
         it("pushes when XP crosses the next-level threshold", function()
-            taPackage.character.class = "Warrior"
-            taPackage.character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Experience:   792683")  -- seeds earned level 12
             assert.are.equal(0, #helper.httpRequestCalls)
             helper.simulateLine("Experience:   815600")  -- level-13 threshold
@@ -1355,15 +1355,15 @@ describe("Tele-Arena triggers", function()
         end)
 
         it("stays silent on the first XP observation", function()
-            taPackage.character.class = "Warrior"
-            taPackage.character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Experience:   815600")
             assert.are.equal(0, #helper.httpRequestCalls)
         end)
 
         it("does not re-fire while XP stays within the same level", function()
-            taPackage.character.class = "Warrior"
-            taPackage.character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Experience:   792683")  -- seeds earned level 12
             helper.simulateLine("Experience:   815600")  -- crosses to level 13
             assert.are.equal(1, #helper.httpRequestCalls)
@@ -1374,8 +1374,8 @@ describe("Tele-Arena triggers", function()
         -- A farming character is levelled and thrown away by design, so its
         -- levels are not worth a push. The handover to the banker still is.
         it("stays silent during a gold-farming run", function()
-            taPackage.character.class = "Warrior"
-            taPackage.character.name = "Garbageman"
+            taPackage._character.class = "Warrior"
+            taPackage._character.name = "Garbageman"
             helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Experience:   792683")  -- seeds earned level 12
             helper.simulateLine("Experience:   815600")  -- crosses to level 13
@@ -1385,8 +1385,8 @@ describe("Tele-Arena triggers", function()
         -- The bank runs whether or not the push does, so a crossing that
         -- happened while farming is not announced late once farming stops.
         it("does not announce a crossing that happened while farming", function()
-            taPackage.character.class = "Warrior"
-            taPackage.character.name = "Garbageman"
+            taPackage._character.class = "Warrior"
+            taPackage._character.name = "Garbageman"
             helper.simulateAlias("farm-for-gold")
             helper.simulateLine("Experience:   792683")
             helper.simulateLine("Experience:   815600")
@@ -1396,7 +1396,7 @@ describe("Tele-Arena triggers", function()
         end)
 
         it("does nothing when the class is unknown", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Experience:   792683")
             helper.simulateLine("Experience:   815600")
             assert.are.equal(0, #helper.httpRequestCalls)
@@ -1430,21 +1430,21 @@ describe("Tele-Arena triggers", function()
 
         it("captures current and max vitality", function()
             helper.simulateLine("Vitality:     26 / 26")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(26, current)
             assert.are.equal(26, max)
         end)
 
         it("captures when current differs from max", function()
             helper.simulateLine("Vitality:     10 / 26")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.are.equal(10, current)
             assert.are.equal(26, max)
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Mana:         0 / 0")
-            local current, max = getVitality()
+            local current, max = taPackage.character.getVitality()
             assert.is_nil(current)
             assert.is_nil(max)
         end)
@@ -1459,35 +1459,35 @@ describe("Tele-Arena triggers", function()
 
         it("captures current and max encumberance", function()
             helper.simulateLine("Encumberance: 1000 / 1000")
-            local current, max = getEncumberance()
+            local current, max = taPackage.character.getEncumberance()
             assert.are.equal(1000, current)
             assert.are.equal(1000, max)
         end)
 
         it("captures when current is below max", function()
             helper.simulateLine("Encumberance: 250 / 1000")
-            local current, max = getEncumberance()
+            local current, max = taPackage.character.getEncumberance()
             assert.are.equal(250, current)
             assert.are.equal(1000, max)
         end)
 
         it("computes the percentage of max", function()
             helper.simulateLine("Encumberance: 750 / 1000")
-            assert.are.equal(75, getEncumberancePercent())
+            assert.are.equal(75, taPackage.character.getEncumberancePercent())
         end)
 
         it("reports 100% when fully encumbered", function()
             helper.simulateLine("Encumberance: 1000 / 1000")
-            assert.are.equal(100, getEncumberancePercent())
+            assert.are.equal(100, taPackage.character.getEncumberancePercent())
         end)
 
         it("percentage is nil when encumberance is unknown", function()
-            assert.is_nil(getEncumberancePercent())
+            assert.is_nil(taPackage.character.getEncumberancePercent())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Vitality:     26 / 26")
-            local current, max = getEncumberance()
+            local current, max = taPackage.character.getEncumberance()
             assert.is_nil(current)
             assert.is_nil(max)
         end)
@@ -1520,25 +1520,25 @@ describe("Tele-Arena triggers", function()
         end)
 
         it("shows player name in first segment when class is unknown", function()
-            taPackage.character.name = "Sat"
+            taPackage._character.name = "Sat"
             assert.are.equal("Sat", capturedFn()[1].text)
         end)
 
         it("shows name and class in first segment when both known", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             helper.simulateLine("Class:        Acolyte")
             assert.are.equal("Pelayo [Acolyte]", capturedFn()[1].text)
         end)
 
         it("shows only name and class when following someone", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             helper.simulateLine("Class:        Acolyte")
             taPackage.followTarget = "tojolias"
             assert.are.equal("Pelayo [Acolyte]", capturedFn()[1].text)
         end)
 
         it("appends a bare Leader tag when being followed", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
             taPackage.followedBy = { "Pelayo" }
             assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
@@ -1547,21 +1547,21 @@ describe("Tele-Arena triggers", function()
         -- Promotion is the one time the class changes, and the bar follows it
         -- at once rather than waiting for the next `st`.
         it("shows the promoted class after buy promotion", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
             helper.simulateLine("previously known. The guild bestows upon you the title of knight!")
             assert.are.equal("Tojolias [Knight]", capturedFn()[1].text)
         end)
 
         it("shows the same Leader tag regardless of follower count", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             helper.simulateLine("Class:        Warrior")
             taPackage.followedBy = { "Pelayo", "Sat", "Grog" }
             assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
         it("does not show Leader while following, even with a stale followedBy", function()
-            taPackage.character.name = "Johnsonite"
+            taPackage._character.name = "Johnsonite"
             helper.simulateLine("Class:        Sorceror")
             taPackage.followTarget = "pelayo"
             taPackage.followedBy = { "Grog" }
@@ -2223,7 +2223,7 @@ describe("Arena combat", function()
     describe("Sorceror", function()
 
         before_each(function()
-            setClass("Sorceror")
+            taPackage.character.setClass("Sorceror")
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
         end)
@@ -2265,7 +2265,7 @@ describe("Arena combat", function()
 
         -- Promotion renames the class but keeps the spellbook.
         it("keeps casting toduza once promoted to Arch Magus", function()
-            setClass("Arch Magus")
+            taPackage.character.setClass("Arch Magus")
             helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
             assert.are.equal("cast toduza lizard", lastSend())
         end)
@@ -2287,7 +2287,7 @@ describe("Arena combat", function()
     describe("non-Sorceror", function()
 
         it("attacks normally for a Warrior", function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             helper.simulateLine("Your sword hit the lizard man for 5 damage!")
@@ -2299,8 +2299,8 @@ describe("Arena combat", function()
     describe("Acolyte", function()
 
         it("does not self-heal on physical exhaustion (leaves for the temple instead)", function()
-            setClass("Acolyte")
-            taPackage.character.name = "Pelayo"
+            taPackage.character.setClass("Acolyte")
+            taPackage._character.name = "Pelayo"
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             helper.sendCalls = {}
@@ -2315,7 +2315,7 @@ describe("Arena combat", function()
     describe("loop guard", function()
 
         it("does not continue the spell loop outside arena fighting", function()
-            setClass("Sorceror")
+            taPackage.character.setClass("Sorceror")
             -- no arenaState set
             helper.simulateLine("You discharged the spell at the lizard man for 12 damage!")
             assert.are.equal(0, #helper.sendCalls)
@@ -4402,7 +4402,7 @@ describe("World map triggers", function()
 
         it("records the character's location after capturing exits", function()
             taPackage.currentRoomId = 110
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             helper.simulateLine("Exits: n,s.")
             local loc = helper.findDbCall("execute", "INSERT INTO player_location")
             assert.is_not_nil(loc)
@@ -4412,7 +4412,7 @@ describe("World map triggers", function()
 
         it("does not record location without a logged-in character name", function()
             taPackage.currentRoomId = 110
-            taPackage.character.name = nil
+            taPackage._character.name = nil
             helper.simulateLine("Exits: n,s.")
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO player_location"))
         end)
@@ -4482,7 +4482,7 @@ describe("World map triggers", function()
         -- narrowing them by hand
         -- (logs/session-tojolias-2026-09-13T19-46-09.log line 108).
         it("names the room the map last saw you in, when it is a candidate", function()
-            taPackage.character = { name = "Tojolias" }
+            taPackage._character = { name = "Tojolias" }
             taPackage.slugProbe = { name = "cave" }
             helper.mockDbRows = function(sql)
                 if string.find(sql, "rooms WHERE name", 1, true) then
@@ -4511,7 +4511,7 @@ describe("World map triggers", function()
         it("stays quiet when the last-seen room is not one of the candidates", function()
             -- A stale stamp (walked around with mapping off) must not point at a
             -- room the probe just ruled out.
-            taPackage.character = { name = "Tojolias" }
+            taPackage._character = { name = "Tojolias" }
             taPackage.slugProbe = { name = "cave" }
             helper.mockDbRows = function(sql)
                 if string.find(sql, "rooms WHERE name", 1, true) then
@@ -4919,7 +4919,7 @@ describe("World map triggers", function()
         end)
 
         it("stamps the player's location at the anchor room", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
             helper.simulateAlias("map-here cave-11")
             local loc = helper.findDbCall("execute", "INSERT INTO player_location")
@@ -5575,7 +5575,7 @@ describe("World map triggers", function()
             taPackage.hereState = "lost"
             taPackage.offMap = nil
             taPackage.pendingDirection = nil
-            taPackage.character = { name = "Tester" }
+            taPackage._character = { name = "Tester" }
         end)
 
         it("starts lost, and says so rather than guessing", function()
@@ -5791,12 +5791,12 @@ describe("re-roll-for-good-stats", function()
 
         it("captures physique value", function()
             helper.simulateLine("Physique:     24")
-            assert.are.equal(24, getPhysique())
+            assert.are.equal(24, taPackage.character.getPhysique())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Stamina:      24")
-            assert.is_nil(getPhysique())
+            assert.is_nil(taPackage.character.getPhysique())
         end)
 
     end)
@@ -5805,12 +5805,12 @@ describe("re-roll-for-good-stats", function()
 
         it("captures stamina value", function()
             helper.simulateLine("Stamina:      24")
-            assert.are.equal(24, getStamina())
+            assert.are.equal(24, taPackage.character.getStamina())
         end)
 
         it("does not fire on unrelated lines", function()
             helper.simulateLine("Physique:     24")
-            assert.is_nil(getStamina())
+            assert.is_nil(taPackage.character.getStamina())
         end)
 
     end)
@@ -6581,8 +6581,8 @@ describe("farm-for-gold", function()
         local function trainDuringGoldFarming()
             helper.simulateAlias("farm-for-gold")
             taPackage.arenaState = "training"
-            setLevel(1)
-            setGold(1372)
+            taPackage.character.setLevel(1)
+            taPackage.character.setGold(1372)
             helper.simulateLine(TRAINED)
         end
 
@@ -6862,7 +6862,7 @@ describe("farm-for-gold", function()
         -- and its gear on the floor.
         it("does not fire for an arena run this loop did not start", function()
             taPackage.arenaState = "training"
-            setLevel(1)
+            taPackage.character.setLevel(1)
             helper.simulateLine(TRAINED)
             assert.is_nil(taPackage.createCashOutArmed)
             assert.is_false(taPackage.onArenaArrivedHome())
@@ -7537,7 +7537,7 @@ describe("Combat triggers", function()
         it("records a hit and reduces vitality", function()
             helper.simulateLine("Vitality:     26 / 26")
             helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(19, current)
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
@@ -7550,7 +7550,7 @@ describe("Combat triggers", function()
             helper.simulateLine("Vitality:     26 / 26")
             helper.simulateLine("The lizard woman attacked you with her spear for 3 damage!")
             helper.simulateLine("The lizard woman attacked you with her spear for 7 damage!")
-            local current, _ = getVitality()
+            local current, _ = taPackage.character.getVitality()
             assert.are.equal(16, current)
         end)
 
@@ -7705,7 +7705,7 @@ describe("ring-gong-and-fight-in-arena", function()
         helper.resetAll()
         dofile("main.lua")
         helper.clearDbCalls()
-        setClass("Warrior")
+        taPackage.character.setClass("Warrior")
         -- Real sessions always run through beginArenaSession("1"), which sets
         -- the profile; the training gate now keys on its route (ARENA_NAV), so
         -- default it here for tests that drive combat without the alias.
@@ -7736,13 +7736,13 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("records session start XP from current experience", function()
-            taPackage.character.experience = 500
+            taPackage._character.experience = 500
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             assert.are.equal(500, taPackage.arenaSessionStartXp)
         end)
 
         it("does not start when class is unknown", function()
-            setClass(nil)
+            taPackage.character.setClass(nil)
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             assert.is_nil(taPackage.arenaState)
             local warned = false
@@ -7767,7 +7767,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("echoes session start with XP", function()
-            taPackage.character.experience = 1000
+            taPackage._character.experience = 1000
             helper.simulateAlias("ring-gong-and-fight-in-arena")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
@@ -8386,7 +8386,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("echoes session summary with XP gained and elapsed minutes", function()
             taPackage.arenaSessionStartXp = 400
             taPackage.arenaSessionStartTime = os.time() - 600  -- 10 minutes ago
-            taPackage.character = { experience = 1400 }
+            taPackage._character = { experience = 1400 }
             helper.simulateAlias("stop-arena-fight")
             local found = false
             for _, msg in ipairs(helper.echoCalls) do
@@ -8447,9 +8447,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             helper.simulateAlias("stop-after-next")
             helper.sendCalls = {}
             helper.simulateLine("The lizard man falls to the ground lifeless!")
@@ -8501,9 +8501,9 @@ describe("ring-gong-and-fight-in-arena", function()
         -- to cash out and start a whole new character.
         it("does not train on arriving home when the stop is pending", function()
             setHP(100, 100)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaState = "returning"
             helper.simulateAlias("stop-after-next")
             taPackage.arenaJourney = { steps = { "e" }, index = 2, arriveRoom = "arena" }
@@ -8606,7 +8606,7 @@ describe("ring-gong-and-fight-in-arena", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             -- Capture only the XP-check timer; session start also arms the
             -- short scan-pump timer, which is not what these tests are about.
             _G.createTimer = function(interval, cb, opts)
@@ -8643,9 +8643,9 @@ describe("ring-gong-and-fight-in-arena", function()
             end)
 
             local function delayAfterXp(xp)
-                setClass("Warrior")
-                setLevel(1)
-                setExperience(xp)
+                taPackage.character.setClass("Warrior")
+                taPackage.character.setLevel(1)
+                taPackage.character.setExperience(xp)
                 intervals = {}
                 helper.simulateAlias("ring-gong-and-fight-in-arena")
                 for _, i in ipairs(intervals) do
@@ -8736,13 +8736,13 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("second-arena XP check fires a Markdown ntfy notification", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Tojolias"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 12
-            taPackage.character.vitalityCurrent = 313
-            taPackage.character.encumberanceCurrent = 750
-            taPackage.character.encumberanceMax = 1000
-            taPackage.character.gold = 2900
+            taPackage._character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 12
+            taPackage._character.vitalityCurrent = 313
+            taPackage._character.encumberanceCurrent = 750
+            taPackage._character.encumberanceMax = 1000
+            taPackage._character.gold = 2900
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
@@ -8767,15 +8767,15 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("marks an earned-but-untrained level with a caret on the Lvl line", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Tojolias"
-            taPackage.character.class = "Warrior"
+            taPackage._character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
             -- Still reported as level 11 by the game, but 620,046 XP is past the
             -- 588,700 a Warrior needs for level 12: earned, not yet trained.
-            taPackage.character.level = 11
-            taPackage.character.vitalityCurrent = 313
-            taPackage.character.encumberanceCurrent = 750
-            taPackage.character.encumberanceMax = 1000
-            taPackage.character.gold = 2900
+            taPackage._character.level = 11
+            taPackage._character.vitalityCurrent = 313
+            taPackage._character.encumberanceCurrent = 750
+            taPackage._character.encumberanceMax = 1000
+            taPackage._character.gold = 2900
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
@@ -8793,7 +8793,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("first-arena XP check fires an ntfy notification with a first-arena title", function()
             taPackage.arenaProfile = "1"
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             taPackage.arenaXpCheckPending = true
@@ -8810,7 +8810,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- waiting for. The handover to the banker still is.
         it("stays silent during a gold-farming run", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Garbageman"
+            taPackage._character.name = "Garbageman"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             helper.simulateAlias("farm-for-gold")
@@ -8824,7 +8824,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- readable by whoever is looking at the session.
         it("still echoes arena progress during a gold-farming run", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Garbageman"
+            taPackage._character.name = "Garbageman"
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             helper.simulateAlias("farm-for-gold")
@@ -8841,9 +8841,9 @@ describe("ring-gong-and-fight-in-arena", function()
         -- round ends pings as usual.
         it("resumes check-ins once farming stops", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Garbageman"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 12
+            taPackage._character.name = "Garbageman"
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 12
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
             helper.simulateAlias("farm-for-gold")
@@ -8868,8 +8868,8 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("ntfy notification is throttled to every 2 hours", function()
             taPackage.arenaProfile = "2"
-            taPackage.character.name = "Tojolias"
-            taPackage.character.vitalityCurrent = 313
+            taPackage._character.name = "Tojolias"
+            taPackage._character.vitalityCurrent = 313
             taPackage.arenaSessionStartXp = 300
             taPackage.arenaSessionStartTime = os.time()
 
@@ -9340,9 +9340,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("training", taPackage.arenaState)
             assert.is_not_nil(taPackage.arenaJourney)   -- walking, not phase-hopping
@@ -9353,9 +9353,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 500
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 500
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
             assert.are.equal("", helper.sendCalls[1])
@@ -9370,9 +9370,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("restoring", taPackage.arenaState)
@@ -9401,7 +9401,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- Enough to pay for it: the same line is also charged against our
             -- gold, and dropping under ARENA_MIN_GOLD emergency-exits the session
             -- (which would nil the count rather than zero it).
-            setGold(800)
+            taPackage.character.setGold(800)
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
             assert.are.equal(0, taPackage.arenaPotionsActive)
@@ -9412,10 +9412,10 @@ describe("ring-gong-and-fight-in-arena", function()
         -- arriving home re-enters arenaTryTrain, now clean. This is the seam the
         -- design leans on, so walk the whole loop rather than either half.
         it("walks to the training hall after arriving home from the restore", function()
-            setGold(800)
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage.character.setGold(800)
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
             setHP(90, 100)                         -- not low, so no heal detour
             taPackage.arenaPotionsActive = 2
 
@@ -9442,11 +9442,11 @@ describe("ring-gong-and-fight-in-arena", function()
         -- only, and firing it here would hand over the takings and suicide the
         -- character with the level still unbanked.
         it("does not cash out a gold-farming run on the way back from the temple", function()
-            setGold(800)
+            taPackage.character.setGold(800)
             taPackage.goldFarming = true
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120
             setHP(90, 100)
             taPackage.arenaPotionsActive = 0  -- restore already confirmed
             taPackage.arenaState = "returning"
@@ -9463,9 +9463,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 2
             taPackage.arenaRestoreTried = true  -- already spent our one attempt
             helper.simulateLine("The lizard man falls to the ground lifeless!")
@@ -9478,9 +9478,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 0
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("training", taPackage.arenaState)
@@ -9568,9 +9568,9 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.experience = 1120   -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120   -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             helper.simulateLine("The lizard man falls to the ground lifeless!")
         end)
 
@@ -9607,13 +9607,13 @@ describe("ring-gong-and-fight-in-arena", function()
         -- fee can be measured, and flag a potion restock for the way home.
         it("banks the level, re-reads gold, and re-buys potions on a successful train", function()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.gold = 500
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.gold = 500
             taPackage.arenaPotionsActive = 0
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
-            assert.are.equal(2, taPackage.character.level)   -- banked locally
+            assert.are.equal(2, taPackage._character.level)   -- banked locally
             assert.are.equal("i", helper.sendCalls[#helper.sendCalls])
             assert.is_true(taPackage.needsPotions)           -- restock on the way home
         end)
@@ -9623,10 +9623,10 @@ describe("ring-gong-and-fight-in-arena", function()
         it("measures the training fee from the gold before and after", function()
             helper.clearDbCalls()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120
-            taPackage.character.gold = 500
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120
+            taPackage._character.gold = 500
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
             helper.simulateLine("You are carrying 463 gold crowns")
             assert.are.equal(37, taPackage.levelUpPush.cost)
@@ -9647,10 +9647,10 @@ describe("ring-gong-and-fight-in-arena", function()
         it("records the training fee as a service", function()
             helper.clearDbCalls()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120
-            taPackage.character.gold = 500
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120
+            taPackage._character.gold = 500
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
             helper.simulateLine("You are carrying 490 gold crowns")
             local recorded = false
@@ -9664,24 +9664,24 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("ignores the training-success line outside an arena session", function()
             taPackage.arenaState = nil
-            taPackage.character.level = 1
-            taPackage.character.gold = 500
+            taPackage._character.level = 1
+            taPackage._character.gold = 500
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
-            assert.are.equal(1, taPackage.character.level)  -- untouched
-            assert.are.equal(500, taPackage.character.gold)
+            assert.are.equal(1, taPackage._character.level)  -- untouched
+            assert.are.equal(500, taPackage._character.gold)
         end)
 
         -- The push is held until the character sheet we ask for comes back with
         -- the new maxima, so the notification can say what the level was worth.
         local function trainForNtfy()
             taPackage.arenaState = "returning"
-            taPackage.character.name = "Tojolias"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120
-            taPackage.character.gold = 500
-            taPackage.character.vitalityMax = 411
-            taPackage.character.manaMax = 17
+            taPackage._character.name = "Tojolias"
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120
+            taPackage._character.gold = 500
+            taPackage._character.vitalityMax = 411
+            taPackage._character.manaMax = 17
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
         end
 
@@ -9737,14 +9737,14 @@ describe("ring-gong-and-fight-in-arena", function()
             end
             assert.is_true(askedForSheet)
             helper.simulateLine("Vitality:     434 / 434")
-            assert.are.equal(434, taPackage.character.vitalityMax)
+            assert.are.equal(434, taPackage._character.vitalityMax)
         end)
 
         -- A warrior's sheet says "0 / 0" every level; the line would be noise.
         it("omits the MP line for a character with no mana pool", function()
-            taPackage.character.manaMax = 0
+            taPackage._character.manaMax = 0
             trainForNtfy()
-            taPackage.character.manaMax = 0
+            taPackage._character.manaMax = 0
             helper.simulateLine("Vitality:     434 / 434")
             helper.simulateLine("You are carrying 490 gold crowns")
             local body = helper.httpRequestCalls[1].options.body
@@ -9814,18 +9814,18 @@ describe("ring-gong-and-fight-in-arena", function()
         -- keep fighting until the potion wears off and then retry.
         it("recovers when training is refused for being potion-tainted", function()
             taPackage.arenaState = "returning"
-            taPackage.character.level = 1
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 0
             helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
-            assert.are.equal(1, taPackage.character.level)     -- unchanged (never leveled)
+            assert.are.equal(1, taPackage._character.level)     -- unchanged (never leveled)
             assert.are.equal(1, taPackage.arenaPotionsActive)  -- forced positive: keep draining
         end)
 
         it("ignores the training-refused line outside an arena session", function()
             taPackage.arenaState = nil
-            taPackage.character.level = 2
+            taPackage._character.level = 2
             helper.simulateLine("Your mind and body must be whole and untainted before you may train.")
-            assert.are.equal(2, taPackage.character.level)  -- untouched
+            assert.are.equal(2, taPackage._character.level)  -- untouched
         end)
 
     end)
@@ -9842,10 +9842,10 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.name = "Tojolias"
-            taPackage.character.class = class or "Warrior"
-            taPackage.character.level = 25
-            taPackage.character.experience = 11594700  -- Warrior level 25 threshold
+            taPackage._character.name = "Tojolias"
+            taPackage._character.class = class or "Warrior"
+            taPackage._character.level = 25
+            taPackage._character.experience = 11594700  -- Warrior level 25 threshold
             helper.simulateLine("The lizard man falls to the ground lifeless!")
         end
 
@@ -9865,7 +9865,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end
 
         it("walks to the guild hall to promote a level 25 warrior", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             killAtLevel25()
             assert.are.equal("promoting", taPackage.arenaState)
             assert.are.equal("guild hall", taPackage.arenaJourney.arriveRoom)
@@ -9874,7 +9874,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
         for _, class in ipairs({ "Rogue", "Hunter", "Archer", "Acolyte", "Druid", "Sorceror", "Necrolyte" }) do
             it("promotes a level 25 " .. class .. " too", function()
-                setGold(2000)
+                taPackage.character.setGold(2000)
                 killAtLevel25(class)
                 assert.are.equal("promoting", taPackage.arenaState)
             end)
@@ -9883,25 +9883,25 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Promoted classes sit at level 1-105 on their own ladder; there is
         -- nothing further to buy.
         it("never promotes an already-promoted class", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             killAtLevel25("Knight")
             assert.are_not.equal("promoting", taPackage.arenaState)
         end)
 
         it("does not promote below level 25", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "lizard man"
             setHP(80, 100)
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 24
-            taPackage.character.experience = 10000000  -- short of level 25
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 24
+            taPackage._character.experience = 10000000  -- short of level 25
             helper.simulateLine("The lizard man falls to the ground lifeless!")
             assert.are.equal("ringing", taPackage.arenaState)
         end)
 
         it("buys restoring at the temple first when stat potions are up", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             taPackage.arenaPotionsActive = 2
             killAtLevel25()
             assert.are.equal("restoring", taPackage.arenaState)
@@ -9911,17 +9911,17 @@ describe("ring-gong-and-fight-in-arena", function()
         -- The potions are about to be dispelled for the trip, so a wear-off
         -- must not send us to the shop for a fresh pair.
         it("does not restock potions while a promotion is owed", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             taPackage.arenaState = "fighting"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.is_nil(taPackage.needsPotions)
         end)
 
         it("pushes a notification and leaves the game when short of gold", function()
-            setGold(900)
+            taPackage.character.setGold(900)
             killAtLevel25()
             assert.is_nil(taPackage.arenaState)
             assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
@@ -9934,10 +9934,10 @@ describe("ring-gong-and-fight-in-arena", function()
         -- 1000 is the fee; the gold floor on top keeps the walk home from
         -- emergency-exiting on the spot.
         it("counts the arena's gold floor on top of the fee", function()
-            setGold(1000)
+            taPackage.character.setGold(1000)
             killAtLevel25()
             assert.is_nil(taPackage.arenaState)
-            setGold(1050)
+            taPackage.character.setGold(1050)
             taPackage.arenaProfile = "1"
             killAtLevel25()
             assert.are.equal("promoting", taPackage.arenaState)
@@ -9962,16 +9962,16 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("takes on the new class at level 1 with no XP", function()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            taPackage.character.experience = 13900000
-            taPackage.character.earnedLevel = 25
-            setGold(1100)
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage._character.experience = 13900000
+            taPackage._character.earnedLevel = 25
+            taPackage.character.setGold(1100)
             hallReply("knight")
-            assert.are.equal("Knight", getClass())
-            assert.are.equal(1, getLevel())
-            assert.are.equal(0, getExperience())
-            assert.are.equal(1, taPackage.character.earnedLevel)
+            assert.are.equal("Knight", taPackage.character.getClass())
+            assert.are.equal(1, taPackage.character.getLevel())
+            assert.are.equal(0, taPackage.character.getExperience())
+            assert.are.equal(1, taPackage._character.earnedLevel)
             assert.is_nil(taPackage.xpChange)
         end)
 
@@ -9979,29 +9979,29 @@ describe("ring-gong-and-fight-in-arena", function()
         -- not bank a level 26 or push "Leveled Up!".
         it("does not mistake the promotion for a training session", function()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             helper.simulateLine(BLEND)
-            assert.are.equal(25, taPackage.character.level)
+            assert.are.equal(25, taPackage._character.level)
             assert.is_nil(taPackage.levelUpPush)
         end)
 
         it("title-cases a two-word title to match the class line", function()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Hunter"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.class = "Hunter"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             hallReply("beast master")
-            assert.are.equal("Beast Master", getClass())
+            assert.are.equal("Beast Master", taPackage.character.getClass())
         end)
 
         it("pushes the old class, new class and measured cost", function()
             taPackage.arenaState = "returning"
-            taPackage.character.name = "Tojolias"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.name = "Tojolias"
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             hallReply("knight")
             assert.is_nil(ntfyTitled("Promoted!"))   -- waiting on the inventory
             helper.simulateLine("You are carrying 100 gold crowns")
@@ -10018,9 +10018,9 @@ describe("ring-gong-and-fight-in-arena", function()
         it("records the promotion fee as a service", function()
             helper.clearDbCalls()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             hallReply("knight")
             helper.simulateLine("You are carrying 100 gold crowns")
             local recorded
@@ -10035,9 +10035,9 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Then it fights on as a Knight: potions first, no second promotion.
         it("restocks potions and owes nothing more once promoted", function()
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             hallReply("knight")
             assert.is_true(taPackage.needsPotions)
             assert.is_false(taPackage.checkPromotionNeeded())
@@ -10048,9 +10048,9 @@ describe("ring-gong-and-fight-in-arena", function()
         it("heads for the shop after promoting without blaming a wear-off", function()
             setHP(90, 100)
             taPackage.arenaState = "returning"
-            taPackage.character.class = "Warrior"
-            taPackage.character.level = 25
-            setGold(1100)
+            taPackage._character.class = "Warrior"
+            taPackage._character.level = 25
+            taPackage.character.setGold(1100)
             hallReply("knight")
             taPackage.arenaJourney = { steps = { "s", "e" }, index = 2, arriveRoom = "arena" }
             helper.simulateLine("You're in the arena.")
@@ -10063,7 +10063,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- A refusal we did not foresee must not send every trip home back to
         -- the hall.
         it("stops asking after the hall says it is not ready", function()
-            setGold(2000)
+            taPackage.character.setGold(2000)
             taPackage.arenaState = "returning"
             helper.simulateLine("You are not ready for a promotion, you must first achieve greater")
             assert.is_true(taPackage.arenaPromotionRefused)
@@ -10170,7 +10170,7 @@ describe("ring-gong-and-fight-in-arena", function()
             taPackage.arenaMonster = "flame giant"
             setHP(500, 500)
             helper.simulateLine("The flame giant exhaled a blast of flame at you for 388 damage!")
-            local current = getVitality()
+            local current = taPackage.character.getVitality()
             assert.are.equal(112, current)
         end)
 
@@ -10234,7 +10234,7 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("You're in the north plaza.")
             stepTimer.cb()
             helper.simulateLine("You're in the temple.")
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
@@ -10246,7 +10246,7 @@ describe("ring-gong-and-fight-in-arena", function()
             helper.simulateLine("You're in the north plaza.")
             stepTimer.cb()
             helper.simulateLine("You're in the temple.")
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             helper.simulateLine("You're in the north plaza.")
             stepTimer.cb()
@@ -10511,7 +10511,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- arenaTeamRing). A ring already sent has nothing left to cancel when
         -- the team-mate's ring arrives a moment later; only a pending timer has.
         it("waits its gap even when first in the order", function()
-            taPackage.character.name = "Castor"
+            taPackage._character.name = "Castor"
             probeFindsEmptyArenaWith("Pelayo and Tojolias are here.")
             assert.is_false(rangGong())
             assert.are.equal(0, taPackage.arenaTeamSlot)
@@ -10520,35 +10520,35 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("holds off when someone sorts ahead of us", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             probeFindsEmptyArenaWith("Castor and Tojolias are here.")
             assert.is_false(rangGong())
             assert.are.equal(1, taPackage.arenaTeamSlot)
         end)
 
         it("takes a slot per character ahead of us", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             probeFindsEmptyArenaWith("Castor, Pelayo, and Johnsonite are here.")
             assert.is_false(rangGong())
             assert.are.equal(3, taPackage.arenaTeamSlot)
         end)
 
         it("orders case-insensitively", function()
-            taPackage.character.name = "castor"
+            taPackage._character.name = "castor"
             probeFindsEmptyArenaWith("Pelayo is here.")
             assert.are.equal(0, taPackage.arenaTeamSlot)
         end)
 
         -- Alone in the arena, team mode has to behave exactly like a solo run.
         it("rings immediately when nobody else is here", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             probeFindsEmptyArenaWith(nil)
             assert.is_true(rangGong())
             assert.are.equal(0, taPackage.arenaTeamSlot)
         end)
 
         it("rings once its turn comes round", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             probeFindsEmptyArenaWith("Castor is here.")
             assert.is_false(rangGong())
             helper.fireTimers(2 * 2000)
@@ -10559,7 +10559,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- that ticked together rang together — exactly the pairing (Kerhak at 0,
         -- Teekywiki at 1) that double-summoned. Every slot gets its own instant.
         it("does not put slot 0 and slot 1 on the same instant", function()
-            taPackage.character.name = "Castor"
+            taPackage._character.name = "Castor"
             probeFindsEmptyArenaWith("Pelayo is here.")
             helper.fireTimers(2 * 2000)   -- slot 1's instant passes first
             assert.is_false(rangGong())
@@ -10577,7 +10577,7 @@ describe("ring-gong-and-fight-in-arena", function()
         describe("slot 0 in company", function()
 
             it("takes the timer path on the first attempt and on the retry", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 probeFindsEmptyArenaWith("Pelayo is here.")
                 assert.is_false(rangGong())
                 -- The ring bounced; the pump re-probes and we come round again.
@@ -10589,7 +10589,7 @@ describe("ring-gong-and-fight-in-arena", function()
             end)
 
             it("stands down when the team-mate rings during that gap", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 probeFindsEmptyArenaWith("Pelayo is here.")
                 helper.sendCalls = {}
                 probeFindsEmptyArenaWith("Pelayo is here.")
@@ -10602,7 +10602,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- Alone there is nobody to collide with, so the wait would be dead
             -- time on every cycle of a solo run.
             it("keeps the fast path when alone", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 probeFindsEmptyArenaWith(nil)
                 helper.sendCalls = {}
                 probeFindsEmptyArenaWith(nil)
@@ -10613,7 +10613,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- company leaving gives the fast path back: the roster is re-derived
             -- on every probe, so neither needs its own bookkeeping.
             it("follows the roster when company comes and goes", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 probeFindsEmptyArenaWith("Pelayo is here.")
                 assert.is_false(rangGong())
                 probeFindsEmptyArenaWith(nil)
@@ -10626,7 +10626,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- the brief, so the next one along inherits the front of the order. This
         -- is what makes the team survive without a designated leader.
         it("moves up the order when the character ahead leaves the arena", function()
-            taPackage.character.name = "Pelayo"
+            taPackage._character.name = "Pelayo"
             probeFindsEmptyArenaWith("Castor is here.")
             assert.are.equal(1, taPackage.arenaTeamSlot)
             probeFindsEmptyArenaWith(nil)
@@ -10663,7 +10663,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("leaves the solo ring unstaggered", function()
-            taPackage.character.name = "Tojolias"
+            taPackage._character.name = "Tojolias"
             taPackage.arenaTeam = false
             taPackage.arenaState = "ringing"
             taPackage.arenaProbePending = true
@@ -10677,7 +10677,7 @@ describe("ring-gong-and-fight-in-arena", function()
         describe("standing down when someone else rings first", function()
 
             it("cancels a pending ring", function()
-                taPackage.character.name = "Pelayo"
+                taPackage._character.name = "Pelayo"
                 probeFindsEmptyArenaWith("Castor is here.")
                 helper.simulateLine("Castor just rang the great gong!")
                 helper.fireTimers(1 * 2000)
@@ -10688,7 +10688,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- a summon that never lands (the ringer bounced off "still
             -- physically exhausted", or walked out) would leave us idle forever.
             it("re-arms the scan pump so a summon that never lands can't wedge us", function()
-                taPackage.character.name = "Pelayo"
+                taPackage._character.name = "Pelayo"
                 probeFindsEmptyArenaWith("Castor is here.")
                 helper.timers = {}
                 helper.simulateLine("Castor just rang the great gong!")
@@ -10702,7 +10702,7 @@ describe("ring-gong-and-fight-in-arena", function()
             -- were left live a slot-0 character would ring on top of the very
             -- summon it just stood down for.
             it("abandons a brief that is still arriving", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 taPackage.arenaTeam = true
                 taPackage.arenaState = "ringing"
                 taPackage.arenaProbePending = true
@@ -10713,7 +10713,7 @@ describe("ring-gong-and-fight-in-arena", function()
             end)
 
             it("is not fooled by our own ring", function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 taPackage.arenaTeam = true
                 taPackage.arenaState = "ringing"
                 local genBefore = taPackage.arenaRingGen
@@ -11112,7 +11112,7 @@ describe("ring-gong-and-fight-in-arena", function()
         describe("hearing a team-mate call out", function()
 
             before_each(function()
-                taPackage.character.name = "Castor"
+                taPackage._character.name = "Castor"
                 taPackage.arenaTeam = true
             end)
 
@@ -11380,7 +11380,7 @@ describe("ring-gong-and-fight-in-arena", function()
                 taPackage.arenaAnnouncedNeedsHealing = true
                 -- The heal is charged for, and a balance that goes negative
                 -- trips the low-gold bailout and tears the session down.
-                taPackage.character.gold = 5000
+                taPackage._character.gold = 5000
                 taPackage.arenaState = "healing"
                 helper.simulateLine("The priests heal all your wounds for 100 crowns.")
                 assert.is_false(said("I am healed"))
@@ -11411,7 +11411,7 @@ describe("ring-gong-and-fight-in-arena", function()
                 taPackage.arenaTeam = true
                 taPackage.arenaState = "fighting"
                 taPackage.arenaMonster = "cave bear"
-                taPackage.character.gold = 5000
+                taPackage._character.gold = 5000
                 setHP(10, 100)
                 helper.simulateLine("Your attack hit the cave bear for 5 damage!")
                 assert.is_true(said("I need healing"))
@@ -11439,7 +11439,7 @@ describe("ring-gong-and-fight-in-arena", function()
         it("starts a new session deaf to a stale hold", function()
             taPackage.arenaTeam = true
             helper.simulateLine("From Pelayo: I need healing")
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             helper.simulateAlias("team-fight-in-arena")
             assert.are.same({}, taPackage.arenaTeamHealing)
             assert.is_false(taPackage.arenaAnnouncedNeedsHealing)
@@ -11554,7 +11554,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- Casting is attacking: a Sorceror gives away XP with toduza just as
         -- surely as with its sword.
         it("holds a Sorceror's toduza too, and casts once assisting", function()
-            setClass("Sorceror")
+            taPackage.character.setClass("Sorceror")
             supportingInAFight()
             monsterHitsUs()
             assert.is_false(said("cast toduza flame"))
@@ -11569,7 +11569,7 @@ describe("ring-gong-and-fight-in-arena", function()
         -- a permanently fresh physical clock, so it clears the gong's floor
         -- immediately after a kill instead of waiting out ARENA_RING_FLOOR_MS.
         it("still rings the gong", function()
-            taPackage.character.name = "Castor"
+            taPackage._character.name = "Castor"
             taPackage.arenaTeam = true
             taPackage.arenaSupportOnly = true
             taPackage.arenaState = "ringing"
@@ -11599,7 +11599,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("is cleared by stop-all-scripts", function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             helper.simulateAlias("tfia 3 support-only")
             assert.is_true(taPackage.arenaSupportOnly)
             helper.simulateAlias("stop-all-scripts")
@@ -11705,7 +11705,7 @@ describe("ring-gong-and-fight-in-arena", function()
             stepTimer.cb()
             helper.simulateLine("You're in the temple.")
             taPackage.needsDrinks = true
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             helper.simulateLine("You're in the north plaza.")
@@ -11886,7 +11886,7 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("does not affect state when arenaState is not healing", function()
             taPackage.arenaState = "fighting"
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 2 crowns.")
             assert.are.equal("fighting", taPackage.arenaState)
             assert.are.equal(0, #helper.sendCalls)
@@ -11926,11 +11926,11 @@ describe("ring-gong-and-fight-in-arena", function()
 
         it("exits and stops when gold falls below the 50 floor", function()
             taPackage.arenaState = "fighting"
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("You found 3 gold crowns while searching the orc's corpse.")
             assert.is_not_nil(taPackage.arenaState)  -- 503 is fine
             helper.sendCalls = {}
-            taPackage.character.gold = 80
+            taPackage._character.gold = 80
             helper.simulateLine("The priests heal all your wounds for 40 crowns.")  -- -> 40
             assert.are.equal("x", helper.sendCalls[#helper.sendCalls])
             assert.is_nil(taPackage.arenaState)
@@ -12342,7 +12342,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("stale cast retry does not fire after flee is triggered", function()
-            setClass("Sorceror")
+            taPackage.character.setClass("Sorceror")
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             helper.simulateLine("You are still too mentally exhausted from your last incantation!")
@@ -12355,7 +12355,7 @@ describe("ring-gong-and-fight-in-arena", function()
         end)
 
         it("retry timer does not fire after a new session bumps the combat gen", function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "skeleton"
             helper.simulateLine("You are still physically exhausted from your previous activities!")
@@ -12388,7 +12388,7 @@ describe("ring-gong-and-fight-in-arena 2", function()
         helper.resetAll()
         dofile("main.lua")
         helper.clearDbCalls()
-        setClass("Warrior")
+        taPackage.character.setClass("Warrior")
     end)
 
     local function setHP(current, max)
@@ -12410,7 +12410,7 @@ describe("ring-gong-and-fight-in-arena 2", function()
         end)
 
         it("does not start when class is unknown", function()
-            setClass(nil)
+            taPackage.character.setClass(nil)
             helper.simulateAlias("ring-gong-and-fight-in-arena 2")
             assert.is_nil(taPackage.arenaState)
         end)
@@ -12514,7 +12514,7 @@ describe("ring-gong-and-fight-in-arena 2", function()
 
         it("walks back to the arena, starting with north", function()
             taPackage.arenaState = "healing"
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 3 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
@@ -12743,13 +12743,13 @@ describe("ring-gong-and-fight-in-arena 2", function()
             end
             stepTimer = nil
             taPackage.arenaProfile = "2"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
         end)
 
         local function killWith(gold, potions)
-            setGold(gold)
+            taPackage.character.setGold(gold)
             taPackage.arenaPotionsActive = potions or 0
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
@@ -12787,7 +12787,7 @@ describe("ring-gong-and-fight-in-arena 2", function()
         -- Short of gold, a level owed is not a level we are about to train for,
         -- so a lapsing potion is restocked as usual rather than drained.
         it("restocks a lapsed potion while short of the trip's gold", function()
-            setGold(300)
+            taPackage.character.setGold(300)
             taPackage.arenaPotionsActive = 2
             taPackage.arenaState = "fighting"
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
@@ -12842,7 +12842,7 @@ describe("ring-gong-and-fight-in-arena 2", function()
         -- A restore dispels the potions outright, so no wear-off line will ever
         -- come to send us shopping. The training success line has to.
         it("restocks potions on arriving home after training", function()
-            setGold(1000)
+            taPackage.character.setGold(1000)
             taPackage.arenaState = "returning"
             taPackage.arenaPotionsActive = 0
             helper.simulateLine("After a rigorous mental and physical training session, you managed to blend")
@@ -12897,7 +12897,7 @@ describe("ring-gong-and-fight-in-arena 3", function()
         helper.resetAll()
         dofile("main.lua")
         helper.clearDbCalls()
-        setClass("Warrior")
+        taPackage.character.setClass("Warrior")
     end)
 
     local function setHP(current, max)
@@ -12919,7 +12919,7 @@ describe("ring-gong-and-fight-in-arena 3", function()
         end)
 
         it("does not start when class is unknown", function()
-            setClass(nil)
+            taPackage.character.setClass(nil)
             helper.simulateAlias("ring-gong-and-fight-in-arena 3")
             assert.is_nil(taPackage.arenaState)
         end)
@@ -13121,7 +13121,7 @@ describe("ring-gong-and-fight-in-arena 3", function()
 
         it("walks back to the arena starting 'w' after healing", function()
             taPackage.arenaState = "healing"
-            taPackage.character.gold = 500
+            taPackage._character.gold = 500
             helper.simulateLine("The priests heal all your wounds for 3 crowns.")
             assert.are.equal("returning", taPackage.arenaState)
             assert.are.equal("w", helper.sendCalls[#helper.sendCalls])
@@ -13187,9 +13187,9 @@ describe("ring-gong-and-fight-in-arena 3", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             setHP(900, 1000)
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 0  -- clean, so it may train
             helper.simulateLine("The cave bear falls to the ground lifeless!")
             assert.are.equal("training", taPackage.arenaState)
@@ -13203,9 +13203,9 @@ describe("ring-gong-and-fight-in-arena 3", function()
             taPackage.arenaState = "fighting"
             taPackage.arenaMonster = "cave bear"
             setHP(900, 1000)
-            taPackage.character.experience = 1120
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
+            taPackage._character.experience = 1120
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
             taPackage.arenaPotionsActive = 1  -- tainted; hall would refuse
             helper.simulateLine("The cave bear falls to the ground lifeless!")
             assert.are.equal("restoring", taPackage.arenaState)
@@ -13217,10 +13217,10 @@ describe("ring-gong-and-fight-in-arena 3", function()
         -- toTemple = { "sw", "se", "ne", "e" } out, fromTemple back, then the
         -- clean re-entry into arenaTryTrain sets out for the guild hall.
         it("walks to the training hall after arriving home from the restore", function()
-            setGold(800)
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120
+            taPackage.character.setGold(800)
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120
             setHP(900, 1000)  -- above the third arena's 500 flee floor
             taPackage.arenaPotionsActive = 1
 
@@ -13280,7 +13280,7 @@ describe("magic-shop potion runs", function()
         helper.resetAll()
         dofile("main.lua")
         helper.clearDbCalls()
-        setClass("Warrior")
+        taPackage.character.setClass("Warrior")
     end)
 
     describe("a potion wears off", function()
@@ -13356,9 +13356,9 @@ describe("magic-shop potion runs", function()
         it("drains instead of restocking when a level is owed", function()
             taPackage.arenaProfile = "1"
             taPackage.arenaState = "fighting"
-            taPackage.character.class = "Rogue"
-            taPackage.character.level = 1
-            taPackage.character.experience = 1120  -- Rogue level 2 threshold
+            taPackage._character.class = "Rogue"
+            taPackage._character.level = 1
+            taPackage._character.experience = 1120  -- Rogue level 2 threshold
             taPackage.arenaPotionsActive = 2
             helper.simulateLine("An odd tingling sensation washes over you briefly!")
             assert.are.equal("fighting", taPackage.arenaState)  -- no shop trip
@@ -13490,7 +13490,7 @@ describe("errand vs. in-flight gong summon", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
-        setClass("Warrior")
+        taPackage.character.setClass("Warrior")
         taPackage.arenaProfile = "2"
     end)
 
@@ -13570,13 +13570,13 @@ describe("training detour vs. in-flight gong summon", function()
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
-        setClass("Rogue")
+        taPackage.character.setClass("Rogue")
         taPackage.arenaProfile = "1"
         -- A level owed: Rogue's level-2 threshold is 1120 XP and the sheet still
         -- says level 1. The Experience line below is what checkTrainingNeeded
         -- reads, so each test sets the state and then feeds the poll's reply.
-        taPackage.character.class = "Rogue"
-        taPackage.character.level = 1
+        taPackage._character.class = "Rogue"
+        taPackage._character.level = 1
     end)
 
     it("defers the restore detour while a ring is in flight", function()
@@ -13741,7 +13741,7 @@ describe("cast komiza outbound trigger", function()
     it("decrements manaCurrent by 1", function()
         helper.simulateLine("Mana:         10 / 20")
         helper.simulateOutbound("cast komiza tojolias")
-        assert.are.equal(9, taPackage.character.manaCurrent)
+        assert.are.equal(9, taPackage._character.manaCurrent)
     end)
 
 end)
@@ -13756,18 +13756,18 @@ describe("cast toduza outbound trigger", function()
     it("decrements manaCurrent by 2", function()
         helper.simulateLine("Mana:         10 / 20")
         helper.simulateOutbound("cast toduza tojolias")
-        assert.are.equal(8, taPackage.character.manaCurrent)
+        assert.are.equal(8, taPackage._character.manaCurrent)
     end)
 
     it("does not reduce manaCurrent below 0", function()
         helper.simulateLine("Mana:         0 / 20")
         helper.simulateOutbound("cast toduza tojolias")
-        assert.are.equal(0, taPackage.character.manaCurrent)
+        assert.are.equal(0, taPackage._character.manaCurrent)
     end)
 
     it("does nothing when manaCurrent is unknown", function()
         helper.simulateOutbound("cast toduza tojolias")
-        assert.is_nil(taPackage.character.manaCurrent)
+        assert.is_nil(taPackage._character.manaCurrent)
     end)
 
 end)
@@ -14112,7 +14112,7 @@ describe("ta.follow", function()
     describe("confer command trigger", function()
 
         before_each(function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             taPackage.followTarget = "tojolias"
         end)
 
@@ -14130,7 +14130,7 @@ describe("ta.follow", function()
         end)
 
         it("heals the most injured with kusamotu on a conferred heal-most-injured-party-member", function()
-            setClass("High Priest")
+            taPackage.character.setClass("High Priest")
             helper.simulateLine("From Tojolias (to group): heal-most-injured-party-member")
             assert.are.equal("group", helper.sendCalls[1])
             helper.sendCalls = {}
@@ -14142,7 +14142,7 @@ describe("ta.follow", function()
         end)
 
         it("answers a conferred heal-most-injured-party-member as an Acolyte too", function()
-            setClass("Acolyte")
+            taPackage.character.setClass("Acolyte")
             helper.simulateLine("From Tojolias (to group): heal-most-injured-party-member")
             assert.are.equal("group", helper.sendCalls[1])
         end)
@@ -14153,13 +14153,13 @@ describe("ta.follow", function()
         end)
 
         it("ignores a conferred heal-most-injured-party-member from someone it isn't following", function()
-            setClass("High Priest")
+            taPackage.character.setClass("High Priest")
             helper.simulateLine("From Kerhak (to group): heal-most-injured-party-member")
             assert.are.equal(0, #helper.sendCalls)
         end)
 
         it("no longer answers the retired confer heal.allies", function()
-            setClass("High Priest")
+            taPackage.character.setClass("High Priest")
             helper.simulateLine("From Tojolias (to group): heal.allies")
             assert.are.equal(0, #helper.sendCalls)
         end)
@@ -14254,7 +14254,7 @@ describe("ta.follow", function()
     describe("group attack trigger", function()
 
         before_each(function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             taPackage.followTarget = "tojolias"
         end)
 
@@ -14299,7 +14299,7 @@ describe("ta.follow", function()
         end)
 
         it("does not start when class is unknown", function()
-            setClass(nil)
+            taPackage.character.setClass(nil)
             helper.simulateLine("Tojolias just attacked the huge rat with a flail!")
             assert.is_falsy(taPackage.killActive)
         end)
@@ -14382,11 +14382,11 @@ describe("ta.follow", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
         end)
 
         it("does not start when class is unknown", function()
-            setClass(nil)
+            taPackage.character.setClass(nil)
             helper.simulateAlias("kill cave lizard")
             assert.is_falsy(taPackage.killActive)
             assert.are.equal(0, #helper.sendCalls)
@@ -14754,7 +14754,7 @@ describe("ta.follow", function()
         describe("Sorceror", function()
 
             before_each(function()
-                setClass("Sorceror")
+                taPackage.character.setClass("Sorceror")
             end)
 
             it("melees and casts toduza on start", function()
@@ -14803,7 +14803,7 @@ describe("ta.follow", function()
         describe("Acolyte", function()
 
             before_each(function()
-                setClass("Acolyte")
+                taPackage.character.setClass("Acolyte")
             end)
 
             it("melees on start like everyone else", function()
@@ -14860,11 +14860,11 @@ describe("ta.follow", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
-            setClass("High Priest")
+            taPackage.character.setClass("High Priest")
         end)
 
         it("confers itself to the group when we are not a healer", function()
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
             helper.simulateAlias("heal-most-injured-party-member")
             assert.are.equal("confer heal-most-injured-party-member", helper.sendCalls[1])
             assert.are.equal(1, #helper.sendCalls)
@@ -15034,7 +15034,7 @@ describe("ta.follow", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
-            setClass("Acolyte")
+            taPackage.character.setClass("Acolyte")
         end)
 
         -- Did any echoed line contain the given substring?
@@ -15070,7 +15070,7 @@ describe("ta.follow", function()
         before_each(function()
             helper.resetAll()
             dofile("main.lua")
-            setClass("Warrior")
+            taPackage.character.setClass("Warrior")
         end)
 
         it("does not send group on attack exhaustion", function()
@@ -15369,21 +15369,21 @@ describe("Attack badges", function()
         it("adds the healed amount to our vitality", function()
             helper.simulateLine(
                 "You discharged the spell at friendly people in the area, healing 104 damage!")
-            assert.are.equal(154, taPackage.character.vitalityCurrent)
-            assert.are.equal(200, taPackage.character.vitalityMax)
+            assert.are.equal(154, taPackage._character.vitalityCurrent)
+            assert.are.equal(200, taPackage._character.vitalityMax)
         end)
 
         it("clamps the gain at max vitality", function()
             helper.simulateLine("Vitality:     180 / 200")
             helper.simulateLine(
                 "You discharged the spell at friendly people in the area, healing 104 damage!")
-            assert.are.equal(200, taPackage.character.vitalityCurrent)
+            assert.are.equal(200, taPackage._character.vitalityCurrent)
         end)
 
         it("does not fire for a non-heal area spell", function()
             helper.simulateLine("You discharged the spell at friendly people in the area!")
             assert.are.equal(0, #helper.cechoBgCalls)
-            assert.are.equal(50, taPackage.character.vitalityCurrent)
+            assert.are.equal(50, taPackage._character.vitalityCurrent)
         end)
     end)
 
@@ -17705,7 +17705,7 @@ describe("navigate-to", function()
 
         it("reports the pace and encumbrance it started with", function()
             route()
-            setEncumberance(120, 200)
+            taPackage.character.setEncumberance(120, 200)
             helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
             -- Read the pace rather than repeating it: it is still being tuned,
@@ -21069,7 +21069,7 @@ describe("Auto-login", function()
         loadWith({ TA_CHARACTER = "kerhak" })
         helper.simulateLine("Username: ")
         helper.simulateOutbound("kerhak")
-        assert.are.equal("Kerhak", taPackage.character.name)
+        assert.are.equal("Kerhak", taPackage._character.name)
     end)
 
 end)
@@ -21562,6 +21562,35 @@ describe("ta.follow XP poll", function()
         local before = statusCount()
         helper.fireTimers(taPackage.FOLLOW_XP_POLL_MS)
         assert.are.equal(before + 1, statusCount())
+    end)
+
+end)
+
+-- The character's data is taPackage._character and its accessors are
+-- taPackage.character. reloadScript() keeps taPackage but re-runs main.lua, so
+-- the data has to survive the reload while the accessors are rebuilt.
+describe("character state across a script reload", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("keeps the character's data", function()
+        taPackage.character.setLevel(7)
+        taPackage._character.name = "Tojolias"
+        dofile("main.lua")
+        assert.are.equal(7, taPackage.character.getLevel())
+        assert.are.equal("Tojolias", taPackage._character.name)
+    end)
+
+    -- A session loaded before the split kept its data in taPackage.character.
+    it("adopts data from before the split", function()
+        taPackage._character = nil
+        taPackage.character = { name = "Tojolias", level = 7 }
+        dofile("main.lua")
+        assert.are.equal(7, taPackage.character.getLevel())
+        assert.are.equal("Tojolias", taPackage._character.name)
     end)
 
 end)
