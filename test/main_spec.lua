@@ -21606,3 +21606,35 @@ describe("character state across a script reload", function()
     end)
 
 end)
+
+-- setGold is the one way gold changes, so it carries the arena's gold floor:
+-- under ARENA_MIN_GOLD (50) mid-run, the loop can no longer pay for healing and
+-- potions and leaves the game. Nothing fails loudly if that wiring breaks -- the
+-- run just stops bailing out -- so pin it here.
+describe("the arena gold floor", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("leaves the game when gold drops under 50 mid-run", function()
+        taPackage.arenaState = "fighting"
+        taPackage.character.setGold(49)
+        assert.is_nil(taPackage.arenaState)
+        assert.is_true(taPackage.exitGamePending)
+    end)
+
+    it("stays put at exactly 50", function()
+        taPackage.arenaState = "fighting"
+        taPackage.character.setGold(50)
+        assert.are.equal("fighting", taPackage.arenaState)
+        assert.is_falsy(taPackage.exitGamePending)
+    end)
+
+    it("does nothing outside an arena run", function()
+        taPackage.character.setGold(0)
+        assert.is_falsy(taPackage.exitGamePending)
+    end)
+
+end)
