@@ -92,9 +92,6 @@ end
 
 dofile(scriptDir .. "ta_xp.lua")
 
--- Progress through the current level, from just-leveled (blue) to about-to-level
--- (red), walking across the color wheel through violet/magenta/pink in between.
--- All light/readable tints so the value stays visible against a dark status bar.
 -- =========================================================================
 -- Triggers
 -- =========================================================================
