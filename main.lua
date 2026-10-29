@@ -7016,8 +7016,8 @@ local HEAL_THRESHOLD = 90
 
 -- Hard-coded toggle: when true, an Acolyte in the kill loop skips its automatic
 -- in-combat healing (the exhaustion-driven group scan and the cast-clock heal)
--- and just melees for damage. heal-most-injured-party-member and the opt-in
--- `heal-allies-in-loop` are unaffected. Flip to false to restore automatic
+-- and just melees for damage. heal-most-injured-party-member is unaffected.
+-- Flip to false to restore automatic
 -- battle healing. Lives on taPackage so it can also be flipped at runtime via
 -- `/lua taPackage.acolyteAutoHealDisabled = false`.
 if taPackage.acolyteAutoHealDisabled == nil then
@@ -7100,8 +7100,7 @@ end
 -- the listing doesn't cut the scan short.
 local GROUP_HEAL_TERMINATOR = "ex"
 -- context labels the scan's origin so the decision log distinguishes
--- heal-most-injured-party-member, an automatic loop tick, and the kill-loop's
--- exhaustion heal.
+-- heal-most-injured-party-member from the kill-loop's exhaustion heal.
 -- spell overrides the kamotu/motu choice in finalizeGroupHeal.
 local function beginGroupHealScan(threshold, context, spell)
     taPackage.groupHealPhase = "want"
@@ -7345,43 +7344,6 @@ createAlias("^heal-most-injured-party-member$", function()
     end
 end, { type = "regex" })
 
--- Hands-off group healing: every minute, scan the group and top off anyone
--- below 95%. A generation counter (bumped on start/stop) makes the rescheduled
--- one-shot timer self-cancel, mirroring scheduleArenaXpCheck.
-local HEAL_LOOP_INTERVAL = 60000
-local HEAL_LOOP_THRESHOLD = 95
-local function scheduleHealAlliesLoop()
-    local gen = taPackage.healLoopGen or 0
-    createTimer(HEAL_LOOP_INTERVAL, function()
-        if (taPackage.healLoopGen or 0) ~= gen then return end
-        beginGroupHealScan(HEAL_LOOP_THRESHOLD, "loop tick")
-        scheduleHealAlliesLoop()
-    end, { repeating = false })
-end
-
-createAlias("^heal-allies-in-loop$", function()
-    if not isClass("Acolyte") then
-        echo("[heal] Only an Acolyte can heal the group.")
-        return
-    end
-    taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
-    taPackage.healLoopActive = true
-    echo("[heal] Looping group heal every 60s (tops off below 95%), and scanning on any group member taking a hit.")
-    beginGroupHealScan(HEAL_LOOP_THRESHOLD, "loop start")
-    scheduleHealAlliesLoop()
-end, { type = "regex" })
-
-local function stopHealLoop()
-    taPackage.healLoopGen = (taPackage.healLoopGen or 0) + 1
-    taPackage.healLoopActive = false
-    echo("[heal] Group heal loop stopped.")
-end
-taPackage.stopHealLoop = stopHealLoop
-
-createAlias("^stop-heal-allies-in-loop$", function()
-    stopHealLoop()
-end, { type = "regex" })
-
 -- =========================================================================
 -- Navigate to a destination
 -- =========================================================================
@@ -7420,7 +7382,6 @@ dofile(scriptDir .. "ta_bank.lua")
 createAlias("^stop-all-scripts$", function()
     local scripts = {
         { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = function() stopArena("stop-all-scripts") end },
-        { name = "heal loop",             running = taPackage.healLoopActive == true, stop = stopHealLoop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = stopKill },
         -- Every `running` flag is read when this table is built, before any
         -- stop runs -- which is what keeps the report honest now that stopping
@@ -7454,34 +7415,6 @@ createAlias("^stop-all-scripts$", function()
         end
     end
 end, { type = "regex" })
-
--- The 60s timer can leave an ally hurt for up to a minute between scans, which
--- is fatal against burst damage (a cave bear's worst round is ~23). So while
--- the loop is active, react to any group member taking a hit by scanning the
--- group right away and healing if it dropped someone below the threshold. The
--- in-progress guard collapses a monster's two claws in one round into a single
--- scan.
-local function reactToGroupHit()
-    if not taPackage.healLoopActive then return end
-    if not isClass("Acolyte") then return end
-    if taPackage.groupHealPhase then return end
-    beginGroupHealScan(HEAL_LOOP_THRESHOLD, "hit reaction")
-end
-
--- The "with" in the pattern matches landed hits ("attacked Johnsonite with its
--- claws!", "attacked you ... for N damage!") while skipping glances and misses,
--- which deal no damage.
-createTrigger("^The .+ attacked .+ with .+!$", reactToGroupHit, { type = "regex" })
-
--- Special attacks (a stone giant's boulder, a cyclops's throw) are the biggest
--- single hits we've seen, so the healer must react to them too. Unlike the
--- HP-tracking triggers above, these match any target, not just "you": when one
--- lands on an ally the game prints no number ("hurled a boulder at Pelayo!"),
--- but the ally still took a heavy hit and needs an immediate scan.
-createTrigger("^The .+ hurled a boulder at .+!$", reactToGroupHit, { type = "regex" })
-createTrigger("^The .+ picks up and hurls .+!$", reactToGroupHit, { type = "regex" })
-createTrigger("^The .+ breathed flames at .+!$", reactToGroupHit, { type = "regex" })
-createTrigger("^The .+ exhaled a blast of .+ at .+!$", reactToGroupHit, { type = "regex" })
 
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
@@ -7522,7 +7455,7 @@ createTrigger("^You discharged the spell at the .+ for \\d+ damage!$", function(
 end, { type = "regex" })
 
 createTrigger("^You confuse the key syllables and the spell fails!$", function()
-    -- Clear unconditionally: a heal (heal-allies-in-loop) can fizzle too, and
+    -- Clear unconditionally: a heal (heal-most-injured-party-member) can fizzle too, and
     -- if we only cleared inside a kill the blocked cast would wedge castPending
     -- forever. Only the kill loop's re-cast needs an active fight.
     taPackage.castPending = false

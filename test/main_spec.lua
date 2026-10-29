@@ -1110,11 +1110,9 @@ describe("Tele-Arena triggers", function()
         it("stops every long-running script", function()
             taPackage.arenaState = "fighting"
             taPackage.killActive = true
-            taPackage.healLoopActive = true
             helper.simulateLine(KILLED)
             assert.is_nil(taPackage.arenaState)
             assert.is_falsy(taPackage.killActive)
-            assert.is_false(taPackage.healLoopActive)
         end)
 
         it("says so in the session log and pushes a notification", function()
@@ -15014,237 +15012,21 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
-        it("does not leak kusamotu into a later loop scan", function()
+        it("does not leak kusamotu into a later exhaustion scan", function()
             setClass("Acolyte")
             helper.simulateAlias("heal-most-injured-party-member")
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
             taPackage.castPending = false
-            helper.simulateAlias("heal-allies-in-loop")
+            taPackage.killActive = true
+            taPackage.acolyteAutoHealDisabled = false
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
             helper.sendCalls = {}
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
             assert.are.equal("cast kamotu Kerhak", helper.sendCalls[1])
-        end)
-
-    end)
-
-    describe("heal-allies-in-loop alias", function()
-
-        local timers
-        local realCreateTimer
-
-        local function lastLoopTimer()
-            -- The 60s loop timer (the only timer this feature schedules).
-            for i = #timers, 1, -1 do
-                if timers[i].interval == 60000 then return timers[i] end
-            end
-        end
-
-        before_each(function()
-            helper.resetAll()
-            timers = {}
-            realCreateTimer = _G.createTimer
-            _G.createTimer = function(interval, cb, opts)
-                table.insert(timers, { interval = interval, cb = cb, opts = opts })
-                return "mock_timer"
-            end
-            dofile("main.lua")
-        end)
-
-        after_each(function()
-            _G.createTimer = realCreateTimer
-        end)
-
-        it("scans immediately and schedules a 60s loop as an Acolyte", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal-allies-in-loop")
-            assert.are.equal("group", helper.sendCalls[1])
-            assert.is_not_nil(lastLoopTimer())
-        end)
-
-        it("tops off a member below 95%", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal-allies-in-loop")
-            helper.sendCalls = {}
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 92% ST:Ready]")
-            helper.simulateLine("  Teekywiki                          [HE: 98% ST:Ready]")
-            helper.simulateLine("You're in a cave.")
-            assert.are.equal("cast kamotu Pelayo", helper.sendCalls[1])
-        end)
-
-        it("does not heal when everyone is at or above 95%", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal-allies-in-loop")
-            helper.sendCalls = {}
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
-            helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
-            helper.simulateLine("You're in a cave.")
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("the loop tick re-scans and reschedules", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal-allies-in-loop")
-            local loop = lastLoopTimer()
-            helper.sendCalls = {}
-            local before = #timers
-            loop.cb()
-            assert.are.equal("group", helper.sendCalls[1])
-            assert.is_true(#timers > before)
-        end)
-
-        it("stop-heal-allies-in-loop keeps a pending tick from firing", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal-allies-in-loop")
-            local loop = lastLoopTimer()
-            helper.simulateAlias("stop-heal-allies-in-loop")
-            helper.sendCalls = {}
-            loop.cb()
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("warns and does not loop when not an Acolyte", function()
-            setClass("Warrior")
-            helper.simulateAlias("heal-allies-in-loop")
-            assert.are.equal(0, #helper.sendCalls)
-            assert.is_nil(lastLoopTimer())
-            local warned = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "Acolyte") then warned = true end
-            end
-            assert.is_true(warned)
-        end)
-
-    end)
-
-    describe("heal-allies-in-loop hit reaction", function()
-
-        before_each(function()
-            helper.resetAll()
-            dofile("main.lua")
-            setClass("Acolyte")
-        end)
-
-        it("scans the group when a group member takes a hit", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            assert.are.equal("group", helper.sendCalls[1])
-            assert.are.equal("ex", helper.sendCalls[2])
-        end)
-
-        it("scans when the healer itself is hit (for N damage)", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked you with its claws for 6 damage!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("heals the most injured member the hit revealed", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            helper.sendCalls = {}
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Johnsonite                         [HE: 38% ST:Ready]")
-            helper.simulateLine("Exits: w,d.")
-            assert.are.equal("cast kamotu Johnsonite", helper.sendCalls[1])
-        end)
-
-        it("does not scan on a glancing blow (no damage)", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked Johnsonite, but its claws glanced off Johnsonite's armor!")
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("collapses a monster's two claws in one round into a single scan", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            local scans = 0
-            for _, cmd in ipairs(helper.sendCalls) do
-                if cmd == "group" then scans = scans + 1 end
-            end
-            assert.are.equal(1, scans)
-        end)
-
-        it("does not scan when the loop is not active", function()
-            taPackage.healLoopActive = false
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("does not scan after the loop is stopped", function()
-            helper.simulateAlias("heal-allies-in-loop")
-            helper.simulateAlias("stop-heal-allies-in-loop")
-            helper.sendCalls = {}
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("does not scan when not an Acolyte", function()
-            setClass("Warrior")
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cave bear attacked Johnsonite with its claws!")
-            assert.are.equal(0, #helper.sendCalls)
-        end)
-
-        it("scans when a stone giant's boulder lands on an ally", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a stone giant's boulder lands on the healer", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The stone giant hurled a boulder at you for 52 damage!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a cyclops's throw lands on an ally", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cyclops picks up and hurls Teekywiki!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a cyclops's throw lands on the healer", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The cyclops picks up and hurls you for 22 damage!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a chimera's flame breath lands on an ally", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The chimera breathed flames at Pelayo!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a chimera's flame breath lands on the healer", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The chimera breathed flames at you for 27 damage!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when a flame giant's breath lands on an ally", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The flame giant exhaled a blast of flame at Pelayo!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("scans when an ice giantess's frost breath lands on the healer", function()
-            taPackage.healLoopActive = true
-            helper.simulateLine("The ice giantess exhaled a blast of frost at you for 60 damage!")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("does not scan on special attacks when the loop is not active", function()
-            taPackage.healLoopActive = false
-            helper.simulateLine("The stone giant hurled a boulder at Pelayo!")
-            helper.simulateLine("The cyclops picks up and hurls Teekywiki!")
-            helper.simulateLine("The chimera breathed flames at Pelayo!")
-            assert.are.equal(0, #helper.sendCalls)
         end)
 
     end)
@@ -15256,15 +15038,13 @@ describe("ta.follow", function()
             dofile("main.lua")
         end)
 
-        it("stops the kill, heal loop, arena, tavern, and mapping scripts together", function()
+        it("stops the kill, arena, tavern, and mapping scripts together", function()
             taPackage.killActive = true
-            taPackage.healLoopActive = true
             taPackage.arenaState = "fighting"
             taPackage.tavernMode = true
             taPackage.mapping = true
             helper.simulateAlias("stop-all-scripts")
             assert.is_falsy(taPackage.killActive)
-            assert.is_false(taPackage.healLoopActive)
             assert.is_nil(taPackage.arenaState)
             assert.is_false(taPackage.tavernMode)
             assert.is_false(taPackage.mapping)
@@ -15299,7 +15079,6 @@ describe("ta.follow", function()
                 helper.simulateAlias("stop-all-scripts")
             end)
             assert.is_falsy(taPackage.killActive)
-            assert.is_falsy(taPackage.healLoopActive)
             assert.is_nil(taPackage.arenaState)
         end)
 
@@ -15312,12 +15091,10 @@ describe("ta.follow", function()
 
         it("reports each script it stopped", function()
             taPackage.killActive = true
-            taPackage.healLoopActive = true
             taPackage.arenaState = "fighting"
             taPackage.tavernMode = true
             helper.simulateAlias("stop-all-scripts")
             assert.is_true(echoed("[all] Stopped arena."))
-            assert.is_true(echoed("[all] Stopped heal loop."))
             assert.is_true(echoed("[all] Stopped kill."))
             assert.is_true(echoed("[all] Stopped hang-around-in-tavern-and-deposit-gold."))
         end)
@@ -15332,7 +15109,6 @@ describe("ta.follow", function()
         it("reports scripts that were not running", function()
             helper.simulateAlias("stop-all-scripts")
             assert.is_true(echoed("[all] arena not running."))
-            assert.is_true(echoed("[all] heal loop not running."))
             assert.is_true(echoed("[all] kill not running."))
             assert.is_true(echoed("[all] hang-around-in-tavern-and-deposit-gold not running."))
         end)
@@ -15381,13 +15157,16 @@ describe("ta.follow", function()
         end)
 
         it("logs hurt-but-above-threshold when allies are hurt but none need healing", function()
-            -- Only a scan below 100% can see someone hurt yet not needy: the loop's 95%.
-            helper.simulateAlias("heal-allies-in-loop")
+            -- Only a scan below 100% can see someone hurt yet not needy: the kill
+            -- loop's exhaustion heal, at 90%.
+            taPackage.killActive = true
+            taPackage.acolyteAutoHealDisabled = false
+            helper.simulateLine("You are still physically exhausted from your previous activities!")
             helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 96% ST:Ready]")
+            helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
-            assert.is_true(logged("1 of 2 allies hurt but all at or above 95%, taking no action"))
+            assert.is_true(logged("exhaustion: 1 of 2 allies hurt but all at or above 90%, taking no action"))
         end)
 
         it("logs the count and most-injured member when healing", function()
@@ -15397,27 +15176,6 @@ describe("ta.follow", function()
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
             assert.is_true(logged("heal-most-injured-party-member: 2 of 2 allies below 100%, healing most injured Teekywiki at 60%"))
-        end)
-
-        it("labels the scan origin (loop tick) in the log", function()
-            local timers = {}
-            local realCreateTimer = _G.createTimer
-            _G.createTimer = function(interval, cb, opts)
-                table.insert(timers, { interval = interval, cb = cb, opts = opts })
-                return "mock_timer"
-            end
-            helper.simulateAlias("heal-allies-in-loop")
-            local loop
-            for i = #timers, 1, -1 do
-                if timers[i].interval == 60000 then loop = timers[i] break end
-            end
-            helper.echoCalls = {}
-            loop.cb()
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 50% ST:Ready]")
-            helper.simulateLine("Exits: n,sw.")
-            _G.createTimer = realCreateTimer
-            assert.is_true(logged("loop tick: 1 of 1 allies below 95%, healing most injured Pelayo at 50%"))
         end)
 
     end)
