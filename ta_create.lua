@@ -571,10 +571,15 @@ local function farmAssess(prefix)
     local c = taPackage._character
     local potionsUp = (taPackage.character.getAgility() or 0) > HALF_OGRE_MAX_AGILITY
     if (taPackage.character.getLevel() or 1) < 2 and not potionsUp then
-        local stats = {}
-        for _, k in ipairs({ "intellect", "knowledge", "physique", "stamina", "agility", "charisma" }) do
-            stats[k] = c[k] or 0
-        end
+        local ch = taPackage.character
+        local stats = {
+            intellect = ch.getIntellect() or 0,
+            knowledge = ch.getKnowledge() or 0,
+            physique  = ch.getPhysique() or 0,
+            stamina   = ch.getStamina() or 0,
+            agility   = ch.getAgility() or 0,
+            charisma  = ch.getCharisma() or 0,
+        }
         local good = taPackage.reRollBuilds.halfOgreWarriorFast(stats)
         if not good then
             echo("[farm] Stats short of the roll — starting re-roll-half-ogre-warrior-fast-mode.")

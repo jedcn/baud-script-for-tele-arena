@@ -678,12 +678,12 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     if not taPackage.reRolling then return end
 
     local stats = {
-        intellect = taPackage._character.intellect or 0,
-        knowledge = taPackage._character.knowledge or 0,
-        physique  = taPackage._character.physique or 0,
-        stamina   = taPackage._character.stamina or 0,
-        agility   = taPackage._character.agility or 0,
-        charisma  = taPackage._character.charisma or 0,
+        intellect = taPackage.character.getIntellect() or 0,
+        knowledge = taPackage.character.getKnowledge() or 0,
+        physique  = taPackage.character.getPhysique() or 0,
+        stamina   = taPackage.character.getStamina() or 0,
+        agility   = taPackage.character.getAgility() or 0,
+        charisma  = taPackage.character.getCharisma() or 0,
     }
 
     taPackage.reRollCount = (taPackage.reRollCount or 0) + 1
@@ -3028,7 +3028,7 @@ end, { type = "regex" })
 
 createTrigger("^Level:\\s+(\\d+)$", function(matches)
     local newLevel = tonumber(matches[2])
-    local oldLevel = taPackage._character.level
+    local oldLevel = taPackage.character.getLevel()
     if oldLevel and oldLevel ~= newLevel then
         taPackage.db.recordStatChange("Level", oldLevel, newLevel)
     end
@@ -4743,7 +4743,7 @@ end
 -- checkFleeArena so the question can be asked from outside a fight — see
 -- arenaHeal.isLow.
 function arenaHeal.threshold()
-    local maxHp = taPackage._character.vitalityMax
+    local _, maxHp = taPackage.character.getVitality()
     -- Max vitality unknown falls through to the floor below, as before: the
     -- bands are a function of it and have nothing to say without it.
     if maxHp and taPackage.arenaProfile == "3" then
@@ -4757,7 +4757,7 @@ end
 -- is unknown: an unread HP is not evidence of being hurt, and answering yes
 -- would send a fresh character straight to the temple before its first status.
 function arenaHeal.isLow()
-    local hp = taPackage._character.vitalityCurrent
+    local hp = taPackage.character.getVitality()
     return hp ~= nil and hp < arenaHeal.threshold()
 end
 
@@ -5062,7 +5062,7 @@ local function beginArenaSession(profile, debug, team, exitIfSolo, supportOnly)
     -- would keep the gong held for a team-mate who finished healing long ago.
     taPackage.arenaTeamHealing = {}
     taPackage.arenaAnnouncedNeedsHealing = false
-    taPackage.arenaSessionStartXp = taPackage._character.experience
+    taPackage.arenaSessionStartXp = taPackage.character.getExperience()
     taPackage.arenaSessionStartTime = os.time()
     taPackage.arenaLastNtfyTime = nil
     taPackage.arenaXpTimerGen = (taPackage.arenaXpTimerGen or 0) + 1
@@ -5250,7 +5250,7 @@ local function stopArena(reason, opts)
     taPackage.arenaCombatGen = (taPackage.arenaCombatGen or 0) + 1
     taPackage.arenaXpCheckPending = false
     local startXp = taPackage.arenaSessionStartXp
-    local currentXp = taPackage._character.experience
+    local currentXp = taPackage.character.getExperience()
     local startTime = taPackage.arenaSessionStartTime
     local summary
     if startXp and currentXp and startTime then
@@ -6314,13 +6314,13 @@ function flushLevelUpNotification()
     end
 
     local lines = { pending.headline }
-    local hp = taPackage._character.vitalityMax
+    local _, hp = taPackage.character.getVitality()
     if hp then
         lines[#lines + 1] = "- New HP: " .. formatWithCommas(hp) .. gain(pending.hpBefore, hp, "HP")
     end
     -- Only spell casters have a mana pool; for everyone else the sheet says
     -- "0 / 0" every level and the line would be noise.
-    local mp = taPackage._character.manaMax
+    local _, mp = taPackage.character.getMana()
     if mp and mp > 0 then
         lines[#lines + 1] = "- New MP: " .. formatWithCommas(mp) .. gain(pending.mpBefore, mp, "MP")
     end
@@ -6337,7 +6337,7 @@ end
 function noticeLevelUpStats()
     local pending = taPackage.levelUpPush
     if not pending then return end
-    if pending.hpBefore and taPackage._character.vitalityMax == pending.hpBefore then return end
+    if pending.hpBefore and select(2, taPackage.character.getVitality()) == pending.hpBefore then return end
     pending.statsLanded = true
     if pending.goldAfter then flushLevelUpNotification() end
 end
@@ -6398,8 +6398,8 @@ createTrigger("^After a rigorous mental and physical training session, you manag
             headline = "[" .. (taPackage._character.name or "?") .. "] trained to level "
                 .. newLevel .. "!",
             goldBefore = taPackage.character.getGold(),
-            hpBefore = taPackage._character.vitalityMax,
-            mpBefore = taPackage._character.manaMax,
+            hpBefore = select(2, taPackage.character.getVitality()),
+            mpBefore = select(2, taPackage.character.getMana()),
         }
         send("st")
         send("i")
