@@ -7528,8 +7528,8 @@ end, { type = "regex" })
 -- the leader pick the moment to move on and have everyone stop with them.
 -- Only a leader confers -- followers only obey their leader, so a follower's
 -- confer would reach nobody who acts on it.
--- `skill` is shorthand.
-for _, killStopPattern in ipairs({ "^kill-stop$", "^skill$" }) do
+-- `skill` and `sk` are shorthand.
+for _, killStopPattern in ipairs({ "^kill-stop$", "^skill$", "^sk$" }) do
     createAlias(killStopPattern, function()
         stopKill()
         if not taPackage.followTarget
@@ -7542,8 +7542,8 @@ end
 -- A Leader sends its Followers after a monster and joins in: `confer-kill
 -- warrior` confers `kill warrior`, which each Follower runs as its own kill
 -- (see the "(to group)" trigger), then starts the Leader's own kill loop.
--- `ckill <monster>` is shorthand.
-for _, conferKillPattern in ipairs({ "^confer-kill (.+)$", "^ckill (.+)$" }) do
+-- `ckill <monster>` and `ck <monster>` are shorthand.
+for _, conferKillPattern in ipairs({ "^confer-kill (.+)$", "^ckill (.+)$", "^ck (.+)$" }) do
     createAlias(conferKillPattern, function(matches)
         send("confer kill " .. matches[2])
         startKill(matches[2])
