@@ -258,6 +258,40 @@ function taPackage.character.getKnowledge()
     return taPackage._character.knowledge
 end
 
+function taPackage.character.setName(value)
+    taPackage._character.name = value
+end
+
+function taPackage.character.getName()
+    return taPackage._character.name
+end
+
+function taPackage.character.setWeapon(value)
+    taPackage._character.weapon = value
+end
+
+function taPackage.character.getWeapon()
+    return taPackage._character.weapon
+end
+
+function taPackage.character.setArmor(value)
+    taPackage._character.armor = value
+end
+
+function taPackage.character.getArmor()
+    return taPackage._character.armor
+end
+
+-- The level the character's XP has earned, which can run ahead of the level
+-- it has trained to (getLevel). checkLevelUpNotification keeps it.
+function taPackage.character.setEarnedLevel(value)
+    taPackage._character.earnedLevel = value
+end
+
+function taPackage.character.getEarnedLevel()
+    return taPackage._character.earnedLevel
+end
+
 -- =========================================================================
 -- XP tables by class (from "help Exp1" and "help Exp2")
 -- =========================================================================
@@ -485,15 +519,15 @@ function checkLevelUpNotification(xp)
     -- threshold to announce (getLevelForXp returns nil).
     if not (xp and class and xpThresholds[class]) then return end
     local newEarned = getLevelForXp(xp, class)
-    local prev = taPackage._character.earnedLevel
+    local prev = taPackage.character.getEarnedLevel()
     if prev == nil then
         -- First observation: seed silently so we only alert on later crossings,
         -- not on every fresh login / script reload.
-        taPackage._character.earnedLevel = newEarned
+        taPackage.character.setEarnedLevel(newEarned)
         return
     end
     if newEarned > prev then
-        taPackage._character.earnedLevel = newEarned
+        taPackage.character.setEarnedLevel(newEarned)
         -- Silent during a gold-farming run. That character exists to be levelled
         -- and then thrown away, so its levels are not news -- a single round
         -- crosses several thresholds and trains at each one, which is two pushes
@@ -507,7 +541,7 @@ function checkLevelUpNotification(xp)
         -- game's own `help Exp1` table and a real training event), so crossing it
         -- means you've earned enough to train up to level N.
         sendNtfy("Time to Level Up!",
-            (taPackage._character.name or "?") .. " just passed "
+            (taPackage.character.getName() or "?") .. " just passed "
                 .. formatWithCommas(threshold)
                 .. " and is ready to train for level " .. newEarned)
     end
@@ -723,13 +757,13 @@ createTrigger("^Class:\\s+(.+)$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^Weapon:\\s+(.+)$", function(matches)
-    taPackage._character.weapon = matches[2]
+    taPackage.character.setWeapon(matches[2])
 end, { type = "regex" })
 
 -- "Armor:" alone, not "Armor Rating:", which the colon right after the word
 -- keeps out. farm-for-gold reads it to tell whether the robes are on.
 createTrigger("^Armor:\\s+(.+)$", function(matches)
-    taPackage._character.armor = matches[2]
+    taPackage.character.setArmor(matches[2])
 end, { type = "regex" })
 
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
@@ -1388,8 +1422,8 @@ function taPackage.setHere(roomId)
     taPackage.hereState = "known"
     taPackage.offMap = nil
     taPackage.hereCandidates = nil
-    if taPackage._character and taPackage._character.name then
-        taPackage.db.setPlayerLocation(taPackage._character.name, roomId)
+    if taPackage.character.getName() then
+        taPackage.db.setPlayerLocation(taPackage.character.getName(), roomId)
     end
 end
 
@@ -1942,8 +1976,8 @@ local function printRoomSlugCandidates(name, dirs)
         -- the right one, and the walk spent a move narrowing them down by hand.
         -- A hint, not a pick: the location is stamped while MAPPING, so a
         -- character walked around with mapping off has silently moved on.
-        local lastSeen = taPackage._character and taPackage._character.name
-            and taPackage.db.playerLocation(taPackage._character.name)
+        local lastSeen = taPackage.character.getName()
+            and taPackage.db.playerLocation(taPackage.character.getName())
         if lastSeen then
             for _, m in ipairs(matches) do
                 if m.id == lastSeen then
@@ -2552,8 +2586,8 @@ createAlias("^map-here (.+)$", function(matches)
     taPackage.setHere(room.id)
     -- Stamp location now so the report's "you are here" marker is right the
     -- moment you anchor, not only after the first move (map-here sends no ex).
-    if taPackage._character and taPackage._character.name then
-        taPackage.db.setPlayerLocation(taPackage._character.name, room.id)
+    if taPackage.character.getName() then
+        taPackage.db.setPlayerLocation(taPackage.character.getName(), room.id)
     end
     echo("[map] anchored at " .. slug .. " (#" .. tostring(room.id) .. ")"
         .. (taPackage.coord
@@ -2809,14 +2843,14 @@ createTrigger("^Your (.+) hit the (.+) for (\\d+) damage!$", function(matches)
     taPackage.lastAttackTarget = monster
     outgoingBadge("HIT " .. damage)
     taPackage.db.recordPlayerAttack(
-        taPackage._character.weapon or "weapon", monster, "hit", damage
+        taPackage.character.getWeapon() or "weapon", monster, "hit", damage
     )
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     local monster = taPackage.lastAttackTarget or "unknown"
     taPackage.db.recordPlayerAttack(
-        taPackage._character.weapon or "weapon", monster, "miss", nil
+        taPackage.character.getWeapon() or "weapon", monster, "miss", nil
     )
 end, { type = "regex" })
 
@@ -2824,7 +2858,7 @@ createTrigger("^The (.+) dodged your attack!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
     taPackage.db.recordPlayerAttack(
-        taPackage._character.weapon or "weapon", monster, "dodge", nil
+        taPackage.character.getWeapon() or "weapon", monster, "dodge", nil
     )
 end, { type = "regex" })
 
@@ -3119,7 +3153,7 @@ local function status()
     local nextLevelXp = xp and getXpForNextLevel(xp, taPackage.character.getClass())
     local gold = taPackage.character.getGold() and commafy(taPackage.character.getGold()) or "?"
 
-    local charName = taPackage._character.name
+    local charName = taPackage.character.getName()
     local charClass = taPackage.character.getClass()
     local nameText = charName and charClass and (charName .. " [" .. charClass .. "]")
         or charName
@@ -3723,7 +3757,7 @@ function arenaSolo.observe(count)
     local reason = "Alone in the arena for " .. arenaSolo.minutesLabel()
         .. " — too weak to fight solo"
     sendNtfy("Left the arena alone",
-        (taPackage._character.name or "The character") .. " was alone in arena "
+        (taPackage.character.getName() or "The character") .. " was alone in arena "
         .. (taPackage.arenaProfile or "?") .. " for " .. arenaSolo.minutesLabel()
         .. " and has left the game.")
     -- Looked up on taPackage rather than closed over: arenaEmergencyExit is
@@ -3799,7 +3833,7 @@ end
 -- appear in our own roster (we don't — the game omits us from the brief) since
 -- an equal name is not "before" us either way.
 local function arenaTeamRingSlot()
-    local me = taPackage._character.name
+    local me = taPackage.character.getName()
     -- Without a name we can't place ourselves, so take the front of the order and
     -- behave like solo. Ringing a beat early is recoverable; never ringing is not.
     if not me then return 0 end
@@ -4626,7 +4660,7 @@ local function arenaTryTrain()
         local gold = taPackage.character.getGold()
         if not gold then return false end
         if gold < need then
-            local name = taPackage._character.name or "?"
+            local name = taPackage.character.getName() or "?"
             sendNtfy("Short of gold for promotion",
                 name .. " is a level 25 " .. taPackage.character.getClass() .. " and needs "
                     .. formatWithCommas(need) .. " gold to buy promotion, but has "
@@ -4950,7 +4984,7 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             local hp = taPackage.character.getVitality()
             local gold = taPackage.character.getGold()
             local nextThreshold = getXpForNextLevel(xp, taPackage.character.getClass())
-            local lines = { "[" .. (taPackage._character.name or "?") .. "]" }
+            local lines = { "[" .. (taPackage.character.getName() or "?") .. "]" }
             if nextThreshold then
                 lines[#lines + 1] = "- XP Until Level Up: "
                     .. formatWithCommas(nextThreshold - xp)
@@ -5266,7 +5300,7 @@ local function stopArena(reason, opts)
         local hp, hpMax = taPackage.character.getVitality()
         local gold = taPackage.character.getGold()
         sendNtfy("Arena stopped", table.concat({
-            "[" .. (taPackage._character.name or "?") .. "] arena "
+            "[" .. (taPackage.character.getName() or "?") .. "] arena "
                 .. (profile or "?") .. " session stopped",
             "- Why: " .. (reason or "stopped"),
             "- Ran: " .. (summary or "?"),
@@ -5436,7 +5470,7 @@ createTrigger("^Sorry to interrupt here, but the BBS will be shutting$", functio
     end
     sendNtfy("Nightly shutdown",
         "The BBS is closing. Scripts stopped and " ..
-        (taPackage._character.name or "the character") .. " is leaving the game"
+        (taPackage.character.getName() or "the character") .. " is leaving the game"
         .. " so nothing carried is lost.")
     -- Stop first: a walk or a fight still issuing commands fights the exit, and
     -- whatever it was doing is about to be interrupted anyway. Through the alias
@@ -5573,7 +5607,7 @@ createTrigger("^(.+)$", function(matches)
     local kind = taPackage.abandonedTickKind
     echo("[abandoned] " .. streak .. " " .. kind .. " ticks with nothing in between"
         .. " — leaving the game (x).")
-    sendNtfy("Abandoned", (taPackage._character.name or "The character")
+    sendNtfy("Abandoned", (taPackage.character.getName() or "The character")
         .. " saw " .. streak .. " " .. kind .. " ticks with no other activity"
         .. " and left the game with x.")
     -- Same order as the nightly shutdown: stop everything first so a wedged
@@ -5629,7 +5663,7 @@ function taPackage.checkIdle(gen)
         local minutes = math.floor(idle / 60000)
         echo("[idle] No commands sent for " .. minutes .. " minutes"
             .. " — leaving the game (x).")
-        sendNtfy("Idle", (taPackage._character.name or "The character")
+        sendNtfy("Idle", (taPackage.character.getName() or "The character")
             .. " sent no commands for " .. minutes .. " minutes"
             .. " and left the game with x.")
         -- Same order as the abandonment check above.
@@ -5702,7 +5736,7 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
     echo("[death] KILLED — stopping every script. Gear and gold are gone; you"
         .. " wake at the temple with a soulstone, or at the BBS menu without one.")
     sendNtfy("Character killed",
-        (taPackage._character.name or "The character") .. " was killed. All scripts"
+        (taPackage.character.getName() or "The character") .. " was killed. All scripts"
         .. " stopped. Equipment and carried gold are lost.")
     -- Read before the stop below clears it.
     local farming = taPackage.goldFarming
@@ -6395,7 +6429,7 @@ createTrigger("^After a rigorous mental and physical training session, you manag
         -- Vitality on the sheet, so both are current by the time we flush. The
         -- `i` after it measures the fee against the gold read before the buy.
         taPackage.levelUpPush = {
-            headline = "[" .. (taPackage._character.name or "?") .. "] trained to level "
+            headline = "[" .. (taPackage.character.getName() or "?") .. "] trained to level "
                 .. newLevel .. "!",
             goldBefore = taPackage.character.getGold(),
             hpBefore = select(2, taPackage.character.getVitality()),
@@ -6421,7 +6455,7 @@ function taPackage.flushPromotionNotification()
     if not pending then return end
     taPackage.promotionPush = nil
     sendNtfy("Promoted!", table.concat({
-        "[" .. (taPackage._character.name or "?") .. "] bought promotion!",
+        "[" .. (taPackage.character.getName() or "?") .. "] bought promotion!",
         "- Old class: " .. (pending.oldClass or "?"),
         "- New class: " .. pending.newClass,
         "- Promotion cost: " .. (pending.cost and formatWithCommas(pending.cost) or "?") .. " gold",
@@ -6466,7 +6500,7 @@ createTrigger("The guild bestows upon you the title of (.+)!$", function(matches
     taPackage.character.setLevel(1)
     taPackage._character.experience = 0
     taPackage.xpChange = nil
-    taPackage._character.earnedLevel = 1
+    taPackage.character.setEarnedLevel(1)
     echo("[arena] Promoted: " .. (oldClass or "?") .. " -> " .. newClass .. ".")
     taPackage.promotionPush = { oldClass = oldClass, newClass = newClass, goldBefore = taPackage.character.getGold() }
     send("st")
@@ -6487,7 +6521,7 @@ createTrigger("^You are not ready for a promotion", function()
     if not taPackage.arenaState then return end
     taPackage.arenaPromotionRefused = true
     echo("[arena] Promotion refused — fighting on without it.")
-    sendNtfy("Promotion refused", (taPackage._character.name or "?")
+    sendNtfy("Promotion refused", (taPackage.character.getName() or "?")
         .. " was told it is not ready for a promotion. Fighting on without it.")
 end, { type = "regex" })
 
@@ -6872,7 +6906,7 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     taPackage.castPending = false
     healingBadge("HEALED " .. string.upper(target) .. " FOR " .. amount)
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", target, "hit", amount, "heal")
-    if target == taPackage._character.name then
+    if target == taPackage.character.getName() then
         local current = taPackage._character.vitalityCurrent
         local max = taPackage._character.vitalityMax
         if current and amount then
@@ -7916,7 +7950,7 @@ createOutboundTrigger("^(.+)$", function(matches)
     if not taPackage.awaitingUsername then return end
     taPackage.awaitingUsername = false
     local username = matches[2]
-    taPackage._character.name = username:sub(1, 1):upper() .. username:sub(2)
+    taPackage.character.setName(username:sub(1, 1):upper() .. username:sub(2))
 end, { type = "regex" })
 
 echo("Finishing reading main.lua")

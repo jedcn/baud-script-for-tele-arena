@@ -12,7 +12,7 @@
 --
 -- The seam, through taPackage (locals are not visible across chunks):
 --
---   in    taPackage.reRollBuilds, taPackage._character, taPackage.currentRoom
+--   in    taPackage.reRollBuilds, taPackage.character, taPackage.currentRoom
 --   out   taPackage.creating, taPackage.stopCreateCharacter,
 --         taPackage.onRerollAccepted, taPackage.onArenaArrivedHome,
 --         taPackage.onFarmingDeath
@@ -201,7 +201,6 @@ end
 -- gate, so the floor line can rebuild the rest of it. The re-roll is decided
 -- before this is called (see farmAssess); everything here assumes a good roll.
 local function farmPlan(room)
-    local c = taPackage._character
     local steps = appendSteps({}, TO_NORTH_PLAZA[room])
 
     if (taPackage.character.getLevel() or 1) >= 2 then
@@ -225,7 +224,10 @@ local function farmPlan(room)
     appendSteps(fromSouthPlaza, fight)
 
     local done = "Kitted out and in the arena — rg 1 has the wheel."
-    local need = { robes = c.armor ~= "Robes", warhammer = c.weapon ~= "Warhammer" }
+    local need = {
+        robes = taPackage.character.getArmor() ~= "Robes",
+        warhammer = taPackage.character.getWeapon() ~= "Warhammer",
+    }
     if need.robes or need.warhammer then
         appendSteps(steps, { "s", { cmd = "sw", await = "gear" } })
         -- Until the floor line says otherwise, assume the gear is lying there:
@@ -568,7 +570,6 @@ local function farmAssess(prefix)
     -- A roll short of the build gets re-rolled before anything is spent on it.
     -- Only at level 1, and only with no potions up: a potion-boosted sheet is
     -- not the roll, and a character that has trained is cashing out anyway.
-    local c = taPackage._character
     local potionsUp = (taPackage.character.getAgility() or 0) > HALF_OGRE_MAX_AGILITY
     if (taPackage.character.getLevel() or 1) < 2 and not potionsUp then
         local ch = taPackage.character
@@ -609,8 +610,8 @@ local function farmAssess(prefix)
 
     local plan = farmPlan(room)
     local steps = appendSteps(appendSteps({}, prefix or {}), plan.steps)
-    echo("[farm] Level " .. tostring(taPackage.character.getLevel()) .. ", " .. tostring(c.weapon) .. "/"
-        .. tostring(c.armor) .. ", in the " .. room .. " — " .. plan.label .. " walk.")
+    echo("[farm] Level " .. tostring(taPackage.character.getLevel()) .. ", " .. tostring(taPackage.character.getWeapon()) .. "/"
+        .. tostring(taPackage.character.getArmor()) .. ", in the " .. room .. " — " .. plan.label .. " walk.")
     createWalkStart(steps, plan.label, plan.doneMsg,
         { need = plan.need, afterGear = plan.afterGear })
 end

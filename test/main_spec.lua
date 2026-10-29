@@ -21584,6 +21584,18 @@ describe("character state across a script reload", function()
         assert.are.equal("Tojolias", taPackage._character.name)
     end)
 
+    it("round-trips name, weapon, armor and earned level", function()
+        local ch = taPackage.character
+        ch.setName("Tojolias")
+        ch.setWeapon("Warhammer")
+        ch.setArmor("Robes")
+        ch.setEarnedLevel(4)
+        assert.are.equal("Tojolias", ch.getName())
+        assert.are.equal("Warhammer", ch.getWeapon())
+        assert.are.equal("Robes", ch.getArmor())
+        assert.are.equal(4, ch.getEarnedLevel())
+    end)
+
     -- A session loaded before the split kept its data in taPackage.character.
     it("adopts data from before the split", function()
         taPackage._character = nil

@@ -1472,7 +1472,7 @@ local function navExitAfterWalk(outcome)
         if taPackage.navExiting ~= pending then return end
         taPackage.navExiting = nil
         sendNtfy("navigate-to " .. armed.destination,
-            (taPackage._character.name or "The character") .. " " .. outcome
+            (taPackage.character.getName() or "The character") .. " " .. outcome
             .. " and is leaving the game.\n" .. table.concat(pending.lines, "\n"))
         taPackage.exitGameWithRetry()
     end, { repeating = false })
