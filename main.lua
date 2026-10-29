@@ -6890,9 +6890,9 @@ createTrigger("^You are still too mentally exhausted from your last incantation!
 end, { type = "regex" })
 
 createOutboundTrigger("^cast kamotu ", function()
-    local current = taPackage._character.manaCurrent
+    local current, max = taPackage.character.getMana()
     if current then
-        taPackage._character.manaCurrent = math.max(0, current - 1)
+        taPackage.character.setMana(math.max(0, current - 1), max)
     end
     taPackage.lastSpellCast = "kamotu"
 end, { type = "regex" })
@@ -6907,10 +6907,10 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     healingBadge("HEALED " .. string.upper(target) .. " FOR " .. amount)
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", target, "hit", amount, "heal")
     if target == taPackage.character.getName() then
-        local current = taPackage._character.vitalityCurrent
-        local max = taPackage._character.vitalityMax
+        local current, max = taPackage.character.getVitality()
         if current and amount then
-            taPackage._character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
+            local healed = current + amount
+            taPackage.character.setVitality(max and math.min(healed, max) or healed, max)
         end
     end
 end, { type = "regex" })
@@ -6933,7 +6933,8 @@ createTrigger("^You discharged the spell at friendly people in the area, healing
         taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", "group", "hit", amount, "heal")
         local current, max = taPackage.character.getVitality()
         if current then
-            taPackage.character.setVitality(max and math.min(current + amount, max) or (current + amount), max)
+            local healed = current + amount
+            taPackage.character.setVitality(max and math.min(healed, max) or healed, max)
         end
     end, { type = "regex" })
 
@@ -6970,10 +6971,10 @@ local function applyPartyHeal(matches)
     local healer = matches[2]
     local amount = tonumber(matches[3])
     healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
-    local current = taPackage._character.vitalityCurrent
-    local max = taPackage._character.vitalityMax
+    local current, max = taPackage.character.getVitality()
     if current and amount then
-        taPackage._character.vitalityCurrent = max and math.min(current + amount, max) or (current + amount)
+        local healed = current + amount
+        taPackage.character.setVitality(max and math.min(healed, max) or healed, max)
     end
 end
 
@@ -6981,17 +6982,17 @@ createTrigger("^(.+) just intoned .+ for you which healed (\\d+)", applyPartyHea
     { type = "regex" })
 
 createOutboundTrigger("^cast komiza ", function()
-    local current = taPackage._character.manaCurrent
+    local current, max = taPackage.character.getMana()
     if current then
-        taPackage._character.manaCurrent = math.max(0, current - 1)
+        taPackage.character.setMana(math.max(0, current - 1), max)
     end
     taPackage.lastSpellCast = "komiza"
 end, { type = "regex" })
 
 createOutboundTrigger("^cast toduza ", function()
-    local current = taPackage._character.manaCurrent
+    local current, max = taPackage.character.getMana()
     if current then
-        taPackage._character.manaCurrent = math.max(0, current - 2)
+        taPackage.character.setMana(math.max(0, current - 2), max)
     end
     taPackage.lastSpellCast = "toduza"
 end, { type = "regex" })
@@ -7030,9 +7031,9 @@ createTrigger("^Your spell was negated by the (.+)'s magickal defenses!$", funct
 end, { type = "regex" })
 
 createOutboundTrigger("^cast motu ", function()
-    local current = taPackage._character.manaCurrent
+    local current, max = taPackage.character.getMana()
     if current then
-        taPackage._character.manaCurrent = math.max(0, current - 1)
+        taPackage.character.setMana(math.max(0, current - 1), max)
     end
     taPackage.lastSpellCast = "motu"
 end, { type = "regex" })
