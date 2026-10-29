@@ -13752,7 +13752,6 @@ describe("spell-name translation aliases", function()
         ["cast-heal-area"]         = "kamotumaru",
         ["cast-cure-poison-area"]  = "dobudanimaru",
         ["cast-greater-heal-area"] = "gimotumaru",
-        ["cast-deific-heal-area"]  = "kusamotumaru",
         ["group-heal"]             = "kusamotumaru",
         ["gh"]                     = "kusamotumaru",
     }
@@ -13764,6 +13763,11 @@ describe("spell-name translation aliases", function()
             assert.are.equal(1, #helper.sendCalls)
         end)
     end
+
+    it("cast-deific-heal-area is gone (use group-heal or gh)", function()
+        helper.simulateAlias("cast-deific-heal-area")
+        assert.are.equal(0, #helper.sendCalls)
+    end)
 
     -- The area alias must not also fire the same-stem targeted alias, and
     -- vice-versa (they differ only by a trailing "-area" vs a space + target).

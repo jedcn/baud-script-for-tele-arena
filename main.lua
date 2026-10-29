@@ -7221,7 +7221,6 @@ local castAreaTranslations = {
     ["cast-heal-area"]         = "kamotumaru",
     ["cast-cure-poison-area"]  = "dobudanimaru",
     ["cast-greater-heal-area"] = "gimotumaru",
-    ["cast-deific-heal-area"]  = "kusamotumaru",
     ["group-heal"]             = "kusamotumaru",
     ["gh"]                     = "kusamotumaru",
 }
