@@ -13753,6 +13753,8 @@ describe("spell-name translation aliases", function()
         ["cast-cure-poison-area"]  = "dobudanimaru",
         ["cast-greater-heal-area"] = "gimotumaru",
         ["cast-deific-heal-area"]  = "kusamotumaru",
+        ["group-heal"]             = "kusamotumaru",
+        ["gh"]                     = "kusamotumaru",
     }
 
     for alias, spell in pairs(area) do
