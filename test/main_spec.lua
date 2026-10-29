@@ -14948,63 +14948,6 @@ describe("ta.follow", function()
 
     end)
 
-    describe("heal.allies alias", function()
-
-        before_each(function()
-            helper.resetAll()
-            dofile("main.lua")
-        end)
-
-        it("scans the group and heals the most injured as an Acolyte", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal.allies")
-            assert.are.equal("group", helper.sendCalls[1])
-            helper.sendCalls = {}
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
-            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
-            helper.simulateLine("Exits: n,sw.")
-            assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
-        end)
-
-        it("still heals the group once promoted to High Priest", function()
-            setClass("High Priest")
-            helper.simulateAlias("heal.allies")
-            assert.are.equal("group", helper.sendCalls[1])
-        end)
-
-        it("chases the listing with `ex` so a terminator line always arrives", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal.allies")
-            assert.are.equal("group", helper.sendCalls[1])
-            assert.are.equal("ex", helper.sendCalls[2])
-        end)
-
-        it("finalizes off the `ex` reply (no following line needed)", function()
-            setClass("Acolyte")
-            helper.simulateAlias("heal.allies")
-            helper.sendCalls = {}
-            helper.simulateLine("Your group currently consists of:")
-            helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
-            helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")
-            -- The "Exits:" line is the guaranteed terminator from `ex`.
-            helper.simulateLine("Exits: n,sw.")
-            assert.are.equal("cast kamotu Teekywiki", helper.sendCalls[1])
-        end)
-
-        it("does nothing and warns when not an Acolyte", function()
-            setClass("Warrior")
-            helper.simulateAlias("heal.allies")
-            assert.are.equal(0, #helper.sendCalls)
-            local warned = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "Acolyte") then warned = true end
-            end
-            assert.is_true(warned)
-        end)
-
-    end)
-
     describe("heal-most-injured-party-member alias", function()
 
         before_each(function()
@@ -15045,14 +14988,15 @@ describe("ta.follow", function()
             assert.are.equal(0, #helper.sendCalls)
         end)
 
-        it("does not leak kusamotu into a later heal.allies", function()
+        it("does not leak kusamotu into a later conferred heal.allies", function()
             setClass("Acolyte")
+            taPackage.followTarget = "tojolias"
             helper.simulateAlias("heal-most-injured-party-member")
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
             helper.simulateLine("Exits: n,sw.")
             taPackage.castPending = false
-            helper.simulateAlias("heal.allies")
+            helper.simulateLine("From Tojolias (to group): heal.allies")
             helper.sendCalls = {}
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("   Kerhak                             [HE: 50% ST:Ready]")
@@ -15392,6 +15336,8 @@ describe("ta.follow", function()
             helper.resetAll()
             dofile("main.lua")
             setClass("Acolyte")
+            -- A leader's `confer heal.allies` runs the default-threshold scan.
+            taPackage.followTarget = "tojolias"
         end)
 
         -- Did any echoed line contain the given substring?
@@ -15403,7 +15349,7 @@ describe("ta.follow", function()
         end
 
         it("logs that all allies are at full health when nobody is hurt", function()
-            helper.simulateAlias("heal.allies")
+            helper.simulateLine("From Tojolias (to group): heal.allies")
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("  Pelayo                             [HE:100% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
@@ -15412,7 +15358,7 @@ describe("ta.follow", function()
         end)
 
         it("logs hurt-but-above-threshold when allies are hurt but none need healing", function()
-            helper.simulateAlias("heal.allies")
+            helper.simulateLine("From Tojolias (to group): heal.allies")
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("  Pelayo                             [HE: 95% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE:100% ST:Ready]")
@@ -15421,7 +15367,7 @@ describe("ta.follow", function()
         end)
 
         it("logs the count and most-injured member when healing", function()
-            helper.simulateAlias("heal.allies")
+            helper.simulateLine("From Tojolias (to group): heal.allies")
             helper.simulateLine("Your group currently consists of:")
             helper.simulateLine("  Pelayo                             [HE: 88% ST:Ready]")
             helper.simulateLine("  Teekywiki                          [HE: 60% ST:Ready]")

@@ -7016,7 +7016,7 @@ local HEAL_THRESHOLD = 90
 
 -- Hard-coded toggle: when true, an Acolyte in the kill loop skips its automatic
 -- in-combat healing (the exhaustion-driven group scan and the cast-clock heal)
--- and just melees for damage. Manually-typed `heal.allies` and the opt-in
+-- and just melees for damage. A conferred `heal.allies` and the opt-in
 -- `heal-allies-in-loop` are unaffected. Flip to false to restore automatic
 -- battle healing. Lives on taPackage so it can also be flipped at runtime via
 -- `/lua taPackage.acolyteAutoHealDisabled = false`.
@@ -7326,16 +7326,6 @@ for _, conferKillPattern in ipairs({ "^confer-kill (.+)$", "^ckill (.+)$", "^ck 
         startKill(matches[2])
     end, { type = "regex" })
 end
-
--- Typed equivalent of the conferred `heal.allies`: an Acolyte scans the group
--- and heals its most-injured member. Non-Acolytes have no group heal to cast.
-createAlias("^heal\\.allies$", function()
-    if isClass("Acolyte") then
-        beginGroupHealScan()
-    else
-        echo("[heal] Only an Acolyte can heal the group.")
-    end
-end, { type = "regex" })
 
 -- Deific heal (kusamotu) on whoever has the lowest HE% in the group listing.
 -- Threshold 100 so anyone short of full counts; at full health it does nothing.
