@@ -2770,43 +2770,6 @@ createAlias("^map-off$", function()
     echo("[map] mapping OFF")
 end, { type = "regex" })
 
--- Arm a one-shot ntfy watcher. The first server line containing <phrase> pushes
--- a single notification, then the trigger removes itself so it never fires
--- again. A literal trigger matches <phrase> anywhere in the line. When
--- andExit is set, we also leave the game afterwards.
-local function armPhraseWatcher(aliasName, arg, andExit)
-    -- Accept the phrase with or without surrounding double quotes.
-    local phrase = arg:match('^"(.*)"$') or arg
-    local triggerId
-    triggerId = createTrigger(phrase, function()
-        removeTrigger(triggerId)
-        -- Name the character rather than saying "I": several characters can be
-        -- watching at once, so the push has to say which one tripped it.
-        sendNtfy(aliasName, "Heads up- " .. (taPackage.character.name or "?")
-            .. " just saw: " .. phrase)
-        echo("[watch] notified: " .. phrase)
-        if andExit then
-            echo("[watch] leaving the game (x).")
-            taPackage.exitGameWithRetry()
-        end
-    end)
-    echo("[watch] will message you once when I see: " .. phrase
-        .. (andExit and " (then leaving the game)" or ""))
-end
-
--- message-me-when-you-see "<phrase>" — notify and stay put.
-createAlias("^message-me-when-you-see (.+)$", function(matches)
-    armPhraseWatcher("message-me-when-you-see", matches[2], false)
-end, { type = "regex" })
-
--- message-me-and-exit-when-you-see "<phrase>" — notify, then get out of the
--- game with "x" so the character is safe from damage by the time the push
--- reaches your phone. Notify *first*: the exit retry loop can take seconds when
--- we're rest-blocked, and the whole point is to hear about the phrase.
-createAlias("^message-me-and-exit-when-you-see (.+)$", function(matches)
-    armPhraseWatcher("message-me-and-exit-when-you-see", matches[2], true)
-end, { type = "regex" })
-
 -- buy-potions — the manual version of the arena's potion round trip: buy and
 -- drink both stat potions (rowan for strength, hyssop for agility) while you're
 -- standing in the magic shop. Each is drunk right after it's bought so a
@@ -2823,15 +2786,6 @@ end, { type = "regex" })
 createAlias("^buy-tavern$", function()
     send("buy meal")
     send("buy drink")
-end, { type = "regex" })
-
--- wait-for-potions-to-wear-off-and-exit — the one phrase we wait on often
--- enough to deserve its own name: the line the game prints when a potion runs
--- out. Same behaviour as message-me-and-exit-when-you-see with that phrase,
--- just without having to remember the wording.
-createAlias("^wait-for-potions-to-wear-off-and-exit$", function()
-    armPhraseWatcher("wait-for-potions-to-wear-off-and-exit",
-        "An odd tingling sensation washes over", true)
 end, { type = "regex" })
 
 -- train-and-exit-once-potions-wear-off — wait out the stat potions in the guild
