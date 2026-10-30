@@ -2149,7 +2149,7 @@ local function arenaResumeInCombat()
 end
 
 -- =========================================================================
--- Paced journey navigation
+-- Arena routes and the paced journey walker
 -- =========================================================================
 -- Some destinations are several rooms away, and moving between them too fast
 -- makes the character fall down. A "journey" walks such a route one step at a
@@ -2348,6 +2348,10 @@ local function arenaJourneyStart(steps, arriveRoom, fromRoom)
     taPackage.arenaJourney = { steps = steps, index = 0, arriveRoom = arriveRoom, fromRoom = fromRoom }
     arenaJourneyStep()
 end
+
+-- =========================================================================
+-- Arena errands: the bar, the shop and coming home
+-- =========================================================================
 
 -- Head to the bar. Its confirmation lines differ from the first arena's tavern
 -- ("The barmaid brings you a drink..."), but the buy commands are the same and
@@ -2549,6 +2553,10 @@ local function arenaRingOrErrand()
     end
 end
 
+-- =========================================================================
+-- Advancing a journey, one room at a time
+-- =========================================================================
+
 -- Advance the walk one room at a time. Called for every "You're ..." line while
 -- a paced journey is active. Reaching the leg's destination room fires that
 -- leg's action (heal, buy, or resume combat); any other room is an intermediate
@@ -2644,6 +2652,10 @@ local function arenaJourneyOnMovement(room)
         arenaArrivedHome()
     end
 end
+
+-- =========================================================================
+-- Arena training and promotion
+-- =========================================================================
 
 -- A promotion is owed once a base class has trained to 25, the top of its
 -- ladder (the status bar's "(max)"). The class name is the whole of the state:
@@ -2778,6 +2790,10 @@ end
 -- level owed has to be banked on arriving home too, not only at the post-kill
 -- decision point (see the comment there).
 taPackage.arenaTryTrain = arenaTryTrain
+
+-- =========================================================================
+-- Arena healing and fleeing
+-- =========================================================================
 
 -- Flee at 75% of max HP, but never below an absolute floor. The percentage
 -- alone is unsafe for low-HP characters: a level-2 Sorceror (31 max HP) at 60%
@@ -2921,6 +2937,10 @@ end
 function departForTavern()
     departForBar()
 end
+
+-- =========================================================================
+-- Arena XP polling
+-- =========================================================================
 
 -- How long to wait before asking for XP again.
 --
@@ -3097,6 +3117,10 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     end
 end, { type = "regex" })
 
+-- =========================================================================
+-- Starting away from the arena: the walk home
+-- =========================================================================
+
 -- A session started outside the arena walks home before anything else. Every
 -- route the loop knows sets out from the arena, so starting anywhere else rang
 -- the gong in a plaza, or (starting hurt) sent the temple route's "sw" from a
@@ -3159,6 +3183,10 @@ createTrigger("^Exits: (.+)\\.$", function(matches)
     taPackage.arenaState = "returning"
     arenaJourneyStart(route, arenaNav().arenaRoom, nil)
 end, { type = "regex" })
+
+-- =========================================================================
+-- Starting an arena session (rg, tfia)
+-- =========================================================================
 
 -- Start an arena session. profile "1" is the original adjacent-rooms arena;
 -- profiles "2" and "3" share this combat engine but walk their distant
@@ -3365,6 +3393,10 @@ for _, teamAliasPattern in ipairs({ "^team-fight-in-arena(.*)$", "^tfia(.*)$" })
     end, { type = "regex" })
 end
 
+-- =========================================================================
+-- Stopping an arena session
+-- =========================================================================
+
 -- `reason` says why, for the push below; `opts.quiet` skips the push, for a
 -- caller that stops the arena only to hand over to something that reports for
 -- itself (the gold-farming cash-out).
@@ -3477,6 +3509,10 @@ function taPackage.arenaStopIfArmed(reason)
     stopArena("stop-after-next: " .. reason)
     return true
 end
+
+-- =========================================================================
+-- Leaving the game
+-- =========================================================================
 
 -- Leave the game with "x", and keep re-sending it until the game confirms.
 --
@@ -3846,6 +3882,10 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
     if farming and taPackage.onFarmingDeath then taPackage.onFarmingDeath() end
 end, { type = "regex" })
 
+-- =========================================================================
+-- Arena safety exits: the gold floor and unrelieved thirst
+-- =========================================================================
+
 -- The arena loop only stays alive while it can pay the temple for healing and
 -- the shop for potions. If our gold ever falls below this floor (ARENA_MIN_GOLD,
 -- declared up with ARENA_NAV so the training gate can count it), the next such
@@ -3880,6 +3920,10 @@ local function arenaCheckParched()
     end
     return false
 end
+
+-- =========================================================================
+-- Stopping the arena by hand
+-- =========================================================================
 
 -- One stop for every arena: stopArena() clears the profile along with the rest
 -- of the session, so there was never anything per-arena about stopping.
@@ -3923,6 +3967,10 @@ createAlias("^stop-after-next$", function()
         .. " if it ends hurt). There is no cancel; stop-arena-fight or"
         .. " stop-all-scripts to stop right now.")
 end, { type = "regex" })
+
+-- =========================================================================
+-- The gong
+-- =========================================================================
 
 -- Our own gong ring is confirmed by this line; the monster we summoned arrives
 -- on the very next "enters the arena" line. The arena is shared, so other
@@ -4030,6 +4078,10 @@ createTrigger("^(.+) just rang the great gong!$", function(matches)
         end
     end, { repeating = false })
 end, { type = "regex" })
+
+-- =========================================================================
+-- The monster: summons, the room roster and the floor line
+-- =========================================================================
 
 -- Adopt a freshly-spawned monster. Solo, only the one that followed *our* ring
 -- (arenaOwnSummonPending): without that guard a monster summoned by another
@@ -4142,6 +4194,10 @@ createTrigger("^There .+ on the floor\\.$", function()
     if taPackage.arenaState ~= "ringing" then return end
     arenaRingOrErrand()
 end, { type = "regex" })
+
+-- =========================================================================
+-- Fighting: our swings, the kill and attacks on us
+-- =========================================================================
 
 -- Hit, miss and dodge all mean the same thing to the physical clock: the game
 -- ACCEPTED a swing and spent a tick of the burst. Stamping the time here is what
@@ -4257,6 +4313,10 @@ createTrigger("^You barely dodge the .+'s attack!$", function()
     arenaAttack()
 end, { type = "regex" })
 
+-- =========================================================================
+-- Arena room briefs: the steps of a journey
+-- =========================================================================
+
 -- Every arena leg is a paced journey now, so a room line means one thing: a
 -- step of the walk in progress. These four also remember the room the brief
 -- named (arenaLastRoom), journey or not, so a session started anywhere knows
@@ -4337,6 +4397,10 @@ createTrigger("^In your haste, you trip and fall!$", function()
     end, { repeating = false })
 end, { type = "regex" })
 
+-- =========================================================================
+-- Thirst, hunger and potions in the arena
+-- =========================================================================
+
 -- In a group (see inGroup), drink from the waterskin the moment thirst bites.
 -- Without one the game just refuses.
 createTrigger("^You're thirsty\\.$", function()
@@ -4405,6 +4469,10 @@ createTrigger("^An odd tingling sensation washes over you briefly!$", function()
         echo("[arena] A potion wore off — will restock at next shop visit.")
     end
 end, { type = "regex" })
+
+-- =========================================================================
+-- Training and promotion results, and their notifications
+-- =========================================================================
 
 -- How long to wait for the character sheet and inventory we ask for after training before
 -- pushing the level-up notification without the HP/MP figures. The sheet comes
@@ -4616,6 +4684,10 @@ createTrigger("^You are not ready for a promotion", function()
         .. " was told it is not ready for a promotion. Fighting on without it.")
 end, { type = "regex" })
 
+-- =========================================================================
+-- The temple: restoring and healing
+-- =========================================================================
+
 -- The taint is gone: every stat is back at base, so the hall will take us. Zero
 -- the count outright rather than decrementing it — restoring does not care how
 -- many potions were up, and this is the one line that proves the buy landed. The
@@ -4656,194 +4728,12 @@ createTrigger("^The priests heal all your wounds for \\d+ crowns\\.$", function(
 end, { type = "regex" })
 
 -- =========================================================================
--- hang-around-in-tavern-and-deposit-gold
---
--- A standalone "idle in a tavern" mode, independent of the arena scripts. It
--- parks the character in a bar and keeps it fed and watered: buy a meal when
--- hungry, a drink when thirsty. Two things end it, both by leaving the game
--- with "x": HP falling below half (something is hurting us faster than we can
--- recover — e.g. we ran out of money and hunger/thirst is grinding us down),
--- or a purchase failing for lack of money (the direct signal for the same).
---
--- It also arms banking (ta_bank.lua), which is where the name's second half
--- comes from. The character sitting in the tavern is the one the gold farm
--- hands its takings to, so "idling here" and "deposit what arrives" are the
--- same job; keeping them as two switches meant banking was never once armed in
--- a real session. Stopping the mode disarms banking again, so the pair goes
--- down together.
+-- Blocked moves, exhaustion and spell results
 -- =========================================================================
-
-local TAVERN_HP_FRACTION = 0.5        -- exit if current HP drops below this share of max
-local TAVERN_STATUS_POLL_MS = 600000 -- low-frequency HP heartbeat (10 min); see scheduleTavernPoll
-
--- Session accounting. The whole point of parking a character here is the gold
--- the farm hands it, and until now a run said nothing about how that was going:
--- the only evidence was counting "[bank] Deposited ..." lines in the log after
--- the fact. So keep two numbers from the moment the mode is armed — when it
--- started, and how much gold has arrived since — and report them as a rate,
--- which is the figure that actually answers "is this round worth leaving up?".
 --
--- Both live on taPackage rather than in locals so they survive reloadScript()
--- mid-run; a reload that reset the clock would silently inflate the rate.
-local function tavernSummary()
-    local elapsed = os.time() - (taPackage.tavernStartTime or os.time())
-    if elapsed < 0 then elapsed = 0 end
-    local hours = math.floor(elapsed / 3600)
-    local minutes = math.floor((elapsed % 3600) / 60)
-    local uptime = hours > 0 and (hours .. "h " .. minutes .. "m") or (minutes .. "m")
-    local gold = taPackage.tavernGoldReceived or 0
-    -- Under a minute there is no meaningful rate — dividing by a fraction of a
-    -- minute turns the first handover into a fantasy figure ("49,320 gold/min").
-    local rate = elapsed >= 60
-        and string.format("%.1f", gold / (elapsed / 60)) .. " gold/min"
-        or "rate n/a yet"
-    return "up " .. uptime .. ", " .. formatWithCommas(gold) .. " gold received ("
-        .. rate .. ")"
-end
-
-local function isTavernRoom(room)
-    if not room then return false end
-    local r = room:lower()
-    return r:find("tavern") ~= nil or r:find("bar") ~= nil
-end
-
--- Leave the game and stop the mode. Bumping the generation invalidates any
--- poll timer still in flight so it can't re-arm after we've quit.
-local function tavernExitGame(reason)
-    echo("[tavern] " .. reason .. " — leaving the game. Session: " .. tavernSummary() .. ".")
-    taPackage.tavernMode = false
-    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
-    -- Disarm banking on the way out. We're about to be logged out, and a
-    -- deposit trip that fires after that would walk a character who isn't
-    -- there — or worse, resume mid-route on the next login.
-    taPackage.stopBanking()
-    send("x")
-end
-
--- Hunger/thirst damage is NOT silent: the game prints "You're hungry." /
--- "You're thirsty." on every 1-HP tick, and the triggers below react to each by
--- buying food/drink. The real "we're being ground down" case — out of money — is
--- caught directly by the "You can't afford ..." trigger, which exits at once. So
--- this poll isn't the primary safety mechanism; it's just an occasional HP
--- heartbeat (10 min) to catch anything unforeseen. The Vitality trigger below
--- reads the fresh line and decides whether to bail.
-local function scheduleTavernPoll()
-    local gen = taPackage.tavernModeGen
-    createTimer(TAVERN_STATUS_POLL_MS, function()
-        if not taPackage.tavernMode or taPackage.tavernModeGen ~= gen then return end
-        -- Ride the heartbeat for the check-in too, so an idle run says where it
-        -- is every 10 minutes instead of only when gold happens to land.
-        echo("[tavern] " .. os.date("%H:%M:%S") .. " — " .. tavernSummary() .. ".")
-        send("st")
-        scheduleTavernPoll()
-    end, { repeating = false })
-end
-
--- Stop tavern idle mode without leaving the game. Returns true if it was
--- running. Bumping the generation invalidates any poll timer in flight so it
--- can't re-arm. Shared by stop-hang-around-in-tavern-and-deposit-gold and
--- stop-all-scripts.
---
--- Banking goes down with it, including a deposit trip already in flight —
--- stopping the mode should leave nothing walking. Someone who armed banking on
--- its own with start-banking and then idled in a tavern loses it here too;
--- that's the cost of one switch for both, and start-banking re-arms it.
-local function stopTavernMode()
-    if not taPackage.tavernMode then return false end
-    taPackage.tavernMode = false
-    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
-    taPackage.stopBanking()
-    return true
-end
-
-createAlias("^hang-around-in-tavern-and-deposit-gold$", function()
-    -- Judge the room from the name the last arrival brief left behind. Don't
-    -- send a `look` first: send() is fire-and-forget, so its reply lands long
-    -- after this function has returned, and a look's opening line is
-    -- deliberately not treated as an arrival anyway (see
-    -- handleRoomEntryUnlessLooking) -- it could never set currentRoom.
-    local room = taPackage.currentRoom
-    if not isTavernRoom(room) then
-        echo("[tavern] Not in a tavern/bar (room: " .. (room or "unknown")
-            .. "). Walk into one first, then run"
-            .. " hang-around-in-tavern-and-deposit-gold.")
-        return
-    end
-    taPackage.tavernMode = true
-    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
-    taPackage.tavernStartTime = os.time()
-    taPackage.tavernGoldReceived = 0
-    echo("[tavern] Hanging around in the " .. room
-        .. ". Buying meals/drinks as needed; will leave (x) if HP drops below 50% or money runs out.")
-    -- Arm banking too. ta_bank.lua's route home ends "ne" into the first town's
-    -- tavern, so a deposit trip started from any other bar walks back to the
-    -- wrong room -- but that is ta_bank's route to fix, and arming it here is
-    -- what the alias name promises.
-    taPackage.startBanking()
-    send("st") -- prime HP tracking so the first poll isn't the first reading
-    scheduleTavernPoll()
-end, { type = "regex" })
-
-createAlias("^stop-hang-around-in-tavern-and-deposit-gold$", function()
-    -- Read the summary before stopping: stopTavernMode leaves the numbers
-    -- alone, but the reading belongs to the run that just ended, so take it
-    -- first and say it in the same breath as "stopped".
-    local summary = tavernSummary()
-    if stopTavernMode() then
-        echo("[tavern] Stopped hanging around, banking disarmed (still in the game). Session: "
-            .. summary .. ".")
-    else
-        echo("[tavern] Not currently hanging around.")
-    end
-end, { type = "regex" })
-
-createTrigger("^You're hungry\\.$", function()
-    if not taPackage.tavernMode then return end
-    send("buy meal")
-end, { type = "regex" })
-
-createTrigger("^You're thirsty\\.$", function()
-    if not taPackage.tavernMode then return end
-    send("buy drink")
-end, { type = "regex" })
-
--- Gold landed. ta_bank.lua has its own trigger on this line (it starts the
--- deposit trip); this one only keeps score, so it stays here with the rest of
--- the tavern session and counts every handover — including one that arrives
--- while we're already walking to the vaults, which ta_bank declines to bank but
--- which is money we were nonetheless given.
-createTrigger("^(\\S+) just gave you (\\d+) gold coins\\.$", function(matches)
-    if not taPackage.tavernMode then return end
-    taPackage.tavernGoldReceived = (taPackage.tavernGoldReceived or 0)
-        + (tonumber(matches[3]) or 0)
-    echo("[tavern] +" .. matches[3] .. " gold from " .. matches[2] .. " — "
-        .. tavernSummary() .. ".")
-end, { type = "regex" })
-
--- A purchase we asked for was refused for lack of funds. In tavern mode the only
--- things we buy are meals and drinks ("You can't afford drink.", "... a meal.");
--- in an arena run it's healing ("You can't afford healing.") and potions
--- ("... a rowan potion.", "... a hyssop potion."). Either way an affordability
--- failure is ours and means we're broke: quit at once before hunger/thirst or
--- the next unhealed fight grinds the character down.
-createTrigger("^You can't afford (.+)\\.$", function(matches)
-    if taPackage.tavernMode then
-        tavernExitGame("Out of money (can't afford " .. matches[2] .. ")")
-    elseif taPackage.arenaState then
-        arenaEmergencyExit("Out of money (can't afford " .. matches[2] .. ")")
-    end
-end, { type = "regex" })
-
--- A fresh Vitality reading — from our poll, or any status check. If we've
--- dropped below half health while idling, leave the game.
-createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
-    if not taPackage.tavernMode then return end
-    local current = tonumber(matches[2])
-    local max = tonumber(matches[3])
-    if current and max and max > 0 and current < max * TAVERN_HP_FRACTION then
-        tavernExitGame("HP below 50% (" .. current .. "/" .. max .. ")")
-    end
-end, { type = "regex" })
+-- Mostly the arena's: a walk-out a monster blocks, a swing or cast refused for
+-- exhaustion, a spell that lands or fizzles. The mana and vitality bookkeeping
+-- for our own casts and heals sits here too, and runs in or out of the arena.
 
 -- Any walk-out that gets blocked by a monster — fleeing to the temple, an errand
 -- run to the bar ("tavern") or magic shop ("potions"), or a level being banked
@@ -5127,6 +5017,196 @@ createOutboundTrigger("^cast motu ", function()
         taPackage.character.setMana(math.max(0, current - 1), max)
     end
     taPackage.lastSpellCast = "motu"
+end, { type = "regex" })
+
+-- =========================================================================
+-- hang-around-in-tavern-and-deposit-gold
+--
+-- A standalone "idle in a tavern" mode, independent of the arena scripts. It
+-- parks the character in a bar and keeps it fed and watered: buy a meal when
+-- hungry, a drink when thirsty. Two things end it, both by leaving the game
+-- with "x": HP falling below half (something is hurting us faster than we can
+-- recover — e.g. we ran out of money and hunger/thirst is grinding us down),
+-- or a purchase failing for lack of money (the direct signal for the same).
+--
+-- It also arms banking (ta_bank.lua), which is where the name's second half
+-- comes from. The character sitting in the tavern is the one the gold farm
+-- hands its takings to, so "idling here" and "deposit what arrives" are the
+-- same job; keeping them as two switches meant banking was never once armed in
+-- a real session. Stopping the mode disarms banking again, so the pair goes
+-- down together.
+-- =========================================================================
+
+local TAVERN_HP_FRACTION = 0.5        -- exit if current HP drops below this share of max
+local TAVERN_STATUS_POLL_MS = 600000 -- low-frequency HP heartbeat (10 min); see scheduleTavernPoll
+
+-- Session accounting. The whole point of parking a character here is the gold
+-- the farm hands it, and until now a run said nothing about how that was going:
+-- the only evidence was counting "[bank] Deposited ..." lines in the log after
+-- the fact. So keep two numbers from the moment the mode is armed — when it
+-- started, and how much gold has arrived since — and report them as a rate,
+-- which is the figure that actually answers "is this round worth leaving up?".
+--
+-- Both live on taPackage rather than in locals so they survive reloadScript()
+-- mid-run; a reload that reset the clock would silently inflate the rate.
+local function tavernSummary()
+    local elapsed = os.time() - (taPackage.tavernStartTime or os.time())
+    if elapsed < 0 then elapsed = 0 end
+    local hours = math.floor(elapsed / 3600)
+    local minutes = math.floor((elapsed % 3600) / 60)
+    local uptime = hours > 0 and (hours .. "h " .. minutes .. "m") or (minutes .. "m")
+    local gold = taPackage.tavernGoldReceived or 0
+    -- Under a minute there is no meaningful rate — dividing by a fraction of a
+    -- minute turns the first handover into a fantasy figure ("49,320 gold/min").
+    local rate = elapsed >= 60
+        and string.format("%.1f", gold / (elapsed / 60)) .. " gold/min"
+        or "rate n/a yet"
+    return "up " .. uptime .. ", " .. formatWithCommas(gold) .. " gold received ("
+        .. rate .. ")"
+end
+
+local function isTavernRoom(room)
+    if not room then return false end
+    local r = room:lower()
+    return r:find("tavern") ~= nil or r:find("bar") ~= nil
+end
+
+-- Leave the game and stop the mode. Bumping the generation invalidates any
+-- poll timer still in flight so it can't re-arm after we've quit.
+local function tavernExitGame(reason)
+    echo("[tavern] " .. reason .. " — leaving the game. Session: " .. tavernSummary() .. ".")
+    taPackage.tavernMode = false
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    -- Disarm banking on the way out. We're about to be logged out, and a
+    -- deposit trip that fires after that would walk a character who isn't
+    -- there — or worse, resume mid-route on the next login.
+    taPackage.stopBanking()
+    send("x")
+end
+
+-- Hunger/thirst damage is NOT silent: the game prints "You're hungry." /
+-- "You're thirsty." on every 1-HP tick, and the triggers below react to each by
+-- buying food/drink. The real "we're being ground down" case — out of money — is
+-- caught directly by the "You can't afford ..." trigger, which exits at once. So
+-- this poll isn't the primary safety mechanism; it's just an occasional HP
+-- heartbeat (10 min) to catch anything unforeseen. The Vitality trigger below
+-- reads the fresh line and decides whether to bail.
+local function scheduleTavernPoll()
+    local gen = taPackage.tavernModeGen
+    createTimer(TAVERN_STATUS_POLL_MS, function()
+        if not taPackage.tavernMode or taPackage.tavernModeGen ~= gen then return end
+        -- Ride the heartbeat for the check-in too, so an idle run says where it
+        -- is every 10 minutes instead of only when gold happens to land.
+        echo("[tavern] " .. os.date("%H:%M:%S") .. " — " .. tavernSummary() .. ".")
+        send("st")
+        scheduleTavernPoll()
+    end, { repeating = false })
+end
+
+-- Stop tavern idle mode without leaving the game. Returns true if it was
+-- running. Bumping the generation invalidates any poll timer in flight so it
+-- can't re-arm. Shared by stop-hang-around-in-tavern-and-deposit-gold and
+-- stop-all-scripts.
+--
+-- Banking goes down with it, including a deposit trip already in flight —
+-- stopping the mode should leave nothing walking. Someone who armed banking on
+-- its own with start-banking and then idled in a tavern loses it here too;
+-- that's the cost of one switch for both, and start-banking re-arms it.
+local function stopTavernMode()
+    if not taPackage.tavernMode then return false end
+    taPackage.tavernMode = false
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    taPackage.stopBanking()
+    return true
+end
+
+createAlias("^hang-around-in-tavern-and-deposit-gold$", function()
+    -- Judge the room from the name the last arrival brief left behind. Don't
+    -- send a `look` first: send() is fire-and-forget, so its reply lands long
+    -- after this function has returned, and a look's opening line is
+    -- deliberately not treated as an arrival anyway (see
+    -- handleRoomEntryUnlessLooking) -- it could never set currentRoom.
+    local room = taPackage.currentRoom
+    if not isTavernRoom(room) then
+        echo("[tavern] Not in a tavern/bar (room: " .. (room or "unknown")
+            .. "). Walk into one first, then run"
+            .. " hang-around-in-tavern-and-deposit-gold.")
+        return
+    end
+    taPackage.tavernMode = true
+    taPackage.tavernModeGen = (taPackage.tavernModeGen or 0) + 1
+    taPackage.tavernStartTime = os.time()
+    taPackage.tavernGoldReceived = 0
+    echo("[tavern] Hanging around in the " .. room
+        .. ". Buying meals/drinks as needed; will leave (x) if HP drops below 50% or money runs out.")
+    -- Arm banking too. ta_bank.lua's route home ends "ne" into the first town's
+    -- tavern, so a deposit trip started from any other bar walks back to the
+    -- wrong room -- but that is ta_bank's route to fix, and arming it here is
+    -- what the alias name promises.
+    taPackage.startBanking()
+    send("st") -- prime HP tracking so the first poll isn't the first reading
+    scheduleTavernPoll()
+end, { type = "regex" })
+
+createAlias("^stop-hang-around-in-tavern-and-deposit-gold$", function()
+    -- Read the summary before stopping: stopTavernMode leaves the numbers
+    -- alone, but the reading belongs to the run that just ended, so take it
+    -- first and say it in the same breath as "stopped".
+    local summary = tavernSummary()
+    if stopTavernMode() then
+        echo("[tavern] Stopped hanging around, banking disarmed (still in the game). Session: "
+            .. summary .. ".")
+    else
+        echo("[tavern] Not currently hanging around.")
+    end
+end, { type = "regex" })
+
+createTrigger("^You're hungry\\.$", function()
+    if not taPackage.tavernMode then return end
+    send("buy meal")
+end, { type = "regex" })
+
+createTrigger("^You're thirsty\\.$", function()
+    if not taPackage.tavernMode then return end
+    send("buy drink")
+end, { type = "regex" })
+
+-- Gold landed. ta_bank.lua has its own trigger on this line (it starts the
+-- deposit trip); this one only keeps score, so it stays here with the rest of
+-- the tavern session and counts every handover — including one that arrives
+-- while we're already walking to the vaults, which ta_bank declines to bank but
+-- which is money we were nonetheless given.
+createTrigger("^(\\S+) just gave you (\\d+) gold coins\\.$", function(matches)
+    if not taPackage.tavernMode then return end
+    taPackage.tavernGoldReceived = (taPackage.tavernGoldReceived or 0)
+        + (tonumber(matches[3]) or 0)
+    echo("[tavern] +" .. matches[3] .. " gold from " .. matches[2] .. " — "
+        .. tavernSummary() .. ".")
+end, { type = "regex" })
+
+-- A purchase we asked for was refused for lack of funds. In tavern mode the only
+-- things we buy are meals and drinks ("You can't afford drink.", "... a meal.");
+-- in an arena run it's healing ("You can't afford healing.") and potions
+-- ("... a rowan potion.", "... a hyssop potion."). Either way an affordability
+-- failure is ours and means we're broke: quit at once before hunger/thirst or
+-- the next unhealed fight grinds the character down.
+createTrigger("^You can't afford (.+)\\.$", function(matches)
+    if taPackage.tavernMode then
+        tavernExitGame("Out of money (can't afford " .. matches[2] .. ")")
+    elseif taPackage.arenaState then
+        arenaEmergencyExit("Out of money (can't afford " .. matches[2] .. ")")
+    end
+end, { type = "regex" })
+
+-- A fresh Vitality reading — from our poll, or any status check. If we've
+-- dropped below half health while idling, leave the game.
+createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
+    if not taPackage.tavernMode then return end
+    local current = tonumber(matches[2])
+    local max = tonumber(matches[3])
+    if current and max and max > 0 and current < max * TAVERN_HP_FRACTION then
+        tavernExitGame("HP below 50% (" .. current .. "/" .. max .. ")")
+    end
 end, { type = "regex" })
 
 -- =========================================================================
