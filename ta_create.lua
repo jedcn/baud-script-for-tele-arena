@@ -12,7 +12,7 @@
 --
 -- The seam, through taPackage (locals are not visible across chunks):
 --
---   in    taPackage.reRollBuilds, taPackage.character, taPackage.currentRoom
+--   in    taPackage.reroll.builds, taPackage.character, taPackage.currentRoom
 --   out   taPackage.creating, taPackage.stopCreateCharacter,
 --         taPackage.onRerollAccepted, taPackage.onArenaArrivedHome,
 --         taPackage.onFarmingDeath
@@ -581,7 +581,7 @@ local function farmAssess(prefix)
             agility   = ch.getAgility() or 0,
             charisma  = ch.getCharisma() or 0,
         }
-        local good = taPackage.reRollBuilds.halfOgreWarriorFast(stats)
+        local good = taPackage.reroll.builds.halfOgreWarriorFast(stats)
         if not good then
             echo("[farm] Stats short of the roll — starting re-roll-half-ogre-warrior-fast-mode.")
             -- Only a re-roll WE started may end in a walk to the arena. A
