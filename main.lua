@@ -1379,14 +1379,19 @@ local function killAllScan()
 end
 taPackage.killAllScan = killAllScan
 
-createAlias("^kill-all$", function()
+local function handleKillAllAlias()
     if taPackage.arenaState then
         echo("[kill] Cannot start — arena session is active.")
         return
     end
     taPackage.killAllActive = true
     killAllScan()
-end, { type = "regex" })
+end
+
+createAlias("^kill-all$", handleKillAllAlias, { type = "regex" })
+
+-- Shorthand: `ka` behaves exactly like `kill-all`.
+createAlias("^ka$", handleKillAllAlias, { type = "regex" })
 
 -- Response to the kill-all probe: the room brief's occupant line. Engage the
 -- first monster, or end the sweep when the room is clear ("nobody"). The \S+

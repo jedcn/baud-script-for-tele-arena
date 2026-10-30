@@ -14572,6 +14572,20 @@ describe("ta.follow", function()
                 assert.is_true(taPackage.killAllActive)
             end)
 
+            it("starts the same sweep from the shorthand `ka`", function()
+                helper.simulateAlias("ka")
+                assert.are.equal("", helper.sendCalls[1])
+                assert.is_true(taPackage.killAllActive)
+                helper.simulateLine("There is a warlock here.")
+                assert.are.equal("warlock", taPackage.killTarget)
+            end)
+
+            it("refuses `ka` during an arena session, as kill-all does", function()
+                taPackage.arenaState = "fighting"
+                helper.simulateAlias("ka")
+                assert.is_falsy(taPackage.killAllActive)
+            end)
+
             it("engages the first monster from the room brief", function()
                 helper.simulateAlias("kill-all")
                 helper.simulateLine("You're in a flagstone corridor.")
