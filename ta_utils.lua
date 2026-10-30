@@ -30,7 +30,8 @@ function taPackage.utils.trimLine(line)
 end
 
 -- Group an integer into comma-separated thousands, e.g. 620046 -> "620,046".
--- Display-only (notifications); returns non-numbers unchanged.
+-- Display-only (the status bar and notifications). Takes a number or a numeric
+-- string, floors a fraction, and returns anything else as tostring() of it.
 function taPackage.utils.formatWithCommas(n)
     local num = tonumber(n)
     if not num then return tostring(n) end
@@ -41,19 +42,6 @@ function taPackage.utils.formatWithCommas(n)
         if replaced == 0 then break end
     end
     return s
-end
-
--- The status bar's own thousands separator. It differs from formatWithCommas
--- only at the edges: nil stays nil, and a non-integer is passed through as
--- written rather than floored.
-function taPackage.utils.commafy(value)
-    if value == nil then return nil end
-    local s = tostring(value)
-    local sign, digits = s:match("^(%-?)(%d+)$")
-    if not digits then return s end
-    local formatted = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-    formatted = formatted:gsub("^,", "")
-    return sign .. formatted
 end
 
 -- Fire-and-forget push to our ntfy topic. `title` becomes the notification

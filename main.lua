@@ -1055,7 +1055,7 @@ local function xpChangeText(xp, class)
     if not (before and after) then return nil end
     local delta = after - before
     if delta == 0 then return nil end
-    return (delta > 0 and "+" or "") .. taPackage.utils.commafy(delta)
+    return (delta > 0 and "+" or "") .. taPackage.utils.formatWithCommas(delta)
 end
 
 local function status()
@@ -1064,7 +1064,7 @@ local function status()
     local manaCurrent, manaMax = taPackage.character.getMana()
     local xp = taPackage.character.getExperience()
     local nextLevelXp = xp and taPackage.xp.getXpForNextLevel(xp, taPackage.character.getClass())
-    local gold = taPackage.character.getGold() and taPackage.utils.commafy(taPackage.character.getGold()) or "?"
+    local gold = taPackage.character.getGold() and taPackage.utils.formatWithCommas(taPackage.character.getGold()) or "?"
 
     local charName = taPackage.character.getName()
     local charClass = taPackage.character.getClass()
@@ -1086,15 +1086,15 @@ local function status()
         { text = nameText, fg = "white" },
         { text = "HP:" },
         {
-            text = vitalityCurrent and taPackage.utils.commafy(vitalityCurrent) or "?",
+            text = vitalityCurrent and taPackage.utils.formatWithCommas(vitalityCurrent) or "?",
             fg = vitalityColor(vitalityCurrent, vitalityMax)
         },
-        { text = vitalityMax and ("/ " .. taPackage.utils.commafy(vitalityMax)) or "", fg = "white" },
+        { text = vitalityMax and ("/ " .. taPackage.utils.formatWithCommas(vitalityMax)) or "", fg = "white" },
     }
     if manaMax and manaMax > 0 then
         table.insert(segments, { text = "MP:", fg = "green" })
-        table.insert(segments, { text = manaCurrent and taPackage.utils.commafy(manaCurrent) or "?", fg = "cyan" })
-        table.insert(segments, { text = "/ " .. taPackage.utils.commafy(manaMax), fg = "cyan" })
+        table.insert(segments, { text = manaCurrent and taPackage.utils.formatWithCommas(manaCurrent) or "?", fg = "cyan" })
+        table.insert(segments, { text = "/ " .. taPackage.utils.formatWithCommas(manaMax), fg = "cyan" })
     end
     -- Only ever show the XP remaining to the next level as "(<xp remaining>)".
     -- "?" when XP is unknown, "(max)" at the top level where there's no next.
@@ -1102,7 +1102,7 @@ local function status()
     if not xp then
         remainingText = "?"
     elseif nextLevelXp then
-        remainingText = "(" .. taPackage.utils.commafy(nextLevelXp - xp) .. ")"
+        remainingText = "(" .. taPackage.utils.formatWithCommas(nextLevelXp - xp) .. ")"
     else
         remainingText = "(max)"
     end
