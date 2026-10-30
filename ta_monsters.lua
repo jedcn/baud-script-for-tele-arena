@@ -8,16 +8,13 @@
 -- Loaded by main.lua with dofile, where the `look <target>` triggers used to
 -- sit. A separate chunk; the seam runs through taPackage:
 --
---   in    taPackage.monsterDbPath (main.lua: only main.lua's absoluteScriptDir
+--   in    taPackage.monsterStorePath (main.lua: only main.lua's absoluteScriptDir
 --         gives the right directory), taPackage.db (ta_db.lua),
 --         taPackage.currentRoom
---   out   taPackage.monsters.getEntry, .getDbState, .onLookLine (main.lua's
---         catch-all look trigger), .clearPresence (the kill trigger), and
---         taPackage.monsterDb, whose `state` the room-description capture in
---         main.lua and ta_map.lua shares
---
--- taPackage.monsterDb and taPackage.roomPresence keep their names: they survive
--- reloadScript(), and the description capture already reads monsterDb.state.
+--   out   taPackage.monsters.getEntry, .getLookState, .onLookLine (main.lua's
+--         catch-all look trigger), .clearPresence (the kill trigger),
+--         taPackage.monsterStore, and taPackage.lookCapture, which the
+--         room-description capture in main.lua and ta_map.lua shares
 
 taPackage.monsters = {}
 
@@ -25,13 +22,42 @@ if not taPackage.roomPresence then
     taPackage.roomPresence = {}
 end
 
-if not taPackage.monsterDb then
+-- Two tables that outlive reloadScript():
+--
+--   monsterStore  the monster database itself: loaded from monsters.lua once per
+--                 baud session, and saved back on every change
+--   lookCapture   the `look` being read right now. Shared with the room-
+--                 description capture in main.lua, which reads it too: `state`
+--                 is "idle", "accumulating" (a monster) or "accumulating_room"
+--
+-- They were one table, taPackage.monsterDb, which named only half of what it
+-- held. A session loaded before the split is carried over from it.
+if taPackage.monsterDb then
+    local old = taPackage.monsterDb
+    taPackage.monsterStore = taPackage.monsterStore
+        or { monsters = old.monsters, db = old.db, dbPath = old.dbPath }
+    taPackage.lookCapture = taPackage.lookCapture or {
+        state = old.state or "idle",
+        lookTarget = old.lookTarget,
+        accumulatedLines = old.accumulatedLines or {},
+        descRoomId = old.descRoomId,
+        descRoomProvisional = old.descRoomProvisional,
+    }
+    taPackage.monsterDb = nil
+end
+
+if not taPackage.monsterStore then
     local Db = dofile(SCRIPT_DIR .. "db.lua")
-    local dbPath = taPackage.monsterDbPath
-    taPackage.monsterDb = {
+    local dbPath = taPackage.monsterStorePath
+    taPackage.monsterStore = {
         monsters = Db.load(dbPath),
         db = Db,
         dbPath = dbPath,
+    }
+end
+
+if not taPackage.lookCapture then
+    taPackage.lookCapture = {
         state = "idle",
         lookTarget = nil,
         accumulatedLines = {},
@@ -91,7 +117,7 @@ local function descPrefixFromHealthLine(line)
 end
 
 local function upsertMonster(name, description)
-    local db = taPackage.monsterDb.monsters
+    local db = taPackage.monsterStore.monsters
     local today = os.date("%Y-%m-%d")
     if db[name] then
         db[name].description = description
@@ -99,21 +125,21 @@ local function upsertMonster(name, description)
     else
         db[name] = { description = description, firstSeen = today, encounters = 1 }
     end
-    pcall(taPackage.monsterDb.db.save, taPackage.monsterDb.dbPath, db)
+    pcall(taPackage.monsterStore.db.save, taPackage.monsterStore.dbPath, db)
 end
 
 function taPackage.monsters.getEntry(name)
-    return taPackage.monsterDb.monsters[name]
+    return taPackage.monsterStore.monsters[name]
 end
 
-function taPackage.monsters.getDbState()
-    return taPackage.monsterDb.state
+function taPackage.monsters.getLookState()
+    return taPackage.lookCapture.state
 end
 
 local function startLook(target)
-    taPackage.monsterDb.state = "accumulating"
-    taPackage.monsterDb.lookTarget = target
-    taPackage.monsterDb.accumulatedLines = {}
+    taPackage.lookCapture.state = "accumulating"
+    taPackage.lookCapture.lookTarget = target
+    taPackage.lookCapture.accumulatedLines = {}
 end
 
 createTrigger("^l (.+)$", function(matches)
@@ -154,10 +180,10 @@ end
 taPackage.monsters.clearPresence = clearPresence
 
 local function recordEncounter(name)
-    local entry = taPackage.monsterDb.monsters[name]
+    local entry = taPackage.monsterStore.monsters[name]
     if entry then
         entry.encounters = entry.encounters + 1
-        pcall(taPackage.monsterDb.db.save, taPackage.monsterDb.dbPath, taPackage.monsterDb.monsters)
+        pcall(taPackage.monsterStore.db.save, taPackage.monsterStore.dbPath, taPackage.monsterStore.monsters)
     end
 end
 
@@ -190,15 +216,15 @@ end
 -- over every line once it has ruled out a room-description capture. Collects
 -- the description until the monster's health sentence ends it, then files it.
 function taPackage.monsters.onLookLine(line)
-    if taPackage.monsterDb.state ~= "accumulating" then return end
+    if taPackage.lookCapture.state ~= "accumulating" then return end
     if string.match(line, "^l .") or string.match(line, "^look .") then return end
     if isRoomLine(line) or string.match(line, "^There is ") then
-        taPackage.monsterDb.state = "idle"
-        taPackage.monsterDb.accumulatedLines = {}
+        taPackage.lookCapture.state = "idle"
+        taPackage.lookCapture.accumulatedLines = {}
         return
     end
     if isHealthLine(line) then
-        local lines = taPackage.monsterDb.accumulatedLines
+        local lines = taPackage.lookCapture.accumulatedLines
         -- Extract description text that precedes the health sentence on the same line
         -- (e.g. "claws and teeth. The X seems to be in good physical health.")
         local prefix = descPrefixFromHealthLine(line)
@@ -209,7 +235,7 @@ function taPackage.monsters.onLookLine(line)
             local healthSentence = prefix and string.sub(line, #prefix + 2) or line
             local canonicalName = extractNameFromHealthLine(healthSentence)
                 or extractMonsterName(lines[1])
-                or taPackage.monsterDb.lookTarget
+                or taPackage.lookCapture.lookTarget
             local desc = table.concat(lines, " ")
             -- If the health status was split across two server lines, the first fragment
             -- (e.g. "The X seems to be in") got accumulated; truncate at last period to drop it.
@@ -218,8 +244,8 @@ function taPackage.monsters.onLookLine(line)
             taPackage.db.upsertMonster(canonicalName, desc)
             taPackage.lastAttackTarget = canonicalName
         end
-        taPackage.monsterDb.state = "idle"
+        taPackage.lookCapture.state = "idle"
     else
-        table.insert(taPackage.monsterDb.accumulatedLines, line)
+        table.insert(taPackage.lookCapture.accumulatedLines, line)
     end
 end

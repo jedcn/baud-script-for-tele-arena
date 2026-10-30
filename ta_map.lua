@@ -6,7 +6,7 @@
 -- Like ta_nav.lua it is a separate chunk and cannot see main.lua's locals; the
 -- seam runs through taPackage:
 --
---   in    taPackage.db (ta_db.lua); taPackage.monsterDb.state (main.lua's look
+--   in    taPackage.db (ta_db.lua); taPackage.lookCapture.state (main.lua's look
 --         capture -- a room brief that arrives mid-look is the look talking,
 --         not an arrival)
 --   out   taPackage.stopMapping (for stop-all-scripts), and the position and
@@ -479,7 +479,7 @@ end
 -- are" triggers below because every preposition now goes through it, and in Lua
 -- a local has to exist before the trigger that names it.
 local function handleRoomEntryUnlessLooking(matches)
-    if taPackage.monsterDb.state == "accumulating_room" then return end
+    if taPackage.lookCapture.state == "accumulating_room" then return end
     -- The brief after the smoke is a Teleport, not a move (see the smoke trigger
     -- below). If the room it fired in has a Device saying where it goes, and the
     -- brief names that room, that is where we are; otherwise we are lost, as

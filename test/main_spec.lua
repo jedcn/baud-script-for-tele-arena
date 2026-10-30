@@ -1931,27 +1931,27 @@ describe("Monster database", function()
 
         it("transitions to accumulating state", function()
             helper.simulateLine("l li")
-            assert.are.equal("accumulating", taPackage.monsters.getDbState())
+            assert.are.equal("accumulating", taPackage.monsters.getLookState())
         end)
 
         it("transitions to accumulating state with 'look' prefix", function()
             helper.simulateLine("look li")
-            assert.are.equal("accumulating", taPackage.monsters.getDbState())
+            assert.are.equal("accumulating", taPackage.monsters.getLookState())
         end)
 
         it("records the look target", function()
             helper.simulateLine("l li")
-            assert.are.equal("li", taPackage.monsterDb.lookTarget)
+            assert.are.equal("li", taPackage.lookCapture.lookTarget)
         end)
 
         it("does not accumulate the echo line itself", function()
             helper.simulateLine("l li")
-            assert.are.equal(0, #taPackage.monsterDb.accumulatedLines)
+            assert.are.equal(0, #taPackage.lookCapture.accumulatedLines)
         end)
 
         it("does not accumulate the 'look' echo line itself", function()
             helper.simulateLine("look li")
-            assert.are.equal(0, #taPackage.monsterDb.accumulatedLines)
+            assert.are.equal(0, #taPackage.lookCapture.accumulatedLines)
         end)
 
     end)
@@ -1961,22 +1961,22 @@ describe("Monster database", function()
         it("accumulates non-health lines", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
-            assert.are.equal(1, #taPackage.monsterDb.accumulatedLines)
-            assert.are.equal("accumulating", taPackage.monsters.getDbState())
+            assert.are.equal(1, #taPackage.lookCapture.accumulatedLines)
+            assert.are.equal("accumulating", taPackage.monsters.getLookState())
         end)
 
         it("accumulates multiple lines", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
             helper.simulateLine("resemble those of a large lizard.")
-            assert.are.equal(2, #taPackage.monsterDb.accumulatedLines)
+            assert.are.equal(2, #taPackage.lookCapture.accumulatedLines)
         end)
 
         it("finalizes on a wounded health line", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
-            assert.are.equal("idle", taPackage.monsters.getDbState())
+            assert.are.equal("idle", taPackage.monsters.getLookState())
         end)
 
         it("extracts canonical name from description first line", function()
@@ -2081,7 +2081,7 @@ describe("Monster database", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("You're in the north plaza.")
-            assert.are.equal("idle", taPackage.monsters.getDbState())
+            assert.are.equal("idle", taPackage.monsters.getLookState())
             assert.is_nil(taPackage.monsters.getEntry("lizard woman"))
         end)
 
@@ -2089,7 +2089,7 @@ describe("Monster database", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("There is a blue robed priest here.")
-            assert.are.equal("idle", taPackage.monsters.getDbState())
+            assert.are.equal("idle", taPackage.monsters.getLookState())
             assert.is_nil(taPackage.monsters.getEntry("lizard woman"))
         end)
 
@@ -2097,7 +2097,7 @@ describe("Monster database", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman falls to the ground lifeless!")
-            assert.are.equal("idle", taPackage.monsters.getDbState())
+            assert.are.equal("idle", taPackage.monsters.getLookState())
             assert.is_not_nil(taPackage.monsters.getEntry("lizard woman"))
         end)
 
@@ -4026,7 +4026,7 @@ describe("World map triggers", function()
         it("ignores a 'You are ...' line while accumulating a look description", function()
             taPackage.currentRoom = "large cavern"
             taPackage.currentRoomId = 5
-            taPackage.monsterDb.state = "accumulating_room"  -- mid-look
+            taPackage.lookCapture.state = "accumulating_room"  -- mid-look
             helper.simulateLine("You are in a large cavern.")  -- the look's first line
             assert.are.equal("large cavern", taPackage.currentRoom)  -- unchanged
             assert.is_nil(helper.findDbCall("execute", "INSERT INTO rooms"))
@@ -4088,9 +4088,9 @@ describe("World map triggers", function()
         -- A capture that never sees its Exits line would hold the guard open for
         -- good, so a move abandons it the way it clears the look-suppress flag.
         it("a real move abandons a look capture left open", function()
-            taPackage.monsterDb.state = "accumulating_room"
+            taPackage.lookCapture.state = "accumulating_room"
             helper.simulateAlias("n")
-            assert.are.equal("idle", taPackage.monsterDb.state)
+            assert.are.equal("idle", taPackage.lookCapture.state)
         end)
 
         it("a real move clears a stale look-suppress flag", function()
@@ -4120,7 +4120,7 @@ describe("World map triggers", function()
         -- through navSend rather than through the direction aliases -- which is
         -- how a capture opened by `map-here` survived a fifty-step live-navigate.
         it("a walk's own step abandons a look capture left open", function()
-            taPackage.monsterDb.state = "accumulating_room"
+            taPackage.lookCapture.state = "accumulating_room"
             taPackage.hereState = "known"
             taPackage.here = 1
             helper.mockDbRows = function(sql)
@@ -4133,7 +4133,7 @@ describe("World map triggers", function()
             end
             helper.simulateAlias("live-navigate somewhere")
             assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
-            assert.are.equal("idle", taPackage.monsterDb.state)
+            assert.are.equal("idle", taPackage.lookCapture.state)
         end)
 
         -- Eighteen of the caverns rooms walked on 2026-09-18 have a minotaur
@@ -4168,7 +4168,7 @@ describe("World map triggers", function()
             helper.simulateLine("look")
             helper.clearDbCalls()
             for i = 1, 90 do helper.simulateLine("filler line " .. i) end
-            assert.are.equal("idle", taPackage.monsterDb.state)
+            assert.are.equal("idle", taPackage.lookCapture.state)
             helper.simulateLine("Exits: nw.")
             assert.is_nil(helper.findDbCall("execute", "UPDATE rooms SET description"))
         end)
@@ -21681,6 +21681,43 @@ describe("the arena gold floor", function()
     it("does nothing outside an arena run", function()
         taPackage.character.setGold(0)
         assert.is_falsy(taPackage.exitGamePending)
+    end)
+
+end)
+
+-- taPackage.monsterDb held both the monster database and the look being read
+-- right now. It is two tables now, and a session that predates the split -- its
+-- taPackage survives reloadScript() -- is carried over on the next load.
+describe("monster store and look capture across a script reload", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("carries a pre-split monsterDb over to monsterStore and lookCapture", function()
+        local monsters = { ["cave lizard"] = { description = "Scaly.", encounters = 3 } }
+        taPackage.monsterStore = nil
+        taPackage.lookCapture = nil
+        taPackage.monsterDb = {
+            monsters = monsters, db = {}, dbPath = "/x/monsters.lua",
+            state = "accumulating_room", accumulatedLines = { "A cave." }, descRoomId = 42,
+        }
+        dofile("main.lua")
+        assert.is_nil(taPackage.monsterDb)
+        assert.are.equal(monsters, taPackage.monsterStore.monsters)
+        assert.are.equal("/x/monsters.lua", taPackage.monsterStore.dbPath)
+        assert.are.equal("accumulating_room", taPackage.lookCapture.state)
+        assert.are.same({ "A cave." }, taPackage.lookCapture.accumulatedLines)
+        assert.are.equal(42, taPackage.lookCapture.descRoomId)
+    end)
+
+    it("keeps both across an ordinary reload", function()
+        local store = taPackage.monsterStore
+        taPackage.lookCapture.state = "accumulating"
+        dofile("main.lua")
+        assert.are.equal(store, taPackage.monsterStore)
+        assert.are.equal("accumulating", taPackage.lookCapture.state)
     end)
 
 end)

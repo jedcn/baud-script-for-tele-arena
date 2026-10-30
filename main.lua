@@ -383,12 +383,12 @@ end, { type = "regex" })
 -- `look <monster>` files its description in the monster database
 -- (ta_monsters.lua); a bare `look` files the room's description on the map.
 -- Both are read by one catch-all trigger below, steered by
--- taPackage.monsterDb.state: the room half is handled here, and every other
+-- taPackage.lookCapture.state: the room half is handled here, and every other
 -- line goes to taPackage.monsters.onLookLine. The mapper itself (position
 -- tracking and the room graph) is in ta_map.lua, loaded below.
 
 -- Computed here rather than in ta_monsters.lua: see absoluteScriptDir.
-taPackage.monsterDbPath = absoluteScriptDir() .. "monsters.lua"
+taPackage.monsterStorePath = absoluteScriptDir() .. "monsters.lua"
 dofile(scriptDir .. "ta_monsters.lua")
 
 -- Open a room-description capture, remembering WHICH ROOM it is a description
@@ -408,10 +408,10 @@ dofile(scriptDir .. "ta_monsters.lua")
 -- (it is what keeps the look's own room lines from reading as arrivals) but
 -- files nothing.
 function taPackage.startRoomDescCapture()
-    taPackage.monsterDb.state = "accumulating_room"
-    taPackage.monsterDb.accumulatedLines = {}
-    taPackage.monsterDb.descRoomId = taPackage.mapping and taPackage.currentRoomId or nil
-    taPackage.monsterDb.descRoomProvisional = taPackage.currentRoomProvisional
+    taPackage.lookCapture.state = "accumulating_room"
+    taPackage.lookCapture.accumulatedLines = {}
+    taPackage.lookCapture.descRoomId = taPackage.mapping and taPackage.currentRoomId or nil
+    taPackage.lookCapture.descRoomProvisional = taPackage.currentRoomProvisional
 end
 
 -- The exits the map has for `roomId` that the game's `ex` (`dirs`) leaves out,
@@ -440,10 +440,10 @@ end
 -- capture that never ends worse than a lost description: it quietly stops the
 -- mapper seeing arrivals at all, for the rest of the session.
 function taPackage.abandonRoomDescCapture()
-    if taPackage.monsterDb.state ~= "accumulating_room" then return end
-    taPackage.monsterDb.state = "idle"
-    taPackage.monsterDb.accumulatedLines = {}
-    taPackage.monsterDb.descRoomId = nil
+    if taPackage.lookCapture.state ~= "accumulating_room" then return end
+    taPackage.lookCapture.state = "idle"
+    taPackage.lookCapture.accumulatedLines = {}
+    taPackage.lookCapture.descRoomId = nil
 end
 
 -- Bare "look" or "l" (no target) = room description
@@ -523,18 +523,18 @@ end
 createTrigger("^(.+)$", function(matches)
     local line = taPackage.utils.trimLine(matches[2])
 
-    if taPackage.monsterDb.state == "accumulating_room" then
+    if taPackage.lookCapture.state == "accumulating_room" then
         -- Skip our own echoed commands (look starts the capture, ex ends it).
         if line == "look" or line == "l" or line == "ex" then return end
         if isRoomDescTerminator(line) then
-            local lines = taPackage.monsterDb.accumulatedLines
-            local roomId = taPackage.monsterDb.descRoomId
+            local lines = taPackage.lookCapture.accumulatedLines
+            local roomId = taPackage.lookCapture.descRoomId
             -- A room we believed we knew, whose `ex` contradicts the map, is some
             -- other room: its description is not this one's. (A room minted on
             -- this move holds only an assumed back-link, so it is exempt, as it
             -- is in the Exits handler.)
             local exitList = line:match("^Exits: (.+)%.$")
-            if roomId and exitList and not taPackage.monsterDb.descRoomProvisional then
+            if roomId and exitList and not taPackage.lookCapture.descRoomProvisional then
                 local dirs = {}
                 for dir in exitList:gmatch("[^,%s]+") do dirs[#dirs + 1] = dir end
                 if #taPackage.exitsMissingFrom(roomId, dirs) > 0 then roomId = nil end
@@ -550,10 +550,10 @@ createTrigger("^(.+)$", function(matches)
             -- Dropped, but the capture stays open: the look's own prose is still
             -- coming, and the `Exits:` that ends it has not arrived.
             return
-        elseif #taPackage.monsterDb.accumulatedLines >= ROOM_DESC_MAX_LINES then
+        elseif #taPackage.lookCapture.accumulatedLines >= ROOM_DESC_MAX_LINES then
             taPackage.abandonRoomDescCapture()
         else
-            table.insert(taPackage.monsterDb.accumulatedLines, line)
+            table.insert(taPackage.lookCapture.accumulatedLines, line)
         end
         return
     end
