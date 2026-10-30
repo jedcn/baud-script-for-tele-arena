@@ -1756,6 +1756,10 @@ createAlias("^stop-all-scripts$", function()
         { name = "navigate",              running = taPackage.navigate ~= nil
                                                     or taPackage.navExitWhenDone ~= nil
                                                     or taPackage.navExiting ~= nil,   stop = taPackage.stopNavigateManual },
+        -- Ahead of gold-farming, which starts one: stopping the farm only drops
+        -- its claim on the result (createRerollArmed), and the re-roll itself
+        -- kept rolling.
+        { name = "re-roll",               running = taPackage.reRolling == true,      stop = taPackage.reroll.stop },
         { name = "gold-farming",          running = taPackage.createCharacterRunning(), stop = taPackage.stopCreateCharacter },
         { name = "banking",               running = taPackage.bankingRunning(),       stop = taPackage.stopBanking },
         -- Stops only the 5-minute status poll; the character stays in the group.

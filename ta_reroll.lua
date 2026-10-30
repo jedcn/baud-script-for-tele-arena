@@ -13,7 +13,8 @@
 --         taPackage.createRerollArmed (ta_create.lua, when farm-for-gold started
 --         the re-roll)
 --   out   taPackage.reroll.builds (ta_create.lua asks the same "is this roll good
---         enough?"), taPackage.reroll.checkStats, and the state the stat-change
+--         enough?"), taPackage.reroll.checkStats, taPackage.reroll.stop
+--         (stop-all-scripts), and the state the stat-change
 --         triggers read: taPackage.reRolling, taPackage.reRollSuppressStats
 --
 -- The state keeps its old taPackage.reRoll* names: it survives reloadScript(),
@@ -172,12 +173,21 @@ createAlias("^re-roll-half-ogre-hunter$", function()
     send("status")
 end, { type = "regex" })
 
-createAlias("^re-roll-stop$", function()
+-- Stop re-rolling. Shared by `re-roll-stop` and stop-all-scripts, and safe when
+-- no re-roll is running: it only resets state that is already clear. Bumping
+-- the generation is what disarms a `reroll` already scheduled. Stat-change
+-- tracking stays muted a beat longer, so the sheet still in flight from the
+-- last roll is not logged as a change.
+function taPackage.reroll.stop()
     taPackage.reRolling = false
     taPackage.reRollTimerPending = false
     taPackage.reRollGeneration = (taPackage.reRollGeneration or 0) + 1
-    echo("[re-roll] Stopped.")
     createTimer(2000, function()
         taPackage.reRollSuppressStats = false
     end, { repeating = false })
+end
+
+createAlias("^re-roll-stop$", function()
+    taPackage.reroll.stop()
+    echo("[re-roll] Stopped.")
 end, { type = "regex" })

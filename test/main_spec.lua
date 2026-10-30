@@ -15027,6 +15027,38 @@ describe("ta.follow", function()
             assert.is_true(echoed("[all] Stopped gold-farming."))
         end)
 
+        it("stops a re-roll too", function()
+            helper.simulateAlias("re-roll-half-ogre-warrior")
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_false(taPackage.reRolling)
+            assert.is_true(echoed("[all] Stopped re-roll."))
+        end)
+
+        -- A roll short of the build schedules the next `reroll`; stopping has to
+        -- disarm that one too, not just stop scheduling more.
+        it("cancels the reroll already scheduled", function()
+            helper.simulateAlias("re-roll-half-ogre-warrior")
+            helper.simulateLine("Physique:     10")
+            helper.simulateLine("Stamina:      10")
+            helper.simulateLine("Agility:      10")
+            helper.simulateLine("Vitality:     10 / 10")
+            helper.simulateAlias("stop-all-scripts")
+            helper.fireTimers(500)
+            for _, sent in ipairs(helper.sendCalls) do
+                assert.are_not.equal("reroll", sent)
+            end
+        end)
+
+        -- farm-for-gold starts its re-roll by running the alias, so the same
+        -- teardown has to reach it once the farm itself is stopped.
+        it("stops a re-roll that farm-for-gold started", function()
+            taPackage.createRerollArmed = true
+            helper.simulateAlias("re-roll-half-ogre-warrior-fast-mode")
+            helper.simulateAlias("stop-all-scripts")
+            assert.is_false(taPackage.reRolling)
+            assert.is_nil(taPackage.createRerollArmed)
+        end)
+
     end)
 
     describe("group-heal decision logging", function()
