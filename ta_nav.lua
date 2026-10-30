@@ -11,8 +11,8 @@
 -- The seam runs through taPackage, the shared state table, because locals are
 -- not visible across chunks:
 --
---   in    taPackage.utils.nowMillis, taPackage.utils.trimLine, taPackage.stopKill,
---         taPackage.killAllScan, taPackage.exitGameWithRetry  (all defined in
+--   in    taPackage.utils.nowMillis, taPackage.utils.trimLine, taPackage.kill.stop,
+--         taPackage.kill.killAllScan, taPackage.exitGameWithRetry  (all defined in
 --         main.lua)
 --   out   taPackage.stopNavigate, taPackage.stopNavigateManual,
 --         taPackage.navOnSweepDone, taPackage.navOnRoomBrief,
@@ -1520,7 +1520,7 @@ local function stopNavigate()
     -- too -- otherwise "stopped" would leave the character still swinging.
     if taPackage.navSweep then
         taPackage.navSweep = nil
-        if taPackage.killAllActive then taPackage.stopKill() end
+        if taPackage.killAllActive then taPackage.kill.stop() end
         running = true
     end
     -- Mapping was on when we set off and we turned it off. Leave it off: we may
@@ -2434,7 +2434,7 @@ navStartSweep = function()
     -- handling below: a kill-all run by hand is nobody's business but yours.
     taPackage.navSweep = { destination = j.destination, uncarried = {}, untilFound = want }
     taPackage.killAllActive = true
-    taPackage.killAllScan()
+    taPackage.kill.killAllScan()
 end
 
 -- We have what the errand came for, so there is no reason to go on killing.
@@ -2444,7 +2444,7 @@ end
 local function navSweepGotWhatItCameFor(item)
     local sweep = taPackage.navSweep
     taPackage.navSweep = nil
-    if taPackage.stopKill then taPackage.stopKill() end
+    if taPackage.kill.stop then taPackage.kill.stop() end
     navEcho("Got the " .. item .. " — that's what this was for, leaving the rest of the room.")
     if sweep and #sweep.uncarried > 0 then
         navEcho("  Note: the " .. table.concat(sweep.uncarried, ", the ")
