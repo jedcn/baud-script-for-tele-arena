@@ -317,4 +317,23 @@ function M.resetAll()
     taPackage = nil
 end
 
+-- Strict globals: reading a global nobody defined is an error, not a nil.
+--
+-- The scripts are split across files that cannot see each other's locals, so a
+-- name left behind by a move does not fail to load -- it quietly reads as a nil
+-- global, and an `if f then f() end` guard turns that into a feature that has
+-- silently stopped working (setGold's gold floor would have, when it moved to
+-- ta_character.lua). Raising here makes any spec that reaches such a line fail.
+--
+-- The exceptions are globals the scripts test for on purpose:
+--   taPackage    absent on the very first load (main.lua's `if not taPackage`)
+--   runCommand   absent on an older baud; a spec clears it to stand in for one
+local OPTIONAL_GLOBALS = { taPackage = true, runCommand = true }
+setmetatable(_G, {
+    __index = function(_, name)
+        if OPTIONAL_GLOBALS[name] then return nil end
+        error("read of undefined global '" .. tostring(name) .. "'", 2)
+    end,
+})
+
 return M
