@@ -13,7 +13,8 @@
 -- Like ta_nav.lua, a separate chunk that cannot see main.lua's locals; the seam
 -- runs through taPackage:
 --
---   in    taPackage.utils.nowMillis, taPackage.healingBadge (main.lua);
+--   in    taPackage.utils.nowMillis (ta_utils.lua), taPackage.badges
+--         (ta_badges.lua);
 --         taPackage.arenaEmergencyExit (ta_leave_game.lua)
 --   out   taPackage.stopArena, taPackage.checkFleeArena (main.lua's damage
 --         triggers), taPackage.firstArenaMonster (`kill`), and the arena state
@@ -21,7 +22,6 @@
 --         arenaHeal, arenaTryTrain, arenaWalkHomeFirst, ...
 
 local nowMillis = taPackage.utils.nowMillis
-local healingBadge = taPackage.healingBadge
 
 -- Damage triggers want the flee decision the moment HP drops, but checkFleeArena
 -- is defined with the other arena-state helpers well below its first callers.
@@ -3175,7 +3175,7 @@ createTrigger("^You intoned the spell for (.+) which healed (\\d+) damage!$", fu
     -- land message doesn't name the spell, so record whichever heal we last
     -- cast (motu = self, kamotu = group); both produce this same line.
     taPackage.castPending = false
-    healingBadge("HEALED " .. string.upper(target) .. " FOR " .. amount)
+    taPackage.badges.healing("HEALED " .. string.upper(target) .. " FOR " .. amount)
     taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", target, "hit", amount, "heal")
     if target == taPackage.character.getName() then
         local current, max = taPackage.character.getVitality()
@@ -3200,7 +3200,7 @@ createTrigger("^You discharged the spell at friendly people in the area, healing
         -- loop; leaving castPending set would wedge it waiting on a targeted
         -- heal that this cast displaced.
         taPackage.castPending = false
-        healingBadge("HEALED GROUP FOR " .. amount)
+        taPackage.badges.healing("HEALED GROUP FOR " .. amount)
         taPackage.db.recordPlayerSpell(taPackage.lastSpellCast or "unknown", "group", "hit", amount, "heal")
         local current, max = taPackage.character.getVitality()
         if current then
@@ -3241,7 +3241,7 @@ end, { type = "regex" })
 local function applyPartyHeal(matches)
     local healer = matches[2]
     local amount = tonumber(matches[3])
-    healingBadge("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
+    taPackage.badges.healing("HEALED BY " .. string.upper(healer) .. " FOR " .. amount)
     local current, max = taPackage.character.getVitality()
     if current and amount then
         local healed = current + amount

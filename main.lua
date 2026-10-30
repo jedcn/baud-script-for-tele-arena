@@ -53,23 +53,7 @@ dofile(scriptDir .. "ta_xp.lua")
 -- Triggers
 -- =========================================================================
 
--- A normalized, color-coded badge echoed right after a combat line so the
--- result doesn't get lost in the fast scroll of party/monster chatter. Both
--- badges share the same bold, padded, near-white block so they read as a
--- matched pair; only the foreground color differs: blue for damage we deal,
--- pink/red for damage we take. Defined here (above the Vitality trigger) so the
--- trap handler below can badge from there too.
-local BADGE_BG = "#e0e0e0"
-local OUTGOING_FG = "#2563eb" -- blue: damage we deal
-local INCOMING_FG = "#ff5fd7" -- pink/red: damage we take
-local HEAL_FG = "#16a34a" -- green: healing we cast (blue is reserved for damage dealt)
-local function badge(fg, text)
-    cechoBg(fg, BADGE_BG, " " .. text .. " ", true)
-end
-local function outgoingBadge(text) badge(OUTGOING_FG, text) end
-local function incomingBadge(text) badge(INCOMING_FG, text) end
-local function healingBadge(text) badge(HEAL_FG, text) end
-taPackage.healingBadge = healingBadge
+dofile(scriptDir .. "ta_badges.lua")
 
 -- On entering the arena, pull our character sheet (st) and inventory (i) so the
 -- script's tracked state is populated right away instead of waiting for the
@@ -109,7 +93,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     if trapBefore then
         taPackage.trapHpBefore = nil
         local lost = trapBefore - tonumber(matches[2])
-        if lost > 0 then incomingBadge("TRAP " .. lost) end
+        if lost > 0 then taPackage.badges.incoming("TRAP " .. lost) end
     end
     -- Same trick for an area-effect spell: the caster's handler stashed our HP
     -- and fired "st", so this fresh Vitality line recovers the hit and badges it.
@@ -117,7 +101,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
     if aoeBefore then
         taPackage.aoeHpBefore = nil
         local lost = aoeBefore - tonumber(matches[2])
-        if lost > 0 then incomingBadge("AOE " .. lost) end
+        if lost > 0 then taPackage.badges.incoming("AOE " .. lost) end
     end
     -- And the mirror image: a party member's area heal landed on us. It names no
     -- amount, so its handler stashed our HP and fired "st" — the gain is the
@@ -129,7 +113,7 @@ createTrigger("^Vitality:\\s+(\\d+) / (\\d+)$", function(matches)
         taPackage.groupHealHpBefore = nil
         local gained = tonumber(matches[2]) - groupHealBefore
         if gained > 0 then
-            healingBadge("HEALED BY " .. string.upper(taPackage.groupHealCaster or "?")
+            taPackage.badges.healing("HEALED BY " .. string.upper(taPackage.groupHealCaster or "?")
                 .. " FOR " .. gained)
         end
     end
@@ -606,7 +590,7 @@ createTrigger("^Your (.+) hit the (.+) for (\\d+) damage!$", function(matches)
     local monster = matches[3]
     local damage = tonumber(matches[4])
     taPackage.lastAttackTarget = monster
-    outgoingBadge("HIT " .. damage)
+    taPackage.badges.outgoing("HIT " .. damage)
     taPackage.db.recordPlayerAttack(
         taPackage.character.getWeapon() or "weapon", monster, "hit", damage
     )
@@ -660,7 +644,7 @@ for _, pattern in ipairs(incomingDamagePatterns) do
         if current then
             taPackage.character.setVitality(current - damage, max)
         end
-        incomingBadge("TOOK " .. damage)
+        taPackage.badges.incoming("TOOK " .. damage)
         taPackage.db.recordMonsterAttack(monster, "hit", damage)
         -- React to the damage itself, not just to our own swings. Flee was
         -- otherwise only checked when one of our attacks resolved, so a burst of
