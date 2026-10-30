@@ -603,7 +603,7 @@ local function farmAssess(prefix)
         -- echo, not cecho: a run that stopped has to leave the reason in the log.
         echo("[farm] STOPPED — no route from \"" .. tostring(room) .. "\". Walk to the"
             .. " arena and run farm-for-gold again.")
-        sendNtfy("Gold farming stopped", "No route from \"" .. tostring(room)
+        taPackage.utils.sendNtfy("Gold farming stopped", "No route from \"" .. tostring(room)
             .. "\" — the character is parked there.")
         return
     end
@@ -732,7 +732,7 @@ createTrigger("^There .+ on the floor\\.$", function()
         echo("[cash-out] STOPPED — nobody is in the tavern to take the gold. Still"
             .. " carrying it, still wearing the gear; restart once somebody is"
             .. " waiting there.")
-        sendNtfy("Gold farming stopped",
+        taPackage.utils.sendNtfy("Gold farming stopped",
             "Nobody in the tavern to hand the takings to. The character is parked"
             .. " there with its gold and gear intact.")
         return
@@ -744,7 +744,7 @@ createTrigger("^There .+ on the floor\\.$", function()
         echo("[cash-out] STOPPED — more than one character is in the tavern (" .. who
             .. "), so there is no telling which one the gold is for. Still carrying"
             .. " it, still wearing the gear.")
-        sendNtfy("Gold farming stopped",
+        taPackage.utils.sendNtfy("Gold farming stopped",
             "More than one character in the tavern (" .. who .. ") — nothing was"
             .. " handed over.")
         return
@@ -810,7 +810,7 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
                 echo("[cash-out] STOPPED — no room brief came back in the tavern, so"
                     .. " there is no knowing who to give the " .. amount .. " gold to."
                     .. " Still carrying it, still wearing the gear.")
-                sendNtfy("Gold farming stopped",
+                taPackage.utils.sendNtfy("Gold farming stopped",
                     "No room brief in the tavern, so the recipient is unknown."
                     .. " Nothing was handed over.")
                 return
@@ -840,7 +840,7 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
             .. " handover to " .. (walk.handedTo or "the tavern")
             .. ", so not going through with the suicide. Hand it over yourself,"
             .. " then restart.")
-        sendNtfy("Farming", "Encountered a problem. Exited game.")
+        taPackage.utils.sendNtfy("Farming", "Encountered a problem. Exited game.")
         -- Leave the game rather than stand here. The gear is already on the
         -- floor, so this character has nothing to do but starve: hunger and
         -- thirst tick 1 HP each and there is no errand loop left running to feed
@@ -854,7 +854,7 @@ createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     -- A hard zero: the handover landed in full, which is the only proof we get.
     -- Report the harvest for the cycle now, not when the give was sent.
     if walk.handedOver then
-        sendNtfy("Farming", "Gave " .. walk.handedOver .. " gold to "
+        taPackage.utils.sendNtfy("Farming", "Gave " .. walk.handedOver .. " gold to "
             .. (walk.handedTo or "the tavern"))
         walk.handedOver = nil
     end
@@ -995,7 +995,7 @@ createTrigger("^Sorry, (\\S+) can't carry that much more gold\\.$", function(mat
     echo("[cash-out] STOPPED — " .. who .. " cannot carry any more gold. Still"
         .. " carrying the takings and still wearing the gear. Have " .. who
         .. " bank what they hold (start-banking), then restart.")
-    sendNtfy("Gold farming stopped",
+    taPackage.utils.sendNtfy("Gold farming stopped",
         who .. " is too encumbered to accept the handover. Nothing was lost --"
         .. " the character is parked with its gold and gear.")
 end, { type = "regex" })
@@ -1012,7 +1012,7 @@ createTrigger("^Sorry, you don't see \"(.+)\" nearby\\.$", function(matches)
     echo("[cash-out] STOPPED — \"" .. who .. "\" is not here to take the gold."
         .. " Still carrying it, still wearing the gear; hand it over and restart when"
         .. " " .. who .. " is in the tavern.")
-    sendNtfy("Gold farming stopped",
+    taPackage.utils.sendNtfy("Gold farming stopped",
         "No " .. who .. " in the tavern to hand the takings to. The character is"
         .. " parked there with its gold and gear intact.")
 end, { type = "regex" })

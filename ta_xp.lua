@@ -702,9 +702,9 @@ function taPackage.xp.checkLevelUpNotification(xp)
         -- thresholds[N] is the XP required to reach level N (verified against the
         -- game's own `help Exp1` table and a real training event), so crossing it
         -- means you've earned enough to train up to level N.
-        sendNtfy("Time to Level Up!",
+        taPackage.utils.sendNtfy("Time to Level Up!",
             (taPackage.character.getName() or "?") .. " just passed "
-                .. formatWithCommas(threshold)
+                .. taPackage.utils.formatWithCommas(threshold)
                 .. " and is ready to train for level " .. newEarned)
     end
 end

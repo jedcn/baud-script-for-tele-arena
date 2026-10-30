@@ -126,7 +126,7 @@ function taPackage.reroll.checkStats()
         -- createRerollArmed is that run's "this result is mine" flag; it is
         -- still set here because onRerollAccepted below is what clears it.
         if not taPackage.createRerollArmed then
-            sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
+            taPackage.utils.sendNtfy("Re-roll complete", "Found a match after " .. n .. " rolls: " .. summary .. ". Type re-roll-stop when finished.")
         end
         -- A scripted run (farm-for-gold) takes it from here: it stops the
         -- re-roll itself and walks the new character to the arena. Defined in

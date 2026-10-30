@@ -1407,17 +1407,17 @@ describe("Tele-Arena triggers", function()
     describe("formatWithCommas", function()
 
         it("groups thousands with commas", function()
-            assert.are.equal("620,046", formatWithCommas(620046))
-            assert.are.equal("1,000,000", formatWithCommas(1000000))
+            assert.are.equal("620,046", taPackage.utils.formatWithCommas(620046))
+            assert.are.equal("1,000,000", taPackage.utils.formatWithCommas(1000000))
         end)
 
         it("leaves values under 1000 unchanged", function()
-            assert.are.equal("313", formatWithCommas(313))
-            assert.are.equal("0", formatWithCommas(0))
+            assert.are.equal("313", taPackage.utils.formatWithCommas(313))
+            assert.are.equal("0", taPackage.utils.formatWithCommas(0))
         end)
 
         it("accepts numeric strings", function()
-            assert.are.equal("620,046", formatWithCommas("620046"))
+            assert.are.equal("620,046", taPackage.utils.formatWithCommas("620046"))
         end)
 
     end)

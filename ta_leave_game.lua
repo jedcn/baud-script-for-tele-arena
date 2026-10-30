@@ -12,13 +12,13 @@
 --
 -- A separate chunk; the seam runs through taPackage:
 --
---   in    taPackage.nowMillis, taPackage.trimLine (main.lua);
+--   in    taPackage.utils.nowMillis, taPackage.utils.trimLine (main.lua);
 --         taPackage.stopArena (ta_arena.lua, defined before this file loads)
 --   out   taPackage.exitGameWithRetry, taPackage.arenaEmergencyExit,
 --         taPackage.checkIdle, taPackage.inGame, ...
 
-local nowMillis = taPackage.nowMillis
-local trimLine = taPackage.trimLine
+local nowMillis = taPackage.utils.nowMillis
+local trimLine = taPackage.utils.trimLine
 local stopArena = taPackage.stopArena
 
 
@@ -107,7 +107,7 @@ createTrigger("^Sorry to interrupt here, but the BBS will be shutting$", functio
         echo("[shutdown] BBS closing for nightly maintenance — stopping everything"
             .. " and leaving the game (x) so the character is saved.")
     end
-    sendNtfy("Nightly shutdown",
+    taPackage.utils.sendNtfy("Nightly shutdown",
         "The BBS is closing. Scripts stopped and " ..
         (taPackage.character.getName() or "the character") .. " is leaving the game"
         .. " so nothing carried is lost.")
@@ -246,7 +246,7 @@ createTrigger("^(.+)$", function(matches)
     local kind = taPackage.abandonedTickKind
     echo("[abandoned] " .. streak .. " " .. kind .. " ticks with nothing in between"
         .. " — leaving the game (x).")
-    sendNtfy("Abandoned", (taPackage.character.getName() or "The character")
+    taPackage.utils.sendNtfy("Abandoned", (taPackage.character.getName() or "The character")
         .. " saw " .. streak .. " " .. kind .. " ticks with no other activity"
         .. " and left the game with x.")
     -- Same order as the nightly shutdown: stop everything first so a wedged
@@ -302,7 +302,7 @@ function taPackage.checkIdle(gen)
         local minutes = math.floor(idle / 60000)
         echo("[idle] No commands sent for " .. minutes .. " minutes"
             .. " — leaving the game (x).")
-        sendNtfy("Idle", (taPackage.character.getName() or "The character")
+        taPackage.utils.sendNtfy("Idle", (taPackage.character.getName() or "The character")
             .. " sent no commands for " .. minutes .. " minutes"
             .. " and left the game with x.")
         -- Same order as the abandonment check above.
@@ -374,7 +374,7 @@ createTrigger("^As the final blow strikes your body you fall unconscious\\.$", f
     -- problem is noticing it after the fact.
     echo("[death] KILLED — stopping every script. Gear and gold are gone; you"
         .. " wake at the temple with a soulstone, or at the BBS menu without one.")
-    sendNtfy("Character killed",
+    taPackage.utils.sendNtfy("Character killed",
         (taPackage.character.getName() or "The character") .. " was killed. All scripts"
         .. " stopped. Equipment and carried gold are lost.")
     -- Read before the stop below clears it.

@@ -13,6 +13,9 @@ end
 
 -- Derive absolute directory from debug info so io.open paths work regardless
 -- of baud's working directory (which may be /).
+--
+-- Do not move this out of main.lua (see ta_utils.lua's header): its answer
+-- depends on which chunk defines it, and the monster database's path with it.
 local function absoluteScriptDir()
     local src = debug.getinfo(1, "S").source
     if src and src:sub(1, 1) == "@" then
@@ -38,6 +41,7 @@ if not taPackage then
     taPackage = {}
 end
 
+dofile(scriptDir .. "ta_utils.lua")
 
 if not taPackage.roomPresence then
     taPackage.roomPresence = {}
@@ -59,36 +63,6 @@ end
 taPackage.db = dofile(scriptDir .. "ta_db.lua")
 
 dofile(scriptDir .. "ta_character.lua")
-
--- Group an integer into comma-separated thousands, e.g. 620046 -> "620,046".
--- Display-only (notifications); returns non-numbers unchanged.
-function formatWithCommas(n)
-    local num = tonumber(n)
-    if not num then return tostring(n) end
-    local s = tostring(math.floor(num))
-    while true do
-        local replaced
-        s, replaced = string.gsub(s, "^(-?%d+)(%d%d%d)", "%1,%2")
-        if replaced == 0 then break end
-    end
-    return s
-end
-
--- Fire-and-forget push to our ntfy topic. `title` becomes the notification
--- title (ntfy's X-Title header), `body` the message. Pass markdown=true to have
--- ntfy render the body as Markdown (X-Markdown header). No callback — a failed
--- ping must never disturb whatever loop triggered it.
-function sendNtfy(title, body, markdown)
-    local headers = { ["X-Title"] = title }
-    if markdown then
-        headers["X-Markdown"] = "true"
-    end
-    httpRequest("https://ntfy.sh/s5bbs-tele-arena-j5", {
-        method = "POST",
-        headers = headers,
-        body = body,
-    })
-end
 
 dofile(scriptDir .. "ta_xp.lua")
 
@@ -654,15 +628,6 @@ end, { type = "regex" })
 
 local DIRECTION_PATTERN = "^[nsewud][sewn]?$"
 
-local function trimLine(line)
-    return (line or ""):match("^%s*(.-)%s*$")
-end
-
--- Published for the navigation chunk, which lives in its own file (see the
--- dofile of ta_nav.lua) and so cannot see main.lua's locals. A field costs no
--- local slot, which is the other half of why the split works.
-taPackage.trimLine = trimLine
-
 local function isRoomLine(line)
     return string.match(line, "^You're in ")
         or string.match(line, "^You are in ")
@@ -725,7 +690,7 @@ local function cleanRoomDesc(desc)
 end
 
 createTrigger("^(.+)$", function(matches)
-    local line = trimLine(matches[2])
+    local line = taPackage.utils.trimLine(matches[2])
 
     if taPackage.monsterDb.state == "accumulating_room" then
         -- Skip our own echoed commands (look starts the capture, ex ends it).
@@ -1053,21 +1018,6 @@ createTrigger("^Level:\\s+(\\d+)$", function(matches)
     taPackage.character.setLevel(newLevel)
 end, { type = "regex" })
 
--- Milliseconds since the epoch. baud supplies nowMs precisely because Lua
--- can't: os.time only resolves to the second, which can't tell 1.0s from 1.9s,
--- and os.clock measures CPU rather than elapsed time. Fall back to whole
--- seconds if the script is reloaded into a baud too old to have it -- the
--- timings go coarse, but nothing breaks.
--- Defined up here rather than beside the arena timings that consume it because
--- the status bar (below) reckons the age of its XP marker against it too.
-local function nowMillis()
-    if nowMs then return nowMs() end
-    return os.time() * 1000
-end
-
--- Published for ta_nav.lua, as trimLine above.
-taPackage.nowMillis = nowMillis
-
 -- =========================================================================
 -- Status bar
 -- =========================================================================
@@ -1082,18 +1032,6 @@ local function vitalityColor(current, max)
     else
         return "red"
     end
-end
-
--- Format an integer with thousands separators (e.g. 1234567 -> "1,234,567").
--- Handles a leading minus sign and leaves non-numbers untouched.
-local function commafy(value)
-    if value == nil then return nil end
-    local s = tostring(value)
-    local sign, digits = s:match("^(%-?)(%d+)$")
-    if not digits then return s end
-    local formatted = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-    formatted = formatted:gsub("^,", "")
-    return sign .. formatted
 end
 
 -- How long the XP-change marker stays on the bar after the XP figure moves.
@@ -1111,13 +1049,13 @@ local XP_CHANGE_FG = "#ff8700"
 local function xpChangeText(xp, class)
     local change = taPackage.xpChange
     if not change then return nil end
-    if nowMillis() - change.at >= XP_CHANGE_VISIBLE_MS then return nil end
+    if taPackage.utils.nowMillis() - change.at >= XP_CHANGE_VISIBLE_MS then return nil end
     local before = taPackage.xp.xpRemaining(change.from, class)
     local after = taPackage.xp.xpRemaining(xp, class)
     if not (before and after) then return nil end
     local delta = after - before
     if delta == 0 then return nil end
-    return (delta > 0 and "+" or "") .. commafy(delta)
+    return (delta > 0 and "+" or "") .. taPackage.utils.commafy(delta)
 end
 
 local function status()
@@ -1126,7 +1064,7 @@ local function status()
     local manaCurrent, manaMax = taPackage.character.getMana()
     local xp = taPackage.character.getExperience()
     local nextLevelXp = xp and taPackage.xp.getXpForNextLevel(xp, taPackage.character.getClass())
-    local gold = taPackage.character.getGold() and commafy(taPackage.character.getGold()) or "?"
+    local gold = taPackage.character.getGold() and taPackage.utils.commafy(taPackage.character.getGold()) or "?"
 
     local charName = taPackage.character.getName()
     local charClass = taPackage.character.getClass()
@@ -1148,15 +1086,15 @@ local function status()
         { text = nameText, fg = "white" },
         { text = "HP:" },
         {
-            text = vitalityCurrent and commafy(vitalityCurrent) or "?",
+            text = vitalityCurrent and taPackage.utils.commafy(vitalityCurrent) or "?",
             fg = vitalityColor(vitalityCurrent, vitalityMax)
         },
-        { text = vitalityMax and ("/ " .. commafy(vitalityMax)) or "", fg = "white" },
+        { text = vitalityMax and ("/ " .. taPackage.utils.commafy(vitalityMax)) or "", fg = "white" },
     }
     if manaMax and manaMax > 0 then
         table.insert(segments, { text = "MP:", fg = "green" })
-        table.insert(segments, { text = manaCurrent and commafy(manaCurrent) or "?", fg = "cyan" })
-        table.insert(segments, { text = "/ " .. commafy(manaMax), fg = "cyan" })
+        table.insert(segments, { text = manaCurrent and taPackage.utils.commafy(manaCurrent) or "?", fg = "cyan" })
+        table.insert(segments, { text = "/ " .. taPackage.utils.commafy(manaMax), fg = "cyan" })
     end
     -- Only ever show the XP remaining to the next level as "(<xp remaining>)".
     -- "?" when XP is unknown, "(max)" at the top level where there's no next.
@@ -1164,7 +1102,7 @@ local function status()
     if not xp then
         remainingText = "?"
     elseif nextLevelXp then
-        remainingText = "(" .. commafy(nextLevelXp - xp) .. ")"
+        remainingText = "(" .. taPackage.utils.commafy(nextLevelXp - xp) .. ")"
     else
         remainingText = "(max)"
     end
@@ -1203,7 +1141,7 @@ setStatus(status)
 -- there is nothing to compare against) would leave it flickering for no reason.
 function taPackage.recordXpChange(previous, current)
     if previous == nil or current == nil or previous == current then return end
-    taPackage.xpChange = { from = previous, at = nowMillis() }
+    taPackage.xpChange = { from = previous, at = taPackage.utils.nowMillis() }
     -- baud only re-evaluates the status function when the server sends data, so
     -- three quiet seconds would leave an expired marker stuck on the bar. Handing
     -- setStatus the same function again forces a fresh evaluation, which is what
@@ -1260,7 +1198,7 @@ local function tavernSummary()
     local rate = elapsed >= 60
         and string.format("%.1f", gold / (elapsed / 60)) .. " gold/min"
         or "rate n/a yet"
-    return "up " .. uptime .. ", " .. formatWithCommas(gold) .. " gold received ("
+    return "up " .. uptime .. ", " .. taPackage.utils.formatWithCommas(gold) .. " gold received ("
         .. rate .. ")"
 end
 

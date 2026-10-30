@@ -11,7 +11,7 @@
 -- The seam runs through taPackage, the shared state table, because locals are
 -- not visible across chunks:
 --
---   in    taPackage.nowMillis, taPackage.trimLine, taPackage.stopKill,
+--   in    taPackage.utils.nowMillis, taPackage.utils.trimLine, taPackage.stopKill,
 --         taPackage.killAllScan, taPackage.exitGameWithRetry  (all defined in
 --         main.lua)
 --   out   taPackage.stopNavigate, taPackage.stopNavigateManual,
@@ -1421,7 +1421,7 @@ local function navEcho(msg, color)
     if pending then pending.lines[#pending.lines + 1] = msg end
 end
 
-local navNowMs = taPackage.nowMillis
+local navNowMs = taPackage.utils.nowMillis
 
 -- Timing trace for the paced walk, off unless `navigate-to <dest> debug` was
 -- used. Every line carries the wall clock and, more usefully, the gap since
@@ -1471,7 +1471,7 @@ local function navExitAfterWalk(outcome)
         -- A second walk started inside the delay owns the exit now, not us.
         if taPackage.navExiting ~= pending then return end
         taPackage.navExiting = nil
-        sendNtfy("navigate-to " .. armed.destination,
+        taPackage.utils.sendNtfy("navigate-to " .. armed.destination,
             (taPackage.character.getName() or "The character") .. " " .. outcome
             .. " and is leaving the game.\n" .. table.concat(pending.lines, "\n"))
         taPackage.exitGameWithRetry()
@@ -2716,7 +2716,7 @@ end
 createTrigger("^(.+)$", function(matches)
     local inv = taPackage.navInventory
     if not inv then return end
-    local line = taPackage.trimLine(matches[2])
+    local line = taPackage.utils.trimLine(matches[2])
     if inv.text == nil then
         -- Everything before the listing (our own echoed `i`, a passing shout)
         -- is not ours to read.

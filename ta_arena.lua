@@ -13,14 +13,14 @@
 -- Like ta_nav.lua, a separate chunk that cannot see main.lua's locals; the seam
 -- runs through taPackage:
 --
---   in    taPackage.nowMillis, taPackage.healingBadge (main.lua);
+--   in    taPackage.utils.nowMillis, taPackage.healingBadge (main.lua);
 --         taPackage.arenaEmergencyExit (ta_leave_game.lua)
 --   out   taPackage.stopArena, taPackage.checkFleeArena (main.lua's damage
 --         triggers), taPackage.firstArenaMonster (`kill`), and the arena state
 --         and helpers the other files already read: taPackage.arenaState,
 --         arenaHeal, arenaTryTrain, arenaWalkHomeFirst, ...
 
-local nowMillis = taPackage.nowMillis
+local nowMillis = taPackage.utils.nowMillis
 local healingBadge = taPackage.healingBadge
 
 -- Damage triggers want the flee decision the moment HP drops, but checkFleeArena
@@ -503,7 +503,7 @@ function arenaSolo.observe(count)
     end
     local reason = "Alone in the arena for " .. arenaSolo.minutesLabel()
         .. " — too weak to fight solo"
-    sendNtfy("Left the arena alone",
+    taPackage.utils.sendNtfy("Left the arena alone",
         (taPackage.character.getName() or "The character") .. " was alone in arena "
         .. (taPackage.arenaProfile or "?") .. " for " .. arenaSolo.minutesLabel()
         .. " and has left the game.")
@@ -1421,10 +1421,10 @@ local function arenaTryTrain()
         if not gold then return false end
         if gold < need then
             local name = taPackage.character.getName() or "?"
-            sendNtfy("Short of gold for promotion",
+            taPackage.utils.sendNtfy("Short of gold for promotion",
                 name .. " is a level 25 " .. taPackage.character.getClass() .. " and needs "
-                    .. formatWithCommas(need) .. " gold to buy promotion, but has "
-                    .. formatWithCommas(gold) .. ". Leaving the game.")
+                    .. taPackage.utils.formatWithCommas(need) .. " gold to buy promotion, but has "
+                    .. taPackage.utils.formatWithCommas(gold) .. ". Leaving the game.")
             taPackage.arenaEmergencyExit("Short of gold for promotion ("
                 .. gold .. " of " .. need .. ")")
             return true
@@ -1756,7 +1756,7 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             local lines = { "[" .. (taPackage.character.getName() or "?") .. "]" }
             if nextThreshold then
                 lines[#lines + 1] = "- XP Until Level Up: "
-                    .. formatWithCommas(nextThreshold - xp)
+                    .. taPackage.utils.formatWithCommas(nextThreshold - xp)
             end
             -- The raw XP total says little on a phone; the level does, and a "^"
             -- glued to it (as on the status bar) says this character has earned
@@ -1767,10 +1767,10 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
             lines[#lines + 1] = "- HP: " .. (hp or "?")
             local encPct = taPackage.character.getEncumberancePercent()
             lines[#lines + 1] = "- Encumberance: " .. (encPct and (encPct .. "%") or "?")
-            lines[#lines + 1] = "- Gold: " .. (gold and formatWithCommas(gold) or "?")
+            lines[#lines + 1] = "- Gold: " .. (gold and taPackage.utils.formatWithCommas(gold) or "?")
             local titles = { ["2"] = "2nd Arena Check-In", ["3"] = "3rd Arena Check-In" }
             local title = titles[taPackage.arenaProfile] or "Arena Check-In"
-            sendNtfy(title, table.concat(lines, "\n"), true)
+            taPackage.utils.sendNtfy(title, table.concat(lines, "\n"), true)
         end
     end
 end, { type = "regex" })
@@ -2072,7 +2072,7 @@ local function stopArena(reason, opts)
         local gained = currentXp - startXp
         local minutes = math.floor((os.time() - startTime) / 60)
         echo("[arena] Session over — +" .. gained .. " XP in " .. minutes .. " minutes.")
-        summary = "+" .. formatWithCommas(gained) .. " XP in " .. minutes .. " minutes"
+        summary = "+" .. taPackage.utils.formatWithCommas(gained) .. " XP in " .. minutes .. " minutes"
     end
     -- Say so off-screen. A run nobody is watching (keep-going on the VPS) can
     -- end for a dozen reasons, and the overnight pollux run of 2026-10-10
@@ -2080,13 +2080,13 @@ local function stopArena(reason, opts)
     if wasRunning and not (opts and opts.quiet) then
         local hp, hpMax = taPackage.character.getVitality()
         local gold = taPackage.character.getGold()
-        sendNtfy("Arena stopped", table.concat({
+        taPackage.utils.sendNtfy("Arena stopped", table.concat({
             "[" .. (taPackage.character.getName() or "?") .. "] arena "
                 .. (profile or "?") .. " session stopped",
             "- Why: " .. (reason or "stopped"),
             "- Ran: " .. (summary or "?"),
             "- HP: " .. (hp or "?") .. (hpMax and (" / " .. hpMax) or ""),
-            "- Gold: " .. (gold and formatWithCommas(gold) or "?"),
+            "- Gold: " .. (gold and taPackage.utils.formatWithCommas(gold) or "?"),
         }, "\n"), true)
     end
     taPackage.arenaSessionStartXp = nil
@@ -2793,23 +2793,23 @@ function taPackage.flushLevelUpNotification()
     -- only show it if we knew the old maximum (we may never have polled `st`).
     local function gain(before, after, unit)
         if not before then return "" end
-        return ", gain of " .. formatWithCommas(after - before) .. " " .. unit
+        return ", gain of " .. taPackage.utils.formatWithCommas(after - before) .. " " .. unit
     end
 
     local lines = { pending.headline }
     local _, hp = taPackage.character.getVitality()
     if hp then
-        lines[#lines + 1] = "- New HP: " .. formatWithCommas(hp) .. gain(pending.hpBefore, hp, "HP")
+        lines[#lines + 1] = "- New HP: " .. taPackage.utils.formatWithCommas(hp) .. gain(pending.hpBefore, hp, "HP")
     end
     -- Only spell casters have a mana pool; for everyone else the sheet says
     -- "0 / 0" every level and the line would be noise.
     local _, mp = taPackage.character.getMana()
     if mp and mp > 0 then
-        lines[#lines + 1] = "- New MP: " .. formatWithCommas(mp) .. gain(pending.mpBefore, mp, "MP")
+        lines[#lines + 1] = "- New MP: " .. taPackage.utils.formatWithCommas(mp) .. gain(pending.mpBefore, mp, "MP")
     end
-    lines[#lines + 1] = "- Training cost: " .. (pending.cost and formatWithCommas(pending.cost) or "?") .. " gold"
-    lines[#lines + 1] = "- Gold: " .. (pending.goldAfter and formatWithCommas(pending.goldAfter) or "?")
-    sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
+    lines[#lines + 1] = "- Training cost: " .. (pending.cost and taPackage.utils.formatWithCommas(pending.cost) or "?") .. " gold"
+    lines[#lines + 1] = "- Gold: " .. (pending.goldAfter and taPackage.utils.formatWithCommas(pending.goldAfter) or "?")
+    taPackage.utils.sendNtfy("Leveled Up!", table.concat(lines, "\n"), true)
 end
 
 -- A fresh Vitality line arrived while a level-up push is held. Answered by the
@@ -2903,12 +2903,12 @@ function taPackage.flushPromotionNotification()
     local pending = taPackage.promotionPush
     if not pending then return end
     taPackage.promotionPush = nil
-    sendNtfy("Promoted!", table.concat({
+    taPackage.utils.sendNtfy("Promoted!", table.concat({
         "[" .. (taPackage.character.getName() or "?") .. "] bought promotion!",
         "- Old class: " .. (pending.oldClass or "?"),
         "- New class: " .. pending.newClass,
-        "- Promotion cost: " .. (pending.cost and formatWithCommas(pending.cost) or "?") .. " gold",
-        "- Gold: " .. (pending.goldAfter and formatWithCommas(pending.goldAfter) or "?"),
+        "- Promotion cost: " .. (pending.cost and taPackage.utils.formatWithCommas(pending.cost) or "?") .. " gold",
+        "- Gold: " .. (pending.goldAfter and taPackage.utils.formatWithCommas(pending.goldAfter) or "?"),
     }, "\n"), true)
 end
 
@@ -2970,7 +2970,7 @@ createTrigger("^You are not ready for a promotion", function()
     if not taPackage.arenaState then return end
     taPackage.arenaPromotionRefused = true
     echo("[arena] Promotion refused — fighting on without it.")
-    sendNtfy("Promotion refused", (taPackage.character.getName() or "?")
+    taPackage.utils.sendNtfy("Promotion refused", (taPackage.character.getName() or "?")
         .. " was told it is not ready for a promotion. Fighting on without it.")
 end, { type = "regex" })
 
