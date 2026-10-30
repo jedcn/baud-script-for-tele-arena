@@ -50,7 +50,7 @@ dofile(scriptDir .. "ta_character.lua")
 dofile(scriptDir .. "ta_xp.lua")
 
 -- =========================================================================
--- Triggers
+-- Character sheet triggers
 -- =========================================================================
 
 dofile(scriptDir .. "ta_badges.lua")
@@ -193,6 +193,13 @@ createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
     end
     taPackage.character.setKnowledge(newVal)
 end, { type = "regex" })
+
+-- =========================================================================
+-- Gold accounting
+-- =========================================================================
+--
+-- Every line that moves our gold: what we carry, find, share, give, receive,
+-- bank and spend. All of it goes through taPackage.character.setGold.
 
 createTrigger("^You are carrying (\\d+) gold crowns", function(matches)
     taPackage.character.setGold(matches[2])
@@ -554,6 +561,12 @@ createTrigger("^(.+)$", function(matches)
     taPackage.monsters.onLookLine(line)
 end, { type = "regex" })
 
+-- =========================================================================
+-- Mapping
+-- =========================================================================
+--
+-- Position tracking and the room graph: ta_map.lua. Loaded here, where the
+-- section used to sit, so trigger order is unchanged.
 dofile(scriptDir .. "ta_map.lua")
 
 -- =========================================================================
@@ -945,8 +958,20 @@ function taPackage.recordXpChange(previous, current)
     end, { repeating = false })
 end
 
+-- =========================================================================
+-- Re-roll for good stats
+-- =========================================================================
+--
+-- ta_reroll.lua, loaded where its aliases used to sit.
 dofile(scriptDir .. "ta_reroll.lua")
 
+-- =========================================================================
+-- Ring gong and fight in arena
+-- =========================================================================
+--
+-- The arena loop: ta_arena.lua, which loads ta_leave_game.lua partway
+-- through. Loaded here, where the section used to sit, so trigger and alias
+-- registration order is unchanged.
 dofile(scriptDir .. "ta_arena.lua")
 
 -- =========================================================================
@@ -1468,6 +1493,9 @@ dofile(scriptDir .. "ta_create.lua")
 -- ta_create.lua because it borrows that chunk's paced walker.
 dofile(scriptDir .. "ta_bank.lua")
 
+-- =========================================================================
+-- Stopping everything
+-- =========================================================================
 -- Stops every long-running script at once. Each sub-stop is independent and
 -- safe to call when its script isn't running (it just resets already-clear
 -- state). We check each script's "running" flag first so we can report, per
@@ -1515,6 +1543,13 @@ createAlias("^stop-all-scripts$", function()
     end
 end, { type = "regex" })
 
+-- =========================================================================
+-- Kill loop triggers
+-- =========================================================================
+--
+-- The game's replies that drive the kill loop above: our swings and casts
+-- landing or not, the group scan for heal-most-injured-party-member, the kill
+-- itself, and exhaustion.
 createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
     if not taPackage.killActive then return end
     killDebugEcho("our melee landed")
@@ -1868,6 +1903,13 @@ createTrigger("^(.+) has just gone upward\\.$", function(matches)
     send("u")
 end, { type = "regex" })
 
+-- =========================================================================
+-- Auto-login
+-- =========================================================================
+--
+-- Answering the BBS login and menus: ta_auto_login.lua. Loaded last, where
+-- the section used to sit: its two "Username:" triggers fire in order, and its
+-- catch-all outbound trigger is registered after everything else.
 dofile(scriptDir .. "ta_auto_login.lua")
 
 echo("Finishing reading main.lua")
