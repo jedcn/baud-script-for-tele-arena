@@ -11,7 +11,7 @@ up is +z). Identical rooms (every cave is named "cave") are told apart by that
 coordinate, so loops close correctly instead of collapsing into one room. Traps
 and locked doors are captured as you hit them, and you can attach freeform
 [room notes](#room-notes) for mechanics the graph can't express. The map is
-stored in `tele-arena.db` and rendered by `just report`.
+stored in `data/tele-arena.db` and rendered by `just report`.
 
 Move with the normal direction aliases — `n s e w ne nw se sw u d`. While
 mapping, each move both walks you in-game and advances your position on the map.

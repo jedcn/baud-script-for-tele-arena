@@ -1,9 +1,7 @@
 session.log
 logs/
-tele-arena.db
-tele-arena.db-shm
-tele-arena.db-wal
-tele-arena.db.bak-*
+data/*
+!data/.gitkeep
 report.html
 map.html
 map/players.json

@@ -10,7 +10,7 @@ local function dbLog(msg)
     end
 end
 
-local db = dbOpen("tele-arena.db")
+local db = dbOpen("data/tele-arena.db")
 
 -- WAL mode lets multiple sessions read concurrently while one writes.
 -- busy_timeout tells SQLite to retry for up to 5s before giving up on a lock.

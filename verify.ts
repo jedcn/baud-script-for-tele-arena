@@ -570,11 +570,11 @@ if (import.meta.main) {
     return want && rooms.some(r => r.slug === want) ? want : rooms[0].slug;
   };
 
-  if (!existsSync('tele-arena.db')) {
-    console.error('verify: no tele-arena.db here — nothing to check.');
+  if (!existsSync('data/tele-arena.db')) {
+    console.error('verify: no data/tele-arena.db here — nothing to check.');
     process.exit(1);
   }
-  const db = new Database('tele-arena.db');
+  const db = new Database('data/tele-arena.db');
   const wanted = process.argv[2];
   const slugs = wanted
     ? [wanted]

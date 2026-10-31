@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { writeFileSync } from "fs";
 import { join } from "path";
 
-const DB_PATH = join(process.cwd(), "tele-arena.db");
+const DB_PATH = join(process.cwd(), "data", "tele-arena.db");
 const OUTPUT_PATH = join(process.cwd(), "report.html");
 
 const db = new Database(DB_PATH, { readonly: true });

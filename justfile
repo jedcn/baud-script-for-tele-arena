@@ -119,7 +119,7 @@ draw-map-as-html:
     # session that mapped 17 new rooms drew a map with none of them on it and
     # nothing said why. Skipped where there is no database to refresh from (the
     # VPS), because there the checked-in JSON is already the whole story.
-    [ -f tele-arena.db ] && bun export.ts
+    [ -f data/tele-arena.db ] && bun export.ts
     bun site.ts
     bun test site.test.ts
     open map.html
@@ -209,7 +209,7 @@ archive-logs:
 # commit it. Run before a risky hand-edit instead of making a .db.bak copy.
 # Usage: just db-snapshot "why I'm about to change the DB"
 db-snapshot why:
-    sqlite3 tele-arena.db .dump > ../tele-arena-db/tele-arena.sql
+    sqlite3 data/tele-arena.db .dump > ../tele-arena-db/tele-arena.sql
     git -C ../tele-arena-db add tele-arena.sql
     git -C ../tele-arena-db diff --cached --quiet && echo "db-snapshot: no changes since last snapshot" || git -C ../tele-arena-db commit -m "{{why}}"
 

@@ -127,8 +127,8 @@ export function mergeIndex(existing: Row[], fresh: Row[], wanted: string[]): Row
 }
 
 if (import.meta.main) {
-  if (!existsSync('tele-arena.db')) { console.error('export: no tele-arena.db here.'); process.exit(1); }
-  const db = new Database('tele-arena.db');
+  if (!existsSync('data/tele-arena.db')) { console.error('export: no data/tele-arena.db here.'); process.exit(1); }
+  const db = new Database('data/tele-arena.db');
   mkdirSync('map/areas', { recursive: true });
 
   const idToRoomId = new Map<number, string>(

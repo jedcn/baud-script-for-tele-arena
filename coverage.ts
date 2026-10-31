@@ -669,13 +669,13 @@ if (import.meta.main) {
     console.error(`  known: ${[...Object.keys(SHRINE), ...Object.keys(PAGES)].join(', ') || '(none)'}`);
     process.exit(1);
   }
-  if (!existsSync('tele-arena.db')) {
-    console.error('coverage: no tele-arena.db here.');
+  if (!existsSync('data/tele-arena.db')) {
+    console.error('coverage: no data/tele-arena.db here.');
     process.exit(1);
   }
   // A plain read-write handle, never mode=ro: baud keeps the DB in WAL mode and a
   // read-only connection cannot attach the -wal file, so it returns stale data.
-  const db = new Database('tele-arena.db');
+  const db = new Database('data/tele-arena.db');
   const areaId = (s: string) => (db.prepare('SELECT id FROM areas WHERE slug = ?').get(s) as any)?.id;
 
   // One area's report: its picture (unless the caller draws the page itself),

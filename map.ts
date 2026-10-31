@@ -914,7 +914,7 @@ if (import.meta.main) {
   const { Database } = await import('bun:sqlite');
   const { existsSync } = await import('node:fs');
 
-  const DB_PATH = 'tele-arena.db';
+  const DB_PATH = 'data/tele-arena.db';
   if (!existsSync(DB_PATH)) {
     console.error(`map: no ${DB_PATH} here — nothing to draw.`);
     process.exit(1);
