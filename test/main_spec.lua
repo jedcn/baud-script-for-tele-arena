@@ -3255,6 +3255,64 @@ describe("ta_db", function()
             assert.are.equal("dodge", call.params[3])
         end)
 
+        it("records the attacker's class, level, agility and physique", function()
+            TaDb.recordPlayerAttack("Mace", "huge rat", "hit", 10,
+                { class = "Warrior", level = 12, agility = 18, physique = 21 })
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.are.equal("Warrior", call.params[6])
+            assert.are.equal(12, call.params[7])
+            assert.are.equal(18, call.params[8])
+            assert.are.equal(21, call.params[9])
+        end)
+
+        it("leaves the attacker columns NULL when no attacker is given", function()
+            TaDb.recordPlayerAttack("Mace", "huge rat", "hit", 10)
+            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
+            assert.is_nil(call.params[6])
+            assert.is_nil(call.params[7])
+            assert.is_nil(call.params[8])
+            assert.is_nil(call.params[9])
+        end)
+
+    end)
+
+    -- Real SQLite: a database from before the attacker columns gains them on
+    -- load, and its existing rows survive with NULL in each.
+    describe("player_attacks attacker-column migration", function()
+
+        local db, mockDbOpen
+
+        before_each(function()
+            mockDbOpen = _G.dbOpen
+            db = SqliteDb.install()
+            db.exec([[CREATE TABLE player_attacks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, weapon TEXT NOT NULL,
+                monster TEXT NOT NULL, outcome TEXT NOT NULL, damage INTEGER,
+                recorded_at TEXT NOT NULL)]])
+            db.exec("INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at)"
+                .. " VALUES ('Mace', 'huge rat', 'hit', 7, '2026-06-14T20:00:00')")
+        end)
+
+        after_each(function()
+            if db then db.remove() end
+            _G.dbOpen = mockDbOpen
+        end)
+
+        it("adds the columns and keeps the old rows", function()
+            local migrated = dofile("ta_db.lua")
+            migrated.recordPlayerAttack("Wyrmslayer", "troll", "hit", 122,
+                { class = "Knight", level = 30, agility = 19, physique = 24 })
+            local old = db.one("SELECT damage, class, level FROM player_attacks WHERE id = 1")
+            assert.are.equal("7", tostring(old.damage))
+            assert.is_nil(old.class)
+            assert.is_nil(old.level)
+            local new = db.one("SELECT class, level, agility, physique FROM player_attacks WHERE id = 2")
+            assert.are.equal("Knight", new.class)
+            assert.are.equal("30", tostring(new.level))
+            assert.are.equal("19", tostring(new.agility))
+            assert.are.equal("24", tostring(new.physique))
+        end)
+
     end)
 
     describe("recordMonsterAttack", function()
@@ -7475,6 +7533,42 @@ describe("Combat triggers", function()
             assert.is_not_nil(call)
             assert.are.equal("huge rat", call.params[2])
             assert.are.equal("dodge", call.params[3])
+        end)
+
+        describe("with the character sheet read", function()
+
+            before_each(function()
+                taPackage.character.setWeapon("Wyrmslayer")
+                taPackage.character.setClass("Knight")
+                taPackage.character.setLevel("30")
+                taPackage.character.setAgility("19")
+                taPackage.character.setPhysique("24")
+            end)
+
+            local function assertAttacker(call)
+                assert.are.equal("Wyrmslayer", call.params[1])
+                assert.are.equal("Knight", call.params[6])
+                assert.are.equal(30, call.params[7])
+                assert.are.equal(19, call.params[8])
+                assert.are.equal(24, call.params[9])
+            end
+
+            it("files a hit with the attacker", function()
+                helper.simulateLine("Your attack hit the troll for 122 damage!")
+                assertAttacker(helper.findDbCall("execute", "INSERT INTO player_attacks"))
+            end)
+
+            it("files a miss with the attacker", function()
+                taPackage.lastAttackTarget = "troll"
+                helper.simulateLine("Your attack missed!")
+                assertAttacker(helper.findDbCall("execute", "INSERT INTO player_attacks"))
+            end)
+
+            it("files a dodge with the attacker", function()
+                helper.simulateLine("The troll dodged your attack!")
+                assertAttacker(helper.findDbCall("execute", "INSERT INTO player_attacks"))
+            end)
+
         end)
 
     end)

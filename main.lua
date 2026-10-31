@@ -571,6 +571,16 @@ end, { type = "regex" })
 -- Combat triggers
 -- =========================================================================
 
+-- Each of our swings is filed with what moves its odds: the weapon, and the
+-- class, level, agility and physique of the character swinging it.
+local function recordOurAttack(monster, outcome, damage)
+    local c = taPackage.character
+    taPackage.db.recordPlayerAttack(c.getWeapon() or "weapon", monster, outcome, damage, {
+        class = c.getClass(), level = c.getLevel(),
+        agility = c.getAgility(), physique = c.getPhysique(),
+    })
+end
+
 -- Rogues land a "skillful attack" alongside the ordinary one, so the verb phrase
 -- is captured rather than spelled out: "Your attack hit …" and "Your skillful
 -- attack hit …" are the only two forms in the logs, and both are our melee. The
@@ -580,24 +590,18 @@ createTrigger("^Your (.+) hit the (.+) for (\\d+) damage!$", function(matches)
     local damage = tonumber(matches[4])
     taPackage.lastAttackTarget = monster
     taPackage.badges.outgoing("HIT " .. damage)
-    taPackage.db.recordPlayerAttack(
-        taPackage.character.getWeapon() or "weapon", monster, "hit", damage
-    )
+    recordOurAttack(monster, "hit", damage)
 end, { type = "regex" })
 
 createTrigger("^Your attack missed!$", function(matches)
     local monster = taPackage.lastAttackTarget or "unknown"
-    taPackage.db.recordPlayerAttack(
-        taPackage.character.getWeapon() or "weapon", monster, "miss", nil
-    )
+    recordOurAttack(monster, "miss", nil)
 end, { type = "regex" })
 
 createTrigger("^The (.+) dodged your attack!$", function(matches)
     local monster = matches[2]
     taPackage.lastAttackTarget = monster
-    taPackage.db.recordPlayerAttack(
-        taPackage.character.getWeapon() or "weapon", monster, "dodge", nil
-    )
+    recordOurAttack(monster, "dodge", nil)
 end, { type = "regex" })
 
 -- All incoming-damage lines do the same three things: subtract the hit from our

@@ -217,7 +217,11 @@ db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   monster     TEXT NOT NULL,
   outcome     TEXT NOT NULL,
   damage      INTEGER,
-  recorded_at TEXT NOT NULL
+  recorded_at TEXT NOT NULL,
+  class       TEXT,
+  level       INTEGER,
+  agility     INTEGER,
+  physique    INTEGER
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS monster_attacks (
@@ -293,6 +297,20 @@ if not tableHasColumn("item_drops", "room_id") then
     pcall(function()
         db:execute("ALTER TABLE item_drops ADD COLUMN room_id INTEGER")
     end)
+end
+
+-- Migration: player_attacks predates the attacker columns -- the class, level,
+-- agility and physique of the character who swung, which are what move hit
+-- rate and damage. Add any that are missing; historical rows keep NULL.
+for _, colDef in ipairs({
+    { "class", "TEXT" }, { "level", "INTEGER" },
+    { "agility", "INTEGER" }, { "physique", "INTEGER" },
+}) do
+    if not tableHasColumn("player_attacks", colDef[1]) then
+        pcall(function()
+            db:execute("ALTER TABLE player_attacks ADD COLUMN " .. colDef[1] .. " " .. colDef[2])
+        end)
+    end
 end
 
 local function now()
@@ -1220,10 +1238,16 @@ function TaDb.recordStatChange(stat, fromVal, toVal)
     dbLog("[DB\xE2\x86\x92stat_changes] " .. stat .. ": " .. fromVal .. " \xE2\x86\x92 " .. toVal)
 end
 
-function TaDb.recordPlayerAttack(weapon, monster, outcome, damage)
+-- `attacker` is the character who swung, as { class, level, agility, physique };
+-- any of it may be nil (before the first `st` of a session, say), and so may
+-- `attacker` itself.
+function TaDb.recordPlayerAttack(weapon, monster, outcome, damage, attacker)
+    attacker = attacker or {}
     db:execute(
-        "INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at) VALUES (?, ?, ?, ?, ?)",
-        weapon, monster, outcome, damage or 0, now()
+        "INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at,"
+            .. " class, level, agility, physique) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        weapon, monster, outcome, damage or 0, now(),
+        attacker.class, attacker.level, attacker.agility, attacker.physique
     )
 end
 
