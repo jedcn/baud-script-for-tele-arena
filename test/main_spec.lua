@@ -2,6 +2,7 @@
 -- Tests for triggers and status display in main.lua
 
 local helper = require("test.test_helper")
+local SqliteDb = dofile("test/mapper/sqlite_db.lua")
 
 -- True when `list` (e.g. helper.echoCalls) contains `value`. Handy for asserting
 -- an echo was emitted without depending on its position among other echoes.
@@ -1844,87 +1845,33 @@ describe("Tele-Arena triggers", function()
 end)
 
 -- =========================================================================
--- Db module
--- =========================================================================
-
-describe("Db", function()
-
-    local Db
-    local tmpPath = "./test/monsters_test_tmp.lua"
-
-    before_each(function()
-        Db = dofile("db.lua")
-        os.remove(tmpPath)
-    end)
-
-    after_each(function()
-        os.remove(tmpPath)
-    end)
-
-    it("returns empty table when file does not exist", function()
-        local result = Db.load(tmpPath)
-        assert.are.same({}, result)
-    end)
-
-    it("round-trips a monster record", function()
-        local monsters = {
-            ["giant bat"] = {
-                description = "The giant bat has a wingspan of over twelve feet.",
-                firstSeen = "2026-06-12",
-                encounters = 3,
-            }
-        }
-        Db.save(tmpPath, monsters)
-        local loaded = Db.load(tmpPath)
-        assert.are.equal("The giant bat has a wingspan of over twelve feet.", loaded["giant bat"].description)
-        assert.are.equal("2026-06-12", loaded["giant bat"].firstSeen)
-        assert.are.equal(3, loaded["giant bat"].encounters)
-    end)
-
-    it("round-trips multiple monster records", function()
-        local monsters = {
-            ["lizard woman"] = { description = "She has scaley skin.", firstSeen = "2026-06-12", encounters = 1 },
-            ["giant bat"] = { description = "It has large wings.", firstSeen = "2026-06-12", encounters = 5 },
-        }
-        Db.save(tmpPath, monsters)
-        local loaded = Db.load(tmpPath)
-        assert.are.equal("She has scaley skin.", loaded["lizard woman"].description)
-        assert.are.equal("It has large wings.", loaded["giant bat"].description)
-    end)
-
-    it("handles descriptions with commas and apostrophes", function()
-        local monsters = {
-            ["lizard woman"] = {
-                description = "She has greyish scaley skin, and sharp claws and teeth.",
-                firstSeen = "2026-06-12",
-                encounters = 1,
-            }
-        }
-        Db.save(tmpPath, monsters)
-        local loaded = Db.load(tmpPath)
-        assert.are.equal("She has greyish scaley skin, and sharp claws and teeth.", loaded["lizard woman"].description)
-    end)
-
-end)
-
--- =========================================================================
 -- Monster database triggers
 -- =========================================================================
 
 describe("Monster database", function()
 
-    local realIo
+    -- Real SQLite, so these check what lands in the monsters table rather than
+    -- which statements were issued.
+    local db, mockDbOpen
+
+    -- The monster's row, with encounters as a number, or nil if there is none.
+    local function monster(name)
+        local row = db.one("SELECT description, encounters FROM monsters WHERE name = '" .. name .. "'")
+        if row then row.encounters = tonumber(row.encounters) end
+        return row
+    end
 
     before_each(function()
         helper.resetAll()
-        -- Prevent file writes during trigger tests
-        realIo = _G.io
-        _G.io = { open = function() return nil end }
+        mockDbOpen = _G.dbOpen
+        db = SqliteDb.install()
         dofile("main.lua")
     end)
 
+    -- install() replaces the global dbOpen; every later spec expects the mock.
     after_each(function()
-        _G.io = realIo
+        if db then db.remove() end
+        _G.dbOpen = mockDbOpen
     end)
 
     describe("look command", function()
@@ -1983,14 +1930,14 @@ describe("Monster database", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
-            assert.is_not_nil(taPackage.monsters.getEntry("lizard woman"))
+            assert.is_not_nil(monster("lizard woman"))
         end)
 
         it("does not include the health line in the description", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
-            local entry = taPackage.monsters.getEntry("lizard woman")
+            local entry = monster("lizard woman")
             assert.is_nil(string.find(entry.description, "wounded"))
         end)
 
@@ -2002,7 +1949,7 @@ describe("Monster database", function()
             helper.simulateLine("The skeleton warrior is wearing tattered armor and mouldering bits of old")
             helper.simulateLine("clothing, and is armed with a shortsword. The skeleton warrior seems to be in")
             helper.simulateLine("good physical health.")
-            local entry = taPackage.monsters.getEntry("skeleton warrior")
+            local entry = monster("skeleton warrior")
             assert.are.equal(
                 "The skeleton warrior is wearing tattered armor and mouldering bits of old clothing, and is armed with a shortsword.",
                 entry.description
@@ -2017,7 +1964,7 @@ describe("Monster database", function()
             helper.simulateLine("The orc is a smallish humanoid with piglike facial features and is covered")
             helper.simulateLine("sparsely by coarse body hair. She stands just over four feet in height, is")
             helper.simulateLine("wearing a leather tunic, and is armed with a dagger. The female orc seems to be in good physical health.")
-            local entry = taPackage.monsters.getEntry("female orc")
+            local entry = monster("female orc")
             assert.is_not_nil(entry, "monster should be stored under 'female orc'")
         end)
 
@@ -2028,7 +1975,7 @@ describe("Monster database", function()
             helper.simulateLine("look bat")
             helper.simulateLine("The giant bat has a wingspan of over twelve feet and has wicked looking")
             helper.simulateLine("claws and teeth. The giant bat seems to be in good physical health.")
-            local entry = taPackage.monsters.getEntry("giant bat")
+            local entry = monster("giant bat")
             assert.is_not_nil(entry, "monster should be stored under 'giant bat'")
             assert.are.equal(
                 "The giant bat has a wingspan of over twelve feet and has wicked looking claws and teeth.",
@@ -2043,7 +1990,7 @@ describe("Monster database", function()
             helper.simulateLine("l rat")
             helper.simulateLine("The huge rat resembles rats you've seen before, except that it is about")
             helper.simulateLine("two feet tall at the shoulder. The huge rat is lightly wounded.")
-            local entry = taPackage.monsters.getEntry("huge rat")
+            local entry = monster("huge rat")
             assert.is_not_nil(entry, "monster should be stored under 'huge rat'")
         end)
 
@@ -2052,7 +1999,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid who's features")
             helper.simulateLine("resemble those of a large lizard.")
             helper.simulateLine("The lizard woman is lightly wounded.")
-            local entry = taPackage.monsters.getEntry("lizard woman")
+            local entry = monster("lizard woman")
             assert.are.equal(
                 "The lizard woman is a five foot tall bipedal humanoid who's features resemble those of a large lizard.",
                 entry.description
@@ -2071,10 +2018,10 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
             helper.simulateLine("Your attack missed!")
-            local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
-            assert.is_not_nil(call)
-            assert.are.equal("lizard woman", call.params[2])
-            assert.are.equal("miss", call.params[3])
+            local row = db.one("SELECT monster, outcome FROM player_attacks")
+            assert.is_not_nil(row)
+            assert.are.equal("lizard woman", row.monster)
+            assert.are.equal("miss", row.outcome)
         end)
 
         it("aborts on room navigation line without saving", function()
@@ -2082,7 +2029,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("You're in the north plaza.")
             assert.are.equal("idle", taPackage.monsters.getLookState())
-            assert.is_nil(taPackage.monsters.getEntry("lizard woman"))
+            assert.is_nil(monster("lizard woman"))
         end)
 
         it("aborts on 'There is' line without saving", function()
@@ -2090,7 +2037,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("There is a blue robed priest here.")
             assert.are.equal("idle", taPackage.monsters.getLookState())
-            assert.is_nil(taPackage.monsters.getEntry("lizard woman"))
+            assert.is_nil(monster("lizard woman"))
         end)
 
         it("finalizes on 'falls to the ground lifeless' line", function()
@@ -2098,7 +2045,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman falls to the ground lifeless!")
             assert.are.equal("idle", taPackage.monsters.getLookState())
-            assert.is_not_nil(taPackage.monsters.getEntry("lizard woman"))
+            assert.is_not_nil(monster("lizard woman"))
         end)
 
     end)
@@ -2112,7 +2059,7 @@ describe("Monster database", function()
             helper.simulateLine("l li")
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid with sharp claws.")
             helper.simulateLine("The lizard woman is badly wounded.")
-            local entry = taPackage.monsters.getEntry("lizard woman")
+            local entry = monster("lizard woman")
             assert.are.equal(
                 "The lizard woman is a five foot tall bipedal humanoid with sharp claws.",
                 entry.description
@@ -2126,7 +2073,7 @@ describe("Monster database", function()
 
         it("does not create a record for an unknown monster", function()
             helper.simulateLine("There is a blue robed priest here.")
-            assert.is_nil(taPackage.monsters.getEntry("blue robed priest"))
+            assert.is_nil(monster("blue robed priest"))
         end)
 
         it("increments encounters for a known monster", function()
@@ -2134,7 +2081,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is a five foot tall bipedal humanoid.")
             helper.simulateLine("The lizard woman is lightly wounded.")
             helper.simulateLine("There is a lizard woman here.")
-            assert.are.equal(2, taPackage.monsters.getEntry("lizard woman").encounters)
+            assert.are.equal(2, monster("lizard woman").encounters)
         end)
 
         it("does not double-count when re-entering the same room within an hour", function()
@@ -2144,7 +2091,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard woman is lightly wounded.")
             helper.simulateLine("There is a lizard woman here.")
             helper.simulateLine("There is a lizard woman here.")
-            assert.are.equal(2, taPackage.monsters.getEntry("lizard woman").encounters)
+            assert.are.equal(2, monster("lizard woman").encounters)
         end)
 
         it("counts as new encounter after kill clears presence", function()
@@ -2155,7 +2102,7 @@ describe("Monster database", function()
             helper.simulateLine("There is a lizard woman here.")
             helper.simulateLine("The lizard woman falls to the ground lifeless!")
             helper.simulateLine("There is a lizard woman here.")
-            assert.are.equal(3, taPackage.monsters.getEntry("lizard woman").encounters)
+            assert.are.equal(3, monster("lizard woman").encounters)
         end)
 
     end)
@@ -2164,7 +2111,7 @@ describe("Monster database", function()
 
         it("does not create a record for an unknown monster entering", function()
             helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
-            assert.is_nil(taPackage.monsters.getEntry("lizard man"))
+            assert.is_nil(monster("lizard man"))
         end)
 
         it("increments encounters when a known monster enters", function()
@@ -2172,7 +2119,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard man is a bipedal lizard humanoid.")
             helper.simulateLine("The lizard man is lightly wounded.")
             helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
-            assert.are.equal(2, taPackage.monsters.getEntry("lizard man").encounters)
+            assert.are.equal(2, monster("lizard man").encounters)
         end)
 
         it("does not double-count if the same monster is seen entering without a kill", function()
@@ -2182,7 +2129,7 @@ describe("Monster database", function()
             helper.simulateLine("The lizard man is lightly wounded.")
             helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
             helper.simulateLine("A lizard man enters the arena through the dungeon gate!")
-            assert.are.equal(2, taPackage.monsters.getEntry("lizard man").encounters)
+            assert.are.equal(2, monster("lizard man").encounters)
         end)
 
         it("handles 'An' prefix for monsters starting with a vowel", function()
@@ -2190,7 +2137,7 @@ describe("Monster database", function()
             helper.simulateLine("The ogre is a large brutish humanoid.")
             helper.simulateLine("The ogre is lightly wounded.")
             helper.simulateLine("An ogre enters the arena through the dungeon gate!")
-            assert.are.equal(2, taPackage.monsters.getEntry("ogre").encounters)
+            assert.are.equal(2, monster("ogre").encounters)
         end)
 
     end)
@@ -21685,38 +21632,40 @@ describe("the arena gold floor", function()
 
 end)
 
--- taPackage.monsterDb held both the monster database and the look being read
--- right now. It is two tables now, and a session that predates the split -- its
--- taPackage survives reloadScript() -- is carried over on the next load.
-describe("monster store and look capture across a script reload", function()
+-- taPackage.monsterDb held both a copy of the monster database (monsters.lua)
+-- and the look being read right now. Only the look survives: the monsters live
+-- in SQLite. A session that predates either change -- its taPackage survives
+-- reloadScript() -- is carried over on the next load.
+describe("look capture across a script reload", function()
 
     before_each(function()
         helper.resetAll()
         dofile("main.lua")
     end)
 
-    it("carries a pre-split monsterDb over to monsterStore and lookCapture", function()
-        local monsters = { ["cave lizard"] = { description = "Scaly.", encounters = 3 } }
-        taPackage.monsterStore = nil
+    it("carries a pre-split monsterDb's look over to lookCapture", function()
         taPackage.lookCapture = nil
         taPackage.monsterDb = {
-            monsters = monsters, db = {}, dbPath = "/x/monsters.lua",
+            monsters = { ["cave lizard"] = { description = "Scaly.", encounters = 3 } },
+            db = {}, dbPath = "/x/monsters.lua",
             state = "accumulating_room", accumulatedLines = { "A cave." }, descRoomId = 42,
         }
         dofile("main.lua")
         assert.is_nil(taPackage.monsterDb)
-        assert.are.equal(monsters, taPackage.monsterStore.monsters)
-        assert.are.equal("/x/monsters.lua", taPackage.monsterStore.dbPath)
         assert.are.equal("accumulating_room", taPackage.lookCapture.state)
         assert.are.same({ "A cave." }, taPackage.lookCapture.accumulatedLines)
         assert.are.equal(42, taPackage.lookCapture.descRoomId)
     end)
 
-    it("keeps both across an ordinary reload", function()
-        local store = taPackage.monsterStore
+    it("drops a running session's monsters.lua store", function()
+        taPackage.monsterStore = { monsters = {}, dbPath = "/x/monsters.lua" }
+        dofile("main.lua")
+        assert.is_nil(taPackage.monsterStore)
+    end)
+
+    it("keeps the look in progress across an ordinary reload", function()
         taPackage.lookCapture.state = "accumulating"
         dofile("main.lua")
-        assert.are.equal(store, taPackage.monsterStore)
         assert.are.equal("accumulating", taPackage.lookCapture.state)
     end)
 

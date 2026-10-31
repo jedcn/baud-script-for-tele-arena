@@ -1,20 +1,17 @@
 -- ta_monsters.lua -- the monster database, and which monsters we have met
 --
 -- `look <monster>` collects the description that follows and files it under
--- the monster's name, in monsters.lua and in the SQLite database. Alongside it,
--- each monster seen in a room counts as an encounter, at most once an hour per
--- room.
+-- the monster's name in the SQLite database. Alongside it, each monster seen in
+-- a room counts as an encounter, at most once an hour per room.
 --
 -- Loaded by main.lua with dofile, where the `look <target>` triggers used to
 -- sit. A separate chunk; the seam runs through taPackage:
 --
---   in    taPackage.monsterStorePath (main.lua: only main.lua's absoluteScriptDir
---         gives the right directory), taPackage.db (ta_db.lua),
---         taPackage.currentRoom
---   out   taPackage.monsters.getEntry, .getLookState, .onLookLine (main.lua's
---         catch-all look trigger), .clearPresence (the kill trigger),
---         taPackage.monsterStore, and taPackage.lookCapture, which the
---         room-description capture in main.lua and ta_map.lua shares
+--   in    taPackage.db (ta_db.lua), taPackage.currentRoom
+--   out   taPackage.monsters.getLookState, .onLookLine (main.lua's catch-all
+--         look trigger), .clearPresence (the kill trigger), and
+--         taPackage.lookCapture, which the room-description capture in main.lua
+--         and ta_map.lua shares
 
 taPackage.monsters = {}
 
@@ -22,20 +19,16 @@ if not taPackage.roomPresence then
     taPackage.roomPresence = {}
 end
 
--- Two tables that outlive reloadScript():
+-- taPackage.lookCapture outlives reloadScript(): it is the `look` being read
+-- right now, shared with the room-description capture in main.lua, which reads
+-- it too. `state` is "idle", "accumulating" (a monster) or "accumulating_room".
 --
---   monsterStore  the monster database itself: loaded from monsters.lua once per
---                 baud session, and saved back on every change
---   lookCapture   the `look` being read right now. Shared with the room-
---                 description capture in main.lua, which reads it too: `state`
---                 is "idle", "accumulating" (a monster) or "accumulating_room"
---
--- They were one table, taPackage.monsterDb, which named only half of what it
--- held. A session loaded before the split is carried over from it.
+-- It used to be half of taPackage.monsterDb, alongside a copy of the monster
+-- database kept in monsters.lua. A session loaded before either change is
+-- carried over: the look in progress is kept, and the old monster table, which
+-- only the SQLite database replaces, is dropped.
 if taPackage.monsterDb then
     local old = taPackage.monsterDb
-    taPackage.monsterStore = taPackage.monsterStore
-        or { monsters = old.monsters, db = old.db, dbPath = old.dbPath }
     taPackage.lookCapture = taPackage.lookCapture or {
         state = old.state or "idle",
         lookTarget = old.lookTarget,
@@ -45,16 +38,7 @@ if taPackage.monsterDb then
     }
     taPackage.monsterDb = nil
 end
-
-if not taPackage.monsterStore then
-    local Db = dofile(SCRIPT_DIR .. "db.lua")
-    local dbPath = taPackage.monsterStorePath
-    taPackage.monsterStore = {
-        monsters = Db.load(dbPath),
-        db = Db,
-        dbPath = dbPath,
-    }
-end
+taPackage.monsterStore = nil
 
 if not taPackage.lookCapture then
     taPackage.lookCapture = {
@@ -116,22 +100,6 @@ local function descPrefixFromHealthLine(line)
     return nil
 end
 
-local function upsertMonster(name, description)
-    local db = taPackage.monsterStore.monsters
-    local today = os.date("%Y-%m-%d")
-    if db[name] then
-        db[name].description = description
-        db[name].encounters = db[name].encounters + 1
-    else
-        db[name] = { description = description, firstSeen = today, encounters = 1 }
-    end
-    pcall(taPackage.monsterStore.db.save, taPackage.monsterStore.dbPath, db)
-end
-
-function taPackage.monsters.getEntry(name)
-    return taPackage.monsterStore.monsters[name]
-end
-
 function taPackage.monsters.getLookState()
     return taPackage.lookCapture.state
 end
@@ -179,18 +147,9 @@ local function clearPresence(monster)
 end
 taPackage.monsters.clearPresence = clearPresence
 
-local function recordEncounter(name)
-    local entry = taPackage.monsterStore.monsters[name]
-    if entry then
-        entry.encounters = entry.encounters + 1
-        pcall(taPackage.monsterStore.db.save, taPackage.monsterStore.dbPath, taPackage.monsterStore.monsters)
-    end
-end
-
 createTrigger("^There is a (.+) here\\.$", function(matches)
     local name = matches[2]
     if isNewEncounter(name) then
-        recordEncounter(name)
         taPackage.db.recordMonsterSeen(name)
     end
     markPresent(name)
@@ -199,7 +158,6 @@ end, { type = "regex" })
 createTrigger("^An? (.+) enters ", function(matches)
     local name = matches[2]
     if isNewEncounter(name) then
-        recordEncounter(name)
         taPackage.db.recordMonsterSeen(name)
     end
     markPresent(name)
@@ -240,7 +198,6 @@ function taPackage.monsters.onLookLine(line)
             -- If the health status was split across two server lines, the first fragment
             -- (e.g. "The X seems to be in") got accumulated; truncate at last period to drop it.
             desc = desc:match("^(.*%.)") or desc
-            upsertMonster(canonicalName, desc)
             taPackage.db.upsertMonster(canonicalName, desc)
             taPackage.lastAttackTarget = canonicalName
         end

@@ -11,28 +11,6 @@ if not scriptDir then
     error("SCRIPT_DIR not set - are you running this through Baud?")
 end
 
--- Derive absolute directory from debug info so io.open paths work regardless
--- of baud's working directory (which may be /).
---
--- Do not move this out of main.lua (see ta_utils.lua's header): its answer
--- depends on which chunk defines it, and the monster database's path with it.
-local function absoluteScriptDir()
-    local src = debug.getinfo(1, "S").source
-    if src and src:sub(1, 1) == "@" then
-        local path = src:sub(2)
-        if path:sub(1, 1) == "/" then
-            return path:match("^(.+)/[^/]+$") .. "/"
-        end
-    end
-    -- Fallback: baud data dir, which is a known writable absolute path.
-    -- os.getenv cannot see it: baud runs Lua as WASM, so os.getenv reads the
-    -- emscripten sandbox environment and HOME comes back nil, which silently
-    -- made this "/Library/Application Support/baud/" -- a path off the root of
-    -- the filesystem. baud's own getenv reads the real environment.
-    local home = (getenv and getenv("HOME")) or os.getenv("HOME") or ""
-    return home .. "/Library/Application Support/baud/"
-end
-
 -- =========================================================================
 -- State
 -- =========================================================================
@@ -387,8 +365,6 @@ end, { type = "regex" })
 -- line goes to taPackage.monsters.onLookLine. The mapper itself (position
 -- tracking and the room graph) is in ta_map.lua, loaded below.
 
--- Computed here rather than in ta_monsters.lua: see absoluteScriptDir.
-taPackage.monsterStorePath = absoluteScriptDir() .. "monsters.lua"
 dofile(scriptDir .. "ta_monsters.lua")
 
 -- Open a room-description capture, remembering WHICH ROOM it is a description

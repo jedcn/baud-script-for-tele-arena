@@ -5,13 +5,6 @@
 --
 -- Loaded by main.lua first, so every other file can count on it. Nothing here
 -- reads anything from the other files.
---
--- main.lua's absoluteScriptDir is the one helper that stays behind, on purpose:
--- it reads its answer off the source of the chunk it is defined in. baud runs
--- main.lua as a string, so there it always takes the fallback directory, which
--- is where monsters.lua lives; defined in a file loaded by dofile it would
--- return the script directory instead, and quietly start a new, empty monster
--- database.
 
 taPackage.utils = {}
 
