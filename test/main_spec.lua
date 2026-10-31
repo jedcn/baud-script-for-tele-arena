@@ -7489,6 +7489,67 @@ describe("re-roll-half-ogre-hunter", function()
 
 end)
 
+-- Lines that move our stats without printing them ask for a fresh sheet, so
+-- every swing after them is filed under the stats it was really made with.
+describe("Sheet refresh when stats move unseen", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function stCount()
+        local n = 0
+        for _, cmd in ipairs(helper.sendCalls) do
+            if cmd == "st" then n = n + 1 end
+        end
+        return n
+    end
+
+    for _, line in ipairs({
+        "You feel somehow different after drinking the potion.",
+        "An odd tingling sensation washes over you briefly!",
+        "You feel an odd tingling sensation on your brow for a moment!",
+        "The priests restore your body and mind to it's former state for 25 crowns.",
+    }) do
+        it("sends st a second after: " .. line, function()
+            helper.simulateLine(line)
+            assert.are.equal(0, stCount())
+            helper.fireTimers(1000)
+            assert.are.equal(1, stCount())
+        end)
+    end
+
+    it("answers a rowan and a hyssop drunk back to back with one st", function()
+        helper.simulateLine("You feel somehow different after drinking the potion.")
+        helper.simulateLine("You feel somehow different after drinking the potion.")
+        helper.fireTimers(1000)
+        assert.are.equal(1, stCount())
+    end)
+
+    it("answers both potions lapsing in the same second with one st", function()
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.fireTimers(1000)
+        assert.are.equal(1, stCount())
+    end)
+
+    it("re-arms once the st has gone", function()
+        helper.simulateLine("You feel somehow different after drinking the potion.")
+        helper.fireTimers(1000)
+        helper.simulateLine("An odd tingling sensation washes over you briefly!")
+        helper.fireTimers(1000)
+        assert.are.equal(2, stCount())
+    end)
+
+    it("leaves other lines alone", function()
+        helper.simulateLine("Ok, you bought a rowan potion for 13 crowns.")
+        helper.fireTimers()
+        assert.are.equal(0, stCount())
+    end)
+
+end)
+
 describe("Combat triggers", function()
 
     before_each(function()

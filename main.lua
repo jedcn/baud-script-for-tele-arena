@@ -51,6 +51,35 @@ createTrigger("^Entering Tele-Arena\\.\\.\\.$", function()
     send("i")
 end, { type = "regex" })
 
+-- Re-read the sheet whenever the game says our stats just moved without
+-- printing them: a potion taking effect, a stat potion wearing off, the temple
+-- dispelling them, a trial's mark. Every melee swing is filed with our agility
+-- and physique (recordOurAttack), so a sheet left stale across a potion files
+-- a whole fight under the wrong numbers. Rowan and hyssop are drunk back to
+-- back and lapse in the same second, so the lines are gathered for a second
+-- and answered with one `st`. A local, so a reload mid-wait can't wedge it.
+local SHEET_REFRESH_DELAY_MS = 1000
+local sheetRefreshPending = false
+
+local function refreshSheetSoon()
+    if sheetRefreshPending then return end
+    sheetRefreshPending = true
+    createTimer(SHEET_REFRESH_DELAY_MS, function()
+        sheetRefreshPending = false
+        send("st")
+    end, { repeating = false })
+end
+
+-- Every potion in the logs answers a drink with this line: rowan, hyssop,
+-- verbena, yarrow, rue and anemone alike.
+createTrigger("^You feel somehow different after drinking the potion\\.$", refreshSheetSoon, { type = "regex" })
+-- A rowan or hyssop potion lapsing (the arena's restock trigger reads it too).
+createTrigger("^An odd tingling sensation washes over you briefly!$", refreshSheetSoon, { type = "regex" })
+-- Follows "You have passed the trial of might" / "... of wisdom".
+createTrigger("^You feel an odd tingling sensation on your brow for a moment!$", refreshSheetSoon, { type = "regex" })
+-- `buy restoring` at the temple dispels every potion at once.
+createTrigger("^The priests restore your body and mind to it's former state", refreshSheetSoon, { type = "regex" })
+
 createTrigger("^Status:\\s+(\\S+)$", function(matches)
     taPackage.character.setCharacterStatus(matches[2])
 end, { type = "regex" })
