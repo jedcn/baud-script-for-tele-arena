@@ -7778,6 +7778,15 @@ describe("Combat triggers", function()
                 assert.is_false(found)
             end)
 
+            for _, case in ipairs({ { 16, 15, "a fall" }, { 16, 18, "a rise of two" }, { 17, 37, "a potion's rise" } }) do
+                it("does not record " .. case[3] .. " in " .. stat, function()
+                    helper.simulateLine(stat .. ":      " .. case[1])
+                    helper.simulateLine(stat .. ":      " .. case[2])
+                    assert.is_nil(helper.findDbCall("execute", "stat_changes"))
+                    assert.are.equal(case[2], taPackage.character["get" .. stat]())
+                end)
+            end
+
             it("does not record " .. stat .. " change during re-rolling", function()
                 helper.simulateAlias("re-roll-for-good-stats")
                 helper.simulateLine(stat .. ":      16")

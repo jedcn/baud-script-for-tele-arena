@@ -147,10 +147,16 @@ createTrigger("^Armor:\\s+(.+)$", function(matches)
     taPackage.character.setArmor(matches[2])
 end, { type = "regex" })
 
+-- The six attributes. stat_changes keeps only a rise of exactly one: that is
+-- what a level's random stat point looks like, and it is the lasting change
+-- the table is for. Everything else that moves an attribute is temporary --
+-- rowan and hyssop shift Physique and Agility by up to about 20, a monster's
+-- drain or the temple's restoring takes it back -- and filing those buried the
+-- real gains (1,117 of 1,293 rows were deleted as potion noise on 2026-11-01).
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getPhysique()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Physique", oldVal, newVal)
     end
     taPackage.character.setPhysique(newVal)
@@ -159,7 +165,7 @@ end, { type = "regex" })
 createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getStamina()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Stamina", oldVal, newVal)
     end
     taPackage.character.setStamina(newVal)
@@ -168,7 +174,7 @@ end, { type = "regex" })
 createTrigger("^Agility:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getAgility()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Agility", oldVal, newVal)
     end
     taPackage.character.setAgility(newVal)
@@ -177,7 +183,7 @@ end, { type = "regex" })
 createTrigger("^Charisma:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getCharisma()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Charisma", oldVal, newVal)
     end
     taPackage.character.setCharisma(newVal)
@@ -186,7 +192,7 @@ end, { type = "regex" })
 createTrigger("^Intellect:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getIntellect()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Intellect", oldVal, newVal)
     end
     taPackage.character.setIntellect(newVal)
@@ -195,7 +201,7 @@ end, { type = "regex" })
 createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getKnowledge()
-    if oldVal and oldVal ~= newVal and not taPackage.reRollSuppressStats then
+    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
         taPackage.db.recordStatChange("Knowledge", oldVal, newVal)
     end
     taPackage.character.setKnowledge(newVal)
