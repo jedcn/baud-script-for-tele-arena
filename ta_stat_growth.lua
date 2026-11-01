@@ -48,12 +48,15 @@ createTrigger("^After a rigorous mental and physical training session, you manag
     startRecord({ kind = "training", class_before = taPackage.character.getClass() })
 end, { type = "regex" })
 
--- `donate 100 gold`, or the temple help's shorthand `d 100 g`.
+-- `donate 100 gold` or `donate 100 g`. Not the temple help's `d 100 g`: the
+-- game takes that `d` for drop and answers "Sorry, littering is not permitted
+-- here." (session-tojolias-2026-11-01T11-10-52.log), so it gives nothing --
+-- and the amount it left here was once filed against the next real donation.
 local function noteDonationAmount(matches)
     taPackage.donationAmount = tonumber(matches[2])
 end
 createOutboundTrigger("^donate (\\d+) gold$", noteDonationAmount, { type = "regex" })
-createOutboundTrigger("^d (\\d+) g$", noteDonationAmount, { type = "regex" })
+createOutboundTrigger("^donate (\\d+) g$", noteDonationAmount, { type = "regex" })
 
 -- The priests take exactly what was offered (twelve donations on 2026-11-01
 -- came to 1,200 and carried gold fell 2,103 -> 903), so take it off the
