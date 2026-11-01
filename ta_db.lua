@@ -225,6 +225,27 @@ db:execute([[CREATE TABLE IF NOT EXISTS trainings (
   charisma_before  INTEGER, charisma_after  INTEGER
 )]])
 
+-- One row per gold donation at a temple (`donate 100 gold`), the same shape
+-- as trainings: the six attributes just before and just after, so a donation
+-- that moved nothing is counted too. The shrine docs say 100 gold can raise a
+-- stat below 20; the priests' reply is the same whatever happens, so the
+-- sheets are the only record of it. `amount` is what the command asked to
+-- give, since the reply doesn't say.
+db:execute([[CREATE TABLE IF NOT EXISTS donations (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  recorded_at      TEXT NOT NULL,
+  character        TEXT,
+  class            TEXT,
+  level            INTEGER,
+  amount           INTEGER,
+  intellect_before INTEGER, intellect_after INTEGER,
+  knowledge_before INTEGER, knowledge_after INTEGER,
+  physique_before  INTEGER, physique_after  INTEGER,
+  stamina_before   INTEGER, stamina_after   INTEGER,
+  agility_before   INTEGER, agility_after   INTEGER,
+  charisma_before  INTEGER, charisma_after  INTEGER
+)]])
+
 db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   weapon      TEXT NOT NULL,
@@ -1252,12 +1273,17 @@ end
 -- The six attributes, in the order the sheet prints them.
 TaDb.ATTRIBUTES = { "intellect", "knowledge", "physique", "stamina", "agility", "charisma" }
 
--- `t` is { character, class_before, class_after, level, before, after },
--- `before` and `after` keyed by the names in TaDb.ATTRIBUTES. Any of it may
--- be nil: before the first `st` of a session there is no "before" to give.
-function TaDb.recordTraining(t)
-    local cols = { "recorded_at", "character", "class_before", "class_after", "level" }
-    local vals = { now(), t.character, t.class_before, t.class_after, t.level }
+-- Insert one row into trainings or donations: `fields` names the columns
+-- that come straight from `t`, then each attribute's before and after
+-- follow from t.before and t.after (either may be nil, or missing a stat:
+-- before the first `st` of a session there is no "before" to give).
+local function insertStatRow(tbl, fields, t)
+    local cols = { "recorded_at" }
+    local vals = { now() }
+    for _, f in ipairs(fields) do
+        cols[#cols + 1] = f
+        vals[#cols] = t[f]
+    end
     for _, stat in ipairs(TaDb.ATTRIBUTES) do
         cols[#cols + 1] = stat .. "_before"
         vals[#cols] = (t.before or {})[stat]
@@ -1265,9 +1291,21 @@ function TaDb.recordTraining(t)
         vals[#cols] = (t.after or {})[stat]
     end
     local marks = string.rep("?", #cols, ", ")
-    db:execute("INSERT INTO trainings (" .. table.concat(cols, ", ") .. ") VALUES (" .. marks .. ")",
+    db:execute("INSERT INTO " .. tbl .. " (" .. table.concat(cols, ", ") .. ") VALUES (" .. marks .. ")",
         table.unpack(vals, 1, #cols))
+end
+
+-- `t` is { character, class_before, class_after, level, before, after },
+-- `before` and `after` keyed by the names in TaDb.ATTRIBUTES.
+function TaDb.recordTraining(t)
+    insertStatRow("trainings", { "character", "class_before", "class_after", "level" }, t)
     dbLog("[DB\xE2\x86\x92trainings] " .. tostring(t.character) .. " trained to level " .. tostring(t.level))
+end
+
+-- `t` is { character, class, level, amount, before, after }.
+function TaDb.recordDonation(t)
+    insertStatRow("donations", { "character", "class", "level", "amount" }, t)
+    dbLog("[DB\xE2\x86\x92donations] " .. tostring(t.character) .. " gave " .. tostring(t.amount))
 end
 
 -- `attacker` is the character who swung, as { character, class, level, agility,

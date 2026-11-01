@@ -167,6 +167,10 @@ const trainings = db.prepare(`
   SELECT * FROM trainings ORDER BY recorded_at
 `).all() as any[];
 
+const donations = db.prepare(`
+  SELECT * FROM donations ORDER BY recorded_at
+`).all() as any[];
+
 const services = db.prepare(`
   SELECT name, location, cost, uses, first_used FROM services ORDER BY location, name
 `).all() as any[];
@@ -354,14 +358,21 @@ const roomRows = rooms.map(r => [
 
 // What rose on each training, e.g. "Agility 18→19"; "—" when nothing did.
 const ATTRIBUTES = ["intellect", "knowledge", "physique", "stamina", "agility", "charisma"];
-const trainingRows = trainings.map(t => {
-  const rose = ATTRIBUTES
+function rose(t: any): string {
+  return ATTRIBUTES
     .filter(a => t[a + "_before"] != null && t[a + "_after"] > t[a + "_before"])
-    .map(a => `${a[0].toUpperCase()}${a.slice(1)} ${t[a + "_before"]}→${t[a + "_after"]}`);
+    .map(a => `${a[0].toUpperCase()}${a.slice(1)} ${t[a + "_before"]}→${t[a + "_after"]}`)
+    .join(", ") || "—";
+}
+const trainingRows = trainings.map(t => {
   const cls = t.class_before && t.class_after && t.class_before !== t.class_after
     ? `${t.class_before} → ${t.class_after}` : (t.class_after ?? "—");
-  return [t.recorded_at?.slice(0,10) ?? "—", esc(t.character ?? "—"), esc(cls), t.level ?? "—", esc(rose.join(", ") || "—")];
+  return [t.recorded_at?.slice(0,10) ?? "—", esc(t.character ?? "—"), esc(cls), t.level ?? "—", esc(rose(t))];
 });
+const donationRows = donations.map(d => [
+  d.recorded_at?.slice(0,10) ?? "—", esc(d.character ?? "—"), esc(d.class ?? "—"), d.level ?? "—",
+  d.amount != null ? d.amount + " gp" : "—", esc(rose(d)),
+]);
 
 const serviceRows = services.map(s => [esc(s.name), esc(s.location), s.cost != null ? s.cost + " gp" : "—", s.uses]);
 
@@ -540,6 +551,13 @@ ${trainingRows.length > 0 ? table(
   trainingRows,
   { alignRight: [3] }
 ) : "<p class='note'>No trainings recorded yet.</p>"}
+
+<h2>Donations</h2>
+${donationRows.length > 0 ? table(
+  ["Date", "Character", "Class", "Level", "Gave", "Rose"],
+  donationRows,
+  { alignRight: [3,4] }
+) : "<p class='note'>No donations recorded yet.</p>"}
 
 <h2>Room Encyclopedia</h2>
 <div class="cards">

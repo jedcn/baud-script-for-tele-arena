@@ -3352,6 +3352,20 @@ describe("ta_db", function()
             assert.is_not_nil(row.recorded_at)
         end)
 
+        it("files a donation with its amount and each attribute before and after", function()
+            local fresh = dofile("ta_db.lua")
+            fresh.recordDonation({
+                character = "Tojolias", class = "Knight", level = 30, amount = 100,
+                before = { intellect = 15, charisma = 12 }, after = { intellect = 16, charisma = 12 },
+            })
+            local row = db.one("SELECT * FROM donations")
+            assert.are.equal("Tojolias", row.character)
+            assert.are.equal("Knight", row.class)
+            assert.are.equal("100", tostring(row.amount))
+            assert.are.equal("15", tostring(row.intellect_before))
+            assert.are.equal("16", tostring(row.intellect_after))
+        end)
+
         it("files a training with no sheet read before it, leaving those columns empty", function()
             local fresh = dofile("ta_db.lua")
             fresh.recordTraining({ character = "Castor", level = 2, after = { agility = 18 } })
@@ -7855,6 +7869,86 @@ describe("Combat triggers", function()
             sheet("Knight", 1, 7, 8, 25, 25, 18, 9)
             local p = filed()
             assert.are.same({ "Warrior", "Knight", 1 }, { p[3], p[4], p[5] })
+        end)
+
+    end)
+
+    describe("donations", function()
+
+        local ACCEPTED = "The priests gladly accept your donation."
+
+        local function sheet(int, know, cha)
+            helper.simulateLine("Class:        Knight")
+            helper.simulateLine("Level:        30")
+            helper.simulateLine("Intellect:    " .. int)
+            helper.simulateLine("Knowledge:    " .. know)
+            helper.simulateLine("Physique:     35")
+            helper.simulateLine("Stamina:      35")
+            helper.simulateLine("Agility:      25")
+            helper.simulateLine("Charisma:     " .. cha)
+        end
+
+        -- params: recorded_at, character, class, level, amount, then
+        -- before/after for intellect, knowledge, physique, stamina, agility,
+        -- charisma.
+        local function filed()
+            local call = helper.findDbCall("execute", "donations")
+            return call and call.params
+        end
+
+        it("files the amount sent and the sheets either side", function()
+            taPackage.character.setName("Tojolias")
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            helper.simulateLine(ACCEPTED)
+            assert.is_nil(filed())
+            sheet(16, 12, 12)
+            local p = filed()
+            assert.are.same({ "Tojolias", "Knight", 30, 100 }, { p[2], p[3], p[4], p[5] })
+            assert.are.same({ 15, 16 }, { p[6], p[7] })
+        end)
+
+        it("asks for a fresh sheet when the priests accept", function()
+            helper.simulateLine(ACCEPTED)
+            local sent = false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "st" then sent = true end
+            end
+            assert.is_true(sent)
+        end)
+
+        it("reads the amount from the temple's shorthand", function()
+            sheet(15, 12, 12)
+            send("d 99 g")
+            helper.simulateLine(ACCEPTED)
+            sheet(15, 12, 12)
+            assert.are.equal(99, filed()[5])
+        end)
+
+        it("files a donation that moved nothing", function()
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            helper.simulateLine(ACCEPTED)
+            sheet(15, 12, 12)
+            assert.is_not_nil(filed())
+        end)
+
+        it("does not carry one donation's amount over to the next", function()
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            helper.simulateLine(ACCEPTED)
+            sheet(15, 12, 12)
+            helper.clearDbCalls()
+            helper.simulateLine(ACCEPTED)
+            sheet(15, 12, 12)
+            assert.is_nil(filed()[5])
+        end)
+
+        it("files nothing for a sheet with no donation before it", function()
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            sheet(15, 12, 12)
+            assert.is_nil(filed())
         end)
 
     end)

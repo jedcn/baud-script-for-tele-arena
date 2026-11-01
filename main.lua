@@ -148,7 +148,7 @@ createTrigger("^Armor:\\s+(.+)$", function(matches)
 end, { type = "regex" })
 
 -- The six attributes. Only remembered here: how they move on a training is
--- filed by ta_trainings.lua, which reads them before and after.
+-- filed by ta_stat_growth.lua, which reads them before and after.
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
     taPackage.character.setPhysique(tonumber(matches[2]))
 end, { type = "regex" })
@@ -174,7 +174,7 @@ createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
 end, { type = "regex" })
 
 -- After the attribute triggers: its Charisma trigger reads the stored values.
-dofile(scriptDir .. "ta_trainings.lua")
+dofile(scriptDir .. "ta_stat_growth.lua")
 
 -- =========================================================================
 -- Gold accounting
