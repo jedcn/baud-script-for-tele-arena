@@ -3255,14 +3255,15 @@ describe("ta_db", function()
             assert.are.equal("dodge", call.params[3])
         end)
 
-        it("records the attacker's class, level, agility and physique", function()
+        it("records the attacker's name, class, level, agility and physique", function()
             TaDb.recordPlayerAttack("Mace", "huge rat", "hit", 10,
-                { class = "Warrior", level = 12, agility = 18, physique = 21 })
+                { character = "Castor", class = "Warrior", level = 12, agility = 18, physique = 21 })
             local call = helper.findDbCall("execute", "INSERT INTO player_attacks")
             assert.are.equal("Warrior", call.params[6])
             assert.are.equal(12, call.params[7])
             assert.are.equal(18, call.params[8])
             assert.are.equal(21, call.params[9])
+            assert.are.equal("Castor", call.params[10])
         end)
 
         it("leaves the attacker columns NULL when no attacker is given", function()
@@ -3272,13 +3273,14 @@ describe("ta_db", function()
             assert.is_nil(call.params[7])
             assert.is_nil(call.params[8])
             assert.is_nil(call.params[9])
+            assert.is_nil(call.params[10])
         end)
 
     end)
 
-    -- Real SQLite: a database from before the attacker columns gains them on
-    -- load, and its existing rows survive with NULL in each.
-    describe("player_attacks attacker-column migration", function()
+    -- Real SQLite: a database from before the attacker and character columns
+    -- gains them on load, and its existing rows survive with NULL in each.
+    describe("player_attacks and stat_changes column migrations", function()
 
         local db, mockDbOpen
 
@@ -3291,6 +3293,12 @@ describe("ta_db", function()
                 recorded_at TEXT NOT NULL)]])
             db.exec("INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at)"
                 .. " VALUES ('Mace', 'huge rat', 'hit', 7, '2026-06-14T20:00:00')")
+            db.exec([[CREATE TABLE stat_changes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, stat TEXT NOT NULL,
+                from_value INTEGER NOT NULL, to_value INTEGER NOT NULL,
+                recorded_at TEXT NOT NULL)]])
+            db.exec("INSERT INTO stat_changes (stat, from_value, to_value, recorded_at)"
+                .. " VALUES ('Agility', 17, 18, '2026-08-14T09:18:21')")
         end)
 
         after_each(function()
@@ -3301,7 +3309,7 @@ describe("ta_db", function()
         it("adds the columns and keeps the old rows", function()
             local migrated = dofile("ta_db.lua")
             migrated.recordPlayerAttack("Wyrmslayer", "troll", "hit", 122,
-                { class = "Knight", level = 30, agility = 19, physique = 24 })
+                { character = "Castor", class = "Knight", level = 30, agility = 19, physique = 24 })
             local old = db.one("SELECT damage, class, level FROM player_attacks WHERE id = 1")
             assert.are.equal("7", tostring(old.damage))
             assert.is_nil(old.class)
@@ -3311,6 +3319,17 @@ describe("ta_db", function()
             assert.are.equal("30", tostring(new.level))
             assert.are.equal("19", tostring(new.agility))
             assert.are.equal("24", tostring(new.physique))
+            assert.are.equal("Castor", db.one("SELECT character FROM player_attacks WHERE id = 2").character)
+            assert.is_nil(db.one("SELECT character FROM player_attacks WHERE id = 1").character)
+        end)
+
+        it("adds character to stat_changes and keeps the old rows", function()
+            local migrated = dofile("ta_db.lua")
+            migrated.recordStatChange("Intellect", 14, 15, "Castor")
+            local old = db.one("SELECT stat, character FROM stat_changes WHERE id = 1")
+            assert.are.equal("Agility", old.stat)
+            assert.is_nil(old.character)
+            assert.are.equal("Castor", db.one("SELECT character FROM stat_changes WHERE id = 2").character)
         end)
 
     end)
@@ -3432,6 +3451,12 @@ describe("ta_db", function()
             assert.are.equal("Level", call.params[1])
             assert.are.equal(1, call.params[2])
             assert.are.equal(2, call.params[3])
+        end)
+
+        it("files the character's name", function()
+            TaDb.recordStatChange("Agility", 17, 18, "Castor")
+            local call = helper.findDbCall("execute", "stat_changes")
+            assert.are.equal("Castor", call.params[5])
         end)
 
     end)
@@ -7599,6 +7624,7 @@ describe("Combat triggers", function()
         describe("with the character sheet read", function()
 
             before_each(function()
+                taPackage.character.setName("Castor")
                 taPackage.character.setWeapon("Wyrmslayer")
                 taPackage.character.setClass("Knight")
                 taPackage.character.setLevel("30")
@@ -7612,6 +7638,7 @@ describe("Combat triggers", function()
                 assert.are.equal(30, call.params[7])
                 assert.are.equal(19, call.params[8])
                 assert.are.equal(24, call.params[9])
+                assert.are.equal("Castor", call.params[10])
             end
 
             it("files a hit with the attacker", function()
@@ -7758,6 +7785,14 @@ describe("Combat triggers", function()
 
         -- A recreated character: same name, level back to 1, fresh rolls. Its
         -- first sheet must not be filed as changes to its predecessor's stats.
+        it("files a gain under the name logged in with", function()
+            taPackage.character.setName("Castor")
+            helper.simulateLine("Agility:      17")
+            helper.simulateLine("Agility:      18")
+            local call = helper.findDbCall("execute", "stat_changes")
+            assert.are.equal("Castor", call.params[5])
+        end)
+
         it("does not compare a new character's sheet with the old one's", function()
             helper.simulateLine("Level:        2")
             helper.simulateLine("Intellect:    7")

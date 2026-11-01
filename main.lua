@@ -157,7 +157,7 @@ createTrigger("^Physique:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getPhysique()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Physique", oldVal, newVal)
+        taPackage.db.recordStatChange("Physique", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setPhysique(newVal)
 end, { type = "regex" })
@@ -166,7 +166,7 @@ createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getStamina()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Stamina", oldVal, newVal)
+        taPackage.db.recordStatChange("Stamina", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setStamina(newVal)
 end, { type = "regex" })
@@ -175,7 +175,7 @@ createTrigger("^Agility:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getAgility()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Agility", oldVal, newVal)
+        taPackage.db.recordStatChange("Agility", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setAgility(newVal)
 end, { type = "regex" })
@@ -184,7 +184,7 @@ createTrigger("^Charisma:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getCharisma()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Charisma", oldVal, newVal)
+        taPackage.db.recordStatChange("Charisma", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setCharisma(newVal)
 end, { type = "regex" })
@@ -193,7 +193,7 @@ createTrigger("^Intellect:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getIntellect()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Intellect", oldVal, newVal)
+        taPackage.db.recordStatChange("Intellect", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setIntellect(newVal)
 end, { type = "regex" })
@@ -202,7 +202,7 @@ createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
     local newVal = tonumber(matches[2])
     local oldVal = taPackage.character.getKnowledge()
     if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Knowledge", oldVal, newVal)
+        taPackage.db.recordStatChange("Knowledge", oldVal, newVal, taPackage.character.getName())
     end
     taPackage.character.setKnowledge(newVal)
 end, { type = "regex" })
@@ -606,12 +606,13 @@ end, { type = "regex" })
 -- Combat triggers
 -- =========================================================================
 
--- Each of our swings is filed with what moves its odds: the weapon, and the
--- class, level, agility and physique of the character swinging it.
+-- Each of our swings is filed with what moves its odds -- the weapon, and the
+-- class, level, agility and physique of the character swinging it -- and with
+-- that character's name.
 local function recordOurAttack(monster, outcome, damage)
     local c = taPackage.character
     taPackage.db.recordPlayerAttack(c.getWeapon() or "weapon", monster, outcome, damage, {
-        class = c.getClass(), level = c.getLevel(),
+        character = c.getName(), class = c.getClass(), level = c.getLevel(),
         agility = c.getAgility(), physique = c.getPhysique(),
     })
 end

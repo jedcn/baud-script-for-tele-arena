@@ -208,7 +208,8 @@ db:execute([[CREATE TABLE IF NOT EXISTS stat_changes (
   stat        TEXT NOT NULL,
   from_value  INTEGER NOT NULL,
   to_value    INTEGER NOT NULL,
-  recorded_at TEXT NOT NULL
+  recorded_at TEXT NOT NULL,
+  character   TEXT
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
@@ -221,7 +222,8 @@ db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   class       TEXT,
   level       INTEGER,
   agility     INTEGER,
-  physique    INTEGER
+  physique    INTEGER,
+  character   TEXT
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS monster_attacks (
@@ -302,13 +304,17 @@ end
 -- Migration: player_attacks predates the attacker columns -- the class, level,
 -- agility and physique of the character who swung, which are what move hit
 -- rate and damage. Add any that are missing; historical rows keep NULL.
+--
+-- Both it and stat_changes then gained `character`: the name logged in with,
+-- since every character on a machine writes to this one file.
 for _, colDef in ipairs({
-    { "class", "TEXT" }, { "level", "INTEGER" },
-    { "agility", "INTEGER" }, { "physique", "INTEGER" },
+    { "player_attacks", "class", "TEXT" }, { "player_attacks", "level", "INTEGER" },
+    { "player_attacks", "agility", "INTEGER" }, { "player_attacks", "physique", "INTEGER" },
+    { "player_attacks", "character", "TEXT" }, { "stat_changes", "character", "TEXT" },
 }) do
-    if not tableHasColumn("player_attacks", colDef[1]) then
+    if not tableHasColumn(colDef[1], colDef[2]) then
         pcall(function()
-            db:execute("ALTER TABLE player_attacks ADD COLUMN " .. colDef[1] .. " " .. colDef[2])
+            db:execute("ALTER TABLE " .. colDef[1] .. " ADD COLUMN " .. colDef[2] .. " " .. colDef[3])
         end)
     end
 end
@@ -1230,24 +1236,25 @@ function TaDb.recordService(name, location, cost)
     dbLog("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
 end
 
-function TaDb.recordStatChange(stat, fromVal, toVal)
+-- `character` is the name logged in with; nil if it isn't known.
+function TaDb.recordStatChange(stat, fromVal, toVal, character)
     db:execute(
-        "INSERT INTO stat_changes (stat, from_value, to_value, recorded_at) VALUES (?, ?, ?, ?)",
-        stat, fromVal, toVal, now()
+        "INSERT INTO stat_changes (stat, from_value, to_value, recorded_at, character) VALUES (?, ?, ?, ?, ?)",
+        stat, fromVal, toVal, now(), character
     )
     dbLog("[DB\xE2\x86\x92stat_changes] " .. stat .. ": " .. fromVal .. " \xE2\x86\x92 " .. toVal)
 end
 
--- `attacker` is the character who swung, as { class, level, agility, physique };
--- any of it may be nil (before the first `st` of a session, say), and so may
--- `attacker` itself.
+-- `attacker` is the character who swung, as { character, class, level, agility,
+-- physique }, `character` being the name logged in with; any of it may be nil
+-- (before the first `st` of a session, say), and so may `attacker` itself.
 function TaDb.recordPlayerAttack(weapon, monster, outcome, damage, attacker)
     attacker = attacker or {}
     db:execute(
         "INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at,"
-            .. " class, level, agility, physique) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            .. " class, level, agility, physique, character) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         weapon, monster, outcome, damage or 0, now(),
-        attacker.class, attacker.level, attacker.agility, attacker.physique
+        attacker.class, attacker.level, attacker.agility, attacker.physique, attacker.character
     )
 end
 
