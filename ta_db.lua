@@ -203,15 +203,6 @@ db:execute([[CREATE TABLE IF NOT EXISTS services (
   PRIMARY KEY (name, location)
 )]])
 
-db:execute([[CREATE TABLE IF NOT EXISTS stat_changes (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  stat        TEXT NOT NULL,
-  from_value  INTEGER NOT NULL,
-  to_value    INTEGER NOT NULL,
-  recorded_at TEXT NOT NULL,
-  character   TEXT
-)]])
-
 db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   weapon      TEXT NOT NULL,
@@ -305,12 +296,12 @@ end
 -- agility and physique of the character who swung, which are what move hit
 -- rate and damage. Add any that are missing; historical rows keep NULL.
 --
--- Both it and stat_changes then gained `character`: the name logged in with,
--- since every character on a machine writes to this one file.
+-- It then gained `character`: the name logged in with, since every character
+-- on a machine writes to this one file.
 for _, colDef in ipairs({
     { "player_attacks", "class", "TEXT" }, { "player_attacks", "level", "INTEGER" },
     { "player_attacks", "agility", "INTEGER" }, { "player_attacks", "physique", "INTEGER" },
-    { "player_attacks", "character", "TEXT" }, { "stat_changes", "character", "TEXT" },
+    { "player_attacks", "character", "TEXT" },
 }) do
     if not tableHasColumn(colDef[1], colDef[2]) then
         pcall(function()
@@ -1234,15 +1225,6 @@ function TaDb.recordService(name, location, cost)
         cost, name, location
     )
     dbLog("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
-end
-
--- `character` is the name logged in with; nil if it isn't known.
-function TaDb.recordStatChange(stat, fromVal, toVal, character)
-    db:execute(
-        "INSERT INTO stat_changes (stat, from_value, to_value, recorded_at, character) VALUES (?, ?, ?, ?, ?)",
-        stat, fromVal, toVal, now(), character
-    )
-    dbLog("[DB\xE2\x86\x92stat_changes] " .. stat .. ": " .. fromVal .. " \xE2\x86\x92 " .. toVal)
 end
 
 -- `attacker` is the character who swung, as { character, class, level, agility,

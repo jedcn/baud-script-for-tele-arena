@@ -3280,7 +3280,7 @@ describe("ta_db", function()
 
     -- Real SQLite: a database from before the attacker and character columns
     -- gains them on load, and its existing rows survive with NULL in each.
-    describe("player_attacks and stat_changes column migrations", function()
+    describe("player_attacks column migrations", function()
 
         local db, mockDbOpen
 
@@ -3293,12 +3293,6 @@ describe("ta_db", function()
                 recorded_at TEXT NOT NULL)]])
             db.exec("INSERT INTO player_attacks (weapon, monster, outcome, damage, recorded_at)"
                 .. " VALUES ('Mace', 'huge rat', 'hit', 7, '2026-06-14T20:00:00')")
-            db.exec([[CREATE TABLE stat_changes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, stat TEXT NOT NULL,
-                from_value INTEGER NOT NULL, to_value INTEGER NOT NULL,
-                recorded_at TEXT NOT NULL)]])
-            db.exec("INSERT INTO stat_changes (stat, from_value, to_value, recorded_at)"
-                .. " VALUES ('Agility', 17, 18, '2026-08-14T09:18:21')")
         end)
 
         after_each(function()
@@ -3321,15 +3315,6 @@ describe("ta_db", function()
             assert.are.equal("24", tostring(new.physique))
             assert.are.equal("Castor", db.one("SELECT character FROM player_attacks WHERE id = 2").character)
             assert.is_nil(db.one("SELECT character FROM player_attacks WHERE id = 1").character)
-        end)
-
-        it("adds character to stat_changes and keeps the old rows", function()
-            local migrated = dofile("ta_db.lua")
-            migrated.recordStatChange("Intellect", 14, 15, "Castor")
-            local old = db.one("SELECT stat, character FROM stat_changes WHERE id = 1")
-            assert.are.equal("Agility", old.stat)
-            assert.is_nil(old.character)
-            assert.are.equal("Castor", db.one("SELECT character FROM stat_changes WHERE id = 2").character)
         end)
 
     end)
@@ -3438,25 +3423,6 @@ describe("ta_db", function()
             assert.is_not_nil(helper.findDbCall("execute", "INSERT OR IGNORE INTO services"))
             assert.is_not_nil(helper.findDbCall("execute", "UPDATE services"))
             assert.are.equal("[DB\xE2\x86\x92services] temple: healing 2gp", helper.echoCalls[1])
-        end)
-
-    end)
-
-    describe("recordStatChange", function()
-
-        it("inserts a stat change and echoes", function()
-            TaDb.recordStatChange("Level", 1, 2)
-            local call = helper.findDbCall("execute", "stat_changes")
-            assert.is_not_nil(call)
-            assert.are.equal("Level", call.params[1])
-            assert.are.equal(1, call.params[2])
-            assert.are.equal(2, call.params[3])
-        end)
-
-        it("files the character's name", function()
-            TaDb.recordStatChange("Agility", 17, 18, "Castor")
-            local call = helper.findDbCall("execute", "stat_changes")
-            assert.are.equal("Castor", call.params[5])
         end)
 
     end)
@@ -7765,104 +7731,19 @@ describe("Combat triggers", function()
 
     end)
 
-    describe("stat changes", function()
+    describe("character sheet attributes", function()
 
-        it("tracks a level-up without filing it", function()
-            helper.simulateLine("Level:        1")
+        it("remembers the level", function()
             helper.simulateLine("Level:        2")
             assert.are.equal(2, taPackage.character.getLevel())
-            assert.is_nil(helper.findDbCall("execute", "stat_changes"))
         end)
 
-        it("does not record a stat change on first level reading", function()
-            helper.simulateLine("Level:        1")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "stat_changes") then found = true end
-            end
-            assert.is_false(found)
-        end)
-
-        -- A recreated character: same name, level back to 1, fresh rolls. Its
-        -- first sheet must not be filed as changes to its predecessor's stats.
-        it("files a gain under the name logged in with", function()
-            taPackage.character.setName("Castor")
-            helper.simulateLine("Agility:      17")
-            helper.simulateLine("Agility:      18")
-            local call = helper.findDbCall("execute", "stat_changes")
-            assert.are.equal("Castor", call.params[5])
-        end)
-
-        it("does not compare a new character's sheet with the old one's", function()
-            helper.simulateLine("Level:        2")
-            helper.simulateLine("Intellect:    7")
-            helper.simulateLine("Level:        1")
-            helper.simulateLine("Intellect:    8")
-            assert.is_nil(helper.findDbCall("execute", "stat_changes"))
-            assert.are.equal(8, taPackage.character.getIntellect())
-        end)
-
-        it("files the new character's own gains after that", function()
-            helper.simulateLine("Level:        2")
-            helper.simulateLine("Intellect:    7")
-            helper.simulateLine("Level:        1")
-            helper.simulateLine("Intellect:    8")
-            helper.simulateLine("Level:        2")
-            helper.simulateLine("Intellect:    9")
-            local call = helper.findDbCall("execute", "stat_changes")
-            assert.is_not_nil(call)
-            assert.are.same({ "Intellect", 8, 9 }, { call.params[1], call.params[2], call.params[3] })
-        end)
-
-        it("keeps comparing across a promotion, which sets level 1 itself", function()
-            helper.simulateLine("Level:        25")
-            helper.simulateLine("Intellect:    7")
-            helper.simulateLine("The guild bestows upon you the title of knight!")
-            helper.simulateLine("Level:        1")
-            helper.simulateLine("Intellect:    8")
-            assert.is_not_nil(helper.findDbCall("execute", "stat_changes"))
-        end)
-
-        local attributeStats = { "Physique", "Stamina", "Agility", "Charisma", "Intellect", "Knowledge" }
-
-        for _, stat in ipairs(attributeStats) do
-            it("records a " .. stat .. " increase", function()
+        for _, stat in ipairs({ "Physique", "Stamina", "Agility", "Charisma", "Intellect", "Knowledge" }) do
+            it("remembers " .. stat .. " without filing anything", function()
                 helper.simulateLine(stat .. ":      16")
                 helper.simulateLine(stat .. ":      17")
-                local found = false
-                for _, msg in ipairs(helper.echoCalls) do
-                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
-                end
-                assert.is_true(found)
-            end)
-
-            it("does not record " .. stat .. " change on first reading", function()
-                helper.simulateLine(stat .. ":      16")
-                local found = false
-                for _, msg in ipairs(helper.echoCalls) do
-                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
-                end
-                assert.is_false(found)
-            end)
-
-            for _, case in ipairs({ { 16, 15, "a fall" }, { 16, 18, "a rise of two" }, { 17, 37, "a potion's rise" } }) do
-                it("does not record " .. case[3] .. " in " .. stat, function()
-                    helper.simulateLine(stat .. ":      " .. case[1])
-                    helper.simulateLine(stat .. ":      " .. case[2])
-                    assert.is_nil(helper.findDbCall("execute", "stat_changes"))
-                    assert.are.equal(case[2], taPackage.character["get" .. stat]())
-                end)
-            end
-
-            it("does not record " .. stat .. " change during re-rolling", function()
-                helper.simulateAlias("re-roll-for-good-stats")
-                helper.simulateLine(stat .. ":      16")
-                helper.simulateLine(stat .. ":      17")
-                local found = false
-                for _, msg in ipairs(helper.echoCalls) do
-                    if string.find(msg, "stat_changes") and string.find(msg, stat) then found = true end
-                end
-                assert.is_false(found)
+                assert.are.equal(17, taPackage.character["get" .. stat]())
+                assert.is_nil(helper.findDbCall("execute", "INSERT"))
             end)
         end
 

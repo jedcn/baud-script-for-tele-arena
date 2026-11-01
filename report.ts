@@ -167,10 +167,6 @@ const services = db.prepare(`
   SELECT name, location, cost, uses, first_used FROM services ORDER BY location, name
 `).all() as any[];
 
-const statChanges = db.prepare(`
-  SELECT stat, from_value, to_value, recorded_at FROM stat_changes ORDER BY recorded_at
-`).all() as any[];
-
 const playerAttacks = db.prepare(`
   SELECT monster, outcome, damage, recorded_at FROM player_attacks ORDER BY recorded_at
 `).all() as any[];
@@ -354,8 +350,6 @@ const roomRows = rooms.map(r => [
 
 const serviceRows = services.map(s => [esc(s.name), esc(s.location), s.cost != null ? s.cost + " gp" : "—", s.uses]);
 
-const statRows = statChanges.map(s => [esc(s.stat), s.from_value, s.to_value, s.recorded_at?.slice(0,10) ?? "—"]);
-
 const monsterCards = monsters.map(m => `
   <div class="card">
     <h3>${esc(m.name)}</h3>
@@ -524,13 +518,6 @@ ${playerSpells.length > 0 ? table(
   playerSpells.map(s => [esc(s.spell), esc(s.target), s.hits, s.fizzles, s.resists, s.hit_pct + "%", s.avg_amount ?? "—", s.min_amount ?? "—", s.max_amount ?? "—"]),
   { alignRight: [2,3,4,5,6,7,8] }
 ) : "<p class='note'>No spells recorded yet.</p>"}
-
-<h2>Stat Changes</h2>
-${statRows.length > 0 ? table(
-  ["Stat", "From", "To", "Date"],
-  statRows,
-  { alignRight: [1,2] }
-) : "<p class='note'>No stat changes recorded yet.</p>"}
 
 <h2>Room Encyclopedia</h2>
 <div class="cards">

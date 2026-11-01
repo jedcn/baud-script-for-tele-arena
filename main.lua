@@ -147,64 +147,30 @@ createTrigger("^Armor:\\s+(.+)$", function(matches)
     taPackage.character.setArmor(matches[2])
 end, { type = "regex" })
 
--- The six attributes. stat_changes keeps only a rise of exactly one: that is
--- what a level's random stat point looks like, and it is the lasting change
--- the table is for. Everything else that moves an attribute is temporary --
--- rowan and hyssop shift Physique and Agility by up to about 20, a monster's
--- drain or the temple's restoring takes it back -- and filing those buried the
--- real gains (1,117 of 1,293 rows were deleted as potion noise on 2026-11-01).
+-- The six attributes. Only remembered here: how they move on a training is
+-- filed by ta_trainings.lua, which reads them before and after.
 createTrigger("^Physique:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getPhysique()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Physique", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setPhysique(newVal)
+    taPackage.character.setPhysique(tonumber(matches[2]))
 end, { type = "regex" })
 
 createTrigger("^Stamina:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getStamina()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Stamina", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setStamina(newVal)
+    taPackage.character.setStamina(tonumber(matches[2]))
 end, { type = "regex" })
 
 createTrigger("^Agility:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getAgility()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Agility", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setAgility(newVal)
+    taPackage.character.setAgility(tonumber(matches[2]))
 end, { type = "regex" })
 
 createTrigger("^Charisma:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getCharisma()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Charisma", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setCharisma(newVal)
+    taPackage.character.setCharisma(tonumber(matches[2]))
 end, { type = "regex" })
 
 createTrigger("^Intellect:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getIntellect()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Intellect", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setIntellect(newVal)
+    taPackage.character.setIntellect(tonumber(matches[2]))
 end, { type = "regex" })
 
 createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
-    local newVal = tonumber(matches[2])
-    local oldVal = taPackage.character.getKnowledge()
-    if oldVal and newVal == oldVal + 1 and not taPackage.reRollSuppressStats then
-        taPackage.db.recordStatChange("Knowledge", oldVal, newVal, taPackage.character.getName())
-    end
-    taPackage.character.setKnowledge(newVal)
+    taPackage.character.setKnowledge(tonumber(matches[2]))
 end, { type = "regex" })
 
 -- =========================================================================
@@ -827,28 +793,8 @@ createTrigger("^The barmaid brings you a meal for (\\d+) crowns\\.$", function(m
     taPackage.db.recordService("meal", "tavern", cost)
 end, { type = "regex" })
 
--- =========================================================================
--- Stat change tracking
--- =========================================================================
-
--- Not filed in stat_changes: that table is for the six attributes, and the
--- level is already on every row of player_attacks.
---
--- A level that falls means a different character: farm-for-gold and character
--- creation delete one and roll the next under the same name, and training
--- only ever raises it (a promotion sets level 1 itself, so its sheet reads
--- 1 -> 1). The sheet prints Level above the six attributes, so forgetting them
--- here makes this sheet's attribute lines a first reading, rather than the
--- new character's rolls filed as changes to the old one's.
 createTrigger("^Level:\\s+(\\d+)$", function(matches)
-    local newLevel = tonumber(matches[2])
-    local oldLevel = taPackage.character.getLevel()
-    if oldLevel and newLevel < oldLevel then
-        local c = taPackage.character
-        c.setPhysique(nil); c.setStamina(nil); c.setAgility(nil)
-        c.setCharisma(nil); c.setIntellect(nil); c.setKnowledge(nil)
-    end
-    taPackage.character.setLevel(newLevel)
+    taPackage.character.setLevel(tonumber(matches[2]))
 end, { type = "regex" })
 
 -- =========================================================================
