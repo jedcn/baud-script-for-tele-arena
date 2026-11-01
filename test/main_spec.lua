@@ -7740,14 +7740,11 @@ describe("Combat triggers", function()
 
     describe("stat changes", function()
 
-        it("records a level-up", function()
+        it("tracks a level-up without filing it", function()
             helper.simulateLine("Level:        1")
             helper.simulateLine("Level:        2")
-            local found = false
-            for _, msg in ipairs(helper.echoCalls) do
-                if string.find(msg, "stat_changes") and string.find(msg, "Level") then found = true end
-            end
-            assert.is_true(found)
+            assert.are.equal(2, taPackage.character.getLevel())
+            assert.is_nil(helper.findDbCall("execute", "stat_changes"))
         end)
 
         it("does not record a stat change on first level reading", function()

@@ -824,13 +824,10 @@ end, { type = "regex" })
 -- Stat change tracking
 -- =========================================================================
 
+-- Not filed in stat_changes: that table is for the six attributes, and the
+-- level is already on every row of player_attacks.
 createTrigger("^Level:\\s+(\\d+)$", function(matches)
-    local newLevel = tonumber(matches[2])
-    local oldLevel = taPackage.character.getLevel()
-    if oldLevel and oldLevel ~= newLevel then
-        taPackage.db.recordStatChange("Level", oldLevel, newLevel)
-    end
-    taPackage.character.setLevel(newLevel)
+    taPackage.character.setLevel(tonumber(matches[2]))
 end, { type = "regex" })
 
 -- =========================================================================
