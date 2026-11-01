@@ -163,6 +163,10 @@ const monsters = db.prepare(`
   FROM monsters ORDER BY name
 `).all() as any[];
 
+const trainings = db.prepare(`
+  SELECT * FROM trainings ORDER BY recorded_at
+`).all() as any[];
+
 const services = db.prepare(`
   SELECT name, location, cost, uses, first_used FROM services ORDER BY location, name
 `).all() as any[];
@@ -348,6 +352,17 @@ const roomRows = rooms.map(r => [
   esc((exitsByRoom.get(r.id) ?? []).join(", ") || "none"),
 ]);
 
+// What rose on each training, e.g. "Agility 18→19"; "—" when nothing did.
+const ATTRIBUTES = ["intellect", "knowledge", "physique", "stamina", "agility", "charisma"];
+const trainingRows = trainings.map(t => {
+  const rose = ATTRIBUTES
+    .filter(a => t[a + "_before"] != null && t[a + "_after"] > t[a + "_before"])
+    .map(a => `${a[0].toUpperCase()}${a.slice(1)} ${t[a + "_before"]}→${t[a + "_after"]}`);
+  const cls = t.class_before && t.class_after && t.class_before !== t.class_after
+    ? `${t.class_before} → ${t.class_after}` : (t.class_after ?? "—");
+  return [t.recorded_at?.slice(0,10) ?? "—", esc(t.character ?? "—"), esc(cls), t.level ?? "—", esc(rose.join(", ") || "—")];
+});
+
 const serviceRows = services.map(s => [esc(s.name), esc(s.location), s.cost != null ? s.cost + " gp" : "—", s.uses]);
 
 const monsterCards = monsters.map(m => `
@@ -518,6 +533,13 @@ ${playerSpells.length > 0 ? table(
   playerSpells.map(s => [esc(s.spell), esc(s.target), s.hits, s.fizzles, s.resists, s.hit_pct + "%", s.avg_amount ?? "—", s.min_amount ?? "—", s.max_amount ?? "—"]),
   { alignRight: [2,3,4,5,6,7,8] }
 ) : "<p class='note'>No spells recorded yet.</p>"}
+
+<h2>Trainings</h2>
+${trainingRows.length > 0 ? table(
+  ["Date", "Character", "Class", "Level", "Rose"],
+  trainingRows,
+  { alignRight: [3] }
+) : "<p class='note'>No trainings recorded yet.</p>"}
 
 <h2>Room Encyclopedia</h2>
 <div class="cards">

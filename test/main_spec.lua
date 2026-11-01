@@ -3319,6 +3319,49 @@ describe("ta_db", function()
 
     end)
 
+    -- Real SQLite: the row lands with every column where the name says.
+    describe("recordTraining", function()
+
+        local db, mockDbOpen
+
+        before_each(function()
+            mockDbOpen = _G.dbOpen
+            db = SqliteDb.install()
+        end)
+
+        after_each(function()
+            if db then db.remove() end
+            _G.dbOpen = mockDbOpen
+        end)
+
+        it("files the character, classes, level and each attribute before and after", function()
+            local fresh = dofile("ta_db.lua")
+            fresh.recordTraining({
+                character = "Castor", class_before = "Warrior", class_after = "Warrior", level = 12,
+                before = { intellect = 7, knowledge = 8, physique = 25, stamina = 25, agility = 18, charisma = 9 },
+                after  = { intellect = 7, knowledge = 9, physique = 25, stamina = 25, agility = 18, charisma = 9 },
+            })
+            local row = db.one("SELECT * FROM trainings")
+            assert.are.equal("Castor", row.character)
+            assert.are.equal("Warrior", row.class_before)
+            assert.are.equal("12", tostring(row.level))
+            assert.are.equal("8", tostring(row.knowledge_before))
+            assert.are.equal("9", tostring(row.knowledge_after))
+            assert.are.equal("18", tostring(row.agility_before))
+            assert.are.equal("9", tostring(row.charisma_after))
+            assert.is_not_nil(row.recorded_at)
+        end)
+
+        it("files a training with no sheet read before it, leaving those columns empty", function()
+            local fresh = dofile("ta_db.lua")
+            fresh.recordTraining({ character = "Castor", level = 2, after = { agility = 18 } })
+            local row = db.one("SELECT * FROM trainings")
+            assert.is_nil(row.agility_before)
+            assert.are.equal("18", tostring(row.agility_after))
+        end)
+
+    end)
+
     describe("recordMonsterAttack", function()
 
         it("records a hit and echoes damage", function()
@@ -7727,6 +7770,91 @@ describe("Combat triggers", function()
                 if msg == "[DB\xE2\x86\x92services] tavern: meal 2gp" then found = true end
             end
             assert.is_true(found)
+        end)
+
+    end)
+
+    describe("trainings", function()
+
+        local TRAINED = "After a rigorous mental and physical training session, you managed to blend"
+
+        local function sheet(class, level, int, know, phy, sta, agi, cha)
+            helper.simulateLine("Class:        " .. class)
+            helper.simulateLine("Level:        " .. level)
+            helper.simulateLine("Intellect:    " .. int)
+            helper.simulateLine("Knowledge:    " .. know)
+            helper.simulateLine("Physique:     " .. phy)
+            helper.simulateLine("Stamina:      " .. sta)
+            helper.simulateLine("Agility:      " .. agi)
+            helper.simulateLine("Charisma:     " .. cha)
+        end
+
+        -- params: recorded_at, character, class_before, class_after, level,
+        -- then before/after for intellect, knowledge, physique, stamina,
+        -- agility, charisma.
+        local function filed()
+            local call = helper.findDbCall("execute", "trainings")
+            return call and call.params
+        end
+
+        it("files nothing for a sheet with no training before it", function()
+            sheet("Warrior", 4, 7, 8, 25, 25, 18, 9)
+            sheet("Warrior", 4, 7, 8, 25, 25, 19, 9)
+            assert.is_nil(filed())
+        end)
+
+        it("asks for a fresh sheet when training succeeds", function()
+            helper.simulateLine(TRAINED)
+            local sent = false
+            for _, cmd in ipairs(helper.sendCalls) do
+                if cmd == "st" then sent = true end
+            end
+            assert.is_true(sent)
+        end)
+
+        it("files the sheet before and the sheet after", function()
+            taPackage.character.setName("Castor")
+            sheet("Warrior", 4, 7, 8, 25, 25, 18, 9)
+            helper.simulateLine(TRAINED)
+            assert.is_nil(filed())
+            sheet("Warrior", 5, 7, 8, 25, 25, 19, 9)
+            local p = filed()
+            assert.are.same({ "Castor", "Warrior", "Warrior", 5 }, { p[2], p[3], p[4], p[5] })
+            assert.are.same({ 18, 19 }, { p[14], p[15] })
+            assert.are.same({ 7, 7 }, { p[6], p[7] })
+        end)
+
+        it("files a training where nothing moved", function()
+            sheet("Warrior", 4, 7, 8, 25, 25, 18, 9)
+            helper.simulateLine(TRAINED)
+            sheet("Warrior", 5, 7, 8, 25, 25, 18, 9)
+            assert.is_not_nil(filed())
+        end)
+
+        it("files a training typed by hand, outside an arena run", function()
+            taPackage.arenaState = nil
+            sheet("Warrior", 4, 7, 8, 25, 25, 18, 9)
+            helper.simulateLine(TRAINED)
+            sheet("Warrior", 5, 7, 8, 25, 25, 18, 9)
+            assert.is_not_nil(filed())
+        end)
+
+        it("files only the first sheet after the training", function()
+            sheet("Warrior", 4, 7, 8, 25, 25, 18, 9)
+            helper.simulateLine(TRAINED)
+            sheet("Warrior", 5, 7, 8, 25, 25, 18, 9)
+            helper.clearDbCalls()
+            sheet("Warrior", 5, 7, 8, 25, 25, 18, 9)
+            assert.is_nil(filed())
+        end)
+
+        it("files a promotion with the class it left", function()
+            sheet("Warrior", 25, 7, 8, 25, 25, 18, 9)
+            helper.simulateLine(TRAINED)
+            helper.simulateLine("The guild bestows upon you the title of knight!")
+            sheet("Knight", 1, 7, 8, 25, 25, 18, 9)
+            local p = filed()
+            assert.are.same({ "Warrior", "Knight", 1 }, { p[3], p[4], p[5] })
         end)
 
     end)

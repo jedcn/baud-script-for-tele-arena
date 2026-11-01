@@ -173,6 +173,9 @@ createTrigger("^Knowledge:\\s+(\\d+)$", function(matches)
     taPackage.character.setKnowledge(tonumber(matches[2]))
 end, { type = "regex" })
 
+-- After the attribute triggers: its Charisma trigger reads the stored values.
+dofile(scriptDir .. "ta_trainings.lua")
+
 -- =========================================================================
 -- Gold accounting
 -- =========================================================================

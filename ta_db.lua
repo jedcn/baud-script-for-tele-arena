@@ -203,6 +203,28 @@ db:execute([[CREATE TABLE IF NOT EXISTS services (
   PRIMARY KEY (name, location)
 )]])
 
+-- One row per training at the guild hall, promotions included (`buy
+-- promotion` answers with the same line; class_before and class_after tell
+-- them apart). The six attributes are read just before and just after, so
+-- every training gets a row whether or not a stat moved: how often Agility
+-- rises on a level is rows where it rose over all rows. The hall refuses a
+-- potion-tainted character, so these are the base stats, not boosted ones.
+-- `level` is the level trained to, as the sheet after it says.
+db:execute([[CREATE TABLE IF NOT EXISTS trainings (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  recorded_at      TEXT NOT NULL,
+  character        TEXT,
+  class_before     TEXT,
+  class_after      TEXT,
+  level            INTEGER,
+  intellect_before INTEGER, intellect_after INTEGER,
+  knowledge_before INTEGER, knowledge_after INTEGER,
+  physique_before  INTEGER, physique_after  INTEGER,
+  stamina_before   INTEGER, stamina_after   INTEGER,
+  agility_before   INTEGER, agility_after   INTEGER,
+  charisma_before  INTEGER, charisma_after  INTEGER
+)]])
+
 db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   weapon      TEXT NOT NULL,
@@ -1225,6 +1247,27 @@ function TaDb.recordService(name, location, cost)
         cost, name, location
     )
     dbLog("[DB\xE2\x86\x92services] " .. location .. ": " .. name .. " " .. cost .. "gp")
+end
+
+-- The six attributes, in the order the sheet prints them.
+TaDb.ATTRIBUTES = { "intellect", "knowledge", "physique", "stamina", "agility", "charisma" }
+
+-- `t` is { character, class_before, class_after, level, before, after },
+-- `before` and `after` keyed by the names in TaDb.ATTRIBUTES. Any of it may
+-- be nil: before the first `st` of a session there is no "before" to give.
+function TaDb.recordTraining(t)
+    local cols = { "recorded_at", "character", "class_before", "class_after", "level" }
+    local vals = { now(), t.character, t.class_before, t.class_after, t.level }
+    for _, stat in ipairs(TaDb.ATTRIBUTES) do
+        cols[#cols + 1] = stat .. "_before"
+        vals[#cols] = (t.before or {})[stat]
+        cols[#cols + 1] = stat .. "_after"
+        vals[#cols] = (t.after or {})[stat]
+    end
+    local marks = string.rep("?", #cols, ", ")
+    db:execute("INSERT INTO trainings (" .. table.concat(cols, ", ") .. ") VALUES (" .. marks .. ")",
+        table.unpack(vals, 1, #cols))
+    dbLog("[DB\xE2\x86\x92trainings] " .. tostring(t.character) .. " trained to level " .. tostring(t.level))
 end
 
 -- `attacker` is the character who swung, as { character, class, level, agility,
