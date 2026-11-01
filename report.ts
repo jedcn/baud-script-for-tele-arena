@@ -371,7 +371,7 @@ const trainingRows = trainings.map(t => {
 });
 const donationRows = donations.map(d => [
   d.recorded_at?.slice(0,10) ?? "—", esc(d.character ?? "—"), esc(d.class ?? "—"), d.level ?? "—",
-  d.amount != null ? d.amount + " gp" : "—", esc(rose(d)),
+  d.amount != null ? d.amount + " gp" : "—", d.pleased == null ? "—" : d.pleased ? "yes" : "no", esc(rose(d)),
 ]);
 
 const serviceRows = services.map(s => [esc(s.name), esc(s.location), s.cost != null ? s.cost + " gp" : "—", s.uses]);
@@ -554,7 +554,7 @@ ${trainingRows.length > 0 ? table(
 
 <h2>Donations</h2>
 ${donationRows.length > 0 ? table(
-  ["Date", "Character", "Class", "Level", "Gave", "Rose"],
+  ["Date", "Character", "Class", "Level", "Gave", "Pleased", "Rose"],
   donationRows,
   { alignRight: [3,4] }
 ) : "<p class='note'>No donations recorded yet.</p>"}

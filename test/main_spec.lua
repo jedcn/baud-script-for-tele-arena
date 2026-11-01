@@ -3366,6 +3366,20 @@ describe("ta_db", function()
             assert.are.equal("16", tostring(row.intellect_after))
         end)
 
+        it("adds pleased to a donations table from before it, keeping the old rows", function()
+            db.exec([[CREATE TABLE donations (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recorded_at TEXT NOT NULL, character TEXT, class TEXT, level INTEGER, amount INTEGER,
+                intellect_before INTEGER, intellect_after INTEGER, knowledge_before INTEGER,
+                knowledge_after INTEGER, physique_before INTEGER, physique_after INTEGER,
+                stamina_before INTEGER, stamina_after INTEGER, agility_before INTEGER,
+                agility_after INTEGER, charisma_before INTEGER, charisma_after INTEGER)]])
+            db.exec("INSERT INTO donations (recorded_at, amount) VALUES ('2026-11-01T11:54:21', 100)")
+            local migrated = dofile("ta_db.lua")
+            migrated.recordDonation({ character = "Tojolias", amount = 100, pleased = 1 })
+            assert.is_nil(db.one("SELECT pleased FROM donations WHERE id = 1").pleased)
+            assert.are.equal("1", tostring(db.one("SELECT pleased FROM donations WHERE id = 2").pleased))
+        end)
+
         it("files a training with no sheet read before it, leaving those columns empty", function()
             local fresh = dofile("ta_db.lua")
             fresh.recordTraining({ character = "Castor", level = 2, after = { agility = 18 } })
@@ -7888,7 +7902,7 @@ describe("Combat triggers", function()
             helper.simulateLine("Charisma:     " .. cha)
         end
 
-        -- params: recorded_at, character, class, level, amount, then
+        -- params: recorded_at, character, class, level, amount, pleased, then
         -- before/after for intellect, knowledge, physique, stamina, agility,
         -- charisma.
         local function filed()
@@ -7905,7 +7919,7 @@ describe("Combat triggers", function()
             sheet(16, 12, 12)
             local p = filed()
             assert.are.same({ "Tojolias", "Knight", 30, 100 }, { p[2], p[3], p[4], p[5] })
-            assert.are.same({ 15, 16 }, { p[6], p[7] })
+            assert.are.same({ 15, 16 }, { p[7], p[8] })
         end)
 
         it("asks for a fresh sheet when the priests accept", function()
@@ -7951,6 +7965,23 @@ describe("Combat triggers", function()
             taPackage.character.setGold(2103)
             helper.simulateLine(ACCEPTED)
             assert.are.equal(2103, taPackage.character.getGold())
+        end)
+
+        it("files whether the Gods were pleased", function()
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            helper.simulateLine(ACCEPTED)
+            helper.simulateLine("The Gods seem pleased by your donation...")
+            sheet(16, 12, 12)
+            assert.are.equal(1, filed()[6])
+        end)
+
+        it("files a donation without that line as not pleased", function()
+            sheet(15, 12, 12)
+            send("donate 100 gold")
+            helper.simulateLine(ACCEPTED)
+            sheet(15, 12, 12)
+            assert.are.equal(0, filed()[6])
         end)
 
         it("files a donation that moved nothing", function()

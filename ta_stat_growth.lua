@@ -68,7 +68,15 @@ createTrigger("^The priests gladly accept your donation\\.$", function()
     if amount then
         taPackage.character.setGold((taPackage.character.getGold() or 0) - amount)
     end
-    startRecord({ kind = "donation", amount = amount })
+    startRecord({ kind = "donation", amount = amount, pleased = 0 })
+end, { type = "regex" })
+
+-- The game's word that a donation worked. It comes after the priests' reply
+-- and before the sheet we asked for (session-tojolias-2026-11-01T11-52-31.log,
+-- the 12th donation of that session, Intellect 15 -> 16).
+createTrigger("^The Gods seem pleased by your donation\\.\\.\\.$", function()
+    local pending = taPackage.statGrowthPending
+    if pending and pending.kind == "donation" then pending.pleased = 1 end
 end, { type = "regex" })
 
 -- Charisma is the last attribute on the sheet, and the sheet answers the `st`

@@ -230,7 +230,10 @@ db:execute([[CREATE TABLE IF NOT EXISTS trainings (
 -- that moved nothing is counted too. The shrine docs say 100 gold can raise a
 -- stat below 20; the priests' reply is the same whatever happens, so the
 -- sheets are the only record of it. `amount` is what the command asked to
--- give, since the reply doesn't say.
+-- give, since the reply doesn't say. `pleased` is 1 when the game added "The
+-- Gods seem pleased by your donation...", which it does when the donation
+-- worked; kept apart from the sheets so a pleased donation that raised
+-- nothing (a stat already at 20, say) still shows up.
 db:execute([[CREATE TABLE IF NOT EXISTS donations (
   id               INTEGER PRIMARY KEY AUTOINCREMENT,
   recorded_at      TEXT NOT NULL,
@@ -243,8 +246,14 @@ db:execute([[CREATE TABLE IF NOT EXISTS donations (
   physique_before  INTEGER, physique_after  INTEGER,
   stamina_before   INTEGER, stamina_after   INTEGER,
   agility_before   INTEGER, agility_after   INTEGER,
-  charisma_before  INTEGER, charisma_after  INTEGER
+  charisma_before  INTEGER, charisma_after  INTEGER,
+  pleased          INTEGER
 )]])
+
+-- Migration: donations predates `pleased`. Older rows keep NULL.
+if not tableHasColumn("donations", "pleased") then
+    pcall(function() db:execute("ALTER TABLE donations ADD COLUMN pleased INTEGER") end)
+end
 
 db:execute([[CREATE TABLE IF NOT EXISTS player_attacks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1302,9 +1311,10 @@ function TaDb.recordTraining(t)
     dbLog("[DB\xE2\x86\x92trainings] " .. tostring(t.character) .. " trained to level " .. tostring(t.level))
 end
 
--- `t` is { character, class, level, amount, before, after }.
+-- `t` is { character, class, level, amount, pleased, before, after },
+-- `pleased` being 1 or 0.
 function TaDb.recordDonation(t)
-    insertStatRow("donations", { "character", "class", "level", "amount" }, t)
+    insertStatRow("donations", { "character", "class", "level", "amount", "pleased" }, t)
     dbLog("[DB\xE2\x86\x92donations] " .. tostring(t.character) .. " gave " .. tostring(t.amount))
 end
 
