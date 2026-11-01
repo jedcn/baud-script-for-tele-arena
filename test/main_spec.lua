@@ -7756,6 +7756,38 @@ describe("Combat triggers", function()
             assert.is_false(found)
         end)
 
+        -- A recreated character: same name, level back to 1, fresh rolls. Its
+        -- first sheet must not be filed as changes to its predecessor's stats.
+        it("does not compare a new character's sheet with the old one's", function()
+            helper.simulateLine("Level:        2")
+            helper.simulateLine("Intellect:    7")
+            helper.simulateLine("Level:        1")
+            helper.simulateLine("Intellect:    8")
+            assert.is_nil(helper.findDbCall("execute", "stat_changes"))
+            assert.are.equal(8, taPackage.character.getIntellect())
+        end)
+
+        it("files the new character's own gains after that", function()
+            helper.simulateLine("Level:        2")
+            helper.simulateLine("Intellect:    7")
+            helper.simulateLine("Level:        1")
+            helper.simulateLine("Intellect:    8")
+            helper.simulateLine("Level:        2")
+            helper.simulateLine("Intellect:    9")
+            local call = helper.findDbCall("execute", "stat_changes")
+            assert.is_not_nil(call)
+            assert.are.same({ "Intellect", 8, 9 }, { call.params[1], call.params[2], call.params[3] })
+        end)
+
+        it("keeps comparing across a promotion, which sets level 1 itself", function()
+            helper.simulateLine("Level:        25")
+            helper.simulateLine("Intellect:    7")
+            helper.simulateLine("The guild bestows upon you the title of knight!")
+            helper.simulateLine("Level:        1")
+            helper.simulateLine("Intellect:    8")
+            assert.is_not_nil(helper.findDbCall("execute", "stat_changes"))
+        end)
+
         local attributeStats = { "Physique", "Stamina", "Agility", "Charisma", "Intellect", "Knowledge" }
 
         for _, stat in ipairs(attributeStats) do

@@ -832,8 +832,22 @@ end, { type = "regex" })
 
 -- Not filed in stat_changes: that table is for the six attributes, and the
 -- level is already on every row of player_attacks.
+--
+-- A level that falls means a different character: farm-for-gold and character
+-- creation delete one and roll the next under the same name, and training
+-- only ever raises it (a promotion sets level 1 itself, so its sheet reads
+-- 1 -> 1). The sheet prints Level above the six attributes, so forgetting them
+-- here makes this sheet's attribute lines a first reading, rather than the
+-- new character's rolls filed as changes to the old one's.
 createTrigger("^Level:\\s+(\\d+)$", function(matches)
-    taPackage.character.setLevel(tonumber(matches[2]))
+    local newLevel = tonumber(matches[2])
+    local oldLevel = taPackage.character.getLevel()
+    if oldLevel and newLevel < oldLevel then
+        local c = taPackage.character
+        c.setPhysique(nil); c.setStamina(nil); c.setAgility(nil)
+        c.setCharisma(nil); c.setIntellect(nil); c.setKnowledge(nil)
+    end
+    taPackage.character.setLevel(newLevel)
 end, { type = "regex" })
 
 -- =========================================================================
