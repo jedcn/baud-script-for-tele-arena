@@ -55,9 +55,16 @@ end
 createOutboundTrigger("^donate (\\d+) gold$", noteDonationAmount, { type = "regex" })
 createOutboundTrigger("^d (\\d+) g$", noteDonationAmount, { type = "regex" })
 
+-- The priests take exactly what was offered (twelve donations on 2026-11-01
+-- came to 1,200 and carried gold fell 2,103 -> 903), so take it off the
+-- tracked gold here, as the tavern and temple triggers in main.lua do for
+-- their fees, rather than leave it stale until the next `i`.
 createTrigger("^The priests gladly accept your donation\\.$", function()
     local amount = taPackage.donationAmount
     taPackage.donationAmount = nil
+    if amount then
+        taPackage.character.setGold((taPackage.character.getGold() or 0) - amount)
+    end
     startRecord({ kind = "donation", amount = amount })
 end, { type = "regex" })
 
