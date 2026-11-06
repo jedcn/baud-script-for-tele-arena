@@ -48,6 +48,7 @@
 --
 --     "se"                  -- a direction; the arrival brief advances the walk
 --     { cmd = "pull lever" } -- any command; the walk advances after a pause
+--     { run = "buy-tavern" } -- the same, through runCommand, for an alias
 --     { killAll = true }     -- clear this room; the sweep advances the walk
 --     { goTo = "<slug>" }    -- `live-navigate <slug>` from here, mid-route
 --     { anchor = "<slug>" }  -- `map-here <slug>`, for the tracker only
@@ -1035,6 +1036,30 @@ NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
     },
 }
 
+-- From wherever the map knows you are: bank the purse, then make the round of
+-- the first town's shops. No `from`, for the same reason as the route above.
+--
+-- The `i` is there so the deposit works from what the game says we hold, not
+-- from a running total that a missed line could have left wrong: too high and
+-- the game refuses the whole deposit.
+NAV_ROUTES["restock-in-first-town"] = {
+    to             = "first-town/south-plaza",
+    climbOutOfPits = true,
+    steps          = { { goTo = "town-vaults" },
+                       { cmd = "i" },
+                       { run = "deposit-all-but 100" },
+                       "u", "s", "ne",            -- tavern
+                       { run = "buy-tavern" },
+                       "sw", "nw",                -- equipment shop
+                       { cmd = "sell water" },
+                       { cmd = "buy water" },
+                       "se", "w",                 -- temple
+                       { cmd = "buy healing" },
+                       "e", "s", "s",             -- magic shop
+                       { run = "buy-potions" },
+                       "n" },
+}
+
 -- Second names for the two halves of the third-town journey. `after-doors` and
 -- `after-doors-to-town-3` say what each one is, which is what you want when
 -- you're editing them; `part-1` and `part-2` say what order to run them in,
@@ -1778,6 +1803,7 @@ local function navStepKind(step)
     if type(step) ~= "table" then return nil end
     if step.killAll then return "killAll" end
     if type(step.cmd) == "string" then return "cmd" end
+    if type(step.run) == "string" then return "run" end
     if type(step.door) == "string" then return "gate" end
     if type(step.seam) == "string" then return "seam" end
     if type(step.goTo) == "string" then return "goTo" end
@@ -1794,7 +1820,7 @@ local function navBadStep(steps, seen)
     for i, step in ipairs(steps or {}) do
         local kind = navStepKind(step)
         if not kind then
-            return i, "isn't a direction, a { cmd = ... }, a { killAll = true },"
+            return i, "isn't a direction, a { cmd = ... }, a { run = ... }, a { killAll = true },"
                 .. " a { door = ... }, a { seam = ... }, a { goTo = ... } or an { anchor = ... }"
         end
         if kind == "seam" and not NAV_ROUTES[step.seam] then
@@ -1821,6 +1847,7 @@ local function navStepLabel(step)
     local kind = navStepKind(step)
     if kind == "move" then return step end
     if kind == "cmd" then return "'" .. step.cmd .. "'" end
+    if kind == "run" then return "'" .. step.run .. "'" end
     if kind == "gate" then return step.door .. " (" .. (step.key or "locked") .. " door)" end
     if kind == "seam" then return "seam check (" .. step.seam .. ")" end
     if kind == "goTo" then return "live-navigate " .. step.goTo end
@@ -1944,6 +1971,11 @@ local function navStep()
         navSend(step.cmd)
         -- Nothing reliably answers an arbitrary command, so the pause is the
         -- only signal we have that it has had its chance.
+        navAdvance()
+    elseif kind == "run" then
+        -- A cmd goes out as a bare send, which an alias would reach as literal
+        -- text. Nothing answers this either, so it paces the same way.
+        runCommand(step.run)
         navAdvance()
     elseif kind == "seam" then
         navStartSeam(step.seam)
@@ -2935,6 +2967,10 @@ local function navListRoutes()
         navEcho(string.format("  %-" .. width .. "s  %s", name, note))
     end
 end
+
+createAlias("^restock-in-first-town$", function()
+    runCommand("navigate-to restock-in-first-town")
+end, { type = "regex" })
 
 createAlias("^navigate-to\\s*$", function()
     navListRoutes()

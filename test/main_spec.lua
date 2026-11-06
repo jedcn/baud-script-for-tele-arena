@@ -21765,6 +21765,130 @@ describe("live-navigate", function()
 
 end)
 
+describe("deposit-all-but", function()
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    it("deposits everything over the amount kept", function()
+        taPackage.character.setGold(1234)
+        helper.simulateAlias("deposit-all-but 100")
+        assert.are.same({ "deposit 1134" }, helper.sendCalls)
+    end)
+
+    it("sends nothing when there is nothing over the amount kept", function()
+        taPackage.character.setGold(100)
+        helper.simulateAlias("deposit-all-but 100")
+        assert.are.same({}, helper.sendCalls)
+    end)
+
+    it("sends nothing when the gold isn't known", function()
+        taPackage.character.setGold(nil)
+        helper.simulateAlias("deposit-all-but 100")
+        assert.are.same({}, helper.sendCalls)
+    end)
+end)
+
+describe("restock-in-first-town", function()
+
+    -- Ids as on the real map; only what the walk's search and checks read.
+    local ROOMS = {
+        ["town-vaults"] = { id = 6, name = "town vaults" },
+        ["south-plaza"] = { id = 10, name = "south plaza" },
+    }
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.mockDbRows = function(sql)
+            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                return {
+                    { from_id = 1, direction = "n", to_id = 5 },
+                    { from_id = 5, direction = "d", to_id = 6 },
+                }
+            end
+            return {}
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "SELECT id, name, area_id", 1, true) then
+                return ROOMS[params[1]]
+            end
+            return nil
+        end
+        taPackage.character.setGold(50)
+        taPackage.hereState = "known"
+        taPackage.here = 1
+    end)
+
+    local function arrive(name)
+        helper.simulateLine("You're in the " .. name .. ".")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+    end
+
+    local function pace(n)
+        for _ = 1, n or 1 do helper.fireTimers(taPackage.navStepDelayMs) end
+    end
+
+    it("banks all but 100 of what `i` reports, then makes the round of the shops", function()
+        helper.simulateAlias("restock-in-first-town")
+        arrive("north plaza")
+        helper.simulateLine("Exits: n,s.")
+        pace()                         -- n: the search's first step
+        arrive("guild hall")
+        pace()                         -- d
+        arrive("town vaults")
+        pace()                         -- i
+        helper.simulateLine("You are carrying 1500 gold crowns.")
+        pace(2)                        -- deposit-all-but 100, u
+        for _, room in ipairs({ "guild hall", "north plaza", "tavern" }) do
+            arrive(room)
+            pace()
+        end
+        pace()                         -- sw, past buy-tavern
+        for _, room in ipairs({ "north plaza", "equipment shop" }) do
+            arrive(room)
+            pace()
+        end
+        pace(2)                        -- buy water, se
+        for _, room in ipairs({ "north plaza", "temple" }) do
+            arrive(room)
+            pace()
+        end
+        pace()                         -- e, past buy healing
+        for _, room in ipairs({ "north plaza", "south plaza", "magic shop" }) do
+            arrive(room)
+            pace()
+        end
+        pace()                         -- n, past buy-potions
+        arrive("south plaza")
+
+        local sent = {}
+        for i = 3, #helper.sendCalls do sent[#sent + 1] = helper.sendCalls[i] end
+        assert.are.same({
+            "n", "d", "i", "deposit 1400", "u", "s", "ne",
+            "buy meal", "buy drink", "sw", "nw",
+            "sell water", "buy water", "se", "w",
+            "buy healing", "e", "s", "s",
+            "buy rowan", "drink rowan", "buy hyssop", "drink hyssop", "n",
+        }, sent)
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("Arrived at restock-in-first-town", 1, true))
+    end)
+
+    it("doesn't set off when the tracker has lost you", function()
+        taPackage.hereState = "lost"
+        helper.simulateAlias("restock-in-first-town")
+        arrive("north plaza")
+        helper.simulateLine("Exits: n,s.")
+        pace()
+        assert.are.same({ "", "ex" }, helper.sendCalls)
+        assert.is_nil(taPackage.navigate)
+    end)
+end)
+
 -- A written route whose way is found on the map: `{ goTo = slug }` is
 -- live-navigate mid-route and `{ anchor = slug }` is map-here for the tracker.
 -- start-of-labrynth-to-beginning-of-level-2 is the route built from them.

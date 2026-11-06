@@ -99,6 +99,23 @@ createTrigger("^(\\S+) just gave you (\\d+) gold coins\\.$", function(matches)
         "Deposited — back in the tavern.")
 end, { type = "regex" })
 
+-- deposit-all-but <N>: bank the purse, keeping N crowns to spend. Works from the
+-- tracked gold, so it is only as fresh as the last line that moved it; send `i`
+-- first where that matters.
+createAlias("^deposit-all-but (\\d+)$", function(matches)
+    local gold = taPackage.character.getGold()
+    if not gold then
+        echo("[bank] I don't know how much gold you have yet -- run `i` first.")
+        return
+    end
+    local amount = gold - tonumber(matches[2])
+    if amount <= 0 then
+        echo("[bank] Only " .. gold .. " gold on you -- nothing to deposit.")
+        return
+    end
+    send("deposit " .. amount)
+end, { type = "regex" })
+
 -- Confirmation, purely so the log says the money actually landed. A deposit
 -- that silently failed would look exactly like one that worked, and the failure
 -- only shows up much later as a refused handover.
