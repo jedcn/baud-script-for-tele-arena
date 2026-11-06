@@ -710,7 +710,7 @@ end
 -- { from_id = , direction = , to_id = } rows.
 --
 -- One query rather than a per-room lookup because the caller is a breadth-first
--- search (`live-navigate`), and asking the database per room turns one round trip
+-- search (`navigate-live`), and asking the database per room turns one round trip
 -- into one per room visited -- a thousand of them on a world this size.
 function TaDb.allExits()
     return db:query(
@@ -728,7 +728,7 @@ function TaDb.roomIdsInArea(areaSlug)
     return ids
 end
 
--- Every room tagged with this trap, as a set of ids. `live-navigate` asks for
+-- Every room tagged with this trap, as a set of ids. `navigate-live` asks for
 -- the trap doors: a route through one can end at the bottom of a pit.
 function TaDb.roomIdsWithTrap(trap)
     local ids = {}

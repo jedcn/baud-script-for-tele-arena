@@ -50,7 +50,7 @@
 --     { cmd = "pull lever" } -- any command; the walk advances after a pause
 --     { run = "buy-tavern" } -- the same, through runCommand, for an alias
 --     { killAll = true }     -- clear this room; the sweep advances the walk
---     { goTo = "<slug>" }    -- `live-navigate <slug>` from here, mid-route
+--     { goTo = "<slug>" }    -- `navigate-live <slug>` from here, mid-route
 --     { anchor = "<slug>" }  -- `map-here <slug>`, for the tracker only
 --
 -- Each leg is deliberately short and run by hand. Chaining them is a later
@@ -1765,14 +1765,14 @@ local function navSend(dir)
     taPackage.suppressRoomEntry = nil
     -- The same abandon the typed direction aliases do. Without it a walk is the
     -- one kind of move that leaves a half-read description open: `map-here X`
-    -- then `live-navigate` left a capture running for fifty steps on
+    -- then `navigate-live` left a capture running for fifty steps on
     -- 2026-09-18, and it ended up filed under X.
     taPackage.abandonRoomDescCapture()
     taPackage.pendingDirection = nil
     -- Queued like a typed move, so the arrival moves `where` along with us.
     -- Unqueued, every arrival of a walk reached trackMove with no direction and
     -- was ignored: the tracker ended the walk still sure it was in the room the
-    -- walk STARTED from, and the next `live-navigate` planned from there --
+    -- walk STARTED from, and the next `navigate-live` planned from there --
     -- "You're already in town-gates" from the guild hall, then a first step of
     -- `ne` the guild hall hasn't got (logs/session-castor-2026-10-27T21-12-21.log).
     -- Commands (`pull lever`, `push stone`) aren't moves; the triggers that
@@ -1850,7 +1850,7 @@ local function navStepLabel(step)
     if kind == "run" then return "'" .. step.run .. "'" end
     if kind == "gate" then return step.door .. " (" .. (step.key or "locked") .. " door)" end
     if kind == "seam" then return "seam check (" .. step.seam .. ")" end
-    if kind == "goTo" then return "live-navigate " .. step.goTo end
+    if kind == "goTo" then return "navigate-live " .. step.goTo end
     if kind == "anchor" then return "map-here " .. step.anchor end
     return "kill-all"
 end
@@ -1858,7 +1858,7 @@ end
 -- All three are defined below: they need navStep, which needs them.
 local navAdvance, navStartSweep, navStartSeam
 
--- A `{ goTo = "<slug>" }` step: `live-navigate` in the middle of a written
+-- A `{ goTo = "<slug>" }` step: `navigate-live` in the middle of a written
 -- route. The map is searched from where the tracker says we are NOW, at this
 -- step, and the directions it finds are spliced in after it -- so they are
 -- walked, paced and checked like any written step. Spliced the same way a
@@ -1869,7 +1869,7 @@ local navAdvance, navStartSweep, navStartSeam
 -- A walk never tells the tracker which way it went (navSend is a bare send),
 -- so after one goTo the tracker is still in the room the walk STARTED from.
 -- A second goTo needs an `anchor` in front of it, the way the same thing typed
--- by hand needs a `map-here` between two `live-navigate`s.
+-- by hand needs a `map-here` between two `navigate-live`s.
 local function navGoTo(slug)
     local j = taPackage.navigate
     if taPackage.hereState ~= "known" or not taPackage.here then
@@ -1944,7 +1944,7 @@ local function navStep()
     local skipping = kind == "cmd" and j.noPullLever and step.cmd:match("^pull%s") ~= nil
     navDebug((skipping and "skip step " or "send step ")
         .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
-    -- Said out loud, not just traced, when the walk asked for it: a `live-navigate`
+    -- Said out loud, not just traced, when the walk asked for it: a `navigate-live`
     -- route was worked out a moment ago and written down nowhere, so this line is
     -- the only account of how far along it is. The skipped-lever case says its own
     -- piece below, so it isn't announced twice.
@@ -2862,7 +2862,7 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- Read by navStep, which is where a `pull ...` step gets skipped.
         noPullLever  = noPullLever,
         -- Read by navStep: say every step out loud as it goes out. Off for a
-        -- written route, whose steps you can read in this file -- `live-navigate`
+        -- written route, whose steps you can read in this file -- `navigate-live`
         -- turns it on because its route exists only for the length of the walk.
         announceSteps = route.announceSteps,
         -- Read by the trap-door trigger: add the climb out of a pit the route
@@ -3864,7 +3864,7 @@ createTrigger("^An? (.+) has just arrived from below\\.$",
     function(matches) navNoteArrival(matches[2]) end, { type = "regex" })
 
 -- ---------------------------------------------------------------------------
--- live-navigate: a route worked out from the map, not written out by hand
+-- navigate-live: a route worked out from the map, not written out by hand
 --
 -- `navigate-to` walks routes that somebody typed into this file, which is right
 -- for the ones that matter -- they pull levers, carry keys, cross a chasm in a
@@ -3934,7 +3934,7 @@ function taPackage.navGoal(arg)
     return function(id) return id == room.id end, slug
 end
 
-createAlias("^live-navigate (.+)$", function(matches)
+createAlias("^navigate-live (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
     local justSay = arg:match("^(.-)%s+directions%-only$")
     if justSay then arg = justSay end

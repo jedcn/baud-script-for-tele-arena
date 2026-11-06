@@ -1208,7 +1208,7 @@ createAlias("^map-here (.+)$", function(matches)
     local slug = matches[2]:match("^%s*(.-)%s*$")
     -- Accept the `area/room` form as well as the bare slug, because that is how
     -- the map prints a room everywhere else -- roomRef, the coverage report,
-    -- live-navigate, and the duplicate warning, which ends "stop now and
+    -- navigate-live, and the duplicate warning, which ends "stop now and
     -- `map-here` it" and then names the room as `complex-caverns/...`. Copying
     -- that name back in answered "no room with slug", so the one command the
     -- warning exists to prompt was the one thing it made impossible. The walker

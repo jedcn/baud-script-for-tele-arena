@@ -4185,7 +4185,7 @@ describe("World map triggers", function()
 
         -- A walk is a move like any other, but it sends its steps straight
         -- through navSend rather than through the direction aliases -- which is
-        -- how a capture opened by `map-here` survived a fifty-step live-navigate.
+        -- how a capture opened by `map-here` survived a fifty-step navigate-live.
         it("a walk's own step abandons a look capture left open", function()
             taPackage.lookCapture.state = "accumulating_room"
             taPackage.hereState = "known"
@@ -4198,7 +4198,7 @@ describe("World map triggers", function()
                 end
                 return {}
             end
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
             assert.are.equal("idle", taPackage.lookCapture.state)
         end)
@@ -16508,7 +16508,7 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("sw"))
         end)
 
-        -- Counting the steps out loud is `live-navigate`'s, and opt-in. A
+        -- Counting the steps out loud is `navigate-live`'s, and opt-in. A
         -- written route's steps are in ta_nav.lua to be read, and a sixty-one
         -- step walk that narrates every one of them buries the lines that
         -- matter -- a locked door, a lever, a seam that didn't check out.
@@ -21457,7 +21457,7 @@ describe("Auto-login", function()
 
 end)
 
-describe("live-navigate", function()
+describe("navigate-live", function()
 
     before_each(function()
         helper.resetAll()
@@ -21519,7 +21519,7 @@ describe("live-navigate", function()
         stubGraph()
         taPackage.hereState = "lost"
         taPackage.here = nil
-        helper.simulateAlias("live-navigate fourth-town")
+        helper.simulateAlias("navigate-live fourth-town")
         local said = table.concat(helper.echoCalls, " ")
         assert.is_truthy(said:find("don't know which room", 1, true))
         assert.are.equal(0, #helper.sendCalls)
@@ -21533,7 +21533,7 @@ describe("live-navigate", function()
             if string.find(sql, "SELECT id, name, area_id", 1, true) then return { id = 99 } end
             return nil
         end
-        helper.simulateAlias("live-navigate far-away")
+        helper.simulateAlias("navigate-live far-away")
         local said = table.concat(helper.echoCalls, " ")
         assert.is_truthy(said:find("Nothing walked connects", 1, true))
         assert.are.equal(0, #helper.sendCalls)
@@ -21545,7 +21545,7 @@ describe("live-navigate", function()
         stubGraph({ { id = 4 } })
         taPackage.hereState = "known"
         taPackage.here = 1
-        helper.simulateAlias("live-navigate somewhere directions-only")
+        helper.simulateAlias("navigate-live somewhere directions-only")
         local said = table.concat(helper.echoCalls, " ")
         assert.is_truthy(said:find("e e n", 1, true))
         assert.are.equal(0, #helper.sendCalls)
@@ -21560,7 +21560,7 @@ describe("live-navigate", function()
             stubGraph({ { id = 4 } })
             taPackage.hereState = "known"
             taPackage.here = 1
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
         end
 
         it("announces the first step as it goes out", function()
@@ -21618,7 +21618,7 @@ describe("live-navigate", function()
 
         it("checks for a rope before setting off", function()
             trapGraph()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             assert.are.equal("i", helper.sendCalls[#helper.sendCalls])
             assert.are.equal(0, sent("e"))
             helper.simulateLine("You are carrying a coil of rope.")
@@ -21627,7 +21627,7 @@ describe("live-navigate", function()
 
         it("won't set off without a rope", function()
             trapGraph()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             helper.simulateLine("You are carrying 12 gold crowns.")
             assert.are.equal(0, sent("e"))
             local said = table.concat(helper.echoCalls, "\n")
@@ -21639,14 +21639,14 @@ describe("live-navigate", function()
             stubGraph({ { id = 4 } })
             taPackage.hereState = "known"
             taPackage.here = 1
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             assert.are.equal(0, sent("i"))
             assert.are.equal("e", helper.sendCalls[#helper.sendCalls])
         end)
 
         it("climbs out of the pit before taking the next step", function()
             trapGraph()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             helper.simulateLine("You are carrying a coil of rope.")
             arrive("the trap room")                              -- step 1 landed
             helper.simulateLine("You just fell through a trap door in the floor!")
@@ -21663,7 +21663,7 @@ describe("live-navigate", function()
         -- When the floor holds there's no pit and nothing to climb out of.
         it("walks on as planned when the floor holds", function()
             trapGraph()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             helper.simulateLine("You are carrying a coil of rope.")
             arrive("the trap room")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -21677,8 +21677,8 @@ describe("live-navigate", function()
     -- nothing queued them and every arrival reached the tracker with no
     -- direction: it ended the walk sure it was still where the walk began. In
     -- logs/session-castor-2026-10-27T21-12-21.log castor walked town gates ->
-    -- guild hall, then `live-navigate town-gates` said "You're already in
-    -- town-gates" and `live-navigate south-plaza` planned a first step of `ne`
+    -- guild hall, then `navigate-live town-gates` said "You're already in
+    -- town-gates" and `navigate-live south-plaza` planned a first step of `ne`
     -- from the guild hall, which hasn't got one.
     describe("keeping track of where the walk went", function()
 
@@ -21712,7 +21712,7 @@ describe("live-navigate", function()
         end
 
         local function walkToTheFarRoom()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             arrive("the second room")
             helper.fireTimers(taPackage.navStepDelayMs)
             arrive("the third room")
@@ -21735,7 +21735,7 @@ describe("live-navigate", function()
             -- The side room is reached from the far room by `s s`; from the
             -- first room, where the walk began, it would be `e e s`.
             stubGraph({ { id = 5 } })
-            helper.simulateAlias("live-navigate elsewhere")
+            helper.simulateAlias("navigate-live elsewhere")
             local said = table.concat(helper.echoCalls, "\n")
             assert.is_truthy(said:find("is 2 steps: s s", 1, true))
             assert.are.equal("s", helper.sendCalls[#helper.sendCalls])
@@ -21755,7 +21755,7 @@ describe("live-navigate", function()
         -- paired with the next lit arrival.
         it("takes a dark arrival's move off the queue", function()
             namedGraph()
-            helper.simulateAlias("live-navigate somewhere")
+            helper.simulateAlias("navigate-live somewhere")
             helper.simulateLine("It's too dark to see.")
             assert.are.same({}, taPackage.pendingDirs)
             assert.are.equal(2, taPackage.here)
@@ -21890,7 +21890,7 @@ describe("restock-in-first-town", function()
 end)
 
 -- A written route whose way is found on the map: `{ goTo = slug }` is
--- live-navigate mid-route and `{ anchor = slug }` is map-here for the tracker.
+-- navigate-live mid-route and `{ anchor = slug }` is map-here for the tracker.
 -- start-of-labrynth-to-beginning-of-level-2 is the route built from them.
 describe("navigate-to with goTo and anchor steps", function()
 
