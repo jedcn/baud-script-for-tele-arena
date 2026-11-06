@@ -672,8 +672,7 @@ local NAV_ROUTES = {
     -- that log (session-pelayo-walk-back-2026-08-07T17-38-34.log), which brackets
     -- the trip with two typed markers -- "LET'S BEGIN THE JOURNEY" at the square
     -- and "WE DID IT!" at the plaza -- so the whole of it is one recorded walk
-    -- rather than a derivation. That matters here: `town-1/north-plaza` is a
-    -- reversal of `ruined-town` done on paper, and this deliberately is not.
+    -- rather than a derivation.
     --
     -- 201 steps against the 438 the outward chain takes, and the difference is
     -- all things you only pay for once. The levers and stones turn traps OFF and
@@ -686,9 +685,13 @@ local NAV_ROUTES = {
     -- Both ends are checked and both agree with what we already had. The start
     -- fingerprint is third town's mapped town square (id 1011, exits e/ne/nw/
     -- se/sw), and it's stated literally rather than as `third-town/town-square`
-    -- so this leg still runs on a host with no map -- the same reason
-    -- `ruined-town` states both of its ends. The tail is better than a check: the
-    -- last two steps `u`, `ne` are the exact reverse of the first two steps of
+    -- so this leg still runs on a host with no map: the script opens
+    -- `tele-arena.db` relative to the working directory, and on a host that has
+    -- never mapped anything that call quietly makes an EMPTY database rather than
+    -- failing, whereupon every <area>/<room> reference reports "there's no area
+    -- called 'third-town' (known areas: )" and refuses to move. The tail is
+    -- better than a check: the last two steps `u`, `ne` are the exact reverse of
+    -- the first two steps of
     -- `town-3/ruby-door` (`sw`, `d`), the path between the plaza and the sewers.
     -- The three `d` into the sewers mirror that route's three `u` out.
     --
@@ -767,88 +770,6 @@ local NAV_ROUTES = {
                      "w", "nw", "nw", "w", "u", "sw", "sw", "u", "n", "u",
                      "n", "w", "nw", "nw", "nw", "sw", "sw", "nw", "nw", "ne",
                      "nw", "nw", "n", "ne", "nw", "u", "ne" },
-    },
-    -- Out of the first town and south-west across the wilderness to the ruined
-    -- town in the swamp. Nothing to do with the town-3 chain above: this one
-    -- starts from the FIRST town's north plaza, which the map can tell apart
-    -- from second-town's by exit-set (six exits against five).
-    --
-    -- Rather more of this is checkable than it first looks, because the whole
-    -- wilderness was mapped in one walk -- tojolias, 2026-07-13 -- and these
-    -- directions run back over it. Steps 1-24 walk through the mapped graph and
-    -- steps 55-61 do too, coming backwards from the plaza; only the
-    -- twenty-nine in between are unverifiable, and those leave the map at
-    -- step 25, an unwalked `ne` stub out of the clearing at id 915.
-    --
-    -- Two things that reading fell out of, both worth knowing about:
-    --
-    -- The map is missing a room at step 3. Between south-plaza and the mountains
-    -- stands "outside the town gates" (exits ne, se, sw, nw), which the mapper
-    -- failed to name on the way past -- "[map] couldn't read the room name" --
-    -- and then anchored past. So the graph carries a south-plaza --sw--> mountains
-    -- edge that skips a room, and a forward trace of this route "fails" at step 3
-    -- for that reason. The route is right and the map is wrong; don't correct the
-    -- route to match it.
-    --
-    -- Step 11 is the second `w`, and it was missing from the walk as first
-    -- written down. Without it step 12's `sw` is being asked of cave-161, whose
-    -- exits are e and w and are known from an actual `ex` -- and with it the next
-    -- thirteen steps walk cleanly through the forest to the clearing. Which is
-    -- the usual failure exactly once inverted: a repeated direction counted one
-    -- time too FEW. Nine other runs of a doubled direction to mistrust if a step
-    -- is refused, the longest being se se se se (19-22), ne ne ne ne (42-45) and
-    -- the n n n n that ends it.
-    --
-    -- Both ends are stated literally rather than as map references, so this leg
-    -- runs on a machine that has no map: the script opens `tele-arena.db`
-    -- relative to the working directory, and on a host that has never mapped
-    -- anything that call quietly makes an EMPTY database rather than failing --
-    -- whereupon every route naming an <area>/<room> reports "there's no area
-    -- called 'first-town' (known areas: )" and refuses to move. The two towns'
-    -- north plazas are still told apart exactly, by the six exits against five
-    -- that the paragraph above turns on. What is given up is only the map's
-    -- corroboration of the two ends, and both were checked when this was
-    -- recorded -- the plaza is id 966 and its `ex` reads n,ne,e,s,w,nw.
-    ["ruined-town"] = {
-        from  = { room = "north plaza",  exits = "e,n,ne,nw,s,w" },
-        to    = { room = "ruined plaza" },
-        steps = { "s", "sw", "sw", "s", "sw", "se", "sw", "sw", "nw", "w",
-                  "w", "sw", "s", "s", "sw", "sw", "se", "sw", "se", "se",
-                  "se", "se", "sw", "se", "ne", "e", "e", "e", "ne", "n",
-                  "ne", "e", "e", "se", "s", "sw", "se", "se", "ne", "ne",
-                  "n", "ne", "ne", "ne", "ne", "se", "se", "e", "ne", "ne",
-                  "e", "se", "se", "e", "ne", "ne", "ne", "n", "n", "n", "n" },
-    },
-    -- The way home: ruined-town reversed, direction by direction. Sixty-one
-    -- steps back to where the other one starts.
-    --
-    -- Derived rather than walked, which is a weaker thing than the leg it
-    -- mirrors and should be read that way -- it assumes every exit out there has
-    -- a reverse, and one that doesn't is a step this list cannot know about.
-    -- What can be checked has been. The map confirms both ends of the mirror:
-    -- steps 1-7 down the path and the swamp to id 959, and steps 38-59 from the
-    -- clearing at 915 back through the forest and the caves to the mountains --
-    -- twenty-nine of the sixty-one, each one a real reverse edge in the graph
-    -- rather than an assumed one. Steps 8-37 are the stretch the map has never
-    -- seen; the walk of 2026-08-05 crossed it forwards, so the rooms are there,
-    -- but nothing has been through them the other way.
-    --
-    -- Step 60 is the one the map actively disagrees with, and the map is wrong.
-    -- Tracing back from the north plaza dies at step 60 because the graph is
-    -- missing "outside the town gates" and carries a south-plaza --sw-->
-    -- mountains edge straight through where it stands. The session log of
-    -- 2026-08-05 walked the pair in both directions and settles it: `sw` from
-    -- the south plaza reaches the gates (exits ne, se, sw, nw) and `ne` returns.
-    -- Two `ne` here, not one.
-    ["town-1/north-plaza"] = {
-        from  = { room = "ruined plaza", exits = "e,n,ne,nw,s,w" },
-        to    = { room = "north plaza" },
-        steps = { "s", "s", "s", "s", "sw", "sw", "sw", "w", "nw", "nw",
-                  "w", "sw", "sw", "w", "nw", "nw", "sw", "sw", "sw", "sw",
-                  "s", "sw", "sw", "nw", "nw", "ne", "n", "nw", "w", "w",
-                  "sw", "s", "sw", "w", "w", "w", "sw", "nw", "ne", "nw",
-                  "nw", "nw", "nw", "ne", "nw", "ne", "ne", "n", "n", "ne",
-                  "e", "e", "se", "ne", "ne", "nw", "ne", "n", "ne", "ne", "n" },
     },
     -- The far end of the second level of the labyrinth. Unlit -- see "Walking in
     -- the dark" below for what that changes and why the route says so here.
@@ -1138,9 +1059,8 @@ end
 -- The labyrinth routes are walked in one direction and come back the other, and
 -- the way back is the same directions reversed and flipped. That is a real
 -- assumption -- it takes every exit to have a reverse, and a one-way passage is
--- a step this cannot know about -- but it is the same assumption
--- `town-1/north-plaza` has been making since it was written, and the level-2
--- stone is now settled: it opens a wall rather than teleporting (confirmed by
+-- a step this cannot know about -- but the level-2 stone is now settled: it
+-- opens a wall rather than teleporting (confirmed by
 -- the user after two walks), so the mirror is not defeated at step 45.
 --
 -- DERIVED, not transcribed. A hundred directions written out a second time
@@ -1659,7 +1579,7 @@ end
 -- The route names as an indented list, one per line, with the ones that share
 -- a `town-3/` style prefix gathered under it. On one comma-separated line two
 -- dozen names were a wall to read. A prefix with only one route under it stays
--- on one line (`town-1/north-plaza`): a heading over a single entry is more
+-- on one line (`town-1/somewhere`): a heading over a single entry is more
 -- lines, not more clarity.
 function taPackage.navRouteListLines(names)
     local sorted = {}
@@ -3137,7 +3057,7 @@ createAlias("^navigate-to (.+)$", function(matches)
     --
     -- Either end may be stated literally instead of as a map reference, and both
     -- ends of a route can need it for the same reason the stoneworks legs do:
-    -- the map may not be able to answer. `{ room = "ruined plaza" }` asks it
+    -- the map may not be able to answer. `{ room = "north plaza" }` asks it
     -- nothing and checks the arrival brief's name directly. All that is lost is
     -- `destRoomId`, which only the door probe wants, so a literal `to` and a
     -- `door` don't go together.

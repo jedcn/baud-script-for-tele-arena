@@ -16253,9 +16253,6 @@ describe("navigate-to", function()
                    exits = { "e", "n", "s", "sw", "w" } },
         [340]  = { id = 340,  slug = "town-sewers",          name = "town sewers",       area = 8,
                    exits = { "u", "se" } },
-        -- Where the ruined-town route ends, so its `to` reference resolves.
-        [966]  = { id = 966,  slug = "ruined-plaza",         name = "ruined plaza",      area = 1,
-                   exits = { "n", "ne", "e", "s", "w", "nw" } },
         [359]  = { id = 359,  slug = "town-sewers-18",       name = "town sewers",       area = 8,
                    exits = { "e", "n", "s", "w" } },
         -- The junction the ruby, platinum and onyx doors open off, and where
@@ -16389,7 +16386,7 @@ describe("navigate-to", function()
             local out = lastEchoes()
             assert.is_truthy(out:find("end-of-labrynth-level-2", 1, true))
             assert.is_truthy(out:find("town-3/hydra", 1, true))
-            assert.is_truthy(out:find("ruined-town", 1, true))
+            assert.is_truthy(out:find("town-2", 1, true))
             assert.are.equal(0, #helper.sendCalls)
             assert.is_nil(taPackage.navigate)
         end)
@@ -16445,15 +16442,15 @@ describe("navigate-to", function()
 
         it("lists known routes one per line, grouped under a shared prefix", function()
             assert.are.same({
-                "  ruined-town",
-                "  town-1/north-plaza",
+                "  some-route",
+                "  town-1/somewhere",
                 "  town-2",
                 "  town-3/",
                 "    after-doors",
                 "    get-onyx-key",
                 "    temple",
             }, taPackage.navRouteListLines({
-                "town-3/temple", "town-2", "town-1/north-plaza", "ruined-town",
+                "town-3/temple", "town-2", "town-1/somewhere", "some-route",
                 "town-3/after-doors", "town-3/get-onyx-key",
             }))
         end)
@@ -16520,98 +16517,8 @@ describe("navigate-to", function()
             assert.is_falsy(lastEchoes():find("Taking step", 1, true))
         end)
 
-        -- The one recorded route that starts outside the town-3 chain, and the
-        -- reason the start check has to fingerprint: both towns have a room
-        -- called "north plaza", and walking sixty wilderness steps from the
-        -- wrong one would march the character into the sewers' walls instead.
-        describe("the ruined-town route", function()
-
-            it("is sixty-one directions from the first town's north plaza", function()
-                local r = taPackage.navRoutes["ruined-town"]
-                -- Stated literally at both ends so the leg runs on a host with
-                -- no map: an empty tele-arena.db makes every <area>/<room>
-                -- reference unresolvable.
-                assert.are.same({ room = "north plaza", exits = "e,n,ne,nw,s,w" }, r.from)
-                assert.are.same({ room = "ruined plaza" }, r.to)
-                assert.are.equal(61, #r.steps)
-                for i, step in ipairs(r.steps) do
-                    assert.is_true(type(step) == "string",
-                        "step " .. i .. " should be a plain direction")
-                end
-            end)
-
-            it("sets off south from first-town's north plaza", function()
-                helper.simulateAlias("navigate-to ruined-town")
-                answerProbe(1)
-                assert.are.equal(1, sent("s"))
-            end)
-
-            it("refuses to walk it from second-town's north plaza", function()
-                helper.simulateAlias("navigate-to ruined-town")
-                answerProbe(274)
-                assert.are.equal(0, sent("s"))
-                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
-            end)
-
-            -- The script opens tele-arena.db relative to the working directory,
-            -- and on a host that has never mapped anything that call makes an
-            -- empty database rather than failing. Every <area>/<room> reference
-            -- is then unresolvable -- "there's no area called 'first-town'
-            -- (known areas: )" -- so this leg names both its ends literally and
-            -- asks the map nothing.
-            it("walks on a host whose map is empty", function()
-                helper.mockDbOneRow = function() return nil end
-                helper.mockDbRows = function() return {} end
-                helper.simulateAlias("navigate-to ruined-town")
-                answerProbe(1)
-                assert.are.equal(1, sent("s"))
-                assert.is_falsy(lastEchoes():find("known areas", 1, true))
-            end)
-
-        end)
-
-        -- The way back is ruined-town inverted rather than a walk of its own, so
-        -- the property worth testing is that it really is the inverse: a typo in
-        -- either list shows up as a step that doesn't mirror.
-        describe("the town-1/north-plaza route back", function()
-
-            local OPP = { n = "s", s = "n", e = "w", w = "e", ne = "sw",
-                          sw = "ne", nw = "se", se = "nw", u = "d", d = "u" }
-
-            it("mirrors ruined-town step for step", function()
-                local out  = taPackage.navRoutes["ruined-town"]
-                local back = taPackage.navRoutes["town-1/north-plaza"]
-                assert.are.equal(#out.steps, #back.steps)
-                for i, step in ipairs(back.steps) do
-                    assert.are.equal(OPP[out.steps[#out.steps - i + 1]], step,
-                        "step " .. i .. " should reverse the other route's")
-                end
-            end)
-
-            it("swaps the two routes' ends", function()
-                local out  = taPackage.navRoutes["ruined-town"]
-                local back = taPackage.navRoutes["town-1/north-plaza"]
-                assert.are.equal(out.to.room, back.from.room)
-                assert.are.equal(out.from.room, back.to.room)
-            end)
-
-            it("sets off south from the ruined plaza", function()
-                helper.simulateAlias("navigate-to town-1/north-plaza")
-                answerProbe(966)
-                assert.are.equal(1, sent("s"))
-            end)
-
-            it("refuses to walk it from the north plaza", function()
-                helper.simulateAlias("navigate-to town-1/north-plaza")
-                answerProbe(1)
-                assert.are.equal(0, sent("s"))
-                assert.is_truthy(lastEchoes():find("I don't know how to get there from here.", 1, true))
-            end)
-
-        end)
-
-        -- The whole of the third-town chain walked backwards in one leg. Unlike
-        -- town-1/north-plaza this is a recorded walk rather than an inversion,
+        -- The whole of the third-town chain walked backwards in one leg. This
+        -- is a recorded walk rather than an inversion,
         -- so there is no mirror property to assert -- what can be checked is
         -- that it still meets the outward chain where the two must agree.
         -- after-doors is the first four legs in one, and it is composition
@@ -17926,8 +17833,9 @@ describe("navigate-to", function()
 
             it("is 201 steps from the town square to the north plaza", function()
                 local r = taPackage.navRoutes["town-2"]
-                -- Literal at both ends so the leg runs on a host with no map,
-                -- the same reason ruined-town states both of its ends.
+                -- Literal at both ends so the leg runs on a host with no map:
+                -- an empty tele-arena.db makes every <area>/<room> reference
+                -- unresolvable.
                 assert.are.same({ room = "town square", exits = "e,ne,nw,se,sw" }, r.from)
                 assert.are.same({ room = "north plaza" }, r.to)
                 assert.are.equal(201, #r.steps)
