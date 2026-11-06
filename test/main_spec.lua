@@ -21702,7 +21702,7 @@ describe("restock-in-first-town", function()
 
     -- Ids as on the real map; only what the walk's search and checks read.
     local ROOMS = {
-        ["town-vaults"] = { id = 6, name = "town vaults" },
+        ["guild-hall"]  = { id = 5, name = "guild hall" },
         ["south-plaza"] = { id = 10, name = "south plaza" },
     }
 
@@ -21713,7 +21713,6 @@ describe("restock-in-first-town", function()
             if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
                 return {
                     { from_id = 1, direction = "n", to_id = 5 },
-                    { from_id = 5, direction = "d", to_id = 6 },
                 }
             end
             return {}
@@ -21739,13 +21738,13 @@ describe("restock-in-first-town", function()
         for _ = 1, n or 1 do helper.fireTimers(taPackage.navStepDelayMs) end
     end
 
-    it("banks all but 100 of what `i` reports, then makes the round of the shops", function()
+    it("trains, banks all but 100 of what `i` reports, then rounds the shops", function()
         helper.simulateAlias("restock-in-first-town")
         arrive("north plaza")
         helper.simulateLine("Exits: n,s.")
         pace()                         -- n: the search's first step
         arrive("guild hall")
-        pace()                         -- d
+        pace(2)                        -- buy training, d
         arrive("town vaults")
         pace()                         -- i
         helper.simulateLine("You are carrying 1500 gold crowns.")
@@ -21775,7 +21774,7 @@ describe("restock-in-first-town", function()
         local sent = {}
         for i = 3, #helper.sendCalls do sent[#sent + 1] = helper.sendCalls[i] end
         assert.are.same({
-            "n", "d", "i", "deposit 1400", "u", "s", "ne",
+            "n", "buy training", "d", "i", "deposit 1400", "u", "s", "ne",
             "buy meal", "buy drink", "sw", "nw",
             "sell water", "buy water", "se", "w",
             "buy healing", "e", "s", "s",

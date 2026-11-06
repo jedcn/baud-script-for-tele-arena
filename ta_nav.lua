@@ -957,8 +957,13 @@ NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
     },
 }
 
--- From wherever the map knows you are: bank the purse, then make the round of
--- the first town's shops. No `from`, for the same reason as the route above.
+-- From wherever the map knows you are: train, bank the purse, then make the
+-- round of the first town's shops. No `from`, for the same reason as the route
+-- above.
+--
+-- Training comes before the deposit because it is paid from the purse, and the
+-- deposit leaves only 100 in it. The way to the vaults is through the guild
+-- hall anyway, so stopping there on the way down adds no steps.
 --
 -- The `i` is there so the deposit works from what the game says we hold, not
 -- from a running total that a missed line could have left wrong: too high and
@@ -966,7 +971,9 @@ NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
 NAV_ROUTES["restock-in-first-town"] = {
     to             = "first-town/south-plaza",
     climbOutOfPits = true,
-    steps          = { { goTo = "town-vaults" },
+    steps          = { { goTo = "guild-hall" },
+                       { cmd = "buy training" },
+                       "d",                       -- town vaults
                        { cmd = "i" },
                        { run = "deposit-all-but 100" },
                        "u", "s", "ne",            -- tavern
