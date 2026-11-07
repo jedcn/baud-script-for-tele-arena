@@ -15,7 +15,8 @@
 -- seam runs through taPackage:
 --
 --   in    taPackage.kill.start / .stop, taPackage.character, taPackage.arenaState,
---         taPackage.killActive
+--         taPackage.killActive, taPackage.navStepDelayMs / .navTripRetryMs /
+--         .navFloor (ta_nav.lua: navigate-to's pace and trip recovery)
 --   out   taPackage.teamChampions.running / .stop (stop-all-scripts)
 --
 -- `team-fight-champions-in-loop` keeps going: after each room it walks on round
@@ -54,9 +55,18 @@ local COUNT_WORDS = {
 --   "fight"   engaged, or about to be; every poll re-reads the room
 --   "muster"  stood down, polling `group` until everyone is Ready
 --   "walk"    a move is out, waiting for the room to print
+--   "tripped" the move was refused by a fall; waiting to look at the floor
+--   "tripcheck" looking at the floor for anything the fall shook loose
 -- With `run.travel` set, the run is a loop's leg between champion rooms: no
 -- home yet, so moves are not recorded, and the first champion seen makes home.
 local run = nil
+
+-- When we last walked into a room, and what lay on its floor. Moves are paced
+-- from the arrival as navigate-to paces them: at the loop's old pace, about one
+-- move every 0.7s, Pelayo tripped three times in four minutes and left a
+-- heartstone and a coil of rope on the ring (session-pelayo-2026-11-07T16-53-41).
+local lastArrivalAt = nil
+local floorHere = nil
 
 -- When the last group heal landed, whoever cast it. Outside `run` so that a heal
 -- typed by hand, or cast just before a run started, still counts.
@@ -207,11 +217,30 @@ local function engage()
     end
 end
 
-local function move(direction)
+local function sendMove(direction)
     run.phase = "walk"
     run.pendingMove = direction
     run.walkTicks = 0
     send(direction)
+end
+
+-- No sooner than navigate-to's pace after the last arrival. Anything that
+-- changes the phase while we wait (a champion catching us) calls the move off.
+local function move(direction)
+    local waited = lastArrivalAt and taPackage.utils.nowMillis() - lastArrivalAt
+    local pace = taPackage.navStepDelayMs
+    if not waited or waited >= pace then
+        sendMove(direction)
+        return
+    end
+    if run.paced then return end
+    local token, phase = {}, run.phase
+    run.paced = token
+    createTimer(pace - waited, function()
+        if not run or run.paced ~= token then return end
+        run.paced = nil
+        if run.phase == phase then sendMove(direction) end
+    end, { repeating = false })
 end
 
 -- Whatever stopped us walking, the room decides what is next: fight what's here,
@@ -304,6 +333,7 @@ local function recordMove(direction)
 end
 
 local function arrive(count)
+    lastArrivalAt = taPackage.utils.nowMillis()
     if run.travel then
         run.pendingMove = nil
         if count == 0 then
@@ -345,7 +375,9 @@ end
 
 function tick(thisRun)
     if run ~= thisRun then return end
-    if run.phase == "fight" then
+    if run.phase == "tripped" or run.phase == "tripcheck" then
+        -- The trip's own timer carries on from here.
+    elseif run.phase == "fight" then
         probeGroup()
         scanRoom()
     elseif run.phase == "muster" then
@@ -377,7 +409,9 @@ local function readGroup(exits)
     end
     if hurt and healRecovered() then
         -- Not a step as well: a cast leaves the caster too tired to move, and the
-        -- game refuses it. The next polls wait for Ready again.
+        -- game refuses it. The next polls wait for Ready again, and a move
+        -- already waiting on the pace is called off for the same reason.
+        run.paced = nil
         send("cast kusamotumaru")
         return
     end
@@ -425,12 +459,41 @@ createTrigger("^There \\S+ (.+) here\\.$", function(matches)
     run.champions = taPackage.teamChampions.countChampions(matches[2])
 end, { type = "regex" })
 
+-- Picks up what the fall shook loose, then tries the move again, unless a
+-- champion has come to us meanwhile.
+local function afterTrip(count, items)
+    local dropped = taPackage.navFloor.newItems(run.tripFloor or {}, items)
+    if #dropped > 0 then
+        echo(TAG .. "The fall shook loose the " .. table.concat(dropped, ", the ")
+            .. ". Picking it back up.")
+        taPackage.navFloor.pickUp(dropped)
+    end
+    floorHere = items
+    if count > 0 then
+        backToFighting()
+        return
+    end
+    -- Back to waiting on the move, so a wait cut short by an arrival still
+    -- counts as the step having gone nowhere.
+    local direction = run.pendingMove
+    run.phase = "walk"
+    lastArrivalAt = taPackage.utils.nowMillis()
+    move(direction)
+end
+
 -- The end of every room. A room with players and no monster has no occupant line
 -- at all, which is why the count is reset here rather than trusted to be fresh.
-createTrigger("^There .+ on the floor\\.$", function()
+createTrigger("^There (.+) on the floor\\.$", function(matches)
     if not run then return end
+    local phrase = matches[2]:match("^is (.+) lying$") or matches[2]:match("^are (.+) lying$")
+    local items = phrase and taPackage.navFloor.parse(phrase) or {}
     local count = run.champions
     run.champions = 0
+    if run.phase == "tripcheck" then
+        afterTrip(count, items)
+        return
+    end
+    floorHere = items
     if run.phase == "walk" then
         arrive(count)
     elseif run.phase == "fight" then
@@ -481,6 +544,21 @@ createTrigger("^Sorry, you don't see \"champion\" nearby\\.$", function()
     if not run or run.phase ~= "fight" then return end
     taPackage.kill.stop()
     scanRoom()
+end, { type = "regex" })
+
+-- The move was refused and nothing prints. As navigate-to does: wait out the
+-- fall, look at the floor, pick up whatever the fall dropped, then go again.
+createTrigger("^In your haste, you trip and fall!$", function()
+    if not run or run.phase ~= "walk" then return end
+    run.phase = "tripped"
+    run.tripFloor = floorHere
+    local thisRun = run
+    createTimer(taPackage.navTripRetryMs, function()
+        if run ~= thisRun or run.phase ~= "tripped" then return end
+        run.phase = "tripcheck"
+        run.champions = 0
+        scanRoom()
+    end, { repeating = false })
 end, { type = "regex" })
 
 for _, refusal in ipairs({

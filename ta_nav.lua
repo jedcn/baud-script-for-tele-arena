@@ -16,7 +16,8 @@
 --         main.lua)
 --   out   taPackage.stopNavigate, taPackage.stopNavigateManual,
 --         taPackage.navOnSweepDone, taPackage.navOnRoomBrief,
---         taPackage.navWanted, taPackage.navItemPhrase
+--         taPackage.navWanted, taPackage.navItemPhrase,
+--         taPackage.navFloor (trip recovery, for ta_team_champions.lua)
 --
 -- Add to that list rather than reaching for a main.lua local: it won't be
 -- there. A field costs no local slot, unlike a declaration.
@@ -2095,6 +2096,14 @@ local function navPickupStart(items)
     taPackage.navPickup = { queue = items, queueIndex = 0 }
     navPickupNextItem()
 end
+
+-- For other walkers that trip: read the floor, tell what the fall shook loose,
+-- and pick it back up with the same ladder of words.
+taPackage.navFloor = {
+    parse = navParseFloorItems,
+    newItems = navNewFloorItems,
+    pickUp = navPickupStart,
+}
 
 -- The game did not recognise the word we tried. Step down the ladder; when it
 -- runs out, say the item is being left behind rather than failing silently.
