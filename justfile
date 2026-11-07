@@ -45,6 +45,12 @@ normalize +files:
 normalize-stats +files:
     bun log.ts normalize {{files}} --stats
 
+# What each character earned from team-fight-champions: per run and per login,
+# XP, damage per second, where the time went, and how close anyone came to dying.
+# Give it every character's log; with no arguments it reads all of logs/.
+xp-report +files="logs/*.log":
+    bun xp-report.ts {{files}}
+
 # Launch baud. The label names both the session log and the character to log in
 # as: main.lua reads TA_CHARACTER and answers the BBS login and menus itself.
 # TA_PASSWORD comes from your own environment (export it in ~/.zshrc or pass it
