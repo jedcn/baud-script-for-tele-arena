@@ -107,6 +107,42 @@ describe("team-fight-champions", function()
         end)
     end)
 
+    describe("XP readings for xp-report", function()
+        it("takes one for everyone as a run starts", function()
+            helper.simulateAlias("team-fight-champions")
+            assert.is_true(sent("status"))
+            assert.is_true(sent("confer status"))
+        end)
+
+        it("takes one as a run succeeds", function()
+            start(ONE)
+            kill()
+            clearSent()
+            room(NONE)
+            assert.is_true(sent("status"))
+            assert.is_true(sent("confer status"))
+        end)
+
+        it("takes one when a run is stopped by hand", function()
+            start()
+            clearSent()
+            helper.simulateAlias("stop-team-fight-champions")
+            assert.is_true(sent("confer status"))
+        end)
+
+        it("a follower answers the leader's confer", function()
+            taPackage.followTarget = "pelayo"
+            helper.simulateLine("From Pelayo (to group): status")
+            assert.is_true(sent("status"))
+        end)
+
+        it("a follower ignores anyone but the leader", function()
+            taPackage.followTarget = "pelayo"
+            helper.simulateLine("From Kerhak (to group): status")
+            assert.is_false(sent("status"))
+        end)
+    end)
+
     it("refuses to run without a High Priest", function()
         taPackage.character.setClass("Warrior")
         helper.simulateAlias("team-fight-champions")

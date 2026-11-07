@@ -143,6 +143,8 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
         taPackage.kill.start(killMonster, taPackage.followDebug)
     elseif command == "kill-stop" then
         taPackage.kill.stop()
+    elseif command == "status" then
+        send("status")
     elseif command == "heal-most-injured-party-member" then
         if taPackage.character.isClass("Acolyte") then
             taPackage.kill.healMostInjuredPartyMember()

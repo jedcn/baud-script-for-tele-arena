@@ -79,9 +79,17 @@ function taPackage.teamChampions.ringNext(exits, heading)
     return nil
 end
 
+-- An XP reading for everyone, so `just xp-report` gets exact numbers for a run
+-- instead of whatever the followers' 5-minute poll happened to catch.
+local function markXp()
+    send("status")
+    send("confer status")
+end
+
 local function finish(message)
     run = nil
     echo(TAG .. message)
+    markXp()
 end
 
 local function standDown()
@@ -289,6 +297,7 @@ createAlias("^team-fight-champions$", function()
         engaged = false,
     }
     echo(TAG .. "Fighting the champions here.")
+    markXp()
     scanRoom()
     local thisRun = run
     createTimer(POLL_MS, function() tick(thisRun) end, { repeating = false })
