@@ -87,6 +87,7 @@ function isArt(text: string): boolean {
 // without terminal punctuation, keeping the first line's number.
 const WRAP_MIN = 70;
 const RE_CLOCK_TICK = /^\[T\] \d{2}:\d{2}:\d{2} tick$/;
+const RE_SCRIPT_ECHO = /^\[[^\]\s]{1,16}\] /;
 
 function unwrap(lines: string[]): { n: number; text: string }[] {
   const out: { n: number; text: string }[] = [];
@@ -96,6 +97,7 @@ function unwrap(lines: string[]): { n: number; text: string }[] {
     while (
       text.length >= WRAP_MIN &&
       !/[.!?:]$/.test(text) &&
+      !text.startsWith(">") &&
       !isArt(text) &&
       i + 1 < lines.length
     ) {
@@ -106,8 +108,9 @@ function unwrap(lines: string[]): { n: number; text: string }[] {
       const next = lines[nextAt].replace(/\s+$/, "");
       // Never swallow a blank line, a prompt echo, or an injected debug echo —
       // those are their own records, not a continuation of this sentence.
-      if (next.trim() === "" || next.startsWith(">") ||
-          next.trim().startsWith("[T]") || isArt(next)) break;
+      if (next.trim() === "" || next.startsWith(">") || next.startsWith("$ ") ||
+          RE_SCRIPT_ECHO.test(next.trim()) || next.trim().startsWith("[T]") ||
+          isArt(next)) break;
       text = text + " " + next.trim();
       i = nextAt;
     }

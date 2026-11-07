@@ -58,6 +58,19 @@ test("does not swallow a prompt echo or a debug echo into a wrapped line", () =>
   expect(unwrap([long, "[T] 13:34:28 flee-triggered"]).length).toBe(2);
 });
 
+// A long note typed in-game ran on through the next lines and swallowed
+// `$ team-fight-champions` and the script's own echo, hiding a whole run.
+test("does not swallow an alias or a script echo into a wrapped line", () => {
+  const long = "TO FUTURE CLAUDE ANALYST, GREAT, THEY ARE BACK, RUNNING TEAM-FIGHT-CHAMPIONS";
+  expect(unwrap([long, "$ team-fight-champions"]).length).toBe(2);
+  expect(unwrap([long, "[champions] Fighting the champions here."]).length).toBe(2);
+});
+
+test("does not wrap a typed command onto what follows it", () => {
+  const long = "> TO FUTURE CLAUDE ANALYST, GREAT, THEY ARE BACK, RUNNING TEAM-FIGHT-CHAMPIONS";
+  expect(unwrap([long, "TO FUTURE"]).length).toBe(2);
+});
+
 test("rejoins a wrapped sentence across baud's clock tick", () => {
   const long = "The elven champion barely dodged Teekywiki's Twin Katanas and kept on going";
   const lines = [long, "[T] 08:12:59 tick", "going!"];
