@@ -150,6 +150,16 @@ local function move(direction)
     send(direction)
 end
 
+-- Whatever stopped us walking, the room decides what is next: fight what's here,
+-- or carry on once it is clear. Giving up instead left the group standing still
+-- while three champions that had followed it hit them for nearly two minutes
+-- (logs/session-pelayo-2026-11-07T14-58-23.log, 15:01:57).
+local function backToFighting()
+    run.pendingMove = nil
+    run.phase = "fight"
+    scanRoom()
+end
+
 local function abandonChase(reason)
     echo(TAG .. reason .. " Going back.")
     run.chase = nil
@@ -248,8 +258,8 @@ local function tick(thisRun)
     else
         run.walkTicks = run.walkTicks + 1
         if run.walkTicks >= WALK_LOST_TICKS then
-            finish("Never reached the next room; stopping here.")
-            return
+            echo(TAG .. "Never reached the next room. Checking this one.")
+            backToFighting()
         end
     end
     createTimer(POLL_MS, function() tick(thisRun) end, { repeating = false })
@@ -270,7 +280,12 @@ local function readGroup(exits)
         if row.health < HEAL_BELOW_PERCENT then hurt = true end
         if row.state ~= "Ready" then allReady = false end
     end
-    if hurt and healRecovered() then send("cast kusamotumaru") end
+    if hurt and healRecovered() then
+        -- Not a step as well: a cast leaves the caster too tired to move, and the
+        -- game refuses it. The next polls wait for Ready again.
+        send("cast kusamotumaru")
+        return
+    end
     if run.phase == "muster" and allReady then stepOnward(exits) end
 end
 
@@ -335,9 +350,15 @@ createTrigger("^The elven champion has just gone to the (\\w+)\\.$", function(ma
     end
 end, { type = "regex" })
 
--- One came back on its own: that is one fewer to go looking for.
+-- While we stand waiting to move, an arrival has caught us: turn and fight. In a
+-- fight at home, one that came back is one fewer to go looking for.
 createTrigger("^An elven champion has just arrived from the (\\w+)\\.$", function(matches)
-    if not run or run.phase ~= "fight" or not isHome() then return end
+    if not run then return end
+    if run.phase == "muster" then
+        backToFighting()
+        return
+    end
+    if run.phase ~= "fight" or not isHome() then return end
     local direction = SHORT_DIRECTION[matches[2]]
     for i, fled in ipairs(run.flees) do
         if fled == direction then
@@ -362,12 +383,14 @@ createTrigger("^Sorry, you don't see \"champion\" nearby\\.$", function()
     scanRoom()
 end, { type = "regex" })
 
-createTrigger("^You cannot leave in the heat of battle!$", function()
-    if not run or run.phase ~= "walk" then return end
-    run.pendingMove = nil
-    run.phase = "fight"
-    scanRoom()
-end, { type = "regex" })
+for _, refusal in ipairs({
+    "^You cannot leave in the heat of battle!$",
+    "^Sorry, you'll have to rest a while before you can move\\.$",
+}) do
+    createTrigger(refusal, function()
+        if run and run.phase == "walk" then backToFighting() end
+    end, { type = "regex" })
+end
 
 -- Timed from the heal landing, so a cast the game refused starts no wait.
 createTrigger("^You discharged the spell at friendly people in the area", function()
