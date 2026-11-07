@@ -309,6 +309,8 @@ function M.resetAll()
     -- Same reasoning for runCommand: a test that clears it to stand in for an
     -- older baud must not leave every later test running without it.
     runCommand = mockRunCommand
+    -- baud's scriptVersion, absent unless a spec supplies one.
+    scriptVersion = nil
     M.mockDbOneRow = nil
     M.mockDbRows = {}
     M.mockExecuteReturn = nil
@@ -328,7 +330,8 @@ end
 -- The exceptions are globals the scripts test for on purpose:
 --   taPackage    absent on the very first load (main.lua's `if not taPackage`)
 --   runCommand   absent on an older baud; a spec clears it to stand in for one
-local OPTIONAL_GLOBALS = { taPackage = true, runCommand = true }
+--   scriptVersion absent on a baud from before jedcn/baud#60
+local OPTIONAL_GLOBALS = { taPackage = true, runCommand = true, scriptVersion = true }
 setmetatable(_G, {
     __index = function(_, name)
         if OPTIONAL_GLOBALS[name] then return nil end

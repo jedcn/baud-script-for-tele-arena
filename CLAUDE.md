@@ -26,6 +26,8 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 - Logs live in two places. `logs/` (in this repo) holds the current sessions; older ones are moved out to the sibling repo `../tele-arena-archived-session-logs/`. Code comments citing a log as `logs/session-...` were written when it was still current — if it isn't in `logs/` any more, look for it in the archive under the same filename.
 
+- **A log says what code it ran.** `main.lua` echoes `Starting to read main.lua (<sha>)` and `Finishing reading main.lua (<sha>)` when the session starts and on every `/lua reloadScript()`. `<sha>` is the commit, `-dirty` when tracked files had uncommitted edits, or `unknown` on a baud without `scriptVersion` (jedcn/baud#60) or outside a checkout. To tell whether a fix was live, read the last pair before the moment in question. A `Starting` with no `Finishing` after it means `main.lua` failed partway through loading.
+
 ### Analyzing a log: run `normalize` first
 
 **Don't hand-roll `tr`/`sed`/`grep` pipelines over a raw log.** `log.ts` turns one into typed JSONL events — one record per line, with a timestamp, a `kind`, and parsed fields — and it already handles the traps that make ad-hoc pipelines quietly wrong. Start here:

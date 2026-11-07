@@ -3,7 +3,12 @@
 --
 -- Details [here](https://github.com/jedcn/baud?tab=readme-ov-file#loading-scripts)
 --
-echo("Starting to read main.lua")
+-- The commit these scripts are at ("4c266b6", or "4c266b6-dirty" with
+-- uncommitted edits), so every session log says exactly what code it ran,
+-- including after a reloadScript(). scriptVersion is baud's (jedcn/baud#60);
+-- an older baud lacks it.
+local scriptVersionText = scriptVersion and scriptVersion() or "unknown"
+echo("Starting to read main.lua (" .. scriptVersionText .. ")")
 
 -- SCRIPT_DIR is set by Baud to the directory containing this script
 local scriptDir = SCRIPT_DIR
@@ -1094,4 +1099,4 @@ dofile(scriptDir .. "ta_team_elves.lua")
 -- catch-all outbound trigger is registered after everything else.
 dofile(scriptDir .. "ta_auto_login.lua")
 
-echo("Finishing reading main.lua")
+echo("Finishing reading main.lua (" .. scriptVersionText .. ")")

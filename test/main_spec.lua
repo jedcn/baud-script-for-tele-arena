@@ -20,6 +20,32 @@ local function ranCommandGlobal(text)
         or tableContains(helper.sendCalls, text)
 end
 
+-- Every session log should say what code it ran, on the first load and on each
+-- reloadScript(), so a question like "was this fix loaded?" is a lookup.
+describe("load lines", function()
+    before_each(function()
+        helper.resetAll()
+    end)
+
+    it("name the commit baud reports", function()
+        _G.scriptVersion = function() return "4c266b6" end
+        dofile("main.lua")
+        assert.is_true(tableContains(helper.echoCalls, "Starting to read main.lua (4c266b6)"))
+        assert.is_true(tableContains(helper.echoCalls, "Finishing reading main.lua (4c266b6)"))
+    end)
+
+    it("say unknown on a baud without scriptVersion", function()
+        dofile("main.lua")
+        assert.is_true(tableContains(helper.echoCalls, "Starting to read main.lua (unknown)"))
+    end)
+
+    it("say unknown outside a git checkout, where scriptVersion is nil", function()
+        _G.scriptVersion = function() return nil end
+        dofile("main.lua")
+        assert.is_true(tableContains(helper.echoCalls, "Finishing reading main.lua (unknown)"))
+    end)
+end)
+
 describe("Warrior XP table", function()
 
     before_each(function()
