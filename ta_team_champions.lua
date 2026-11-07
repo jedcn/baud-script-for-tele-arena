@@ -38,6 +38,9 @@ local HEAL_BELOW_PERCENT = 85
 local HEAL_COOLDOWN_MS = 24000      -- the shortest gap between heals in the logs
                                     -- was 25s; asking sooner is only refused
 local MAX_CHASE_ROOMS = 10          -- the longest chase in the logs was 8
+local MAX_CHASE_FIGHT = 2           -- away from home, fight up to this many; the
+                                    -- group beat five at once on 2026-11-07, but
+                                    -- a full trio found on a chase hurt it badly
 
 local SHORT_DIRECTION = {
     north = "n", south = "s", east = "e", west = "w",
@@ -355,8 +358,9 @@ local function arrive(count)
         else
             roomClear()
         end
-    elseif count == 1 or isHome() then
-        -- Found one, or home with company: home is where a fight belongs.
+    elseif count <= MAX_CHASE_FIGHT or isHome() then
+        -- Few enough to take on here, or home with company: home is where a
+        -- big fight belongs.
         run.chase = nil
         run.phase = "fight"
         local thisRun = run
