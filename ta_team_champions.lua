@@ -18,6 +18,10 @@
 --         taPackage.killActive
 --   out   taPackage.teamChampions.running / .stop (stop-all-scripts)
 --
+-- `team-fight-champions-in-loop` keeps going: after each room it walks on round
+-- the ring, keeping its heading, until a room with a champion in it, and fights
+-- there the same way. It runs until `team-fight-champions-in-loop-stop`.
+--
 -- `run` is a local on purpose: a reloadScript() cannot carry the poll timer over,
 -- so a run should not survive one either.
 
@@ -50,6 +54,8 @@ local COUNT_WORDS = {
 --   "fight"   engaged, or about to be; every poll re-reads the room
 --   "muster"  stood down, polling `group` until everyone is Ready
 --   "walk"    a move is out, waiting for the room to print
+-- With `run.travel` set, the run is a loop's leg between champion rooms: no
+-- home yet, so moves are not recorded, and the first champion seen makes home.
 local run = nil
 
 -- When the last group heal landed, whoever cast it. Outside `run` so that a heal
@@ -86,10 +92,66 @@ local function markXp()
     send("confer status")
 end
 
+-- Where the loop goes next. On along the ring if `ringNext` can tell; else, as at
+-- the start or the top of the spur, the first of n, e, s, w that isn't back.
+function taPackage.teamChampions.loopNext(exits, heading)
+    if heading then
+        local direction = taPackage.teamChampions.ringNext(exits, heading)
+        if direction then return direction end
+    end
+    for _, direction in ipairs({ "n", "e", "s", "w" }) do
+        if direction ~= OPPOSITE[heading] then
+            for _, exit in ipairs(exits) do
+                if exit == direction then return direction end
+            end
+        end
+    end
+    return nil
+end
+
+local function newRun(loop)
+    return {
+        phase = "fight",
+        path = {},        -- moves out from the starting room
+        flees = {},       -- directions champions left the starting room in
+        kills = 0,
+        abandoned = 0,
+        champions = 0,    -- what the latest occupant line said
+        engaged = false,
+        loop = loop,      -- { heading, kills } while looping, else nil
+        travel = false,
+    }
+end
+
+local tick
+
+local function begin(newRunState)
+    run = newRunState
+    local thisRun = run
+    createTimer(POLL_MS, function() tick(thisRun) end, { repeating = false })
+end
+
+local probeGroup
+
+-- A loop's next leg: wait for everyone to be Ready, then walk on.
+local function travel(loop)
+    local leg = newRun(loop)
+    leg.travel = true
+    leg.phase = "muster"
+    begin(leg)
+    probeGroup()
+end
+
 local function finish(message)
+    local loop = run.loop
+    if loop then
+        loop.kills = loop.kills + run.kills
+        message = message .. string.format(" %d this loop. Moving on.", loop.kills)
+    end
     run = nil
     echo(TAG .. message)
     markXp()
+    if loop then travel(loop) end
 end
 
 local function standDown()
@@ -101,6 +163,7 @@ end
 
 local function stop()
     if not run then return end
+    run.loop = nil
     standDown()
     finish("Stopped.")
 end
@@ -122,7 +185,7 @@ end
 
 -- The listing has no end of its own, so `ex` closes it, as in ta_kill.lua's heal
 -- scan. Its reply also gives us the exits a chase needs.
-local function probeGroup()
+function probeGroup()
     run.rows = nil
     send("group")
     send("ex")
@@ -139,6 +202,7 @@ local function engage()
     run.engaged = true
     send("confer kill " .. TARGET)
     if not taPackage.kill.start(TARGET) then
+        run.loop = nil
         finish("Could not start the kill loop.")
     end
 end
@@ -155,6 +219,7 @@ end
 -- while three champions that had followed it hit them for nearly two minutes
 -- (logs/session-pelayo-2026-11-07T14-58-23.log, 15:01:57).
 local function backToFighting()
+    run.travel = false
     run.pendingMove = nil
     run.phase = "fight"
     scanRoom()
@@ -175,6 +240,12 @@ local function roomClear()
         run.chaseFresh = true
         echo(TAG .. "Room clear. Chasing the one that went " .. run.chase .. ".")
         muster()
+    elseif run.loop and run.kills == 0 and run.abandoned == 0 then
+        -- Nothing was fought here, so there is nothing to report.
+        standDown()
+        local loop = run.loop
+        run = nil
+        travel(loop)
     elseif run.abandoned > 0 then
         standDown()
         finish(string.format("Back and the room is clear: %d killed, %d chase(s) given up.",
@@ -187,6 +258,17 @@ end
 
 -- Everyone is Ready: take the next step, along the ring or back home.
 local function stepOnward(exits)
+    if run.travel then
+        local direction = taPackage.teamChampions.loopNext(exits, run.loop.heading)
+        if not direction then
+            run.loop = nil
+            finish("Can't tell which way the ring goes from here; stopping the loop.")
+            return
+        end
+        run.loop.heading = direction
+        move(direction)
+        return
+    end
     if run.chase and #run.path >= MAX_CHASE_ROOMS then
         abandonChase("Nothing within " .. MAX_CHASE_ROOMS .. " rooms.")
     end
@@ -222,8 +304,21 @@ local function recordMove(direction)
 end
 
 local function arrive(count)
-    recordMove(run.pendingMove)
-    run.pendingMove = nil
+    if run.travel then
+        run.pendingMove = nil
+        if count == 0 then
+            muster()
+            return
+        end
+        -- The first room with a champion becomes home, whatever the count:
+        -- three is what stands there, and fewer is easier.
+        run.travel = false
+        echo(TAG .. "Fighting the champions here.")
+        markXp()
+    else
+        recordMove(run.pendingMove)
+        run.pendingMove = nil
+    end
     if count == 0 then
         if run.chase or not isHome() then
             muster()
@@ -248,7 +343,7 @@ local function arrive(count)
     end
 end
 
-local function tick(thisRun)
+function tick(thisRun)
     if run ~= thisRun then return end
     if run.phase == "fight" then
         probeGroup()
@@ -289,36 +384,41 @@ local function readGroup(exits)
     if run.phase == "muster" and allReady then stepOnward(exits) end
 end
 
-createAlias("^team-fight-champions$", function()
+local function canStart()
     if run then
         echo(TAG .. "Already running.")
-        return
+        return false
     end
     if taPackage.arenaState then
         echo(TAG .. "Cannot start — arena session is active.")
-        return
+        return false
     end
     if not taPackage.character.isClass("Acolyte") then
         echo(TAG .. "This needs a High Priest to lead; run 'st' if that's you.")
-        return
+        return false
     end
-    run = {
-        phase = "fight",
-        path = {},        -- moves out from the starting room
-        flees = {},       -- directions champions left the starting room in
-        kills = 0,
-        abandoned = 0,
-        champions = 0,    -- what the latest occupant line said
-        engaged = false,
-    }
+    return true
+end
+
+createAlias("^team-fight-champions$", function()
+    if not canStart() then return end
+    begin(newRun(nil))
     echo(TAG .. "Fighting the champions here.")
     markXp()
     scanRoom()
-    local thisRun = run
-    createTimer(POLL_MS, function() tick(thisRun) end, { repeating = false })
+end, { type = "regex" })
+
+-- Starts by fighting whatever is here; an empty room just sets it walking.
+createAlias("^team-fight-champions-in-loop$", function()
+    if not canStart() then return end
+    begin(newRun({ heading = nil, kills = 0 }))
+    echo(TAG .. "Looping round the ring until team-fight-champions-in-loop-stop.")
+    markXp()
+    scanRoom()
 end, { type = "regex" })
 
 createAlias("^stop-team-fight-champions$", stop, { type = "regex" })
+createAlias("^team-fight-champions-in-loop-stop$", stop, { type = "regex" })
 
 createTrigger("^There \\S+ (.+) here\\.$", function(matches)
     if not run then return end
