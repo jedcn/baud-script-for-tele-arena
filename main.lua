@@ -1019,6 +1019,9 @@ dofile(scriptDir .. "ta_bank.lua")
 createAlias("^stop-all-scripts$", function()
     local scripts = {
         { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = function() taPackage.stopArena("stop-all-scripts") end },
+        -- Ahead of kill, which it would otherwise leave to re-engage on its next
+        -- poll, and it confers the stand-down to the group as it goes.
+        { name = "team-fight-champions",  running = taPackage.teamChampions.running(), stop = taPackage.teamChampions.stop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = taPackage.kill.stop },
         -- Every `running` flag is read when this table is built, before any
         -- stop runs -- which is what keeps the report honest now that stopping
@@ -1073,6 +1076,14 @@ taPackage.kill.registerLoopTriggers()
 -- ta.follow / ta.unfollow: ta_follow.lua. Loaded here, where the section used
 -- to sit, so trigger and alias registration order is unchanged.
 dofile(scriptDir .. "ta_follow.lua")
+
+-- =========================================================================
+-- Team fight: elven champions
+-- =========================================================================
+--
+-- team-fight-champions: ta_team_champions.lua. After the kill loop's triggers,
+-- because a death has to have ended the loop before this decides what is next.
+dofile(scriptDir .. "ta_team_champions.lua")
 
 -- =========================================================================
 -- Auto-login
