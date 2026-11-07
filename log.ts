@@ -86,6 +86,7 @@ function isArt(text: string): boolean {
 // pattern at all, and the event is silently lost. Rejoin a long line that stops
 // without terminal punctuation, keeping the first line's number.
 const WRAP_MIN = 70;
+const RE_CLOCK_TICK = /^\[T\] \d{2}:\d{2}:\d{2} tick$/;
 
 function unwrap(lines: string[]): { n: number; text: string }[] {
   const out: { n: number; text: string }[] = [];
@@ -98,13 +99,17 @@ function unwrap(lines: string[]): { n: number; text: string }[] {
       !isArt(text) &&
       i + 1 < lines.length
     ) {
-      const next = lines[i + 1].replace(/\s+$/, "");
+      // baud's once-a-second clock line can land between the two halves of a
+      // wrapped sentence. Look past it: the sentence matters more than one tick.
+      const nextAt = RE_CLOCK_TICK.test(lines[i + 1]) ? i + 2 : i + 1;
+      if (nextAt >= lines.length) break;
+      const next = lines[nextAt].replace(/\s+$/, "");
       // Never swallow a blank line, a prompt echo, or an injected debug echo —
       // those are their own records, not a continuation of this sentence.
       if (next.trim() === "" || next.startsWith(">") ||
           next.trim().startsWith("[T]") || isArt(next)) break;
       text = text + " " + next.trim();
-      i++;
+      i = nextAt;
     }
     out.push({ n, text });
   }

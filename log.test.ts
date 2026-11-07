@@ -58,6 +58,18 @@ test("does not swallow a prompt echo or a debug echo into a wrapped line", () =>
   expect(unwrap([long, "[T] 13:34:28 flee-triggered"]).length).toBe(2);
 });
 
+test("rejoins a wrapped sentence across baud's clock tick", () => {
+  const long = "The elven champion barely dodged Teekywiki's Twin Katanas and kept on going";
+  const lines = [long, "[T] 08:12:59 tick", "going!"];
+  expect(unwrap(lines).map((l) => l.text)).toEqual([`${long} going!`]);
+});
+
+test("does not treat a tick as a sentence's continuation", () => {
+  const long = "The elven champion barely dodged Teekywiki's Twin Katanas and kept on going";
+  expect(unwrap([long, "[T] 08:12:59 tick"]).length).toBe(2);
+  expect(unwrap([long, "[T] 08:12:59 tick", "> st"]).length).toBe(3);
+});
+
 // ── classification ─────────────────────────────────────────────────────────────
 
 test("reads damage off an incoming special-verb hit", () => {

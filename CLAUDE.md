@@ -47,7 +47,7 @@ Things it handles that a naive pipeline does not, all of which have produced wro
 - ANSI escapes **split across a newline** — stripping per line leaves `;37;46m` as text *and* a phantom line break mid-sentence. The strip has to run over the whole buffer.
 - Backspaces. Writing `\b` outside a character class in a JS/Perl regex means *word boundary*, and silently deletes the last letter of every word (`Sorry, you'll` → `Sorr,yolhav`).
 - The BBS **hard-wraps at 78 columns mid-sentence**, so `…glanced off Tojolias's` / `armor!` matches nothing unless the lines are rejoined.
-- Timestamps are sparse: only `[T]`/script echoes and the BBS status bar carry a clock, and it is carried forward between them (`timeSource: "carried"` says so). A logon broadcast states when the event *happened*, not when it was delivered, so it is used for the date only — adopting it as the clock rewinds everything after it.
+- Timestamps are sparse in logs from before baud's `[T] HH:MM:SS tick` clock line (a line written ahead of the first entry of each second, to the file only): there, only `[T]`/script echoes and the BBS status bar carry a clock. It is carried forward between clock lines (`timeSource: "carried"` says so). A logon broadcast states when the event *happened*, not when it was delivered, so it is used for the date only — adopting it as the clock rewinds everything after it.
 
 If you must grep the raw file, use `grep -a` (the logs read as binary), and don't pre-strip escape codes — a naive strip eats the first letter of a word following a color code and you miss real matches.
 
