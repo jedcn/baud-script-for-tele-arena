@@ -30,6 +30,8 @@ local ARRIVAL_SETTLE_MS = 1000      -- followers land a beat after the leader; a
                                     -- `kill` conferred sooner finds nothing nearby
 local WALK_LOST_TICKS = 3           -- polls with no arrival before giving up
 local HEAL_BELOW_PERCENT = 85
+local HEAL_COOLDOWN_MS = 24000      -- the shortest gap between heals in the logs
+                                    -- was 25s; asking sooner is only refused
 local MAX_CHASE_ROOMS = 10          -- the longest chase in the logs was 8
 
 local SHORT_DIRECTION = {
@@ -49,6 +51,10 @@ local COUNT_WORDS = {
 --   "muster"  stood down, polling `group` until everyone is Ready
 --   "walk"    a move is out, waiting for the room to print
 local run = nil
+
+-- When the last group heal landed, whoever cast it. Outside `run` so that a heal
+-- typed by hand, or cast just before a run started, still counts.
+local lastHealAt = nil
 
 -- "three elven champions", "two elven champions, and an elven warrior", "an
 -- elven champion". A plural with a count word we don't know is still at least two.
@@ -241,6 +247,11 @@ local function tick(thisRun)
     createTimer(POLL_MS, function() tick(thisRun) end, { repeating = false })
 end
 
+local function healRecovered()
+    return not lastHealAt
+        or taPackage.utils.nowMillis() - lastHealAt >= HEAL_COOLDOWN_MS
+end
+
 -- The group listing closed. Heal first in any phase, then see if we can move.
 local function readGroup(exits)
     local rows = run.rows
@@ -251,7 +262,7 @@ local function readGroup(exits)
         if row.health < HEAL_BELOW_PERCENT then hurt = true end
         if row.state ~= "Ready" then allReady = false end
     end
-    if hurt then send("cast kusamotumaru") end
+    if hurt and healRecovered() then send("cast kusamotumaru") end
     if run.phase == "muster" and allReady then stepOnward(exits) end
 end
 
@@ -347,6 +358,11 @@ createTrigger("^You cannot leave in the heat of battle!$", function()
     run.pendingMove = nil
     run.phase = "fight"
     scanRoom()
+end, { type = "regex" })
+
+-- Timed from the heal landing, so a cast the game refused starts no wait.
+createTrigger("^You discharged the spell at friendly people in the area", function()
+    lastHealAt = taPackage.utils.nowMillis()
 end, { type = "regex" })
 
 createTrigger("^Your group currently consists of:$", function()
