@@ -17,7 +17,7 @@
 --   out   taPackage.stopNavigate, taPackage.stopNavigateManual,
 --         taPackage.navOnSweepDone, taPackage.navOnRoomBrief,
 --         taPackage.navWanted, taPackage.navItemPhrase,
---         taPackage.navFloor (trip recovery, for ta_team_champions.lua)
+--         taPackage.navFloor (trip recovery, for ta_team_elves.lua)
 --
 -- Add to that list rather than reaching for a main.lua local: it won't be
 -- there. A field costs no local slot, unlike a declaration.

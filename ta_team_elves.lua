@@ -1,11 +1,13 @@
--- ta_team_champions.lua -- `team-fight-champions`: a group clears elven champions
+-- ta_team_elves.lua -- `team-fight-elves`: a group clears elven champions and
+-- elven warriors
 --
--- Run from a High Priest leading a group, in the room on the Elven Valley ring
--- where the champions stand. The group fights everything here, then chases down
--- each champion that fled, then comes back. It succeeds when it is back in this
--- room and no champion is left in it.
+-- Run from a High Priest leading a group, in a room on the Elven Valley ring
+-- where elves stand: champions in trios at the corners and the middle of the
+-- north side, warriors in pairs along the sides. The group fights everything
+-- here, champions first, then chases down each elf that fled, then comes back.
+-- It succeeds when it is back in this room and no elf is left in it.
 --
--- Champions leave a room only when close to death or when chasing one of our
+-- Elves leave a room only when close to death or when chasing one of our
 -- characters, so a departure during a fight is always a flee. Leaving turns our
 -- backs on the healthy ones, which then follow, so the room is finished first
 -- and the flee directions wait in a queue.
@@ -17,19 +19,22 @@
 --   in    taPackage.kill.start / .stop, taPackage.character, taPackage.arenaState,
 --         taPackage.killActive, taPackage.navStepDelayMs / .navTripRetryMs /
 --         .navFloor (ta_nav.lua: navigate-to's pace and trip recovery)
---   out   taPackage.teamChampions.running / .stop (stop-all-scripts)
+--   out   taPackage.teamElves.running / .stop (stop-all-scripts)
 --
--- `team-fight-champions-in-loop` keeps going: after each room it walks on round
--- the ring, keeping its heading, until a room with a champion in it, and fights
--- there the same way. It runs until `team-fight-champions-in-loop-stop`.
+-- `team-fight-elves-in-loop` keeps going: after each room it walks on round the
+-- ring, keeping its heading, until a room with an elf in it, and fights there
+-- the same way. It runs until `team-fight-elves-in-loop-stop`.
 --
 -- `run` is a local on purpose: a reloadScript() cannot carry the poll timer over,
 -- so a run should not survive one either.
 
-taPackage.teamChampions = {}
+taPackage.teamElves = {}
 
-local TAG = "[champions] "
-local TARGET = "champion"
+local TAG = "[elves] "
+-- What the script fights, in the order it attacks them: champions first, as
+-- they hit harder (100-140 a blow in the logs, warriors 90-105). Each is the
+-- word `kill` takes and the noun the game uses after "elven".
+local KINDS = { "champion", "warrior" }
 local POLL_MS = 3000                -- `group` is the only view of health and Ready
 local ARRIVAL_SETTLE_MS = 1000      -- followers land a beat after the leader; a
                                     -- `kill` conferred sooner finds nothing nearby
@@ -60,8 +65,8 @@ local COUNT_WORDS = {
 --   "walk"    a move is out, waiting for the room to print
 --   "tripped" the move was refused by a fall; waiting to look at the floor
 --   "tripcheck" looking at the floor for anything the fall shook loose
--- With `run.travel` set, the run is a loop's leg between champion rooms: no
--- home yet, so moves are not recorded, and the first champion seen makes home.
+-- With `run.travel` set, the run is a loop's leg between rooms of elves: no
+-- home yet, so moves are not recorded, and the first elf seen makes home.
 local run = nil
 
 -- When we last walked into a room, and what lay on its floor. Moves are paced
@@ -75,20 +80,35 @@ local floorHere = nil
 -- typed by hand, or cast just before a run started, still counts.
 local lastHealAt = nil
 
--- "three elven champions", "two elven champions, and an elven warrior", "an
--- elven champion". A plural with a count word we don't know is still at least two.
-function taPackage.teamChampions.countChampions(contents)
-    local total = 0
-    for word, noun in contents:lower():gmatch("(%S+) elven (champions?)") do
-        total = total + (noun == "champion" and 1 or COUNT_WORDS[word] or 2)
+-- "three elven champions, and four elven warriors", "an elven warrior": how
+-- many of each kind, and in all. A plural with a count word we don't know is
+-- still at least two.
+function taPackage.teamElves.countElves(contents)
+    local counts = { total = 0 }
+    for _, kind in ipairs(KINDS) do counts[kind] = 0 end
+    for word, kind, plural in (contents:lower() .. " "):gmatch("(%S+) elven (%a-)(s?)[,%s]") do
+        if counts[kind] then
+            local n = plural == "" and 1 or COUNT_WORDS[word] or 2
+            counts[kind] = counts[kind] + n
+            counts.total = counts.total + n
+        end
     end
-    return total
+    return counts
+end
+
+local NO_ELVES = taPackage.teamElves.countElves("")
+
+local function targetFor(counts)
+    for _, kind in ipairs(KINDS) do
+        if counts[kind] > 0 then return kind end
+    end
+    return nil
 end
 
 -- Which way the ring continues. Straight on if we can, which also carries us
 -- through the junction at the top of the spur; otherwise this is a corner, and
 -- the only way on is the exit we did not come in by. Nil if that isn't one exit.
-function taPackage.teamChampions.ringNext(exits, heading)
+function taPackage.teamElves.ringNext(exits, heading)
     local onward = {}
     for _, exit in ipairs(exits) do
         if exit == heading then return heading end
@@ -107,9 +127,9 @@ end
 
 -- Where the loop goes next. On along the ring if `ringNext` can tell; else, as at
 -- the start or the top of the spur, the first of n, e, s, w that isn't back.
-function taPackage.teamChampions.loopNext(exits, heading)
+function taPackage.teamElves.loopNext(exits, heading)
     if heading then
-        local direction = taPackage.teamChampions.ringNext(exits, heading)
+        local direction = taPackage.teamElves.ringNext(exits, heading)
         if direction then return direction end
     end
     for _, direction in ipairs({ "n", "e", "s", "w" }) do
@@ -126,10 +146,10 @@ local function newRun(loop)
     return {
         phase = "fight",
         path = {},        -- moves out from the starting room
-        flees = {},       -- directions champions left the starting room in
+        flees = {},       -- directions elves left the starting room in
         kills = 0,
         abandoned = 0,
-        champions = 0,    -- what the latest occupant line said
+        elves = NO_ELVES, -- what the latest occupant line said
         engaged = false,
         loop = loop,      -- { heading, kills } while looping, else nil
         travel = false,
@@ -180,9 +200,9 @@ local function stop()
     standDown()
     finish("Stopped.")
 end
-taPackage.teamChampions.stop = stop
+taPackage.teamElves.stop = stop
 
-function taPackage.teamChampions.running()
+function taPackage.teamElves.running()
     return run ~= nil
 end
 
@@ -210,11 +230,12 @@ local function muster()
     probeGroup()
 end
 
-local function engage()
+local function engage(counts)
     if taPackage.killActive then return end
+    local target = targetFor(counts)
     run.engaged = true
-    send("confer kill " .. TARGET)
-    if not taPackage.kill.start(TARGET) then
+    send("confer kill " .. target)
+    if not taPackage.kill.start(target) then
         run.loop = nil
         finish("Could not start the kill loop.")
     end
@@ -228,7 +249,7 @@ local function sendMove(direction)
 end
 
 -- No sooner than navigate-to's pace after the last arrival. Anything that
--- changes the phase while we wait (a champion catching us) calls the move off.
+-- changes the phase while we wait (an elf catching us) calls the move off.
 local function move(direction)
     local waited = lastArrivalAt and taPackage.utils.nowMillis() - lastArrivalAt
     local pace = taPackage.navStepDelayMs
@@ -263,7 +284,7 @@ local function abandonChase(reason)
     run.abandoned = run.abandoned + 1
 end
 
--- The room we are in holds no champion, so what is next?
+-- The room we are in holds no elf, so what is next?
 local function roomClear()
     if run.chase or not isHome() then
         muster()
@@ -284,14 +305,14 @@ local function roomClear()
             run.kills, run.abandoned))
     else
         standDown()
-        finish(string.format("All champions dead: %d killed.", run.kills))
+        finish(string.format("All elves dead: %d killed.", run.kills))
     end
 end
 
 -- Everyone is Ready: take the next step, along the ring or back home.
 local function stepOnward(exits)
     if run.travel then
-        local direction = taPackage.teamChampions.loopNext(exits, run.loop.heading)
+        local direction = taPackage.teamElves.loopNext(exits, run.loop.heading)
         if not direction then
             run.loop = nil
             finish("Can't tell which way the ring goes from here; stopping the loop.")
@@ -309,7 +330,7 @@ local function stepOnward(exits)
         if run.chaseFresh then
             run.chaseFresh = false
         else
-            direction = taPackage.teamChampions.ringNext(exits, run.chase)
+            direction = taPackage.teamElves.ringNext(exits, run.chase)
         end
         if direction then
             run.chase = direction
@@ -343,10 +364,9 @@ local function arrive(count)
             muster()
             return
         end
-        -- The first room with a champion becomes home, whatever the count:
-        -- three is what stands there, and fewer is easier.
+        -- The first room with an elf becomes home, whatever the count.
         run.travel = false
-        echo(TAG .. "Fighting the champions here.")
+        echo(TAG .. "Fighting the elves here.")
         markXp()
     else
         recordMove(run.pendingMove)
@@ -371,7 +391,7 @@ local function arrive(count)
         -- Too many at once can kill the group. Any that chase us will reach
         -- home a few at a time, and walking on is the way to make that happen.
         if run.chase then
-            abandonChase(count .. " champions here is too many at once.")
+            abandonChase(count .. " elves here is too many at once.")
         end
         muster()
     end
@@ -438,33 +458,33 @@ local function canStart()
     return true
 end
 
-createAlias("^team-fight-champions$", function()
+createAlias("^team-fight-elves$", function()
     if not canStart() then return end
     begin(newRun(nil))
-    echo(TAG .. "Fighting the champions here.")
+    echo(TAG .. "Fighting the elves here.")
     markXp()
     scanRoom()
 end, { type = "regex" })
 
 -- Starts by fighting whatever is here; an empty room just sets it walking.
-createAlias("^team-fight-champions-in-loop$", function()
+createAlias("^team-fight-elves-in-loop$", function()
     if not canStart() then return end
     begin(newRun({ heading = nil, kills = 0 }))
-    echo(TAG .. "Looping round the ring until team-fight-champions-in-loop-stop.")
+    echo(TAG .. "Looping round the ring until team-fight-elves-in-loop-stop.")
     markXp()
     scanRoom()
 end, { type = "regex" })
 
-createAlias("^stop-team-fight-champions$", stop, { type = "regex" })
-createAlias("^team-fight-champions-in-loop-stop$", stop, { type = "regex" })
+createAlias("^stop-team-fight-elves$", stop, { type = "regex" })
+createAlias("^team-fight-elves-in-loop-stop$", stop, { type = "regex" })
 
 createTrigger("^There \\S+ (.+) here\\.$", function(matches)
     if not run then return end
-    run.champions = taPackage.teamChampions.countChampions(matches[2])
+    run.elves = taPackage.teamElves.countElves(matches[2])
 end, { type = "regex" })
 
--- Picks up what the fall shook loose, then tries the move again, unless a
--- champion has come to us meanwhile.
+-- Picks up what the fall shook loose, then tries the move again, unless
+-- an elf has come to us meanwhile.
 local function afterTrip(count, items)
     local dropped = taPackage.navFloor.newItems(run.tripFloor or {}, items)
     if #dropped > 0 then
@@ -491,21 +511,21 @@ createTrigger("^There (.+) on the floor\\.$", function(matches)
     if not run then return end
     local phrase = matches[2]:match("^is (.+) lying$") or matches[2]:match("^are (.+) lying$")
     local items = phrase and taPackage.navFloor.parse(phrase) or {}
-    local count = run.champions
-    run.champions = 0
+    local elves = run.elves
+    run.elves = NO_ELVES
     if run.phase == "tripcheck" then
-        afterTrip(count, items)
+        afterTrip(elves.total, items)
         return
     end
     floorHere = items
     if run.phase == "walk" then
-        arrive(count)
+        arrive(elves.total)
     elseif run.phase == "fight" then
-        if count > 0 then engage() else roomClear() end
+        if elves.total > 0 then engage(elves) else roomClear() end
     end
 end, { type = "regex" })
 
-createTrigger("^The elven champion has just gone to the (\\w+)\\.$", function(matches)
+local function fled(matches)
     if not run or run.phase ~= "fight" then return end
     local direction = SHORT_DIRECTION[matches[2]]
     if not direction then return end
@@ -515,11 +535,11 @@ createTrigger("^The elven champion has just gone to the (\\w+)\\.$", function(ma
         run.chase = direction
         run.chaseFresh = true
     end
-end, { type = "regex" })
+end
 
 -- While we stand waiting to move, an arrival has caught us: turn and fight. In a
 -- fight at home, one that came back is one fewer to go looking for.
-createTrigger("^An elven champion has just arrived from the (\\w+)\\.$", function(matches)
+local function arrived(matches)
     if not run then return end
     if run.phase == "muster" then
         backToFighting()
@@ -527,27 +547,38 @@ createTrigger("^An elven champion has just arrived from the (\\w+)\\.$", functio
     end
     if run.phase ~= "fight" or not isHome() then return end
     local direction = SHORT_DIRECTION[matches[2]]
-    for i, fled in ipairs(run.flees) do
-        if fled == direction then
+    for i, flee in ipairs(run.flees) do
+        if flee == direction then
             table.remove(run.flees, i)
             return
         end
     end
-end, { type = "regex" })
+end
+
+-- Our target walked out: the kill loop has nothing to swing at and would sit
+-- there still marked active, so clear it for the next scan to start a new one.
+local function targetGone()
+    if not run or run.phase ~= "fight" then return end
+    taPackage.kill.stop()
+    scanRoom()
+end
+
+-- One trigger per kind rather than an alternation, which the specs' regex
+-- translation can't express.
+for _, kind in ipairs(KINDS) do
+    createTrigger("^The elven " .. kind .. " has just gone to the (\\w+)\\.$", fled, { type = "regex" })
+    createTrigger("^An elven " .. kind .. " has just arrived from the (\\w+)\\.$", arrived, { type = "regex" })
+    createTrigger("^Sorry, you don't see \"" .. kind .. "\" nearby\\.$", targetGone, { type = "regex" })
+end
+
+local IS_KIND = {}
+for _, kind in ipairs(KINDS) do IS_KIND["elven " .. kind] = true end
 
 -- Any death ends every kill loop in the room, whoever else is left in it.
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if not run then return end
-    if matches[2] == "elven champion" then run.kills = run.kills + 1 end
+    if IS_KIND[matches[2]] then run.kills = run.kills + 1 end
     if run.phase == "fight" then scanRoom() end
-end, { type = "regex" })
-
--- Our target walked out: the kill loop has nothing to swing at and would sit
--- there still marked active, so clear it for the next scan to start a new one.
-createTrigger("^Sorry, you don't see \"champion\" nearby\\.$", function()
-    if not run or run.phase ~= "fight" then return end
-    taPackage.kill.stop()
-    scanRoom()
 end, { type = "regex" })
 
 -- The move was refused and nothing prints. As navigate-to does: wait out the
@@ -560,7 +591,7 @@ createTrigger("^In your haste, you trip and fall!$", function()
     createTimer(taPackage.navTripRetryMs, function()
         if run ~= thisRun or run.phase ~= "tripped" then return end
         run.phase = "tripcheck"
-        run.champions = 0
+        run.elves = NO_ELVES
         scanRoom()
     end, { repeating = false })
 end, { type = "regex" })
