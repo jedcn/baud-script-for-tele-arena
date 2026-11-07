@@ -11,7 +11,8 @@
 -- chunk; the seam runs through taPackage:
 --
 --   in    taPackage.kill (ta_kill.lua) for joining a fight and for the
---         leader's `confer` commands, taPackage.character
+--         leader's `confer` commands, taPackage.character,
+--         taPackage.pushPendingDir (ta_map.lua) so `where` follows our moves
 --   out   taPackage.follow.startXpPoll / .stopXpPoll (stop-all-scripts) /
 --         .scheduleXpPoll, and the state, which keeps its taPackage.follow*
 --         names because it survives reloadScript(): followTarget, followedBy,
@@ -208,23 +209,34 @@ createTrigger("^The temple priests take (\\S+) into another chamber", function(m
     send("buy healing")
 end, { type = "regex" })
 
+-- Queued like a typed move, so the map's position moves along with us. Sent
+-- bare, a follower's arrivals reached the tracker with no direction and were
+-- ignored: Pollux followed Pelayo from the town gates to the guild hall and
+-- the map still put him at the gates, so `restock-in-first-town` planned
+-- `ne n n` from there and walked into a wall
+-- (logs/session-pollux-2026-11-07T17-10-19.log, 17:23:40).
+local function followMove(direction)
+    taPackage.pushPendingDir(direction)
+    send(direction)
+end
+
 createTrigger("^(.+) has just gone to the (.+)\\.$", function(matches)
     if not taPackage.followTarget then return end
     local name = matches[2]:lower()
     if name ~= taPackage.followTarget then return end
     local direction = matches[3]:lower()
     local cmd = dirShort[direction]
-    if cmd then send(cmd) end
+    if cmd then followMove(cmd) end
 end, { type = "regex" })
 
 createTrigger("^(.+) has just gone downward\\.$", function(matches)
     if not taPackage.followTarget then return end
     if matches[2]:lower() ~= taPackage.followTarget then return end
-    send("d")
+    followMove("d")
 end, { type = "regex" })
 
 createTrigger("^(.+) has just gone upward\\.$", function(matches)
     if not taPackage.followTarget then return end
     if matches[2]:lower() ~= taPackage.followTarget then return end
-    send("u")
+    followMove("u")
 end, { type = "regex" })

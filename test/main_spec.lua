@@ -14415,6 +14415,29 @@ describe("ta.follow", function()
             assert.are.equal("d", helper.sendCalls[1])
         end)
 
+        -- logs/session-pollux-2026-11-07T17-10-19.log: followed from the town
+        -- gates to the guild hall, the map still had him at the gates.
+        it("moves the map's position along with the leader", function()
+            taPackage.followTarget = "tojolias"
+            taPackage.mapping = false
+            taPackage.hereState = "known"
+            taPackage.here = 1
+            local origExit, origName = taPackage.db.exitDestination, taPackage.db.roomName
+            taPackage.db.exitDestination = function(id, dir)
+                if id == 1 and dir == "ne" then return 2 end
+            end
+            taPackage.db.roomName = function(id)
+                return ({ [1] = "outside the town gates", [2] = "south plaza" })[id]
+            end
+            local origSet = taPackage.db.setPlayerLocation
+            taPackage.db.setPlayerLocation = function() end
+            helper.simulateLine("Tojolias has just gone to the northeast.")
+            helper.simulateLine("You're in the south plaza.")
+            taPackage.db.exitDestination, taPackage.db.roomName = origExit, origName
+            taPackage.db.setPlayerLocation = origSet
+            assert.are.equal(2, taPackage.here)
+        end)
+
         it("does nothing on upward when followTarget not set", function()
             helper.simulateLine("Tojolias has just gone upward.")
             assert.are.equal(0, #helper.sendCalls)
