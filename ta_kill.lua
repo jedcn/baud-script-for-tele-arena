@@ -33,6 +33,11 @@ local function killDebugEcho(label)
 end
 taPackage.kill.debugEcho = killDebugEcho
 
+-- Melee recovery is a fixed ~34s for every character (n=77 across three classes;
+-- see ARENA_PHYSICAL_COOLDOWN_MS in ta_arena.lua, which reckons it the same way).
+local KILL_MELEE_RECOVERY_MS = 34000
+local KILL_EXHAUSTED_RETRY_MS = 3000
+
 -- Melee: everyone swings each round, casters included.
 local function killAttack()
     local target = taPackage.killTarget
@@ -325,6 +330,7 @@ end, { type = "regex" })
 function taPackage.kill.registerLoopTriggers()
     createTrigger("^Your .+ hit the .+ for \\d+ damage!$", function()
         if not taPackage.killActive then return end
+        taPackage.killLastSwingAt = taPackage.utils.nowMillis()
         killDebugEcho("our melee landed")
         taPackage.killAttackPending = false
         killAttack()
@@ -332,6 +338,7 @@ function taPackage.kill.registerLoopTriggers()
 
     createTrigger("^Your attack missed!$", function()
         if not taPackage.killActive then return end
+        taPackage.killLastSwingAt = taPackage.utils.nowMillis()
         killDebugEcho("our melee missed")
         taPackage.killAttackPending = false
         killAttack()
@@ -339,6 +346,7 @@ function taPackage.kill.registerLoopTriggers()
 
     createTrigger("^The .+ dodged your attack!$", function()
         if not taPackage.killActive then return end
+        taPackage.killLastSwingAt = taPackage.utils.nowMillis()
         killDebugEcho("monster dodged our melee")
         taPackage.killAttackPending = false
         killAttack()
@@ -442,10 +450,20 @@ function taPackage.kill.registerLoopTriggers()
 
     createTrigger("^You are still physically exhausted from your previous activities!$", function()
         if not taPackage.killActive then return end
-        killDebugEcho("physically exhausted — melee retry in 30s")
         taPackage.killAttackPending = false
+        -- Reckon from the last swing the game took, not from this refusal: the
+        -- refusal lands anywhere from a moment to several seconds after that
+        -- swing, which is why a flat 30s was refused again a quarter of the time
+        -- and then sat out a second 30s. Nothing to reckon from, or a retry past
+        -- the mark, means asking again shortly.
+        local delay = KILL_EXHAUSTED_RETRY_MS
+        if taPackage.killLastSwingAt then
+            local remaining = KILL_MELEE_RECOVERY_MS - (taPackage.utils.nowMillis() - taPackage.killLastSwingAt)
+            if remaining > delay then delay = remaining end
+        end
+        killDebugEcho("physically exhausted — melee retry in " .. delay .. "ms")
         local gen = taPackage.killGeneration or 0
-        createTimer(30000, function()
+        createTimer(delay, function()
             if taPackage.killActive and (taPackage.killGeneration or 0) == gen then
                 killDebugEcho("melee retry firing after exhaustion")
                 killAttack()
