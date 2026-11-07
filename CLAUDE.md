@@ -26,7 +26,7 @@ What is more: we have control over baud. This means that if we are bumping into 
 
 - Logs live in two places. `logs/` (in this repo) holds the current sessions; older ones are moved out to the sibling repo `../tele-arena-archived-session-logs/`. Code comments citing a log as `logs/session-...` were written when it was still current — if it isn't in `logs/` any more, look for it in the archive under the same filename.
 
-- **A log says what code it ran.** `main.lua` echoes `Starting to read main.lua (<sha>)` and `Finishing reading main.lua (<sha>)` when the session starts and on every `/lua reloadScript()`. `<sha>` is the commit, `-dirty` when tracked files had uncommitted edits, or `unknown` on a baud without `scriptVersion` (jedcn/baud#60) or outside a checkout. To tell whether a fix was live, read the last pair before the moment in question. A `Starting` with no `Finishing` after it means `main.lua` failed partway through loading.
+- **A log says what code it ran.** `main.lua` echoes `Starting to read main.lua (<sha>)` and `Finishing reading main.lua (<sha>)` when the session starts and on every `/lua reloadScript()`. `<sha>` is the commit, `-dirty` when tracked files had uncommitted edits, or `unknown` on a baud without `scriptVersion` (jedcn/baud#60) or outside a checkout. To tell whether a fix was live, read the last pair before the moment in question. A `Starting` with no `Finishing` after it means `main.lua` failed partway through loading. The log's first line names baud's own commit, read once when baud started: `# baud text log - started <iso> - baud <sha>`. `normalize` gives both as fields: `scriptVersion` on `script-load` records, `baudVersion` on the `header`.
 
 ### Analyzing a log: run `normalize` first
 

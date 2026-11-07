@@ -225,6 +225,13 @@ const HIT_VERBS = [
 ];
 
 const RULES: Rule[] = [
+  // — the scripts loading —
+  // main.lua's first and last lines, on the first load and every reloadScript().
+  // The commit in parentheses came with baud#60; older logs have none.
+  { kind: "script-load", re: /^(Starting to read|Finishing reading) main\.lua(?: \((\S+)\))?$/,
+    fields: m => ({ phase: m[1] === "Starting to read" ? "start" : "finish",
+                    scriptVersion: m[2] ?? null }) },
+
   // — our combat —
   // "Your skillful attack hit …" is the rogue variant of the ordinary swing.
   { kind: "our-hit", re: /^Your (?:skillful )?attack hit the (.+) for (\d+) damage!$/,
@@ -630,7 +637,10 @@ function normalizeFile(path: string): Event[] {
 
     // baud's own first line, holding the session start in UTC.
     if (trimmed.startsWith("# baud text log")) {
-      events.push({ ...at(), kind: "header", text: trimmed, startedUtc: header?.[1] ?? null });
+      // The commit baud was started from, in headers since baud#60.
+      const baudVersion = trimmed.match(/ - baud (\S+)$/)?.[1] ?? null;
+      events.push({ ...at(), kind: "header", text: trimmed, startedUtc: header?.[1] ?? null,
+        baudVersion });
       return;
     }
 

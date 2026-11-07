@@ -258,3 +258,32 @@ test("classifies a sprung trap, with the type the mapper stores", () => {
   expect(events.find(e => e.kind === "trap")!.trap).toBe("falling rocks");
   expect(events.find(e => e.kind === "trap-door")!.trap).toBe("trap door");
 });
+
+test("reads the version of baud and of the scripts", () => {
+  const events = normalizeFile(fixture([
+    "# baud text log - started 2026-11-07T23:10:00.000Z - baud 2d3407b",
+    "Starting to read main.lua (10399d4)",
+    "Finishing reading main.lua (10399d4)",
+    "[T] 18:20:01 tick",
+    "Starting to read main.lua (10399d4-dirty)",
+    "Finishing reading main.lua (10399d4-dirty)",
+  ].join("\n")));
+  const header = events.find(e => e.kind === "header");
+  expect(header?.baudVersion).toBe("2d3407b");
+  expect(header?.startedUtc).toBe("2026-11-07T23:10:00.000Z");
+  const loads = events.filter(e => e.kind === "script-load");
+  expect(loads.map(e => [e.phase, e.scriptVersion])).toEqual([
+    ["start", "10399d4"], ["finish", "10399d4"],
+    ["start", "10399d4-dirty"], ["finish", "10399d4-dirty"],
+  ]);
+});
+
+test("reads logs from before either version was recorded", () => {
+  const events = normalizeFile(fixture(HEADER + [
+    "Starting to read main.lua",
+    "Finishing reading main.lua",
+  ].join("\n")));
+  expect(events.find(e => e.kind === "header")?.baudVersion).toBeNull();
+  const loads = events.filter(e => e.kind === "script-load");
+  expect(loads.map(e => [e.phase, e.scriptVersion])).toEqual([["start", null], ["finish", null]]);
+});
