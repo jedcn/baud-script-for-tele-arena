@@ -79,7 +79,7 @@ function taPackage.teamChampions.ringNext(exits, heading)
     return nil
 end
 
--- An XP reading for everyone, so `just xp-report` gets exact numbers for a run
+-- An XP reading for everyone, so the logs hold exact numbers for a run
 -- instead of whatever the followers' 5-minute poll happened to catch.
 local function markXp()
     send("status")

@@ -107,7 +107,7 @@ describe("team-fight-champions", function()
         end)
     end)
 
-    describe("XP readings for xp-report", function()
+    describe("XP readings at each end of a run", function()
         it("takes one for everyone as a run starts", function()
             helper.simulateAlias("team-fight-champions")
             assert.is_true(sent("status"))
