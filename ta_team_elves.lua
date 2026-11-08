@@ -19,11 +19,17 @@
 --   in    taPackage.kill.start / .stop, taPackage.character, taPackage.arenaState,
 --         taPackage.killActive, taPackage.navStepDelayMs / .navTripRetryMs /
 --         .navFloor (ta_nav.lua: navigate-to's pace and trip recovery)
+--         taPackage.utils.sendNtfy; followers answering `confer report-xp`
+--         (ta_follow.lua)
 --   out   taPackage.teamElves.running / .stop (stop-all-scripts)
 --
 -- `team-fight-elves-in-loop` keeps going: after each room it walks on round the
 -- ring, keeping its heading, until a room with an elf in it, and fights there
 -- the same way. It runs until `team-fight-elves-in-loop-stop`.
+--
+-- Each time the loop leaves the REPORT_CORNER, the leader pushes an "Elven
+-- Valley Update" to ntfy: when, how long the circuit took, and everyone's XP
+-- gain over it, which the followers send back over group chat.
 --
 -- `run` is a local on purpose: a reloadScript() cannot carry the poll timer over,
 -- so a run should not survive one either.
@@ -46,6 +52,12 @@ local MAX_CHASE_ROOMS = 10          -- the longest chase in the logs was 8
 local MAX_CHASE_FIGHT = 2           -- away from home, fight up to this many; the
                                     -- group beat five at once on 2026-11-07, but
                                     -- a full trio found on a chase hurt it badly
+
+local REPORT_CORNER = "SE"
+local REPORT_WAIT_MS = 15000        -- how long to wait for the followers' XP
+
+-- The ring's corners are the only rooms on it with these two exits.
+local CORNERS = { ["e,s"] = "NW", ["s,w"] = "NE", ["n,w"] = "SE", ["e,n"] = "SW" }
 
 local SHORT_DIRECTION = {
     north = "n", south = "s", east = "e", west = "w",
@@ -140,6 +152,75 @@ function taPackage.teamElves.loopNext(exits, heading)
         end
     end
     return nil
+end
+
+-- Which corner these exits make, if any: "NW", "NE", "SE" or "SW".
+function taPackage.teamElves.cornerOf(exits)
+    local sorted = {}
+    for _, exit in ipairs(exits) do table.insert(sorted, exit) end
+    table.sort(sorted)
+    return CORNERS[table.concat(sorted, ",")]
+end
+
+-- The corner report being gathered: our own XP from `status`, the followers'
+-- from their `xp-is` replies.
+local pendingReport = nil
+
+local function formatGain(xp)
+    if xp >= 1000 then return math.floor(xp / 1000 + 0.5) .. "k" end
+    return tostring(xp)
+end
+
+local function sendReport(report)
+    if report.sent then return end
+    report.sent = true
+    if pendingReport == report then pendingReport = nil end
+    local lines = { "- reached " .. REPORT_CORNER .. " corner at " .. os.date("%H:%M") }
+    local previous = report.previous
+    if not previous then
+        lines[#lines + 1] = "- first time round: timing the circuit from here"
+    else
+        local minutes = math.floor((report.at - previous.at) / 60000 + 0.5)
+        lines[#lines + 1] = "- last circuit took " .. minutes .. " minutes"
+        lines[#lines + 1] = "- XP gains:"
+        local names = {}
+        for name in pairs(report.xp) do table.insert(names, name) end
+        for name in pairs(previous.xp) do
+            if not report.xp[name] then table.insert(names, name) end
+        end
+        table.sort(names)
+        for _, name in ipairs(names) do
+            local now, before = report.xp[name], previous.xp[name]
+            lines[#lines + 1] = "  - " .. name .. " "
+                .. ((now and before) and formatGain(now - before) or "?")
+        end
+    end
+    taPackage.utils.sendNtfy("Elven Valley Update", table.concat(lines, "\n"), true)
+end
+
+local function recordXp(name, xp)
+    local report = pendingReport
+    if not report then return end
+    report.xp[name:lower()] = xp
+    local have = 0
+    for _ in pairs(report.xp) do have = have + 1 end
+    if report.expected and have >= report.expected then sendReport(report) end
+end
+
+-- Asks everyone for their XP; the report goes out once all have answered, or
+-- after REPORT_WAIT_MS with "?" for whoever didn't.
+local function cornerReport(loop)
+    local report = {
+        at = taPackage.utils.nowMillis(),
+        xp = {},
+        previous = loop.lastCorner,
+        expected = loop.members,
+    }
+    loop.lastCorner = report
+    pendingReport = report
+    send("status")
+    send("confer report-xp")
+    createTimer(REPORT_WAIT_MS, function() sendReport(report) end, { repeating = false })
 end
 
 local function newRun(loop)
@@ -318,6 +399,16 @@ local function stepOnward(exits)
             finish("Can't tell which way the ring goes from here; stopping the loop.")
             return
         end
+        -- Once per visit: a fight with an elf that caught us here comes
+        -- back through this step.
+        if taPackage.teamElves.cornerOf(exits) == REPORT_CORNER then
+            if not run.loop.atReportCorner then
+                run.loop.atReportCorner = true
+                cornerReport(run.loop)
+            end
+        else
+            run.loop.atReportCorner = nil
+        end
         run.loop.heading = direction
         move(direction)
         return
@@ -439,6 +530,7 @@ local function readGroup(exits)
         send("cast kusamotumaru")
         return
     end
+    if run.loop then run.loop.members = #rows end
     if run.phase == "muster" and allReady then stepOnward(exits) end
 end
 
@@ -617,6 +709,15 @@ end, { type = "regex" })
 createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)% ST:(\\w+)", function(matches)
     if not run or not run.rows then return end
     table.insert(run.rows, { health = tonumber(matches[3]), state = matches[4] })
+end, { type = "regex" })
+
+createTrigger("^Experience:\\s+(\\d+)$", function(matches)
+    if not pendingReport then return end
+    recordXp(taPackage.character.getName() or "leader", tonumber(matches[2]))
+end, { type = "regex" })
+
+createTrigger("^From (\\S+) \\(to group\\): xp-is (\\d+)$", function(matches)
+    recordXp(matches[2], tonumber(matches[3]))
 end, { type = "regex" })
 
 createTrigger("^Exits: (.+)\\.$", function(matches)

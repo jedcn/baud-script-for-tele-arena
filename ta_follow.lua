@@ -17,6 +17,8 @@
 --         .scheduleXpPoll, and the state, which keeps its taPackage.follow*
 --         names because it survives reloadScript(): followTarget, followedBy,
 --         followDebug, followXpPollActive, ...
+--         Answers `confer report-xp` with `confer xp-is <XP>` for
+--         team-fight-elves-in-loop's corner report (ta_team_elves.lua).
 
 taPackage.follow = {}
 
@@ -135,6 +137,8 @@ end, { type = "regex" })
 -- which everyone sees as "From <leader> (to group): <command>". Only an
 -- allowlisted set of commands runs; anything else is ignored. The speaker
 -- must be the leader we're following, so our own conferred lines won't match.
+local reportXpPending = false
+
 createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
     if not taPackage.followTarget then return end
     if matches[2]:lower() ~= taPackage.followTarget then return end
@@ -146,11 +150,21 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
         taPackage.kill.stop()
     elseif command == "status" then
         send("status")
+    elseif command == "report-xp" then
+        -- team-fight-elves-in-loop's corner report: answer with a fresh reading.
+        reportXpPending = true
+        send("status")
     elseif command == "heal-most-injured-party-member" then
         if taPackage.character.isClass("Acolyte") then
             taPackage.kill.healMostInjuredPartyMember()
         end
     end
+end, { type = "regex" })
+
+createTrigger("^Experience:\\s+(\\d+)$", function(matches)
+    if not reportXpPending then return end
+    reportXpPending = false
+    send("confer xp-is " .. matches[2])
 end, { type = "regex" })
 
 -- When the leader we're following engages a monster, join the fight on the same

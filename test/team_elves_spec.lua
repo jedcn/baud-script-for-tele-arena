@@ -686,6 +686,121 @@ describe("team-fight-elves", function()
             assert.is_false(taPackage.teamElves.running())
         end)
 
+        describe("the corner report", function()
+            local function pushes()
+                local bodies = {}
+                for _, call in ipairs(helper.httpRequestCalls) do
+                    if call.url:find("ntfy", 1, true) then
+                        table.insert(bodies, call.options.body)
+                    end
+                end
+                return bodies
+            end
+
+            -- The group helper lists Pelayo and Pollux.
+            local function answer(pelayoXp, polluxXp)
+                helper.simulateLine("Experience:   " .. pelayoXp)
+                helper.simulateLine("From Pollux (to group): xp-is " .. polluxXp)
+            end
+
+            before_each(function()
+                taPackage.character.setName("Pelayo")
+            end)
+
+            it("knows the corners by their exits", function()
+                local cornerOf = taPackage.teamElves.cornerOf
+                assert.are.equal("NW", cornerOf({ "s", "e" }))
+                assert.are.equal("NE", cornerOf({ "s", "w" }))
+                assert.are.equal("SE", cornerOf({ "n", "w" }))
+                assert.are.equal("SW", cornerOf({ "n", "e" }))
+                assert.is_nil(cornerOf({ "e", "w" }))
+                assert.is_nil(cornerOf({ "e", "s", "w" }))
+            end)
+
+            it("asks everyone for their XP on leaving the SE corner", function()
+                startLoop(NONE)
+                clearSent()
+                group("Ready", 100, "n,w")
+                assert.is_true(sent("status"))
+                assert.is_true(sent("confer report-xp"))
+                assert.is_true(sent("n"))
+            end)
+
+            it("says nothing at the other corners", function()
+                startLoop(NONE)
+                clearSent()
+                group("Ready", 100, "s,w")
+                assert.is_false(sent("confer report-xp"))
+            end)
+
+            it("pushes the circuit's time and each character's XP gain", function()
+                startLoop(NONE)
+                group("Ready", 100, "n,w")
+                answer(1000000, 500000)
+                local first = pushes()
+                assert.are.equal(1, #first)
+                assert.is_truthy(first[1]:find("reached SE corner at", 1, true))
+                assert.is_truthy(first[1]:find("first time round", 1, true))
+
+                helper.advanceMs(50 * 60000)
+                room(NONE)
+                group("Ready", 100, "e,w")
+                room(NONE)
+                group("Ready", 100, "n,w")
+                answer(1100000, 520400)
+                local bodies = pushes()
+                assert.are.equal(2, #bodies)
+                assert.is_truthy(bodies[2]:find("last circuit took 50 minutes", 1, true))
+                assert.is_truthy(bodies[2]:find("  - pelayo 100k", 1, true))
+                assert.is_truthy(bodies[2]:find("  - pollux 20k", 1, true))
+                assert.is_true(helper.httpRequestCalls[2].options.headers["X-Title"]
+                    == "Elven Valley Update")
+            end)
+
+            it("sends without whoever doesn't answer", function()
+                startLoop(NONE)
+                group("Ready", 100, "n,w")
+                helper.simulateLine("Experience:   1000000")
+                assert.are.equal(0, #pushes())
+                helper.fireTimers(15000)
+                assert.are.equal(1, #pushes())
+            end)
+
+            -- Ready with no time gone by, so the move waits on the pace and the
+            -- next poll comes back through the same step.
+            it("reports a visit once, however many polls it takes to leave", function()
+                startLoop(NONE)
+                group("Ready", 100, "e,w")
+                room(NONE)
+                clearSent()
+                for _ = 1, 2 do
+                    helper.simulateLine("Your group currently consists of:")
+                    helper.simulateLine("  Pelayo                         (L) [HE:100% ST:Ready]")
+                    helper.simulateLine("Exits: n,w.")
+                end
+                assert.is_false(sent("n"))
+                local asked = 0
+                for _, call in ipairs(helper.sendCalls) do
+                    if call == "confer report-xp" then asked = asked + 1 end
+                end
+                assert.are.equal(1, asked)
+            end)
+
+            it("a follower answers with a fresh reading", function()
+                taPackage.followTarget = "pelayo"
+                clearSent()
+                helper.simulateLine("Experience:   123")
+                assert.is_false(sent("confer xp-is 123"))
+                helper.simulateLine("From Pelayo (to group): report-xp")
+                assert.is_true(sent("status"))
+                helper.simulateLine("Experience:   456")
+                assert.is_true(sent("confer xp-is 456"))
+                clearSent()
+                helper.simulateLine("Experience:   789")
+                assert.is_false(sent("confer xp-is 789"))
+            end)
+        end)
+
         it("team-fight-elves-in-loop-stop stops it mid-fight", function()
             startLoop(THREE)
             clearSent()
