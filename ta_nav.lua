@@ -3217,7 +3217,22 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             -- No `from`: a route that opens with a goTo starts wherever the
             -- tracker says you are, and the goTo is what checks that.
+            --
+            -- The probe has just read the room's name and exits, so when the
+            -- tracker is lost let them settle it first. A fresh login lands
+            -- Pollux in the guild hall with the position lost, and "guild hall"
+            -- names two rooms -- but only one has n,s,d, and before this the goTo
+            -- refused to start while the answer sat in the probe
+            -- (logs/session-pollux-2026-11-08T12-55-46.log).
             if not route.from then
+                if taPackage.hereState ~= "known" then
+                    local m = taPackage.db.roomsMatchingFingerprint(name, dirs)
+                    if #m == 1 then
+                        taPackage.setHere(m[1].id)
+                        navEcho("You're in " .. m[1].slug .. " — the only '" .. name
+                            .. "' with exits " .. navExitKey(dirs) .. ".")
+                    end
+                end
                 checkThenGo()
                 return
             end

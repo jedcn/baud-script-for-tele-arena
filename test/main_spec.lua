@@ -21905,6 +21905,41 @@ describe("restock-in-first-town", function()
         assert.are.same({ "", "ex" }, helper.sendCalls)
         assert.is_nil(taPackage.navigate)
     end)
+
+    -- logs/session-pollux-2026-11-08T12-55-46.log: logged in to the guild
+    -- hall, lost, and refused -- though only one guild hall has n,s,d.
+    it("works out the room from the probe when only one room fits", function()
+        taPackage.hereState, taPackage.here = "lost", nil
+        -- Two guild halls, as on the real map; only #5 has n,s,d.
+        local exits = { [5] = { "n", "s", "d" }, [1020] = { "s" } }
+        local rows, oneRow = helper.mockDbRows, helper.mockDbOneRow
+        helper.mockDbRows = function(sql, params)
+            if sql:find("SELECT id, slug, x, y, z FROM rooms WHERE name", 1, true)
+                and params[1] == "guild hall" then
+                return { { id = 5, slug = "guild-hall" }, { id = 1020, slug = "guild-hall-1" } }
+            end
+            if sql:find("SELECT direction FROM room_exits", 1, true) and exits[params[1]] then
+                local out = {}
+                for _, d in ipairs(exits[params[1]]) do out[#out + 1] = { direction = d } end
+                return out
+            end
+            if sql:find("SELECT id, slug, name FROM rooms WHERE area_id", 1, true) then
+                return { { id = 10, slug = "south-plaza", name = "south plaza" } }
+            end
+            return rows(sql, params)
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if sql:find("SELECT id FROM areas WHERE slug", 1, true) then return { id = 1 } end
+            return oneRow(sql, params)
+        end
+        helper.simulateAlias("restock-in-first-town")
+        arrive("guild hall")
+        helper.simulateLine("Exits: n,s,d.")
+        assert.are.equal(5, taPackage.here)
+        assert.is_truthy(taPackage.navigate)
+        pace()
+        assert.are.equal("buy training", helper.sendCalls[3])
+    end)
 end)
 
 -- A written route whose way is found on the map: `{ goTo = slug }` is
