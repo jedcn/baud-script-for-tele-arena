@@ -43,7 +43,7 @@ local TAG = "[elves] "
 -- they hit harder (100-140 a blow in the logs, warriors 90-105). Each is the
 -- word `kill` takes and the noun the game uses after "elven".
 local KINDS = { "champion", "warrior" }
-local POLL_MS = 3000                -- `group` is the only view of health and Ready
+local POLL_MS = 6000                -- `group` is the only view of health and Ready
 local ARRIVAL_SETTLE_MS = 1000      -- followers land a beat after the leader; a
                                     -- `kill` conferred sooner finds nothing nearby
 local WALK_LOST_TICKS = 3           -- polls with no arrival before giving up
