@@ -168,9 +168,12 @@ end
 -- from their `xp-is` replies.
 local pendingReport = nil
 
+-- Millions to one place, cut rather than rounded, without the leading zero:
+-- 1153000 -> "1.1M", 382000 -> ".3M".
 local function formatGain(xp)
-    if xp >= 1000 then return math.floor(xp / 1000 + 0.5) .. "k" end
-    return tostring(xp)
+    local tenths = math.floor(xp / 100000)
+    local text = string.format("%d.%dM", tenths // 10, tenths % 10)
+    return (text:gsub("^0%.", "."))
 end
 
 local function sendReport(report)
