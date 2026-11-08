@@ -20,12 +20,14 @@
 --         taPackage.killActive, taPackage.navStepDelayMs / .navTripRetryMs /
 --         .navFloor (ta_nav.lua: navigate-to's pace and trip recovery)
 --         taPackage.utils.sendNtfy; followers answering `confer report-xp`
---         (ta_follow.lua)
+--         (ta_follow.lua) and `confer exit-game`; taPackage.exitGameWithRetry
+--         (ta_leave_game.lua)
 --   out   taPackage.teamElves.running / .stop (stop-all-scripts)
 --
 -- `team-fight-elves-in-loop` keeps going: after each room it walks on round the
 -- ring, keeping its heading, until a room with an elf in it, and fights there
--- the same way. It runs until `team-fight-elves-in-loop-stop`.
+-- the same way. It runs until `team-fight-elves-in-loop-stop`, which also takes
+-- every character out of the game.
 --
 -- Each time the loop leaves the REPORT_CORNER, the leader pushes an "Elven
 -- Valley Update" to ntfy: when, how long the circuit took, and everyone's XP
@@ -568,7 +570,17 @@ createAlias("^team-fight-elves-in-loop$", function()
 end, { type = "regex" })
 
 createAlias("^stop-team-fight-elves$", stop, { type = "regex" })
-createAlias("^team-fight-elves-in-loop-stop$", stop, { type = "regex" })
+
+-- The end of a session: everyone stops and leaves the game. The followers are
+-- told first and forget their leader before they go, so the "no longer a
+-- member" line that follows doesn't read as the leader having been lost
+-- (ta_follow.lua), and nobody gets a notification for an exit asked for.
+createAlias("^team-fight-elves-in-loop-stop$", function()
+    if runCommand then runCommand("stop-all-scripts") else stop() end
+    echo(TAG .. "Everyone is leaving the game.")
+    send("confer exit-game")
+    taPackage.exitGameWithRetry()
+end, { type = "regex" })
 
 createTrigger("^There \\S+ (.+) here\\.$", function(matches)
     if not run then return end

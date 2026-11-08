@@ -20,7 +20,7 @@
 --         Answers `confer report-xp` with `confer xp-is <XP>` for
 --         team-fight-elves-in-loop's corner report (ta_team_elves.lua).
 --         Leaves the game (taPackage.exitGameWithRetry, ta_leave_game.lua) when
---         the leader is gone.
+--         the leader is gone or confers `exit-game`.
 
 taPackage.follow = {}
 
@@ -152,6 +152,12 @@ createTrigger("^From (.+) \\(to group\\): (.+)$", function(matches)
         taPackage.kill.stop()
     elseif command == "status" then
         send("status")
+    elseif command == "exit-game" then
+        -- The leader is ending the session. Forget them first, so the "no
+        -- longer a member" line our exit brings isn't taken as losing them.
+        taPackage.followTarget = nil
+        if runCommand then runCommand("stop-all-scripts") end
+        taPackage.exitGameWithRetry()
     elseif command == "report-xp" then
         -- team-fight-elves-in-loop's corner report: answer with a fresh reading.
         reportXpPending = true
