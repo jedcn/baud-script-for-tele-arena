@@ -19,6 +19,8 @@
 --         followDebug, followXpPollActive, ...
 --         Answers `confer report-xp` with `confer xp-is <XP>` for
 --         team-fight-elves-in-loop's corner report (ta_team_elves.lua).
+--         Leaves the game (taPackage.exitGameWithRetry, ta_leave_game.lua) when
+--         the leader is gone.
 
 taPackage.follow = {}
 
@@ -165,6 +167,27 @@ createTrigger("^Experience:\\s+(\\d+)$", function(matches)
     if not reportXpPending then return end
     reportXpPending = false
     send("confer xp-is " .. matches[2])
+end, { type = "regex" })
+
+-- The leader is gone: the BBS dropped their connection, or they left the
+-- game. The game says only this. With nobody leading or healing, the group
+-- stood in a room with a champion taking hits for eight minutes
+-- (session-pollux-2026-11-08T07-56-47.log, 08:24:22), and putting the group
+-- back together takes a person, so push a notification and leave the game.
+-- Stopping everything first keeps a kill loop's swings from holding off the
+-- exit, and `x` is retried until the game takes it. `ta.unfollow` clears
+-- followTarget before its own `leave` is answered, so leaving on purpose
+-- doesn't land here.
+createTrigger("^You are no longer a member of (.+)'s group\\.$", function(matches)
+    local leader = matches[2]
+    if not taPackage.followTarget or leader:lower() ~= taPackage.followTarget then return end
+    local me = taPackage.character.getName() or "A follower"
+    echo("[follow] No longer in " .. leader .. "'s group — stopping and leaving the game.")
+    taPackage.utils.sendNtfy("Lost the leader",
+        me .. " is no longer in " .. leader .. "'s group, so it is leaving the game.")
+    if runCommand then runCommand("stop-all-scripts") end
+    taPackage.followTarget = nil
+    taPackage.exitGameWithRetry()
 end, { type = "regex" })
 
 -- When the leader we're following engages a monster, join the fight on the same

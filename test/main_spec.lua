@@ -14495,6 +14495,68 @@ describe("ta.follow", function()
 
     end)
 
+    -- 2026-11-08: the BBS dropped Pelayo mid-fight and the followers stood
+    -- there taking a champion's hits; this is the only line they got.
+    describe("losing the leader", function()
+        local LOST = "You are no longer a member of Tojolias's group."
+
+        local function pushes()
+            local n = 0
+            for _, call in ipairs(helper.httpRequestCalls) do
+                if call.url:find("ntfy", 1, true) then n = n + 1 end
+            end
+            return n
+        end
+
+        local function exits()
+            local n = 0
+            for _, call in ipairs(helper.sendCalls) do
+                if call == "x" then n = n + 1 end
+            end
+            return n
+        end
+
+        before_each(function()
+            taPackage.character.setClass("Warrior")
+            taPackage.character.setName("Pollux")
+            taPackage.followTarget = "tojolias"
+        end)
+
+        it("stops everything, pushes a notification and leaves the game", function()
+            helper.simulateLine("From Tojolias (to group): kill champion")
+            assert.is_true(taPackage.killActive)
+            helper.simulateLine(LOST)
+            assert.is_falsy(taPackage.killActive)
+            assert.are.equal(1, pushes())
+            assert.is_true(helper.httpRequestCalls[1].options.body:find("Pollux", 1, true) ~= nil)
+            assert.are.equal(1, exits())
+            assert.is_nil(taPackage.followTarget)
+        end)
+
+        it("keeps sending x until the game lets it go", function()
+            helper.simulateLine(LOST)
+            helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+            helper.fireTimers(2000)
+            assert.are.equal(2, exits())
+            helper.simulateLine("Exiting Tele-Arena...")
+            helper.fireTimers(2000)
+            assert.are.equal(2, exits())
+        end)
+
+        it("ignores another group's news", function()
+            helper.simulateLine("You are no longer a member of Kerhak's group.")
+            assert.are.equal(0, pushes())
+            assert.are.equal(0, exits())
+        end)
+
+        it("stays when leaving was our own doing", function()
+            helper.simulateAlias("ta.unfollow")
+            helper.simulateLine(LOST)
+            assert.are.equal(0, pushes())
+            assert.are.equal(0, exits())
+        end)
+    end)
+
     describe("confer command trigger", function()
 
         before_each(function()
