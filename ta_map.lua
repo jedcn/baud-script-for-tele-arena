@@ -38,8 +38,18 @@
 --
 -- It never guesses. Contradicted, it goes `lost` rather than picking a
 -- plausible room, which is exactly the failure that cost the desert twice.
-taPackage.here = nil
-taPackage.hereState = "lost"
+--
+-- A known position survives reloadScript(). Resetting it to lost on every load
+-- stranded Pelayo on 2026-11-07: navigate-live arrived in the first town's
+-- guild hall, a reload threw that away, and "guild hall" names two rooms, so
+-- the bare return after it could not settle which -- restock-in-first-town
+-- then refused to start. The room must still be on the map, though: a reload
+-- is also how a hand-merged DB gets picked up, and a merged-away id is gone.
+if not (taPackage.hereState == "known" and taPackage.here
+        and taPackage.db.roomName(taPackage.here)) then
+    taPackage.here = nil
+    taPackage.hereState = "lost"
+end
 taPackage.offMap = nil
 -- While lost, the rooms we might be in. Narrowed by each move rather than
 -- guessed from appearance: two rooms are called "tavern", but only one of them

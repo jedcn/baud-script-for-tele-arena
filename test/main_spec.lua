@@ -22032,6 +22032,57 @@ end)
 -- The character's data is taPackage._character and its accessors are
 -- taPackage.character. reloadScript() keeps taPackage but re-runs main.lua, so
 -- the data has to survive the reload while the accessors are rebuilt.
+-- 2026-11-07: navigate-live put Pelayo in the guild hall, a reload reset the
+-- position to lost, and "guild hall" names two rooms -- so restock-in-first-town
+-- refused to start. A known position must outlive the reload.
+describe("position across a script reload", function()
+
+    local rooms
+
+    before_each(function()
+        helper.resetAll()
+        rooms = { [5] = "guild hall" }
+        helper.mockDbOneRow = function(sql, params)
+            if sql:match("SELECT name FROM rooms WHERE id") and rooms[params[1]] then
+                return { name = rooms[params[1]] }
+            end
+            return nil
+        end
+        dofile("main.lua")
+    end)
+
+    it("keeps a known room", function()
+        taPackage.setHere(5)
+        dofile("main.lua")
+        assert.are.equal("known", taPackage.hereState)
+        assert.are.equal(5, taPackage.here)
+    end)
+
+    it("drops a room the map no longer has", function()
+        taPackage.setHere(5)
+        rooms[5] = nil
+        dofile("main.lua")
+        assert.are.equal("lost", taPackage.hereState)
+        assert.is_nil(taPackage.here)
+    end)
+
+    it("stays lost when it was lost", function()
+        taPackage.loseHere(nil)
+        dofile("main.lua")
+        assert.are.equal("lost", taPackage.hereState)
+    end)
+
+    -- Off the map the position is a guess against an edge; start over.
+    it("does not carry an off-map position", function()
+        taPackage.setHere(5)
+        taPackage.here, taPackage.hereState = nil, "off-map"
+        taPackage.offMap = { from = 5, dir = "n", moves = 1 }
+        dofile("main.lua")
+        assert.are.equal("lost", taPackage.hereState)
+        assert.is_nil(taPackage.offMap)
+    end)
+end)
+
 describe("character state across a script reload", function()
 
     before_each(function()
