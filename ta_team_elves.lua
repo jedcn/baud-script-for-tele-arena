@@ -185,6 +185,18 @@ local function formatGain(xp)
     return (text:gsub("^0%.", "."))
 end
 
+-- "2 champions, 1 warrior": the kills since the last report, or since the loop
+-- started on the first one.
+local function killsLine(report)
+    local before = report.previous and report.previous.killed or {}
+    local parts = {}
+    for _, kind in ipairs(KINDS) do
+        local n = report.killed[kind] - (before[kind] or 0)
+        parts[#parts + 1] = n .. " " .. kind .. (n == 1 and "" or "s")
+    end
+    return "- killed " .. table.concat(parts, ", ")
+end
+
 local function sendReport(report)
     if report.sent then return end
     report.sent = true
@@ -193,9 +205,11 @@ local function sendReport(report)
     local previous = report.previous
     if not previous then
         lines[#lines + 1] = "- first time round: timing the circuit from here"
+        lines[#lines + 1] = killsLine(report)
     else
         local minutes = math.floor((report.at - previous.at) / 60000 + 0.5)
         lines[#lines + 1] = "- last circuit took " .. minutes .. " minutes"
+        lines[#lines + 1] = killsLine(report)
         lines[#lines + 1] = "- XP gains:"
         local names = {}
         for name in pairs(report.xp) do table.insert(names, name) end
@@ -227,9 +241,11 @@ local function cornerReport(loop)
     local report = {
         at = taPackage.utils.nowMillis(),
         xp = {},
+        killed = {},
         previous = loop.lastCorner,
         expected = loop.members,
     }
+    for _, kind in ipairs(KINDS) do report.killed[kind] = loop.killed[kind] end
     loop.lastCorner = report
     pendingReport = report
     send("status")
@@ -603,7 +619,9 @@ end, { type = "regex" })
 -- Starts by fighting whatever is here; an empty room just sets it walking.
 createAlias("^team-fight-elves-in-loop$", function()
     if not canStart() then return end
-    begin(newRun({ heading = nil, kills = 0 }))
+    local killed = {}
+    for _, kind in ipairs(KINDS) do killed[kind] = 0 end
+    begin(newRun({ heading = nil, kills = 0, killed = killed }))
     echo(TAG .. "Looping round the ring until team-fight-elves-in-loop-stop.")
     markXp()
     scanRoom()
@@ -722,7 +740,13 @@ for _, kind in ipairs(KINDS) do IS_KIND["elven " .. kind] = true end
 -- Any death ends every kill loop in the room, whoever else is left in it.
 createTrigger("^The (.+) falls to the ground lifeless!$", function(matches)
     if not run then return end
-    if IS_KIND[matches[2]] then run.kills = run.kills + 1 end
+    if IS_KIND[matches[2]] then
+        run.kills = run.kills + 1
+        if run.loop then
+            local kind = matches[2]:sub(#"elven " + 1)
+            run.loop.killed[kind] = run.loop.killed[kind] + 1
+        end
+    end
     if run.phase == "fight" then scanRoom() end
 end, { type = "regex" })
 
