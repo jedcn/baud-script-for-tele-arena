@@ -26,8 +26,10 @@
 --
 -- `team-fight-elves-in-loop` keeps going: after each room it walks on round the
 -- ring, keeping its heading, until a room with an elf in it, and fights there
--- the same way. It runs until `team-fight-elves-in-loop-stop`, which also takes
--- every character out of the game.
+-- the same way. `team-fight-elves-in-loop-stop-now` ends it on the spot and
+-- takes every character out of the game; `team-fight-elves-in-loop-stop` lets it
+-- carry on round to the JUNCTION, the way in and out of the ring, and leaves
+-- there.
 --
 -- Each time the loop leaves the REPORT_CORNER, the leader pushes an "Elven
 -- Valley Update" to ntfy: when, how long the circuit took, and everyone's XP
@@ -60,6 +62,9 @@ local REPORT_WAIT_MS = 15000        -- how long to wait for the followers' XP
 
 -- The ring's corners are the only rooms on it with these two exits.
 local CORNERS = { ["e,s"] = "NW", ["s,w"] = "NE", ["n,w"] = "SE", ["e,n"] = "SW" }
+-- The top of the spur that leads in and out of the ring: the only room on it
+-- with exits e, s and w.
+local JUNCTION = "e,s,w"
 
 local SHORT_DIRECTION = {
     north = "n", south = "s", east = "e", west = "w",
@@ -157,11 +162,15 @@ function taPackage.teamElves.loopNext(exits, heading)
 end
 
 -- Which corner these exits make, if any: "NW", "NE", "SE" or "SW".
-function taPackage.teamElves.cornerOf(exits)
+local function exitKey(exits)
     local sorted = {}
     for _, exit in ipairs(exits) do table.insert(sorted, exit) end
     table.sort(sorted)
-    return CORNERS[table.concat(sorted, ",")]
+    return table.concat(sorted, ",")
+end
+
+function taPackage.teamElves.cornerOf(exits)
+    return CORNERS[exitKey(exits)]
 end
 
 -- The corner report being gathered: our own XP from `status`, the followers'
@@ -292,6 +301,17 @@ function taPackage.teamElves.running()
     return run ~= nil
 end
 
+-- The end of a session: everyone stops and leaves the game. The followers are
+-- told first and forget their leader before they go, so the "no longer a
+-- member" line that follows doesn't read as the leader having been lost
+-- (ta_follow.lua), and nobody gets a notification for an exit asked for.
+local function leaveGame()
+    if runCommand then runCommand("stop-all-scripts") else stop() end
+    echo(TAG .. "Everyone is leaving the game.")
+    send("confer exit-game")
+    taPackage.exitGameWithRetry()
+end
+
 local function isHome()
     return #run.path == 0
 end
@@ -398,6 +418,13 @@ end
 -- Everyone is Ready: take the next step, along the ring or back home.
 local function stepOnward(exits)
     if run.travel then
+        -- Only a leg moving on counts: a room of elves here is fought first,
+        -- and the leg that follows it starts from this same step.
+        if run.loop.leaveAtJunction and exitKey(exits) == JUNCTION then
+            echo(TAG .. "At the way out of the ring.")
+            leaveGame()
+            return
+        end
         local direction = taPackage.teamElves.loopNext(exits, run.loop.heading)
         if not direction then
             run.loop = nil
@@ -574,15 +601,16 @@ end, { type = "regex" })
 
 createAlias("^stop-team-fight-elves$", stop, { type = "regex" })
 
--- The end of a session: everyone stops and leaves the game. The followers are
--- told first and forget their leader before they go, so the "no longer a
--- member" line that follows doesn't read as the leader having been lost
--- (ta_follow.lua), and nobody gets a notification for an exit asked for.
+createAlias("^team-fight-elves-in-loop-stop-now$", leaveGame, { type = "regex" })
+
+-- Keeps fighting and walking until the loop next moves on from the junction.
 createAlias("^team-fight-elves-in-loop-stop$", function()
-    if runCommand then runCommand("stop-all-scripts") else stop() end
-    echo(TAG .. "Everyone is leaving the game.")
-    send("confer exit-game")
-    taPackage.exitGameWithRetry()
+    if not (run and run.loop) then
+        echo(TAG .. "Not looping. team-fight-elves-in-loop-stop-now leaves the game from here.")
+        return
+    end
+    run.loop.leaveAtJunction = true
+    echo(TAG .. "Carrying on to the way out of the ring, then everyone leaves the game.")
 end, { type = "regex" })
 
 createTrigger("^There \\S+ (.+) here\\.$", function(matches)
