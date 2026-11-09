@@ -336,6 +336,16 @@ local function muster()
     probeGroup()
 end
 
+-- Into a room with nobody to fight. The last step waited for everyone to be
+-- Ready and well, and walking changes neither, so only the exits are needed:
+-- a `group` on every step was most of what the loop sent on an empty lap, and
+-- the BBS may be logging Pelayo out for the traffic.
+local function walkOn()
+    run.phase = "muster"
+    run.exitsOnly = true
+    send("ex")
+end
+
 local function engage(counts)
     if taPackage.killActive then return end
     local target = targetFor(counts)
@@ -484,7 +494,7 @@ local function arrive(count)
     if run.travel then
         run.pendingMove = nil
         if count == 0 then
-            muster()
+            walkOn()
             return
         end
         -- The first room with an elf becomes home, whatever the count.
@@ -497,7 +507,7 @@ local function arrive(count)
     end
     if count == 0 then
         if run.chase or not isHome() then
-            muster()
+            walkOn()
         else
             roomClear()
         end
@@ -764,8 +774,14 @@ createTrigger("^From (\\S+) \\(to group\\): xp-is (\\d+)$", function(matches)
 end, { type = "regex" })
 
 createTrigger("^Exits: (.+)\\.$", function(matches)
-    if not run or not run.rows then return end
+    if not run or not (run.rows or run.exitsOnly) then return end
     local exits = {}
     for exit in matches[2]:gmatch("[^,%s]+") do table.insert(exits, exit) end
-    readGroup(exits)
+    local exitsOnly = run.exitsOnly
+    run.exitsOnly = nil
+    if run.rows then
+        readGroup(exits)
+    elseif exitsOnly and run.phase == "muster" then
+        stepOnward(exits)
+    end
 end, { type = "regex" })
