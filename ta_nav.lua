@@ -53,6 +53,8 @@
 --     { killAll = true }     -- clear this room; the sweep advances the walk
 --     { goTo = "<slug>" }    -- `navigate-live <slug>` from here, mid-route
 --     { anchor = "<slug>" }  -- `map-here <slug>`, for the tracker only
+--     { teleport = "w" }     -- a move into a room that teleports you on entry;
+--                               the brief after the smoke is the arrival
 --
 -- Each leg is deliberately short and run by hand. Chaining them is a later
 -- decision; for now every one is a thing you ask for and watch.
@@ -1243,7 +1245,9 @@ function taPackage.navRouteSteps(route, variant)
             return nil, "leg " .. n .. " (" .. name .. ") is itself built from legs,"
                 .. " and I don't join those"
         end
-        if n > 1 then steps[#steps + 1] = { seam = name } end
+        -- A leg with no `from` starts wherever it finds itself (it opens with a
+        -- goTo), so there is nothing for a seam to check it against.
+        if n > 1 and leg.from then steps[#steps + 1] = { seam = name } end
         local last = #leg.steps - drop
         -- The leg's own variant of this name, where the joined route asked for
         -- the legs' variants rather than an ending of its own. It replaces the
@@ -1736,6 +1740,7 @@ local function navStepKind(step)
     if type(step.seam) == "string" then return "seam" end
     if type(step.goTo) == "string" then return "goTo" end
     if type(step.anchor) == "string" then return "anchor" end
+    if type(step.teleport) == "string" then return "teleport" end
     return nil
 end
 
@@ -1749,7 +1754,8 @@ local function navBadStep(steps, seen)
         local kind = navStepKind(step)
         if not kind then
             return i, "isn't a direction, a { cmd = ... }, a { run = ... }, a { killAll = true },"
-                .. " a { door = ... }, a { seam = ... }, a { goTo = ... } or an { anchor = ... }"
+                .. " a { door = ... }, a { seam = ... }, a { goTo = ... }, an { anchor = ... }"
+                .. " or a { teleport = ... }"
         end
         if kind == "seam" and not NAV_ROUTES[step.seam] then
             return i, "checks we've reached '" .. step.seam .. "', and there's no such route"
@@ -1780,6 +1786,7 @@ local function navStepLabel(step)
     if kind == "seam" then return "seam check (" .. step.seam .. ")" end
     if kind == "goTo" then return "navigate-live " .. step.goTo end
     if kind == "anchor" then return "map-here " .. step.anchor end
+    if kind == "teleport" then return step.teleport .. " (into a teleport)" end
     return "kill-all"
 end
 
@@ -1911,6 +1918,11 @@ local function navStep()
         navGoTo(step.goTo)
     elseif kind == "anchor" then
         navAnchor(step.anchor)
+    elseif kind == "teleport" then
+        -- Cleared per step: it is the smoke of THIS move that makes the next
+        -- brief its arrival (see the teleport triggers below navOnRoomBrief).
+        j.teleported = nil
+        navSend(step.teleport)
     else
         navStartSweep()
     end
@@ -1933,6 +1945,7 @@ local function navResendStep()
     local dir = j.returning
         or (type(step) == "string" and step)
         or (navStepKind(step) == "gate" and step.door)
+        or (navStepKind(step) == "teleport" and step.teleport)
         or nil
     if dir then
         navDebug(j.returning and ("go back " .. dir .. " after being thrown")
@@ -2593,6 +2606,28 @@ local function navOnRoomBrief(room)
     -- A gate that produced a brief is a door we got through, and which of the
     -- two ways we got through it is worth saying: "the walk carried on" reads
     -- identically for both, and only one of them means the key is ours to keep.
+    -- A teleport step walks into a room that throws us somewhere else: the
+    -- game prints the room walked into, then the smoke (or flash, or
+    -- springboard), then the room we land in. The first brief is only the way
+    -- through. Counting it would run the walk a step ahead, and on a last step
+    -- would check arrival against the wrong room.
+    if j.stepKind == "teleport" and not j.teleported then
+        navDebug("into the teleport on step " .. j.index .. " (" .. room .. ")")
+        -- The smoke follows the brief at once. If it doesn't come, the room
+        -- didn't teleport us -- a Rune the character lacks, perhaps -- and no
+        -- further brief is coming to move the walk along.
+        local gen, at = taPackage.navGen or 0, j.index
+        createTimer(NAV_PROBE_TIMEOUT_MS, function()
+            local w = taPackage.navigate
+            if not w or (taPackage.navGen or 0) ~= gen then return end
+            if w.index ~= at or w.teleported then return end
+            stopNavigate()
+            navEcho("Step " .. at .. " walked into '" .. room .. "' expecting to be"
+                .. " teleported, and nothing happened — stopping.")
+        end, { repeating = false })
+        return
+    end
+
     if j.stepKind == "gate" then
         local gate = j.steps[j.index]
         if j.doorOpenedByKey then
@@ -2605,7 +2640,7 @@ local function navOnRoomBrief(room)
     -- Only a movement step is answered by an arrival brief. A command's reply
     -- and the briefs a kill-all sweep's own scans print are not arrivals, and
     -- counting them would run the walk ahead of where the character is.
-    elseif j.stepKind ~= "move" then
+    elseif j.stepKind ~= "move" and j.stepKind ~= "teleport" then
         return
     end
 
@@ -2621,6 +2656,21 @@ local function navOnRoomBrief(room)
     navScheduleStep()
 end
 taPackage.navOnRoomBrief = navOnRoomBrief
+
+-- The lines that say a teleport step has fired: the tower's [L] and the
+-- labyrinth's [T] smoke you, the tunnel's entrance flashes you, a springboard
+-- throws you up a level. The same lines ta_map.lua reads to move the tracker;
+-- here they only say that the next brief is where the step landed.
+for _, pattern in ipairs({
+    "^A cloud of thick black smoke suddenly engulfs you!$",
+    "^A sudden flash of light momentarily blinds you!$",
+    "^A spring loaded pressure plate rapidly lifts you through the ceiling!$",
+}) do
+    createTrigger(pattern, function()
+        local j = taPackage.navigate
+        if j and j.stepKind == "teleport" then j.teleported = true end
+    end, { type = "regex" })
+end
 
 -- =========================================================================
 -- Setting off only if we're carrying what the errand needs

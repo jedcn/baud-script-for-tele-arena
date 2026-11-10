@@ -22056,6 +22056,91 @@ describe("navigate-to with goTo and anchor steps", function()
 
 end)
 
+-- A `{ teleport = dir }` step walks into a room that throws you somewhere else
+-- on entry: the tower's [L], the labyrinth's [T], the tunnel's entrance. The
+-- game prints the room walked into, then the smoke, then the room you land in.
+describe("navigate-to with teleport steps", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function brief(name)
+        helper.simulateLine("You're in a " .. name .. ".")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+    end
+
+    local function start(steps, to)
+        taPackage.navRoutes["test-teleport"] = { steps = steps, to = to }
+        helper.simulateAlias("navigate-to test-teleport")
+        brief("marble hallway")
+        helper.simulateLine("Exits: e,w.")
+    end
+
+    local function pace() helper.fireTimers(taPackage.navStepDelayMs) end
+
+    local function walked()
+        local out = {}
+        for i = 3, #helper.sendCalls do out[#out + 1] = helper.sendCalls[i] end
+        return out
+    end
+
+    local SMOKE = "A cloud of thick black smoke suddenly engulfs you!"
+
+    it("counts the room it lands in, not the room it walks through", function()
+        start({ { teleport = "w" }, "n" })
+        brief("marble hallway")             -- the room walked into
+        pace()
+        assert.are.same({ "w" }, walked())   -- not yet: we haven't landed
+        helper.simulateLine(SMOKE)
+        brief("labyrinth")                  -- where the smoke put us
+        pace()
+        assert.are.same({ "w", "n" }, walked())
+    end)
+
+    it("checks arrival against the landing when the teleport is the last step", function()
+        taPackage.navRoutes["test-teleport"] = { steps = { { teleport = "n" } },
+                                                  to = { room = "marble hallway" } }
+        helper.simulateAlias("navigate-to test-teleport")
+        brief("labyrinth")
+        helper.simulateLine("Exits: n,w.")
+        brief("labyrinth")                  -- [T] itself
+        assert.is_not_nil(taPackage.navigate)
+        helper.simulateLine(SMOKE)
+        brief("marble hallway")
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("Arrived at test-teleport", 1, true))
+    end)
+
+    it("takes the flash and the springboard as teleports too", function()
+        for _, line in ipairs({ "A sudden flash of light momentarily blinds you!",
+                                "A spring loaded pressure plate rapidly lifts you through the ceiling!" }) do
+            helper.resetAll()
+            dofile("main.lua")
+            start({ { teleport = "s" }, "n" })
+            brief("entrance to a tunnel")
+            helper.simulateLine(line)
+            brief("labyrinth")
+            pace()
+            assert.are.same({ "s", "n" }, walked())
+        end
+    end)
+
+    it("stops when the room doesn't teleport", function()
+        start({ { teleport = "w" }, "n" })
+        brief("marble hallway")
+        helper.fireTimers(5000)
+        assert.is_nil(taPackage.navigate)
+        assert.are.same({ "w" }, walked())
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("expecting to be teleported", 1, true))
+    end)
+
+end)
+
 describe("ta.follow XP poll", function()
 
     before_each(function()
