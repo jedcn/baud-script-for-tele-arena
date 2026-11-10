@@ -555,9 +555,17 @@ function TaDb.setPlayerLocation(player, roomId)
     dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ #" .. tostring(roomId))
 end
 
--- Where the map last saw a character. Only ever a hint: it is stamped while
--- mapping (and by map-here), so a character walked around with mapping off has
--- moved on without saying so. Used to break a tie between rooms that look alike.
+-- Forget where a character is: the tracker has lost them, so the stored room
+-- would go stale as they walk on.
+function TaDb.clearPlayerLocation(player)
+    db:execute("DELETE FROM player_location WHERE player = ?", player)
+    dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ (lost)")
+end
+
+-- Where the map last saw a character: the last room the tracker was sure of. It
+-- is written on every tracked move and cleared when the tracker loses them, so
+-- it is stale only if the tracker was wrong. Used to break a tie between rooms
+-- that look alike.
 function TaDb.playerLocation(player)
     local row = db:queryOne(
         "SELECT room_id FROM player_location WHERE player = ?", player)

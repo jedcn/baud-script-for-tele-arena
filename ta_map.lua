@@ -91,11 +91,22 @@ function taPackage.setHere(roomId)
     end
 end
 
+-- Losing track forgets the stored location too. It is written on every tracked
+-- move, so while lost the character walks on and the stored room goes stale;
+-- `navigate-to` trusts it at login to tell lookalike rooms apart, and a stale
+-- one would pick the wrong lookalike. Cleared, a stored location always means
+-- the last room the tracker was sure of.
+local function forgetStoredLocation()
+    local who = taPackage.character.getName()
+    if who then taPackage.db.clearPlayerLocation(who) end
+end
+
 function taPackage.loseHere(why)
     taPackage.here = nil
     taPackage.hereState = "lost"
     taPackage.offMap = nil
     taPackage.hereCandidates = nil
+    forgetStoredLocation()
     if why then echo("[where] lost track: " .. why) end
 end
 
@@ -156,6 +167,7 @@ function taPackage.trackMove(dir, name)
         taPackage.offMap = { from = taPackage.here, dir = dir, moves = 1 }
         taPackage.here = nil
         taPackage.hereState = "off-map"
+        forgetStoredLocation()
         return
     end
     local expect = taPackage.db.roomName(dest)
@@ -654,8 +666,8 @@ local function printRoomSlugCandidates(name, dirs)
         -- the answer -- and a tie-break is free. On 2026-09-13 a probe in the
         -- Stoneworks offered four identical corridors while player_location named
         -- the right one, and the walk spent a move narrowing them down by hand.
-        -- A hint, not a pick: the location is stamped while MAPPING, so a
-        -- character walked around with mapping off has silently moved on.
+        -- A hint, not a pick: it is the last room the tracker was sure of, and
+        -- the tracker can be wrong (navigate-to does pick it, at login).
         local lastSeen = taPackage.character.getName()
             and taPackage.db.playerLocation(taPackage.character.getName())
         if lastSeen then

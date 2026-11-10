@@ -3382,6 +3382,27 @@ createAlias("^navigate-to (.+)$", function(matches)
                         taPackage.setHere(m[1].id)
                         navEcho("You're in " .. m[1].slug .. " — the only '" .. name
                             .. "' with exits " .. navExitKey(dirs) .. ".")
+                    elseif #m > 1 then
+                        -- Several rooms look like this one. Where the map last
+                        -- saw this character settles it, when that room is one
+                        -- of them: the location is written on every tracked
+                        -- move and cleared when the tracker loses you, so a
+                        -- stored room is the last place it was sure of, and
+                        -- nothing moves a character between sessions. Pelayo
+                        -- logged in to the tunnels, where three rooms have
+                        -- exits ne,s, and tunnels-to-tower refused at step 1
+                        -- (logs/session-pelayo-2026-11-10T18-42-28.log).
+                        local who = taPackage.character.getName()
+                        local last = who and taPackage.db.playerLocation(who)
+                        for _, r in ipairs(m) do
+                            if r.id == last then
+                                taPackage.setHere(r.id)
+                                navEcho("You're in " .. r.slug .. " — where the map last saw "
+                                    .. who .. ", and it looks the same (" .. #m
+                                    .. " rooms do).")
+                                break
+                            end
+                        end
                     end
                 end
                 checkThenGo()

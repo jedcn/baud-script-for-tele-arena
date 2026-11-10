@@ -5769,6 +5769,32 @@ describe("World map triggers", function()
             assert.are.equal(1, taPackage.offMap.moves)
         end)
 
+        -- navigate-to trusts the stored location at login to tell lookalike
+        -- rooms apart, so it must not outlive the tracker's certainty: walked
+        -- on while lost, the character would leave a stale room behind.
+        it("forgets the stored location when it loses track", function()
+            taPackage.setHere(1)
+            helper.mockDbOneRow = function(sql)
+                if sql:find("SELECT to_id", 1, true) then return { to_id = 2 } end
+                if sql:find("SELECT name FROM rooms", 1, true) then return { name = "temple" } end
+                return nil
+            end
+            taPackage.trackMove("e", "cave")
+            local call = helper.findDbCall("execute", "DELETE FROM player_location")
+            assert.is_not_nil(call)
+            assert.are.equal("Tester", call.params[1])
+        end)
+
+        it("forgets the stored location when it walks off the map", function()
+            taPackage.setHere(7)
+            helper.mockDbOneRow = function(sql)
+                if sql:find("SELECT to_id", 1, true) then return { to_id = nil } end
+                return nil
+            end
+            taPackage.trackMove("s", "desert")
+            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM player_location"))
+        end)
+
         -- Walking off the map is not a one-way door: a uniquely named room
         -- should put us straight back on it. The tracker used to count moves
         -- forever, even through rooms only one room in the world is called.
@@ -22020,6 +22046,59 @@ describe("restock-in-first-town", function()
         assert.is_truthy(taPackage.navigate)
         pace()
         assert.are.equal("buy training", helper.sendCalls[3])
+    end)
+
+    -- logs/session-pelayo-2026-11-10T18-42-28.log: logged in to the tunnels,
+    -- where three rooms have exits ne,s, and tunnels-to-tower refused at step 1
+    -- while player_location named the right one.
+    local function twoLookalikeHalls(lastSeen)
+        taPackage.hereState, taPackage.here = "lost", nil
+        taPackage._character = { name = "Pollux" }
+        local rows, oneRow = helper.mockDbRows, helper.mockDbOneRow
+        helper.mockDbRows = function(sql, params)
+            if sql:find("SELECT id, slug, x, y, z FROM rooms WHERE name", 1, true)
+                and params[1] == "guild hall" then
+                return { { id = 5, slug = "guild-hall" }, { id = 1020, slug = "guild-hall-1" } }
+            end
+            if sql:find("SELECT direction FROM room_exits", 1, true)
+                and (params[1] == 5 or params[1] == 1020) then
+                return { { direction = "n" }, { direction = "s" }, { direction = "d" } }
+            end
+            if sql:find("SELECT id, slug, name FROM rooms WHERE area_id", 1, true) then
+                return { { id = 10, slug = "south-plaza", name = "south plaza" } }
+            end
+            return rows(sql, params)
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if sql:find("SELECT id FROM areas WHERE slug", 1, true) then return { id = 1 } end
+            if sql:find("FROM player_location", 1, true) then
+                return lastSeen and { room_id = lastSeen } or nil
+            end
+            return oneRow(sql, params)
+        end
+        helper.simulateAlias("restock-in-first-town")
+        arrive("guild hall")
+        helper.simulateLine("Exits: n,s,d.")
+    end
+
+    it("takes where the map last saw you, among rooms that look alike", function()
+        twoLookalikeHalls(1020)
+        assert.are.equal("known", taPackage.hereState)
+        assert.are.equal(1020, taPackage.here)
+        assert.is_truthy(table.concat(helper.echoCalls, "\n")
+            :find("You're in guild-hall-1 — where the map last saw Pollux", 1, true))
+    end)
+
+    it("stays lost when the last-seen room isn't one of the lookalikes", function()
+        twoLookalikeHalls(77)
+        assert.are_not.equal("known", taPackage.hereState)
+        assert.is_nil(taPackage.navigate)
+    end)
+
+    it("stays lost when the map has no last-seen room", function()
+        twoLookalikeHalls(nil)
+        assert.are_not.equal("known", taPackage.hereState)
+        assert.is_nil(taPackage.navigate)
     end)
 end)
 
