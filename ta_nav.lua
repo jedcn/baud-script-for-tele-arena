@@ -49,6 +49,9 @@
 --
 --     "se"                  -- a direction; the arrival brief advances the walk
 --     { cmd = "pull lever" } -- any command; the walk advances after a pause
+--                               (add `firstWalkOnly = true` for one that only
+--                               the day's first walk should do -- see
+--                               `path-already-walked-today`)
 --     { run = "buy-tavern" } -- the same, through runCommand, for an alias
 --     { killAll = true }     -- clear this room; the sweep advances the walk
 --     { goTo = "<slug>" }    -- `navigate-live <slug>` from here, mid-route
@@ -810,34 +813,14 @@ local NAV_ROUTES = {
         -- { cmd = ... }, which advances on a pause, is the only thing that could
         -- ever carry the walk past it.
         --
-        -- What the stone DOES is not settled, and the difference matters. The
-        -- third-town stone teleports, and this was first written down as another
-        -- of those on no better grounds than that. The evidence points the other
-        -- way: that stone glues the arrival onto the push ("...You're in a
-        -- stonework corridor."), and this one glued nothing -- which is what you
-        -- would see if the push opened a wall and left you standing where you
-        -- were, and NOT what you would see from a teleport, since the glue would
-        -- then have printed the too-dark line.
-        --
-        -- So: it probably opens a wall, and step 46's `w` probably walks through
-        -- the gap.
-        --
-        -- The obvious fear was that a second push would CLOSE it again -- a
-        -- toggle would shut the wall on the second run and walk step 46 into it.
-        -- Tested, and it does not: tojolias walked the whole route an hour after
-        -- kerhak, pushed the same stone, and step 46 went through. The push
-        -- printed the identical single line both times. Whatever the stone is,
-        -- the route is repeatable, which is the part that matters. Should it
-        -- ever fail there, recovery is `push stone` by hand and then
-        -- `navigate-to end-of-labrynth-level-2 from-step 46`.
-        --
-        -- Still open, and neither costs anything to leave open: whether the push
-        -- is needed at all on a run after the first (the wall may simply have
-        -- stayed open, making tojolias's push a no-op), and hence the way home. A
-        -- wall that opens and stays open makes the return trip the mirrored
-        -- directions and nothing else; a teleport makes the mirror useless,
-        -- because the reverse of a teleport is not a direction you can walk.
-        -- Settle the stone before writing that route.
+        -- What the stone does: it turns on Level 4's lights (Device #18, from
+        -- the shrine's page: "Push Stone to turn on lights on Level 4"). It is
+        -- not a teleport and opens no wall, which is why step 46 walked through
+        -- whether or not anyone had pushed it -- tojolias pushed it an hour after
+        -- kerhak on 2026-09-03 and the walk was unaffected. A second push most
+        -- likely turns the lights off again (the user, 2026-11-10), so it is
+        -- `firstWalkOnly`: a walk with `path-already-walked-today` leaves it, and
+        -- Level 4 stays lit for tower-to-tunnels' goTo and riddle.
         --
         -- Monsters live along the way and they get their hits in -- a minotaur
         -- chieftain, an ogress mage, a troll, a stone giantess, an ogre mage, a
@@ -855,7 +838,7 @@ local NAV_ROUTES = {
                   "w", "w", "s", "s", "w", "n", "n", "w", "s", "w",
                   "n", "w", "s", "w", "n", "w", "s", "s", "e", "e",
                   "e", "e", "s", "s",
-                  { cmd = "push stone" },
+                  { cmd = "push stone", firstWalkOnly = true },
                   "w", "n", "w", "w", "w", "s", "s", "s", "s", "e",
                   "s", "w", "s", "e", "e", "e", "e", "n", "w", "w",
                   "n", "n", "w", "n", "n", "e", "s", "e", "e", "e",
@@ -900,13 +883,12 @@ local NAV_ROUTES = {
         --
         -- So only the first walk pulls it. Everyone after that walks the same
         -- forty-six steps with `navigate-to end-of-labrynth-level-3
-        -- no-pull-lever`, and the flag is announced at the start of the walk so
-        -- there is no doubt which mode ran.
-        leverToggles = true,
+        -- path-already-walked-today`, and the flag is announced at the start of
+        -- the walk so there is no doubt which mode ran.
         --
         -- Both ways of walking it are verified live on 2026-09-03: pelayo
         -- pulled the lever (and found the extra `d`), and teekywiki then walked
-        -- it with `no-pull-lever` -- 46/46 steps, zero trips, 83.7s, no `pull
+        -- it with what was then `no-pull-lever` -- 46/46 steps, zero trips, 83.7s, no `pull
         -- lever` sent and not one refusal along the way, which is the door
         -- pelayo opened still standing open.
         --
@@ -928,7 +910,7 @@ local NAV_ROUTES = {
                   "d", "w", "n", "n", "n", "w", "w", "w", "w", "w",
                   "s", "s", "s", "s", "s", "s", "e", "e", "e", "e",
                   "e", "e", "n", "n", "e", "e", "n", "n", "w", "s",
-                  { cmd = "pull lever" },
+                  { cmd = "pull lever", firstWalkOnly = true },
                   "n", "e", "e", "n", "n", "w", "s", "w", "n", "n",
                   "w", "w", "n", "e", "d" },
     },
@@ -944,14 +926,15 @@ local NAV_ROUTES = {
 -- The levers toggle, like every lever in the labyrinth: only the first
 -- character through today should pull them. Everyone after that takes the
 -- `no-pull-levers` variant, which skips both lever rooms and goes straight to
--- the stairs.
+-- the stairs. (Inside tower-to-tunnels, `path-already-walked-today` walks to
+-- both lever rooms and leaves the levers alone.)
 NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
     to       = { room = "labyrinth" },
     steps    = { { goTo = "labyrinth-89" },
                  { anchor = "labyrinth-89" },
-                 { cmd = "pull lever" },
+                 { cmd = "pull lever", firstWalkOnly = true },
                  { goTo = "labyrinth-93" },
-                 { cmd = "pull lever" },
+                 { cmd = "pull lever", firstWalkOnly = true },
                  { anchor = "labyrinth-93" },
                  { goTo = "labyrinth-94" },
                  "d" },
@@ -1169,11 +1152,11 @@ NAV_ROUTES["labrynth-level-4-to-tunnels"] = {
               { anchor = "tunnel" } },
 }
 
--- The labyrinth's levers toggle, so the second character through today should
--- add `no-pull-lever`, which skips all three.
+-- The labyrinth's levers and Level 2's stone undo themselves when worked
+-- twice, so the second character through today should add
+-- `path-already-walked-today`, which skips all four.
 NAV_ROUTES["tower-to-tunnels"] = {
     to           = "tunnels/tunnel",
-    leverToggles = true,
     legs         = { "tower-to-labrynth",
                      "start-of-labrynth-to-beginning-of-level-2",
                      "end-of-labrynth-level-2",
@@ -1879,6 +1862,16 @@ local function navStepLabel(step)
     return "kill-all"
 end
 
+-- How many steps only the day's first walk should take. On taPackage rather
+-- than a local, for the 200-local budget.
+function taPackage.navFirstWalkSteps(steps)
+    local n = 0
+    for _, step in ipairs(steps or {}) do
+        if type(step) == "table" and step.firstWalkOnly == true then n = n + 1 end
+    end
+    return n
+end
+
 -- All three are defined below: they need navStep, which needs them.
 local navAdvance, navStartSweep, navStartSeam
 
@@ -1961,19 +1954,32 @@ local function navStep()
     -- Remembered because the room-brief handler has to know whether a brief is
     -- this step's answer or just noise from a command or a sweep.
     j.stepKind = kind
-    -- A lever we are about to skip is traced as skipped, not as sent. The trace
+    -- A step we are about to skip is traced as skipped, not as sent. The trace
     -- is what a walk gets read back from days later, and "send step 31/46 'pull
     -- lever'" on a line where nothing was sent is the kind of thing that costs
     -- an hour when the question is whether the lever got worked.
-    local skipping = kind == "cmd" and j.noPullLever and step.cmd:match("^pull%s") ~= nil
+    local skipping = j.alreadyWalked and type(step) == "table" and step.firstWalkOnly == true
     navDebug((skipping and "skip step " or "send step ")
         .. j.index .. "/" .. #j.steps .. " " .. navStepLabel(step))
     -- Said out loud, not just traced, when the walk asked for it: a `navigate-live`
     -- route was worked out a moment ago and written down nowhere, so this line is
-    -- the only account of how far along it is. The skipped-lever case says its own
+    -- the only account of how far along it is. A skipped step says its own
     -- piece below, so it isn't announced twice.
     if j.announceSteps and not skipping then
         navEcho("Taking step " .. j.index .. "/" .. #j.steps .. ": " .. navStepLabel(step))
+    end
+    -- `path-already-walked-today`: someone has walked this route since the
+    -- daily reset, so what the first walk does to the world for the rest of the
+    -- day -- a door a lever opened, the lights a stone turned on -- is done, and
+    -- doing it again would undo it. Skipped here rather than filtered out of the
+    -- step list so that a step keeps the same number in both modes -- the
+    -- trace, and `from-step N` read off it, then mean the same thing whichever
+    -- way the route was asked for.
+    if skipping then
+        navEcho("Step " .. j.index .. " would " .. navStepLabel(step)
+            .. " — skipping it, the path has already been walked today.")
+        navAdvance()
+        return
     end
     if kind == "move" then
         navSend(step)
@@ -1983,15 +1989,6 @@ local function navStep()
         j.doorOpenedByKey = nil
         navSend(step.door)
     elseif kind == "cmd" then
-        -- `no-pull-lever`: walk the route without working its levers. Skipped
-        -- here rather than filtered out of the step list so that a step keeps
-        -- the same number in both modes -- the trace, and `from-step N` read off
-        -- it, then mean the same thing whichever way the route was asked for.
-        if j.noPullLever and step.cmd:match("^pull%s") then
-            navEcho("Step " .. j.index .. " would " .. step.cmd .. " — skipping it, as asked.")
-            navAdvance()
-            return
-        end
         navSend(step.cmd)
         -- Nothing reliably answers an arbitrary command, so the pause is the
         -- only signal we have that it has had its chance.
@@ -2903,7 +2900,7 @@ navWatchStuck = function()
 end
 
 local function navStart(destination, route, arriveName, startFloor, destRoomId, debug, variant,
-                        resumeAt, noPullLever)
+                        resumeAt, alreadyWalked)
     taPackage.navGen = (taPackage.navGen or 0) + 1
     -- Suspend mapping so the walk can't write to the map. Our arrival briefs are
     -- ordinary room lines; with mapping on handleRoomEntry would happily record
@@ -2934,8 +2931,8 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- Read by the too-dark trigger, which is the only thing that advances
         -- this walk once it is past the last lit room.
         dark         = route.dark,
-        -- Read by navStep, which is where a `pull ...` step gets skipped.
-        noPullLever  = noPullLever,
+        -- Read by navStep, which is where a `firstWalkOnly` step gets skipped.
+        alreadyWalked = alreadyWalked,
         -- Read by navStep: say every step out loud as it goes out. Off for a
         -- written route, whose steps you can read in this file -- `navigate-live`
         -- turns it on because its route exists only for the length of the walk.
@@ -2955,23 +2952,21 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
                  .. (#steps - resumeAt + 1) .. " of its " .. #steps .. " steps left")
             or ("Walking to " .. destination .. " — " .. #steps .. " steps"))
         .. (gated and ", plus a key errand for any door that's locked." or "."))
-    local levers = 0
-    for _, step in ipairs(steps) do
-        if navStepKind(step) == "cmd" and step.cmd:match("^pull%s") then levers = levers + 1 end
-    end
-    if noPullLever then
+    local firstWalk = taPackage.navFirstWalkSteps(steps)
+    if alreadyWalked then
         -- Saying so when there is nothing to skip matters as much as saying so
-        -- when there is: `no-pull-lever` on a route with no lever in it is a
-        -- flag that did nothing, and silence there reads exactly like a flag
-        -- that worked.
-        navEcho(levers > 0
-            and ("Leaving this route's " .. levers .. " lever pull"
-                 .. (levers > 1 and "s" or "") .. " alone, as asked.")
-            or "Nothing on this route pulls a lever, so `no-pull-lever` changes nothing here.")
-    elseif levers > 0 and route.leverToggles then
-        navEcho("Careful: this route pulls a lever that TOGGLES. If someone has already"
-            .. " walked it and left the door open, pulling again shuts it —"
-            .. " use `navigate-to " .. destination .. " no-pull-lever` instead.")
+        -- when there is: the flag on a route with nothing marked is a flag that
+        -- did nothing, and silence there reads exactly like a flag that worked.
+        navEcho(firstWalk > 0
+            and ("Leaving this route's " .. firstWalk .. " first-walk step"
+                 .. (firstWalk > 1 and "s" or "") .. " alone, as asked.")
+            or ("Nothing on this route is first-walk-only, so `path-already-walked-today`"
+                .. " changes nothing here."))
+    elseif firstWalk > 0 then
+        navEcho("Careful: this route works " .. firstWalk .. " device"
+            .. (firstWalk > 1 and "s" or "") .. " whose effect lasts the day, and doing it"
+            .. " again undoes it. If someone has already walked it today, use"
+            .. " `navigate-to " .. destination .. " path-already-walked-today` instead.")
     end
     if route.dark then
         navEcho("This route runs dark: I walk on \"It's too dark to see.\" instead of a room"
@@ -3024,8 +3019,8 @@ local function navListRoutes()
             local bits = { (steps and #steps or "?") .. " steps" }
             if r.dark then bits[#bits + 1] = "dark" end
             if r.door then bits[#bits + 1] = "ends at the " .. r.door.dir .. " door" end
-            if r.leverToggles then
-                bits[#bits + 1] = "toggling lever (no-pull-lever after the first walk)"
+            if taPackage.navFirstWalkSteps(steps) > 0 then
+                bits[#bits + 1] = "works devices (path-already-walked-today after the first walk)"
             end
             if r.requires then
                 bits[#bits + 1] = "needs "
@@ -3070,7 +3065,7 @@ createAlias("^navigate-to (.+)$", function(matches)
     --           310-step walk, which is otherwise 56 steps to be re-walked by
     --           hand. See navStart for what N means.
     local destination, debug, anyway, resumeAt = arg, true, false, nil
-    local andExit, noPullLever = false, false
+    local andExit, alreadyWalked = false, false
     while true do
         -- Two words where the others are one, so it is peeled first: `56` on
         -- its own is not a flag, and the loop would stop on it and leave
@@ -3088,12 +3083,14 @@ createAlias("^navigate-to (.+)$", function(matches)
                 destination, anyway = head, true
             elseif word == "and-exit" then
                 destination, andExit = head, true
-            --   no-pull-lever  walk every step but the lever pulls. The lever on
-            --           labyrinth level 3 TOGGLES a door: the first character
-            --           through opens it, and a second one pulling it shuts it
-            --           again. So everyone after the first walks with this.
-            elseif word == "no-pull-lever" then
-                destination, noPullLever = head, true
+            --   path-already-walked-today  skip every step marked
+            --           `firstWalkOnly`. The labyrinth's levers and its Level 2
+            --           stone change the world for everyone until the daily
+            --           reset, and doing them again undoes them: the first
+            --           character through works them, and everyone after walks
+            --           with this.
+            elseif word == "path-already-walked-today" then
+                destination, alreadyWalked = head, true
             else
                 break
             end
@@ -3310,7 +3307,7 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
             local function go()
                 navStart(destination, route, arriveName, probe.floor, destRoomId, debug,
-                    variant, resumeAt, noPullLever)
+                    variant, resumeAt, alreadyWalked)
             end
             -- We're in the right room by the time this is called; the only
             -- remaining question is whether we're equipped for what lies

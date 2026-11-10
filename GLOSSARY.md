@@ -293,7 +293,7 @@ Room.
 
 And Device State is **shared by everyone on the BBS**, not held per character. One
 player's pull opens the Seal for all of them. That is what makes the level-3 lever
-protocol necessary — one character pulls, the rest walk `no-pull-lever` — and it is
+protocol necessary — one character works them, the rest walk `path-already-walked-today` — and it is
 also the way out when a Reset leaves someone on the wrong side of a Seal whose
 Device is on the other: another player can work it for them.
 
@@ -337,7 +337,7 @@ name — it is the property, not the kind of thing
 A Device that reverses itself: first use opens the Seal, second shuts it, third
 opens it again. The lever at the end of the dark labyrinth's third Level is one,
 which is why only the first character through pulls it and everyone after walks
-`navigate-to end-of-labrynth-level-3 no-pull-lever`.
+`navigate-to end-of-labrynth-level-3 path-already-walked-today`.
 _Avoid_: switch, flip-flop, momentary
 
 Both kinds hold state, so this is not a stateful/stateless distinction and a
@@ -355,8 +355,9 @@ one)
 A Riddle can want more than one answer. The labyrinth's `Z` room takes `say
 cinders` and then `say ether`, and its effect is a Teleport into the Tunnels. The
 two stoneworks Riddles are single-answer, Latching, and open Seals — which is why
-a Route re-says them every walk: `say arok` stays in the `no-pull-lever` variant
-precisely because saying it again is harmless.
+a Route re-says them every walk: `say arok` is not marked `firstWalkOnly`, so
+`path-already-walked-today` still says it, precisely because saying it again is
+harmless.
 
 Which kind a Device is belongs to that Device alone and cannot be reasoned out
 from another one. The level-3 lever was written down as permanent because the

@@ -16508,7 +16508,7 @@ describe("navigate-to", function()
             local out = lastEchoes()
             assert.is_truthy(out:find("100 steps, dark", 1, true))
             assert.is_truthy(out:find("needs a coil of rope", 1, true))
-            assert.is_truthy(out:find("no-pull-lever after the first walk", 1, true))
+            assert.is_truthy(out:find("path-already-walked-today after the first walk", 1, true))
             assert.is_truthy(out:find("variants: chasm-is-clear", 1, true))
         end)
 
@@ -18323,7 +18323,7 @@ describe("navigate-to", function()
             it("is forty-six steps with the lever at 31, and isn't dark", function()
                 local r = ROUTE()
                 assert.are.equal(46, #r.steps)
-                assert.are.same({ cmd = "pull lever" }, r.steps[31])
+                assert.are.same({ cmd = "pull lever", firstWalkOnly = true }, r.steps[31])
                 assert.is_nil(r.dark)
                 assert.is_nil(r.pending)
             end)
@@ -18407,7 +18407,7 @@ describe("navigate-to", function()
             it("is a hundred steps, all compass directions bar the stone at 45", function()
                 local steps = ROUTE().steps
                 assert.are.equal(100, #steps)
-                assert.are.same({ cmd = "push stone" }, steps[45])
+                assert.are.same({ cmd = "push stone", firstWalkOnly = true }, steps[45])
                 local compass = { n = true, s = true, e = true, w = true }
                 for i, step in ipairs(steps) do
                     if i ~= 45 then
@@ -18490,13 +18490,14 @@ describe("navigate-to", function()
 
     end)
 
-    -- The lever on labyrinth level 3 toggles a door: the first character
-    -- through opens it, and the next one pulling it shuts it again. So every
-    -- walk after the first has to take the same steps without the pull.
-    describe("no-pull-lever", function()
+    -- The labyrinth's levers and Level 2's stone change the world for everyone
+    -- until the daily reset, and working them twice undoes them. So the first
+    -- walk of the day works them and every walk after skips them.
+    describe("path-already-walked-today", function()
 
         local LEVER = { from = ROUTE.from, to = ROUTE.to,
-                        steps = { "sw", { cmd = "pull lever" }, "se" } }
+                        steps = { "sw", { cmd = "pull lever", firstWalkOnly = true }, "se" } }
+        local FLAG = "navigate-to sewers-level-1/town-sewers-18 path-already-walked-today"
 
         local function leverRoute(overrides)
             local r = {}
@@ -18506,7 +18507,7 @@ describe("navigate-to", function()
             return r
         end
 
-        it("pulls the lever by default", function()
+        it("works the device by default", function()
             leverRoute()
             helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
@@ -18515,15 +18516,26 @@ describe("navigate-to", function()
             assert.are.equal(1, sent("pull lever"))
         end)
 
-        it("walks the route without pulling it when asked", function()
+        it("walks the route without it when asked", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+            helper.simulateAlias(FLAG)
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
             assert.are.equal(0, sent("pull lever"))
-            assert.is_truthy(lastEchoes():find("Leaving this route's 1 lever pull alone",
+            assert.is_truthy(lastEchoes():find("Leaving this route's 1 first-walk step alone",
                 1, true))
+        end)
+
+        -- A teleport stone or a riddle answer moves YOU, and has to be done on
+        -- every walk. Only what a step is marked as is skipped, never a verb.
+        it("still sends a command that isn't marked", function()
+            leverRoute({ steps = { "sw", { cmd = "push stone" }, "se" } })
+            helper.simulateAlias(FLAG)
+            answerProbe(274)
+            brief("path")
+            helper.fireTimers(taPackage.navStepDelayMs)
+            assert.are.equal(1, sent("push stone"))
         end)
 
         -- Skipped at send time rather than filtered out of the list, so a step
@@ -18531,7 +18543,7 @@ describe("navigate-to", function()
         -- it, mean the same thing whichever way the route was asked for.
         it("keeps the step numbering identical either way", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+            helper.simulateAlias(FLAG)
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)   -- step 2, skipped
@@ -18542,34 +18554,32 @@ describe("navigate-to", function()
 
         -- A flag that did nothing looks exactly like a flag that worked, and
         -- this is the shape a typo takes: the right word on the wrong route.
-        it("says so when the route has no lever to leave alone", function()
+        it("says so when the route has nothing to leave alone", function()
             route()
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+            helper.simulateAlias(FLAG)
             answerProbe(274)
-            assert.is_truthy(lastEchoes():find("Nothing on this route pulls a lever", 1, true))
+            assert.is_truthy(lastEchoes():find("Nothing on this route is first-walk-only", 1, true))
             assert.are.equal(1, sent("sw"))   -- and it still walks
         end)
 
-        -- The other way round: a route whose lever is known to toggle warns
-        -- when it is about to pull one.
-        it("warns before pulling a lever that toggles", function()
-            leverRoute({ leverToggles = true })
+        it("warns before working a device whose effect lasts the day", function()
+            leverRoute()
             helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18")
             answerProbe(274)
-            assert.is_truthy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
-            assert.is_truthy(lastEchoes():find("no-pull-lever", 1, true))
+            assert.is_truthy(lastEchoes():find("whose effect lasts the day", 1, true))
+            assert.is_truthy(lastEchoes():find("path-already-walked-today", 1, true))
         end)
 
-        it("doesn't warn when the pull is being skipped anyway", function()
-            leverRoute({ leverToggles = true })
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+        it("doesn't warn when the device is being skipped anyway", function()
+            leverRoute()
+            helper.simulateAlias(FLAG)
             answerProbe(274)
-            assert.is_falsy(lastEchoes():find("pulls a lever that TOGGLES", 1, true))
+            assert.is_falsy(lastEchoes():find("whose effect lasts the day", 1, true))
         end)
 
         it("combines with the other trailing flags", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever quiet")
+            helper.simulateAlias(FLAG .. " quiet")
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -18578,9 +18588,9 @@ describe("navigate-to", function()
 
         -- The trace is what a walk gets read back from days later, so a step
         -- that wasn't sent must not be traced as sent.
-        it("traces the skipped lever as skipped, not as sent", function()
+        it("traces the skipped step as skipped, not as sent", function()
             leverRoute()
-            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+            helper.simulateAlias(FLAG)
             answerProbe(274)
             brief("path")
             helper.fireTimers(taPackage.navStepDelayMs)
@@ -18589,8 +18599,22 @@ describe("navigate-to", function()
             assert.is_falsy(out:find("send step 2/3 'pull lever'", 1, true))
         end)
 
-        it("marks level 3's lever as one that toggles", function()
-            assert.is_true(taPackage.navRoutes["end-of-labrynth-level-3"].leverToggles)
+        it("no longer knows no-pull-lever", function()
+            leverRoute()
+            helper.simulateAlias("navigate-to sewers-level-1/town-sewers-18 no-pull-lever")
+            assert.is_nil(taPackage.navigate)
+            assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- The labyrinth's four: Level 1's two levers, Level 2's stone, Level 3's
+        -- lever.
+        it("marks the labyrinth's levers and Level 2's stone", function()
+            local function marked(name)
+                return taPackage.navFirstWalkSteps(taPackage.navRoutes[name].steps)
+            end
+            assert.are.equal(2, marked("start-of-labrynth-to-beginning-of-level-2"))
+            assert.are.equal(1, marked("end-of-labrynth-level-2"))
+            assert.are.equal(1, marked("end-of-labrynth-level-3"))
         end)
 
     end)
@@ -22192,8 +22216,8 @@ describe("tower-to-tunnels and tunnels-to-tower", function()
             kinds(flat("tunnels-to-tower"), "seam"))
     end)
 
-    it("warns that its levers toggle", function()
-        assert.is_true(taPackage.navRoutes["tower-to-tunnels"].leverToggles)
+    it("skips all four first-walk steps on a path already walked today", function()
+        assert.are.equal(4, taPackage.navFirstWalkSteps(flat("tower-to-tunnels")))
     end)
 
 end)
