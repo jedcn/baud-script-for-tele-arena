@@ -22141,6 +22141,63 @@ describe("navigate-to with teleport steps", function()
 
 end)
 
+-- The whole labyrinth in one command each way, joined from the labyrinth legs.
+describe("tower-to-tunnels and tunnels-to-tower", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function flat(name)
+        local steps, err = taPackage.navRouteSteps(taPackage.navRoutes[name])
+        assert.is_not_nil(steps, err)
+        return steps
+    end
+
+    local function kinds(steps, key)
+        local out = {}
+        for _, st in ipairs(steps) do
+            if type(st) == "table" and st[key] then out[#out + 1] = st[key] end
+        end
+        return out
+    end
+
+    it("goes in through the tower's smoke and out by the riddle", function()
+        local steps = flat("tower-to-tunnels")
+        assert.are.same({ goTo = "marble-hallway-41" }, steps[1])
+        assert.are.same({ "w" }, kinds(steps, "teleport"))
+        assert.are.same({ "pull lever", "pull lever", "push stone", "pull lever",
+                          "say cinders", "say ether" }, kinds(steps, "cmd"))
+        assert.are.same({ anchor = "tunnel" }, steps[#steps])
+    end)
+
+    it("comes back in by the tunnel's flash and out by [T]'s smoke", function()
+        local steps = flat("tunnels-to-tower")
+        assert.are.same({ goTo = "tunnels/tunnel" }, steps[1])
+        assert.are.same({ teleport = "n" }, steps[#steps])
+        assert.are.same({ "s", "n" }, kinds(steps, "teleport"))
+        -- It can't open a lever door from the far side, so it works nothing.
+        assert.are.same({}, kinds(steps, "cmd"))
+    end)
+
+    -- start-of-labrynth-to-beginning-of-level-2 has no `from`: it starts with a
+    -- goTo, wherever it finds itself. A seam would have nothing to check.
+    it("puts a seam only in front of legs that say where they start", function()
+        assert.are.same({ "end-of-labrynth-level-2", "end-of-labrynth-level-3",
+                          "labrynth-level-4-to-tunnels" },
+            kinds(flat("tower-to-tunnels"), "seam"))
+        assert.are.same({ "start-of-labrynth-level-3", "start-of-labrynth-level-2",
+                          "labrynth-level-1-to-tower" },
+            kinds(flat("tunnels-to-tower"), "seam"))
+    end)
+
+    it("warns that its levers toggle", function()
+        assert.is_true(taPackage.navRoutes["tower-to-tunnels"].leverToggles)
+    end)
+
+end)
+
 describe("ta.follow XP poll", function()
 
     before_each(function()

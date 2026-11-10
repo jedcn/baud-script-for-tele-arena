@@ -1129,6 +1129,95 @@ NAV_ROUTES["start-of-labrynth-level-2"] = navReversed("end-of-labrynth-level-2",
     to   = { room = "labyrinth" },
 })
 
+-- =========================================================================
+-- Through the whole labyrinth, and back
+-- =========================================================================
+--
+-- `tower-to-tunnels` goes from anywhere the map can walk to the tower, through
+-- all four labyrinth levels on the way, to the tunnel the Level 4 riddle sends
+-- you to. `tunnels-to-tower` comes back. Each is the labyrinth legs above
+-- joined, with a short leg at each end. Inside each leg the map is used where it
+-- can be (goTo), and written steps are used where it can't: the teleports, the
+-- levers, the dark Level 2 and the riddle.
+--
+-- Getting in: from marble-hallway-41, `w` walks into marble-hallway-57, whose
+-- smoke drops you on Level 1's entrance [E] (Device #8). The map has no edge for
+-- that, so it is a teleport step rather than part of the goTo.
+NAV_ROUTES["tower-to-labrynth"] = {
+    to    = { room = "labyrinth" },
+    steps = { { goTo = "marble-hallway-41" },
+              { anchor = "marble-hallway-41" },
+              { teleport = "w" },
+              { anchor = "labyrinth" } },
+}
+
+-- Getting out: Level 4's riddle room, then `say cinders` and `say ether`. The
+-- second answer moves you, and the game glues the arrival onto it ("As the
+-- answer passes your lips, your surroundings fade...You're in a tunnel."), so it
+-- is a command, not a move. The tracker has no Device for the riddle and loses
+-- you, so the last step anchors where you land.
+--
+-- Starts where end-of-labrynth-level-3 ends, labyrinth-198 (e,n,u,w). Level 4 is
+-- lit once Level 2's stone has been pushed, which end-of-labrynth-level-2 does.
+NAV_ROUTES["labrynth-level-4-to-tunnels"] = {
+    from  = { room = "labyrinth", exits = "e,n,u,w" },
+    to    = "tunnels/tunnel",
+    steps = { { anchor = "labyrinth-198" },
+              { goTo = "labyrinth-406" },
+              { cmd = "say cinders" },
+              { cmd = "say ether" },
+              { anchor = "tunnel" } },
+}
+
+-- The labyrinth's levers toggle, so the second character through today should
+-- add `no-pull-lever`, which skips all three.
+NAV_ROUTES["tower-to-tunnels"] = {
+    to           = "tunnels/tunnel",
+    leverToggles = true,
+    legs         = { "tower-to-labrynth",
+                     "start-of-labrynth-to-beginning-of-level-2",
+                     "end-of-labrynth-level-2",
+                     "end-of-labrynth-level-3",
+                     "labrynth-level-4-to-tunnels" },
+}
+
+-- Back in: `s` from the tunnel walks into "the entrance to a tunnel", whose flash
+-- puts you in the riddle room (logs/session-castor-2026-10-04T14-32-58.log, line
+-- 3126). That room isn't on the map, and the map's `tunnel --s--> tunnel-7` edge
+-- disagrees with every log, so the step is written out and the riddle room is
+-- anchored by hand.
+NAV_ROUTES["tunnels-to-labrynth-level-4"] = {
+    to    = { room = "labyrinth" },
+    steps = { { goTo = "tunnels/tunnel" },
+              { teleport = "s" },
+              { anchor = "labyrinth-406" },
+              { goTo = "labyrinth-198" } },
+}
+
+-- Up out of Level 2 to the stairs room on Level 1, labyrinth-94, across Level 1
+-- to its entrance [E], then `n` into [T], whose smoke puts you in
+-- marble-hallway-41 (Device #9).
+NAV_ROUTES["labrynth-level-1-to-tower"] = {
+    from  = { room = "labyrinth", exits = "n,u" },
+    to    = "tower-level-4/marble-hallway-41",
+    steps = { "u",
+              { anchor = "labyrinth-94" },
+              { goTo = "labyrinth" },
+              { teleport = "n" } },
+}
+
+-- Nothing on the way back works a lever: the doors the levers open have to be
+-- open already, which they are once someone has walked tower-to-tunnels today.
+-- Shut, the walk stops at the door. Two of them (labyrinth-94 s, labyrinth-167
+-- s) can't be opened from this side.
+NAV_ROUTES["tunnels-to-tower"] = {
+    to   = "tower-level-4/marble-hallway-41",
+    legs = { "tunnels-to-labrynth-level-4",
+             "start-of-labrynth-level-3",
+             "start-of-labrynth-level-2",
+             "labrynth-level-1-to-tower" },
+}
+
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
 
