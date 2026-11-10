@@ -656,6 +656,8 @@ for _, pattern in ipairs(incomingDamagePatterns) do
         -- us well below the flee threshold yet sit there taking hits until the
         -- next swing finally landed.
         taPackage.checkFleeArena()
+        -- And when no script is running at all, nothing else will (ta_guard.lua).
+        taPackage.guard.onHit()
     end, { type = "regex" })
 end
 
@@ -1021,8 +1023,11 @@ dofile(scriptDir .. "ta_bank.lua")
 -- script, whether we actually stopped it or it wasn't running.
 --
 -- When you add a new script, add it here too (see CLAUDE.md).
-createAlias("^stop-all-scripts$", function()
-    local scripts = {
+-- The list is a function of its own so the guard (ta_guard.lua) can ask the
+-- same question -- is anything running? -- without a second list to keep in
+-- step with this one.
+function taPackage.allScripts()
+    return {
         { name = "arena",                 running = taPackage.arenaState ~= nil,      stop = function() taPackage.stopArena("stop-all-scripts") end },
         -- Ahead of kill, which it would otherwise leave to re-engage on its next
         -- poll, and it confers the stand-down to the group as it goes.
@@ -1054,8 +1059,13 @@ createAlias("^stop-all-scripts$", function()
         -- drop, and every fresh login re-runs TA_INIT_CMD ("tfia 3"), so an
         -- arena stopped here would otherwise be back on the next reconnect.
         { name = "TA_INIT_CMD",           running = taPackage.login.initCmd ~= nil,   stop = taPackage.autoLogin.disarmInitCmd },
+        -- A flee in progress (ta_guard.lua). The guard itself stays armed.
+        { name = "guard",                 running = taPackage.guard.fleeing(),        stop = taPackage.guard.stop },
     }
-    for _, s in ipairs(scripts) do
+end
+
+createAlias("^stop-all-scripts$", function()
+    for _, s in ipairs(taPackage.allScripts()) do
         if s.running then
             s.stop()
             echo("[all] Stopped " .. s.name .. ".")
@@ -1089,6 +1099,15 @@ dofile(scriptDir .. "ta_follow.lua")
 -- team-fight-elves: ta_team_elves.lua. After the kill loop's triggers,
 -- because a death has to have ended the loop before this decides what is next.
 dofile(scriptDir .. "ta_team_elves.lua")
+
+-- =========================================================================
+-- Guard
+-- =========================================================================
+--
+-- Heal, then flee, when hurt with no script running: ta_guard.lua. Its
+-- triggers only act during its own flee, so where it loads only has to be
+-- after ta_map.lua, which it hears arrivals from.
+dofile(scriptDir .. "ta_guard.lua")
 
 -- =========================================================================
 -- Auto-login
