@@ -44,6 +44,29 @@ describe("guard", function()
         assert.is_true(echoed("[guard] Down to 800 HP (under 859)"))
     end)
 
+    it("sends a notification saying who left and why", function()
+        taPackage._character.name = "Pelayo"
+        hitBelowHalf()
+        assert.are.equal(1, #helper.httpRequestCalls)
+        local call = helper.httpRequestCalls[1]
+        assert.are.equal("Left the game hurt", call.options.headers["X-Title"])
+        assert.are.equal(
+            "Pelayo was down to 800 of 1718 HP with no script running, and is leaving the game.",
+            call.options.body)
+    end)
+
+    it("sends one notification, not one per hit", function()
+        hitBelowHalf()
+        helper.simulateLine(HIT)
+        assert.are.equal(1, #helper.httpRequestCalls)
+    end)
+
+    it("sends no notification above half", function()
+        taPackage.character.setVitality(1000, 1718)
+        helper.simulateLine(HIT)
+        assert.are.equal(0, #helper.httpRequestCalls)
+    end)
+
     it("doesn't heal or move first", function()
         hitBelowHalf()
         assert.are.same({ "x" }, helper.sendCalls)

@@ -52,5 +52,10 @@ function taPackage.guard.onHit()
     if scriptInCharge() then return end
     echo(TAG .. "Down to " .. hp .. " HP (under " .. threshold
         .. ") and no script is running. Leaving the game.")
+    -- Whoever should have been watching wasn't, so tell them where they are.
+    taPackage.utils.sendNtfy("Left the game hurt",
+        (taPackage.character.getName() or "The character") .. " was down to " .. hp
+        .. " of " .. select(2, taPackage.character.getVitality())
+        .. " HP with no script running, and is leaving the game.")
     taPackage.exitGameWithRetry()
 end
