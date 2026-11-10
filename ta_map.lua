@@ -8,10 +8,10 @@
 --
 --   in    taPackage.db (ta_db.lua); taPackage.lookCapture.state (main.lua's look
 --         capture -- a room brief that arrives mid-look is the look talking,
---         not an arrival); taPackage.guard.onArrival (ta_guard.lua)
+--         not an arrival)
 --   out   taPackage.stopMapping (for stop-all-scripts), and the position and
 --         mapping state ta_nav.lua reads: taPackage.here, hereState, setHere,
---         trackMove, mapping; taPackage.lastArrivalDir (ta_guard.lua)
+--         trackMove, mapping
 --
 -- =========================================================================
 -- Position tracking
@@ -315,15 +315,6 @@ local function handleRoomEntry(matches)
         taPackage.pendingDirection = nil
     else
         taPackage.pendingDirection = taPackage.shiftPendingDir()
-    end
-    -- The way we came in, for the guard's way back out (ta_guard.lua). Only a
-    -- real move sets it: a bare return reprints the room and consumes nothing,
-    -- and must not forget the way out. A teleport has no way back.
-    if taPackage.arrivedByTeleport then
-        taPackage.lastArrivalDir = nil
-    elseif taPackage.pendingDirection then
-        taPackage.lastArrivalDir = taPackage.pendingDirection
-        taPackage.guard.onArrival()
     end
 
     -- A kill with no gold found before we left records zero loot.

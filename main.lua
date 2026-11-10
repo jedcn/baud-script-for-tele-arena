@@ -1059,8 +1059,6 @@ function taPackage.allScripts()
         -- drop, and every fresh login re-runs TA_INIT_CMD ("tfia 3"), so an
         -- arena stopped here would otherwise be back on the next reconnect.
         { name = "TA_INIT_CMD",           running = taPackage.login.initCmd ~= nil,   stop = taPackage.autoLogin.disarmInitCmd },
-        -- A flee in progress (ta_guard.lua). The guard itself stays armed.
-        { name = "guard",                 running = taPackage.guard.fleeing(),        stop = taPackage.guard.stop },
     }
 end
 
@@ -1104,9 +1102,8 @@ dofile(scriptDir .. "ta_team_elves.lua")
 -- Guard
 -- =========================================================================
 --
--- Flee when hurt with no script running: ta_guard.lua. Its
--- triggers only act during its own flee, so where it loads only has to be
--- after ta_map.lua, which it hears arrivals from.
+-- Leave the game when hurt with no script running: ta_guard.lua. It
+-- registers no triggers of its own; main.lua's damage triggers call it.
 dofile(scriptDir .. "ta_guard.lua")
 
 -- =========================================================================
