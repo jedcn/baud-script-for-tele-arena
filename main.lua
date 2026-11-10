@@ -1104,7 +1104,7 @@ dofile(scriptDir .. "ta_team_elves.lua")
 -- Guard
 -- =========================================================================
 --
--- Heal, then flee, when hurt with no script running: ta_guard.lua. Its
+-- Flee when hurt with no script running: ta_guard.lua. Its
 -- triggers only act during its own flee, so where it loads only has to be
 -- after ta_map.lua, which it hears arrivals from.
 dofile(scriptDir .. "ta_guard.lua")

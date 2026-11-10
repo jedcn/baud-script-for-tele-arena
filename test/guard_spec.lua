@@ -1,5 +1,5 @@
 -- guard_spec.lua
--- The guard: heal, then flee, when hurt with no script running. The case it is
+-- The guard: flee when hurt with no script running. The case it is
 -- for is Pelayo's death of 2026-11-09 (logs/session-pelayo-2026-11-09T09-48-20.log):
 -- two elven champions, no script, eight minutes.
 
@@ -48,9 +48,8 @@ describe("guard", function()
         helper.simulateLine(HIT)
     end
 
-    it("heals and steps back the way we came in, below half with no script running", function()
+    it("steps back the way we came in, below half with no script running", function()
         hitBelowHalf()
-        assert.is_true(sent("cast kusamotumaru"))
         assert.is_true(sent("se"))
         assert.is_true(echoed("[guard] Down to 800 HP (under 859)"))
     end)
@@ -80,11 +79,10 @@ describe("guard", function()
         assert.is_true(sent("se"))
     end)
 
-    it("doesn't cast without the group heal", function()
-        taPackage.character.setClass("Warrior")
+    it("doesn't heal first, even a High Priest", function()
         hitBelowHalf()
         assert.is_false(sent("cast kusamotumaru"))
-        assert.is_true(sent("se"))
+        assert.are.equal("se", helper.sendCalls[1])
     end)
 
     it("tries the step again 2s after it is refused", function()

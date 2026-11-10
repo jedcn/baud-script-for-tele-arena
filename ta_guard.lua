@@ -1,4 +1,4 @@
--- ta_guard.lua -- heal, then flee, when we are hurt and no script is minding us
+-- ta_guard.lua -- flee when we are hurt and no script is minding us
 --
 -- Every fighting script looks after its own HP: the arena flees at its
 -- threshold, team-fight-elves heals the group. Nothing did when no script was
@@ -9,9 +9,10 @@
 -- (logs/session-pelayo-2026-11-09T09-48-20.log, 09:58-10:05).
 --
 -- So: every hit that lands while no script is running and leaves us under half
--- our max vitality starts a flee. A High Priest casts the group heal first.
--- Then we step back the way we came in, or, not knowing it, out of the first
--- exit `ex` lists. A refused step (still tired from the cast, held in combat,
+-- our max vitality starts a flee: we step back the way we came in, or, not
+-- knowing it, out of the first exit `ex` lists. No heal first, by request: a
+-- cast tires us and the step is refused until it wears off, which is time spent
+-- standing in the room being hit. A refused step (tired, held in combat,
 -- tripped) is tried again every 2s. An elf that chases us in hits us again, and
 -- that hit starts the next flee, so we keep going until they stop following.
 --
@@ -95,11 +96,6 @@ function taPackage.guard.onHit()
     flee = { dir = REVERSE[taPackage.lastArrivalDir or ""], tries = 0 }
     echo(TAG .. "Down to " .. hp .. " HP (under " .. threshold
         .. ") and no script is running. Getting out.")
-    if taPackage.character.isClass("Acolyte") then
-        -- The step goes out right behind it and is refused while the cast
-        -- tires us. The retry carries it.
-        send("cast kusamotumaru")
-    end
     step()
 end
 
