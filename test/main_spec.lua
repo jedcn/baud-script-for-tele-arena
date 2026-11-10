@@ -4570,6 +4570,56 @@ describe("World map triggers", function()
             assert.is_true(hit)
         end)
 
+        -- Three identical tunnels came back right after the riddle had put
+        -- Tojolias in one of them, while `where` named the right one.
+        describe("when the tracker knows where you are", function()
+
+            local function twoCaves()
+                taPackage.slugProbe = { name = "cave" }
+                helper.mockDbRows = function(sql)
+                    if string.find(sql, "rooms WHERE name", 1, true) then
+                        return { { id = 4, slug = "cave-3" }, { id = 9, slug = "cave-8" } }
+                    elseif string.find(sql, "room_exits WHERE from_id", 1, true) then
+                        return { { direction = "e" }, { direction = "w" } }
+                    end
+                    return {}
+                end
+            end
+
+            local function said(text)
+                for _, m in ipairs(helper.echoCalls) do
+                    if string.find(m, text, 1, true) then return m end
+                end
+                return nil
+            end
+
+            it("names the tracked room instead of listing the lookalikes", function()
+                twoCaves()
+                taPackage.hereState, taPackage.here = "known", 9
+                helper.simulateLine("Exits: e,w.")
+                local line = said("this is cave-8")
+                assert.is_not_nil(line)
+                assert.is_truthy(string.find(line, "position tracked", 1, true))
+                assert.is_nil(said("candidates for"))
+                assert.are.equal(9, taPackage.here)
+            end)
+
+            it("lists them as before when the tracked room isn't one of them", function()
+                twoCaves()
+                taPackage.hereState, taPackage.here = "known", 77
+                helper.simulateLine("Exits: e,w.")
+                assert.is_not_nil(said("candidates for"))
+            end)
+
+            it("lists them as before when the tracker is lost", function()
+                twoCaves()
+                taPackage.hereState, taPackage.here = "lost", nil
+                helper.simulateLine("Exits: e,w.")
+                assert.is_not_nil(said("candidates for"))
+            end)
+
+        end)
+
         -- Four identical "stonework corridor" candidates came back while
         -- player_location named the right one, and the walk spent a move
         -- narrowing them by hand

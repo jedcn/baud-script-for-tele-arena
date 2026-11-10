@@ -621,6 +621,22 @@ local function printRoomSlugCandidates(name, dirs)
         echo("[map] this is " .. matches[1].slug .. "  (position tracked)"
             .. "  ->  map-here " .. matches[1].slug .. " to map from here")
     else
+        -- Ambiguous by appearance, but the tracker may already know which one:
+        -- it has followed every move (and every Device teleport) since it last
+        -- knew. Arriving in the tunnels by the riddle, where three rooms look
+        -- alike, this listed all three while `where` named the right one
+        -- (logs/session-tojolias-2026-11-10T08-10-37.log). So when the tracked
+        -- room is among the lookalikes, that is the answer.
+        if taPackage.hereState == "known" then
+            for _, m in ipairs(matches) do
+                if m.id == taPackage.here then
+                    echo("[map] this is " .. m.slug .. "  (position tracked; " .. #matches
+                        .. " rooms look like this one)  ->  map-here " .. m.slug
+                        .. " to map from here")
+                    return
+                end
+            end
+        end
         -- Ambiguous by appearance, but the walk will narrow it: seed the
         -- candidate set so the next move or two settles it.
         local ids = {}
