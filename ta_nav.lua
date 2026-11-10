@@ -1093,15 +1093,30 @@ local function navReversed(name, overrides)
     return out
 end
 
--- Back up to where level 3 starts, which is the room level 2 ends in. Forty-five
--- steps: level 3's forty-six less the lever, which must not be pulled on the way
--- back for the reason above.
-NAV_ROUTES["start-of-labrynth-level-3"] = navReversed("end-of-labrynth-level-3", {
+-- Back up to where level 3 starts, which is the room level 2 ends in. NOT a
+-- mirror, because the stairs between levels 3 and 4 are one-way each way:
+-- labyrinth-173 `d` lands in labyrinth-198, but 198 `u` lands in labyrinth-161,
+-- not 173. The mirror sent `u` then `w` and was lost one room later (tojolias,
+-- logs/session-tojolias-2026-11-10T08-10-37.log, "No exit that way at step 16").
+-- The map's 198 u -> 173 had been filled in from 173 d, never walked.
+--
+-- 161 is a room the way down passes through anyway (east of 162), so the way back is the way down's tail from there, mirrored.
+-- It skips the lever's door altogether, and the trip into the lever room 166 and
+-- straight out again. Walked by hand with `ex` checks against the map, tojolias,
+-- logs/session-tojolias-2026-11-10T18-08-53.log, lines 530-919.
+NAV_ROUTES["start-of-labrynth-level-3"] = {
     -- The room level 3 ends in, and the exit-set is from the live walk: pelayo
     -- ran `ex` there twice and got n,e,w,u both times. The `u` is the way home.
-    from = { room = "labyrinth", exits = "e,n,u,w" },
-    to   = { room = "labyrinth" },
-})
+    from  = { room = "labyrinth", exits = "e,n,u,w" },
+    to    = { room = "labyrinth" },
+    steps = { "u",                                            -- 198 up to 161
+              "n", "e", "s", "s", "w", "w",                   -- 160 ... 165
+              "e", "s", "s", "w", "w", "s", "s",              -- 156 ... 124
+              "w", "w", "w", "w", "w", "w",                   -- 123 ... 118
+              "n", "n", "n", "n", "n", "n",                   -- 117 ... 112
+              "e", "e", "e", "e", "e", "s", "s", "s", "e",    -- 111 ... 100
+              "u" },                                          -- up to level 2
+}
 
 -- And back up through the dark to the room the whole descent starts from.
 -- Ninety-nine steps: level 2's hundred less the stone.

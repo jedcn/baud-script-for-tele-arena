@@ -18701,9 +18701,16 @@ describe("navigate-to", function()
             assertMirrors("start-of-labrynth-level-2", "end-of-labrynth-level-2")
         end)
 
-        it("mirrors level 3, less the lever", function()
-            assert.are.equal(45, #R("start-of-labrynth-level-3").steps)
-            assertMirrors("start-of-labrynth-level-3", "end-of-labrynth-level-3")
+        -- Level 3 can't be mirrored: 198 `u` lands in labyrinth-161, not 173,
+        -- so the way back is written out from a live walk instead.
+        it("climbs from 198 into 161 and follows the way down's tail from there", function()
+            assert.are.same({ "u",
+                              "n", "e", "s", "s", "w", "w",
+                              "e", "s", "s", "w", "w", "s", "s",
+                              "w", "w", "w", "w", "w", "w",
+                              "n", "n", "n", "n", "n", "n",
+                              "e", "e", "e", "e", "e", "s", "s", "s", "e",
+                              "u" }, R("start-of-labrynth-level-3").steps)
         end)
 
         -- The reverse of `push stone` is not `push stone`. The wall it opened is
