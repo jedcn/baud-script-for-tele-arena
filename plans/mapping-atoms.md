@@ -75,7 +75,7 @@ model:
 
 Three things in this repo already conflated them and were wrong as a result:
 `project-town-2-route-home` explained a short return route by levers opening
-walls "permanently"; `ta_nav.lua`'s `chasm-is-clear` variant skips a sweep and
+walls "permanently"; `ta_nav.lua`'s `path-already-walked-today` variant skips a sweep and
 walks past a hydra on the same assumption; and this table said "permanent" until
 now. All are really claims about *a day on which someone already made the
 outward walk*.

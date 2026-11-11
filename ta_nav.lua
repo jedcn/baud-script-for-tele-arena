@@ -143,7 +143,7 @@ local NAV_ROUTES = {
         --
         -- The steps live on town-3/temple, whose ending this is; naming the leg
         -- and nothing else borrows them. That way stopping at the temple seam
-        -- and running `navigate-to town-3/temple chasm-is-clear` by hand walks
+        -- and running `navigate-to town-3/temple path-already-walked-today` by hand walks
         -- the same 47 steps as the chain does -- which is what you want when a
         -- 310-step walk dies on floor four.
         -- No longer just an ending. It began as one -- the temple's two levers
@@ -153,13 +153,13 @@ local NAV_ROUTES = {
         -- the name for "they are all already thrown".
         --
         -- `fromLegs` therefore, rather than a leg and an ending: each leg that
-        -- has a chasm-is-clear of its own uses it, and the ones that don't are
+        -- has a path-already-walked-today of its own uses it, and the ones that don't are
         -- walked as usual. The temple's is unchanged by the switch -- it is the
         -- last leg, so replacing it and carrying on IS ending there.
         --
         -- Read it as a claim about the LEVERS, not about the chasm. Pulling
         -- them disarms the traps along each level as well as dropping the
-        -- walls, and both stay done -- so asking for `chasm-is-clear` says
+        -- walls, and both stay done -- so asking for `path-already-walked-today` says
         -- "every lever on the way has been pulled at some point". On a
         -- character who has never made the outward walk it takes the short way
         -- past traps that are still armed. The chasm is just the obstacle you
@@ -175,15 +175,15 @@ local NAV_ROUTES = {
         -- confirmed on 2026-09-07 that the WHOLE WORLD resets daily -- levers,
         -- pushed stones and every door alike -- and the sewer doors are not
         -- special, they were just the ones observed relocking. So
-        -- `chasm-is-clear` is a claim about *today*: it is safe once somebody
+        -- `path-already-walked-today` is a claim about *today*: it is safe once somebody
         -- has made the outward walk since the reset, and on a fresh day it
         -- walks a still-armed route. Nothing enforces that; it is on the
-        -- caller. So `chasm-is-clear` skips the sweep and
+        -- caller. So `path-already-walked-today` skips the sweep and
         -- walks past the hydra, and the walker needs no pearl key of their own:
         -- the doors the key opens are already open. Nothing extra is asked of
         -- the pack -- see `requires` at the top of this route.
         variants = {
-            ["chasm-is-clear"] = { fromLegs = true },
+            ["path-already-walked-today"] = { fromLegs = true },
         },
     },
     -- The first four legs in one, from second town's north plaza to the junction
@@ -326,7 +326,7 @@ local NAV_ROUTES = {
         -- -- and the walk retries on the combat timer until it breaks off; if it
         -- won't, `flee` or `kill-all` by hand is the way out.
         variants = {
-            ["chasm-is-clear"] = { keep = 23, steps = {} },
+            ["path-already-walked-today"] = { keep = 23, steps = {} },
         },
     },
     -- Out of the sewers and across the desert. TWO of these steps are pearl-keyed
@@ -334,7 +334,7 @@ local NAV_ROUTES = {
     -- crude stone building's east door out into the sandy passages. One key opens
     -- both, and it's the one the hydra drops -- but only the first time. Neither
     -- door relocks, so a walk that finds them already open needs no key, which is
-    -- what makes the hydra's chasm-is-clear variant safe to take.
+    -- what makes the hydra's path-already-walked-today variant safe to take.
     --
     -- The cure is NOT a step. The walk that produced these directions typed
     -- `drink verbena` after the second `w`, but the poisoning is a maybe -- see
@@ -420,7 +420,7 @@ local NAV_ROUTES = {
         -- The second stone is NOT skipped. It is in the shared tail, in the
         -- dead-end corridor that has no `e` until it is pushed.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 8,
                 steps = { "sw", "se", "e", "se", "s", "sw", "sw", "s",
                           "e", "e", "e", "e", "s", "se", "e", "se",
@@ -464,7 +464,7 @@ local NAV_ROUTES = {
         -- What that lever does is the reason the variant is named for a
         -- condition rather than for the walls: pulling these levers DISARMS
         -- THE TRAPS along the level, and the traps stay disarmed the same way
-        -- the walls stay down. So `chasm-is-clear` means "every lever on the
+        -- the walls stay down. So `path-already-walked-today` means "every lever on the
         -- way has been pulled at some point", not merely "the chasm is
         -- passable" -- and walking this list on a level whose lever has never
         -- been pulled walks it into live traps, not just a shut wall.
@@ -473,7 +473,7 @@ local NAV_ROUTES = {
         -- four, and a riddle door does not stay open the way a lever stays
         -- pulled -- the same reason the level-two variant still says komi.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 3,
                 steps = { "nw", "n", "nw", "ne", "ne", "e", "ne",
                           { cmd = "say arok" },
@@ -524,7 +524,7 @@ local NAV_ROUTES = {
         -- as dropping its walls, so this is only walkable once it has been
         -- pulled. See the chain's variants block for what the name claims.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 8,
                 steps = { "n", "nw", "nw", "n", "d" },
             },
@@ -562,7 +562,7 @@ local NAV_ROUTES = {
         -- level's traps as well as dropping its walls, so this is only
         -- walkable once it has been pulled.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 4,
                 steps = { "sw", "sw", "sw", "w", "s", "se", "se", "s", "d" },
             },
@@ -604,7 +604,7 @@ local NAV_ROUTES = {
         -- as the rest: the lever disarms this level's traps as well as
         -- dropping its walls, so this is only walkable once it has been pulled.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 5,
                 steps = { "ne", "se", "e", "ne", "nw", "nw", "n", "n", "d" },
             },
@@ -666,7 +666,7 @@ local NAV_ROUTES = {
         -- NOT down -- wrong variant, and the ordinary ending is the one that
         -- works.
         variants = {
-            ["chasm-is-clear"] = {
+            ["path-already-walked-today"] = {
                 keep  = 26,
                 steps = { "s", "s", "e", "e", "e", "e", "e", "e", "s", "s",
                           "s", "w", "s", "s", "w", "w", "w", "w", "w", "w", "w" },
@@ -1005,7 +1005,7 @@ NAV_ROUTES["town-3/part-1"].requiresFor = "town-3/part-2, which carries on from 
 --
 -- Everything part-2 asks of the pack is asked here, at the north plaza, before
 -- a step is taken -- the same reason part-1 asks for it -- and `anyway` skips
--- it for both halves at once. `chasm-is-clear` is taken from the legs as it is
+-- it for both halves at once. `path-already-walked-today` is taken from the legs as it is
 -- on part-2; after-doors has no such variant and is walked as usual, which is
 -- right, because its doors relock daily whatever the levers below are doing.
 do
@@ -1019,11 +1019,11 @@ do
         onPoison = p2.onPoison,
         legs     = legs,
         variants = {
-            ["chasm-is-clear"] = { fromLegs = true },
+            ["path-already-walked-today"] = { fromLegs = true },
         },
     }
 end
--- The chasm-is-clear way needs nothing on top of that: the same rope and the
+-- The path-already-walked-today way needs nothing on top of that: the same rope and the
 -- same potion, and no pearl key.
 --
 -- It used to ask for one, and refused the walk without it. That was wrong, and
@@ -1033,7 +1033,7 @@ end
 -- come from the pack instead. But the key is not what the two stone doors want.
 -- They want to be UNLOCKED, and they were, by whoever first fought the hydra and
 -- carried the key down -- and they stay that way, like every lever and stone on
--- this route. Asking for the chasm-is-clear way is precisely the claim that all
+-- this route. Asking for the path-already-walked-today way is precisely the claim that all
 -- of that has already been done; a character who has to be told the doors are
 -- shut is a character who should be walking the ordinary route.
 --
@@ -1262,7 +1262,7 @@ taPackage.navRoutes = NAV_ROUTES
 -- for the rest of the session.
 --
 -- `variant` names one of the route's `variants`: an alternative ENDING, asked
--- for as a trailing word (`navigate-to town-3/part-2 chasm-is-clear`). A
+-- for as a trailing word (`navigate-to town-3/part-2 path-already-walked-today`). A
 -- variant is not a second copy of the route. It says where to leave the usual
 -- one and what to walk instead:
 --
@@ -1293,7 +1293,7 @@ taPackage.navRoutes = NAV_ROUTES
 -- of this name uses it, and the rest are walked as usual". The steps then live
 -- on the legs, one transcription each, which is the same reason `legs` names
 -- its legs rather than copying their directions -- and it is what makes
--- `navigate-to town-3/stone-lvl-2 chasm-is-clear` walk that one segment's short
+-- `navigate-to town-3/stone-lvl-2 path-already-walked-today` walk that one segment's short
 -- way on its own, which is how you check a new one without the 300 steps in
 -- front of it.
 --
@@ -1310,7 +1310,7 @@ function taPackage.navRouteSteps(route, variant)
         -- A leg named with no steps of its own is a borrowing: the ending is
         -- recorded on the leg it belongs to, and the joined route just says
         -- which leg to take it from. One transcription, reachable both ways --
-        -- `navigate-to town-3/temple chasm-is-clear` for the leg alone, and
+        -- `navigate-to town-3/temple path-already-walked-today` for the leg alone, and
         -- the whole chain for the journey.
         if v.fromLegs then
             if not route.legs then
@@ -2998,11 +2998,15 @@ local function navStart(destination, route, arriveName, startFloor, destRoomId, 
         -- Saying so when there is nothing to skip matters as much as saying so
         -- when there is: the flag on a route with nothing marked is a flag that
         -- did nothing, and silence there reads exactly like a flag that worked.
-        navEcho(firstWalk > 0
-            and ("Leaving this route's " .. firstWalk .. " first-walk step"
-                 .. (firstWalk > 1 and "s" or "") .. " alone, as asked.")
-            or ("Nothing on this route is first-walk-only, so `path-already-walked-today`"
-                .. " changes nothing here."))
+        if firstWalk > 0 then
+            navEcho("Leaving this route's " .. firstWalk .. " first-walk step"
+                .. (firstWalk > 1 and "s" or "") .. " alone, as asked.")
+        elseif variant == "path-already-walked-today" then
+            navEcho("Taking the short way through, past what was already done today.")
+        else
+            navEcho("Nothing on this route is first-walk-only, so `path-already-walked-today`"
+                .. " changes nothing here.")
+        end
     elseif firstWalk > 0 then
         navEcho("Careful: this route works " .. firstWalk .. " device"
             .. (firstWalk > 1 and "s" or "") .. " whose effect lasts the day, and doing it"
@@ -3137,7 +3141,8 @@ createAlias("^navigate-to (.+)$", function(matches)
         end
     end
     -- A variant: a trailing word naming an alternative ending the route itself
-    -- records (`navigate-to town-3/part-2 chasm-is-clear`). Peeled only when
+    -- records. (The only one, `path-already-walked-today`, is peeled as a flag
+    -- above and picked up just below.) Peeled only when
     -- what's left really is a route and that route really has that variant, so
     -- a mistyped destination is still reported whole rather than quietly split
     -- into a route we don't know and a variant we don't know either.
@@ -3158,6 +3163,17 @@ createAlias("^navigate-to (.+)$", function(matches)
             end
         end
     end
+    -- `path-already-walked-today` was peeled above as a flag, and it is a
+    -- variant too: on the way to third town the day's levers mean a shorter way
+    -- through each level, which the legs record as variants of that name. The
+    -- claim is the same one the flag makes in the labyrinth -- somebody has
+    -- made this walk since today's reset -- so the one word asks for both.
+    if alreadyWalked and not variant then
+        local r = NAV_ROUTES[destination]
+        if r and r.variants and r.variants["path-already-walked-today"] then
+            variant = "path-already-walked-today"
+        end
+    end
     local route = NAV_ROUTES[destination]
     if not route then
         local known = navListedNames()
@@ -3172,8 +3188,10 @@ createAlias("^navigate-to (.+)$", function(matches)
         -- A route that works a day-long device takes path-already-walked-today
         -- after the first walk, and the list is where you go to remember that.
         local function optional(name)
-            local steps = taPackage.navRouteSteps(NAV_ROUTES[name])
-            if steps and taPackage.navFirstWalkSteps(steps) > 0 then
+            local r = NAV_ROUTES[name]
+            local steps = taPackage.navRouteSteps(r)
+            if (r.variants and r.variants["path-already-walked-today"])
+                or (steps and taPackage.navFirstWalkSteps(steps) > 0) then
                 return "[path-already-walked-today]"
             end
         end
@@ -3589,7 +3607,7 @@ end, { type = "regex" })
 -- The chasm on the way to third town's temple, while its walls are still up.
 -- Like a missing exit, nothing follows the refusal, so a walk that ran into it
 -- used to sit waiting for a brief that was never coming. Stop and say which
--- step it was: on a `chasm-is-clear` route it means the levers aren't pulled.
+-- step it was: on a `path-already-walked-today` route it means the levers aren't pulled.
 createTrigger("^The wide chasm prevents your exit in that direction\\.$", function()
     local j = taPackage.navigate
     if not j then return end
