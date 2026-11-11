@@ -1227,20 +1227,30 @@ NAV_ROUTES["tunnels-to-tower"] = {
 for _, r in pairs(NAV_ROUTES) do
     for _, leg in ipairs(r.legs or {}) do
         local name = type(leg) == "table" and leg.route or leg
-        if NAV_ROUTES[name] then NAV_ROUTES[name].leg = true end
+        if NAV_ROUTES[name] then NAV_ROUTES[name].unlisted = true end
     end
     for _, step in ipairs(r.steps or {}) do
         if type(step) == "table" and step.detour and NAV_ROUTES[step.detour] then
-            NAV_ROUTES[step.detour].leg = true
+            NAV_ROUTES[step.detour].unlisted = true
         end
     end
+end
+
+-- And three that no route is built from, but that the long routes have taken
+-- over: after-doors-to-town-3 (also part-2) is town-3/combined from the
+-- junction on, which `from-step` reaches; ruby-door and get-platinum-key are
+-- what after-doors' door gates now do as it walks. The lists are for the
+-- handful of walks you actually set off on.
+for _, name in ipairs({ "town-3/after-doors-to-town-3", "town-3/ruby-door",
+                        "town-3/get-platinum-key" }) do
+    NAV_ROUTES[name].unlisted = true
 end
 
 -- The names the route lists offer: every route but the legs above.
 local function navListedNames()
     local names = {}
     for name, r in pairs(NAV_ROUTES) do
-        if not r.leg then names[#names + 1] = name end
+        if not r.unlisted then names[#names + 1] = name end
     end
     return names
 end

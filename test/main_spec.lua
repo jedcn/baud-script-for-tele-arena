@@ -16594,10 +16594,14 @@ describe("navigate-to", function()
 
         -- town-3/part-1 IS town-3/after-doors rather than a copy of it, so a
         -- listing that counted both would be lying about how many routes exist.
+        -- Both are out of the list now, so the spec brings a pair of its own.
         it("counts a route once however many names it answers to", function()
+            local shared = { steps = { "n" } }
+            taPackage.navRoutes["t/first"], taPackage.navRoutes["t/second"] = shared, shared
             helper.simulateAlias("navigate-to")
+            taPackage.navRoutes["t/first"], taPackage.navRoutes["t/second"] = nil, nil
             local out = lastEchoes()
-            assert.is_truthy(out:find("another name for town-3/after-doors", 1, true))
+            assert.is_truthy(out:find("another name for t/first", 1, true))
             assert.is_truthy(out:find("routes (", 1, true))
             local routes, names = out:match("(%d+) routes %((%d+) names%)")
             assert.is_truthy(routes)
@@ -16626,8 +16630,7 @@ describe("navigate-to", function()
         it("refuses an unknown destination and lists what it does know", function()
             helper.simulateAlias("navigate-to nowhere/at-all")
             assert.is_truthy(lastEchoes():find("I don't know a route to 'nowhere/at-all'. I know:", 1, true))
-            assert.is_truthy(lastEchoes():find("\n  town-3/\n", 1, true))
-            assert.is_truthy(lastEchoes():find("\n    ruby-door\n", 1, true))
+            assert.is_truthy(lastEchoes():find("\n  town-3/combined ", 1, true))
             assert.are.equal(0, #helper.sendCalls)
         end)
 
@@ -16663,7 +16666,7 @@ describe("navigate-to", function()
         it("marks the routes whose short way is a path-already-walked-today variant", function()
             helper.simulateAlias("navigate-to nowhere/at-all")
             local out = lastEchoes() .. "\n"
-            assert.is_truthy(out:find("\n    combined [path-already-walked-today]\n", 1, true))
+            assert.is_truthy(out:find("\n  town-3/combined [path-already-walked-today]\n", 1, true))
         end)
 
         it("no longer knows chasm-is-clear", function()
@@ -16678,12 +16681,16 @@ describe("navigate-to", function()
         it("leaves third town's legs and key errands out of the list", function()
             helper.simulateAlias("navigate-to nowhere/at-all")
             local out = lastEchoes() .. "\n"
-            assert.is_truthy(out:find("\n    combined ", 1, true))
+            assert.is_truthy(out:find("\n  town-3/combined ", 1, true))
             for _, piece in ipairs({ "after-doors", "part-1", "hydra", "stoneworks-entrance",
                                      "stone-lvl-2", "stone-lvl-6", "temple",
                                      "get-ruby-key", "get-onyx-key",
-                                     "get-platinum-key-from-63" }) do
-                assert.is_falsy(out:find("\n    " .. piece .. "[\n ]"), "lists " .. piece)
+                                     "get-platinum-key-from-63",
+                                     -- and the three the long routes took over
+                                     "after-doors-to-town-3", "part-2", "ruby-door",
+                                     "get-platinum-key" }) do
+                assert.is_falsy(out:find("\n  town-3/" .. piece .. " ", 1, true), "lists " .. piece)
+                assert.is_falsy(out:find("\n  town-3/" .. piece .. "\n", 1, true), "lists " .. piece)
             end
         end)
 
