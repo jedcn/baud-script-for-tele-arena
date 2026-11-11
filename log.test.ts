@@ -308,3 +308,69 @@ test("names a ferry crossing", () => {
   expect(classify("You buy passage across the great lake and board a ship...").kind)
     .toBe("ferry-crossed");
 });
+
+// Lines that were `unknown` across the logs of 2026-11-07..11, most of them from
+// team-fight-elves. Each is a real line from those logs.
+test.each([
+  ["Teekywiki just attacked the elven champion with Twin Katanas!", "other-attack",
+    { player: "Teekywiki", monster: "elven champion", weapon: "Twin Katanas" }],
+  ["Pelayo just attacked the elven warrior with a Charred Mace!", "other-attack",
+    { player: "Pelayo", monster: "elven warrior", weapon: "Charred Mace" }],
+  ["Pelayo barely dodged the elven champion's attack!", "other-dodge",
+    { player: "Pelayo", monster: "elven champion" }],
+  ["The elven warrior's poorly executed attack misses Castor!", "monster-miss-other",
+    { monster: "elven warrior", player: "Castor" }],
+  ["Pelayo just discharged a very dark bluish mist at friendly people in the area!", "other-spell-heal",
+    { player: "Pelayo", target: "party" }],
+  ["Pelayo just intoned a very powerful healing spell for Pelayo!", "other-spell-heal",
+    { player: "Pelayo", target: "Pelayo" }],
+  ["-- Message sent only to group --", "team-msg-sent", {}],
+  ["Castor just shared 37 gold with the group, your share was 9 gold.", "gold-share-in",
+    { player: "Castor", total: 37, amount: 9 }],
+  ["You shared 40 gold with the group, each share was 10 gold.", "gold-share-out",
+    { total: 40, share: 10 }],
+  ["Pelayo just gave you 50 gold coins.", "gold-given-in", { player: "Pelayo", amount: 50 }],
+  ["You gave 50 gold coins to Castor.", "gold-given-out", { amount: 50, player: "Castor" }],
+  ["Pelayo just handed some gold coins to Castor.", "other-gold-given", { player: "Pelayo", to: "Castor" }],
+  ["Pelayo just gave you an Ecliptic Glaive.", "item-given-in", { player: "Pelayo", item: "Ecliptic Glaive" }],
+  ["You deposited 300 gold in your account.", "bank-deposit", { amount: 300 }],
+  ["You withdrew 100 gold from your account.", "bank-withdraw", { amount: 100 }],
+  ["You currently have 812 gold in your account.", "bank-balance", { amount: 812 }],
+  ["Ok, you sold a waterskin for 2 gold crowns.", "sold", { item: "waterskin", amount: 2 }],
+  ["Ok, you've asked to join Pelayo's group.", "group-join-asked", { leader: "Pelayo" }],
+  ["You are now a member of Pelayo's group.", "group-joined", { leader: "Pelayo" }],
+  ["You are no longer a member of Pelayo's group.", "group-left", { leader: "Pelayo" }],
+  ["Pollux is asking to join your group.", "group-asking", { player: "Pollux", leader: "us" }],
+  ["Castor is asking to join Pelayo's group.", "group-asking", { player: "Castor", leader: "Pelayo" }],
+  ["Pollux is now a member of your group.", "group-added", { player: "Pollux", leader: "us" }],
+  ["Teekywiki has been accepted into Pelayo's group.", "group-added", { player: "Teekywiki", leader: "Pelayo" }],
+  ["Sorry, you are not the leader of a group.", "not-leader", {}],
+  ["Sorry, you don't see \"warrior\" nearby.", "not-here", { target: "warrior" }],
+  ["Pelayo just took a drink of something.", "other-drink", { player: "Pelayo" }],
+  ["Castor is looking rather parched.", "other-thirsty", { player: "Castor" }],
+  ["Pelayo just bought a rowan potion from the shopkeeper.", "other-bought", { player: "Pelayo", item: "rowan potion" }],
+  ["Castor just sold a waterskin to the shopkeeper.", "other-sold", { player: "Castor", item: "waterskin" }],
+  ["Pelayo just picked up a soulstone.", "other-pickup", { player: "Pelayo", item: "soulstone" }],
+  ["Pelayo is looking to the east.", "other-look", { player: "Pelayo", at: "east" }],
+  ["Pelayo is looking the elven champion over.", "other-look", { player: "Pelayo", at: "the elven champion" }],
+] as [string, string, Record<string, unknown>][])("names %p", (text, kind, fields) => {
+  const got = classify(text);
+  expect(got.kind).toBe(kind);
+  expect(got.fields).toMatchObject(fields);
+});
+
+test("reads group, gold and talk commands as sent, not unknown", () => {
+  const events = normalizeFile(fixture(HEADER + [
+    "Entering Tele-Arena...",
+    "confer kill warrior",
+    "share 40",
+    "join pelayo",
+    "add castor",
+    "give castor 50 gold",
+    "deposit 300",
+    "wi 100",
+    "say ether",
+  ].join("\n")));
+  expect(events.filter(e => e.kind === "unknown")).toEqual([]);
+  expect(events.filter(e => e.kind === "sent")).toHaveLength(8);
+});

@@ -259,12 +259,22 @@ const RULES: Rule[] = [
     fields: m => ({ monster: m[1] }) },
 
   // — other players —
-  { kind: "other-attack", re: /^(.+) just attacked the (.+) with (?:an?|the) (.+)!$/,
+  // A plural weapon has no article: "with Twin Katanas".
+  { kind: "other-attack", re: /^(.+) just attacked the (.+) with (?:(?:an?|the) )?(.+)!$/,
     fields: m => ({ player: m[1], monster: m[2], weapon: m[3] }) },
   { kind: "other-miss", re: /^(.+)'s poorly executed attack misses the (.+)!$/,
     fields: m => ({ player: m[1], monster: m[2] }) },
   { kind: "other-dodged", re: /^The (.+) barely dodged (.+)'s .+!$/,
     fields: m => ({ monster: m[1], player: m[2] }) },
+  // The same two the other way round: a monster swinging at another player.
+  { kind: "monster-miss-other", re: /^The (.+)'s poorly executed attack misses (.+)!$/,
+    fields: m => ({ monster: m[1], player: m[2] }) },
+  { kind: "other-dodge", re: /^(.+) barely dodged the (.+)'s attack!$/,
+    fields: m => ({ player: m[1], monster: m[2] }) },
+  { kind: "other-spell-heal", re: /^(.+) just discharged .+ at friendly people in the area!$/,
+    fields: m => ({ player: m[1], target: "party" }) },
+  { kind: "other-spell-heal", re: /^(.+) just intoned a .*healing spell for (.+)!$/,
+    fields: m => ({ player: m[1], target: m[2] }) },
 
   // — lifecycle —
   { kind: "our-death", re: /^As the final blow strikes your body you fall unconscious\.$/ },
@@ -404,6 +414,64 @@ const RULES: Rule[] = [
   { kind: "team-msg-in", re: /^From (.+?)(?: \(to group\))?: (.+)$/,
     fields: m => ({ player: m[1], message: m[2] }) },
   { kind: "team-msg-sent", re: /^-- Message sent --$/ },
+  { kind: "team-msg-sent", re: /^-- Message sent only to group --$/ },
+
+  // — gold changing hands. `amount` is what reached or left *us*; a share's
+  //   `total` is what was split. A gift between two other players names no sum.
+  { kind: "gold-share-in", re: /^(.+) just shared (\d+) gold with the group, your share was (\d+) gold\.$/,
+    fields: m => ({ player: m[1], total: +m[2], amount: +m[3] }) },
+  { kind: "gold-share-out", re: /^You shared (\d+) gold with the group, each share was (\d+) gold\.$/,
+    fields: m => ({ total: +m[1], share: +m[2] }) },
+  { kind: "gold-given-in", re: /^(.+) just gave you (\d+) gold coins\.$/,
+    fields: m => ({ player: m[1], amount: +m[2] }) },
+  { kind: "gold-given-out", re: /^You gave (\d+) gold coins to (.+)\.$/,
+    fields: m => ({ amount: +m[1], player: m[2] }) },
+  { kind: "other-gold-given", re: /^(.+) just handed some gold coins to (.+)\.$/,
+    fields: m => ({ player: m[1], to: m[2] }) },
+  { kind: "bank-deposit", re: /^You deposited (\d+) gold in your account\.$/,
+    fields: m => ({ amount: +m[1] }) },
+  { kind: "bank-withdraw", re: /^You withdrew (\d+) gold from your account\.$/,
+    fields: m => ({ amount: +m[1] }) },
+  { kind: "bank-balance", re: /^You currently have (\d+) gold in your account\.$/,
+    fields: m => ({ amount: +m[1] }) },
+  { kind: "sold", re: /^Ok, you sold (?:an? )?(.+) for (\d+) gold crowns\.$/,
+    fields: m => ({ item: m[1], amount: +m[2] }) },
+  { kind: "item-given-in", re: /^(.+) just gave you (?:an? )?(.+)\.$/,
+    fields: m => ({ player: m[1], item: m[2] }) },
+
+  // — groups —
+  { kind: "group-join-asked", re: /^Ok, you've asked to join (.+)'s group\.$/,
+    fields: m => ({ leader: m[1] }) },
+  { kind: "group-joined", re: /^You are now a member of (.+)'s group\.$/,
+    fields: m => ({ leader: m[1] }) },
+  { kind: "group-left", re: /^You are no longer a member of (.+)'s group\.$/,
+    fields: m => ({ leader: m[1] }) },
+  { kind: "group-asking", re: /^(.+) is asking to join (?:your|(.+)'s) group\.$/,
+    fields: m => ({ player: m[1], leader: m[2] ?? "us" }) },
+  { kind: "group-added", re: /^(.+) is now a member of your group\.$/,
+    fields: m => ({ player: m[1], leader: "us" }) },
+  { kind: "group-added", re: /^(.+) has been accepted into (.+)'s group\.$/,
+    fields: m => ({ player: m[1], leader: m[2] }) },
+  { kind: "not-leader", re: /^Sorry, you are not (?:the leader of a group|a member of any group)\.$/ },
+
+  // — a target that isn't here: the kill loop swinging at something already
+  //   dead or gone shows up as these.
+  { kind: "not-here", re: /^Sorry, you don't see "(.+)" nearby\.$/,
+    fields: m => ({ target: m[1] }) },
+
+  // — what other players do —
+  { kind: "other-drink", re: /^(.+) just took a drink of something\.$/,
+    fields: m => ({ player: m[1] }) },
+  { kind: "other-thirsty", re: /^(.+) is looking rather parched\.$/,
+    fields: m => ({ player: m[1] }) },
+  { kind: "other-bought", re: /^(.+) just bought (?:an? )?(.+) from the shopkeeper\.$/,
+    fields: m => ({ player: m[1], item: m[2] }) },
+  { kind: "other-sold", re: /^(.+) just sold (?:an? )?(.+) to the shopkeeper\.$/,
+    fields: m => ({ player: m[1], item: m[2] }) },
+  { kind: "other-pickup", re: /^(.+) just picked up (?:an? )?(.+)\.$/,
+    fields: m => ({ player: m[1], item: m[2] }) },
+  { kind: "other-look", re: /^(.+) is looking (?:to the )?(.+?)(?: over)?\.$/,
+    fields: m => ({ player: m[1], at: m[2] }) },
 
   // — session —
   { kind: "game-enter", re: /^Entering Tele-Arena\.\.\.$/ },
@@ -427,6 +495,9 @@ const RE_COMMAND = new RegExp(
     "ring gong|rest|search|ex|exits|look.*|l .*|l|st|status|i|inv|spells|gr|group",
     "x|y|n",                                  // exit handshake
     "push .+|pull .+|open .+|unlock .+",
+    // groups, gold and talk
+    "confer .+|co .+|share \\d+|sh \\d+|join .+|add .+|remove .+|appoint .+|leave|disband|follow|halt",
+    "give .+|deposit .+|dep .+|withdraw .+|wi .+|say .+|help .+",
     "[a-z-]+-[a-z-]+",                        // baud aliases, e.g. map-print-slug
     // A bare lowercase token: "reroll", or a spell name typed at a prompt
     // ("kusamotumaru"). Game text is capitalized and punctuated, and this is
