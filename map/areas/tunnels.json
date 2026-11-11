@@ -11,7 +11,7 @@
           "to": "tunnels/tunnel-1"
         },
         "s": {
-          "to": "tunnels/tunnel-7"
+          "to": null
         }
       },
       "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and south.",
@@ -830,7 +830,7 @@
       "name": "tunnel",
       "exits": {
         "n": {
-          "to": "tunnels/tunnel"
+          "to": "tunnels/tunnel-29"
         },
         "sw": {
           "to": "tunnels/tunnel-6"
@@ -1131,7 +1131,7 @@
           "to": "tunnels/tunnel-25"
         },
         "s": {
-          "to": null
+          "to": "tunnels/tunnel-31"
         },
         "w": {
           "to": "tunnels/tunnel-23"
@@ -1209,6 +1209,57 @@
       "layout": {
         "x": 8,
         "y": 9
+      }
+    },
+    {
+      "id": "tunnels/tunnel-29",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-30"
+        },
+        "s": {
+          "to": "tunnels/tunnel-7"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and south.",
+      "layout": {
+        "x": 6,
+        "y": 2
+      }
+    },
+    {
+      "id": "tunnels/tunnel-30",
+      "name": "tunnel",
+      "exits": {
+        "ne": {
+          "to": "tunnels/tunnel-31"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-29"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the northeast and southwest.",
+      "layout": {
+        "x": 7,
+        "y": 3
+      }
+    },
+    {
+      "id": "tunnels/tunnel-31",
+      "name": "tunnel",
+      "exits": {
+        "n": {
+          "to": "tunnels/tunnel-24"
+        },
+        "sw": {
+          "to": "tunnels/tunnel-30"
+        }
+      },
+      "description": "This tunnel has been eroded from fossil rich rock. The air is humid and hot. Steam rises from many small holes through the walls and floor. The exits are to the to the north and southwest.",
+      "layout": {
+        "x": 8,
+        "y": 4
       }
     }
   ]

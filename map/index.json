@@ -279,7 +279,7 @@
     {
       "area": "tunnels",
       "name": "The Tunnels",
-      "rooms": 70,
+      "rooms": 73,
       "file": "areas/tunnels.json"
     },
     {

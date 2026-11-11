@@ -14,7 +14,7 @@
           "to": "labyrinth-level-4/labyrinth-399"
         },
         "u": {
-          "to": "labyrinth-level-3/labyrinth-173"
+          "to": "labyrinth-level-3/labyrinth-161"
         },
         "w": {
           "to": "labyrinth-level-4/labyrinth-199"
@@ -205,6 +205,14 @@
         }
       },
       "description": "You are deep inside a winding labyrinth. The walls are smooth and glisten with condensation. A thin layer of mold covers the walls in a deep green film. You notice a lever in a recess in the southern wall. The only exit is to the north. The southern wall bears the following inscription: \"Take from the elements that which is swiftest. Take from those which remain that which shares its origin. Take also the element which consumes it. Combine that which remains with its product. What remains as the result of this union? What shares the qualities of the byproduct of this union, yet binds and pervades them all?",
+      "devices": [
+        {
+          "command": "say ether",
+          "effect": "teleport",
+          "dest": "tunnels/tunnel",
+          "note": "Labyrinth Level 4 [Z], the riddle room. Answered in two parts: \"say cinders\" first (\"Correct... Now complete the riddle to gain passage...\"), then \"say ether\", which moves you and glues the arrival onto the answer: \"As the answer passes your lips, your surroundings fade...You're in a tunnel.\" Lands in tunnel (exits ne,s). say cinders alone does nothing to record. Walked by tower-to-tunnels, pelayo 2026-11-10 (logs/session-pelayo-2026-11-10T07-02-22.log, line 3758)."
+        }
+      ],
       "layout": {
         "x": 1,
         "y": 8
