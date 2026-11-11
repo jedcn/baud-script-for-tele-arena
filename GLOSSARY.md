@@ -20,7 +20,7 @@ One location the game can put you in, identified by an integer id. Its `slug`
 (`stonework-corridor-175`) is the human-typable handle used by every `map-*`
 command; the suffix is a **global** counter, not per-Area, so there is no
 `stonework-corridor-0` just because this Area starts at 175.
-_Avoid_: node, square, cell, tile
+_Avoid_: square, cell, tile; and node, except when talking about the Graph
 
 **Area**:
 A named group of Rooms we chose to draw and verify as a unit — `third-town`,
@@ -59,11 +59,15 @@ other respect — most of its Exits stay inside its own Area.
 
 **Exit**:
 A one-way edge out of a Room in one of ten directions (`n s e w ne nw se sw u
-d`). Exits are stored one-way and are expected to come in reciprocal pairs, so
-`A --se--> B` obliges `B --nw--> A`; a one-directional Exit is a defect, not a
-one-way passage.
-_Avoid_: edge, link, connection, and especially **door** — a Door is a property
-*of* an Exit, not a synonym for one
+d`), and the commonest kind of Edge. Exits are stored one-way and usually come in
+reciprocal pairs, so `A --se--> B` usually means `B --nw--> A` -- but not always.
+The stairs between the labyrinth's Levels 3 and 4 go `labyrinth-173 --d--> 198`,
+and `198 --u-->` lands in `labyrinth-161`, not back in 173 (walked 2026-11-10).
+So a missing or mismatched reverse is a question to settle by walking it, not a
+defect to fix. The mapper writes the reverse of every Exit it walks without
+walking it, and that is how `198 --u--> 173` got into the map.
+_Avoid_: link, connection, and especially **door** — a Door is a property *of* an
+Exit, not a synonym for one
 
 An Exit is topology, and topology survives a Reset. Whether it will admit you
 right now is Device State, and the two come apart: a Sealed Exit is still an
@@ -141,9 +145,11 @@ a one-directional step list and not something you can reverse.
 **Route**:
 A named, hand-written list of steps from one Room to somewhere far away, walked
 by `navigate-to`. Its key is a **label** rather than a destination —
-`town-3/get-ruby-key` names an errand that ends where it began — and it names
-the single Room it starts from, by slug or by Fingerprint, refusing to walk
-unless you are standing there.
+`town-3/get-ruby-key` names an errand that ends where it began. It either names
+the single Room it starts from, by slug or by Fingerprint, and refuses to walk
+unless you are standing there (`town-2`, `town-3/combined`), or it opens with a
+Search to its starting Room (`{ goTo = ... }`) and so starts anywhere the map can
+walk from (`tower-to-tunnels`, `restock-in-first-town`).
 _Avoid_: path, journey, directions, walk (a Route is the written plan, not the
 act of following it)
 
@@ -153,9 +159,16 @@ Room to clear of monsters, a RouteGate, or a Seam check. A Route built from
 a Seam check inserted before each — so every leg stays runnable on its own and no
 direction is transcribed twice.
 
-A Route is never derived from the map: each one is a transcription of a walk that
-actually worked, because the graph is full of Stubs and Doors it cannot reason
-about. The map is read-only while a Route runs.
+A Route's written steps are never derived from the map: each is a transcription of
+a walk that actually worked, because the Graph is full of Stubs and Doors it
+cannot reason about. Where the map *can* be trusted, a Route hands over to a
+Search (`goTo`) instead of writing directions out, and an Anchor after each
+Teleport tells the tracker where the Route has got to. The map is read-only while
+a Route runs.
+
+Most Routes are now **unlisted**: the pieces the long Routes are built from (their
+legs, and the key errands their RouteGates splice in) are left out of the lists
+`navigate-to` prints, though each still walks when typed by name.
 
 **RouteGate**:
 A Route step that Moves through a Door which may or may not be shut, naming the
@@ -171,6 +184,91 @@ are carrying the key, and with a refusal if we are not — and the first two bot
 mean the detour can be skipped. Distinct from a Route's own final `door` field,
 which is a single direction tried on arrival to report whether it could be
 passed, and which fetches nothing.
+
+## Planning a walk
+
+These words describe the map the way `navigate-live` sees it: as a Graph to search.
+They are allowed alongside Room and Exit, for when the question is "is there a way
+from here to there, and what is it?"
+
+**Graph**:
+The map as a set of nodes and directed Edges: every Room is a node, and every
+Edge leads from one Room to another. Directed means one-way: `A --ne--> B` and
+`B --sw--> A` are two Edges, and either can exist without the other.
+_Avoid_: network, mesh
+
+**Edge**:
+One way of getting from one Room to another, labelled with what you do to travel
+it. There are two kinds: an **Exit**, labelled with the direction you type (`ne`),
+and a **Script edge**, labelled with a Route or command and travelled by running
+its steps. "Traveling the Edge A to B" means doing what its label says while
+standing in A, and arriving in B.
+_Avoid_: link, connection
+
+A Room has at most one Exit per direction, so a Room plus a direction picks out a
+single Edge. That is why a list of directions is a walk, but only once you know
+the Room it starts from.
+
+**Script edge** (proposed 2026-11-11, not built):
+An Edge travelled by running steps rather than typing one direction, so that a
+Search can plan across a gap no Exit crosses. It may be one command or hundreds:
+the ferry is `buy passage`; the smoke in `marble-hallway-57` is walking `w` into
+it; the labyrinth riddle is `say cinders` then `say ether`; and the whole labyrinth
+is `tower-to-tunnels`, a Script edge from `marble-hallway-41` to `tunnels/tunnel`.
+Its steps use the same step language as a Route. Every Teleport is one.
+_Avoid_: shortcut, macro, super-edge
+
+Today the ferry is the only one the Graph holds, and only as the Exit-like `passage`
+direction name described under Teleport. A Search crosses it, but the walk sends
+the label (`passage`) rather than the command (`buy passage`). An Edge's label and
+the command it takes are the same for an Exit and need not be for a Script edge.
+
+**Path**:
+A sequence of Edges, each starting in the Room the one before it ended in:
+A → B → C → D is a Path from A to D. Its **length** is the number of Edges, so
+the length counts moves, not time, danger or distance. A Path of length 0 means you
+are already there ("tunnel is 0 steps").
+_Avoid_: route (a Route is a named, written plan; a Path is what a Search finds),
+walk
+
+**Search**:
+Finding the shortest Path from one Room to another in the Graph — breadth-first, so
+"shortest" means fewest Edges (`taPackage.navSearch`, behind `navigate-live` and a
+Route's `goTo` steps). It is exact about the Graph and knows nothing beyond it:
+it trusts every Edge, including ones the mapper inferred and never walked; it
+ignores Seals, Traps and darkness; and it cannot see a Teleport that is not an
+Edge. Every Path failure on 2026-11-10 was the Graph being wrong, not the Search.
+_Avoid_: pathfinding, navigation
+
+Once Script edges exist, Edges stop being equal: a 340-step Script edge would
+count as one Edge and beat a twenty-Exit walk around the same gap. The Search would
+then need a cost per Edge (roughly its step count) and a weighted search in place
+of breadth-first.
+
+**Leg**:
+One stretch of a Route built from others: each Level of the labyrinth is a Leg of
+`tower-to-tunnels`. A Leg is a Route in its own right, so each Leg's start is
+checked at the Seam where it joins, and its steps are written once whatever uses
+them.
+_Avoid_: stage, section, part (`town-3/part-1` is a whole Route, not a Leg)
+
+**Anchor**:
+Telling the tracker which Room you are in, after a move it could not follow:
+`map-here <slug>` by hand, `{ anchor = "<slug>" }` in a Route. Needed after every
+Teleport, because the tracker follows Edges and a Teleport that is not yet an Edge
+is invisible to it.
+_Avoid_: reset, sync
+
+**Prerequisite**:
+Something a walk needs before it sets off. Today there is one kind: a Route's
+`requires` checks the inventory (`town-3/combined` wants a coil of rope and a
+verbena potion) and **refuses** unless you add `anyway`, which walks regardless.
+Two more are proposed with Script edges: a **hard** Prerequisite that makes the
+Edge unavailable to the Search (the ferry's 100-gold fare: "Sorry, you cannot
+afford passage across the great lake!"), and a **warning** that lets you go and
+says what you will regret (under 300 gold, as proposed; the two fares alone
+come to 200).
+_Avoid_: requirement as a field name (`requires` is the field), precondition
 
 ## Identity
 
