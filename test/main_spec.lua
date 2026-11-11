@@ -4217,7 +4217,7 @@ describe("World map triggers", function()
             taPackage.hereState = "known"
             taPackage.here = 1
             helper.mockDbRows = function(sql)
-                if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
                     return { { from_id = 1, direction = "e", to_id = 2 } }
                 elseif string.find(sql, "SELECT r.id FROM rooms r JOIN areas a", 1, true) then
                     return { { id = 2 } }
@@ -21680,7 +21680,7 @@ describe("navigate-live", function()
     --                     3 --s--> 5
     local function stubGraph(areaIds)
         helper.mockDbRows = function(sql)
-            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
                 return {
                     { from_id = 1, direction = "e", to_id = 2 },
                     { from_id = 2, direction = "w", to_id = 1 },
@@ -21900,7 +21900,7 @@ describe("navigate-live", function()
             stubGraph({ { id = 4 } })
             helper.mockDbOneRow = function(sql, params)
                 if string.find(sql, "SELECT to_id FROM room_exits", 1, true) then
-                    for _, row in ipairs(helper.mockDbRows("SELECT from_id, direction, to_id FROM room_exits")) do
+                    for _, row in ipairs(helper.mockDbRows("SELECT from_id, direction, to_id, lock_door")) do
                         if row.from_id == params[1] and row.direction == params[2] then
                             return { to_id = row.to_id }
                         end
@@ -21992,7 +21992,7 @@ describe("navigate-live across a Script edge", function()
     -- and the map's own `passage` pair between 2 and 3.
     local function ferryGraph()
         helper.mockDbRows = function(sql, params)
-            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
                 return {
                     { from_id = 1, direction = "n", to_id = 2 },
                     { from_id = 2, direction = "s", to_id = 1 },
@@ -22041,6 +22041,40 @@ describe("navigate-live across a Script edge", function()
         helper.simulateAlias("navigate-live north-plaza-1 directions-only")
         assert.is_truthy(said():find("north-plaza-1 is 3 steps: n [ferry-to-second-town] nw", 1, true))
         assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("says nothing about doors when the way crosses none", function()
+        ferryGraph()
+        helper.simulateAlias("navigate-live north-plaza-1 anyway")
+        assert.is_falsy(said():find("levers, keys or doors", 1, true))
+        assert.is_falsy(said():find("goes through", 1, true))
+    end)
+
+    it("names a door or a Seal the searched part of the way walks through", function()
+        helper.mockDbRows = function(sql)
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
+                return {
+                    { from_id = 1, direction = "n", to_id = 2, lock_door = "bronze", lock_key = "bronze" },
+                    { from_id = 2, direction = "e", to_id = 3, sealed_by = 7 },
+                    { from_id = 3, direction = "e", to_id = 4 },
+                }
+            end
+            return {}
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "SELECT id, name, area_id", 1, true) and params[1] == "goal" then
+                return { id = 4, name = "goal" }
+            end
+            return nil
+        end
+        taPackage.hereState, taPackage.here = "known", 1
+        local path, _, _, gated = taPackage.navSearch(1, function(id) return id == 4 end)
+        assert.are.same({ "n", "e", "e" }, path)
+        assert.are.equal(2, #gated)
+        helper.simulateAlias("navigate-live goal anyway")
+        assert.is_truthy(said():find("n (bronze door, bronze key)", 1, true))
+        assert.is_truthy(said():find("e (sealed)", 1, true))
+        assert.is_truthy(said():find("this walk won't unlock or open anything there", 1, true))
     end)
 
     it("leaves the ferry out of the route lists", function()
@@ -22199,7 +22233,7 @@ describe("restock-in-first-town", function()
         helper.resetAll()
         dofile("main.lua")
         helper.mockDbRows = function(sql)
-            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
                 return {
                     { from_id = 1, direction = "n", to_id = 5 },
                 }
@@ -22385,7 +22419,7 @@ describe("navigate-to with goTo and anchor steps", function()
         helper.resetAll()
         dofile("main.lua")
         helper.mockDbRows = function(sql)
-            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
                 return {
                     { from_id = 1, direction = "e", to_id = 89 },
                     { from_id = 89, direction = "w", to_id = 1 },

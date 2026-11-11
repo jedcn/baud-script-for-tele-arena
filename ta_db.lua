@@ -722,7 +722,8 @@ end
 -- into one per room visited -- a thousand of them on a world this size.
 function TaDb.allExits()
     return db:query(
-        "SELECT from_id, direction, to_id FROM room_exits WHERE to_id IS NOT NULL") or {}
+        "SELECT from_id, direction, to_id, lock_door, lock_key, sealed_by"
+        .. " FROM room_exits WHERE to_id IS NOT NULL") or {}
 end
 
 -- Every room id in an area, for a search that wants to stop at the first room of

@@ -4165,9 +4165,10 @@ function taPackage.navPathText(path)
 end
 
 -- Breadth-first search of the walked graph from `fromId` to the first room
--- `isGoal` accepts. Returns the directions to send, the room reached, and the
--- rooms walked into on the way (the last of them the room reached); or nil when
--- nothing connects. A taPackage field rather than a local: ta_nav.lua has
+-- `isGoal` accepts. Returns the directions to send, the room reached, the
+-- rooms walked into on the way (the last of them the room reached), and the
+-- Exits on the way the map marks as a door or a Seal; or nil when nothing
+-- connects. A taPackage field rather than a local: ta_nav.lua has
 -- its own 200-local budget and this is the cheap way to spend none of it.
 --
 -- The Graph is the compass Exits plus the Script edges. An Exit under any other
@@ -4204,15 +4205,17 @@ function taPackage.navSearch(fromId, isGoal)
         head = head + 1
         for _, e in ipairs(nbr[id] or {}) do
             if cameFrom[e.to_id] == nil then
-                cameFrom[e.to_id] = { from = id, dir = e.direction }
+                cameFrom[e.to_id] = { from = id, dir = e.direction, edge = e }
                 if isGoal(e.to_id) then
-                    local steps, rooms, cur = {}, {}, e.to_id
+                    local steps, rooms, gated, cur = {}, {}, {}, e.to_id
                     while cameFrom[cur] do
+                        local c = cameFrom[cur].edge
                         table.insert(steps, 1, cameFrom[cur].dir)
                         table.insert(rooms, 1, cur)
+                        if c.lock_door or c.sealed_by then table.insert(gated, 1, c) end
                         cur = cameFrom[cur].from
                     end
-                    return steps, e.to_id, rooms
+                    return steps, e.to_id, rooms, gated
                 end
                 queue[#queue + 1] = e.to_id
             end
@@ -4262,7 +4265,7 @@ createAlias("^navigate-live (.+)$", function(matches)
         navEcho("No area or room called " .. arg .. ". `map-list-areas` lists the areas.")
         return
     end
-    local path, reached, rooms = taPackage.navSearch(taPackage.here, isGoal)
+    local path, reached, rooms, gated = taPackage.navSearch(taPackage.here, isGoal)
     if not path then
         navEcho("Nothing walked connects "
             .. (taPackage.db.roomRef(taPackage.here) or ("#" .. tostring(taPackage.here)))
@@ -4275,8 +4278,20 @@ createAlias("^navigate-live (.+)$", function(matches)
     end
     navEcho(label .. " is " .. #path .. " steps: " .. taPackage.navPathText(path))
     if justSay then return end
-    navEcho("Nothing here knows about levers, keys or doors -- if the way needs"
-        .. " one, use navigate-to instead.")
+    -- A Script edge brings its own levers, keys and doors. The searched part
+    -- doesn't: it walks an Exit the map marks as a door or a Seal like any
+    -- other, so name each one rather than warn about all walks.
+    if gated and #gated > 0 then
+        local names = {}
+        for _, e in ipairs(gated) do
+            local what = e.sealed_by and "sealed" or ((e.lock_door or "a") .. " door"
+                .. (e.lock_key and (", " .. e.lock_key .. " key") or ""))
+            names[#names + 1] = (taPackage.db.roomRef(e.from_id) or ("#" .. tostring(e.from_id)))
+                .. " " .. e.direction .. " (" .. what .. ")"
+        end
+        navEcho("The way goes through " .. table.concat(names, "; ")
+            .. " -- this walk won't unlock or open anything there.", "yellow")
+    end
     local steps, edges = taPackage.navExpandPath(path)
     -- `climbOutOfPits`: the map records a trap door's fall as a `d` edge, but
     -- the search walks straight through the trap room, so this route has no
