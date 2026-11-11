@@ -1702,7 +1702,9 @@ end
 -- dozen names were a wall to read. A prefix with only one route under it stays
 -- on one line (`town-1/somewhere`): a heading over a single entry is more
 -- lines, not more clarity.
-function taPackage.navRouteListLines(names)
+--
+-- `suffix`, if given, maps a route name to text for the end of its line, or nil.
+function taPackage.navRouteListLines(names, suffix)
     local sorted = {}
     for i, name in ipairs(names) do sorted[i] = name end
     table.sort(sorted)
@@ -1724,6 +1726,8 @@ function taPackage.navRouteListLines(names)
             lines[#lines + 1] = "  " .. name
             heading = nil
         end
+        local extra = suffix and suffix(name)
+        if extra then lines[#lines] = lines[#lines] .. " " .. extra end
     end
     return lines
 end
@@ -3165,7 +3169,15 @@ createAlias("^navigate-to (.+)$", function(matches)
         -- Plain echo, not navEcho: a `[nav] ` on every line of the list is
         -- noise, and the list is no use in an and-exit push notification.
         echo("")
-        for _, line in ipairs(taPackage.navRouteListLines(known)) do echo(line) end
+        -- A route that works a day-long device takes path-already-walked-today
+        -- after the first walk, and the list is where you go to remember that.
+        local function optional(name)
+            local steps = taPackage.navRouteSteps(NAV_ROUTES[name])
+            if steps and taPackage.navFirstWalkSteps(steps) > 0 then
+                return "[path-already-walked-today]"
+            end
+        end
+        for _, line in ipairs(taPackage.navRouteListLines(known, optional)) do echo(line) end
         return
     end
     -- A name we've agreed on but haven't been given the way to yet. Saying so

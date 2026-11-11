@@ -16651,6 +16651,13 @@ describe("navigate-to", function()
             end
         end)
 
+        it("marks the routes that take path-already-walked-today", function()
+            helper.simulateAlias("navigate-to nowhere/at-all")
+            local out = lastEchoes() .. "\n"
+            assert.is_truthy(out:find("\n  tower-to-tunnels [path-already-walked-today]\n", 1, true))
+            assert.is_truthy(out:find("\n  tunnels-to-tower\n", 1, true))
+        end)
+
         it("still walks a leg typed by name", function()
             helper.simulateAlias("navigate-to start-of-labrynth-level-3")
             assert.is_falsy(lastEchoes():find("I don't know a route", 1, true))
