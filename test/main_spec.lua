@@ -16571,7 +16571,7 @@ describe("navigate-to", function()
         it("lists every route without sending anything", function()
             helper.simulateAlias("navigate-to")
             local out = lastEchoes()
-            assert.is_truthy(out:find("end-of-labrynth-level-2", 1, true))
+            assert.is_truthy(out:find("tower-to-tunnels", 1, true))
             assert.is_truthy(out:find("town-3/hydra", 1, true))
             assert.is_truthy(out:find("town-2", 1, true))
             assert.are.equal(0, #helper.sendCalls)
@@ -16580,9 +16580,13 @@ describe("navigate-to", function()
 
         -- The things you want to know before typing one of them.
         it("says how long each is, and what would surprise you", function()
+            -- Level 2 of the labyrinth, the one dark route, is a leg now and
+            -- left out of the list, so the spec brings its own.
+            taPackage.navRoutes["test-dark"] = { dark = true, steps = { "n", "e" } }
             helper.simulateAlias("navigate-to")
+            taPackage.navRoutes["test-dark"] = nil
             local out = lastEchoes()
-            assert.is_truthy(out:find("100 steps, dark", 1, true))
+            assert.is_truthy(out:find("2 steps, dark", 1, true))
             assert.is_truthy(out:find("needs a coil of rope", 1, true))
             assert.is_truthy(out:find("path-already-walked-today after the first walk", 1, true))
             assert.is_truthy(out:find("variants: chasm-is-clear", 1, true))
@@ -16625,6 +16629,31 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find("\n  town-3/\n", 1, true))
             assert.is_truthy(lastEchoes():find("\n    ruby-door\n", 1, true))
             assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- Nobody walks one level of the labyrinth on its own: the lists offer
+        -- the two through-routes and leave out the legs they are built from.
+        it("leaves the labyrinth's legs out of both lists", function()
+            local legs = { "tower-to-labrynth", "start-of-labrynth-to-beginning-of-level-2",
+                           "end-of-labrynth-level-2", "end-of-labrynth-level-3",
+                           "labrynth-level-4-to-tunnels", "tunnels-to-labrynth-level-4",
+                           "start-of-labrynth-level-3", "start-of-labrynth-level-2",
+                           "labrynth-level-1-to-tower" }
+            for _, alias in ipairs({ "navigate-to nowhere/at-all", "navigate-to" }) do
+                helper.echoCalls = {}
+                helper.simulateAlias(alias)
+                local out = table.concat(helper.echoCalls, "\n") .. "\n"
+                assert.is_truthy(out:find("tower-to-tunnels", 1, true), alias)
+                assert.is_truthy(out:find("tunnels-to-tower", 1, true), alias)
+                for _, leg in ipairs(legs) do
+                    assert.is_falsy(out:find(leg .. "%s"), alias .. " lists " .. leg)
+                end
+            end
+        end)
+
+        it("still walks a leg typed by name", function()
+            helper.simulateAlias("navigate-to start-of-labrynth-level-3")
+            assert.is_falsy(lastEchoes():find("I don't know a route", 1, true))
         end)
 
         it("lists known routes one per line, grouped under a shared prefix", function()
@@ -22179,18 +22208,6 @@ describe("navigate-to with goTo and anchor steps", function()
         assert.is_nil(taPackage.navigate)
         assert.is_truthy(table.concat(helper.echoCalls, "\n")
             :find("Arrived at start-of-labrynth-to-beginning-of-level-2", 1, true))
-    end)
-
-    it("goes straight to the stairs with no-pull-levers", function()
-        start("navigate-to start-of-labrynth-to-beginning-of-level-2 no-pull-levers")
-        pace(1)
-        for _ = 1, 3 do
-            arrive()
-            pace(1)
-        end
-        arrive()
-        assert.are.same({ "e", "e", "e", "d" }, walked())
-        assert.is_nil(taPackage.navigate)
     end)
 
     it("stops rather than search when the tracker has lost you", function()

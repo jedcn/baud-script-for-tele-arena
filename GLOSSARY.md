@@ -337,7 +337,7 @@ name — it is the property, not the kind of thing
 A Device that reverses itself: first use opens the Seal, second shuts it, third
 opens it again. The lever at the end of the dark labyrinth's third Level is one,
 which is why only the first character through pulls it and everyone after walks
-`navigate-to end-of-labrynth-level-3 path-already-walked-today`.
+`navigate-to tower-to-tunnels path-already-walked-today`.
 _Avoid_: switch, flip-flop, momentary
 
 Both kinds hold state, so this is not a stateful/stateless distinction and a

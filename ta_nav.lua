@@ -924,10 +924,9 @@ local NAV_ROUTES = {
 -- without one, the goTo after it would search from the room the walk began in.
 --
 -- The levers toggle, like every lever in the labyrinth: only the first
--- character through today should pull them. Everyone after that takes the
--- `no-pull-levers` variant, which skips both lever rooms and goes straight to
--- the stairs. (Inside tower-to-tunnels, `path-already-walked-today` walks to
--- both lever rooms and leaves the levers alone.)
+-- character through today should pull them. Everyone after that walks
+-- tower-to-tunnels with `path-already-walked-today`, which still walks to both
+-- lever rooms and leaves the levers alone.
 NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
     to       = { room = "labyrinth" },
     steps    = { { goTo = "labyrinth-89" },
@@ -938,9 +937,6 @@ NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
                  { anchor = "labyrinth-93" },
                  { goTo = "labyrinth-94" },
                  "d" },
-    variants = {
-        ["no-pull-levers"] = { keep = 0, steps = { { goTo = "labyrinth-94" }, "d" } },
-    },
 }
 
 -- From wherever the map knows you are: train, bank the purse, then make the
@@ -1215,6 +1211,32 @@ NAV_ROUTES["tunnels-to-tower"] = {
              "start-of-labrynth-level-2",
              "labrynth-level-1-to-tower" },
 }
+
+-- The labyrinth's pieces, which nobody walks on their own: what you want is to
+-- get through the labyrinth, not onto one of its levels. They stay routes
+-- because the through-routes are built from them -- each one's `from` is the
+-- seam check where it joins, and Level 2's way back is derived from its way
+-- down -- but the route lists leave them out, so there are three labyrinth
+-- commands to remember: tower-to-tunnels (with path-already-walked-today after
+-- the day's first walk) and tunnels-to-tower. Typed by name, one still walks.
+for _, name in ipairs({ "tower-to-labrynth",
+                        "start-of-labrynth-to-beginning-of-level-2",
+                        "end-of-labrynth-level-2", "end-of-labrynth-level-3",
+                        "labrynth-level-4-to-tunnels",
+                        "tunnels-to-labrynth-level-4",
+                        "start-of-labrynth-level-3", "start-of-labrynth-level-2",
+                        "labrynth-level-1-to-tower" }) do
+    NAV_ROUTES[name].leg = true
+end
+
+-- The names the route lists offer: every route but the legs above.
+local function navListedNames()
+    local names = {}
+    for name, r in pairs(NAV_ROUTES) do
+        if not r.leg then names[#names + 1] = name end
+    end
+    return names
+end
 
 -- Exposed so tests can register a route without editing the table above.
 taPackage.navRoutes = NAV_ROUTES
@@ -3009,8 +3031,7 @@ end
 -- in the pack, or which will shut a door behind you if you walk it twice. Those
 -- are the things you actually want to know before typing one.
 local function navListRoutes()
-    local names = {}
-    for name in pairs(NAV_ROUTES) do names[#names + 1] = name end
+    local names = navListedNames()
     table.sort(names)
     -- Two names for ONE route table -- town-3/part-1 is town-3/after-doors, not
     -- a copy of it -- is deliberate in the table above. A listing that showed
@@ -3135,8 +3156,7 @@ createAlias("^navigate-to (.+)$", function(matches)
     end
     local route = NAV_ROUTES[destination]
     if not route then
-        local known = {}
-        for name in pairs(NAV_ROUTES) do known[#known + 1] = name end
+        local known = navListedNames()
         if #known == 0 then
             navEcho("I don't know a route to '" .. destination .. "'. No routes are recorded yet.")
             return
