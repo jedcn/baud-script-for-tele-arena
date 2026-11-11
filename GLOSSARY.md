@@ -209,7 +209,7 @@ A Room has at most one Exit per direction, so a Room plus a direction picks out 
 single Edge. That is why a list of directions is a walk, but only once you know
 the Room it starts from.
 
-**Script edge** (proposed 2026-11-11, not built):
+**Script edge**:
 An Edge travelled by running steps rather than typing one direction, so that a
 Search can plan across a gap no Exit crosses. It may be one command or hundreds:
 the ferry is `buy passage`; the smoke in `marble-hallway-57` is walking `w` into
@@ -218,10 +218,13 @@ is `tower-to-tunnels`, a Script edge from `marble-hallway-41` to `tunnels/tunnel
 Its steps use the same step language as a Route. Every Teleport is one.
 _Avoid_: shortcut, macro, super-edge
 
-Today the ferry is the only one the Graph holds, and only as the Exit-like `passage`
-direction name described under Teleport. A Search crosses it, but the walk sends
-the label (`passage`) rather than the command (`buy passage`). An Edge's label and
-the command it takes are the same for an Exit and need not be for a Script edge.
+In the code a Script edge is a Route marked `edge = true` whose ends are both
+Rooms on the map. The ferry is the first (2026-11-11): `ferry-to-second-town` and
+`ferry-to-first-town`, each `buy passage` and an Anchor. The Search uses them in
+place of the map's `passage` Exits, which stay for the tracker and the mapper:
+an Edge's label and the command it takes are the same for an Exit and need not be
+for a Script edge, and the game does not take `passage`. The smoke, the riddle and
+the labyrinth are not Script edges yet.
 
 **Path**:
 A sequence of Edges, each starting in the Room the one before it ended in:
@@ -260,14 +263,15 @@ is invisible to it.
 _Avoid_: reset, sync
 
 **Prerequisite**:
-Something a walk needs before it sets off. Today there is one kind: a Route's
-`requires` checks the inventory (`town-3/combined` wants a coil of rope and a
-verbena potion) and **refuses** unless you add `anyway`, which walks regardless.
-Two more are proposed with Script edges: a **hard** Prerequisite that makes the
-Edge unavailable to the Search (the ferry's 100-gold fare: "Sorry, you cannot
-afford passage across the great lake!"), and a **warning** that lets you go and
-says what you will regret (under 300 gold, as proposed; the two fares alone
-come to 200).
+Something a walk needs before it sets off, checked before the first step and
+skipped with `anyway`. A Route's `requires` checks the inventory
+(`town-3/combined` wants a coil of rope and a verbena potion). A Script edge can
+carry `requires` too, and three more, which `navigate-live` checks for every
+Script edge on the Path at once: `needsGold` and `needsRune` **refuse** (the
+ferry's 100-gold fare -- "Sorry, you cannot afford passage across the great
+lake!" -- and a character whose sheet says `Rune: None`), and `warnGold` is a
+**warning** that lets you go and says what you will regret (under 300 gold for
+the ferry, enough to come back too).
 _Avoid_: requirement as a field name (`requires` is the field), precondition
 
 ## Identity
