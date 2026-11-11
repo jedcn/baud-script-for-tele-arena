@@ -142,6 +142,10 @@ createTrigger("^Class:\\s+(.+)$", function(matches)
     taPackage.character.setClass(matches[2])
 end, { type = "regex" })
 
+createTrigger("^Rune:\\s+(.+)$", function(matches)
+    taPackage.character.setRune(matches[2])
+end, { type = "regex" })
+
 createTrigger("^Weapon:\\s+(.+)$", function(matches)
     taPackage.character.setWeapon(matches[2])
 end, { type = "regex" })

@@ -1212,6 +1212,47 @@ NAV_ROUTES["tunnels-to-tower"] = {
              "labrynth-level-1-to-tower" },
 }
 
+-- =========================================================================
+-- Script edges
+-- =========================================================================
+--
+-- A Script edge (GLOSSARY.md) is an Edge of the map that is travelled by
+-- running steps instead of typing one direction, so that a Search can plan
+-- across a gap no Exit crosses. Here it is a route marked `edge = true` whose
+-- `from` and `to` are both rooms on the map: navSearch adds it to the graph,
+-- and a Path that crosses it runs its steps.
+--
+-- Its prerequisites are checked by navigate-live before the walk sets off,
+-- for every Script edge on the Path at once, and `anyway` skips them:
+--
+--   requires   items to carry, as for any route
+--   needsGold  refuse without this much gold in hand
+--   warnGold   go, but say so, below this much
+--   needsRune  refuse a character whose sheet says `Rune: None`
+--
+-- The great-lake ferry between the first and second towns' docks. The map
+-- has always held it as a pair of `passage` exits, which the tracker and the
+-- mapper still use to follow a crossing; the Search uses these instead,
+-- because the label `passage` is not a command and `buy passage` is. It costs
+-- 100 gold ("Sorry, you cannot afford passage across the great lake!" without
+-- it), 300 is enough to get back again with something to spare, and the
+-- captains won't take a character who has no Rune.
+local NAV_FERRY = { needsGold = 100, warnGold = 300, needsRune = true }
+for _, crossing in ipairs({ { "ferry-to-second-town", "first-town/docks", "second-town/docks-1" },
+                            { "ferry-to-first-town", "second-town/docks-1", "first-town/docks" } }) do
+    local name, from, to = crossing[1], crossing[2], crossing[3]
+    NAV_ROUTES[name] = {
+        edge      = true,
+        unlisted  = true,
+        from      = from,
+        to        = to,
+        needsGold = NAV_FERRY.needsGold,
+        warnGold  = NAV_FERRY.warnGold,
+        needsRune = NAV_FERRY.needsRune,
+        steps     = { { cmd = "buy passage" }, { anchor = to:match("[^/]+$") } },
+    }
+end
+
 -- The pieces the long routes are built from, which nobody walks on their own:
 -- what you want is to get through the labyrinth or down to third town, not
 -- onto one of the levels on the way. They stay routes because the long ones
@@ -1966,8 +2007,12 @@ local function navGoTo(slug)
             or ("No room called " .. slug .. " on this map — stopping."))
         return
     end
-    navEcho(label .. " is " .. #steps .. " steps: " .. table.concat(steps, " "))
-    for i, dir in ipairs(steps) do table.insert(j.steps, j.index + i, dir) end
+    navEcho(label .. " is " .. #steps .. " steps: " .. taPackage.navPathText(steps))
+    -- A Script edge on the way is walked as its steps. Its prerequisites are
+    -- not checked here, mid-route: navigate-live checks them before setting
+    -- off, and a written route that needs them says so in `requires`.
+    local walk = taPackage.navExpandPath(steps)
+    for i, step in ipairs(walk) do table.insert(j.steps, j.index + i, step) end
     navAdvance()
 end
 
@@ -2866,7 +2911,7 @@ local function navInventoryFinish()
         if not text:find(item:lower(), 1, true) then missing[#missing + 1] = item end
     end
     if #missing == 0 then
-        inv.onOk()
+        inv.onOk(inv.text)
         return
     end
     navExitBeforeWalk()
@@ -4067,18 +4112,62 @@ createTrigger("^An? (.+) has just arrived from below\\.$",
 -- walks exits that somebody has already walked, and that is all. Where a written
 -- route exists, prefer it.
 
+-- A Path from navSearch as steps to walk: each Script edge on it replaced by
+-- its route's steps. Also returns the Script edges' route names, in order.
+function taPackage.navExpandPath(path)
+    local steps, edges = {}, {}
+    for _, step in ipairs(path) do
+        if type(step) == "table" and step.scriptEdge then
+            edges[#edges + 1] = step.scriptEdge
+            for _, s in ipairs(NAV_ROUTES[step.scriptEdge].steps) do steps[#steps + 1] = s end
+        else
+            steps[#steps + 1] = step
+        end
+    end
+    return steps, edges
+end
+
+-- A Path as it is printed: directions, and a Script edge by its route's name.
+function taPackage.navPathText(path)
+    local out = {}
+    for _, step in ipairs(path) do
+        out[#out + 1] = (type(step) == "table" and step.scriptEdge)
+            and ("[" .. step.scriptEdge .. "]") or tostring(step)
+    end
+    return table.concat(out, " ")
+end
+
 -- Breadth-first search of the walked graph from `fromId` to the first room
 -- `isGoal` accepts. Returns the directions to send, the room reached, and the
 -- rooms walked into on the way (the last of them the room reached); or nil when
 -- nothing connects. A taPackage field rather than a local: ta_nav.lua has
 -- its own 200-local budget and this is the cheap way to spend none of it.
+--
+-- The Graph is the compass Exits plus the Script edges. An Exit under any other
+-- name -- the ferry's `passage` is the one there is -- is left out: its label
+-- is not something the game will take as a command, and the Script edge that
+-- crosses the same gap says what to send. A Script edge comes back in the
+-- steps as `{ scriptEdge = <route name> }`; navExpandPath turns it into the
+-- route's own steps.
+local NAV_COMPASS = { n = true, s = true, e = true, w = true, ne = true, nw = true,
+                      se = true, sw = true, u = true, d = true }
+
 function taPackage.navSearch(fromId, isGoal)
     if isGoal(fromId) then return {}, fromId, {} end
     local nbr = {}
-    for _, e in ipairs(taPackage.db.allExits()) do
+    local function add(e)
         local list = nbr[e.from_id]
         if not list then list = {}; nbr[e.from_id] = list end
         list[#list + 1] = e
+    end
+    for _, e in ipairs(taPackage.db.allExits()) do
+        if NAV_COMPASS[e.direction] then add(e) end
+    end
+    for name, r in pairs(NAV_ROUTES) do
+        if r.edge then
+            local a, b = navResolveRef(r.from), navResolveRef(r.to)
+            if a and b then add({ from_id = a.id, to_id = b.id, direction = { scriptEdge = name } }) end
+        end
     end
     -- `false` rather than nil for the start, so "have I seen this room" stays a
     -- nil test while the start still terminates the walk back.
@@ -4126,6 +4215,11 @@ end
 
 createAlias("^navigate-live (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
+    -- `anyway`: set off without checking what the way needs (a rope for a trap
+    -- door, and whatever its Script edges need), as navigate-to's `anyway` does.
+    local anyway = false
+    local rest = arg:match("^(.-)%s+anyway$")
+    if rest then arg, anyway = rest, true end
     local justSay = arg:match("^(.-)%s+directions%-only$")
     if justSay then arg = justSay end
     -- The search starts from where the tracker says we are, and it says "lost"
@@ -4141,21 +4235,22 @@ createAlias("^navigate-live (.+)$", function(matches)
         navEcho("No area or room called " .. arg .. ". `map-list-areas` lists the areas.")
         return
     end
-    local steps, reached, rooms = taPackage.navSearch(taPackage.here, isGoal)
-    if not steps then
+    local path, reached, rooms = taPackage.navSearch(taPackage.here, isGoal)
+    if not path then
         navEcho("Nothing walked connects "
             .. (taPackage.db.roomRef(taPackage.here) or ("#" .. tostring(taPackage.here)))
             .. " to " .. label .. ". Some of the way there is still unmapped.")
         return
     end
-    if #steps == 0 then
+    if #path == 0 then
         navEcho("You're already in " .. label .. ".")
         return
     end
-    navEcho(label .. " is " .. #steps .. " steps: " .. table.concat(steps, " "))
+    navEcho(label .. " is " .. #path .. " steps: " .. taPackage.navPathText(path))
     if justSay then return end
     navEcho("Nothing here knows about levers, keys or doors -- if the way needs"
         .. " one, use navigate-to instead.")
+    local steps, edges = taPackage.navExpandPath(path)
     -- `climbOutOfPits`: the map records a trap door's fall as a `d` edge, but
     -- the search walks straight through the trap room, so this route has no
     -- climb out of the pit. The walk adds one if the floor gives way (see the
@@ -4164,17 +4259,79 @@ createAlias("^navigate-live (.+)$", function(matches)
         navStart("live:" .. label, { steps = steps, announceSteps = true, climbOutOfPits = true },
             nil, nil, reached, false, nil, nil, nil)
     end
-    -- The pit's walls can't be climbed unaided, so a way through a trap door
-    -- needs a rope, the same as the written routes through one.
+
+    -- What the way needs, gathered before a step is taken: the pit's walls
+    -- can't be climbed unaided, so a way through a trap door needs a rope, the
+    -- same as the written routes through one; and each Script edge brings its
+    -- own prerequisites (see "Script edges").
+    local wants, wantSeen, why = {}, {}, {}
+    local function want(item, because)
+        if not wantSeen[item] then
+            wantSeen[item] = true
+            wants[#wants + 1] = item
+        end
+        why[#why + 1] = because
+    end
     local traps = taPackage.db.roomIdsWithTrap("trap door")
     for _, id in ipairs(rooms) do
         if traps[id] then
-            local gen = (taPackage.navGen or 0) + 1
-            taPackage.navGen = gen
-            navCheckInventory("coil of rope", gen, go, "This route (it crosses the trap door in "
-                .. (taPackage.db.roomRef(id) or ("#" .. tostring(id))) .. ")")
+            want("coil of rope", "the trap door in "
+                .. (taPackage.db.roomRef(id) or ("#" .. tostring(id))))
+            break
+        end
+    end
+    local needGold, warnGold, runeFor = 0, 0, nil
+    for _, name in ipairs(edges) do
+        local r = NAV_ROUTES[name]
+        for _, item in ipairs(r.requires and taPackage.navWanted(r.requires) or {}) do
+            want(item, name)
+        end
+        needGold = needGold + (r.needsGold or 0)
+        warnGold = math.max(warnGold, r.warnGold or 0)
+        if r.needsRune and not runeFor then runeFor = name end
+    end
+    if #wants == 0 and needGold == 0 and not runeFor then
+        go()
+        return
+    end
+    if anyway then
+        navEcho("Setting off without checking what the way needs -- you asked for it anyway.")
+        go()
+        return
+    end
+    local again = "`navigate-live " .. arg .. " anyway` to go regardless."
+    -- The Rune is read off the character sheet, which costs no traffic.
+    if runeFor then
+        local rune = taPackage.character.getRune()
+        if rune == nil then
+            navEcho("The way to " .. label .. " takes " .. runeFor .. ", which won't take a"
+                .. " character with no Rune, and I haven't seen this character's sheet."
+                .. " `st`, then try again -- or " .. again, "red")
+            return
+        end
+        if rune == "None" then
+            navEcho("The way to " .. label .. " takes " .. runeFor .. ", which won't take a"
+                .. " character with no Rune, and this one has none -- not setting off. "
+                .. again, "red")
             return
         end
     end
-    go()
+    local gen = (taPackage.navGen or 0) + 1
+    taPackage.navGen = gen
+    navCheckInventory(wants, gen, function(text)
+        -- Read off the listing just taken, not a running total: "You are carrying
+        -- a heartstone, ..." with no gold in it is nothing, and moves no counter.
+        local gold = tonumber((text or ""):match("^(%d+) gold crowns")) or 0
+        if gold < needGold then
+            navEcho("The way to " .. label .. " costs " .. needGold .. " gold ("
+                .. table.concat(edges, ", ") .. ") and I'm carrying " .. gold
+                .. " -- not setting off. " .. again, "red")
+            return
+        end
+        if gold < warnGold then
+            navEcho("Careful: I'm carrying " .. gold .. " gold, and " .. table.concat(edges, ", ")
+                .. " is better with at least " .. warnGold .. " -- enough to come back too.")
+        end
+        go()
+    end, "This route (for " .. table.concat(why, ", ") .. ")")
 end, { type = "regex" })

@@ -21975,6 +21975,162 @@ describe("navigate-live", function()
 
 end)
 
+-- The ferry as a Script edge. A Search across the great lake used to come back
+-- `n n passage nw nw n n`, and `passage` is not a command the game takes; the
+-- way across is `buy passage`, and it has prerequisites: 100 gold, a Rune, and
+-- (as a warning) enough gold to come back.
+describe("navigate-live across a Script edge", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    -- first-town (area 10): 1 north plaza --n--> 2 docks
+    -- second-town (area 20): 3 docks-1 --nw--> 4 north-plaza-1
+    -- and the map's own `passage` pair between 2 and 3.
+    local function ferryGraph()
+        helper.mockDbRows = function(sql, params)
+            if string.find(sql, "SELECT from_id, direction, to_id FROM room_exits", 1, true) then
+                return {
+                    { from_id = 1, direction = "n", to_id = 2 },
+                    { from_id = 2, direction = "s", to_id = 1 },
+                    { from_id = 2, direction = "passage", to_id = 3 },
+                    { from_id = 3, direction = "passage", to_id = 2 },
+                    { from_id = 3, direction = "nw", to_id = 4 },
+                    { from_id = 4, direction = "se", to_id = 3 },
+                }
+            elseif string.find(sql, "SELECT id, slug, name FROM rooms WHERE area_id", 1, true) then
+                if params[1] == 10 then return { { id = 2, slug = "docks", name = "docks" } } end
+                if params[1] == 20 then return { { id = 3, slug = "docks-1", name = "docks" } } end
+            end
+            return {}
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "SELECT id FROM areas WHERE slug", 1, true) then
+                if params[1] == "first-town" then return { id = 10 } end
+                if params[1] == "second-town" then return { id = 20 } end
+            elseif string.find(sql, "SELECT id, name, area_id", 1, true) then
+                if params[1] == "north-plaza-1" then return { id = 4, name = "north plaza" } end
+                if params[1] == "docks-1" then return { id = 3, name = "docks" } end
+            end
+            return nil
+        end
+        taPackage.hereState, taPackage.here = "known", 1
+    end
+
+    local function said() return table.concat(helper.echoCalls, "\n") end
+
+    local function sent(cmd)
+        local n = 0
+        for _, c in ipairs(helper.sendCalls) do if c == cmd then n = n + 1 end end
+        return n
+    end
+
+    it("crosses by the Script edge, not the passage exit", function()
+        ferryGraph()
+        local path = taPackage.navSearch(1, function(id) return id == 4 end)
+        assert.are.same({ "n", { scriptEdge = "ferry-to-second-town" }, "nw" }, path)
+        assert.are.same({ "n", { cmd = "buy passage" }, { anchor = "docks-1" }, "nw" },
+            (taPackage.navExpandPath(path)))
+    end)
+
+    it("names the Script edge in the directions it prints", function()
+        ferryGraph()
+        helper.simulateAlias("navigate-live north-plaza-1 directions-only")
+        assert.is_truthy(said():find("north-plaza-1 is 3 steps: n [ferry-to-second-town] nw", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("leaves the ferry out of the route lists", function()
+        helper.simulateAlias("navigate-to nowhere/at-all")
+        assert.is_falsy(said():find("ferry", 1, true))
+    end)
+
+    it("won't set off with a character who has no Rune", function()
+        ferryGraph()
+        taPackage.character.setRune("None")
+        helper.simulateAlias("navigate-live north-plaza-1")
+        assert.is_truthy(said():find("won't take a character with no Rune, and this one has none", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("asks for the character sheet when it hasn't seen one", function()
+        ferryGraph()
+        helper.simulateAlias("navigate-live north-plaza-1")
+        assert.is_truthy(said():find("I haven't seen this character's sheet", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("reads the Rune off the character sheet", function()
+        helper.simulateLine("Rune:         Violet")
+        assert.are.equal("Violet", taPackage.character.getRune())
+    end)
+
+    it("won't set off without the fare", function()
+        ferryGraph()
+        taPackage.character.setRune("Violet")
+        helper.simulateAlias("navigate-live north-plaza-1")
+        assert.are.equal("i", helper.sendCalls[#helper.sendCalls])
+        helper.simulateLine("You are carrying 40 gold crowns, and a torch.")
+        assert.is_truthy(said():find("costs 100 gold (ferry-to-second-town) and I'm carrying 40", 1, true))
+        assert.are.equal(0, sent("n"))
+        assert.is_nil(taPackage.navigate)
+    end)
+
+    it("counts carrying no gold at all as none", function()
+        ferryGraph()
+        taPackage.character.setRune("Violet")
+        taPackage.character.setGold(500)    -- stale: the listing is what counts
+        helper.simulateAlias("navigate-live north-plaza-1")
+        helper.simulateLine("You are carrying a torch.")
+        assert.is_truthy(said():find("I'm carrying 0", 1, true))
+        assert.are.equal(0, sent("n"))
+    end)
+
+    it("warns, and goes, with the fare but not enough to come back", function()
+        ferryGraph()
+        taPackage.character.setRune("Violet")
+        helper.simulateAlias("navigate-live north-plaza-1")
+        helper.simulateLine("You are carrying 250 gold crowns, and a torch.")
+        assert.is_truthy(said():find("Careful: I'm carrying 250 gold", 1, true))
+        assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
+    end)
+
+    it("goes without a word with enough gold", function()
+        ferryGraph()
+        taPackage.character.setRune("Violet")
+        helper.simulateAlias("navigate-live north-plaza-1")
+        helper.simulateLine("You are carrying 500 gold crowns, and a torch.")
+        assert.is_falsy(said():find("Careful", 1, true))
+        assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
+    end)
+
+    it("checks nothing with anyway", function()
+        ferryGraph()
+        taPackage.character.setRune("None")
+        helper.simulateAlias("navigate-live north-plaza-1 anyway")
+        assert.is_truthy(said():find("you asked for it anyway", 1, true))
+        assert.are.equal(0, sent("i"))
+        assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
+    end)
+
+    it("sends buy passage when the walk reaches the docks", function()
+        ferryGraph()
+        taPackage.character.setRune("Violet")
+        helper.simulateAlias("navigate-live north-plaza-1")
+        helper.simulateLine("You are carrying 500 gold crowns, and a torch.")
+        helper.simulateLine("You're on the docks.")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+        helper.fireTimers()
+        assert.are.equal("buy passage", helper.sendCalls[#helper.sendCalls])
+        assert.are.equal(0, sent("passage"))
+    end)
+
+end)
+
 describe("deposit-all-but", function()
     before_each(function()
         helper.resetAll()

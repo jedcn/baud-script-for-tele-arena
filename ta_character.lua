@@ -91,6 +91,17 @@ function taPackage.character.getClass()
     return taPackage._character.class
 end
 
+-- The `Rune:` line of the character sheet, as printed: "None" until the first
+-- Rune is earned, then its colour ("Violet"). nil until `st` has been seen.
+-- navigate-live reads it, because the ferry won't take a character with none.
+function taPackage.character.setRune(value)
+    taPackage._character.rune = value
+end
+
+function taPackage.character.getRune()
+    return taPackage._character.rune
+end
+
 -- What each base class becomes when it buys promotion at level 25
 -- (docs/shrine/PROMOTIONS.md). A class with an entry here can still promote;
 -- the promoted names have none, so they are done.
