@@ -1212,21 +1212,28 @@ NAV_ROUTES["tunnels-to-tower"] = {
              "labrynth-level-1-to-tower" },
 }
 
--- The labyrinth's pieces, which nobody walks on their own: what you want is to
--- get through the labyrinth, not onto one of its levels. They stay routes
--- because the through-routes are built from them -- each one's `from` is the
--- seam check where it joins, and Level 2's way back is derived from its way
--- down -- but the route lists leave them out, so there are three labyrinth
--- commands to remember: tower-to-tunnels (with path-already-walked-today after
--- the day's first walk) and tunnels-to-tower. Typed by name, one still walks.
-for _, name in ipairs({ "tower-to-labrynth",
-                        "start-of-labrynth-to-beginning-of-level-2",
-                        "end-of-labrynth-level-2", "end-of-labrynth-level-3",
-                        "labrynth-level-4-to-tunnels",
-                        "tunnels-to-labrynth-level-4",
-                        "start-of-labrynth-level-3", "start-of-labrynth-level-2",
-                        "labrynth-level-1-to-tower" }) do
-    NAV_ROUTES[name].leg = true
+-- The pieces the long routes are built from, which nobody walks on their own:
+-- what you want is to get through the labyrinth or down to third town, not
+-- onto one of the levels on the way. They stay routes because the long ones
+-- are built from them -- each leg's `from` is the seam check where it joins,
+-- Level 2's way back is derived from its way down, and a locked door splices
+-- its key errand in -- but the route lists leave them out. Typed by name, one
+-- still walks.
+--
+-- A piece is any route another route names as a leg or as a door's detour,
+-- worked out here rather than listed, so a leg added to a long route drops out
+-- of the lists without anyone remembering to say so. A second name for the
+-- same table (town-3/part-1 is town-3/after-doors) goes with it.
+for _, r in pairs(NAV_ROUTES) do
+    for _, leg in ipairs(r.legs or {}) do
+        local name = type(leg) == "table" and leg.route or leg
+        if NAV_ROUTES[name] then NAV_ROUTES[name].leg = true end
+    end
+    for _, step in ipairs(r.steps or {}) do
+        if type(step) == "table" and step.detour and NAV_ROUTES[step.detour] then
+            NAV_ROUTES[step.detour].leg = true
+        end
+    end
 end
 
 -- The names the route lists offer: every route but the legs above.

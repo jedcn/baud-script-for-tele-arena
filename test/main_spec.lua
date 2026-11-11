@@ -16572,7 +16572,7 @@ describe("navigate-to", function()
             helper.simulateAlias("navigate-to")
             local out = lastEchoes()
             assert.is_truthy(out:find("tower-to-tunnels", 1, true))
-            assert.is_truthy(out:find("town-3/hydra", 1, true))
+            assert.is_truthy(out:find("town-3/combined", 1, true))
             assert.is_truthy(out:find("town-2", 1, true))
             assert.are.equal(0, #helper.sendCalls)
             assert.is_nil(taPackage.navigate)
@@ -16671,6 +16671,20 @@ describe("navigate-to", function()
             assert.is_truthy(lastEchoes():find(
                 "I don't know a 'chasm-is-clear' variant of town-3/combined", 1, true))
             assert.are.equal(0, #helper.sendCalls)
+        end)
+
+        -- The same for third town: a route another route uses as a leg or as a
+        -- door's key errand is a piece of it, and so is a second name for one.
+        it("leaves third town's legs and key errands out of the list", function()
+            helper.simulateAlias("navigate-to nowhere/at-all")
+            local out = lastEchoes() .. "\n"
+            assert.is_truthy(out:find("\n    combined ", 1, true))
+            for _, piece in ipairs({ "after-doors", "part-1", "hydra", "stoneworks-entrance",
+                                     "stone-lvl-2", "stone-lvl-6", "temple",
+                                     "get-ruby-key", "get-onyx-key",
+                                     "get-platinum-key-from-63" }) do
+                assert.is_falsy(out:find("\n    " .. piece .. "[\n ]"), "lists " .. piece)
+            end
         end)
 
         it("still walks a leg typed by name", function()
