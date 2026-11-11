@@ -223,8 +223,14 @@ Rooms on the map. The ferry is the first (2026-11-11): `ferry-to-second-town` an
 `ferry-to-first-town`, each `buy passage` and an Anchor. The Search uses them in
 place of the map's `passage` Exits, which stay for the tracker and the mapper:
 an Edge's label and the command it takes are the same for an Exit and need not be
-for a Script edge, and the game does not take `passage`. The smoke, the riddle and
-the labyrinth are not Script edges yet.
+for a Script edge, and the game does not take `passage`. The labyrinth is the
+second: `tower-to-tunnels` and `tunnels-to-tower`. Their routes start anywhere
+(the first step is a goTo), so `edge = { from = ... }` gives the Room the Edge
+leaves from apart from the Route's own `from`. `covers` names the ground the Edge
+stands for, and `navigate-live` refuses to plan from inside it. Flags pass
+through: `navigate-live tunnel-27 path-already-walked-today` walks the Edge the
+way `navigate-to tower-to-tunnels path-already-walked-today` would. The smoke and
+the riddle on their own are not Script edges yet.
 
 **Path**:
 A sequence of Edges, each starting in the Room the one before it ended in:

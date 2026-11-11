@@ -1166,7 +1166,17 @@ NAV_ROUTES["labrynth-level-4-to-tunnels"] = {
 -- The labyrinth's levers and Level 2's stone undo themselves when worked
 -- twice, so the second character through today should add
 -- `path-already-walked-today`, which skips all four.
+--
+-- Both ways through are Script edges too (see "Script edges"): nothing on the
+-- map walks from the tower into the labyrinth or out of it into the tunnels,
+-- so these are the only way navigate-live can get there. `edge.from` is where
+-- the edge leaves the map's Graph, given apart from `from` because the route
+-- itself starts anywhere (its first step is a goTo). `covers` is the ground
+-- the edge's steps stand for; navigate-live won't plan from inside it.
+local NAV_LABYRINTH = { "labyrinth-level-1", "labyrinth-level-2", "labyrinth-level-3",
+                        "labyrinth-level-4", "labyrinth-level-5" }
 NAV_ROUTES["tower-to-tunnels"] = {
+    edge         = { from = "tower-level-4/marble-hallway-41", covers = NAV_LABYRINTH },
     to           = "tunnels/tunnel",
     legs         = { "tower-to-labrynth",
                      "start-of-labrynth-to-beginning-of-level-2",
@@ -1205,6 +1215,7 @@ NAV_ROUTES["labrynth-level-1-to-tower"] = {
 -- Shut, the walk stops at the door. Two of them (labyrinth-94 s, labyrinth-167
 -- s) can't be opened from this side.
 NAV_ROUTES["tunnels-to-tower"] = {
+    edge = { from = "tunnels/tunnel", covers = NAV_LABYRINTH },
     to   = "tower-level-4/marble-hallway-41",
     legs = { "tunnels-to-labrynth-level-4",
              "start-of-labrynth-level-3",
@@ -2011,7 +2022,7 @@ local function navGoTo(slug)
     -- A Script edge on the way is walked as its steps. Its prerequisites are
     -- not checked here, mid-route: navigate-live checks them before setting
     -- off, and a written route that needs them says so in `requires`.
-    local walk = taPackage.navExpandPath(steps)
+    local walk = taPackage.navExpandPath(steps, j.alreadyWalked)
     for i, step in ipairs(walk) do table.insert(j.steps, j.index + i, step) end
     navAdvance()
 end
@@ -4140,13 +4151,19 @@ createTrigger("^An? (.+) has just arrived from below\\.$",
 -- route exists, prefer it.
 
 -- A Path from navSearch as steps to walk: each Script edge on it replaced by
--- its route's steps. Also returns the Script edges' route names, in order.
-function taPackage.navExpandPath(path)
+-- its route's steps, flattened from its legs. Also returns the Script edges'
+-- route names, in order. `alreadyWalked` is the walk's
+-- `path-already-walked-today`, passed through: an edge with a variant of that
+-- name takes it (its firstWalkOnly steps are skipped by the walk itself).
+function taPackage.navExpandPath(path, alreadyWalked)
     local steps, edges = {}, {}
     for _, step in ipairs(path) do
         if type(step) == "table" and step.scriptEdge then
             edges[#edges + 1] = step.scriptEdge
-            for _, s in ipairs(NAV_ROUTES[step.scriptEdge].steps) do steps[#steps + 1] = s end
+            local r = NAV_ROUTES[step.scriptEdge]
+            local variant = alreadyWalked and r.variants
+                and r.variants["path-already-walked-today"] and "path-already-walked-today" or nil
+            for _, s in ipairs(taPackage.navRouteSteps(r, variant) or {}) do steps[#steps + 1] = s end
         else
             steps[#steps + 1] = step
         end
@@ -4193,7 +4210,8 @@ function taPackage.navSearch(fromId, isGoal)
     end
     for name, r in pairs(NAV_ROUTES) do
         if r.edge then
-            local a, b = navResolveRef(r.from), navResolveRef(r.to)
+            local from = type(r.edge) == "table" and r.edge.from or r.from
+            local a, b = navResolveRef(from), navResolveRef(r.to)
             if a and b then add({ from_id = a.id, to_id = b.id, direction = { scriptEdge = name } }) end
         end
     end
@@ -4247,17 +4265,43 @@ createAlias("^navigate-live (.+)$", function(matches)
     local arg = matches[2]:match("^%s*(.-)%s*$")
     -- `anyway`: set off without checking what the way needs (a rope for a trap
     -- door, and whatever its Script edges need), as navigate-to's `anyway` does.
-    local anyway = false
-    local rest = arg:match("^(.-)%s+anyway$")
-    if rest then arg, anyway = rest, true end
-    local justSay = arg:match("^(.-)%s+directions%-only$")
-    if justSay then arg = justSay end
+    -- Trailing flags, in any order. `path-already-walked-today` is passed
+    -- through to the Script edges on the way, as navigate-to takes it.
+    local anyway, justSay, alreadyWalked = false, false, false
+    while true do
+        local head, word = arg:match("^(.-)%s+(%S+)$")
+        if word == "anyway" then anyway = true
+        elseif word == "directions-only" then justSay = true
+        elseif word == "path-already-walked-today" then alreadyWalked = true
+        else break end
+        arg = head
+    end
     -- The search starts from where the tracker says we are, and it says "lost"
     -- rather than guessing -- so this has to as well. A wrong starting room walks
     -- you confidently into a wall.
     if taPackage.hereState ~= "known" or not taPackage.here then
         navEcho("I don't know which room you're in, so I can't search from it."
             .. " `map-print-room-slug`, then `map-here <slug>`.")
+        return
+    end
+    -- Inside ground a Script edge stands for, the map's Exits aren't a way to
+    -- walk: the labyrinth's are dark, one-way and shut by levers. Nothing else
+    -- to do from in here yet.
+    local hereRef = taPackage.db.roomRef(taPackage.here) or ""
+    local hereArea = hereRef:match("^([^/]+)/")
+    local inside = {}
+    for name, r in pairs(NAV_ROUTES) do
+        if type(r.edge) == "table" and r.edge.covers and hereArea then
+            for _, a in ipairs(r.edge.covers) do
+                if a == hereArea then inside[#inside + 1] = name end
+            end
+        end
+    end
+    if #inside > 0 then
+        table.sort(inside)
+        navEcho("You're in " .. hereRef .. ", inside what " .. table.concat(inside, " and ")
+            .. " walk" .. (#inside == 1 and "s" or "") .. " through, and I can't plan a way"
+            .. " from in here. Use navigate-to (with from-step if a walk stopped), or walk out by hand.")
         return
     end
     local isGoal, label = taPackage.navGoal(arg)
@@ -4292,14 +4336,23 @@ createAlias("^navigate-live (.+)$", function(matches)
         navEcho("The way goes through " .. table.concat(names, "; ")
             .. " -- this walk won't unlock or open anything there.", "yellow")
     end
-    local steps, edges = taPackage.navExpandPath(path)
+    local steps, edges = taPackage.navExpandPath(path, alreadyWalked)
+    local firstWalk = taPackage.navFirstWalkSteps(steps)
+    if firstWalk > 0 and not alreadyWalked then
+        navEcho("Careful: the way works " .. firstWalk .. " device"
+            .. (firstWalk > 1 and "s" or "") .. " whose effect lasts the day, and doing it"
+            .. " again undoes it. If someone has already walked it today, add"
+            .. " `path-already-walked-today`.", "yellow")
+    elseif alreadyWalked and firstWalk > 0 then
+        navEcho("Taking the short way through, past what was already done today.")
+    end
     -- `climbOutOfPits`: the map records a trap door's fall as a `d` edge, but
     -- the search walks straight through the trap room, so this route has no
     -- climb out of the pit. The walk adds one if the floor gives way (see the
     -- trap-door trigger) -- it doesn't always, so it can't be planned for.
     local function go()
         navStart("live:" .. label, { steps = steps, announceSteps = true, climbOutOfPits = true },
-            nil, nil, reached, false, nil, nil, nil)
+            nil, nil, reached, false, nil, nil, alreadyWalked)
     end
 
     -- What the way needs, gathered before a step is taken: the pit's walls

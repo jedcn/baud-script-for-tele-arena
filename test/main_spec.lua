@@ -21979,6 +21979,92 @@ end)
 -- `n n passage nw nw n n`, and `passage` is not a command the game takes; the
 -- way across is `buy passage`, and it has prerequisites: 100 gold, a Rune, and
 -- (as a warning) enough gold to come back.
+describe("navigate-live through the labyrinth's Script edges", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        helper.clearDbCalls()
+    end)
+
+    -- tower-level-4 (area 40): 1 marble-hallway-40 --e--> 2 marble-hallway-41
+    -- tunnels (area 50): 3 tunnel --n--> 4 tunnel-27
+    -- Nothing on the map joins the two: only the Script edges do.
+    local function towerGraph(hereRef)
+        helper.mockDbRows = function(sql, params)
+            if string.find(sql, "SELECT from_id, direction, to_id, lock_door", 1, true) then
+                return {
+                    { from_id = 1, direction = "e", to_id = 2 },
+                    { from_id = 2, direction = "w", to_id = 1 },
+                    { from_id = 3, direction = "n", to_id = 4 },
+                    { from_id = 4, direction = "s", to_id = 3 },
+                }
+            elseif string.find(sql, "SELECT id, slug, name FROM rooms WHERE area_id", 1, true) then
+                if params[1] == 40 then return { { id = 2, slug = "marble-hallway-41", name = "marble hallway" } } end
+                if params[1] == 50 then return { { id = 3, slug = "tunnel", name = "tunnel" } } end
+            end
+            return {}
+        end
+        helper.mockDbOneRow = function(sql, params)
+            if string.find(sql, "SELECT id FROM areas WHERE slug", 1, true) then
+                if params[1] == "tower-level-4" then return { id = 40 } end
+                if params[1] == "tunnels" then return { id = 50 } end
+            elseif string.find(sql, "SELECT id, name, area_id", 1, true) then
+                if params[1] == "tunnel-27" then return { id = 4, name = "tunnel" } end
+                if params[1] == "marble-hallway-40" then return { id = 1, name = "marble hallway" } end
+            elseif string.find(sql, "SELECT r.slug AS slug, a.slug AS area", 1, true) then
+                return hereRef and { slug = hereRef:match("/(.+)$"), area = hereRef:match("^([^/]+)/") } or nil
+            end
+            return nil
+        end
+        taPackage.hereState, taPackage.here = "known", 1
+    end
+
+    local function said() return table.concat(helper.echoCalls, "\n") end
+
+    it("crosses from the tower to the tunnels by tower-to-tunnels", function()
+        towerGraph()
+        assert.are.same({ "e", { scriptEdge = "tower-to-tunnels" }, "n" },
+            taPackage.navSearch(1, function(id) return id == 4 end))
+    end)
+
+    it("and back by tunnels-to-tower", function()
+        towerGraph()
+        assert.are.same({ "s", { scriptEdge = "tunnels-to-tower" }, "w" },
+            taPackage.navSearch(4, function(id) return id == 1 end))
+    end)
+
+    it("walks the levers on a first walk, and says how to skip them", function()
+        towerGraph()
+        helper.simulateAlias("navigate-live tunnel-27")
+        assert.is_truthy(said():find("Careful: the way works 4 devices", 1, true))
+        assert.is_falsy(taPackage.navigate.alreadyWalked)
+    end)
+
+    it("passes path-already-walked-today through to the edge", function()
+        towerGraph()
+        helper.simulateAlias("navigate-live tunnel-27 path-already-walked-today")
+        assert.is_truthy(said():find("Taking the short way through", 1, true))
+        assert.is_true(taPackage.navigate.alreadyWalked)
+    end)
+
+    it("takes the flags in any order", function()
+        towerGraph()
+        helper.simulateAlias("navigate-live tunnel-27 path-already-walked-today directions-only")
+        assert.is_truthy(said():find("tunnel-27 is 3 steps: e [tower-to-tunnels] n", 1, true))
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+
+    it("won't plan from inside the labyrinth", function()
+        towerGraph("labyrinth-level-3/labyrinth-173")
+        helper.simulateAlias("navigate-live tunnel-27")
+        assert.is_truthy(said():find("You're in labyrinth-level-3/labyrinth-173, inside what"
+            .. " tower-to-tunnels and tunnels-to-tower walk through", 1, true))
+        assert.is_nil(taPackage.navigate)
+        assert.are.equal(0, #helper.sendCalls)
+    end)
+end)
+
 describe("navigate-live across a Script edge", function()
 
     before_each(function()
