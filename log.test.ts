@@ -287,3 +287,18 @@ test("reads logs from before either version was recorded", () => {
   const loads = events.filter(e => e.kind === "script-load");
   expect(loads.map(e => [e.phase, e.scriptVersion])).toEqual([["start", null], ["finish", null]]);
 });
+
+// logs/session-johnsonite-2026-11-11T16-28-22.log, line 108: a character with no
+// Rune at the docks. Wrapped at 78 columns like any long line.
+test("names the ferry's refusal of a character with no Rune", () => {
+  const [line] = unwrap([
+    "Sorry, by decree of the guild masters, no one shall venture across the great",
+    "lake who does not bear a rune upon their brow.",
+  ]);
+  expect(classify(line.text).kind).toBe("blocked-ferry-rune");
+});
+
+test("names the ferry's refusal of a character short of the fare", () => {
+  expect(classify("Sorry, you cannot afford passage across the great lake!").kind)
+    .toBe("blocked-ferry-gold");
+});

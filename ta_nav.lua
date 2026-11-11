@@ -3666,6 +3666,33 @@ createTrigger("^A mystical force prevents your exit in that direction\\.$", func
         .. " This character's Runes don't allow passage that way.")
 end, { type = "regex" })
 
+-- The ferry's two refusals. navigate-live checks the fare and the Rune before
+-- setting off, so a walk only meets these when it was told `anyway`, or when the
+-- gold or the sheet it read has gone stale. Nothing follows either refusal, and
+-- the walk's next step is the anchor on the far docks, which would claim a
+-- crossing that never happened -- so stop here and say why.
+--
+-- The Rune refusal is wrapped at 78 columns ("...across the great" / "lake who
+-- does not bear a rune upon their brow."), so it is matched on its first part,
+-- which is the part that says what it is (logs/session-johnsonite-2026-11-11T16-28-22.log,
+-- line 108). It is also the game telling us the sheet's answer: no Rune.
+local function navFerryRefused(why)
+    local j = taPackage.navigate
+    if not j then return end
+    local where = "step " .. j.index .. " of " .. #j.steps
+    stopNavigate()
+    navEcho("The ferry refused at " .. where .. " — " .. why .. " Stopping.", "red")
+end
+
+createTrigger("^Sorry, by decree of the guild masters", function()
+    taPackage.character.setRune("None")
+    navFerryRefused("no one without a Rune may cross the great lake.")
+end, { type = "regex" })
+
+createTrigger("^Sorry, you cannot afford passage across the great lake!$", function()
+    navFerryRefused("not enough gold for the fare.")
+end, { type = "regex" })
+
 -- The chasm on the way to third town's temple, while its walls are still up.
 -- Like a missing exit, nothing follows the refusal, so a walk that ran into it
 -- used to sit waiting for a brief that was never coming. Stop and say which

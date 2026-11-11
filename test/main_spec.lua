@@ -22116,6 +22116,37 @@ describe("navigate-live across a Script edge", function()
         assert.are.equal("n", helper.sendCalls[#helper.sendCalls])
     end)
 
+    -- Reached only by `anyway` or a stale sheet: the walk's next step would
+    -- anchor on the far docks as if the crossing had happened.
+    local function walkToTheDocks()
+        ferryGraph()
+        taPackage.character.setRune("None")
+        helper.simulateAlias("navigate-live north-plaza-1 anyway")
+        helper.simulateLine("You're on the docks.")
+        helper.simulateLine("There is nobody here.")
+        helper.simulateLine("There is nothing on the floor.")
+        helper.fireTimers()
+        assert.are.equal("buy passage", helper.sendCalls[#helper.sendCalls])
+    end
+
+    it("stops when the ferry refuses a character with no Rune", function()
+        walkToTheDocks()
+        taPackage.character.setRune(nil)
+        -- As the game wraps it, at 78 columns.
+        helper.simulateLine("Sorry, by decree of the guild masters, no one shall venture across the great")
+        helper.simulateLine("lake who does not bear a rune upon their brow.")
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(said():find("no one without a Rune may cross", 1, true))
+        assert.are.equal("None", taPackage.character.getRune())
+    end)
+
+    it("stops when the ferry refuses a character short of the fare", function()
+        walkToTheDocks()
+        helper.simulateLine("Sorry, you cannot afford passage across the great lake!")
+        assert.is_nil(taPackage.navigate)
+        assert.is_truthy(said():find("not enough gold for the fare", 1, true))
+    end)
+
     it("sends buy passage when the walk reaches the docks", function()
         ferryGraph()
         taPackage.character.setRune("Violet")

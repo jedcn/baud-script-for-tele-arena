@@ -291,6 +291,9 @@ const RULES: Rule[] = [
   { kind: "blocked-move-door", re: /^The locked (.+) door prevents your exit in that direction\.$/,
     fields: m => ({ door: m[1] }) },
   { kind: "trip", re: /^In your haste, you trip and fall!$/ },
+  // The great-lake ferry's refusals (ta_nav.lua stops a walk on each).
+  { kind: "blocked-ferry-rune", re: /^Sorry, by decree of the guild masters, no one shall venture across the great lake who does not bear a rune upon their brow\.$/ },
+  { kind: "blocked-ferry-gold", re: /^Sorry, you cannot afford passage across the great lake!$/ },
 
   // — traps —
   // One line per trap kind, mirroring main.lua's handleTrap triggers, which are
