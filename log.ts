@@ -294,6 +294,8 @@ const RULES: Rule[] = [
   // The great-lake ferry's refusals (ta_nav.lua stops a walk on each).
   { kind: "blocked-ferry-rune", re: /^Sorry, by decree of the guild masters, no one shall venture across the great lake who does not bear a rune upon their brow\.$/ },
   { kind: "blocked-ferry-gold", re: /^Sorry, you cannot afford passage across the great lake!$/ },
+  // The fare taken and the crossing made: the next room line is the far docks.
+  { kind: "ferry-crossed", re: /^You buy passage across the great lake and board a ship\.\.\.$/ },
 
   // — traps —
   // One line per trap kind, mirroring main.lua's handleTrap triggers, which are

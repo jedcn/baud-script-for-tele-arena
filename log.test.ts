@@ -302,3 +302,9 @@ test("names the ferry's refusal of a character short of the fare", () => {
   expect(classify("Sorry, you cannot afford passage across the great lake!").kind)
     .toBe("blocked-ferry-gold");
 });
+
+// logs/session-tojolias-2026-11-11T17-19-17.log, line 3201.
+test("names a ferry crossing", () => {
+  expect(classify("You buy passage across the great lake and board a ship...").kind)
+    .toBe("ferry-crossed");
+});
