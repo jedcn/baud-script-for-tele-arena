@@ -6,7 +6,7 @@
 -- one file. Like ta_nav.lua, it is a separate chunk and cannot see main.lua's
 -- locals; the seam runs through taPackage:
 --
---   in    taPackage.xp (ta_xp.lua); taPackage.recordXpChange,
+--   in    taPackage.xp (ta_xp.lua), taPackage.db (ta_db.lua); taPackage.recordXpChange,
 --         taPackage.checkArenaGoldFloor (main.lua)
 --   out   taPackage.character (the accessors), taPackage._character (the
 --         data), taPackage.PROMOTED_CLASS
@@ -195,6 +195,23 @@ end
 
 function taPackage.character.setName(value)
     taPackage._character.name = value
+    -- A drain outlasts a logout, so a character's flag is read back from the
+    -- DB when we learn who we are playing.
+    taPackage._character.drained = value ~= nil and taPackage.db.isDrained(value) or false
+end
+
+-- Has a monster drained us ("You've been drained!") since we last bought
+-- restoring? The guild hall won't train a drained character: its mind and body
+-- aren't "whole". Kept in the DB under the character's name as well as here, so
+-- it survives a logout; with no name yet it is only kept here.
+function taPackage.character.setDrained(drained)
+    taPackage._character.drained = drained
+    local name = taPackage._character.name
+    if name then taPackage.db.setDrained(name, drained) end
+end
+
+function taPackage.character.isDrained()
+    return taPackage._character.drained == true
 end
 
 function taPackage.character.getName()

@@ -363,8 +363,19 @@ end, { type = "regex" })
 -- the game's own typo; the line is matched as printed.
 createTrigger("^The priests restore your body and mind to it's former state for (\\d+) crowns\\.$", function(matches)
     local cost = tonumber(matches[2])
+    -- Restoring also undoes a drain: it put back the 49 max vitality a flame
+    -- giant warlord took from Pollux (logs/session-pollux-2026-11-13T03-05-52.log).
+    taPackage.character.setDrained(false)
     taPackage.character.setGold((taPackage.character.getGold() or 0) - cost)
     taPackage.db.recordService("restoring", "temple", cost)
+end, { type = "regex" })
+
+-- A monster's drain. Which maximum it lowers depends on the monster: a flame
+-- giant warlord takes max vitality, a ghoul max mana. Either way the guild hall
+-- won't train us until `buy restoring`, so the status bar marks it.
+createTrigger("^You've been drained!$", function()
+    taPackage.character.setDrained(true)
+    refreshSheetSoon()
 end, { type = "regex" })
 
 -- =========================================================================
@@ -864,6 +875,17 @@ local function status()
     local nameText = charName and charClass and (charName .. " [" .. charClass .. "]")
         or charName
         or "?"
+    -- A red "!" in brackets right after the class ("Pollux [Knight][!]") while
+    -- a drain is waiting on `buy restoring`. Glued so it reads as part of the
+    -- name; Leader, when shown, comes after it.
+    local drainMark = {}
+    if taPackage.character.isDrained() then
+        drainMark = {
+            { text = "[", fg = "white", glue = true },
+            { text = "!", fg = "red",   glue = true },
+            { text = "]", fg = "white", glue = true },
+        }
+    end
     -- Followers show only name + class; the leader gets a bare "Leader" tag.
     -- We deliberately omit who we follow and the follower count to keep the bar
     -- compact. Leader and follower are mutually exclusive: if we're following
@@ -872,18 +894,25 @@ local function status()
     -- mislabelling a follower as a leader.
     if not taPackage.followTarget
         and taPackage.followedBy and #taPackage.followedBy > 0 then
-        nameText = nameText .. " Leader"
+        if #drainMark > 0 then
+            table.insert(drainMark, { text = " Leader", fg = "white", glue = true })
+        else
+            nameText = nameText .. " Leader"
+        end
     end
 
     local segments = {
         { text = nameText, fg = "white" },
+    }
+    for _, seg in ipairs(drainMark) do table.insert(segments, seg) end
+    for _, seg in ipairs({
         { text = "HP:" },
         {
             text = vitalityCurrent and taPackage.utils.formatWithCommas(vitalityCurrent) or "?",
             fg = vitalityColor(vitalityCurrent, vitalityMax)
         },
         { text = vitalityMax and ("/ " .. taPackage.utils.formatWithCommas(vitalityMax)) or "", fg = "white" },
-    }
+    }) do table.insert(segments, seg) end
     if manaMax and manaMax > 0 then
         table.insert(segments, { text = "MP:", fg = "green" })
         table.insert(segments, { text = manaCurrent and taPackage.utils.formatWithCommas(manaCurrent) or "?", fg = "cyan" })

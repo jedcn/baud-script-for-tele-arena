@@ -1571,6 +1571,42 @@ describe("Tele-Arena triggers", function()
             assert.are.equal("Tojolias [Warrior] Leader", capturedFn()[1].text)
         end)
 
+        -- logs/session-pollux-2026-11-12T19-50-32.log: a flame giant warlord's
+        -- drain, which the guild hall refuses to train until `buy restoring`.
+        it("marks a drained character with a red [!] glued after the class", function()
+            taPackage._character.name = "Pollux"
+            helper.simulateLine("Class:        Knight")
+            helper.simulateLine("You've been drained!")
+            local segments = capturedFn()
+            assert.are.equal("Pollux [Knight]", segments[1].text)
+            assert.are.same({ "[", "!", "]" }, { segments[2].text, segments[3].text, segments[4].text })
+            assert.are.equal("red", segments[3].fg)
+            assert.is_true(segments[2].glue and segments[3].glue and segments[4].glue)
+            assert.are.equal("HP:", segments[5].text)
+        end)
+
+        it("clears the [!] once restoring is bought", function()
+            taPackage._character.name = "Pollux"
+            helper.simulateLine("Class:        Knight")
+            helper.simulateLine("You've been drained!")
+            helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
+            local segments = capturedFn()
+            assert.are.equal("Pollux [Knight]", segments[1].text)
+            assert.are.equal("HP:", segments[2].text)
+        end)
+
+        it("puts Leader after the [!]", function()
+            taPackage._character.name = "Tojolias"
+            helper.simulateLine("Class:        Warrior")
+            taPackage.followedBy = { "Pelayo" }
+            helper.simulateLine("You've been drained!")
+            local segments = capturedFn()
+            assert.are.equal("Tojolias [Warrior]", segments[1].text)
+            assert.are.equal("!", segments[3].text)
+            assert.are.equal(" Leader", segments[5].text)
+            assert.is_true(segments[5].glue)
+        end)
+
         -- Promotion is the one time the class changes, and the bar follows it
         -- at once rather than waiting for the next `st`.
         it("shows the promoted class after buy promotion", function()
@@ -23043,4 +23079,64 @@ describe("look capture across a script reload", function()
         assert.are.equal("accumulating", taPackage.lookCapture.state)
     end)
 
+end)
+
+describe("drain tracking", function()
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function drainWrites()
+        local out = {}
+        for _, c in ipairs(helper.dbCalls) do
+            if c.method == "execute" and c.sql:find("drained_characters", 1, true)
+                and not c.sql:find("CREATE TABLE", 1, true) then
+                out[#out + 1] = c
+            end
+        end
+        return out
+    end
+
+    it("records the drain under the character's name", function()
+        taPackage.character.setName("Pollux")
+        helper.simulateLine("You've been drained!")
+        assert.is_true(taPackage.character.isDrained())
+        local writes = drainWrites()
+        assert.are.equal(1, #writes)
+        assert.truthy(writes[1].sql:find("INSERT INTO drained_characters", 1, true))
+        assert.are.equal("Pollux", writes[1].params[1])
+    end)
+
+    it("forgets it when restoring is bought", function()
+        taPackage.character.setName("Pollux")
+        helper.simulateLine("You've been drained!")
+        helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
+        assert.is_false(taPackage.character.isDrained())
+        local writes = drainWrites()
+        assert.truthy(writes[2].sql:find("DELETE FROM drained_characters", 1, true))
+        assert.are.equal("Pollux", writes[2].params[1])
+    end)
+
+    -- The 2026-11-12 drain was still there after a logout: the hall refused
+    -- Pollux at 03:08 the next morning.
+    it("reads a drain from an earlier session back when the name is learned", function()
+        helper.mockDbOneRow = function(sql, params)
+            if sql:find("FROM drained_characters", 1, true) and params[1] == "Pollux" then
+                return { drained_at = "2026-11-12T20:15:31" }
+            end
+            return nil
+        end
+        taPackage.character.setName("Castor")
+        assert.is_false(taPackage.character.isDrained())
+        taPackage.character.setName("Pollux")
+        assert.is_true(taPackage.character.isDrained())
+    end)
+
+    it("keeps the flag across reloadScript()", function()
+        taPackage.character.setName("Pollux")
+        helper.simulateLine("You've been drained!")
+        dofile("main.lua")
+        assert.is_true(taPackage.character.isDrained())
+    end)
 end)

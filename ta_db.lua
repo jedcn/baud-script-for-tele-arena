@@ -170,6 +170,16 @@ db:execute([[CREATE TABLE IF NOT EXISTS player_location (
   updated_at TEXT
 )]])
 
+-- Characters a monster has drained ("You've been drained!") and `buy restoring`
+-- has not yet put right. A row per drained character; restoring deletes it. It
+-- lives here rather than only in memory because a drain outlasts the session:
+-- Pollux was drained at 20:15 on 2026-11-12 and the guild hall still refused
+-- to train Pollux after a logout, at 03:08 the next morning.
+db:execute([[CREATE TABLE IF NOT EXISTS drained_characters (
+  player     TEXT PRIMARY KEY,
+  drained_at TEXT
+)]])
+
 db:execute([[CREATE TABLE IF NOT EXISTS monsters (
   name        TEXT PRIMARY KEY,
   description TEXT,
@@ -570,6 +580,25 @@ function TaDb.playerLocation(player)
     local row = db:queryOne(
         "SELECT room_id FROM player_location WHERE player = ?", player)
     return row and row.room_id or nil
+end
+
+function TaDb.setDrained(player, drained)
+    if drained then
+        db:execute(
+            "INSERT INTO drained_characters (player, drained_at) VALUES (?, ?) "
+            .. "ON CONFLICT(player) DO UPDATE SET drained_at = excluded.drained_at",
+            player, now())
+    else
+        db:execute("DELETE FROM drained_characters WHERE player = ?", player)
+    end
+    dbLog("[DB\xE2\x86\x92drained_characters] " .. tostring(player) .. " "
+        .. (drained and "drained" or "restored"))
+end
+
+function TaDb.isDrained(player)
+    local row = db:queryOne(
+        "SELECT drained_at FROM drained_characters WHERE player = ?", player)
+    return row ~= nil and row.drained_at ~= nil
 end
 
 function TaDb.setRoomDescription(roomId, description)
