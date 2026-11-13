@@ -22420,11 +22420,18 @@ describe("restock-in-first-town", function()
         for _ = 1, n or 1 do helper.fireTimers(taPackage.navStepDelayMs) end
     end
 
-    it("trains, banks all but 100 of what `i` reports, then rounds the shops", function()
+    it("restores and heals, trains, banks all but 100 of what `i` reports, then rounds the shops", function()
         helper.simulateAlias("restock-in-first-town")
         arrive("north plaza")
         helper.simulateLine("Exits: n,s.")
         pace()                         -- n: the search's first step
+        for _, room in ipairs({ "guild hall", "north plaza", "temple" }) do
+            arrive(room)
+            pace()
+        end
+        pace(2)                        -- buy healing, e
+        arrive("north plaza")
+        pace()                         -- n
         arrive("guild hall")
         pace(2)                        -- buy training, d
         arrive("town vaults")
@@ -22441,11 +22448,6 @@ describe("restock-in-first-town", function()
             pace()
         end
         pace(2)                        -- buy water, se
-        for _, room in ipairs({ "north plaza", "temple" }) do
-            arrive(room)
-            pace()
-        end
-        pace()                         -- e, past buy healing
         for _, room in ipairs({ "north plaza", "south plaza", "magic shop" }) do
             arrive(room)
             pace()
@@ -22456,10 +22458,10 @@ describe("restock-in-first-town", function()
         local sent = {}
         for i = 3, #helper.sendCalls do sent[#sent + 1] = helper.sendCalls[i] end
         assert.are.same({
-            "n", "buy training", "d", "i", "deposit 1400", "u", "s", "ne",
+            "n", "s", "w", "buy restoring", "buy healing", "e", "n",
+            "buy training", "d", "i", "deposit 1400", "u", "s", "ne",
             "buy meal", "buy drink", "sw", "nw",
-            "sell water", "buy water", "se", "w",
-            "buy healing", "e", "s", "s",
+            "sell water", "buy water", "se", "s", "s",
             "buy rowan", "drink rowan", "buy hyssop", "drink hyssop", "n",
         }, sent)
         assert.is_nil(taPackage.navigate)
@@ -22509,7 +22511,7 @@ describe("restock-in-first-town", function()
         assert.are.equal(5, taPackage.here)
         assert.is_truthy(taPackage.navigate)
         pace()
-        assert.are.equal("buy training", helper.sendCalls[3])
+        assert.are.equal("s", helper.sendCalls[3])      -- off to the temple first
     end)
 
     -- logs/session-pelayo-2026-11-10T18-42-28.log: logged in to the tunnels,

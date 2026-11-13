@@ -943,6 +943,18 @@ NAV_ROUTES["start-of-labrynth-to-beginning-of-level-2"] = {
 -- round of the first town's shops. No `from`, for the same reason as the route
 -- above.
 --
+-- The temple comes first: `buy restoring` then `buy healing`, before training.
+-- The hall refuses anyone whose "mind and body" aren't "whole and untainted",
+-- and that is more than a stat potion still up. On 2026-11-12 a flame giant
+-- warlord's "You've been drained!" took 49 off Pollux's max vitality
+-- (2317 -> 2268) with every stat still at base, so the hall turned Pollux away
+-- that night and again the next morning, when Castor -- whose potions had
+-- simply lapsed -- trained on the same walk
+-- (logs/session-pollux-2026-11-13T03-05-52.log). Restoring put the 49 back and
+-- the hall trained Pollux on the next command. 25 crowns every restock is
+-- cheaper than finding out which kind of taint it was, and healing rides along
+-- because the temple is where it's sold.
+--
 -- Training comes before the deposit because it is paid from the purse, and the
 -- deposit leaves only 100 in it. The way to the vaults is through the guild
 -- hall anyway, so stopping there on the way down adds no steps.
@@ -954,6 +966,10 @@ NAV_ROUTES["restock-in-first-town"] = {
     to             = "first-town/south-plaza",
     climbOutOfPits = true,
     steps          = { { goTo = "guild-hall" },
+                       "s", "w",                  -- temple
+                       { cmd = "buy restoring" },
+                       { cmd = "buy healing" },
+                       "e", "n",                  -- guild hall
                        { cmd = "buy training" },
                        "d",                       -- town vaults
                        { cmd = "i" },
@@ -963,9 +979,7 @@ NAV_ROUTES["restock-in-first-town"] = {
                        "sw", "nw",                -- equipment shop
                        { cmd = "sell water" },
                        { cmd = "buy water" },
-                       "se", "w",                 -- temple
-                       { cmd = "buy healing" },
-                       "e", "s", "s",             -- magic shop
+                       "se", "s", "s",            -- magic shop
                        { run = "buy-potions" },
                        "n" },
 }
