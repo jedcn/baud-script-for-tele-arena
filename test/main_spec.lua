@@ -21244,6 +21244,16 @@ describe("navigate-to", function()
             assert.is_nil(taPackage.navigate)
         end)
 
+        -- A lever door: the errand works a Device rather than fetching a key,
+        -- and says so.
+        it("says it is opening a door that takes no key", function()
+            gated(GATE({ key = false }))
+            helper.simulateLine("The locked stone door prevents your exit in that direction.")
+            local out = lastEchoes()
+            assert.is_truthy(out:find("The e door is locked — opening it first, by way of sewers/errand (2 steps)", 1, true))
+            assert.is_falsy(out:find("I don't have the", 1, true))
+        end)
+
         -- The errand is meant to end holding the key. If the door is still shut
         -- after it, walking it again would only fetch a key we now have.
         it("stops rather than running the errand twice", function()
@@ -21979,6 +21989,69 @@ end)
 -- `n n passage nw nw n n`, and `passage` is not a command the game takes; the
 -- way across is `buy passage`, and it has prerequisites: 100 gold, a Rune, and
 -- (as a warning) enough gold to come back.
+-- logs/session-pelayo-2026-11-11T19-03-59.log and -20-17-26.log: seven stone
+-- doors between hewn-granite-corridor-1 and 117, six opened by a lever behind a
+-- tapestry and one by the topaz key.
+describe("the granite corridors' Script edge", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+    end)
+
+    local function route() return taPackage.navRoutes["granite-corridors/1-to-117"] end
+
+    it("is an edge from corridor 1 to 117 that needs the topaz key", function()
+        local r = route()
+        assert.is_true(r.edge)
+        assert.are.equal("granite-corridors/hewn-granite-corridor-1", r.from)
+        assert.are.equal("granite-corridors/hewn-granite-corridor-117", r.to)
+        assert.are.same({ "topaz key" }, r.requires)
+    end)
+
+    it("walks 75 moves through seven doors, the last the topaz one", function()
+        local moves, doors = 0, {}
+        for _, step in ipairs(route().steps) do
+            if type(step) == "string" then moves = moves + 1
+            elseif step.door then moves = moves + 1; doors[#doors + 1] = step end
+        end
+        assert.are.equal(75, moves)
+        assert.are.equal(7, #doors)
+        assert.are.same({ door = "sw", key = "topaz" }, doors[7])
+        for i = 1, 6 do assert.is_string(doors[i].detour) end
+    end)
+
+    it("clears each lever chamber before moving the tapestry, and walks back", function()
+        local OPP = { n = "s", s = "n", e = "w", w = "e", ne = "sw", sw = "ne", nw = "se", se = "nw" }
+        for _, step in ipairs(route().steps) do
+            if type(step) == "table" and step.detour then
+                local d = taPackage.navRoutes[step.detour].steps
+                local there, back, i = {}, {}, 1
+                while d[i].killAll == nil do
+                    there[#there + 1] = type(d[i]) == "string" and d[i] or d[i].door
+                    i = i + 1
+                end
+                assert.are.equal("move tapestry", d[i + 1].cmd)
+                assert.are.equal("pull lever", d[i + 2].cmd)
+                for k = i + 3, #d do back[#back + 1] = d[k] end
+                -- Back the way it came, so the walk is standing at the door again.
+                assert.are.equal(#there, #back, step.detour)
+                for k = 1, #there do assert.are.equal(OPP[there[k]], back[#back - k + 1], step.detour) end
+            end
+        end
+    end)
+
+    it("reaches chamber-7 through the 88 se door, which has its own lever", function()
+        local d = taPackage.navRoutes["granite-corridors/lever-for-84-sw"].steps
+        assert.are.same({ door = "se", detour = "granite-corridors/lever-for-88-se" }, d[5])
+    end)
+
+    it("keeps the levers out of the route lists", function()
+        helper.simulateAlias("navigate-to nowhere/at-all")
+        assert.is_falsy(table.concat(helper.echoCalls, "\n"):find("granite", 1, true))
+    end)
+end)
+
 describe("navigate-live through the labyrinth's Script edges", function()
 
     before_each(function()

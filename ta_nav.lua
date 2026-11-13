@@ -1224,6 +1224,84 @@ NAV_ROUTES["tunnels-to-tower"] = {
 }
 
 -- =========================================================================
+-- The granite corridors: hewn-granite-corridor-1 to 117
+-- =========================================================================
+--
+-- Seven stone doors stand between the corridors' top (1, below the sweltering
+-- passages) and 117. Six open from a lever behind a tapestry in a huge granite
+-- chamber at the end of a side passage, guarded; the seventh takes the topaz
+-- key. Worked out from Pelayo and Tojolias on 2026-11-11
+-- (logs/session-pelayo-2026-11-11T19-03-59.log from line 5151, and
+-- -20-17-26.log to 2022; the 3 se door from logs/session-tojolias-2026-11-11T04-08-47.log
+-- line 3956), each move checked against the map.
+--
+-- Every lever door is a gate whose detour clears the chamber, moves the
+-- tapestry and pulls the lever, then walks back to the door. A gate only takes
+-- its detour when the game refuses the door, so a door someone has already
+-- opened today costs nothing -- and nothing gets pulled twice, which matters
+-- if these levers toggle the way the labyrinth's do (not known). 84 sw's
+-- lever is in chamber-7, which is itself behind a lever door (88 se), so that
+-- detour has a gate of its own.
+--
+-- The topaz door has no detour: without the key the walk stops there. Anyone
+-- holding it opens the door for the whole group (Pelayo walked through behind
+-- Tojolias, 20:41-20:43), so `requires` is a check `anyway` can overrule.
+--
+-- A Script edge, so navigate-live can plan through: the map's own Exits here
+-- walk straight into those doors.
+local function navLeverDetour(there, back)
+    local steps = {}
+    for _, d in ipairs(there) do steps[#steps + 1] = d end
+    steps[#steps + 1] = { killAll = true }
+    steps[#steps + 1] = { cmd = "move tapestry" }
+    steps[#steps + 1] = { cmd = "pull lever" }
+    for _, d in ipairs(back) do steps[#steps + 1] = d end
+    return { steps = steps }
+end
+NAV_ROUTES["granite-corridors/lever-for-3-se"] =   -- huge-granite-chamber
+    navLeverDetour({ "ne", "n", "ne" }, { "sw", "s", "sw" })
+NAV_ROUTES["granite-corridors/lever-for-9-se"] =   -- huge-granite-chamber-1
+    navLeverDetour({ "ne", "e", "ne" }, { "sw", "w", "sw" })
+NAV_ROUTES["granite-corridors/lever-for-17-s"] =   -- huge-granite-chamber-2
+    navLeverDetour({ "e", "se", "e", "se" }, { "nw", "w", "nw", "w" })
+NAV_ROUTES["granite-corridors/lever-for-25-sw"] =  -- huge-granite-chamber-3
+    navLeverDetour({ "se", "s" }, { "n", "nw" })
+NAV_ROUTES["granite-corridors/lever-for-32-sw"] =  -- huge-granite-chamber-4
+    navLeverDetour({ "se", "s", "se", "ne", "ne" }, { "sw", "sw", "nw", "n", "nw" })
+NAV_ROUTES["granite-corridors/lever-for-88-se"] =  -- huge-granite-chamber-6
+    navLeverDetour({ "ne" }, { "sw" })
+NAV_ROUTES["granite-corridors/lever-for-84-sw"] =  -- huge-granite-chamber-7, behind 88 se
+    navLeverDetour({ "n", "ne", "e", "ne",
+                     { door = "se", detour = "granite-corridors/lever-for-88-se" } },
+                   { "nw", "sw", "w", "sw", "s" })
+
+NAV_ROUTES["granite-corridors/1-to-117"] = {
+    edge     = true,
+    unlisted = true,
+    from     = "granite-corridors/hewn-granite-corridor-1",
+    to       = "granite-corridors/hewn-granite-corridor-117",
+    requires = { "topaz key" },
+    steps    = { "se", "se",                                                    -- to 3
+                 { door = "se", detour = "granite-corridors/lever-for-3-se" },  -- 6
+                 "se", "se", "se",                                              -- 9
+                 { door = "se", detour = "granite-corridors/lever-for-9-se" },  -- 12
+                 "s", "s", "s", "s", "s",                                       -- 17
+                 { door = "s", detour = "granite-corridors/lever-for-17-s" },   -- 21
+                 "s", "s", "s", "s",                                            -- 25
+                 { door = "sw", detour = "granite-corridors/lever-for-25-sw" }, -- 27
+                 "s", "s", "s", "s", "sw",                                      -- 32
+                 { door = "sw", detour = "granite-corridors/lever-for-32-sw" }, -- 37
+                 "sw", "s", "s", "sw", "w", "nw", "ne", "n", "n",               -- 45
+                 "ne", "ne", "ne", "n", "n", "n", "n", "ne",                    -- 54
+                 "n", "n", "n", "n", "n", "n", "n", "n", "nw",                  -- 63
+                 "nw", "nw", "nw", "nw", "nw", "w", "w", "w", "w", "w",         -- 73
+                 "nw", "w", "w", "w", "w", "w", "w", "w", "w",                  -- 84
+                 { door = "sw", detour = "granite-corridors/lever-for-84-sw" }, -- 89
+                 "w", "sw", "s", "se",                                          -- 93
+                 { door = "sw", key = "topaz" } },                              -- 117
+}
+
+-- =========================================================================
 -- Script edges
 -- =========================================================================
 --
@@ -3603,8 +3681,7 @@ createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", 
         if j.gateTried[gate] then
             stopNavigate()
             navEcho("Walked " .. gate.detour .. " and the " .. gate.door
-                .. " door is still locked — stopping rather than fetching the "
-                .. (gate.key or "same") .. " key all over again.")
+                .. " door is still locked — stopping rather than walking it all over again.")
             return
         end
         j.gateTried[gate] = true
@@ -3619,9 +3696,10 @@ createTrigger("^The locked (.+) door prevents your exit in that direction\\.$", 
         -- No brief follows a refusal, but the walk is now between steps; leaving
         -- this as "gate" would let a stray line be read as getting through.
         j.stepKind = nil
-        navEcho("The " .. gate.door .. " door is locked and I don't have the "
-            .. (gate.key or "right") .. " key — fetching it first, by way of "
-            .. gate.detour .. " (" .. #detour .. " steps).")
+        navEcho("The " .. gate.door .. " door is locked"
+            .. (gate.key and (" and I don't have the " .. gate.key .. " key — fetching it first")
+                or " — opening it first")
+            .. ", by way of " .. gate.detour .. " (" .. #detour .. " steps).")
         navScheduleStep()
         return
     end
