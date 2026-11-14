@@ -33,7 +33,9 @@
 --
 -- Each time the loop leaves the REPORT_CORNER, the leader pushes an "Elven
 -- Valley Update" to ntfy: when, how long the circuit took, and everyone's XP
--- gain over it, which the followers send back over group chat.
+-- gain over it, which the followers send back over group chat. Every
+-- HALF_HOUR_MS it pushes the same counts for the half hour, measured from a
+-- reading taken when the loop starts.
 --
 -- `run` is a local on purpose: a reloadScript() cannot carry the poll timer over,
 -- so a run should not survive one either.
@@ -59,6 +61,7 @@ local MAX_CHASE_FIGHT = 2           -- away from home, fight up to this many; th
 
 local REPORT_CORNER = "SE"
 local REPORT_WAIT_MS = 15000        -- how long to wait for the followers' XP
+local HALF_HOUR_MS = 30 * 60000
 
 -- The ring's corners are the only rooms on it with these two exits.
 local CORNERS = { ["e,s"] = "NW", ["s,w"] = "NE", ["n,w"] = "SE", ["e,n"] = "SW" }
@@ -173,9 +176,10 @@ function taPackage.teamElves.cornerOf(exits)
     return CORNERS[exitKey(exits)]
 end
 
--- The corner report being gathered: our own XP from `status`, the followers'
--- from their `xp-is` replies.
-local pendingReport = nil
+-- The reports being gathered: our own XP from `status`, the followers' from
+-- their `xp-is` replies. A list, as a half-hourly report can come due while a
+-- corner report is still waiting on answers; each reply goes to both.
+local pendingReports = {}
 
 -- Millions to one place, cut rather than rounded, without the leading zero:
 -- 1153000 -> "1.1M", 382000 -> ".3M".
@@ -200,15 +204,18 @@ end
 local function sendReport(report)
     if report.sent then return end
     report.sent = true
-    if pendingReport == report then pendingReport = nil end
-    local lines = { "- reached " .. REPORT_CORNER .. " corner at " .. os.date("%H:%M") }
+    for i, pending in ipairs(pendingReports) do
+        if pending == report then table.remove(pendingReports, i) break end
+    end
+    if report.quiet then return end
+    local lines = { "- " .. report.heading .. " at " .. os.date("%H:%M") }
     local previous = report.previous
     if not previous then
         lines[#lines + 1] = "- first time round: timing the circuit from here"
         lines[#lines + 1] = killsLine(report)
     else
         local minutes = math.floor((report.at - previous.at) / 60000 + 0.5)
-        lines[#lines + 1] = "- last circuit took " .. minutes .. " minutes"
+        lines[#lines + 1] = string.format(report.span, minutes)
         lines[#lines + 1] = killsLine(report)
         lines[#lines + 1] = "- XP gains:"
         local names = {}
@@ -227,30 +234,52 @@ local function sendReport(report)
 end
 
 local function recordXp(name, xp)
-    local report = pendingReport
-    if not report then return end
-    report.xp[name:lower()] = xp
-    local have = 0
-    for _ in pairs(report.xp) do have = have + 1 end
-    if report.expected and have >= report.expected then sendReport(report) end
+    -- A copy, as sending a report takes it off the list.
+    for _, report in ipairs({ table.unpack(pendingReports) }) do
+        report.xp[name:lower()] = xp
+        local have = 0
+        for _ in pairs(report.xp) do have = have + 1 end
+        if report.expected and have >= report.expected then sendReport(report) end
+    end
 end
 
 -- Asks everyone for their XP; the report goes out once all have answered, or
--- after REPORT_WAIT_MS with "?" for whoever didn't.
-local function cornerReport(loop)
-    local report = {
-        at = taPackage.utils.nowMillis(),
-        xp = {},
-        killed = {},
-        previous = loop.lastCorner,
-        expected = loop.members,
-    }
+-- after REPORT_WAIT_MS with "?" for whoever didn't. `report` brings its
+-- `heading`, its `span` ("... %d minutes") and the `previous` report it
+-- counts from; a `quiet` one is only a reading for the next to count from.
+local function gatherReport(loop, report)
+    report.at = taPackage.utils.nowMillis()
+    report.xp = {}
+    report.killed = {}
+    report.expected = loop.members
     for _, kind in ipairs(KINDS) do report.killed[kind] = loop.killed[kind] end
-    loop.lastCorner = report
-    pendingReport = report
+    table.insert(pendingReports, report)
     send("status")
     send("confer report-xp")
     createTimer(REPORT_WAIT_MS, function() sendReport(report) end, { repeating = false })
+    return report
+end
+
+local function cornerReport(loop)
+    loop.lastCorner = gatherReport(loop, {
+        heading = "reached " .. REPORT_CORNER .. " corner",
+        span = "- last circuit took %d minutes",
+        previous = loop.lastCorner,
+    })
+end
+
+-- Every half hour for as long as this loop runs. A stopped loop's timer finds
+-- the run gone, or another loop's, and lapses; a reloadScript() clears it.
+local function halfHourly(loop)
+    createTimer(HALF_HOUR_MS, function()
+        if not (run and run.loop == loop) then return end
+        loop.lastHalfHour = gatherReport(loop, {
+            heading = "half-hourly update",
+            span = "- over the last %d minutes",
+            previous = loop.lastHalfHour,
+        })
+        halfHourly(loop)
+    end, { repeating = false })
 end
 
 local function newRun(loop)
@@ -621,9 +650,12 @@ createAlias("^team-fight-elves-in-loop$", function()
     if not canStart() then return end
     local killed = {}
     for _, kind in ipairs(KINDS) do killed[kind] = 0 end
-    begin(newRun({ heading = nil, kills = 0, killed = killed }))
+    local loop = { heading = nil, kills = 0, killed = killed }
+    begin(newRun(loop))
     echo(TAG .. "Looping round the ring until team-fight-elves-in-loop-stop.")
     markXp()
+    loop.lastHalfHour = gatherReport(loop, { quiet = true })
+    halfHourly(loop)
     scanRoom()
 end, { type = "regex" })
 
@@ -789,7 +821,7 @@ createTrigger("^\\s+(\\S+).*HE:\\s*(\\d+)% ST:(\\w+)", function(matches)
 end, { type = "regex" })
 
 createTrigger("^Experience:\\s+(\\d+)$", function(matches)
-    if not pendingReport then return end
+    if #pendingReports == 0 then return end
     recordXp(taPackage.character.getName() or "leader", tonumber(matches[2]))
 end, { type = "regex" })
 

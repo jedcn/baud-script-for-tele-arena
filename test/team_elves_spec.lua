@@ -877,6 +877,83 @@ describe("team-fight-elves", function()
             end)
         end)
 
+        describe("the half-hourly report", function()
+            local function pushes()
+                local bodies = {}
+                for _, call in ipairs(helper.httpRequestCalls) do
+                    if call.url:find("ntfy", 1, true)
+                        and call.options.body:find("half-hourly", 1, true) then
+                        table.insert(bodies, call.options.body)
+                    end
+                end
+                return bodies
+            end
+
+            local function answer(pelayoXp, polluxXp)
+                helper.simulateLine("Experience:   " .. pelayoXp)
+                helper.simulateLine("From Pollux (to group): xp-is " .. polluxXp)
+            end
+
+            before_each(function()
+                taPackage.character.setName("Pelayo")
+            end)
+
+            it("takes a reading at the start without pushing it", function()
+                startLoop(NONE)
+                assert.is_true(sent("confer report-xp"))
+                answer(1000000, 500000)
+                helper.fireTimers(15000)
+                assert.are.equal(0, #pushes())
+            end)
+
+            it("pushes the kills and XP gains of each half hour", function()
+                startLoop(NONE)
+                answer(1000000, 500000)
+                helper.fireTimers(15000)
+                group("Ready", 100, "e,w")
+                arrive(ONE)
+                kill()
+                room(NONE)
+                helper.advanceMs(30 * 60000)
+                helper.fireTimers(30 * 60000)
+                answer(1300000, 1700000)
+                local bodies = pushes()
+                assert.are.equal(1, #bodies)
+                assert.is_truthy(bodies[1]:find("half-hourly update at", 1, true))
+                assert.is_truthy(bodies[1]:find("- over the last 30 minutes", 1, true))
+                assert.is_truthy(bodies[1]:find("- killed 1 champion, 0 warriors", 1, true))
+                assert.is_truthy(bodies[1]:find("  - pelayo .3M", 1, true))
+                assert.is_truthy(bodies[1]:find("  - pollux 1.2M", 1, true))
+            end)
+
+            it("counts the next half hour from the last", function()
+                startLoop(NONE)
+                answer(1000000, 500000)
+                helper.fireTimers(15000)
+                group("Ready", 100, "e,w")
+                helper.advanceMs(30 * 60000)
+                helper.fireTimers(30 * 60000)
+                answer(1300000, 700000)
+                helper.advanceMs(30 * 60000)
+                helper.fireTimers(30 * 60000)
+                answer(1500000, 800000)
+                local bodies = pushes()
+                assert.are.equal(2, #bodies)
+                assert.is_truthy(bodies[2]:find("  - pelayo .2M", 1, true))
+                assert.is_truthy(bodies[2]:find("  - pollux .1M", 1, true))
+            end)
+
+            it("stops when the loop does", function()
+                startLoop(NONE)
+                helper.simulateAlias("stop-team-fight-elves")
+                clearSent()
+                helper.advanceMs(30 * 60000)
+                helper.fireTimers(30 * 60000)
+                assert.is_false(sent("confer report-xp"))
+                assert.are.equal(0, #pushes())
+            end)
+        end)
+
         it("team-fight-elves-in-loop-stop-now stops it mid-fight", function()
             startLoop(THREE)
             clearSent()
