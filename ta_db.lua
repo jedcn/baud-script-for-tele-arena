@@ -156,24 +156,39 @@ if tableExists("room_notes") then
     end
 end
 
--- Last known room per character, so `just report` can mark "you are here". A
--- character maps into the shared DB under its own name; last-known (not live)
--- is the intended semantics — it persists where a character logged off.
-db:execute([[CREATE TABLE IF NOT EXISTS player_location (
-  player     TEXT PRIMARY KEY,
-  room_id    INTEGER REFERENCES rooms(id),
-  updated_at TEXT
+-- One row per character, for facts about where it stands now rather than a
+-- history (trainings, donations, attacks and the rest are histories).
+--
+--   room_id, location_updated_at  the last room the tracker was sure of, for
+--       `just report`'s "you are here" and to break ties between rooms that
+--       look alike. Last-known, not live: it stays where a character logged
+--       off, and goes NULL when the tracker loses them.
+--   drained_at  when a monster drained the character ("You've been drained!"),
+--       NULL once `buy restoring` puts it right. Kept here, not only in memory,
+--       because a drain outlasts a logout: Pollux was drained at 20:15 on
+--       2026-11-12 and the guild hall still refused to train Pollux at 03:08
+--       the next morning.
+--
+-- Replaces player_location and drained_characters, one table per fact; their
+-- rows are moved over and the tables dropped the first time this runs.
+db:execute([[CREATE TABLE IF NOT EXISTS characters (
+  player              TEXT PRIMARY KEY,
+  room_id             INTEGER REFERENCES rooms(id),
+  location_updated_at TEXT,
+  drained_at          TEXT
 )]])
-
--- Characters a monster has drained ("You've been drained!") and `buy restoring`
--- has not yet put right. A row per drained character; restoring deletes it. It
--- lives here rather than only in memory because a drain outlasts the session:
--- Pollux was drained at 20:15 on 2026-11-12 and the guild hall still refused
--- to train Pollux after a logout, at 03:08 the next morning.
-db:execute([[CREATE TABLE IF NOT EXISTS drained_characters (
-  player     TEXT PRIMARY KEY,
-  drained_at TEXT
-)]])
+if tableExists("player_location") then
+    db:execute([[INSERT OR IGNORE INTO characters (player, room_id, location_updated_at)
+                 SELECT player, room_id, updated_at FROM player_location]])
+    db:execute("DROP TABLE player_location")
+end
+if tableExists("drained_characters") then
+    db:execute("INSERT OR IGNORE INTO characters (player) SELECT player FROM drained_characters")
+    db:execute([[UPDATE characters SET drained_at =
+                   (SELECT drained_at FROM drained_characters d WHERE d.player = characters.player)
+                 WHERE player IN (SELECT player FROM drained_characters)]])
+    db:execute("DROP TABLE drained_characters")
+end
 
 db:execute([[CREATE TABLE IF NOT EXISTS monsters (
   name        TEXT PRIMARY KEY,
@@ -536,18 +551,22 @@ end
 -- here" marker). Upsert keyed by character name.
 function TaDb.setPlayerLocation(player, roomId)
     db:execute(
-        "INSERT INTO player_location (player, room_id, updated_at) VALUES (?, ?, ?) "
-        .. "ON CONFLICT(player) DO UPDATE SET room_id = excluded.room_id, updated_at = excluded.updated_at",
+        "INSERT INTO characters (player, room_id, location_updated_at) VALUES (?, ?, ?) "
+        .. "ON CONFLICT(player) DO UPDATE SET room_id = excluded.room_id, "
+        .. "location_updated_at = excluded.location_updated_at",
         player, roomId, now()
     )
-    dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ #" .. tostring(roomId))
+    dbLog("[DB\xE2\x86\x92characters] " .. tostring(player) .. " @ #" .. tostring(roomId))
 end
 
 -- Forget where a character is: the tracker has lost them, so the stored room
--- would go stale as they walk on.
+-- would go stale as they walk on. Only the location: the row keeps the
+-- character's other facts.
 function TaDb.clearPlayerLocation(player)
-    db:execute("DELETE FROM player_location WHERE player = ?", player)
-    dbLog("[DB\xE2\x86\x92player_location] " .. tostring(player) .. " @ (lost)")
+    db:execute(
+        "UPDATE characters SET room_id = NULL, location_updated_at = NULL WHERE player = ?",
+        player)
+    dbLog("[DB\xE2\x86\x92characters] " .. tostring(player) .. " @ (lost)")
 end
 
 -- Where the map last saw a character: the last room the tracker was sure of. It
@@ -556,26 +575,26 @@ end
 -- that look alike.
 function TaDb.playerLocation(player)
     local row = db:queryOne(
-        "SELECT room_id FROM player_location WHERE player = ?", player)
+        "SELECT room_id FROM characters WHERE player = ?", player)
     return row and row.room_id or nil
 end
 
 function TaDb.setDrained(player, drained)
     if drained then
         db:execute(
-            "INSERT INTO drained_characters (player, drained_at) VALUES (?, ?) "
+            "INSERT INTO characters (player, drained_at) VALUES (?, ?) "
             .. "ON CONFLICT(player) DO UPDATE SET drained_at = excluded.drained_at",
             player, now())
     else
-        db:execute("DELETE FROM drained_characters WHERE player = ?", player)
+        db:execute("UPDATE characters SET drained_at = NULL WHERE player = ?", player)
     end
-    dbLog("[DB\xE2\x86\x92drained_characters] " .. tostring(player) .. " "
+    dbLog("[DB\xE2\x86\x92characters] " .. tostring(player) .. " "
         .. (drained and "drained" or "restored"))
 end
 
 function TaDb.isDrained(player)
     local row = db:queryOne(
-        "SELECT drained_at FROM drained_characters WHERE player = ?", player)
+        "SELECT drained_at FROM characters WHERE player = ?", player)
     return row ~= nil and row.drained_at ~= nil
 end
 

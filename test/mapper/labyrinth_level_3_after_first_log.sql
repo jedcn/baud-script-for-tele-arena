@@ -21,5 +21,5 @@ INSERT INTO room_exits(from_id,direction,to_id,lock_key,lock_door,sealed_by) VAL
 INSERT INTO room_exits(from_id,direction,to_id,lock_key,lock_door,sealed_by) VALUES(104,'w',105,NULL,NULL,NULL);
 INSERT INTO room_exits(from_id,direction,to_id,lock_key,lock_door,sealed_by) VALUES(105,'e',104,NULL,NULL,NULL);
 INSERT INTO room_exits(from_id,direction,to_id,lock_key,lock_door,sealed_by) VALUES(105,'w',NULL,NULL,NULL,NULL);
-INSERT INTO player_location(player,room_id,updated_at) VALUES('Teekywiki',101,'2026-09-27T12:17:06');
+INSERT INTO characters(player,room_id,location_updated_at) VALUES('Teekywiki',101,'2026-09-27T12:17:06');
 COMMIT;

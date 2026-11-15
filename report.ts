@@ -41,8 +41,8 @@ const exits = roomGraphReady ? db.prepare(`
 `).all() as any[] : [];
 
 // Last known room per character, for the "you are here" marker on the map.
-const playerLocations = (roomGraphReady && hasTable("player_location")) ? db.prepare(`
-  SELECT player, room_id, updated_at FROM player_location WHERE room_id IS NOT NULL
+const playerLocations = (roomGraphReady && hasTable("characters")) ? db.prepare(`
+  SELECT player, room_id, location_updated_at AS updated_at FROM characters WHERE room_id IS NOT NULL
 `).all() as any[] : [];
 
 // room id -> [character names] standing there.

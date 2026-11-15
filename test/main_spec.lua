@@ -3017,7 +3017,7 @@ describe("ta_db", function()
 
         it("upserts the character's current room", function()
             TaDb.setPlayerLocation("Pelayo", 110)
-            local call = helper.findDbCall("execute", "INSERT INTO player_location")
+            local call = helper.findDbCall("execute", "INSERT INTO characters (player, room_id")
             assert.is_not_nil(call)
             assert.are.equal("Pelayo", call.params[1])
             assert.are.equal(110, call.params[2])
@@ -4533,7 +4533,7 @@ describe("World map triggers", function()
             taPackage.currentRoomId = 110
             taPackage._character.name = "Pelayo"
             helper.simulateLine("Exits: n,s.")
-            local loc = helper.findDbCall("execute", "INSERT INTO player_location")
+            local loc = helper.findDbCall("execute", "INSERT INTO characters (player, room_id")
             assert.is_not_nil(loc)
             assert.are.equal("Pelayo", loc.params[1])
             assert.are.equal(110, loc.params[2])
@@ -4543,7 +4543,7 @@ describe("World map triggers", function()
             taPackage.currentRoomId = 110
             taPackage._character.name = nil
             helper.simulateLine("Exits: n,s.")
-            assert.is_nil(helper.findDbCall("execute", "INSERT INTO player_location"))
+            assert.is_nil(helper.findDbCall("execute", "INSERT INTO characters (player, room_id"))
         end)
 
     end)
@@ -4672,7 +4672,7 @@ describe("World map triggers", function()
                 return {}
             end
             helper.mockDbOneRow = function(sql)
-                if string.find(sql, "FROM player_location", 1, true) then
+                if string.find(sql, "SELECT room_id FROM characters", 1, true) then
                     return { room_id = 9 }
                 end
                 return nil
@@ -4701,7 +4701,7 @@ describe("World map triggers", function()
                 return {}
             end
             helper.mockDbOneRow = function(sql)
-                if string.find(sql, "FROM player_location", 1, true) then
+                if string.find(sql, "SELECT room_id FROM characters", 1, true) then
                     return { room_id = 77 }
                 end
                 return nil
@@ -5101,7 +5101,7 @@ describe("World map triggers", function()
             taPackage._character.name = "Pelayo"
             helper.mockDbOneRow = { id = 91, name = "cave", area_id = 2, x = -4, y = -11, z = -1 }
             helper.simulateAlias("map-here cave-11")
-            local loc = helper.findDbCall("execute", "INSERT INTO player_location")
+            local loc = helper.findDbCall("execute", "INSERT INTO characters (player, room_id")
             assert.is_not_nil(loc)
             assert.are.equal("Pelayo", loc.params[1])
             assert.are.equal(91, loc.params[2])
@@ -5816,7 +5816,7 @@ describe("World map triggers", function()
                 return nil
             end
             taPackage.trackMove("e", "cave")
-            local call = helper.findDbCall("execute", "DELETE FROM player_location")
+            local call = helper.findDbCall("execute", "UPDATE characters SET room_id = NULL")
             assert.is_not_nil(call)
             assert.are.equal("Tester", call.params[1])
         end)
@@ -5828,7 +5828,7 @@ describe("World map triggers", function()
                 return nil
             end
             taPackage.trackMove("s", "desert")
-            assert.is_not_nil(helper.findDbCall("execute", "DELETE FROM player_location"))
+            assert.is_not_nil(helper.findDbCall("execute", "UPDATE characters SET room_id = NULL"))
         end)
 
         -- Walking off the map is not a one-way door: a uniquely named room
@@ -22573,7 +22573,7 @@ describe("restock-in-first-town", function()
         end
         helper.mockDbOneRow = function(sql, params)
             if sql:find("SELECT id FROM areas WHERE slug", 1, true) then return { id = 1 } end
-            if sql:find("FROM player_location", 1, true) then
+            if sql:find("SELECT room_id FROM characters", 1, true) then
                 return lastSeen and { room_id = lastSeen } or nil
             end
             return oneRow(sql, params)
@@ -23090,7 +23090,7 @@ describe("drain tracking", function()
     local function drainWrites()
         local out = {}
         for _, c in ipairs(helper.dbCalls) do
-            if c.method == "execute" and c.sql:find("drained_characters", 1, true)
+            if c.method == "execute" and c.sql:find("drained_at", 1, true)
                 and not c.sql:find("CREATE TABLE", 1, true) then
                 out[#out + 1] = c
             end
@@ -23104,7 +23104,7 @@ describe("drain tracking", function()
         assert.is_true(taPackage.character.isDrained())
         local writes = drainWrites()
         assert.are.equal(1, #writes)
-        assert.truthy(writes[1].sql:find("INSERT INTO drained_characters", 1, true))
+        assert.truthy(writes[1].sql:find("INSERT INTO characters (player, drained_at)", 1, true))
         assert.are.equal("Pollux", writes[1].params[1])
     end)
 
@@ -23114,7 +23114,7 @@ describe("drain tracking", function()
         helper.simulateLine("The priests restore your body and mind to it's former state for 25 crowns.")
         assert.is_false(taPackage.character.isDrained())
         local writes = drainWrites()
-        assert.truthy(writes[2].sql:find("DELETE FROM drained_characters", 1, true))
+        assert.truthy(writes[2].sql:find("UPDATE characters SET drained_at = NULL", 1, true))
         assert.are.equal("Pollux", writes[2].params[1])
     end)
 
@@ -23122,7 +23122,7 @@ describe("drain tracking", function()
     -- Pollux at 03:08 the next morning.
     it("reads a drain from an earlier session back when the name is learned", function()
         helper.mockDbOneRow = function(sql, params)
-            if sql:find("FROM drained_characters", 1, true) and params[1] == "Pollux" then
+            if sql:find("SELECT drained_at FROM characters", 1, true) and params[1] == "Pollux" then
                 return { drained_at = "2026-11-12T20:15:31" }
             end
             return nil

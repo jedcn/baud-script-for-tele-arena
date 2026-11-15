@@ -36,7 +36,7 @@ local LOG = "test/fixtures/session-logs/session-teekywiki-2026-09-25T21-28-18.lo
 -- Regenerate it only if a change to the mapper alters what that first session
 -- builds: replay it alone with the old stand-in seed (see git history of this
 -- file), apply the description cleanup, then dump areas, the non-stand-in rooms,
--- room_exits and player_location with
+-- room_exits and characters with
 -- `sqlite3 -header <db> ".mode insert <table>" ...`.
 local SEED = "test/mapper/labyrinth_level_3_after_first_log.sql"
 

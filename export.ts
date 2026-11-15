@@ -173,7 +173,7 @@ if (import.meta.main) {
   // somebody's whereabouts in front of every commit. A machine without it (a
   // fresh clone, the VPS) simply draws no mark.
   const players = db.prepare(
-    `SELECT p.player, p.room_id, p.updated_at FROM player_location p
+    `SELECT p.player, p.room_id, p.location_updated_at AS updated_at FROM characters p
       WHERE p.room_id IS NOT NULL ORDER BY p.player`).all() as Row[];
   const located = players
     .filter(p => idToRoomId.has(p.room_id))
