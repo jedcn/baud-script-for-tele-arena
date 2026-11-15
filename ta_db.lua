@@ -33,18 +33,13 @@ local function tableHasColumn(tbl, col)
     return false
 end
 
--- Room-graph migration. The original rooms/room_exits schema keyed rooms by
--- display name, so identically-named rooms (every "cave") collapsed into one
--- row and their exits overwrote each other. The new schema keys rooms by an
--- auto-incrementing integer id and resolves identity from the walk graph. When
--- the old name-keyed tables are detected (rooms exists but has no `id` column),
--- rename them aside so nothing is lost, then create the fresh id-keyed tables.
--- Guarded so it's a no-op once migrated, and idempotent across reloadScript().
-if tableExists("rooms") and not tableHasColumn("rooms", "id") then
-    pcall(function() db:execute("ALTER TABLE rooms RENAME TO rooms_legacy") end)
-    if tableExists("room_exits") then
-        pcall(function() db:execute("ALTER TABLE room_exits RENAME TO room_exits_legacy") end)
-    end
+-- Tables nothing uses any more, dropped wherever the script still finds them.
+-- rooms_legacy/room_exits_legacy were the original name-keyed map, renamed
+-- aside when rooms got integer ids; no code read them after that. denizens and
+-- shop_items were planned (plans/tele-arena-sqlite-schema.md) but nothing ever
+-- wrote to them, and both were empty on 2026-11-15.
+for _, t in ipairs({ "rooms_legacy", "room_exits_legacy", "denizens", "shop_items" }) do
+    db:execute("DROP TABLE IF EXISTS " .. t)
 end
 
 db:execute([[CREATE TABLE IF NOT EXISTS areas (
@@ -185,23 +180,6 @@ db:execute([[CREATE TABLE IF NOT EXISTS monsters (
   description TEXT,
   first_seen  TEXT,
   encounters  INTEGER NOT NULL DEFAULT 0
-)]])
-
-db:execute([[CREATE TABLE IF NOT EXISTS denizens (
-  name        TEXT NOT NULL,
-  location    TEXT NOT NULL,
-  description TEXT,
-  first_seen  TEXT,
-  PRIMARY KEY (name, location)
-)]])
-
-db:execute([[CREATE TABLE IF NOT EXISTS shop_items (
-  name       TEXT NOT NULL,
-  shop       TEXT NOT NULL,
-  price      INTEGER,
-  min_level  INTEGER,
-  first_seen TEXT,
-  PRIMARY KEY (name, shop)
 )]])
 
 db:execute([[CREATE TABLE IF NOT EXISTS services (
@@ -1277,32 +1255,6 @@ end
 function TaDb.monsterHasDescription(name)
     local row = db:queryOne("SELECT description FROM monsters WHERE name = ?", name)
     return row ~= nil and row.description ~= nil and row.description ~= ""
-end
-
-function TaDb.upsertDenizen(name, location, description)
-    db:execute(
-        "INSERT OR IGNORE INTO denizens (name, location, description, first_seen) VALUES (?, ?, ?, ?)",
-        name, location, description or "", now()
-    )
-    db:execute(
-        "UPDATE denizens SET description = ? WHERE name = ? AND location = ?",
-        description or "", name, location
-    )
-    dbLog("[DB\xE2\x86\x92denizens] " .. name .. " @ " .. location)
-end
-
-function TaDb.recordShopItem(name, shop, price)
-    db:execute(
-        "INSERT OR IGNORE INTO shop_items (name, shop, price, first_seen) VALUES (?, ?, ?, ?)",
-        name, shop, price, now()
-    )
-    db:execute("UPDATE shop_items SET price = ? WHERE name = ? AND shop = ?", price, name, shop)
-    dbLog("[DB\xE2\x86\x92shop_items] " .. shop .. ": " .. name .. " " .. price .. "gp")
-end
-
-function TaDb.recordMinLevel(name, shop, level)
-    db:execute("UPDATE shop_items SET min_level = ? WHERE name = ? AND shop = ?", level, name, shop)
-    dbLog("[DB\xE2\x86\x92shop_items] min_level updated: " .. name .. " @ " .. shop .. " >= level " .. level)
 end
 
 function TaDb.recordService(name, location, cost)

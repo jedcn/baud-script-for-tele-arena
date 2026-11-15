@@ -23140,3 +23140,15 @@ describe("drain tracking", function()
         assert.is_true(taPackage.character.isDrained())
     end)
 end)
+
+describe("unused tables", function()
+    it("are dropped when the script loads", function()
+        helper.resetAll()
+        dofile("main.lua")
+        for _, t in ipairs({ "rooms_legacy", "room_exits_legacy", "denizens", "shop_items" }) do
+            assert.is_not_nil(helper.findDbCall("execute", "DROP TABLE IF EXISTS " .. t), t)
+        end
+        assert.is_nil(helper.findDbCall("execute", "CREATE TABLE IF NOT EXISTS denizens"))
+        assert.is_nil(helper.findDbCall("execute", "CREATE TABLE IF NOT EXISTS shop_items"))
+    end)
+end)

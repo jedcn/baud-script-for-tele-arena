@@ -72,7 +72,7 @@ export function logInstant(file: string): string | null {
 /**
  * Drop sightings from before the room existed. A room id in a log means whatever
  * the rooms table meant by it THAT DAY, and this map has been rebuilt under the
- * ids it uses now -- rooms_legacy is still sitting beside it. Unfiltered, twelve
+ * ids it uses now (the old map sat beside it as rooms_legacy). Unfiltered, twelve
  * of first-town's thirteen rooms "changed shape", all on the strength of logs
  * from the day before those ids were minted.
  *
