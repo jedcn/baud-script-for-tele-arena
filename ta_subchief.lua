@@ -23,8 +23,13 @@
 --             swing ("heat of battle", "rest a while"): 27 to 43 seconds in the
 --             log, never the same twice, so retry every few seconds instead of
 --             guessing a figure.
---   waiting   one room away, for WAIT_MS, then the reverse move back.
+--   waiting   one room away, for WAIT_MS, then `looking` again from there:
+--             "is to the <dir>!" says the way back.
 --   returning sent the move back; arriving starts `looking` again.
+--
+-- The way back is asked, never worked out by reversing the way out. On
+-- 2026-11-15 the subchief fled into a room you leave by ne but get back to by
+-- s, so a reversed sw would have walked into a wall.
 --
 -- HP is the guard's job (ta_guard.lua): this script is listed there as not in
 -- charge of HP, so a hit that leaves us under half still takes us out of the
@@ -41,12 +46,6 @@ local TAG = "[subchief] "
 local TARGET = "sub"
 local WAIT_MS = 30000       -- next door while he heals; he was healthy after 14-31s
 local RETRY_MS = 3000       -- between refused moves and between missed swings
-
-local REVERSE = {
-    n = "s", s = "n", e = "w", w = "e",
-    ne = "sw", sw = "ne", nw = "se", se = "nw",
-    u = "d", d = "u",
-}
 
 -- "The orc subchief is to the south!" names the way in full.
 local ABBREV = {
@@ -100,16 +99,14 @@ local function move(dir, state)
     send(dir)
 end
 
--- Step out of his room. Back the way we came when we know it, since that exit
--- is proven walkable; otherwise the first exit `ex` listed.
+-- Step out of his room by the first exit `ex` listed.
 local function leave()
-    local dir = (S.cameFrom and REVERSE[S.cameFrom]) or S.exits[1]
+    local dir = S.exits[1]
     if not dir then
         stop()
         echo(TAG .. "No exit to leave by, so stopping. " .. summary() .. ".")
         return
     end
-    S.leftBy = dir
     move(dir, "leaving")
 end
 
@@ -122,7 +119,6 @@ createAlias("^hit-subchief-once-and-let-him-heal$", function()
     stop()
     S.gen = S.gen + 1
     S.exits = {}
-    S.cameFrom = nil
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
     echo(TAG .. "Hitting the subchief once, then waiting " .. (WAIT_MS / 1000)
         .. "s next door while he heals. stop-hit-subchief to stop.")
@@ -213,9 +209,8 @@ end, { type = "regex" })
 createTrigger("^You're in ", function()
     if S.state == "leaving" then
         S.state = "waiting"
-        later(WAIT_MS, function() move(REVERSE[S.leftBy], "returning") end)
+        later(WAIT_MS, look)
     elseif S.state == "returning" then
-        S.cameFrom = S.moveDir
         look()
     end
 end, { type = "regex" })
