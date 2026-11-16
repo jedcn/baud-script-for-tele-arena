@@ -18,7 +18,14 @@ describe("hit-subchief-once-and-let-him-heal", function()
         taPackage.exitGamePending = nil
     end)
 
-    local function sends() return helper.sendCalls end
+    -- What the loop sends, less its `st` readings, which have a spec of their own.
+    local function sends()
+        local out = {}
+        for _, c in ipairs(helper.sendCalls) do
+            if c ~= "st" then out[#out + 1] = c end
+        end
+        return out
+    end
     local function clear() helper.sendCalls = {} end
 
     local function lookReply(exits, health)
@@ -86,6 +93,37 @@ describe("hit-subchief-once-and-let-him-heal", function()
         end
         assert.are.same({ "lightly wounded", "wounded", "moderately wounded",
             "sorely wounded" }, said)
+    end)
+
+    it("sends st at the start and as it leaves after a hit, not between swings", function()
+        start()
+        assert.are.same({ "st", "ex", "l sub" }, helper.sendCalls)
+        lookReply("s,w", HEALTHY)
+        clear()
+        hit("subchief is lightly wounded.")
+        hit("to be moderately wounded.")
+        assert.are.same({ "l sub", "a sub", "l sub", "st", "s" }, helper.sendCalls)
+    end)
+
+    it("prints XP per round and per hour from its own st readings", function()
+        start()
+        helper.simulateLine("Experience:   61000000")
+        lookReply("s,w", HEALTHY)
+        hit("subchief is lightly wounded.")
+        hit("to be moderately wounded.")
+        helper.advanceMs(120000)
+        helper.simulateLine("Experience:   61026000")
+        assert.is_truthy(helper.echoCalls[#helper.echoCalls]:find(
+            "Round: +26,000 XP from 2 hits (110 damage). Total +26,000 XP in 2m, 780,000 XP/hr.",
+            1, true))
+    end)
+
+    it("ignores an st the player typed", function()
+        start()
+        helper.simulateLine("Experience:   61000000")
+        local n = #helper.echoCalls
+        helper.simulateLine("Experience:   61005000")
+        assert.are.equal(n, #helper.echoCalls)
     end)
 
     it("swings again when the hit left him only lightly wounded", function()

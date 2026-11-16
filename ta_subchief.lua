@@ -131,6 +131,10 @@ createAlias("^hit-subchief-once-and-let-him-heal$", function()
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
     echo(TAG .. "Hitting the subchief once, then waiting " .. (WAIT_MS / 1000)
         .. "s next door while he heals. stop-hit-subchief to stop.")
+    S.roundHits, S.roundDamage = 0, 0
+    S.xpStart, S.xpLast, S.xpStartMs = nil, nil, nil
+    S.awaitingSt = true
+    send("st") -- the baseline the first round's XP is measured from
     look()
 end, { type = "regex" })
 
@@ -167,7 +171,15 @@ local function reportHitAndLeave(state)
     local again = SWING_AGAIN[state]
     echo(TAG .. "Hit " .. S.hits .. " for " .. S.lastHit .. ", leaving him "
         .. state .. (again and "; swinging again" or "") .. ". " .. summary() .. ".")
-    if again then swing() else leave() end
+    if again then
+        swing()
+    else
+        -- A status at every departure puts an Experience reading in the log
+        -- per round, so the XP each round earned is one subtraction away.
+        S.awaitingSt = true
+        send("st")
+        leave()
+    end
 end
 
 -- Both anchored to the whole line: baud hands a callback only the text its
@@ -221,6 +233,8 @@ createTrigger("^Your attack hit the orc subchief for (\\d+) damage!$", function(
     if S.state ~= "swinging" then return end
     S.hits = S.hits + 1
     S.damage = S.damage + tonumber(m[2])
+    S.roundHits = S.roundHits + 1
+    S.roundDamage = S.roundDamage + tonumber(m[2])
     S.lastHit = m[2]
     S.state = "checking"
     send("l " .. TARGET)
@@ -258,4 +272,31 @@ createTrigger("^You're in ", function()
     elseif S.state == "returning" then
         look()
     end
+end, { type = "regex" })
+
+-- The `st` we sent: the first sets the baseline, each later one closes a
+-- round. Printing XP per round and per hour here means a run is measured as
+-- it goes, with no `st` typed by hand and no log to wait for. Only our own
+-- `st` counts, so one typed mid-round doesn't split a round in two.
+local function commas(n) return taPackage.utils.formatWithCommas(n) end
+
+createTrigger("^Experience:\\s+(\\d+)$", function(m)
+    if not running() or not S.awaitingSt then return end
+    S.awaitingSt = false
+    local xp = tonumber(m[2])
+    if not S.xpStart then
+        S.xpStart, S.xpLast, S.xpStartMs = xp, xp, nowMs()
+        return
+    end
+    local round, total = xp - S.xpLast, xp - S.xpStart
+    S.xpLast = xp
+    local ms = nowMs() - S.xpStartMs
+    -- Under a minute a rate is one round scaled up 60-fold; not worth printing.
+    local rate = ms >= 60000
+        and commas(math.floor(total / (ms / 3600000))) .. " XP/hr"
+        or "rate after a minute"
+    echo(TAG .. "Round: +" .. commas(round) .. " XP from " .. S.roundHits .. " hit"
+        .. (S.roundHits == 1 and "" or "s") .. " (" .. S.roundDamage .. " damage). Total +"
+        .. commas(total) .. " XP in " .. math.floor(ms / 60000) .. "m, " .. rate .. ".")
+    S.roundHits, S.roundDamage = 0, 0
 end, { type = "regex" })
