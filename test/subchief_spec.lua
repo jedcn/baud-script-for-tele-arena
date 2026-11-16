@@ -27,6 +27,13 @@ describe("hit-subchief-once-and-let-him-heal", function()
         helper.simulateLine(health)
     end
 
+    -- The hit, then the look after it.
+    local function hit(after)
+        helper.simulateLine(HIT)
+        helper.simulateLine(DESC)
+        helper.simulateLine(after or "subchief is lightly wounded.")
+    end
+
     local function arrive()
         helper.simulateLine("You're in a cave.")
     end
@@ -45,8 +52,49 @@ describe("hit-subchief-once-and-let-him-heal", function()
         clear()
         lookReply("s,w", HEALTHY)
         assert.are.same({ "a sub" }, sends())
+        hit()
+        assert.are.same({ "a sub", "l sub", "s" }, sends())
+    end)
+
+    it("looks after the hit and says what it left him at", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        clear()
         helper.simulateLine(HIT)
-        assert.are.same({ "a sub", "s" }, sends())
+        assert.are.same({ "l sub" }, sends())
+        helper.simulateLine(DESC)
+        helper.simulateLine(WOUNDED)
+        assert.are.same({ "l sub", "s" }, sends())
+        assert.is_truthy(helper.echoCalls[#helper.echoCalls]:find(
+            "Hit 1 for 55, leaving him moderately wounded.", 1, true))
+    end)
+
+    it("names each condition the look can report", function()
+        local said = {}
+        for _, line in ipairs({
+            "subchief is lightly wounded.",
+            "to be wounded.",
+            "to be moderately wounded.",
+            "The orc subchief is sorely wounded.",
+        }) do
+            helper.resetAll()
+            dofile("main.lua")
+            start()
+            lookReply("s,w", HEALTHY)
+            hit(line)
+            said[#said + 1] = helper.echoCalls[#helper.echoCalls]:match("leaving him (.-)%. ")
+        end
+        assert.are.same({ "lightly wounded", "wounded", "moderately wounded",
+            "sorely wounded" }, said)
+    end)
+
+    it("still leaves if he fled from the hit", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        helper.simulateLine(HIT)
+        clear()
+        helper.simulateLine('Sorry, you don\'t see "sub" nearby.')
+        assert.are.same({ "s" }, sends())
     end)
 
     it("swings again after a miss or a dodge, not after a hit", function()
@@ -65,7 +113,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     it("retries the move out until the game lets us go", function()
         start()
         lookReply("n,se", HEALTHY)
-        helper.simulateLine(HIT)
+        hit()
         clear()
         helper.simulateLine(BATTLE)
         helper.fireTimers(3000)
@@ -78,7 +126,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     it("waits next door, then asks the way back instead of reversing", function()
         start()
         lookReply("ne,nw", HEALTHY)
-        helper.simulateLine(HIT)       -- out ne
+        hit()       -- out ne
         arrive()
         clear()
         helper.fireTimers(30000)
@@ -92,7 +140,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     it("swings at once if he walked into the room we're waiting in", function()
         start()
         lookReply("ne,nw", HEALTHY)
-        helper.simulateLine(HIT)
+        hit()
         arrive()
         helper.fireTimers(30000)
         clear()
@@ -117,8 +165,8 @@ describe("hit-subchief-once-and-let-him-heal", function()
         assert.are.same({ "s", "ex", "l sub" }, sends())
         clear()
         lookReply("ne,nw", HEALTHY)
-        helper.simulateLine(HIT)
-        assert.are.same({ "a sub", "ne" }, sends())
+        hit()
+        assert.are.same({ "a sub", "l sub", "ne" }, sends())
     end)
 
     it("stops when he can't be found", function()
@@ -130,7 +178,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     it("stops on stop-hit-subchief and ignores its timers after", function()
         start()
         lookReply("s,w", HEALTHY)
-        helper.simulateLine(HIT)
+        hit()
         arrive()
         helper.simulateAlias("stop-hit-subchief")
         clear()
@@ -147,7 +195,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     it("stops once the guard is taking us out of the game", function()
         start()
         lookReply("s,w", HEALTHY)
-        helper.simulateLine(HIT)
+        hit()
         arrive()
         taPackage.exitGamePending = true
         clear()

@@ -19,6 +19,8 @@
 --             means he moved next door, so walk there and look again.
 --   swinging  sent `a sub`. A hit ends the swinging; a miss or a dodge did no
 --             damage, so swing again.
+--   checking  sent `l sub` after the hit, to see what one hit leaves him at
+--             (lightly, moderately, sorely wounded), then leave.
 --   leaving   sent the move out. The game refuses it for a while after a
 --             swing ("heat of battle", "rest a while"): 27 to 43 seconds in the
 --             log, never the same twice, so retry every few seconds instead of
@@ -142,15 +144,38 @@ end, { type = "regex" })
 -- His health sentence. The BBS wraps the look at 78 columns, so the sentence
 -- usually arrives split ("...seems" / "to be in good physical health."); both
 -- halves we test for are on its last line.
-createTrigger("physical health\\.$", function()
-    if S.state ~= "looking" then return end
-    swing()
+--
+-- "...is lightly wounded." / "...to be moderately wounded." / "...to be
+-- wounded." -- the word before "wounded", unless that word is just the verb.
+local function condition(line)
+    if line:find("physical health%.$") then return "in good physical health" end
+    local word = line:match("(%a+) wounded%.$")
+    if not word or word == "be" or word == "is" then return "wounded" end
+    return word .. " wounded"
+end
+
+-- After a hit: say what it left him at, then go.
+local function reportHitAndLeave(state)
+    echo(TAG .. "Hit " .. S.hits .. " for " .. S.lastHit .. ", leaving him "
+        .. state .. ". " .. summary() .. ".")
+    leave()
+end
+
+createTrigger("physical health\\.$", function(m)
+    if S.state == "looking" then
+        swing()
+    elseif S.state == "checking" then
+        reportHitAndLeave(condition(m[1]))
+    end
 end, { type = "regex" })
 
-createTrigger("wounded\\.$", function()
-    if S.state ~= "looking" then return end
-    echo(TAG .. "Not healed yet; giving him longer.")
-    leave()
+createTrigger("wounded\\.$", function(m)
+    if S.state == "looking" then
+        echo(TAG .. "Not healed yet (" .. condition(m[1]) .. "); giving him longer.")
+        leave()
+    elseif S.state == "checking" then
+        reportHitAndLeave(condition(m[1]))
+    end
 end, { type = "regex" })
 
 -- Looked from a room he isn't in, and he is next door.
@@ -170,6 +195,9 @@ createTrigger("^Sorry, you don't see \"" .. TARGET .. "\" nearby\\.$", function(
     if S.state == "swinging" then
         -- He walked off between the look and the swing; find him again.
         look()
+    elseif S.state == "checking" then
+        -- Fled (or died) from the hit. Leave anyway; the next look finds him.
+        reportHitAndLeave("gone from the room")
     elseif S.state == "looking" then
         stop()
         echo(TAG .. "Can't find the subchief here or next door, so stopping. "
@@ -181,8 +209,9 @@ createTrigger("^Your attack hit the orc subchief for (\\d+) damage!$", function(
     if S.state ~= "swinging" then return end
     S.hits = S.hits + 1
     S.damage = S.damage + tonumber(m[2])
-    echo(TAG .. "Hit " .. S.hits .. " for " .. m[2] .. ". " .. summary() .. ".")
-    leave()
+    S.lastHit = m[2]
+    S.state = "checking"
+    send("l " .. TARGET)
 end, { type = "regex" })
 
 local function swingAgain()
