@@ -27,8 +27,14 @@ local TAG = "[guard] "
 local FRACTION = 0.5        -- leave below half our max vitality
 
 -- Running, but not in charge of what the character does: the follow XP poll
--- only sends `status`, and TA_INIT_CMD only waits for the next login.
-local NOT_IN_CHARGE = { ["follow XP poll"] = true, ["TA_INIT_CMD"] = true }
+-- only sends `status`, and TA_INIT_CMD only waits for the next login. The
+-- subchief loop is in charge of where we go but leaves HP to us, so it is here
+-- too, and it stops itself once it sees our exit pending.
+local NOT_IN_CHARGE = {
+    ["follow XP poll"] = true,
+    ["TA_INIT_CMD"] = true,
+    ["hit-subchief-once-and-let-him-heal"] = true,
+}
 
 function taPackage.guard.threshold()
     local _, max = taPackage.character.getVitality()

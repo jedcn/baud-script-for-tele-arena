@@ -1,0 +1,168 @@
+-- subchief_spec.lua
+-- hit-subchief-once-and-let-him-heal. The wording is from Pelayo doing this by
+-- hand (logs/session-pelayo-2026-11-15T20-13-02.log), wrapped as the BBS wraps it.
+
+local helper = require("test.test_helper")
+
+local DESC = "The orc subchief is a smallish humanoid with piglike facial features and is"
+local HEALTHY = "to be in good physical health."
+local WOUNDED = "to be moderately wounded."
+local HIT = "Your attack hit the orc subchief for 55 damage!"
+local BATTLE = "You cannot leave in the heat of battle!"
+
+describe("hit-subchief-once-and-let-him-heal", function()
+
+    before_each(function()
+        helper.resetAll()
+        dofile("main.lua")
+        taPackage.exitGamePending = nil
+    end)
+
+    local function sends() return helper.sendCalls end
+    local function clear() helper.sendCalls = {} end
+
+    local function lookReply(exits, health)
+        helper.simulateLine("Exits: " .. exits .. ".")
+        helper.simulateLine(DESC)
+        helper.simulateLine(health)
+    end
+
+    local function arrive()
+        helper.simulateLine("You're in a cave.")
+    end
+
+    local function start()
+        helper.simulateAlias("hit-subchief-once-and-let-him-heal")
+    end
+
+    it("looks first", function()
+        start()
+        assert.are.same({ "ex", "l sub" }, sends())
+    end)
+
+    it("hits a healthy subchief once, then leaves by the first exit", function()
+        start()
+        clear()
+        lookReply("s,w", HEALTHY)
+        assert.are.same({ "a sub" }, sends())
+        helper.simulateLine(HIT)
+        assert.are.same({ "a sub", "s" }, sends())
+    end)
+
+    it("swings again after a miss or a dodge, not after a hit", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        clear()
+        helper.simulateLine("Your attack missed!")
+        assert.are.same({}, sends())
+        helper.fireTimers(3000)
+        assert.are.same({ "a sub" }, sends())
+        helper.simulateLine("The orc subchief dodged your attack!")
+        helper.fireTimers(3000)
+        assert.are.same({ "a sub", "a sub" }, sends())
+    end)
+
+    it("retries the move out until the game lets us go", function()
+        start()
+        lookReply("n,se", HEALTHY)
+        helper.simulateLine(HIT)
+        clear()
+        helper.simulateLine(BATTLE)
+        helper.fireTimers(3000)
+        helper.simulateLine("Sorry, you'll have to rest a while before you can move.")
+        helper.fireTimers(3000)
+        assert.are.same({ "n", "n" }, sends())
+    end)
+
+    it("waits next door, then comes back the reverse way and looks again", function()
+        start()
+        lookReply("n,se", HEALTHY)
+        helper.simulateLine(HIT)
+        arrive()
+        clear()
+        helper.fireTimers(30000)
+        assert.are.same({ "s" }, sends())
+        arrive()
+        assert.are.same({ "s", "ex", "l sub" }, sends())
+    end)
+
+    it("leaves back the way it came in on later rounds", function()
+        start()
+        lookReply("n,se", HEALTHY)
+        helper.simulateLine(HIT)       -- out n
+        arrive()
+        helper.fireTimers(30000)       -- back s
+        arrive()
+        clear()
+        lookReply("n,se", HEALTHY)
+        helper.simulateLine(HIT)
+        assert.are.same({ "a sub", "n" }, sends())
+    end)
+
+    it("doesn't hit a wounded subchief; steps out and gives him longer", function()
+        start()
+        clear()
+        lookReply("ne,nw", WOUNDED)
+        assert.are.same({ "ne" }, sends())
+    end)
+
+    it("follows him when he has moved next door", function()
+        start()
+        clear()
+        helper.simulateLine("Exits: n,s.")
+        helper.simulateLine("The orc subchief is to the south!")
+        assert.are.same({ "s" }, sends())
+        arrive()
+        assert.are.same({ "s", "ex", "l sub" }, sends())
+        clear()
+        lookReply("ne,nw", HEALTHY)
+        helper.simulateLine(HIT)
+        -- came in going s, so out is n
+        assert.are.same({ "a sub", "n" }, sends())
+    end)
+
+    it("stops when he can't be found", function()
+        start()
+        helper.simulateLine('Sorry, you don\'t see "sub" nearby.')
+        assert.is_false(taPackage.subchief.running())
+    end)
+
+    it("stops on stop-hit-subchief and ignores its timers after", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        helper.simulateLine(HIT)
+        arrive()
+        helper.simulateAlias("stop-hit-subchief")
+        clear()
+        helper.fireTimers()
+        assert.are.same({}, sends())
+    end)
+
+    it("is stopped by stop-all-scripts", function()
+        start()
+        helper.simulateAlias("stop-all-scripts")
+        assert.is_false(taPackage.subchief.running())
+    end)
+
+    it("stops once the guard is taking us out of the game", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        helper.simulateLine(HIT)
+        arrive()
+        taPackage.exitGamePending = true
+        clear()
+        helper.fireTimers(30000)
+        assert.are.same({}, sends())
+        assert.is_false(taPackage.subchief.running())
+    end)
+
+    it("leaves the guard watching our HP", function()
+        taPackage.character.setClass("High Priest")
+        taPackage.inGame = true
+        start()
+        taPackage.character.setVitality(900, 1750)
+        clear()
+        helper.simulateLine("The orc subchief attacked you with his flail for 100 damage!")
+        assert.are.same({ "x" }, sends())
+    end)
+end)
