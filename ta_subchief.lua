@@ -232,6 +232,10 @@ local function swingAgain()
 end
 createTrigger("^Your attack missed!$", swingAgain, { type = "regex" })
 createTrigger("^The orc subchief dodged your attack!$", swingAgain, { type = "regex" })
+-- A swing too soon after the last one is refused, not missed; without this
+-- the loop sat in the room doing nothing (2026-11-16, 03:5x).
+createTrigger("^You are still physically exhausted from your previous activities!$",
+    swingAgain, { type = "regex" })
 
 local function retryMove()
     if S.state ~= "leaving" and S.state ~= "returning" then return end
