@@ -19,8 +19,8 @@
 --             means he moved next door, so walk there and look again.
 --   swinging  sent `a sub`. A hit ends the swinging; a miss or a dodge did no
 --             damage, so swing again.
---   checking  sent `l sub` after the hit, to see what one hit leaves him at
---             (lightly, moderately, sorely wounded), then leave.
+--   checking  sent `l sub` after the hit, to see what it left him at. Still
+--             only lightly wounded: swing again. Anything worse: leave.
 --   leaving   sent the move out. The game refuses it for a while after a
 --             swing ("heat of battle", "rest a while"): 27 to 43 seconds in the
 --             log, never the same twice, so retry every few seconds instead of
@@ -48,6 +48,13 @@ local TAG = "[subchief] "
 local TARGET = "sub"
 local WAIT_MS = 30000       -- next door while he heals; he was healthy after 14-31s
 local RETRY_MS = 3000       -- between refused moves and between missed swings
+
+-- What he can be left at and still take another swing. Hits run 28-63, and in
+-- the 2026-11-15 log 84 damage in all left him "sorely wounded" and he fled,
+-- while 63 and 88 left him "moderately". Lightly wounded (one 28) plus the
+-- worst hit is 91, so even this risks a flee now and then; "wounded" (40-55)
+-- plus a big hit would be past 84 most times.
+local SWING_AGAIN = { ["lightly wounded"] = true }
 
 -- "The orc subchief is to the south!" names the way in full.
 local ABBREV = {
@@ -154,11 +161,13 @@ local function condition(line)
     return word .. " wounded"
 end
 
--- After a hit: say what it left him at, then go.
+-- After a hit: say what it left him at, then go -- or swing again if that
+-- was only a scratch.
 local function reportHitAndLeave(state)
+    local again = SWING_AGAIN[state]
     echo(TAG .. "Hit " .. S.hits .. " for " .. S.lastHit .. ", leaving him "
-        .. state .. ". " .. summary() .. ".")
-    leave()
+        .. state .. (again and "; swinging again" or "") .. ". " .. summary() .. ".")
+    if again then swing() else leave() end
 end
 
 createTrigger("physical health\\.$", function(m)

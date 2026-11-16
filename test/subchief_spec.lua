@@ -31,7 +31,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     local function hit(after)
         helper.simulateLine(HIT)
         helper.simulateLine(DESC)
-        helper.simulateLine(after or "subchief is lightly wounded.")
+        helper.simulateLine(after or "to be moderately wounded.")
     end
 
     local function arrive()
@@ -82,10 +82,28 @@ describe("hit-subchief-once-and-let-him-heal", function()
             start()
             lookReply("s,w", HEALTHY)
             hit(line)
-            said[#said + 1] = helper.echoCalls[#helper.echoCalls]:match("leaving him (.-)%. ")
+            said[#said + 1] = helper.echoCalls[#helper.echoCalls]:match("leaving him ([^;.]+)")
         end
         assert.are.same({ "lightly wounded", "wounded", "moderately wounded",
             "sorely wounded" }, said)
+    end)
+
+    it("swings again when the hit left him only lightly wounded", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        clear()
+        hit("subchief is lightly wounded.")
+        assert.are.same({ "l sub", "a sub" }, sends())
+        hit("to be moderately wounded.")
+        assert.are.same({ "l sub", "a sub", "l sub", "s" }, sends())
+    end)
+
+    it("leaves once he's merely wounded", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        clear()
+        hit("to be wounded.")
+        assert.are.same({ "l sub", "s" }, sends())
     end)
 
     it("still leaves if he fled from the hit", function()
