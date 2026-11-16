@@ -237,10 +237,12 @@ function M.simulateLine(text)
     local snapshot = {}
     for _, trigger in ipairs(M.triggers) do snapshot[#snapshot + 1] = trigger end
     for _, trigger in ipairs(snapshot) do
-        local matches = {string.match(text, trigger.pattern)}
-        if #matches > 0 or string.match(text, trigger.pattern) then
-            if #matches == 0 then matches = {} end
-            table.insert(matches, 1, text)
+        local found = {string.find(text, trigger.pattern)}
+        if found[1] then
+            -- Like baud (JS Array.from(match)): [1] is the matched text, not
+            -- the whole line, then the captures.
+            local matches = { text:sub(found[1], found[2]) }
+            for i = 3, #found do matches[#matches + 1] = found[i] end
             trigger.callback(matches)
         end
     end
