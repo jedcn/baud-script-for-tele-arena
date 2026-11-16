@@ -170,7 +170,10 @@ local function reportHitAndLeave(state)
     if again then swing() else leave() end
 end
 
-createTrigger("physical health\\.$", function(m)
+-- Both anchored to the whole line: baud hands a callback only the text its
+-- regex matched, so an unanchored "wounded\\.$" sees "wounded." and never the
+-- "lightly" in front of it (2026-11-16, logs/session-pelayo-2026-11-16T03-42-22.log).
+createTrigger("^.*physical health\\.$", function(m)
     if S.state == "looking" then
         swing()
     elseif S.state == "checking" then
@@ -178,7 +181,7 @@ createTrigger("physical health\\.$", function(m)
     end
 end, { type = "regex" })
 
-createTrigger("wounded\\.$", function(m)
+createTrigger("^.*wounded\\.$", function(m)
     if S.state == "looking" then
         echo(TAG .. "Not healed yet (" .. condition(m[1]) .. "); giving him longer.")
         leave()
