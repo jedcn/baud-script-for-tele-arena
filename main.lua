@@ -1065,7 +1065,7 @@ function taPackage.allScripts()
         -- Ahead of kill, which it would otherwise leave to re-engage on its next
         -- poll, and it confers the stand-down to the group as it goes.
         { name = "team-fight-elves",      running = taPackage.teamElves.running(), stop = taPackage.teamElves.stop },
-        { name = "hit-subchief-once-and-let-him-heal", running = taPackage.subchief.running(), stop = taPackage.subchief.stop },
+        { name = "hit-subchief-and-let-him-heal", running = taPackage.subchief.running(), stop = taPackage.subchief.stop },
         { name = "kill",                  running = taPackage.killActive == true,     stop = taPackage.kill.stop },
         -- Every `running` flag is read when this table is built, before any
         -- stop runs -- which is what keeps the report honest now that stopping
@@ -1136,7 +1136,7 @@ dofile(scriptDir .. "ta_team_elves.lua")
 -- Subchief: hit once, let him heal
 -- =========================================================================
 --
--- hit-subchief-once-and-let-him-heal: ta_subchief.lua.
+-- hit-subchief-and-let-him-heal: ta_subchief.lua.
 dofile(scriptDir .. "ta_subchief.lua")
 
 -- =========================================================================

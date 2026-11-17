@@ -33,7 +33,7 @@ local FRACTION = 0.5        -- leave below half our max vitality
 local NOT_IN_CHARGE = {
     ["follow XP poll"] = true,
     ["TA_INIT_CMD"] = true,
-    ["hit-subchief-once-and-let-him-heal"] = true,
+    ["hit-subchief-and-let-him-heal"] = true,
 }
 
 function taPackage.guard.threshold()

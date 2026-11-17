@@ -1,5 +1,5 @@
 -- subchief_spec.lua
--- hit-subchief-once-and-let-him-heal. The wording is from Pelayo doing this by
+-- hit-subchief-and-let-him-heal. The wording is from Pelayo doing this by
 -- hand (logs/session-pelayo-2026-11-15T20-13-02.log), wrapped as the BBS wraps it.
 
 local helper = require("test.test_helper")
@@ -10,7 +10,7 @@ local WOUNDED = "to be moderately wounded."
 local HIT = "Your attack hit the orc subchief for 55 damage!"
 local BATTLE = "You cannot leave in the heat of battle!"
 
-describe("hit-subchief-once-and-let-him-heal", function()
+describe("hit-subchief-and-let-him-heal", function()
 
     before_each(function()
         helper.resetAll()
@@ -46,7 +46,7 @@ describe("hit-subchief-once-and-let-him-heal", function()
     end
 
     local function start()
-        helper.simulateAlias("hit-subchief-once-and-let-him-heal")
+        helper.simulateAlias("hit-subchief-and-let-him-heal")
     end
 
     it("looks first", function()

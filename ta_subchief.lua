@@ -1,16 +1,18 @@
--- ta_subchief.lua -- hit-subchief-once-and-let-him-heal
+-- ta_subchief.lua -- hit-subchief-and-let-him-heal
 --
 -- XP for no risk, worked out by hand with Pelayo on 2026-11-15
 -- (logs/session-pelayo-2026-11-15T20-13-02.log). The orc subchief can't hurt
 -- a High Priest in chain mail: 13 minutes in the room with him and every swing
 -- he took glanced off or missed. XP follows damage (~285 XP a point here), and
 -- he heals back to "good physical health" within about 15-30 seconds of our
--- leaving the room. So: hit him once, step out, let him heal, come back, again.
+-- leaving the room. So: hit him, step out, let him heal, come back, again.
 --
--- Once, because twice can send him running. Two hits (40 + 44) left him
--- "sorely wounded" and he fled; no single hit (28 to 63) ever did. A fled
--- subchief is still findable -- `l sub` from the next room answers "The orc
--- subchief is to the south!" -- but chasing him is the chaos we are avoiding.
+-- Hit until he is past lightly wounded, and no further, because too much
+-- sends him running. Two hits (40 + 44) left him "sorely wounded" and he fled;
+-- no single hit (28 to 63) ever did. A second swing only follows a hit that
+-- left him lightly wounded (SWING_AGAIN). A fled subchief is still findable --
+-- `l sub` from the next room answers "The orc subchief is to the south!" --
+-- but chasing him is the chaos we are avoiding.
 --
 -- The cycle, one state at a time:
 --
@@ -124,12 +126,12 @@ local function swing()
     send("a " .. TARGET)
 end
 
-createAlias("^hit-subchief-once-and-let-him-heal$", function()
+createAlias("^hit-subchief-and-let-him-heal$", function()
     stop()
     S.gen = S.gen + 1
     S.exits = {}
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
-    echo(TAG .. "Hitting the subchief once, then waiting " .. (WAIT_MS / 1000)
+    echo(TAG .. "Hitting the subchief until he is past lightly wounded, then waiting " .. (WAIT_MS / 1000)
         .. "s next door while he heals. stop-hit-subchief to stop.")
     S.roundHits, S.roundDamage = 0, 0
     S.xpStart, S.xpLast, S.xpStartMs = nil, nil, nil
