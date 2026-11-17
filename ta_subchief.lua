@@ -41,7 +41,8 @@
 --
 -- A separate chunk; the seam runs through taPackage:
 --
---   in    taPackage.exitGamePending (ta_leave_game.lua)
+--   in    taPackage.exitGamePending (ta_leave_game.lua), taPackage.inGroup
+--         (main.lua), taPackage.utils.sendNtfy
 --   out   taPackage.subchief.stop / .running (stop-all-scripts, the guard)
 
 taPackage.subchief = {}
@@ -302,3 +303,34 @@ createTrigger("^Experience:\\s+(\\d+)$", function(m)
         .. commas(total) .. " XP in " .. math.floor(ms / 60000) .. "m, " .. rate .. ".")
     S.roundHits, S.roundDamage = 0, 0
 end, { type = "regex" })
+
+-- Thirst. Solo, nothing else drinks for us -- the arena's trigger only does in
+-- a group -- and thirst costs a point of HP a tick, too slowly for the guard to
+-- notice for a long time. So drink from the waterskin. In a group the arena's
+-- trigger already sends it, and two drinks would waste one.
+createTrigger("^You're thirsty\\.$", function()
+    if not running() or taPackage.inGroup() then return end
+    S.drinkPending = true
+    send("drink water")
+end, { type = "regex" })
+
+createTrigger("^The water quenches your thirst\\.$", function()
+    S.drinkPending = false
+end, { type = "regex" })
+
+-- Nothing to drink from: "The waterskin is empty!" (seen 2026-11-16, with a
+-- waterskin(1) still in the pack) or, with no waterskin at all, "Sorry, but
+-- you don't seem to have one." Stop rather than keep looping thirsty, and say
+-- so where it'll be seen.
+local function outOfWater()
+    if not S.drinkPending then return end
+    S.drinkPending = false
+    if not running() then return end
+    stop()
+    echo(TAG .. "Thirsty with no water, so stopping. " .. summary() .. ".")
+    taPackage.utils.sendNtfy("Out of water",
+        (taPackage.character.getName() or "The character")
+        .. " is thirsty with no water; hit-subchief-and-let-him-heal stopped.")
+end
+createTrigger("^The waterskin is empty!$", outOfWater, { type = "regex" })
+createTrigger("^Sorry, but you don't seem to have one\\.$", outOfWater, { type = "regex" })

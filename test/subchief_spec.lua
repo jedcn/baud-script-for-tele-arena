@@ -251,6 +251,50 @@ describe("hit-subchief-and-let-him-heal", function()
         assert.are.same({}, sends())
     end)
 
+    it("drinks water when thirsty", function()
+        start()
+        clear()
+        helper.simulateLine("You're thirsty.")
+        assert.are.same({ "drink water" }, sends())
+        helper.simulateLine("The water quenches your thirst.")
+        assert.is_true(taPackage.subchief.running())
+    end)
+
+    it("leaves the drink to the arena's trigger in a group", function()
+        taPackage.followTarget = "Kerhak"
+        start()
+        clear()
+        helper.simulateLine("You're thirsty.")
+        assert.are.same({ "drink water" }, sends())   -- one, not two
+    end)
+
+    it("doesn't drink when it isn't running", function()
+        helper.simulateLine("You're thirsty.")
+        assert.are.same({}, sends())
+    end)
+
+    it("stops when the waterskin is empty", function()
+        start()
+        helper.simulateLine("You're thirsty.")
+        helper.simulateLine("The waterskin is empty!")
+        assert.is_false(taPackage.subchief.running())
+    end)
+
+    it("stops and says so when there's no waterskin", function()
+        start()
+        helper.simulateLine("You're thirsty.")
+        helper.simulateLine("Sorry, but you don't seem to have one.")
+        assert.is_false(taPackage.subchief.running())
+        assert.are.equal("Out of water",
+            helper.httpRequestCalls[#helper.httpRequestCalls].options.headers["X-Title"])
+    end)
+
+    it("ignores that reply when we didn't ask for a drink", function()
+        start()
+        helper.simulateLine("Sorry, but you don't seem to have one.")
+        assert.is_true(taPackage.subchief.running())
+    end)
+
     it("is stopped by stop-all-scripts", function()
         start()
         helper.simulateAlias("stop-all-scripts")
