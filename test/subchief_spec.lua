@@ -295,6 +295,21 @@ describe("hit-subchief-and-let-him-heal", function()
         assert.is_true(taPackage.subchief.running())
     end)
 
+    -- 2026-11-17 02:12:34: a timer left over from an earlier step fired after
+    -- the loop had moved on, and started a second chain of moves.
+    it("drops a timer armed in a step the loop has since left", function()
+        start()
+        lookReply("s,w", HEALTHY)
+        hit()                                   -- out s
+        helper.simulateLine(BATTLE)             -- retry armed
+        arrive()                                -- ...but the s went through
+        clear()
+        helper.fireTimers(3000)
+        assert.are.same({}, sends())
+        helper.fireTimers(30000)
+        assert.are.same({ "ex", "l sub" }, sends())
+    end)
+
     it("is stopped by stop-all-scripts", function()
         start()
         helper.simulateAlias("stop-all-scripts")

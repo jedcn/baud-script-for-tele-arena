@@ -84,8 +84,19 @@ local function summary()
     return S.hits .. " hits, " .. S.damage .. " damage in " .. minutes .. "m"
 end
 
--- Run fn after ms unless the loop was stopped (or restarted) in the meantime,
--- or the guard is taking us out of the game.
+-- Every step change bumps the generation, so a timer armed in one step dies if
+-- the loop has moved on by the time it fires. Without that, a 30s wait timer
+-- left over from an earlier round fired while we were trying to leave his
+-- room, sent a look, and started a second chain of moves on top of the first;
+-- the extra `e` hit a wall and stopped the loop
+-- (logs/session-pelayo-2026-11-17T01-25-47.log, 02:12:34).
+local function setState(state)
+    S.state = state
+    S.gen = S.gen + 1
+end
+
+-- Run fn after ms unless the loop has changed step (or stopped) since, or the
+-- guard is taking us out of the game.
 local function later(ms, fn)
     local gen = S.gen
     createTimer(ms, function()
@@ -100,13 +111,13 @@ local function later(ms, fn)
 end
 
 local function look()
-    S.state = "looking"
+    setState("looking")
     send("ex")
     send("l " .. TARGET)
 end
 
 local function move(dir, state)
-    S.state = state
+    setState(state)
     S.moveDir = dir
     send(dir)
 end
@@ -123,7 +134,7 @@ local function leave()
 end
 
 local function swing()
-    S.state = "swinging"
+    setState("swinging")
     send("a " .. TARGET)
 end
 
@@ -239,7 +250,7 @@ createTrigger("^Your attack hit the orc subchief for (\\d+) damage!$", function(
     S.roundHits = S.roundHits + 1
     S.roundDamage = S.roundDamage + tonumber(m[2])
     S.lastHit = m[2]
-    S.state = "checking"
+    setState("checking")
     send("l " .. TARGET)
 end, { type = "regex" })
 
@@ -270,7 +281,7 @@ end, { type = "regex" })
 
 createTrigger("^You're in ", function()
     if S.state == "leaving" then
-        S.state = "waiting"
+        setState("waiting")
         later(WAIT_MS, look)
     elseif S.state == "returning" then
         look()
