@@ -290,13 +290,89 @@ describe("hit-subchief-and-let-him-heal", function()
         assert.is_false(taPackage.subchief.running())
     end)
 
-    it("stops and says so when there's no waterskin", function()
+    it("stops when there's no waterskin", function()
         start()
         helper.simulateLine("You're thirsty.")
         helper.simulateLine("Sorry, but you don't seem to have one.")
         assert.is_false(taPackage.subchief.running())
-        assert.are.equal("Out of water",
-            helper.httpRequestCalls[#helper.httpRequestCalls].options.headers["X-Title"])
+    end)
+
+    describe("ntfy", function()
+        local function ntfys()
+            local out = {}
+            for _, c in ipairs(helper.httpRequestCalls) do
+                out[#out + 1] = { title = c.options.headers["X-Title"], body = c.options.body }
+            end
+            return out
+        end
+
+        before_each(function() taPackage._character.name = "Pelayo" end)
+
+        it("leaves the game first when the loop ends on its own, then notifies", function()
+            start()
+            helper.simulateLine("Experience:   61000000")
+            clear()
+            helper.simulateLine('Sorry, you don\'t see "sub" nearby.')
+            assert.are.same({ "x" }, sends())
+            assert.are.same({}, ntfys())        -- not until we're out
+            helper.simulateLine("Exiting Tele-Arena...")
+            assert.are.equal(1, #ntfys())
+            assert.are.equal("Subchief loop ended", ntfys()[1].title)
+            assert.is_truthy(ntfys()[1].body:find(
+                "Pelayo: Can't find the subchief here or next door. Out of the game.", 1, true))
+        end)
+
+        it("says why for running out of water", function()
+            start()
+            helper.simulateLine("You're thirsty.")
+            helper.simulateLine("The waterskin is empty!")
+            helper.simulateLine("Exiting Tele-Arena...")
+            assert.is_truthy(ntfys()[1].body:find("Thirsty with no water", 1, true))
+        end)
+
+        it("notifies anyway if the game never confirms the exit", function()
+            start()
+            helper.simulateLine('Sorry, you don\'t see "sub" nearby.')
+            helper.fireTimers(60000)
+            assert.are.equal(1, #ntfys())
+            assert.is_truthy(ntfys()[1].body:find("never confirmed the exit", 1, true))
+            helper.simulateLine("Exiting Tele-Arena...")   -- late: no second one
+            assert.are.equal(1, #ntfys())
+        end)
+
+        it("notifies when something else takes us out of the game", function()
+            start()
+            helper.simulateLine("Exiting Tele-Arena...")
+            assert.is_false(taPackage.subchief.running())
+            assert.is_truthy(ntfys()[1].body:find("Pelayo: Left the game.", 1, true))
+        end)
+
+        it("neither exits nor notifies when stopped by hand", function()
+            start()
+            clear()
+            helper.simulateAlias("stop-hit-subchief")
+            helper.simulateAlias("stop-all-scripts")
+            helper.fireTimers(60000)
+            assert.are.same({}, sends())
+            assert.are.same({}, ntfys())
+        end)
+
+        it("sends an update every 30 minutes while running", function()
+            start()
+            helper.simulateLine("Experience:   61000000")
+            lookReply("s,w", HEALTHY)
+            hit()
+            helper.advanceMs(30 * 60000)
+            helper.simulateLine("Experience:   61450000")
+            helper.fireTimers(30 * 60000)
+            assert.are.same({ { title = "Subchief update",
+                body = "Pelayo: 1 hits in 30m, +450,000 XP, 900,000 XP/hr." } }, ntfys())
+            helper.fireTimers(30 * 60000)
+            assert.are.equal(2, #ntfys())
+            helper.simulateAlias("stop-hit-subchief")
+            helper.fireTimers(30 * 60000)
+            assert.are.equal(2, #ntfys())
+        end)
     end)
 
     it("ignores that reply when we didn't ask for a drink", function()

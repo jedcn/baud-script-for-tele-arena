@@ -35,14 +35,19 @@
 -- 2026-11-15 the subchief fled into a room you leave by ne but get back to by
 -- s, so a reversed sw would have walked into a wall.
 --
+-- Built to run for hours unattended (on the VPS), so it reports to ntfy: an
+-- update every 30 minutes, and when the loop ends on its own for any reason it
+-- leaves the game first, then says why. Stopping it by hand (stop-hit-subchief,
+-- stop-all-scripts) does neither -- someone is at the keyboard.
+--
 -- HP is the guard's job (ta_guard.lua): this script is listed there as not in
 -- charge of HP, so a hit that leaves us under half still takes us out of the
 -- game, and the loop stops when it sees the exit pending.
 --
 -- A separate chunk; the seam runs through taPackage:
 --
---   in    taPackage.exitGamePending (ta_leave_game.lua), taPackage.inGroup
---         (main.lua), taPackage.utils.sendNtfy
+--   in    taPackage.exitGamePending / .exitGameWithRetry (ta_leave_game.lua),
+--         taPackage.inGroup (main.lua), taPackage.utils.sendNtfy
 --   out   taPackage.subchief.stop / .running (stop-all-scripts, the guard)
 
 taPackage.subchief = {}
@@ -52,6 +57,8 @@ local TARGET = "sub"
 local WAIT_MS = 20000       -- next door while he heals; healthy after 14-31s on 11-15, and
                             -- 30s was too short only once in 100 rounds on 11-17
 local RETRY_MS = 3000       -- between refused moves and between missed swings
+local UPDATE_MS = 30 * 60000 -- ntfy progress update
+local EXIT_CONFIRM_MS = 60000 -- notify anyway if the game never confirms the exit
 
 -- What he can be left at and still take another swing. Hits run 28-63, and in
 -- the 2026-11-15 log 84 damage in all left him "sorely wounded" and he fled,
@@ -72,7 +79,7 @@ local ABBREV = {
 }
 
 -- Reset on every load: a reload ends this loop like every other one.
-local S = { state = nil, gen = 0 }
+local S = { state = nil, gen = 0, runId = 0 }
 
 local function running() return S.state ~= nil end
 taPackage.subchief.running = running
@@ -88,6 +95,60 @@ taPackage.subchief.stop = stop
 local function summary()
     local minutes = math.floor((os.time() - S.startedAt) / 60)
     return S.hits .. " hits, " .. S.damage .. " damage in " .. minutes .. "m"
+end
+
+local function commas(n) return taPackage.utils.formatWithCommas(n) end
+
+-- Under a minute a rate is one round scaled up 60-fold; not worth printing.
+local function rate(total, ms)
+    return ms >= 60000
+        and commas(math.floor(total / (ms / 3600000))) .. " XP/hr"
+        or "rate after a minute"
+end
+
+-- The run so far, from the latest of our `st` readings.
+local function xpSummary()
+    if not S.xpStart then return summary() .. ", no XP reading yet" end
+    local total, ms = S.xpLast - S.xpStart, S.xpLastMs - S.xpStartMs
+    return S.hits .. " hits in " .. math.floor(ms / 60000) .. "m, +" .. commas(total)
+        .. " XP, " .. rate(total, ms)
+end
+
+local function who() return taPackage.character.getName() or "The character" end
+
+-- The end-of-run notification, once the game has let us out (or after
+-- EXIT_CONFIRM_MS if it never says so).
+local function sendEnd(note)
+    if not S.endReason then return end
+    local reason = S.endReason
+    S.endReason = nil
+    taPackage.utils.sendNtfy("Subchief loop ended",
+        who() .. ": " .. reason .. ". " .. note .. " " .. xpSummary() .. ".")
+end
+
+-- The loop ending on its own: stop, leave the game, then notify. If the exit
+-- is already under way (the guard, a typed x) it is left to finish.
+local function finish(reason)
+    if not stop() then return end
+    echo(TAG .. reason .. ". Stopping and leaving the game. " .. summary() .. ".")
+    S.endReason = reason
+    S.endId = (S.endId or 0) + 1
+    local id = S.endId
+    if taPackage.inGame ~= false and not taPackage.exitGamePending then
+        taPackage.exitGameWithRetry()
+    end
+    createTimer(EXIT_CONFIRM_MS, function()
+        if S.endId == id then sendEnd("The game never confirmed the exit.") end
+    end, { repeating = false })
+end
+
+local function scheduleUpdate()
+    local run = S.runId
+    createTimer(UPDATE_MS, function()
+        if S.runId ~= run or not running() then return end
+        taPackage.utils.sendNtfy("Subchief update", who() .. ": " .. xpSummary() .. ".")
+        scheduleUpdate()
+    end, { repeating = false })
 end
 
 -- Every step change bumps the generation, so a timer armed in one step dies if
@@ -108,8 +169,7 @@ local function later(ms, fn)
     createTimer(ms, function()
         if S.gen ~= gen or not running() then return end
         if taPackage.exitGamePending then
-            stop()
-            echo(TAG .. "Leaving the game, so stopping. " .. summary() .. ".")
+            finish("Something else is taking us out of the game")
             return
         end
         fn()
@@ -132,8 +192,7 @@ end
 local function leave()
     local dir = S.exits[1]
     if not dir then
-        stop()
-        echo(TAG .. "No exit to leave by, so stopping. " .. summary() .. ".")
+        finish("No exit to leave his room by")
         return
     end
     move(dir, "leaving")
@@ -147,6 +206,8 @@ end
 createAlias("^hit-subchief-and-let-him-heal$", function()
     stop()
     S.gen = S.gen + 1
+    S.runId = S.runId + 1
+    S.endReason = nil
     S.exits = {}
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
     echo(TAG .. "Hitting the subchief until he is moderately wounded, then waiting " .. (WAIT_MS / 1000)
@@ -155,6 +216,7 @@ createAlias("^hit-subchief-and-let-him-heal$", function()
     S.xpStart, S.xpLast, S.xpStartMs = nil, nil, nil
     S.awaitingSt = true
     send("st") -- the baseline the first round's XP is measured from
+    scheduleUpdate()
     look()
 end, { type = "regex" })
 
@@ -227,9 +289,7 @@ createTrigger("^The orc subchief is to the (\\w+)!$", function(m)
     if S.state ~= "looking" then return end
     local dir = ABBREV[m[2]]
     if not dir then
-        stop()
-        echo(TAG .. "He is to the " .. m[2] .. ", which I can't walk, so stopping. "
-            .. summary() .. ".")
+        finish("He is to the " .. m[2] .. ", which I can't walk")
         return
     end
     move(dir, "returning")
@@ -243,9 +303,7 @@ createTrigger("^Sorry, you don't see \"" .. TARGET .. "\" nearby\\.$", function(
         -- Fled (or died) from the hit. Leave anyway; the next look finds him.
         reportHitAndLeave("gone from the room")
     elseif S.state == "looking" then
-        stop()
-        echo(TAG .. "Can't find the subchief here or next door, so stopping. "
-            .. summary() .. ".")
+        finish("Can't find the subchief here or next door")
     end
 end, { type = "regex" })
 
@@ -281,8 +339,7 @@ createTrigger("^Sorry, you'll have to rest a while before you can move\\.$", ret
 
 createTrigger("^Sorry, there's no exit in that direction\\.$", function()
     if S.state ~= "leaving" and S.state ~= "returning" then return end
-    stop()
-    echo(TAG .. "No exit " .. S.moveDir .. " here, so stopping. " .. summary() .. ".")
+    finish("No exit " .. S.moveDir .. " where I tried to walk")
 end, { type = "regex" })
 
 createTrigger("^You're in ", function()
@@ -298,26 +355,20 @@ end, { type = "regex" })
 -- round. Printing XP per round and per hour here means a run is measured as
 -- it goes, with no `st` typed by hand and no log to wait for. Only our own
 -- `st` counts, so one typed mid-round doesn't split a round in two.
-local function commas(n) return taPackage.utils.formatWithCommas(n) end
-
 createTrigger("^Experience:\\s+(\\d+)$", function(m)
     if not running() or not S.awaitingSt then return end
     S.awaitingSt = false
     local xp = tonumber(m[2])
     if not S.xpStart then
-        S.xpStart, S.xpLast, S.xpStartMs = xp, xp, nowMs()
+        S.xpStart, S.xpLast, S.xpStartMs, S.xpLastMs = xp, xp, nowMs(), nowMs()
         return
     end
     local round, total = xp - S.xpLast, xp - S.xpStart
-    S.xpLast = xp
-    local ms = nowMs() - S.xpStartMs
-    -- Under a minute a rate is one round scaled up 60-fold; not worth printing.
-    local rate = ms >= 60000
-        and commas(math.floor(total / (ms / 3600000))) .. " XP/hr"
-        or "rate after a minute"
+    S.xpLast, S.xpLastMs = xp, nowMs()
+    local ms = S.xpLastMs - S.xpStartMs
     echo(TAG .. "Round: +" .. commas(round) .. " XP from " .. S.roundHits .. " hit"
         .. (S.roundHits == 1 and "" or "s") .. " (" .. S.roundDamage .. " damage). Total +"
-        .. commas(total) .. " XP in " .. math.floor(ms / 60000) .. "m, " .. rate .. ".")
+        .. commas(total) .. " XP in " .. math.floor(ms / 60000) .. "m, " .. rate(total, ms) .. ".")
     S.roundHits, S.roundDamage = 0, 0
 end, { type = "regex" })
 
@@ -337,17 +388,19 @@ end, { type = "regex" })
 
 -- Nothing to drink from: "The waterskin is empty!" (seen 2026-11-16, with a
 -- waterskin(1) still in the pack) or, with no waterskin at all, "Sorry, but
--- you don't seem to have one." Stop rather than keep looping thirsty, and say
--- so where it'll be seen.
+-- you don't seem to have one." End the run rather than keep looping thirsty.
 local function outOfWater()
     if not S.drinkPending then return end
     S.drinkPending = false
-    if not running() then return end
-    stop()
-    echo(TAG .. "Thirsty with no water, so stopping. " .. summary() .. ".")
-    taPackage.utils.sendNtfy("Out of water",
-        (taPackage.character.getName() or "The character")
-        .. " is thirsty with no water; hit-subchief-and-let-him-heal stopped.")
+    finish("Thirsty with no water")
 end
 createTrigger("^The waterskin is empty!$", outOfWater, { type = "regex" })
 createTrigger("^Sorry, but you don't seem to have one\\.$", outOfWater, { type = "regex" })
+
+-- Out of the game. If the loop was still going, something else took us out
+-- (a typed x, a disconnect) -- that ends the run too. Either way, this is the
+-- moment the end-of-run notification was waiting for.
+createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
+    if running() then finish("Left the game") end
+    sendEnd("Out of the game.")
+end, { type = "regex" })
