@@ -10,7 +10,7 @@
 -- Hit until he is past lightly wounded, and no further, because too much
 -- sends him running. Two hits (40 + 44) left him "sorely wounded" and he fled;
 -- no single hit (28 to 63) ever did. A second swing only follows a hit that
--- left him lightly wounded (SWING_AGAIN). A fled subchief is still findable --
+-- left him lightly wounded or wounded (SWING_AGAIN). A fled subchief is still findable --
 -- `l sub` from the next room answers "The orc subchief is to the south!" --
 -- but chasing him is the chaos we are avoiding.
 --
@@ -57,7 +57,12 @@ local RETRY_MS = 3000       -- between refused moves and between missed swings
 -- while 63 and 88 left him "moderately". Lightly wounded (one 28) plus the
 -- worst hit is 91, so even this risks a flee now and then; "wounded" (40-55)
 -- plus a big hit would be past 84 most times.
-local SWING_AGAIN = { ["lightly wounded"] = true }
+--
+-- That fear didn't hold up. Over 100 rounds on 2026-11-17 the 24 two-hit
+-- rounds (67-86 damage) sent him running none of the times, and earned ~50%
+-- more XP than a one-hit round in the same ~63s. So "wounded" gets a second
+-- swing too. Moderately wounded or worse still means leave.
+local SWING_AGAIN = { ["lightly wounded"] = true, ["wounded"] = true }
 
 -- "The orc subchief is to the south!" names the way in full.
 local ABBREV = {
@@ -143,7 +148,7 @@ createAlias("^hit-subchief-and-let-him-heal$", function()
     S.gen = S.gen + 1
     S.exits = {}
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
-    echo(TAG .. "Hitting the subchief until he is past lightly wounded, then waiting " .. (WAIT_MS / 1000)
+    echo(TAG .. "Hitting the subchief until he is moderately wounded, then waiting " .. (WAIT_MS / 1000)
         .. "s next door while he heals. stop-hit-subchief to stop.")
     S.roundHits, S.roundDamage = 0, 0
     S.xpStart, S.xpLast, S.xpStartMs = nil, nil, nil
