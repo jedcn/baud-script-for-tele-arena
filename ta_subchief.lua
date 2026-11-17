@@ -49,7 +49,8 @@ taPackage.subchief = {}
 
 local TAG = "[subchief] "
 local TARGET = "sub"
-local WAIT_MS = 30000       -- next door while he heals; he was healthy after 14-31s
+local WAIT_MS = 20000       -- next door while he heals; healthy after 14-31s on 11-15, and
+                            -- 30s was too short only once in 100 rounds on 11-17
 local RETRY_MS = 3000       -- between refused moves and between missed swings
 
 -- What he can be left at and still take another swing. Hits run 28-63, and in
