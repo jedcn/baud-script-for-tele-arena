@@ -10,7 +10,7 @@
 -- Hit until he is past lightly wounded, and no further, because too much
 -- sends him running. Two hits (40 + 44) left him "sorely wounded" and he fled;
 -- no single hit (28 to 63) ever did. A second swing only follows a hit that
--- left him lightly wounded or wounded (SWING_AGAIN). A fled subchief is still findable --
+-- was weak (WEAK_HIT). A fled subchief is still findable --
 -- `l sub` from the next room answers "The orc subchief is to the south!" --
 -- but chasing him is the chaos we are avoiding.
 --
@@ -68,9 +68,21 @@ local EXIT_CONFIRM_MS = 60000 -- notify anyway if the game never confirms the ex
 --
 -- That fear didn't hold up. Over 100 rounds on 2026-11-17 the 24 two-hit
 -- rounds (67-86 damage) sent him running none of the times, and earned ~50%
--- more XP than a one-hit round in the same ~63s. So "wounded" gets a second
--- swing too. Moderately wounded or worse still means leave.
-local SWING_AGAIN = { ["lightly wounded"] = true, ["wounded"] = true }
+-- more XP than a one-hit round in the same ~63s. So "wounded" got a second
+-- swing too.
+--
+-- That went too far (logs/session-pelayo-2026-11-18T00-19-50.log): 6 of 13
+-- rounds left him sorely wounded (92-107 damage), one killed the flail-armed
+-- subchief at 106, and one fled out of sight and ended the run. Even
+-- "lightly wounded" plus a big hit reached sorely twice (28+64, 34+65). The
+-- condition bands are too coarse to steer by, so steer by damage instead:
+-- swing again only while this round has done WEAK_HIT or less. Hits top out
+-- around 65, so a round stays under ~105. The condition still has to allow
+-- it: a subchief not fully healed may already be moderately wounded.
+local WEAK_HIT = 40
+local SWING_AGAIN = {
+    ["in good physical health"] = true, ["lightly wounded"] = true, ["wounded"] = true,
+}
 
 -- "The orc subchief is to the south!" names the way in full.
 local ABBREV = {
@@ -221,7 +233,8 @@ createAlias("^hit-subchief-and-let-him-heal$", function()
     S.endReason = nil
     S.exits = {}
     S.hits, S.damage, S.startedAt = 0, 0, os.time()
-    echo(TAG .. "Hitting the subchief until he is moderately wounded, then waiting " .. (WAIT_MS / 1000)
+    echo(TAG .. "Hitting the subchief (again only while a round has done " .. WEAK_HIT
+        .. " or less), then waiting " .. (WAIT_MS / 1000)
         .. "s next door while he heals. stop-hit-subchief to stop.")
     S.roundHits, S.roundDamage = 0, 0
     S.xpStart, S.xpLast, S.xpStartMs = nil, nil, nil
@@ -258,10 +271,10 @@ local function condition(line)
     return word .. " wounded"
 end
 
--- After a hit: say what it left him at, then go -- or swing again if that
--- was only a scratch.
+-- After a hit: say what it left him at, then go -- or swing again if the
+-- round's damage so far was weak.
 local function reportHitAndLeave(state)
-    local again = SWING_AGAIN[state]
+    local again = SWING_AGAIN[state] and S.thisRound <= WEAK_HIT
     echo(TAG .. "Hit " .. S.hits .. " for " .. S.lastHit .. ", leaving him "
         .. state .. (again and "; swinging again" or "") .. ". " .. summary() .. ".")
     if again then
@@ -280,6 +293,7 @@ end
 -- "lightly" in front of it (2026-11-16, logs/session-pelayo-2026-11-16T03-42-22.log).
 createTrigger("^.*physical health\\.$", function(m)
     if S.state == "looking" then
+        S.thisRound = 0
         swing()
     elseif S.state == "checking" then
         reportHitAndLeave(condition(m[1]))
@@ -324,6 +338,7 @@ createTrigger("^Your attack hit the orc subchief for (\\d+) damage!$", function(
     S.damage = S.damage + tonumber(m[2])
     S.roundHits = S.roundHits + 1
     S.roundDamage = S.roundDamage + tonumber(m[2])
+    S.thisRound = (S.thisRound or 0) + tonumber(m[2])
     S.lastHit = m[2]
     setState("checking")
     send("l " .. TARGET)
