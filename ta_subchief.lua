@@ -128,13 +128,18 @@ end
 
 -- The loop ending on its own: stop, leave the game, then notify. If the exit
 -- is already under way (the guard, a typed x) it is left to finish.
-local function finish(reason)
+local function finish(reason, alreadyOut)
     if not stop() then return end
     echo(TAG .. reason .. ". Stopping and leaving the game. " .. summary() .. ".")
     S.endReason = reason
     S.endId = (S.endId or 0) + 1
     local id = S.endId
-    if taPackage.inGame ~= false and not taPackage.exitGamePending then
+    if alreadyOut or taPackage.inGame == false then
+        -- Already out (disconnected): nothing to leave, so say so now.
+        sendEnd("Already out of the game.")
+        return
+    end
+    if not taPackage.exitGamePending then
         taPackage.exitGameWithRetry()
     end
     createTimer(EXIT_CONFIRM_MS, function()
@@ -170,6 +175,12 @@ local function later(ms, fn)
         if S.gen ~= gen or not running() then return end
         if taPackage.exitGamePending then
             finish("Something else is taking us out of the game")
+            return
+        end
+        -- A dropped connection: we're at the BBS menu or the login prompt, where
+        -- a move or a look would go out as a menu choice or a password.
+        if taPackage.inGame == false then
+            finish("Disconnected from the game", true)
             return
         end
         fn()
@@ -404,3 +415,14 @@ createTrigger("^Exiting Tele-Arena\\.\\.\\.$", function()
     if running() then finish("Left the game") end
     sendEnd("Out of the game.")
 end, { type = "regex" })
+
+-- The BBS menu or the login prompt with the loop still going means the
+-- connection dropped: no "Exiting Tele-Arena..." came first. End the run now
+-- rather than at its next timer. Says so outright rather than reading
+-- inGame: this file loads before ta_auto_login.lua, whose "Username:" trigger
+-- is the one that clears it.
+local function disconnected()
+    if running() then finish("Disconnected from the game", true) end
+end
+createTrigger("^Make your selection", disconnected, { type = "regex" })
+createTrigger("^Username:\\s*$", disconnected, { type = "regex" })

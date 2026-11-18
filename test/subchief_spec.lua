@@ -347,6 +347,36 @@ describe("hit-subchief-and-let-him-heal", function()
             assert.is_truthy(ntfys()[1].body:find("Pelayo: Left the game.", 1, true))
         end)
 
+        it("ends and notifies, sending nothing, when the connection drops", function()
+            start()
+            lookReply("s,w", HEALTHY)
+            hit()
+            arrive()                                  -- waiting next door
+            clear()
+            helper.simulateLine("Username: ")
+            helper.fireTimers()
+            assert.is_false(taPackage.subchief.running())
+            -- The username is auto-login's; nothing of the loop's went out.
+            for _, c in ipairs(sends()) do
+                assert.is_nil(({ ex = 1, ["l sub"] = 1, x = 1, s = 1 })[c])
+            end
+            assert.are.equal(1, #ntfys())
+            assert.is_truthy(ntfys()[1].body:find(
+                "Pelayo: Disconnected from the game. Already out of the game.", 1, true))
+        end)
+
+        it("stops at its next timer if it missed the prompt", function()
+            start()
+            lookReply("s,w", HEALTHY)
+            hit()
+            arrive()
+            taPackage.inGame = false
+            clear()
+            helper.fireTimers(20000)
+            assert.are.same({}, sends())
+            assert.is_false(taPackage.subchief.running())
+        end)
+
         it("neither exits nor notifies when stopped by hand", function()
             start()
             clear()
